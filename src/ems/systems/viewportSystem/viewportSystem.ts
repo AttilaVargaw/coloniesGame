@@ -1,7 +1,7 @@
 import { Engine } from "../../engine";
 import { CircleNode } from "./circleNode";
 import { RectNode } from "./rectNode";
-import { System, } from "../system";
+import { SystemWithNodes, } from "../system";
 import { ColorComponent } from "../../components/colorComponent";
 import { PositionComponent } from "../../components/position";
 import { RadiusComponent } from "../../components/radiusComponent";
@@ -16,7 +16,7 @@ import { HexagoneNode } from "./HexagoneNode";
 import { Entity } from "@/ems/entities/entity";
 import { shortByIndex } from "@/lib/shortByIndex";
 
-export class ViewportSystem extends System {
+export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     removeFromEngine() {
         if(!this.engine) {
             return
@@ -51,11 +51,11 @@ export class ViewportSystem extends System {
         this.labels.sort(shortByIndex)
     }
 
-    private nodes: ViewportNode[] = []
     private rects: RectNode[] = []
     private circles: CircleNode[] = []
     private shapes: HexagoneNode[] = []
     private labels: LabelNode[] = []
+    private readonly eventHandlers: Set<Entity> = new Set()
 
     get viewport() {
         return this.nodes[0].viewPort
@@ -208,5 +208,4 @@ export class ViewportSystem extends System {
 
     }
 
-    private readonly eventHandlers: Set<Entity> = new Set()
 }

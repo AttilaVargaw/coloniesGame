@@ -95,7 +95,7 @@ export default class Camera {
      * Zooms to certain z distance
      * @param {*z distance} z 
      */
-    public zoomTo(z: any) {
+    public zoomTo(z: number) {
         this.distance = z;
         this.updateViewport();
     }
@@ -147,30 +147,30 @@ export default class Camera {
      *  -Center camera on "R" key
      */
     private addListeners() {
-        window.onwheel = e => {
-            if(e.ctrlKey) {
-                // Your zoom/scale factor
-                let zoomLevel = this.distance - (e.deltaY * 20);
-                if(zoomLevel <= 1) {
-                    zoomLevel = 1;
-                }
+        // window.onwheel = e => {
+        //     if(e.ctrlKey) {
+        //         // Your zoom/scale factor
+        //         let zoomLevel = this.distance - (e.deltaY * 20);
+        //         if(zoomLevel <= 1) {
+        //             zoomLevel = 1;
+        //         }
 
-                this.zoomTo(zoomLevel);
-            } else {
-                // Your track-pad X and Y positions
-                const x = this.lookAt[0] + (e.deltaX * 2);
-                const y = this.lookAt[1] + (e.deltaY * 2);
+        //         this.zoomTo(zoomLevel);
+        //     } else {
+        //         // Your track-pad X and Y positions
+        //         const x = this.lookAt[0] + (e.deltaX * 2);
+        //         const y = this.lookAt[1] + (e.deltaY * 2);
 
-                this.moveTo(x, y);
-            }
-        };
+        //         this.moveTo(x, y);
+        //     }
+        // };
 
-        window.addEventListener('keydown', e => {
-            if(e.key === 'r') {
-                this.zoomTo(1000);
-                this.moveTo(0, 0);
-            }
-        });
+        // window.addEventListener('keydown', e => {
+        //     if(e.key === 'r') {
+        //         this.zoomTo(1000);
+        //         this.moveTo(0, 0);
+        //     }
+        // });
 
         return this;
     }

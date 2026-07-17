@@ -13,6 +13,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     removeFromEngine(): void {
         this.clickArray = undefined;
+        this.viewport = undefined;
         this.engine?.unregisterNodeType(ClickableNode)
         this.engine?.unsubscribe("entityAdded", this.onUpdateIndices)
         super.removeFromEngine();
