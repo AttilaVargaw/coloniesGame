@@ -1,0 +1,72 @@
+import { PositionComponent } from "../components/position";
+import { Engine } from "../engine";
+import { Entity } from "../entities/entity";
+import { EntityNode } from "../entities/entityNode";
+import { SystemWithNodes } from "./system";
+import { EntityComponent } from "../entities/entityComponent";
+
+export class JumpDriveComponent extends EntityComponent {
+    target?: Entity
+}
+export class SensorSuiteComponent {
+
+}
+// export class EcmSuiteComponent { }
+// export class ArmorComponent { }
+
+export class MoveNode extends EntityNode {
+    constructor(public position: PositionComponent, public jumpDrive: JumpDriveComponent, public sensorSuite: SensorSuiteComponent) {
+        super()
+    }
+}
+
+export class MoveSystem extends SystemWithNodes<MoveNode> {
+    update(_dt: number): void {
+        // this.nodes.forEach((node) => {
+        //     node.goalSector = node.position
+        // })
+    }
+
+    moveNodes = () => {
+        if(!this.engine) return
+
+        for(const { jumpDrive, entity } of this.nodes) {
+            //remove from the old node and move it to the new node
+            if(jumpDrive.target && entity && jumpDrive.target !== entity._parent) {
+                entity._parent?.removeChild(entity)
+                //this.engine?.removeEntity(entity)
+                jumpDrive.target.addChild(entity)
+                this.engine.addCommand({ name: "redraw", data: {} })
+            }
+        }
+    }
+
+    addToEngine(engine: Engine) {
+        if(!engine) return () => { }
+
+        this.engine = engine.subscribe("dayPassed", this.moveNodes)
+            .registerNodeType(MoveNode,
+                new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
+                (entity) => {
+                    return {
+                        position: entity.getComponent(PositionComponent)!,
+                        jumpDrive: entity.getComponent(JumpDriveComponent)!,
+                        sensorSuite: entity.getComponent(SensorSuiteComponent)!,
+                        entity
+                    }
+                });
+
+        this.nodes = engine.getNodeList(MoveNode)
+    }
+
+    removeFromEngine(): void {
+        if(!this.engine) {
+            return
+        }
+
+        this.engine.unregisterNodeType(MoveNode)
+
+        this.engine.unsubscribe("dayPassed", this.moveNodes)
+        super.removeFromEngine()
+    }
+}
