@@ -156,25 +156,25 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             .addComponent(new PositionComponent((x * 100), (y * 100)))
             .addChild(this.engine.createEntity()
                 .addComponent(new PositionComponent(0, 0, -1))
-                // .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ engine, target, data: { event: { shiftKey } } }) => {
-                //     const selectionSystem = engine.getSystem(SelectionSystem)!
-                //     if(shiftKey) {
-                //         const selection = selectionSystem.selector?._parent
+                .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ engine, target, data: { event: { shiftKey } } }) => {
+                    const selectionSystem = engine.getSystem(SelectionSystem)!
+                    if(shiftKey) {
+                        const selection = selectionSystem.selector?._parent
 
-                //         if(selection) {
-                //             selectionSystem.onTargetChanged(target._parent!)
-                //             selection.getComponent(JumpDriveComponent)!.target = target
-                //         }
-                //     } else {
-                //         if(target.children.size) {
-                //             return
-                //         }
-                //         selectionSystem.unselect()
-                //         selectionSystem.unTarget()
-                //         //engine.getSystem(SelectionSystem).onSelectionChanged(target._parent!)
-                //     }
-                // }
-                // ))
+                        if(selection) {
+                            selectionSystem.onTargetChanged(target._parent!)
+                            selection.getComponent(JumpDriveComponent)!.target = target
+                        }
+                    } else {
+                        if(target.children.size) {
+                            return
+                        }
+                        selectionSystem.unselect()
+                        selectionSystem.unTarget()
+                        //engine.getSystem(SelectionSystem).onSelectionChanged(target._parent!)
+                    }
+                }
+                ))
             )
 
         if(visible) {
