@@ -63,7 +63,9 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
                 }
             }
 
-            if(document.body.style.cursor !== 'default') {
+            const { cursor } = document.body.style
+
+            if(cursor !== 'default' && cursor !== "grabbing") {
                 document.body.style.cursor = 'default';
             }
         })
