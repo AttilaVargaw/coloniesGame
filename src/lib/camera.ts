@@ -101,6 +101,19 @@ export default class Camera {
     }
 
     /**
+     * Moves the centre of the viewport by a pixel delta in screen space, converting
+     * it to world space using the current viewport scale. Subtracts because dragging
+     * right should move the world right / camera left (point under cursor stays fixed).
+     * @param {pixel delta on x axis} dxPixels
+     * @param {pixel delta on y axis} dyPixels
+     */
+    public panByPixels(dxPixels: number, dyPixels: number) {
+        const worldDeltaX = dxPixels / this.viewport.scale[0];
+        const worldDeltaY = dyPixels / this.viewport.scale[1];
+        this.moveTo(this.lookAt[0] - worldDeltaX, this.lookAt[1] - worldDeltaY);
+    }
+
+    /**
      * Moves the centre of the viewport to new x, y coords (updates Camera.lookAt)
      * @param {x axis coord} x 
      * @param {y axis coord} y 
@@ -110,7 +123,6 @@ export default class Camera {
         this.lookAt[1] = y;
         this.updateViewport();
     }
-
     /**
      * Transform a coordinate pair from screen coordinates (relative to the canvas) into world coordinates (useful for intersection between mouse and entities)
      * Optional: obj can supply an object to be populated with the x/y (for object-reuse in garbage collection efficient code)

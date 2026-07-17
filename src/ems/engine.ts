@@ -3,7 +3,7 @@ import type { System } from "./systems/system"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
 
 export type EngineEvents = "updateDone" | "entityAdded" | "updateBegin" | "dayPassed" | "selectionChanged" | "entityRemoved" | "mouseMoved" | "monthPassed"
-export type Commands = "keydown" | "click" | "redraw" | "selectEntity" | "mouseMoved" | "openInfoWindow"
+export type Commands = "keydown" | "click" | "redraw" | "selectEntity" | "mouseMoved" | "openInfoWindow" | "mousedown" | "mouseup"
 
 export type Command = { name: Commands, data: any }
 
@@ -55,7 +55,10 @@ export class Engine {
         ["redraw", []],
         ["selectEntity", []],
         ["mouseMoved", []],
-        ["openInfoWindow", []]
+        ["openInfoWindow", []],
+        ["mousedown", []],
+        ["mouseup", []]
+
     ] as const)
 
     onCommand(command: Commands, commandHandler: (data: any) => void) {

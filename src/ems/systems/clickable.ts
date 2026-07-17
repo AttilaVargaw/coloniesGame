@@ -44,6 +44,11 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     update(): void {
         if(this.nodes.length === 0 || !this.engine || !this.clickArray?.length || !this.viewport) return;
 
+        if(this.viewport.consumeDragMoved()) {
+            this.clickArray.length = 0
+            return
+        }
+
         for(const { data } of this.clickArray) {
             const { x, y } = this.viewport.viewport.camera.screenToWorld(data.x, data.y);
 

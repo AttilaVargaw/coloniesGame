@@ -57,6 +57,18 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private labels: LabelNode[] = []
     private readonly eventHandlers: Set<Entity> = new Set()
 
+    private isDragging = false
+    private lastPointer: { x: number, y: number } | null = null
+    private dragMoved = false
+
+    private static readonly DRAG_THRESHOLD = 3
+
+    consumeDragMoved() {
+        const moved = this.dragMoved
+        this.dragMoved = false
+        return moved
+    }
+
     get viewport() {
         return this.nodes[0].viewPort
     }
@@ -71,6 +83,41 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
     update(_dt: number) {
         if(!this.engine) return
+
+        const camera = this.nodes[0].viewPort.camera
+        const mousedownArray = this.engine.commands.get("mousedown")!
+        const mouseupArray = this.engine.commands.get("mouseup")!
+
+        for(const { data } of mousedownArray) {
+            this.isDragging = true
+            this.lastPointer = { x: data.x, y: data.y }
+            this.dragMoved = false
+            document.body.style.cursor = "grabbing"
+        }
+        mousedownArray.length = 0
+
+        if(this.isDragging && this.lastPointer) {
+            const mouseMovedArray = this.engine.commands.get("mouseMoved")!
+            for(const { data } of mouseMovedArray) {
+                const dx = data.x - this.lastPointer.x
+                const dy = data.y - this.lastPointer.y
+                if(dx || dy) {
+                    camera.panByPixels(dx, dy)
+                    if(Math.abs(dx) > ViewportSystem.DRAG_THRESHOLD || Math.abs(dy) > ViewportSystem.DRAG_THRESHOLD) {
+                        this.dragMoved = true
+                    }
+                    this.lastPointer = { x: data.x, y: data.y }
+                    this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
+                }
+            }
+        }
+
+        for(const _ of mouseupArray) {
+            this.isDragging = false
+            this.lastPointer = null
+            document.body.style.cursor = "default"
+        }
+        mouseupArray.length = 0
 
         const redrawArray = this.engine.commands.get("redraw")!
 

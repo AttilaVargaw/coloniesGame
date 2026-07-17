@@ -9,9 +9,11 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     return { x, y, event }
 }
 
-export function Screen({ onClick, onMouseMove, engine, ref }: ComponentPropsWithRef<"canvas"> & {
+export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, engine, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: { x: number, y: number, event: MouseEvent }) => void,
     onMouseMove: (event: { x: number, y: number, event: MouseEvent }) => void,
+    onMouseDown: (event: { x: number, y: number, event: MouseEvent }) => void,
+    onMouseUp: (event: { x: number, y: number, event: MouseEvent }) => void,
     engine: Engine | null
 }) {
     useLayoutEffect(() => {
@@ -66,10 +68,26 @@ export function Screen({ onClick, onMouseMove, engine, ref }: ComponentPropsWith
         onMouseMove(getCursorPosition(ref?.current, event))
     }
 
+    const handleMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
+        if(typeof ref === "function" || !ref?.current) {
+            return
+        }
+        onMouseDown(getCursorPosition(ref?.current, event))
+    }
+
+    const handleMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
+        if(typeof ref === "function" || !ref?.current) {
+            return
+        }
+        onMouseUp(getCursorPosition(ref?.current, event))
+    }
+
     // @TODO refactor
     return <canvas
         ref={ref}
         style={{ imageRendering: "crisp-edges" }}
         onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
         onClick={handleClick} />;
 }

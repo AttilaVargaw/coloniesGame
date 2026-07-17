@@ -36,7 +36,14 @@ function App() {
       game.engine?.addCommand({ name: "keydown", data: event })
     }
 
+    function onMouseUp(event: MouseEvent) {
+      const rect = map.current?.getBoundingClientRect()
+      if(!rect) return
+      game.engine?.addCommand({ name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
+    }
+
     document.addEventListener("keydown", eventListener)
+    window.addEventListener("mouseup", onMouseUp)
     game.engine?.subscribe("updateDone", updateDate)
       .onCommand("openInfoWindow", onOpenInfoWindow)
 
@@ -44,6 +51,7 @@ function App() {
 
     return () => {
       document.removeEventListener("keydown", eventListener)
+      window.removeEventListener("mouseup", onMouseUp)
 
       game.engine?.unsubscribe("updateDone", updateDate)
       //.unsubscribe("openInfoWindow", onOpenInfoWindow)
@@ -59,6 +67,12 @@ function App() {
       <Screen
         onMouseMove={(data) => {
           engine?.addCommand({ name: "mouseMoved", data })
+        }}
+        onMouseDown={(data) => {
+          engine?.addCommand({ name: "mousedown", data })
+        }}
+        onMouseUp={(data) => {
+          engine?.addCommand({ name: "mouseup", data })
         }}
         engine={engine}
         ref={map}
