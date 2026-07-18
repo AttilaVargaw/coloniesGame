@@ -168,26 +168,25 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         window.addEventListener("wheel", this.onWheel)
-        //reduntant
-        this.engine = engine
         this.nodes = engine.getNodeList(ViewportNode)
 
-        this.addSubsystem(new CircleRenderer)
-            .addSubsystem(new RectRenderer)
+        this
             .addSubsystem(new HexagonRenderer)
+            .addSubsystem(new CircleRenderer)
+            .addSubsystem(new RectRenderer)
             .addSubsystem(new LabelRenderer)
 
         const eventHandlers = [
-            this.engine.createEntity().addComponent(this.moveEventHandler("ArrowLeft", [-1, 0])),
-            this.engine.createEntity().addComponent(this.moveEventHandler("ArrowRight", [1, 0])),
-            this.engine.createEntity().addComponent(this.moveEventHandler("ArrowUp", [0, -1])),
-            this.engine.createEntity().addComponent(this.moveEventHandler("ArrowDown", [0, 1])),
-            this.engine.createEntity().addComponent(this.zoomEventHandler("-", 10)),
-            this.engine.createEntity().addComponent(this.zoomEventHandler("+", -10))
+            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowLeft", [-1, 0])),
+            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowRight", [1, 0])),
+            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowUp", [0, -1])),
+            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowDown", [0, 1])),
+            this.engine!.createEntity().addComponent(this.zoomEventHandler("-", 10)),
+            this.engine!.createEntity().addComponent(this.zoomEventHandler("+", -10))
         ]
 
         for(const eventHandler of eventHandlers) {
-            this.engine.addEntity(eventHandler)
+            this.engine!.addEntity(eventHandler)
             this.eventHandlers.add(eventHandler)
         }
 
