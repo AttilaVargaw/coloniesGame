@@ -10,6 +10,11 @@ import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class CircleRenderer extends SystemWithNodes<CircleNode> {
+    protected filterNodes: ((node: CircleNode) => boolean) = (node) => {
+        const { camera } = (this.parent as ViewportSystem).viewport;
+        return isVisible(node.position, camera.visibleBounds, node.radius.radius);
+    };
+
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(CircleNode)
@@ -56,7 +61,6 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
 
     updateNode = (circle: CircleNode) => {
         const { camera } = (this.parent as ViewportSystem).viewport;
-        if(!isVisible(circle.position, camera.visibleBounds, circle.radius.radius)) return;
 
         const ctx = camera.context
 
