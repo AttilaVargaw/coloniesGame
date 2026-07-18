@@ -9,7 +9,10 @@ import { ShapeComponent } from "../components/ShapeComponent"
 import { RadiusComponent } from "../components/radiusComponent"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
-    removeFromEngine(): void {
+    protected updateNode(_node: SelectionNode, _dT?: number): void {
+    }
+
+    removeFromEngine(): this {
         this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged)
         //this.engine.unsubscribe("targetChanged", this.onTargetChanged)
 
@@ -17,6 +20,8 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         this.unTarget()
         this.engine?.unregisterNodeType(SelectionNode)
         super.removeFromEngine()
+
+        return this
     }
 
     selector?: Entity
@@ -94,11 +99,11 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return this
     }
 
-    update() {
+    update(_dt: number) {
     }
 
-    addToEngine(engine: Engine) {
-
+    addToEngine(engine: Engine): this {
+        super.addToEngine(engine)
         this.engine = engine
             .registerNodeType(SelectionNode, new Set([SelectableComponent]), (entity) => {
                 return {
@@ -112,5 +117,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.nodes = engine.getNodeList(SelectionNode)
 
+        return this
     }
 }
