@@ -131,6 +131,19 @@ export default class Camera {
      * @param {obj can supply an object to be populated with the x/y} obj 
      * @returns 
      */
+    /**
+     * Visible world-space rectangle (left/right/top/bottom).
+     * Useful for culling entities outside the viewport.
+     */
+    public get visibleBounds() {
+        return {
+            left: this.viewport.left,
+            right: this.viewport.right,
+            top: this.viewport.top,
+            bottom: this.viewport.bottom,
+        };
+    }
+
     public screenToWorld(x: number, y: number, obj?: any) {
         obj = obj || {};
         obj.x = (x / this.viewport.scale[0]) + this.viewport.left;

@@ -5,11 +5,15 @@ import { PositionComponent } from "../../../components/position";
 import { LabelComponent } from "../../../components/label";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
+import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
     protected updateNode(node: LabelNode, _dT?: number): void {
-        const ctx = (this.parent as ViewportSystem).viewport.camera.context
+        const { camera } = (this.parent as ViewportSystem).viewport;
+        if(!isVisible(node.position, camera.visibleBounds, node.label.size)) return;
+
+        const ctx = camera.context
 
         ctx.save();
         node.setColor(ctx);

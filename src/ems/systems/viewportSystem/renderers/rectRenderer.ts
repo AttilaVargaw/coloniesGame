@@ -6,11 +6,16 @@ import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
+import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class RectRenderer extends SystemWithNodes<RectNode> {
     protected updateNode(rect: RectNode, _dT?: number): void {
-        const ctx = (this.parent as ViewportSystem).viewport.camera.context;
+        const { camera } = (this.parent as ViewportSystem).viewport;
+        const margin = Math.max(rect.size.width, rect.size.height) / 2;
+        if(!isVisible(rect.position, camera.visibleBounds, margin)) return;
+
+        const ctx = camera.context;
 
         ctx.save();
         rect.setColor(ctx);

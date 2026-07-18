@@ -6,6 +6,7 @@ import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
+import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class CircleRenderer extends SystemWithNodes<CircleNode> {
@@ -54,7 +55,10 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
     }
 
     updateNode = (circle: CircleNode) => {
-        const ctx = (this.parent as ViewportSystem).viewport.camera.context
+        const { camera } = (this.parent as ViewportSystem).viewport;
+        if(!isVisible(circle.position, camera.visibleBounds, circle.radius.radius)) return;
+
+        const ctx = camera.context
 
         ctx.save();
         circle.setColor(ctx);

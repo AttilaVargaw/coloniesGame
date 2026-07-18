@@ -17,7 +17,7 @@ export abstract class System {
     addSubsystem(subsystem: System) {
         this.subsystems.add(subsystem)
         subsystem.parent = this
-        if (this.engine) {
+        if(this.engine) {
             subsystem.addToEngine(this.engine)
         }
 
@@ -27,7 +27,7 @@ export abstract class System {
     removeSubsystem(subsystem: System): System {
         subsystem.parent = undefined
         this.subsystems.delete(subsystem)
-        if (this.engine) {
+        if(this.engine) {
             subsystem.removeFromEngine()
         }
 
@@ -98,8 +98,10 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
 
     protected abstract updateNode(_node: N, _dT?: number): void
 
+    protected filterNodes?: (node: N) => boolean
+
     update(dt: number): void {
-        for(const node of this.nodes) {
+        for(const node of this.filterNodes ? this.nodes.filter(this.filterNodes) : this.nodes) {
             this.updateNode(node, dt)
         }
     }
