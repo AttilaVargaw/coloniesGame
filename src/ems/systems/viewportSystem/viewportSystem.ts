@@ -1,20 +1,13 @@
 import { Engine } from "../../engine";
-import { CircleNode } from "./circleNode";
-import { RectNode } from "./rectNode";
 import { SystemWithNodes, } from "../system";
-import { ColorComponent } from "../../components/colorComponent";
-import { PositionComponent } from "../../components/position";
-import { RadiusComponent } from "../../components/radiusComponent";
-import { SizeComponent } from "../../components/sizeComponent";
-import { LabelNode } from "./labelNode";
-import { LabelComponent } from "../../components/label";
 import { EventHandlerComponent } from "../../components/EventHandlerComponent";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
-import { ShapeComponent } from "../../components/ShapeComponent";
-import { HexagoneNode } from "./HexagoneNode";
 import { Entity } from "@/ems/entities/entity";
-import { shortByIndex } from "@/lib/shortByIndex";
+import { CircleRenderer } from "./renderers/circleRenderer";
+import { RectRenderer } from "./renderers/rectRenderer";
+import { HexagonRenderer } from "./renderers/hexagonRenderer";
+import { LabelRenderer } from "./renderers/labelRenderer";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     removeFromEngine() {
@@ -23,12 +16,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         window.removeEventListener("wheel", this.onWheel)
-        this.engine.unsubscribe("entityAdded", this.onUpdateIndices)
         this.engine.unregisterNodeType(ViewportNode)
-        this.engine.unregisterNodeType(CircleNode)
-        this.engine.unregisterNodeType(HexagoneNode)
-        this.engine.unregisterNodeType(RectNode)
-        this.engine.unregisterNodeType(LabelNode)
 
         for(const eventHandler of this.eventHandlers) {
             this.engine.removeEntity(eventHandler)
@@ -36,25 +24,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.eventHandlers.clear()
 
         this.nodes.length = 0
-        this.circles.length = 0
-        this.rects.length = 0
-        this.labels.length = 0
-        this.shapes.length = 0
 
         super.removeFromEngine()
     }
 
-    private onUpdateIndices = () => {
-        this.circles.sort(shortByIndex)
-        this.rects.sort(shortByIndex)
-        this.shapes.sort(shortByIndex)
-        this.labels.sort(shortByIndex)
-    }
-
-    private rects: RectNode[] = []
-    private circles: CircleNode[] = []
-    private shapes: HexagoneNode[] = []
-    private labels: LabelNode[] = []
     private readonly eventHandlers: Set<Entity> = new Set()
 
     private isDragging = false
@@ -112,7 +85,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
         }
 
-        for(const _ of mouseupArray) {
+        if(mouseupArray.length) {
             this.isDragging = false
             this.lastPointer = null
             document.body.style.cursor = "default"
@@ -129,22 +102,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 camera.begin();
 
                 //implement culling somehow!
-
-                for(const shape of this.shapes) {
-                    shape.render(ctx);
-                }
-
-                for(const rect of this.rects) {
-                    rect.render(ctx);
-                }
-
-                for(const circle of this.circles) {
-                    circle.render(ctx);
-                }
-
-                for(const label of this.labels) {
-                    label.render(ctx)
-                }
+                this.circleRenderer.render(ctx)
+                this.rectRenderer.render(ctx)
+                this.hexagonRenderer.render(ctx)
+                this.labelRenderer.render(ctx)
 
                 camera.end();
             }
@@ -184,6 +145,11 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
     }
 
+    private circleRenderer!: CircleRenderer
+    private rectRenderer!: RectRenderer
+    private hexagonRenderer!: HexagonRenderer
+    private labelRenderer!: LabelRenderer
+
     addToEngine(engine: Engine) {
         window.addEventListener("wheel", this.onWheel)
 
@@ -196,48 +162,21 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                     viewPort: entity.getComponent(ViewportComponent)!,
                     entity
                 }
-            ))
-            .registerNodeType(CircleNode, new Set([PositionComponent, RadiusComponent, ColorComponent]), (entity) => new CircleNode(
-                entity,
-                entity.getComponent(PositionComponent)!,
-                entity.getComponent(RadiusComponent)!,
-                entity.getComponent(ColorComponent)
-            ))
-            .registerNodeType(HexagoneNode, new Set([PositionComponent, ShapeComponent, ColorComponent]), (entity) =>
-                new HexagoneNode(
-                    entity,
-                    entity.getComponent(PositionComponent)!,
-                    entity.getComponent(ColorComponent)!,
-                    entity.getComponent(ShapeComponent)!,
-                )
             )
-            .registerNodeType(RectNode, new Set([PositionComponent, SizeComponent]), (entity) => (
-                new RectNode(
-                    entity,
-                    entity.getComponent(PositionComponent)!,
-                    entity.getComponent(SizeComponent)!,
-                    entity.getComponent(ColorComponent)!,
-                )
-            ))
-            .registerNodeType(LabelNode,
-                new Set([
-                    PositionComponent,
-                    LabelComponent,
-                ]),
-                (entity) =>
-                    new LabelNode(
-                        entity,
-                        entity.getComponent(PositionComponent)!,
-                        entity.getComponent(LabelComponent)!,
-                    )
-            )
+        )
 
         this.engine = engine
         this.nodes = engine.getNodeList(ViewportNode)
-        this.circles = engine.getNodeList(CircleNode)
-        this.rects = engine.getNodeList(RectNode)
-        this.labels = engine.getNodeList(LabelNode)
-        this.shapes = engine.getNodeList(HexagoneNode)
+
+        engine.addSystem(CircleRenderer)
+        engine.addSystem(RectRenderer)
+        engine.addSystem(HexagonRenderer)
+        engine.addSystem(LabelRenderer)
+
+        this.circleRenderer = engine.getSystem(CircleRenderer)
+        this.rectRenderer = engine.getSystem(RectRenderer)
+        this.hexagonRenderer = engine.getSystem(HexagonRenderer)
+        this.labelRenderer = engine.getSystem(LabelRenderer)
 
         const eventHandlers = [
             this.engine.createEntity().addComponent(this.moveEventHandler("ArrowLeft", [-1, 0])),
