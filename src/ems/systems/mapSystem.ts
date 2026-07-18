@@ -75,9 +75,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             return this
         }
 
-        this.engine.unregisterNodeType(PathNode)
-        // this.pathNodes.clear()
-
+        this.clear()
         super.removeFromEngine()
 
         return this
@@ -103,9 +101,9 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                     const selectionSystem = engine.getSystem(SelectionSystem)
 
                     if(shiftKey) {
-                        selectionSystem.onTargetChanged(target._parent!)
+                        selectionSystem.onTargetChanged(target.parent!)
                     } else {
-                        selectionSystem.onSelectionChanged(target._parent!)
+                        selectionSystem.onSelectionChanged(target.parent!)
                     }
                 })))
         // .addComponent(new SelectableComponent(newSpaceship, 40, "red"))
@@ -163,10 +161,10 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                 .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ engine, target, data: { event: { shiftKey } } }) => {
                     const selectionSystem = engine.getSystem(SelectionSystem)!
                     if(shiftKey) {
-                        const selection = selectionSystem.selector?._parent
+                        const selection = selectionSystem.selector?.parent
 
                         if(selection) {
-                            selectionSystem.onTargetChanged(target._parent!)
+                            selectionSystem.onTargetChanged(target.parent!)
                             selection.getComponent(JumpDriveComponent)!.target = target
                         }
                     } else {
@@ -290,6 +288,18 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
         StartState.map.sectors.get("0:10")!.addChild(minerva)
         this.engine.addEntity(minerva)
+
+        return this
+    }
+
+    clear() {
+        if(!this.engine) return this
+
+        // Clear all sectors and their children
+        StartState.map.sectors.forEach(sector => {
+            this.engine?.removeEntity(sector)
+        })
+        StartState.map.sectors.clear()
 
         return this
     }

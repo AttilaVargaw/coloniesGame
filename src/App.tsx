@@ -54,7 +54,9 @@ function App() {
       window.removeEventListener("mouseup", onMouseUp)
 
       game.engine?.unsubscribe("updateDone", updateDate)
-      //.unsubscribe("openInfoWindow", onOpenInfoWindow)
+      game.engine.removeCommandHandler("openInfoWindow")
+
+      game.engine?.destruct()
 
       setEngine(null)
     }

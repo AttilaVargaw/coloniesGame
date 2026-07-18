@@ -23,6 +23,7 @@ export const renderingContextSettings = {
 
 export class Game {
     readonly engine: Engine = new Engine
+    private gameLoopId?: number
 
     constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {
         this.engine
@@ -59,15 +60,15 @@ export class Game {
 
             this.engine.update(dt)
 
-            requestAnimationFrame(update)
+            this.gameLoopId = requestAnimationFrame(update)
 
             this.engine.dispatchEvent("updateDone", dt)
         }
 
-        requestAnimationFrame(time => {
+        this.gameLoopId = requestAnimationFrame(time => {
             previousTime = time;
 
-            requestAnimationFrame(update)
+            this.gameLoopId = requestAnimationFrame(update)
         })
     }
 
@@ -77,6 +78,10 @@ export class Game {
         }
 
         this.engine.destruct()
+
+        if(this.gameLoopId !== undefined) {
+            cancelAnimationFrame(this.gameLoopId)
+        }
         // this.engine = undefined
     }
 }

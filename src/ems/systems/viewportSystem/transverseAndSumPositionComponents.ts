@@ -1,7 +1,7 @@
 import { PositionComponent } from "@/ems/components/position";
 
 export function transverseAndSumPositionComponents({ x, y, entity }: Omit<PositionComponent, "z">): [number, number] {
-    const parent = entity?.getParent()?.getComponent(PositionComponent);
+    const parent = entity?.parent?.getComponent(PositionComponent);
 
     if(!parent) {
         return [x, y];

@@ -26,28 +26,14 @@ export class Engine {
 
         this.entities.length = 0
         this.systems.clear()
-        // this.nodes.clear()
-        // this.nodeTypes.clear()
-        // this.nodeConverters.clear()
+        this.subSystems.clear()
+        this.nodes.clear()
+        this.nodeTypes.clear()
+        this.nodeConverters.clear()
         this.commands.forEach((_, key) => this.commands.set(key, []))
         this.commands.clear()
-        // this.commandHandlers.clear()
-
-        if(this.eventHandlers) {
-            console.log(this.eventHandlers)
-        }
-        if(this.commandHandlers) {
-            console.log(this.commandHandlers)
-        }
-        if(this.nodes) {
-            console.log(this.nodes)
-        }
-        if(this.nodeConverters) {
-            console.log(this.nodeConverters)
-        }
-        if(this.nodeTypes) {
-            console.log(this.nodeTypes)
-        }
+        this.commandHandlers.clear()
+        this.eventHandlers.clear()
     }
 
     readonly commands: Map<Commands, Command[]> = new Map([
@@ -142,7 +128,8 @@ export class Engine {
     }
 
     removeEntity(entity: Entity) {
-        //remove the entity
+        entity.parent?.removeChild(entity)
+
         this.entities.splice(this.entities.indexOf(entity), 1)
 
         const entityComponentConstructors: Set<Function> = new Set()
@@ -169,6 +156,10 @@ export class Engine {
                     }
                 }
             }
+        }
+
+        for(const child of entity.children) {
+            this.removeEntity(child)
         }
 
         return this.dispatchEvent("entityRemoved", entity).addCommand({ name: "redraw", data: {} })

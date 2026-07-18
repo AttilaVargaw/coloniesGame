@@ -16,12 +16,24 @@ export class Entity {
     _parent?: Entity | null = null
     readonly modifiers: Modifier[] = []
 
-    getParent() {
+    get parent() {
         return this._parent
+    }
+
+    getParent() {
+        return this.parent
+    }
+
+    addChild(entity: Entity) {
+        entity.setParent(this)
+
+        return this
     }
 
     setParent(parent: Entity | null) {
         this._parent = parent
+        parent?.children.add(this)
+
         return this
     }
 
@@ -31,7 +43,9 @@ export class Entity {
     }
 
     removeModifier(modifier: Modifier) {
+        modifier.onRemove(this)
         this.modifiers.splice(this.modifiers.indexOf(modifier), 1)
+
         return this
     }
 
@@ -52,14 +66,6 @@ export class Entity {
 
     getComponent<T extends new (...args: any) => Object>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
-    }
-
-    //Notify the engine
-    addChild(entity: Entity) {
-        this.children.add(entity)
-        entity._parent = this
-
-        return this
     }
 
     removeChild(entity: Entity) {

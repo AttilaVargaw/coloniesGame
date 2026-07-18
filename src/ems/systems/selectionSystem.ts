@@ -46,7 +46,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     unselect() {
         if(!this.engine) return
 
-        this.selector?._parent && this.engine.removeEntity(this.selector)
+        this.selector?.parent && this.engine.removeEntity(this.selector)
         this.selector = undefined
         //this.selected = undefined
     }
@@ -54,7 +54,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     unTarget() {
         if(!this.engine) return
 
-        this.targetSelector?._parent && this.engine.removeEntity(this.targetSelector)
+        this.targetSelector?.parent && this.engine.removeEntity(this.targetSelector)
         this.targetSelector = undefined
         //this.selected = undefined
     }
@@ -64,7 +64,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.unselect()
 
-        if(this.selector?._parent === entity || !entity) {
+        if(this.selector?.parent === entity || !entity) {
             return this
         }
 

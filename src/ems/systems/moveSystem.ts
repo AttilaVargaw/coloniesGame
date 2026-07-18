@@ -34,8 +34,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         for(const { jumpDrive, entity } of this.nodes) {
             //remove from the old node and move it to the new node
-            if(jumpDrive.target && entity && jumpDrive.target !== entity._parent) {
-                entity._parent?.removeChild(entity)
+            if(jumpDrive.target && entity && jumpDrive.target !== entity.parent) {
+                entity.parent?.removeChild(entity)
                 //this.engine?.removeEntity(entity)
                 jumpDrive.target.addChild(entity)
                 this.engine.addCommand({ name: "redraw", data: {} })
