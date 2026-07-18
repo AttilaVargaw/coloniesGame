@@ -68,18 +68,22 @@ class PathNode extends EntityNode {
 // }
 
 export class MapSystem extends SystemWithNodes<PathNode> {
-    removeFromEngine(): void {
+    protected updateNode(_node: PathNode, _dT?: number): void {
+    }
+    removeFromEngine() {
         if(!this.engine) {
-            return
+            return this
         }
 
         this.engine.unregisterNodeType(PathNode)
-        this.pathNodes.clear()
+        // this.pathNodes.clear()
 
         super.removeFromEngine()
+
+        return this
     }
     // mapNodes = new Map<string, MapNode>()
-    pathNodes = new Map<string, PathNode>()
+    // pathNodes = new Map<string, PathNode>()
 
     createSpaceship({ name }: { name: string }) {
         if(!this.engine) return null
@@ -206,13 +210,15 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             .addComponent(new ColorComponent("grey"))
             .setParent(parent)
     }
-    update(): void {
+    update(_dt: number): void {
 
     }
 
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         // engine.registerNodeType(PathNode)
+
+        return this
     }
 
     init({ solarSystems, mapSize }: { solarSystems: Map<string, Star>, mapSize: number }) {

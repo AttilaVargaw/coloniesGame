@@ -21,6 +21,8 @@ export class MoveNode extends EntityNode {
 }
 
 export class MoveSystem extends SystemWithNodes<MoveNode> {
+    protected updateNode(_node: MoveNode, _dT?: number): void {
+    }
     update(_dt: number): void {
         // this.nodes.forEach((node) => {
         //     node.goalSector = node.position
@@ -41,8 +43,13 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
-    addToEngine(engine: Engine) {
-        if(!engine) return () => { }
+    addToEngine(engine: Engine): this {
+        if(!engine) {
+            return this
+
+        }
+
+        super.addToEngine(engine)
 
         this.engine = engine.subscribe("dayPassed", this.moveNodes)
             .registerNodeType(MoveNode,
@@ -57,16 +64,20 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 });
 
         this.nodes = engine.getNodeList(MoveNode)
+
+        return this
     }
 
-    removeFromEngine(): void {
+    removeFromEngine(): this {
         if(!this.engine) {
-            return
+            return this
         }
 
         this.engine.unregisterNodeType(MoveNode)
 
         this.engine.unsubscribe("dayPassed", this.moveNodes)
         super.removeFromEngine()
+
+        return this
     }
 }

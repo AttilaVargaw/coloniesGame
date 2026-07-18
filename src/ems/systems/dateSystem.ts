@@ -18,9 +18,9 @@ export class DateSystem extends System {
         date: entity.getComponent(DateComponent)
     })
 
-    removeFromEngine(): void {
+    removeFromEngine(): this {
         if(!this.engine) {
-            return
+            return this
         }
 
         this.engine.unregisterNodeType(DateNode)
@@ -28,15 +28,19 @@ export class DateSystem extends System {
 
         this.node = undefined
         super.removeFromEngine()
+
+        return this
     }
 
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         engine.registerNodeType(DateNode, new Set([DateComponent]), this.dateNodeConverter)
         this.entity = new Entity().addComponent(new DateComponent(this.startTime))
         engine.addEntity(this.entity)
         this.node = engine.getNodeList(DateNode)[0]
+
+        return this
     }
 
     update(dt: number) {

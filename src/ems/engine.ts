@@ -10,6 +10,7 @@ export type Command = { name: Commands, data: any }
 export class Engine {
     readonly entities: Entity[] = []
     readonly systems: Map<new (engine: Engine) => System, System> = new Map()
+    readonly subSystems: Map<new (engine: Engine) => System, System> = new Map()
     readonly nodes = new Map<typeof EntityNode, EntityNode[]>()
 
     readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
@@ -58,7 +59,6 @@ export class Engine {
         ["openInfoWindow", []],
         ["mousedown", []],
         ["mouseup", []]
-
     ] as const)
 
     onCommand(command: Commands, commandHandler: (data: any) => void) {
@@ -163,7 +163,10 @@ export class Engine {
                 }
 
                 for(let i = 0; i < nodes.length; i++) {
-                    nodes[i].entity === entity && nodes.splice(i, 1)
+                    if(nodes[i].entity === entity) {
+                        nodes.splice(i, 1)
+                        break
+                    }
                 }
             }
         }
@@ -206,17 +209,37 @@ export class Engine {
     }
 
     addSystem(system: new () => System) {
-        const newSystem = new system
+        const newSystem = new system()
         newSystem.addToEngine(this)
-        //this.systems.set(system.constructor as new () => System, system)
-
         this.systems.set(system, newSystem)
 
         return this
     }
 
     removeSystem(system: new () => System) {
+        const systemInstance = this.systems.get(system)
+        if(systemInstance) {
+            systemInstance.removeFromEngine()
+        }
         this.systems.delete(system)
+
+        return this
+    }
+
+    addSubSystem(subsystem: new () => System) {
+        const newSubsystem = new subsystem()
+        this.subSystems.set(subsystem, newSubsystem)
+        newSubsystem.addToEngine(this)
+
+        return this
+    }
+
+    removeSubSystem(subsystem: new () => System) {
+        const system = this.subSystems.get(subsystem)
+        if(system) {
+            system.removeFromEngine()
+        }
+        this.subSystems.delete(subsystem)
 
         return this
     }

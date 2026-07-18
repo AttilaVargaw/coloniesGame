@@ -15,6 +15,8 @@ class EntityCommandNode extends EntityNode {
 }
 
 export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
+    protected updateNode(_node: EntityCommandNode, _dT?: number): void {
+    }
     update(_dt: number): void {
         for(const entity of this.nodes) {
             while(entity.commands.commands.length !== 0) {
@@ -24,7 +26,7 @@ export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
         }
     }
 
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         engine
             .registerNodeType(EntityCommandNode,
@@ -36,10 +38,14 @@ export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
                     }
                 });
         this.nodes = engine.getNodeList(EntityCommandNode)
+
+        return this
     }
 
-    removeFromEngine(): void {
+    removeFromEngine(): this {
         this.engine?.unregisterNodeType(EntityCommandNode)
         super.removeFromEngine()
+
+        return this
     }
 }

@@ -6,11 +6,15 @@ import { SystemWithNodes } from "./system";
 const magicNumberToGetEarthsDailyPopuplationGrow = 15_000
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
-    removeFromEngine(): void {
+    protected updateNode(_node: IndustryNode, _dT?: number): void {
+    }
+    removeFromEngine(): this {
         this.engine?.unregisterNodeType(IndustryNode)
         this.engine?.unsubscribe("dayPassed", this.onDayPassed)
 
         super.removeFromEngine()
+
+        return this
     }
 
     private onDayPassed = () => {
@@ -29,7 +33,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         }
     }
 
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         engine.registerNodeType(IndustryNode,
@@ -42,7 +46,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
         this.nodes = engine.getNodeList(IndustryNode);
 
-        return () => { }
+        return this
     }
 
     update(_dt: number) {

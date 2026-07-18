@@ -6,9 +6,21 @@ import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
+import { ViewportSystem } from "../viewportSystem";
 
 export class RectRenderer extends SystemWithNodes<RectNode> {
-    addToEngine(engine: Engine) {
+    protected updateNode(rect: RectNode, _dT?: number): void {
+        const ctx = (this.parent as ViewportSystem).viewport.camera.context;
+
+        ctx.save();
+        rect.setColor(ctx);
+        ctx.translate(...transverseAndSumPositionComponents(rect.position));
+        ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
+        rect.draw(ctx)
+        ctx.restore();
+    }
+
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(RectNode,
             new Set([PositionComponent, SizeComponent]),
             (entity) => new RectNode(
@@ -18,28 +30,37 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
                 entity.getComponent(ColorComponent)!,
             )
         )
+
+        return this
+    }
+
+    protected unregisterNodeTypes(): this {
+        if(!this.engine) {
+            return this
+        }
+
+        this.engine.unregisterNodeType(RectNode)
+
+        return this
+    }
+
+    addToEngine(engine: Engine): this {
+        super.addToEngine(engine)
         this.nodes = engine.getNodeList(RectNode)
         engine.subscribe("entityAdded", this.onEntityAdded)
-        super.addToEngine(engine)
+
+        return this
     }
 
-    removeFromEngine() {
-        if(!this.engine) return
+    removeFromEngine(): this {
+        if(!this.engine) {
+            return this
+        }
         this.engine.unsubscribe("entityAdded", this.onEntityAdded)
-        this.engine.unregisterNodeType(RectNode)
         this.nodes.length = 0
         super.removeFromEngine()
-    }
 
-    render(ctx: CanvasRenderingContext2D) {
-        for(const rect of this.nodes) {
-            ctx.save();
-            rect.setColor(ctx);
-            ctx.translate(...transverseAndSumPositionComponents(rect.position));
-            ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
-            rect.draw(ctx)
-            ctx.restore();
-        }
+        return this
     }
 
     private onEntityAdded = () => {

@@ -6,9 +6,18 @@ import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
+import { ViewportSystem } from "../viewportSystem";
 
 export class CircleRenderer extends SystemWithNodes<CircleNode> {
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
+        super.addToEngine(engine)
+        this.nodes = engine.getNodeList(CircleNode)
+        engine.subscribe("entityAdded", this.onEntityAdded)
+
+        return this
+    }
+
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(CircleNode,
             new Set([PositionComponent, RadiusComponent, ColorComponent]),
             (entity) => new CircleNode(
@@ -18,30 +27,43 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
                 entity.getComponent(ColorComponent)
             )
         )
-        this.nodes = engine.getNodeList(CircleNode)
-        engine.subscribe("entityAdded", this.onEntityAdded)
-        super.addToEngine(engine)
+
+        return this
     }
 
-    removeFromEngine() {
-        if(!this.engine) return
-        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
+    protected unregisterNodeTypes(): this {
+        if(!this.engine) {
+            return this
+        }
+
         this.engine.unregisterNodeType(CircleNode)
+
+        return this
+    }
+
+    removeFromEngine(): this {
+        if(!this.engine) {
+            return this
+        }
+
+        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
         this.nodes.length = 0
         super.removeFromEngine()
+
+        return this
     }
 
-    render(ctx: CanvasRenderingContext2D) {
-        for(const circle of this.nodes) {
-            ctx.save();
-            circle.setColor(ctx);
-            ctx.translate(...transverseAndSumPositionComponents(circle.position));
-            ctx.beginPath();
-            ctx.arc(0, 0, circle.radius.radius, 0, Math.PI * 2);
-            ctx.closePath();
-            circle.draw(ctx);
-            ctx.restore();
-        }
+    updateNode = (circle: CircleNode) => {
+        const ctx = (this.parent as ViewportSystem).viewport.camera.context
+
+        ctx.save();
+        circle.setColor(ctx);
+        ctx.translate(...transverseAndSumPositionComponents(circle.position));
+        ctx.beginPath();
+        ctx.arc(0, 0, circle.radius.radius, 0, Math.PI * 2);
+        ctx.closePath();
+        circle.draw(ctx);
+        ctx.restore();
     }
 
     private onEntityAdded = () => {

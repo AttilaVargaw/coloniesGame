@@ -21,12 +21,16 @@ export class HoverableNode extends PositionNode {
 }
 
 export class CursorSystem extends SystemWithNodes<HoverableNode> {
-    removeFromEngine(): void {
+    protected updateNode(_node: HoverableNode, _dT?: number): void {
+    }
+    removeFromEngine(): this {
         this.engine?.unregisterNodeType(HoverableNode);
         super.removeFromEngine();
+
+        return this
     }
 
-    addToEngine(engine: Engine) {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine);
 
         engine.registerNodeType(HoverableNode, new Set([HoverableComponent]), (entity) =>
@@ -37,9 +41,11 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         }));
 
         this.nodes = engine.getNodeList(HoverableNode)
+
+        return this
     }
 
-    update() {
+    update(_dt: number) {
         if(!this.engine) return
 
         const mouseMovedCommand = this.engine.commands.get("mouseMoved")!
@@ -48,10 +54,12 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
             return
         }
 
-        this.engine.commands.get("mouseMoved")?.forEach(({ data }) => {
-            if(!this.engine) return
+        if(!this.engine) {
+            return
+        }
 
-            const { camera } = this.engine.getSystem(ViewportSystem)!.viewport
+        const mouseHit = this.engine.commands.get("mouseMoved")!.some(({ data }) => {
+            const { camera } = this.engine!.getSystem(ViewportSystem)!.viewport
             const { x, y } = camera.screenToWorld(data.x, data.y)
 
             for(const hoverableNode of this.nodes) {
@@ -59,16 +67,20 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
 
                 if(isContained({ x, y }, { position: hoverableNode.position, size })) {
                     document.body.style.cursor = cursor;
-                    return
+                    return true
                 }
             }
 
+            return false
+        })
+
+        if(!mouseHit) {
             const { cursor } = document.body.style
 
             if(cursor !== 'default' && cursor !== "grabbing") {
                 document.body.style.cursor = 'default';
             }
-        })
+        }
 
         mouseMovedCommand.length = 0
     }

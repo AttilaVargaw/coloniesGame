@@ -8,22 +8,26 @@ import { shortByIndex } from "@/lib/shortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
+    protected updateNode(_node: ClickableNode, _dT?: number): void {
+    }
     private clickArray?: Command[];
     private viewport?: ViewportSystem;
 
-    removeFromEngine(): void {
+    removeFromEngine(): this {
         this.clickArray = undefined;
         this.viewport = undefined;
         this.engine?.unregisterNodeType(ClickableNode)
         this.engine?.unsubscribe("entityAdded", this.onUpdateIndices)
         super.removeFromEngine();
+
+        return this
     }
 
     private onUpdateIndices = () => {
         this.nodes.sort(shortByIndex)
     }
 
-    addToEngine(engine: Engine): void {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine);
         this.clickArray = engine.commands.get("click");
 
@@ -39,6 +43,8 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         engine.subscribe("entityAdded", this.onUpdateIndices)
 
         this.viewport = engine.getSystem(ViewportSystem)
+
+        return this
     }
 
     update(): void {
