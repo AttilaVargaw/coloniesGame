@@ -7,6 +7,8 @@
 export default class Camera {
     distance: number;
     lookAt: [number, number];
+    minDistance: number;
+    maxDistance: number;
     private fieldOfView: number;
     private viewport: { left: number; right: number; top: number; bottom: number; width: number; height: number; scale: [number, number]; };
     private aspectRatio: number = 1.0;
@@ -17,8 +19,12 @@ export default class Camera {
         fieldOfView: Math.PI / 4.0,
         scaleX: 1.0,
         scaleY: 1.0,
+        minDistance: 100.0,
+        maxDistance: 12000.0,
     }) {
         this.distance = settings.distance;
+        this.minDistance = settings.minDistance;
+        this.maxDistance = settings.maxDistance;
         this.lookAt = settings.initialPosition;
         this.context = context;
         this.fieldOfView = settings.fieldOfView;
@@ -92,12 +98,39 @@ export default class Camera {
     }
 
     /**
-     * Zooms to certain z distance
+     * Zooms to certain z distance, clamped to the configured bounds.
      * @param {*z distance} z 
      */
     public zoomTo(z: number) {
-        this.distance = z;
+        this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z));
         this.updateViewport();
+    }
+
+    /**
+     * Zoom while keeping the world point currently under (screenX, screenY) fixed.
+     * Used so the map grows/shrinks around the cursor instead of the world origin.
+     * @param {target z distance} z 
+     * @param {screen-space x relative to the canvas} screenX 
+     * @param {screen-space y relative to the canvas} screenY 
+     */
+    public zoomToAnchored(z: number, screenX: number, screenY: number) {
+        const before = this.screenToWorld(screenX, screenY);
+        this.zoomTo(z);
+        const after = this.screenToWorld(screenX, screenY);
+        this.moveTo(
+            this.lookAt[0] + (before.x - after.x),
+            this.lookAt[1] + (before.y - after.y)
+        );
+    }
+
+    /**
+     * Multiplicative zoom (smooth, frame-rate independent feel). 1 = no change.
+     * @param {zoom factor} factor 
+     * @param {screen-space x relative to the canvas} screenX 
+     * @param {screen-space y relative to the canvas} screenY 
+     */
+    public zoomBy(factor: number, screenX: number, screenY: number) {
+        this.zoomToAnchored(this.distance * factor, screenX, screenY);
     }
 
     /**

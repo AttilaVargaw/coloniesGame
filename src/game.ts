@@ -36,7 +36,7 @@ export class Game {
             .addSystem(CursorSystem)
             .addSystem(MapSystem)
             .addSystem(ClickableSystem)
-            .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0 }))))
+            .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 }))))
             .addEntity(this.engine.createEntity().addComponent(new DateComponent(0)))
             .subscribe("selectionChanged", (entity: Entity) => {
                 if(entity.getComponent(IndustryComponent)) {

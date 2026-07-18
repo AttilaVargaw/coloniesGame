@@ -1,6 +1,5 @@
 import { Engine } from "../../engine";
 import { SystemWithNodes, } from "../system";
-import { EventHandlerComponent } from "../../components/EventHandlerComponent";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
 import { Entity } from "@/ems/entities/entity";
@@ -8,6 +7,7 @@ import { CircleRenderer } from "./renderers/circleRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
+import Camera from "@/lib/camera";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -18,6 +18,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         window.removeEventListener("wheel", this.onWheel)
+        window.removeEventListener("keydown", this.onKeyDown)
+        window.removeEventListener("keyup", this.onKeyUp)
+        this.heldKeys.clear()
         this.engine.unregisterNodeType(ViewportNode)
 
         for(const eventHandler of this.eventHandlers) {
@@ -39,12 +42,48 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private lastPointer: { x: number, y: number } | null = null
     private dragMoved = false
 
+    private pointer: { x: number, y: number } = { x: 0, y: 0 }
+
     private static readonly DRAG_THRESHOLD = 3
+    private static readonly ZOOM_SPEED = 1.0015
+    private static readonly KEY_PAN_SPEED = 250
+    private static readonly WHEEL_ZOOM_SPEED = 1.0015
 
     consumeDragMoved() {
         const moved = this.dragMoved
         this.dragMoved = false
         return moved
+    }
+
+    private readonly heldKeys = new Set<string>()
+
+    private applyKeyScroll(dt: number, camera: Camera) {
+        const { pointer } = this
+
+        let panX = 0
+        let panY = 0
+        if(this.heldKeys.has("ArrowLeft")) panX -= 1
+        if(this.heldKeys.has("ArrowRight")) panX += 1
+        if(this.heldKeys.has("ArrowUp")) panY -= 1
+        if(this.heldKeys.has("ArrowDown")) panY += 1
+
+        if(panX || panY) {
+            const step = ViewportSystem.KEY_PAN_SPEED * (dt / 1000) * (camera.distance / 1000)
+            camera.moveTo(
+                camera.lookAt[0] + panX * step,
+                camera.lookAt[1] + panY * step
+            )
+            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+        }
+
+        if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
+            camera.zoomBy(Math.pow(ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
+            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+        }
+        if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
+            camera.zoomBy(Math.pow(1 / ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
+            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+        }
     }
 
     get viewport() {
@@ -65,6 +104,11 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const camera = this.nodes[0].viewPort.camera
         const mousedownArray = this.engine.commands.get("mousedown")!
         const mouseupArray = this.engine.commands.get("mouseup")!
+        const mouseMovedArray = this.engine.commands.get("mouseMoved")!
+
+        for(const { data } of mouseMovedArray) {
+            this.pointer = { x: data.x, y: data.y }
+        }
 
         for(const { data } of mousedownArray) {
             this.isDragging = true
@@ -75,7 +119,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         mousedownArray.length = 0
 
         if(this.isDragging && this.lastPointer) {
-            const mouseMovedArray = this.engine.commands.get("mouseMoved")!
             for(const { data } of mouseMovedArray) {
                 const dx = data.x - this.lastPointer.x
                 const dy = data.y - this.lastPointer.y
@@ -97,6 +140,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
         mouseupArray.length = 0
 
+        this.applyKeyScroll(dt, camera)
+
         const redrawArray = this.engine.commands.get("redraw")!
 
         if(redrawArray.length) {
@@ -116,33 +161,30 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         redrawArray!.length = 0
     }
 
-    private moveEventHandler = (key: string, [deltaX, deltaY]: [number, number]) =>
-        new EventHandlerComponent(key, ({ shiftKey }: KeyboardEvent) => {
-            if(!this.engine) return
+    private onKeyDown = (event: KeyboardEvent) => {
+        const key = event.key
+        if(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "+", "=", "-", "_"].includes(key)) {
+            this.heldKeys.add(key)
+            event.preventDefault()
+        }
+    }
 
-            const { camera } = this.nodes[0].viewPort
-            const [loookatX, loookatY] = camera.lookAt
-
-            camera.moveTo(loookatX + (shiftKey ? deltaX * 10 : deltaX), loookatY + (shiftKey ? deltaY * 10 : deltaY))
-            this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
-        })
-
-    private zoomEventHandler = (key: string, delta: number) =>
-        new EventHandlerComponent(key, ({ shiftKey }: KeyboardEvent) => {
-            if(!this.engine) return
-
-            const { camera } = this.nodes[0].viewPort
-
-            camera.zoomTo(camera.distance + (shiftKey ? delta * 10 : delta))
-
-            this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
-        })
+    private onKeyUp = (event: KeyboardEvent) => {
+        this.heldKeys.delete(event.key)
+    }
 
     private onWheel = (event: WheelEvent) => {
         if(!this.engine) return
 
+        event.preventDefault()
+
         const { camera } = this.nodes[0].viewPort
-        camera.zoomTo(camera.distance + (event.deltaY > 0 ? 100 : -100))
+        const rect = camera.context.canvas.getBoundingClientRect()
+        const screenX = event.clientX - rect.left
+        const screenY = event.clientY - rect.top
+        const factor = Math.pow(ViewportSystem.WHEEL_ZOOM_SPEED, event.deltaY)
+
+        camera.zoomBy(factor, screenX, screenY)
 
         this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
     }
@@ -167,7 +209,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
-        window.addEventListener("wheel", this.onWheel)
+        window.addEventListener("wheel", this.onWheel, { passive: false })
+        window.addEventListener("keydown", this.onKeyDown)
+        window.addEventListener("keyup", this.onKeyUp)
         this.nodes = engine.getNodeList(ViewportNode)
 
         this
@@ -175,20 +219,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new CircleRenderer)
             .addSubsystem(new RectRenderer)
             .addSubsystem(new LabelRenderer)
-
-        const eventHandlers = [
-            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowLeft", [-1, 0])),
-            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowRight", [1, 0])),
-            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowUp", [0, -1])),
-            this.engine!.createEntity().addComponent(this.moveEventHandler("ArrowDown", [0, 1])),
-            this.engine!.createEntity().addComponent(this.zoomEventHandler("-", 10)),
-            this.engine!.createEntity().addComponent(this.zoomEventHandler("+", -10))
-        ]
-
-        for(const eventHandler of eventHandlers) {
-            this.engine!.addEntity(eventHandler)
-            this.eventHandlers.add(eventHandler)
-        }
 
 
         return this
