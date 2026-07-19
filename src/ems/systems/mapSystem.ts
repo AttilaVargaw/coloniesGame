@@ -170,7 +170,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                 .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ engine, target, data: { event: { shiftKey } } }) => {
                     const selectionSystem = engine.getSystem(SelectionSystem)!
                     if(shiftKey) {
-                        const selection = selectionSystem.selector?.parent
+                        const selection = selectionSystem.currentSelection()
 
                         if(selection) {
                             selectionSystem.onTargetChanged(target.parent!)

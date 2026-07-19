@@ -14,7 +14,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
     removeFromEngine(): this {
         this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged)
-        //this.engine.unsubscribe("targetChanged", this.onTargetChanged)
+        // this.engine.unsubscribe("targetChanged", this.onTargetChanged)
 
         this.unselect()
         this.unTarget()
@@ -24,8 +24,16 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return this
     }
 
-    selector?: Entity
-    targetSelector?: Entity
+    private selector?: Entity
+    private targetSelector?: Entity
+
+    currentSelection() {
+        return this.selector?.parent
+    }
+
+    currentTarget() {
+        return this.targetSelector?.parent
+    }
 
     createSpaceshipSelector(color: string) {
         if(!this.engine) return
