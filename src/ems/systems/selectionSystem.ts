@@ -90,7 +90,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         entity.addChild(this.selector!)
         this.engine.addEntity(this.selector!)
-        this.engine.addCommand({ name: "redraw", data: {} })
+        this.engine.addCommand("redraw", { data: {} })
 
         return this
     }
@@ -108,7 +108,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         entity.addChild(this.targetSelector!)
         this.engine.addEntity(this.targetSelector!)
-        this.engine.addCommand({ name: "redraw", data: {} })
+        this.engine.addCommand("redraw", { data: {} })
 
         return this
     }
@@ -126,7 +126,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                     color: entity.getComponent(ColorComponent)!
                 }
             })
-            .subscribe("selectionChanged", this.onSelectionChanged)
+        //.subscribe("selectionChanged", this.onSelectionChanged)
 
         this.nodes = engine.getNodeList(SelectionNode)
 

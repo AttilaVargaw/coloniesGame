@@ -63,7 +63,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(LabelNode)
-        engine.subscribe("entityAdded", this.onEntityAdded)
+        //engine.subscribe("entityAdded", this.onEntityAdded)
 
         return this
     }

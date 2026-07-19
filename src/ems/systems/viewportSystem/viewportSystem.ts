@@ -8,11 +8,11 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import Camera from "@/lib/camera";
-import { CommandQueue } from "@/ems/lib/commandQueue";
+import { Queue } from "@/ems/lib/commandQueue";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    protected redrawQueue?: CommandQueue
+    protected redrawQueue?: Queue<{}>
     private readonly eventHandlers: Set<Entity> = new Set()
 
     private isDragging = false
@@ -50,16 +50,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 camera.lookAt[0] + panX * step,
                 camera.lookAt[1] + panY * step
             )
-            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ data: {} })
         }
 
         if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
             camera.zoomBy(Math.pow(ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ data: {} })
         }
         if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
             camera.zoomBy(Math.pow(1 / ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ data: {} })
         }
     }
 
@@ -79,9 +79,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         if(!this.engine) return
 
         const camera = this.nodes[0].viewPort.camera
-        const mousedownArray = this.engine.commands.get("mousedown")!
-        const mouseupArray = this.engine.commands.get("mouseup")!
-        const mouseMovedArray = this.engine.commands.get("mouseMoved")!
+        const mousedownArray = this.engine.events.get("mousedown")!
+        const mouseupArray = this.engine.events.get("mouseup")!
+        const mouseMovedArray = this.engine.events.get("mouseMoved")!
 
         for(const { data } of mouseMovedArray) {
             this.pointer = { x: data.x, y: data.y }
@@ -105,7 +105,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                         this.dragMoved = true
                     }
                     this.lastPointer = { x: data.x, y: data.y }
-                    this.redrawQueue!.enqueue({ name: "redraw", data: {} })
+                    this.redrawQueue!.enqueue({ data: {} })
                 }
             }
         }
@@ -162,7 +162,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         camera.zoomBy(factor, screenX, screenY)
 
-        this.redrawQueue?.enqueue({ name: "redraw", data: {} })
+        this.redrawQueue?.enqueue({ data: {} })
     }
 
     registerNodes(engine: Engine) {
@@ -197,9 +197,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new LabelRenderer)
 
         engine.registerCommandQueue("redraw")
-            .registerCommandQueue("mousedown")
-            .registerCommandQueue("mouseup")
-            .registerCommandQueue("mouseMoved")
+        // .registerCommandQueue("mousedown")
+        // .registerCommandQueue("mouseup")
+        // .registerCommandQueue("mouseMoved")
 
         this.redrawQueue = engine.commands.get("redraw")
 
@@ -223,9 +223,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.eventHandlers.clear()
 
         this.engine.removeCommandQueue("redraw")
-            .removeCommandQueue("mousedown")
-            .removeCommandQueue("mouseup")
-            .removeCommandQueue("mouseMoved")
+        // .removeCommandQueue("mousedown")
+        // .removeCommandQueue("mouseup")
+        // .removeCommandQueue("mouseMoved")
 
         this.nodes.length = 0
         this.redrawQueue = undefined

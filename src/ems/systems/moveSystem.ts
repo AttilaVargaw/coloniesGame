@@ -38,7 +38,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 entity.parent?.removeChild(entity)
                 //this.engine?.removeEntity(entity)
                 jumpDrive.target.addChild(entity)
-                this.engine.addCommand({ name: "redraw", data: {} })
+                this.engine.addCommand("redraw", { data: {} })
             }
         }
     }
@@ -51,17 +51,18 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         super.addToEngine(engine)
 
-        this.engine = engine.subscribe("dayPassed", this.moveNodes)
-            .registerNodeType(MoveNode,
-                new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
-                (entity) => {
-                    return {
-                        position: entity.getComponent(PositionComponent)!,
-                        jumpDrive: entity.getComponent(JumpDriveComponent)!,
-                        sensorSuite: entity.getComponent(SensorSuiteComponent)!,
-                        entity
-                    }
-                });
+        this.engine =
+            engine.subscribe("dayPassed", this.moveNodes)
+        engine.registerNodeType(MoveNode,
+            new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
+            (entity) => {
+                return {
+                    position: entity.getComponent(PositionComponent)!,
+                    jumpDrive: entity.getComponent(JumpDriveComponent)!,
+                    sensorSuite: entity.getComponent(SensorSuiteComponent)!,
+                    entity
+                }
+            });
 
         this.nodes = engine.getNodeList(MoveNode)
 

@@ -5,24 +5,29 @@ import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
 import { shortByDepth } from "@/lib/shortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
-import { CommandQueue } from "../lib/commandQueue";
+import { Queue, QueueItem } from "../lib/commandQueue";
+
+export class ClickEvent extends QueueItem<MouseEvent> {
+    constructor(public event: MouseEvent, public x: number, public y: number) {
+        super(event);
+    }
+}
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     protected updateNode(_node: ClickableNode, _dT?: number): void {
     }
-    private clickArray?: CommandQueue;
+    private clickQueue?: Queue<ClickEvent>;
     private viewport?: ViewportSystem;
 
     protected unregisterNodeTypes(): this | undefined {
         this.engine?.unregisterNodeType(ClickableNode);
-        this.engine?.removeCommandQueue("click");
         this.engine?.unsubscribe("entityAdded", this.onUpdateIndices);
 
         return this;
     }
 
     removeFromEngine(): this {
-        this.clickArray = undefined;
+        this.clickQueue = undefined;
         this.viewport = undefined;
         super.removeFromEngine();
 
@@ -41,15 +46,14 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             entity
         }))
 
-        this.engine?.registerCommandQueue("click")
-        this.engine?.subscribe("entityAdded", this.onUpdateIndices);
+        //this.engine?.subscribe("entityAdded", this.onUpdateIndices);
 
         return this
     }
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine);
-        this.clickArray = engine.commands.get("click");
+        this.clickQueue = engine.events.get("click");
 
         this.nodes = engine.getNodeList(ClickableNode);
         this.nodes.sort(shortByDepth)
@@ -59,14 +63,14 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     }
 
     update(): void {
-        if(this.nodes.length === 0 || !this.engine || !this.clickArray?.length || !this.viewport) return;
+        if(this.nodes.length === 0 || !this.engine || !this.clickQueue?.length || !this.viewport) return;
 
         if(this.viewport.consumeDragMoved()) {
-            this.clickArray.clear()
+            this.clickQueue.clear()
             return
         }
 
-        for(const { data } of this.clickArray) {
+        for(const { data } of this.clickQueue) {
             const { x, y } = this.viewport.viewport.camera.screenToWorld(data.x, data.y);
 
             for(const node of this.nodes) {
@@ -80,11 +84,11 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                     && correctedPositionX + halfX > x
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
-                    onClick?.({ target: entity!, data })
+                    onClick?.({ target: entity!, event: data.event })
                 }
             }
         }
 
-        this.clickArray.clear()
+        this.clickQueue.clear()
     }
 }

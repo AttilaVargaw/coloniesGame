@@ -29,14 +29,12 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             eventHandler: entity.getComponent(EventHandlerComponent)!
         }))
 
-        this.engine.registerCommandQueue("keydown")
 
         return this
     }
     
     protected unregisterNodeTypes(): this | undefined {
         this.engine?.unregisterNodeType(ButtonPressNode)
-        this.engine?.removeCommandQueue("keydown")
         this.engine = undefined
 
         return this
@@ -47,7 +45,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
 
         const nodes = this.engine.getNodeList(ButtonPressNode)
 
-        for(const { data } of this.engine.commands.get("keydown")!) {
+        for(const { data } of this.engine.events.get("keydown")!) {
             for(const { eventHandler: { button, fn } } of nodes) {
                 if(button === data.key) {
                     fn(data)
@@ -55,6 +53,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             }
         }
 
-        this.engine.commands.get("keydown")!.clear()
+        this.engine.events.get("keydown")!.clear()
     }
 }

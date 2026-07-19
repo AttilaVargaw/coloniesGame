@@ -48,10 +48,10 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
     update(_dt: number) {
         if(!this.engine) return
 
-        const mouseMovedCommand = this.engine.commands.get("mouseMoved")!
+        const mouseMovedCommand = this.engine.events.get("mouseMoved")!
         if(!mouseMovedCommand.length) return
 
-        const mouseHit = [...this.engine.commands.get("mouseMoved")!].some(({ data }) => {
+        const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data } ) => {
             const { camera } = this.engine!.getSystem(ViewportSystem)!.viewport
             const { x, y } = camera.screenToWorld(data.x, data.y)
 

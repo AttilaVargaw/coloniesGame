@@ -1,7 +1,6 @@
 import { DateComponent } from "./ems/components/dateComponent"
 import { ViewportComponent } from "./ems/components/viewportComponent"
 import { Engine } from "./ems/engine"
-import { Entity } from "./ems/entities/entity"
 import { ButtonPressSystem } from "./ems/systems/buttonPressSystem"
 import { ClickableSystem } from "./ems/systems/clickable"
 import { CursorSystem } from "./ems/systems/cursorSystem"
@@ -31,11 +30,11 @@ export class Game {
             .addSystem(MapSystem)
             .addSystem(ClickableSystem)
             .addEntity(this.engine.createEntity().addComponent(new DateComponent(0)))
-            .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
-                if(type === "colony") {
-                    document.body.style.cursor = 'default';
-                }
-            })
+        // .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
+        //     if(type === "colony") {
+        //         document.body.style.cursor = 'default';
+        //     }
+        // })
 
         this.engine.getSystem(MapSystem)!.init({ solarSystems, mapSize: 48 })
 

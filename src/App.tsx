@@ -32,13 +32,13 @@ function App() {
     }
 
     function eventListener(event: KeyboardEvent) {
-      game.engine?.addCommand({ name: "keydown", data: event })
+      game.engine?.dispatchEvent("keydown", { data: event })
     }
 
     function onMouseUp(event: MouseEvent) {
       const rect = map.current?.getBoundingClientRect()
       if(!rect) return
-      game.engine?.addCommand({ name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
+      game.engine?.dispatchEvent("mouseup", { name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
     }
 
     document.addEventListener("keydown", eventListener)
@@ -67,18 +67,18 @@ function App() {
       <Header time={date} />
       <Screen
         onMouseMove={(data) => {
-          game?.engine.addCommand({ name: "mouseMoved", data })
+          game?.engine.dispatchEvent("mouseMoved", data)
         }}
         onMouseDown={(data) => {
-          game?.engine.addCommand({ name: "mousedown", data })
+          game?.engine.dispatchEvent("mousedown", data)
         }}
         onMouseUp={(data) => {
-          game?.engine.addCommand({ name: "mouseup", data })
+          game?.engine.dispatchEvent("mouseup", data)
         }}
-        triggerRedraw={() => game?.engine.addCommand({ name: "redraw", data: {} })}
+        triggerRedraw={() => game?.engine.addCommand("redraw", {})}
         ref={map}
         onClick={(data) => {
-          game?.engine.addCommand({ name: "click", data })
+          game?.engine.dispatchEvent("click", data)
         }} />
       {/* <div style={{ display: dynamicData ? "block" : "none" }}>
         <DataWindow header={dynamicDataHeader} data={dynamicData} />

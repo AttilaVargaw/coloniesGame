@@ -17,7 +17,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(CircleNode)
-        engine.subscribe("entityAdded", this.onEntityAdded)
+        //engine.subscribe("entityAdded", this.onEntityAdded)
 
         return this
     }

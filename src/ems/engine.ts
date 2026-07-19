@@ -2,9 +2,10 @@ import { Entity } from "./entities/entity"
 import type { System } from "./systems/system"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
 import { v4 as uuid } from "uuid"
-import { CommandQueue } from "./lib/commandQueue"
+import { Queue, QueueItem } from "./lib/commandQueue"
 
-export type EngineEvents = "updateDone"
+export type EngineEvents =
+    "updateDone"
     | "entityAdded"
     | "updateBegin"
     | "dayPassed"
@@ -12,30 +13,47 @@ export type EngineEvents = "updateDone"
     | "entityRemoved"
     | "mouseMoved"
     | "monthPassed"
-
-export type Commands = "keydown"
-    | "click"
-    | "redraw"
-    | "selectEntity"
-    | "mouseMoved"
-    | "mousedown"
     | "mouseup"
+    | "keydown"
+    | "keyup"
+    | "mousedown"
+    | "click"
 
-export type Command = { name: Commands, data: any }
+export type Commands =
+    "redraw"
+    | "selectEntity"
+
+export type CommandQueueItem = QueueItem<Commands>
+export type EventQueueItem = QueueItem<EngineEvents>
 
 export class Engine {
     private readonly entities: Map<string, Entity> = new Map()
     private readonly systems: Map<new (engine: Engine) => System, System> = new Map()
     private readonly subSystems: Map<new (engine: Engine) => System, System> = new Map()
-    private readonly nodes = new Map<typeof EntityNode, EntityNode[]>()
+    private readonly _nodes = new Map<typeof EntityNode, EntityNode[]>()
 
     private readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
     private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => Object> = new Map()
 
+    readonly commands: Map<Commands, Queue<any>> = new Map([])
+    readonly events: Map<EngineEvents, Queue<any>> = new Map([
+        ["updateDone", new Queue()],
+        ["entityAdded", new Queue()],
+        ["updateBegin", new Queue()],
+        ["dayPassed", new Queue()],
+        ["selectionChanged", new Queue()],
+        ["entityRemoved", new Queue()],
+        ["mouseMoved", new Queue()],
+        ["monthPassed", new Queue()],
+        ["mouseup", new Queue()],
+        ["mousedown", new Queue()],
+        ["click", new Queue()],
+    ])
     private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
-    // private readonly commandHandlers = new Map<string, (data: any) => void>()
 
-    readonly commands: Map<Commands, CommandQueue> = new Map([])
+    nodes<Key extends EntityNodeConstructor>(key: Key) {
+        return this._nodes.get(key) as Key[]
+    }
 
     destruct() {
         for(const system of this.systems.values()) {
@@ -45,7 +63,7 @@ export class Engine {
         this.entities.clear()
         this.systems.clear()
         this.subSystems.clear()
-        this.nodes.clear()
+        this._nodes.clear()
         this.nodeTypes.clear()
         this.nodeConverters.clear()
         this.commands.clear()
@@ -54,7 +72,7 @@ export class Engine {
     }
 
     registerCommandQueue(command: Commands) {
-        this.commands.set(command, new CommandQueue())
+        this.commands.set(command, new Queue())
         return this
     }
 
@@ -65,7 +83,7 @@ export class Engine {
 
     createEntity(id = uuid(), addItToEngine = true) {
         const entity = new Entity(id)
-        this.dispatchEvent("entityAdded", entity)
+        this.events.get("entityAdded")?.enqueue({ data: entity })
 
         if(addItToEngine) {
             this.addEntity(entity)
@@ -78,6 +96,7 @@ export class Engine {
         return this.systems.get(system) as T
     }
 
+    // Event subscription for, only for external use
     subscribe(event: EngineEvents, callback: (data: any) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
@@ -90,26 +109,15 @@ export class Engine {
         return this
     }
 
+    // Event unsubscription for, only for external use
     unsubscribe(event: EngineEvents, callback: (data: any) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
         return this
     }
 
-    dispatchEvent(event: EngineEvents, data: any) {
-        if(!this.eventHandlers.has(event)) {
-            return this
-        }
-
-        for(const callback of this.eventHandlers.get(event)!) {
-            callback(data)
-        }
-
-        return this
-    }
-
     unregisterNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>): void {
-        this.nodes.delete(nodeName)
+        this._nodes.delete(nodeName)
         this.nodeTypes.delete(nodeName)
         this.nodeConverters.delete(nodeName)
     }
@@ -118,11 +126,11 @@ export class Engine {
         nodeName: EntityNodeConstructor<T>,
         keys: Set<Function>,
         converter: (entity: Entity) => T) {
-        if(this.nodes.has(nodeName)) {
+        if(this._nodes.has(nodeName)) {
             throw new Error(`Node ${nodeName} already exists`)
         }
 
-        this.nodes.set(nodeName, [])
+        this._nodes.set(nodeName, [])
         // this.nodeTypes.set(nodeName, new Set([...keys.values()].map(getName)))
         this.nodeTypes.set(nodeName, keys)
         this.nodeConverters.set(nodeName, converter)
@@ -146,7 +154,7 @@ export class Engine {
             const keyValues = [...this.nodeTypes.get(nodeName)!.values()]
 
             if(keyValues.every((nodeConstructor) => entityComponentConstructors.has(nodeConstructor))) {
-                const nodes = this.nodes.get(nodeName)
+                const nodes = this._nodes.get(nodeName)
 
                 if(!nodes) {
                     continue
@@ -165,7 +173,7 @@ export class Engine {
             this.removeEntity(child)
         }
 
-        return this.dispatchEvent("entityRemoved", entity).addCommand({ name: "redraw", data: {} })
+        return this.dispatchEvent("entityRemoved", entity).addCommand("redraw", {})
     }
 
     addEntity(entity: Entity) {
@@ -194,7 +202,7 @@ export class Engine {
             }
 
             const nodeConverter = this.nodeConverters.get(nodeName)!
-            this.nodes.get(nodeName)!.push(nodeConverter(entity))
+            this._nodes.get(nodeName)!.push(nodeConverter(entity))
         }
 
         for(const child of entity.children) {
@@ -245,6 +253,23 @@ export class Engine {
     update(dt: number) {
         this.dispatchEvent("updateBegin", dt)
 
+        for(const [eventType, eventQueue] of this.events.entries()) {
+            const handlers = this.eventHandlers.get(eventType)
+
+            if(!handlers) {
+                continue
+            }
+
+            for(const event of eventQueue) {
+                for(const handler of handlers) {
+                    handler(event.data)
+                }
+
+            }
+
+            eventQueue.clear()
+        }
+
         for(const system of this.systems.values()) {
             system.update(dt)
         }
@@ -253,21 +278,36 @@ export class Engine {
     }
 
     getNodeList<T extends Object>(node: EntityNodeConstructor<T>) {
-        if(!this.nodes.has(node)) {
+        if(!this._nodes.has(node)) {
             throw new Error(`Node ${node} does not exist`)
         }
 
-        return (this.nodes.get(node) ?? []) as T[]
+        return (this._nodes.get(node) ?? []) as T[]
     }
 
-    addCommand(command: Command) {
-        this.commands.get(command.name)?.enqueue(command)
+    addCommand(command: Commands, data: any) {
+        this.commands.get(command)?.enqueue({ data })
 
         return this
     }
 
     getCommands(type: Commands) {
         return this.commands.get(type)
+    }
+
+    dispatchEvent(name: EngineEvents, data: any) {
+        this.events.get(name)?.enqueue({ data })
+        return this
+    }
+
+    registerEventQueue(event: EngineEvents) {
+        this.events.set(event, new Queue())
+        return this
+    }
+
+    removeEventQueue(event: EngineEvents) {
+        this.events.delete(event)
+        return this
     }
 
     // addNode(node: any) {
