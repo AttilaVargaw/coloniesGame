@@ -1,4 +1,3 @@
-import { Engine } from '@/ems/engine';
 import { MouseEvent, ComponentPropsWithRef, useLayoutEffect } from 'react';
 
 function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanvasElement>) {

@@ -25,8 +25,6 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
             return;
         }
 
-        console.log("called ")
-
         const ctx = (this.parent as ViewportSystem).viewport.camera.context;
 
         ctx.save();

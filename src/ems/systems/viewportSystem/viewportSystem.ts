@@ -11,33 +11,7 @@ import Camera from "@/lib/camera";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-
-    removeFromEngine(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        window.removeEventListener("wheel", this.onWheel)
-        window.removeEventListener("keydown", this.onKeyDown)
-        window.removeEventListener("keyup", this.onKeyUp)
-
-        this.heldKeys.clear()
-        this.engine.unregisterNodeType(ViewportNode)
-
-        for(const eventHandler of this.eventHandlers) {
-            this.engine.removeEntity(eventHandler)
-        }
-        this.eventHandlers.clear()
-
-        this.nodes.length = 0
-        this.engine.commands.delete("redraw")
-
-        super.removeFromEngine()
-        super.unregisterNodeTypes()
-
-        return this
-    }
-
+    protected redrawQueue?: CommandQueue
     private readonly eventHandlers: Set<Entity> = new Set()
 
     private isDragging = false
@@ -223,6 +197,42 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new RectRenderer)
             .addSubsystem(new LabelRenderer)
 
+        engine.registerCommandQueue("redraw")
+            .registerCommandQueue("mousedown")
+            .registerCommandQueue("mouseup")
+            .registerCommandQueue("mouseMoved")
+
+        this.redrawQueue = engine.commands.get("redraw")
+
+        return this
+    }
+
+    removeFromEngine(): this {
+        if(!this.engine) {
+            return this
+        }
+
+        window.removeEventListener("wheel", this.onWheel)
+        window.removeEventListener("keydown", this.onKeyDown)
+        window.removeEventListener("keyup", this.onKeyUp)
+
+        this.heldKeys.clear()
+
+        for(const eventHandler of this.eventHandlers) {
+            this.engine.removeEntity(eventHandler)
+        }
+        this.eventHandlers.clear()
+
+        this.engine.removeCommandQueue("redraw")
+            .removeCommandQueue("mousedown")
+            .removeCommandQueue("mouseup")
+            .removeCommandQueue("mouseMoved")
+
+        this.nodes.length = 0
+        this.redrawQueue = undefined
+
+        super.removeFromEngine()
+        super.unregisterNodeTypes()
 
         return this
     }

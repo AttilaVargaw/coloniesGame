@@ -170,9 +170,6 @@ export class Engine {
     }
 
     addEntity(entity: Entity) {
-        if(entity.getComponent(LabelComponent)) {
-            console.log("label is here")
-        }
         if(this.entities.has(entity.id)) {
             return this
         }
