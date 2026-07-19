@@ -2,7 +2,7 @@ import { Entity } from "./entities/entity"
 import type { System } from "./systems/system"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
 import { v4 as uuid } from "uuid"
-import { LabelComponent } from "./components/label"
+import { CommandQueue } from "./lib/commandQueue"
 
 export type EngineEvents = "updateDone"
     | "entityAdded"
@@ -33,7 +33,9 @@ export class Engine {
     private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => Object> = new Map()
 
     private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
-    private readonly commandHandlers = new Map<string, (data: any) => void>()
+    // private readonly commandHandlers = new Map<string, (data: any) => void>()
+
+    readonly commands: Map<Commands, CommandQueue> = new Map([])
 
     destruct() {
         for(const system of this.systems.values()) {
@@ -47,21 +49,18 @@ export class Engine {
         this.nodeTypes.clear()
         this.nodeConverters.clear()
         this.commands.clear()
-        this.commandHandlers.clear()
+        // this.commandHandlers.clear()
         this.eventHandlers.clear()
     }
 
-    readonly commands: Map<Commands, Command[]> = new Map([
-        ["keydown", []],
-        ["click", []],
-        ["selectEntity", []],
-        ["mouseMoved", []],
-        ["mousedown", []],
-        ["mouseup", []]
-    ] as const)
+    registerCommandQueue(command: Commands) {
+        this.commands.set(command, new CommandQueue())
+        return this
+    }
 
-    removeCommandHandler(command: Commands) {
-        this.commandHandlers.delete(command)
+    removeCommandQueue(command: Commands) {
+        this.commands.delete(command)
+        return this
     }
 
     createEntity(id = uuid(), addItToEngine = true) {
@@ -262,8 +261,7 @@ export class Engine {
     }
 
     addCommand(command: Command) {
-        this.commands.get(command.name)?.push(command)
-        this.commandHandlers.get(command.name)?.(command.data)
+        this.commands.get(command.name)?.enqueue(command)
 
         return this
     }

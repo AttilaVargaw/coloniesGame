@@ -8,6 +8,7 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import Camera from "@/lib/camera";
+import { CommandQueue } from "@/ems/lib/commandQueue";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -49,16 +50,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 camera.lookAt[0] + panX * step,
                 camera.lookAt[1] + panY * step
             )
-            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
         }
 
         if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
             camera.zoomBy(Math.pow(ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
         }
         if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
             camera.zoomBy(Math.pow(1 / ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.engine!.commands.get("redraw")!.push({ name: "redraw", data: {} })
+            this.redrawQueue!.enqueue({ name: "redraw", data: {} })
         }
     }
 
@@ -92,7 +93,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.dragMoved = false
             document.body.style.cursor = "grabbing"
         }
-        mousedownArray.length = 0
+        mousedownArray.clear()
 
         if(this.isDragging && this.lastPointer) {
             for(const { data } of mouseMovedArray) {
@@ -104,7 +105,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                         this.dragMoved = true
                     }
                     this.lastPointer = { x: data.x, y: data.y }
-                    this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
+                    this.redrawQueue!.enqueue({ name: "redraw", data: {} })
                 }
             }
         }
@@ -114,13 +115,12 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.lastPointer = null
             document.body.style.cursor = "default"
         }
-        mouseupArray.length = 0
+        mouseupArray.clear()
 
         this.applyKeyScroll(dt, camera)
 
-        const redrawArray = this.engine.commands.get("redraw")!
 
-        if(redrawArray.length) {
+        if(this.redrawQueue?.length) {
             for(const { viewPort: { camera } } of this.nodes) {
                 const ctx = camera.context
                 this.clear(ctx)
@@ -134,7 +134,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
         }
-        redrawArray.length = 0
+        this.redrawQueue?.clear()
     }
 
     private onKeyDown = (event: KeyboardEvent) => {
@@ -162,7 +162,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         camera.zoomBy(factor, screenX, screenY)
 
-        this.engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
+        this.redrawQueue?.enqueue({ name: "redraw", data: {} })
     }
 
     registerNodes(engine: Engine) {
@@ -189,7 +189,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         window.addEventListener("keydown", this.onKeyDown)
         window.addEventListener("keyup", this.onKeyUp)
         this.nodes = engine.getNodeList(ViewportNode)
-        engine.commands.set("redraw", [])
 
         this
             .addSubsystem(new HexagonRenderer)

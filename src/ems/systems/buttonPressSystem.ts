@@ -17,12 +17,27 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
+
+        this.nodes = engine.getNodeList(ButtonPressNode)
+
+        return this
+    }
+
+    protected registerNodes(engine: Engine): this {
         this.engine = engine.registerNodeType(ButtonPressNode, new Set([EventHandlerComponent]), (entity) => ({
             entity,
             eventHandler: entity.getComponent(EventHandlerComponent)!
         }))
 
-        this.nodes = engine.getNodeList(ButtonPressNode)
+        this.engine.registerCommandQueue("keydown")
+
+        return this
+    }
+    
+    protected unregisterNodeTypes(): this | undefined {
+        this.engine?.unregisterNodeType(ButtonPressNode)
+        this.engine?.removeCommandQueue("keydown")
+        this.engine = undefined
 
         return this
     }
@@ -40,6 +55,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             }
         }
 
-        this.engine.commands.get("keydown")!.length = 0
+        this.engine.commands.get("keydown")!.clear()
     }
 }

@@ -42,7 +42,6 @@ export default class Camera {
 
     /**
      * Camera Initialization
-     * -Add listeners.
      * -Initial calculations.
      */
     private init() {

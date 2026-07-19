@@ -1,22 +1,29 @@
 import { SystemWithNodes } from "./system";
 import { ClickableNode } from "./viewportSystem/ClickableNode";
-import { Command, Engine } from "../engine";
+import { Engine } from "../engine";
 import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
 import { shortByDepth } from "@/lib/shortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
+import { CommandQueue } from "../lib/commandQueue";
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     protected updateNode(_node: ClickableNode, _dT?: number): void {
     }
-    private clickArray?: Command[];
+    private clickArray?: CommandQueue;
     private viewport?: ViewportSystem;
+
+    protected unregisterNodeTypes(): this | undefined {
+        this.engine?.unregisterNodeType(ClickableNode);
+        this.engine?.removeCommandQueue("click");
+        this.engine?.unsubscribe("entityAdded", this.onUpdateIndices);
+
+        return this;
+    }
 
     removeFromEngine(): this {
         this.clickArray = undefined;
         this.viewport = undefined;
-        this.engine?.unregisterNodeType(ClickableNode)
-        this.engine?.unsubscribe("entityAdded", this.onUpdateIndices)
         super.removeFromEngine();
 
         return this
@@ -26,10 +33,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         this.nodes.sort(shortByDepth)
     }
 
-    addToEngine(engine: Engine): this {
-        super.addToEngine(engine);
-        this.clickArray = engine.commands.get("click");
-
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(ClickableNode, new Set([ClickableComponent]), (entity) =>
         ({
             clickable: entity.getComponent(ClickableComponent)!,
@@ -37,10 +41,18 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             entity
         }))
 
+        this.engine?.registerCommandQueue("click")
+        this.engine?.subscribe("entityAdded", this.onUpdateIndices);
+
+        return this
+    }
+
+    addToEngine(engine: Engine): this {
+        super.addToEngine(engine);
+        this.clickArray = engine.commands.get("click");
+
         this.nodes = engine.getNodeList(ClickableNode);
         this.nodes.sort(shortByDepth)
-        engine.subscribe("entityAdded", this.onUpdateIndices)
-
         this.viewport = engine.getSystem(ViewportSystem)
 
         return this
@@ -50,7 +62,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         if(this.nodes.length === 0 || !this.engine || !this.clickArray?.length || !this.viewport) return;
 
         if(this.viewport.consumeDragMoved()) {
-            this.clickArray.length = 0
+            this.clickArray.clear()
             return
         }
 
@@ -73,6 +85,6 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             }
         }
 
-        this.clickArray.length = 0
+        this.clickArray.clear()
     }
 }
