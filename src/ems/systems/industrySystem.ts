@@ -38,10 +38,9 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
         engine.registerNodeType(IndustryNode,
             new Set([IndustryComponent]),
-            (entity) => ({
-                industry: entity.getComponent(IndustryComponent)!,
-                entity
-            })
+            (entity) => new IndustryNode(
+                entity.getComponent(IndustryComponent)!
+            )
         ).subscribe("dayPassed", this.onDayPassed)
 
         this.nodes = engine.getNodeList(IndustryNode);

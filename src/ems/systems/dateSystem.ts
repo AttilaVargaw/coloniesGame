@@ -14,10 +14,10 @@ export class DateSystem extends System {
     private lastMonth = 0
     private startTime = 0
 
-    private dateNodeConverter = (entity: Entity) => ({
+    private dateNodeConverter = (entity: Entity) => new DateNode(
         entity,
-        date: entity.getComponent(DateComponent)
-    })
+        entity.getComponent(DateComponent)!,
+    )
 
     removeFromEngine(): this {
         if(!this.engine) {

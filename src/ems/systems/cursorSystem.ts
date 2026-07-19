@@ -34,11 +34,11 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         super.addToEngine(engine);
 
         engine.registerNodeType(HoverableNode, new Set([HoverableComponent]), (entity) =>
-        ({
-            hoverable: entity.getComponent(HoverableComponent)!,
-            position: entity.getComponent(PositionComponent)!,
-            entity
-        }));
+            new HoverableNode(
+                entity.getComponent(PositionComponent)!,
+                entity.getComponent(HoverableComponent)!
+            )
+        );
 
         this.nodes = engine.getNodeList(HoverableNode)
 
@@ -51,7 +51,7 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         const mouseMovedCommand = this.engine.events.get("mouseMoved")!
         if(!mouseMovedCommand.length) return
 
-        const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data } ) => {
+        const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data }) => {
             const { camera } = this.engine!.getSystem(ViewportSystem)!.viewport
             const { x, y } = camera.screenToWorld(data.x, data.y)
 

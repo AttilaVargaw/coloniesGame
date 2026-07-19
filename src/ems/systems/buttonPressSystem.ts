@@ -24,11 +24,11 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
     }
 
     protected registerNodes(engine: Engine): this {
-        this.engine = engine.registerNodeType(ButtonPressNode, new Set([EventHandlerComponent]), (entity) => ({
-            entity,
-            eventHandler: entity.getComponent(EventHandlerComponent)!
-        }))
-
+        this.engine = engine.registerNodeType(ButtonPressNode, new Set([EventHandlerComponent]), (entity) =>
+            new ButtonPressNode(
+                entity,
+                entity.getComponent(EventHandlerComponent)!
+            ))
 
         return this
     }

@@ -56,12 +56,11 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         engine.registerNodeType(MoveNode,
             new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
             (entity) => {
-                return {
-                    position: entity.getComponent(PositionComponent)!,
-                    jumpDrive: entity.getComponent(JumpDriveComponent)!,
-                    sensorSuite: entity.getComponent(SensorSuiteComponent)!,
-                    entity
-                }
+                return new MoveNode(
+                    entity.getComponent(PositionComponent)!,
+                    entity.getComponent(JumpDriveComponent)!,
+                    entity.getComponent(SensorSuiteComponent)!
+                )
             });
 
         this.nodes = engine.getNodeList(MoveNode)

@@ -170,11 +170,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             new Set([
                 ViewportComponent
             ]),
-            (entity) => (
-                {
-                    viewPort: entity.getComponent(ViewportComponent)!,
-                    entity
-                }
+            (entity) => new ViewportNode(
+                entity.getComponent(ViewportComponent)!,
+
             )
         )
 

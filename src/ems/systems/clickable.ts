@@ -40,11 +40,10 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     protected registerNodes(engine: Engine): this {
         engine.registerNodeType(ClickableNode, new Set([ClickableComponent]), (entity) =>
-        ({
-            clickable: entity.getComponent(ClickableComponent)!,
-            position: entity.getComponent(PositionComponent)!,
-            entity
-        }))
+            new ClickableNode(
+                entity.getComponent(PositionComponent)!,
+                entity.getComponent(ClickableComponent)!
+            ))
 
         //this.engine?.subscribe("entityAdded", this.onUpdateIndices);
 

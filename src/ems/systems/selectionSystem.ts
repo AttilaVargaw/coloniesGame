@@ -120,11 +120,10 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         super.addToEngine(engine)
         this.engine = engine
             .registerNodeType(SelectionNode, new Set([SelectableComponent]), (entity) => {
-                return {
+                return new SelectionNode(
                     entity,
-                    selection: entity.getComponent(SelectableComponent)!,
-                    color: entity.getComponent(ColorComponent)!
-                }
+                    entity.getComponent(SelectableComponent)!,
+                )
             })
         //.subscribe("selectionChanged", this.onSelectionChanged)
 

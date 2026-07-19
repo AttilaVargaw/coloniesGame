@@ -32,10 +32,10 @@ export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
             .registerNodeType(EntityCommandNode,
                 new Set([EntityCommandComponent]),
                 (entity) => {
-                    return {
-                        commands: entity.getComponent(EntityCommandComponent)!,
-                        entity
-                    }
+                    return new EntityCommandNode(
+                        entity,
+                        entity.getComponent(EntityCommandComponent)!
+                    )
                 });
         this.nodes = engine.getNodeList(EntityCommandNode)
 
