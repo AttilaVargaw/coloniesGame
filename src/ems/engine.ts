@@ -277,6 +277,11 @@ export class Engine {
             eventQueue.clear()
         }
 
+        // @TODO implement the add for next update event loop
+        // for(const commandQueue of this.commands.values()) {
+        //     commandQueue.clear()
+        // }
+
         for(const system of this.systems.values()) {
             system.update(dt)
         }

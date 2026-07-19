@@ -7,60 +7,21 @@ import { CircleRenderer } from "./renderers/circleRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
-import Camera from "@/lib/camera";
 import { Queue } from "@/ems/lib/commandQueue";
+import { ViewportInputHandler } from "./viewInputHandler";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    protected redrawQueue?: Queue<{}>
+    public redrawQueue?: Queue<{}>
     private readonly eventHandlers: Set<Entity> = new Set()
+    private inputHandler!: ViewportInputHandler
 
-    private isDragging = false
-    private lastPointer: { x: number, y: number } | null = null
-    private dragMoved = false
-
-    private pointer: { x: number, y: number } = { x: 0, y: 0 }
-
-    private static readonly DRAG_THRESHOLD = 3
-    private static readonly ZOOM_SPEED = 1.0015
-    private static readonly KEY_PAN_SPEED = 250
-    private static readonly WHEEL_ZOOM_SPEED = 1.0015
-
-    consumeDragMoved() {
-        const moved = this.dragMoved
-        this.dragMoved = false
-        return moved
+    get engineRef() {
+        return this.engine
     }
 
-    private readonly heldKeys = new Set<string>()
-
-    private applyKeyScroll(dt: number, camera: Camera) {
-        const { pointer } = this
-
-        let panX = 0
-        let panY = 0
-        if(this.heldKeys.has("ArrowLeft")) panX -= 1
-        if(this.heldKeys.has("ArrowRight")) panX += 1
-        if(this.heldKeys.has("ArrowUp")) panY -= 1
-        if(this.heldKeys.has("ArrowDown")) panY += 1
-
-        if(panX || panY) {
-            const step = ViewportSystem.KEY_PAN_SPEED * (dt / 1000) * (camera.distance / 1000)
-            camera.moveTo(
-                camera.lookAt[0] + panX * step,
-                camera.lookAt[1] + panY * step
-            )
-            this.redrawQueue!.enqueue({ data: {} })
-        }
-
-        if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
-            camera.zoomBy(Math.pow(ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.redrawQueue!.enqueue({ data: {} })
-        }
-        if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
-            camera.zoomBy(Math.pow(1 / ViewportSystem.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.redrawQueue!.enqueue({ data: {} })
-        }
+    consumeDragMoved() {
+        return this.inputHandler.consumeDragMoved()
     }
 
     get viewport() {
@@ -78,47 +39,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     update(dt: number) {
         if(!this.engine) return
 
-        const camera = this.nodes[0].viewPort.camera
-        const mousedownArray = this.engine.events.get("mousedown")!
-        const mouseupArray = this.engine.events.get("mouseup")!
-        const mouseMovedArray = this.engine.events.get("mouseMoved")!
-
-        for(const { data } of mouseMovedArray) {
-            this.pointer = { x: data.x, y: data.y }
-        }
-
-        for(const { data } of mousedownArray) {
-            this.isDragging = true
-            this.lastPointer = { x: data.x, y: data.y }
-            this.dragMoved = false
-            document.body.style.cursor = "grabbing"
-        }
-        mousedownArray.clear()
-
-        if(this.isDragging && this.lastPointer) {
-            for(const { data } of mouseMovedArray) {
-                const dx = data.x - this.lastPointer.x
-                const dy = data.y - this.lastPointer.y
-                if(dx || dy) {
-                    camera.panByPixels(dx, dy)
-                    if(Math.abs(dx) > ViewportSystem.DRAG_THRESHOLD || Math.abs(dy) > ViewportSystem.DRAG_THRESHOLD) {
-                        this.dragMoved = true
-                    }
-                    this.lastPointer = { x: data.x, y: data.y }
-                    this.redrawQueue!.enqueue({ data: {} })
-                }
-            }
-        }
-
-        if(mouseupArray.length) {
-            this.isDragging = false
-            this.lastPointer = null
-            document.body.style.cursor = "default"
-        }
-        mouseupArray.clear()
-
-        this.applyKeyScroll(dt, camera)
-
+        this.inputHandler.update(dt)
 
         if(this.redrawQueue?.length) {
             for(const { viewPort: { camera } } of this.nodes) {
@@ -134,34 +55,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         }
         this.redrawQueue?.clear()
-    }
-
-    private onKeyDown = (event: KeyboardEvent) => {
-        const key = event.key
-        if(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "+", "=", "-", "_"].includes(key)) {
-            this.heldKeys.add(key)
-            event.preventDefault()
-        }
-    }
-
-    private onKeyUp = (event: KeyboardEvent) => {
-        this.heldKeys.delete(event.key)
-    }
-
-    private onWheel = (event: WheelEvent) => {
-        if(!this.engine) return
-
-        event.preventDefault()
-
-        const { camera } = this.nodes[0].viewPort
-        const rect = camera.context.canvas.getBoundingClientRect()
-        const screenX = event.clientX - rect.left
-        const screenY = event.clientY - rect.top
-        const factor = Math.pow(ViewportSystem.WHEEL_ZOOM_SPEED, event.deltaY)
-
-        camera.zoomBy(factor, screenX, screenY)
-
-        this.redrawQueue?.enqueue({ data: {} })
     }
 
     registerNodes(engine: Engine) {
@@ -182,9 +75,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
-        window.addEventListener("wheel", this.onWheel, { passive: false })
-        window.addEventListener("keydown", this.onKeyDown)
-        window.addEventListener("keyup", this.onKeyUp)
+        this.inputHandler = new ViewportInputHandler(this)
+        this.inputHandler.addToEngine()
         this.nodes = engine.getNodeList(ViewportNode)
 
         this
@@ -208,11 +100,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             return this
         }
 
-        window.removeEventListener("wheel", this.onWheel)
-        window.removeEventListener("keydown", this.onKeyDown)
-        window.removeEventListener("keyup", this.onKeyUp)
-
-        this.heldKeys.clear()
+        this.inputHandler.removeFromEngine()
 
         for(const eventHandler of this.eventHandlers) {
             this.engine.removeEntity(eventHandler)
