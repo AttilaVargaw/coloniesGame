@@ -19,7 +19,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     private clickQueue?: Queue<ClickEvent>;
     private viewport?: ViewportSystem;
 
-    protected unregisterNodeTypes(): this | undefined {
+    protected unregisterNodeTypes(): this {
         this.engine?.unregisterNodeType(ClickableNode);
         this.engine?.unsubscribe("entityAdded", this.onUpdateIndices);
 
@@ -79,12 +79,14 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                 const halfX = width / 2
                 const halfY = height / 2
 
-                if(clickable
+                if(
+                    onClick &&
+                    clickable
                     && correctedPositionX - halfX < x
                     && correctedPositionX + halfX > x
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
-                    onClick?.({ target: entity!, event: data.event })
+                    onClick({ target: entity!, event: data.event })
                 }
             }
         }

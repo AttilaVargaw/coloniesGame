@@ -48,6 +48,8 @@ export class Engine {
         ["mouseup", new Queue()],
         ["mousedown", new Queue()],
         ["click", new Queue()],
+        ["keydown", new Queue()],
+        ["keyup", new Queue()],
     ])
     private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
 
@@ -232,7 +234,7 @@ export class Engine {
         return this
     }
 
-    addSubSystem(subsystem: new () => System) {
+    addSubsystem(subsystem: new () => System) {
         const newSubsystem = new subsystem()
         this.subSystems.set(subsystem, newSubsystem)
         newSubsystem.addToEngine(this)

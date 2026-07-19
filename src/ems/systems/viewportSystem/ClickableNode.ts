@@ -4,7 +4,7 @@ import { PositionNode } from "./positionNode";
 
 
 export class ClickableNode extends PositionNode {
-    constructor(public position: PositionComponent, public clickable: ClickableComponent) {
+    constructor(position: PositionComponent, public clickable: ClickableComponent) {
         super(position);
     }
 }
