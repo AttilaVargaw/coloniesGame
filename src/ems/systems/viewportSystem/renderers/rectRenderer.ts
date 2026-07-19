@@ -4,7 +4,7 @@ import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { shortByDepth } from "@/lib/shortByIndex";
+import { sortByDepth } from "@/lib/shortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -72,7 +72,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
 
     private onEntityAdded = () => {
         if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(shortByDepth)
+            this.nodes.sort(sortByDepth)
         }
     }
 }

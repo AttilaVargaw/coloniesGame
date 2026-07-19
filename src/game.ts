@@ -52,8 +52,6 @@ export class Game {
             this.engine.update(Math.min(500, dt))
 
             this.gameLoopId = requestAnimationFrame(update)
-
-            this.engine.dispatchEvent("updateDone", dt)
         }
 
         this.gameLoopId = requestAnimationFrame(time => {

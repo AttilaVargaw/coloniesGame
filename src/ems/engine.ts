@@ -18,6 +18,7 @@ export type EngineEvents =
     | "keyup"
     | "mousedown"
     | "click"
+    | "componentRemoved"
 
 export type Commands =
     "redraw"
@@ -33,9 +34,12 @@ export class Engine {
     private readonly _nodes = new Map<typeof EntityNode, EntityNode[]>()
 
     private readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
-    private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => Object> = new Map()
+    private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => EntityNode> = new Map()
 
-    readonly commands: Map<Commands, Queue<any>> = new Map([])
+    readonly commands: Map<Commands, Queue<any>> = new Map([
+        ["redraw", new Queue()],
+        ["selectEntity", new Queue()],
+    ])
     readonly events: Map<EngineEvents, Queue<any>> = new Map([
         ["updateDone", new Queue()],
         ["entityAdded", new Queue()],
@@ -50,6 +54,7 @@ export class Engine {
         ["click", new Queue()],
         ["keydown", new Queue()],
         ["keyup", new Queue()],
+        ["componentRemoved", new Queue()],
     ])
     private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
 

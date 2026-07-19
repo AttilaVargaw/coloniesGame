@@ -3,7 +3,7 @@ import { ClickableNode } from "./viewportSystem/ClickableNode";
 import { Engine } from "../engine";
 import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
-import { shortByDepth } from "@/lib/shortByIndex";
+import { sortByDepth } from "@/lib/shortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue, QueueItem } from "../lib/commandQueue";
 
@@ -35,7 +35,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     }
 
     private onUpdateIndices = () => {
-        this.nodes.sort(shortByDepth)
+        this.nodes.sort(sortByDepth)
     }
 
     protected registerNodes(engine: Engine): this {
@@ -55,7 +55,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         this.clickQueue = engine.events.get("click");
 
         this.nodes = engine.getNodeList(ClickableNode);
-        this.nodes.sort(shortByDepth)
+        this.nodes.sort(sortByDepth)
         this.viewport = engine.getSystem(ViewportSystem)
 
         return this

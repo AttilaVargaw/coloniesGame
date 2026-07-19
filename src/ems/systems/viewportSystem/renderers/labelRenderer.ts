@@ -3,7 +3,7 @@ import { LabelNode } from "./labelNode";
 import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { LabelComponent } from "../../../components/label";
-import { shortByDepth } from "@/lib/shortByIndex";
+import { sortByDepth } from "@/lib/shortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { ColorComponent } from "@/ems/components/colorComponent";
@@ -79,7 +79,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
     private onEntityAdded = () => {
         if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(shortByDepth)
+            this.nodes.sort(sortByDepth)
         }
     }
 }

@@ -127,7 +127,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
                 camera.begin();
 
-                //implement culling somehow!
                 this.updateSubsystems(dt);
 
                 camera.end();
@@ -229,7 +228,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.redrawQueue = undefined
 
         super.removeFromEngine()
-        super.unregisterNodeTypes()
 
         return this
     }

@@ -4,7 +4,7 @@ import { Modifier } from "../modifiers/patronGod";
 import { EntityComponent } from "./entityComponent";
 
 export class Entity {
-    private readonly _component = new Map<Function, Object>()
+    private readonly _component = new Map<Function, EntityComponent>()
     private engine?: Engine
 
     private revalidatePosition() {
@@ -89,13 +89,13 @@ export class Entity {
     }
 
     removeComponent(component: new (...args: any) => EntityComponent) {
-        //fix later
         this._component.delete(component);
+        this.engine?.dispatchEvent("componentRemoved", component)
 
         return this
     }
 
-    getComponent<T extends new (...args: any) => Object>(component: T) {
+    getComponent<T extends new (...args: any) => EntityComponent>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
     }
 
