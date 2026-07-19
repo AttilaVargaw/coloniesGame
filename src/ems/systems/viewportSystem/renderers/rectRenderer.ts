@@ -5,7 +5,6 @@ import { PositionComponent } from "../../../components/position";
 import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
-import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -22,7 +21,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
 
         ctx.save();
         rect.setColor(ctx);
-        ctx.translate(...transverseAndSumPositionComponents(rect.position));
+        ctx.translate(...rect.position.getAbsolute());
         ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
         rect.draw(ctx)
         ctx.restore();
@@ -72,6 +71,8 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
     }
 
     private onEntityAdded = () => {
-        this.nodes.sort(shortByIndex)
+        if(this.sortOnEveryEntityAddition) {
+            this.nodes.sort(shortByIndex)
+        }
     }
 }

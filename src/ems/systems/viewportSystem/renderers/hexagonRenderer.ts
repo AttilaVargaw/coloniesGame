@@ -5,7 +5,6 @@ import { PositionComponent } from "../../../components/position";
 import { ShapeComponent } from "../../../components/ShapeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
-import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -25,7 +24,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
 
         ctx.save();
         shape.setColor(ctx);
-        const [translatedPosX, translatedPosY] = transverseAndSumPositionComponents(shape.position);
+        const [translatedPosX, translatedPosY] = shape.position.getAbsolute();
 
         ctx.beginPath();
         for(let i = 0; i < HEXAGON_SIDES; i++) {
@@ -85,6 +84,8 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
     }
 
     private onEntityAdded = () => {
-        this.nodes.sort(shortByIndex)
+        if (this.sortOnEveryEntityAddition) {
+            this.nodes.sort(shortByIndex)
+        }
     }
 }

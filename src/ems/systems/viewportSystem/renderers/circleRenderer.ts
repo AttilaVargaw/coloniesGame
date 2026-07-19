@@ -5,7 +5,6 @@ import { PositionComponent } from "../../../components/position";
 import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { shortByIndex } from "@/lib/shortByIndex";
-import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -66,7 +65,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
 
         ctx.save();
         circle.setColor(ctx);
-        ctx.translate(...transverseAndSumPositionComponents(circle.position));
+        ctx.translate(...circle.position.getAbsolute());
         ctx.beginPath();
         ctx.arc(0, 0, circle.radius.radius, 0, Math.PI * 2);
         ctx.closePath();
@@ -75,6 +74,8 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
     }
 
     private onEntityAdded = () => {
-        this.nodes.sort(shortByIndex)
+        if(this.sortOnEveryEntityAddition) {
+            this.nodes.sort(shortByIndex)
+        }
     }
 }

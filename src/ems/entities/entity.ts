@@ -1,8 +1,17 @@
+import { PositionComponent } from "../components/position";
 import { Modifier } from "../modifiers/patronGod";
 import { EntityComponent } from "./entityComponent";
 
 export class Entity {
     private readonly _component = new Map<Function, Object>()
+
+    private revalidatePosition() {
+        const position = this.getComponent(PositionComponent)
+        if(position) {
+            position.dirty = true
+        }
+        return this
+    }
 
     get components() {
         return this._component
@@ -26,15 +35,22 @@ export class Entity {
 
     addChild(entity: Entity) {
         entity.setParent(this)
+        entity.revalidatePosition()
+
+        for(const child of entity.children) {
+            child.revalidatePosition()
+        }
 
         return this
     }
 
     setParent(parent: Entity | null) {
-        this._parent = parent
-        parent?.children.add(this)
+        this._parent = parent;
+        parent?.children.add(this);
 
-        return this
+        this.revalidatePosition();
+
+        return this;
     }
 
     addModifier(modifier: Modifier) {
@@ -71,6 +87,11 @@ export class Entity {
     removeChild(entity: Entity) {
         this.children.delete(entity)
         entity._parent = null
+        this.revalidatePosition()
+
+        for(const child of entity.children) {
+            child.revalidatePosition()
+        }
 
         return this
     }

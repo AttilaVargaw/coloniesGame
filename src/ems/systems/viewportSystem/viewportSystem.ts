@@ -20,6 +20,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         window.removeEventListener("wheel", this.onWheel)
         window.removeEventListener("keydown", this.onKeyDown)
         window.removeEventListener("keyup", this.onKeyUp)
+
         this.heldKeys.clear()
         this.engine.unregisterNodeType(ViewportNode)
 
@@ -29,6 +30,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.eventHandlers.clear()
 
         this.nodes.length = 0
+        this.engine.commands.delete("redraw")
 
         super.removeFromEngine()
         super.unregisterNodeTypes()
@@ -158,7 +160,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
         }
-        redrawArray!.length = 0
+        redrawArray.length = 0
     }
 
     private onKeyDown = (event: KeyboardEvent) => {
@@ -213,6 +215,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         window.addEventListener("keydown", this.onKeyDown)
         window.addEventListener("keyup", this.onKeyUp)
         this.nodes = engine.getNodeList(ViewportNode)
+        engine.commands.set("redraw", [])
 
         this
             .addSubsystem(new HexagonRenderer)

@@ -1,9 +1,8 @@
-import { PositionComponent } from "@/ems/components/position"
+import { PositionComponent, WorldPosition } from "@/ems/components/position"
 import { SizeComponent } from "@/ems/components/sizeComponent"
-import { transverseAndSumPositionComponents } from "@/ems/systems/viewportSystem/transverseAndSumPositionComponents"
 
-export function isContained(node: Omit<PositionComponent, "z">, { position, size: { height, width } }: { position: Omit<PositionComponent, "z">, size: SizeComponent }) {
-    const [correctedPositionX, correctedPositionY] = transverseAndSumPositionComponents(position)
+export function isContained(node: WorldPosition, { position, size: { height, width } }: { position: PositionComponent, size: SizeComponent }) {
+    const [correctedPositionX, correctedPositionY] = position.getAbsolute()
     const halfX = width / 2
     const halfY = height / 2
 

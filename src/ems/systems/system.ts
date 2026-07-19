@@ -81,7 +81,22 @@ export abstract class System {
 }
 
 export abstract class SystemWithNodes<N extends EntityNode> extends System {
+    protected _sortOnEveryEntityAddition = false
     protected nodes: N[] = []
+
+    get sortOnEveryEntityAddition(): boolean {
+        return this._sortOnEveryEntityAddition
+    }
+
+    set sortOnEveryEntityAddition(value: boolean) {
+        this._sortOnEveryEntityAddition = value
+
+        for(const subsystem of this.subsystems) {
+            if(subsystem instanceof SystemWithNodes) {
+                subsystem.sortOnEveryEntityAddition = value
+            }
+        }
+    }
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
@@ -101,7 +116,10 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
     protected filterNodes?: (node: N) => boolean
 
     update(dt: number): void {
-        for(const node of this.filterNodes ? this.nodes.filter(this.filterNodes) : this.nodes) {
+        for(const node of this.nodes) {
+            if(this.filterNodes && !this.filterNodes(node)) {
+                continue
+            }
             this.updateNode(node, dt)
         }
     }

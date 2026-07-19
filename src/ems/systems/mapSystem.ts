@@ -14,6 +14,7 @@ import { JumpDriveComponent, SensorSuiteComponent } from "./moveSystem";
 import { SelectionSystem } from "./selectionSystem";
 import { EntityComponent } from "../entities/entityComponent";
 import { EntityNode } from "../entities/entityNode";
+import { ViewportSystem } from "./viewportSystem/viewportSystem";
 
 const sectorColor = new ColorComponent("", "grey")
 const sectorShape = new ShapeComponent(6, 40)
@@ -103,7 +104,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                     if(shiftKey) {
                         selectionSystem.onTargetChanged(target.parent!)
                     } else {
-                        selectionSystem.onSelectionChanged(target.parent!)
+                        selectionSystem.onSelectionChanged({ entity: target.parent!, type: "ship" })
                     }
                 })))
         // .addComponent(new SelectableComponent(newSpaceship, 40, "red"))
@@ -138,10 +139,11 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                 .addComponent(colonyColor)
                 .addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
                 .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
-                    if(!this.engine) return
+                    if(!this.engine) {
+                        return
+                    }
 
-                    this.engine.dispatchEvent("selectionChanged", ret)
-                    this.engine.addCommand({ name: "openInfoWindow", data: { data: ret, type: "colony" } })
+                    this.engine.dispatchEvent("selectionChanged", { data: ret, type: "colony" })
                 }))
         } else {
             ret.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
@@ -222,6 +224,9 @@ export class MapSystem extends SystemWithNodes<PathNode> {
     init({ solarSystems, mapSize }: { solarSystems: Map<string, Star>, mapSize: number }) {
         if(!this.engine) return this
 
+        const viewPort = this.engine.getSystem(ViewportSystem)
+        viewPort.sortOnEveryEntityAddition = false
+
         for(let col = 0, y = r, j = 0; y + r * Math.cos(a) < mapSize; y += 2 ** ((j + 1) % 2) * r * Math.sin(a), j = 0, ++col) {
             for(let row = 0, x = r; x + r * (1 + Math.cos(a)) < mapSize; x += r * (1 + Math.cos(a)), y += (-1) ** j++ * r * Math.sin(a), row++) {
                 const offsetCoords = [col, row] as [number, number]
@@ -288,6 +293,8 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
         StartState.map.sectors.get("0:10")!.addChild(minerva)
         this.engine.addEntity(minerva)
+
+        viewPort.sortOnEveryEntityAddition = true
 
         return this
     }

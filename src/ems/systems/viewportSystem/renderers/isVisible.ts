@@ -1,5 +1,4 @@
 import { PositionComponent } from "@/ems/components/position";
-import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
 
 export interface VisibleBounds {
     left: number;
@@ -13,7 +12,7 @@ export function isVisible(
     bounds: VisibleBounds,
     margin = 0
 ): boolean {
-    const [x, y] = transverseAndSumPositionComponents(position);
+    const [x, y] = position.getAbsolute();
     return (
         x + margin >= bounds.left &&
         x - margin <= bounds.right &&

@@ -1,5 +1,4 @@
 import { SystemWithNodes } from "./system";
-import { transverseAndSumPositionComponents } from "./viewportSystem/transverseAndSumPositionComponents";
 import { ClickableNode } from "./viewportSystem/ClickableNode";
 import { Command, Engine } from "../engine";
 import { ClickableComponent } from "../components/clickableComponent";
@@ -60,7 +59,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
-                const [correctedPositionX, correctedPositionY] = transverseAndSumPositionComponents(node.position)
+                const [correctedPositionX, correctedPositionY] = node.position.getAbsolute()
                 const halfX = width / 2
                 const halfY = height / 2
 

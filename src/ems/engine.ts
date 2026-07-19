@@ -2,8 +2,22 @@ import { Entity } from "./entities/entity"
 import type { System } from "./systems/system"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
 
-export type EngineEvents = "updateDone" | "entityAdded" | "updateBegin" | "dayPassed" | "selectionChanged" | "entityRemoved" | "mouseMoved" | "monthPassed"
-export type Commands = "keydown" | "click" | "redraw" | "selectEntity" | "mouseMoved" | "openInfoWindow" | "mousedown" | "mouseup"
+export type EngineEvents = "updateDone"
+    | "entityAdded"
+    | "updateBegin"
+    | "dayPassed"
+    | "selectionChanged"
+    | "entityRemoved"
+    | "mouseMoved"
+    | "monthPassed"
+
+export type Commands = "keydown"
+    | "click"
+    | "redraw"
+    | "selectEntity"
+    | "mouseMoved"
+    | "mousedown"
+    | "mouseup"
 
 export type Command = { name: Commands, data: any }
 
@@ -39,25 +53,11 @@ export class Engine {
     readonly commands: Map<Commands, Command[]> = new Map([
         ["keydown", []],
         ["click", []],
-        ["redraw", []],
         ["selectEntity", []],
         ["mouseMoved", []],
-        ["openInfoWindow", []],
         ["mousedown", []],
         ["mouseup", []]
     ] as const)
-
-    onCommand(command: Commands, commandHandler: (data: any) => void) {
-        if(!this.commandHandlers.has(command)) {
-            this.commandHandlers.set(command, commandHandler)
-
-            return this
-        }
-
-        this.commandHandlers.set(command, commandHandler)
-
-        return this
-    }
 
     removeCommandHandler(command: Commands) {
         this.commandHandlers.delete(command)

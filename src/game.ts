@@ -1,5 +1,4 @@
 import { DateComponent } from "./ems/components/dateComponent"
-import { IndustryComponent } from "./ems/components/industryComponent"
 import { ViewportComponent } from "./ems/components/viewportComponent"
 import { Engine } from "./ems/engine"
 import { Entity } from "./ems/entities/entity"
@@ -38,8 +37,8 @@ export class Game {
             .addSystem(ClickableSystem)
             .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 }))))
             .addEntity(this.engine.createEntity().addComponent(new DateComponent(0)))
-            .subscribe("selectionChanged", (entity: Entity) => {
-                if(entity.getComponent(IndustryComponent)) {
+            .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
+                if(type === "colony") {
                     document.body.style.cursor = 'default';
                     //setCurrentColony(entity)
                 }

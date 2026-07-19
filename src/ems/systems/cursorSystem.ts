@@ -1,7 +1,7 @@
 import { Engine } from "@/ems/engine";
 import { SystemWithNodes } from "./system";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
-import { PositionComponent } from "../components/position";
+import { PositionComponent, WorldPosition } from "../components/position";
 import { PositionNode } from "./viewportSystem/positionNode";
 import { EntityComponent } from "../entities/entityComponent";
 import { isContained } from "@/lib/isContained";
@@ -65,7 +65,7 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
             for(const hoverableNode of this.nodes) {
                 const { hoverable: { size, cursor } } = hoverableNode
 
-                if(isContained({ x, y }, { position: hoverableNode.position, size })) {
+                if(isContained({ x, y } as WorldPosition, { position: hoverableNode.position, size })) {
                     document.body.style.cursor = cursor;
                     return true
                 }

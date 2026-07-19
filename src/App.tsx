@@ -45,7 +45,7 @@ function App() {
     document.addEventListener("keydown", eventListener)
     window.addEventListener("mouseup", onMouseUp)
     game.engine?.subscribe("updateDone", updateDate)
-      .onCommand("openInfoWindow", onOpenInfoWindow)
+      .subscribe("selectionChanged", onOpenInfoWindow)
 
     setEngine(game.engine)
 
@@ -53,10 +53,10 @@ function App() {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      game.engine?.unsubscribe("updateDone", updateDate)
-      game.engine.removeCommandHandler("openInfoWindow")
+      game.engine.unsubscribe("updateDone", updateDate)
+      game.engine.unsubscribe("selectionChanged", onOpenInfoWindow)
 
-      game.engine?.destruct()
+      game.engine.destruct()
 
       setEngine(null)
     }

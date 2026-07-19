@@ -4,7 +4,6 @@ import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { LabelComponent } from "../../../components/label";
 import { shortByIndex } from "@/lib/shortByIndex";
-import { transverseAndSumPositionComponents } from "../transverseAndSumPositionComponents";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -20,7 +19,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
         ctx.save();
         node.setColor(ctx);
-        ctx.translate(...transverseAndSumPositionComponents(node.position));
+        ctx.translate(...node.position.getAbsolute());
         ctx.font = `${node.label.size}px Roboto`;
         ctx.fillText(node.label.text, 24, 0);
         //label.draw(ctx);
@@ -68,6 +67,8 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
     }
 
     private onEntityAdded = () => {
-        this.nodes.sort(shortByIndex)
+        if(this.sortOnEveryEntityAddition) {
+            this.nodes.sort(shortByIndex)
+        }
     }
 }
