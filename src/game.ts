@@ -57,7 +57,7 @@ export class Game {
 
             previousTime = time
 
-            this.engine.update(dt)
+            this.engine.update(Math.min(500, dt))
 
             this.gameLoopId = requestAnimationFrame(update)
 

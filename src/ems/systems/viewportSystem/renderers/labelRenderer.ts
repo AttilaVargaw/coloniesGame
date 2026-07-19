@@ -8,14 +8,23 @@ import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
+
     protected filterNodes: ((node: LabelNode) => boolean) = (node) => {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        if(!this.parent) {
+            return false;
+        }
+
+        const { viewport: { camera } } = this.parent as ViewportSystem;
 
         return isVisible(node.position, camera.visibleBounds, node.label.size);
     };
 
     protected updateNode(node: LabelNode, _dT?: number): void {
-        const ctx = (this.parent as ViewportSystem).viewport.camera.context
+        if(!this.parent) {
+            return;
+        }
+
+        const ctx = (this.parent as ViewportSystem).viewport.camera.context;
 
         ctx.save();
         node.setColor(ctx);

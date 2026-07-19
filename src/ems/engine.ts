@@ -44,7 +44,6 @@ export class Engine {
         this.nodes.clear()
         this.nodeTypes.clear()
         this.nodeConverters.clear()
-        this.commands.forEach((_, key) => this.commands.set(key, []))
         this.commands.clear()
         this.commandHandlers.clear()
         this.eventHandlers.clear()
