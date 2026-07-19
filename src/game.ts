@@ -30,12 +30,12 @@ export class Game {
             .addSystem(DateSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
+            .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 }))))
             .addSystem(MoveSystem)
             .addSystem(SelectionSystem)
             .addSystem(CursorSystem)
             .addSystem(MapSystem)
             .addSystem(ClickableSystem)
-            .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 }))))
             .addEntity(this.engine.createEntity().addComponent(new DateComponent(0)))
             .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
                 if(type === "colony") {
@@ -72,15 +72,10 @@ export class Game {
     }
 
     destruct(): void {
-        if(!this.engine) {
-            return
-        }
-
         this.engine.destruct()
 
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)
         }
-        // this.engine = undefined
     }
 }

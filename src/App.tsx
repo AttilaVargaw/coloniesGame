@@ -1,7 +1,6 @@
 import "./App.css";
 import { Screen } from './components/map/screen';
 import { useEffect, useRef, useState } from 'react';
-import { Engine } from './ems/engine';
 import { Header } from "./components/header/header";
 import { Entity } from "./ems/entities/entity";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
@@ -11,7 +10,7 @@ import { DateNode } from "./ems/systems/DateNode";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
-  const [engine, setEngine] = useState<Engine | null>(null)
+  const [game, setGame] = useState<Game | null>(null)
   const [currentColony, setCurrentColony] = useState<Entity>()
   const [date, setDate] = useState(0)
 
@@ -47,7 +46,7 @@ function App() {
     game.engine?.subscribe("updateDone", updateDate)
       .subscribe("selectionChanged", onOpenInfoWindow)
 
-    setEngine(game.engine)
+    setGame(game)
 
     return () => {
       document.removeEventListener("keydown", eventListener)
@@ -56,9 +55,9 @@ function App() {
       game.engine.unsubscribe("updateDone", updateDate)
       game.engine.unsubscribe("selectionChanged", onOpenInfoWindow)
 
-      game.engine.destruct()
+      game.destruct()
 
-      setEngine(null)
+      setGame(null)
     }
   }, [])
 
@@ -68,18 +67,18 @@ function App() {
       <Header time={date} />
       <Screen
         onMouseMove={(data) => {
-          engine?.addCommand({ name: "mouseMoved", data })
+          game?.engine.addCommand({ name: "mouseMoved", data })
         }}
         onMouseDown={(data) => {
-          engine?.addCommand({ name: "mousedown", data })
+          game?.engine.addCommand({ name: "mousedown", data })
         }}
         onMouseUp={(data) => {
-          engine?.addCommand({ name: "mouseup", data })
+          game?.engine.addCommand({ name: "mouseup", data })
         }}
-        engine={engine}
+        triggerRedraw={() => game?.engine.addCommand({ name: "redraw", data: {} })}
         ref={map}
         onClick={(data) => {
-          engine?.addCommand({ name: "click", data })
+          game?.engine.addCommand({ name: "click", data })
         }} />
       {/* <div style={{ display: dynamicData ? "block" : "none" }}>
         <DataWindow header={dynamicDataHeader} data={dynamicData} />

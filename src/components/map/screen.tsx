@@ -9,12 +9,12 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     return { x, y, event }
 }
 
-export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, engine, ref }: ComponentPropsWithRef<"canvas"> & {
+export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: { x: number, y: number, event: MouseEvent }) => void,
     onMouseMove: (event: { x: number, y: number, event: MouseEvent }) => void,
     onMouseDown: (event: { x: number, y: number, event: MouseEvent }) => void,
     onMouseUp: (event: { x: number, y: number, event: MouseEvent }) => void,
-    engine: Engine | null
+    triggerRedraw: () => void
 }) {
     useLayoutEffect(() => {
         function resize() {
@@ -39,9 +39,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, engine, r
             })!
             ctx.scale(dpr, dpr);
 
-            if(engine) {
-                engine.commands.get("redraw")!.push({ name: "redraw", data: {} })
-            }
+            triggerRedraw()
         }
 
         resize()
@@ -51,7 +49,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, engine, r
         return () => {
             window.removeEventListener('resize', resize)
         }
-    }, [engine])
+    }, [triggerRedraw])
 
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {

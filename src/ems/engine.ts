@@ -1,6 +1,8 @@
 import { Entity } from "./entities/entity"
 import type { System } from "./systems/system"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
+import { v4 as uuid } from "uuid"
+import { LabelComponent } from "./components/label"
 
 export type EngineEvents = "updateDone"
     | "entityAdded"
@@ -22,23 +24,23 @@ export type Commands = "keydown"
 export type Command = { name: Commands, data: any }
 
 export class Engine {
-    readonly entities: Entity[] = []
-    readonly systems: Map<new (engine: Engine) => System, System> = new Map()
-    readonly subSystems: Map<new (engine: Engine) => System, System> = new Map()
-    readonly nodes = new Map<typeof EntityNode, EntityNode[]>()
+    private readonly entities: Map<string, Entity> = new Map()
+    private readonly systems: Map<new (engine: Engine) => System, System> = new Map()
+    private readonly subSystems: Map<new (engine: Engine) => System, System> = new Map()
+    private readonly nodes = new Map<typeof EntityNode, EntityNode[]>()
 
-    readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
-    readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => Object> = new Map()
+    private readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
+    private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => Object> = new Map()
 
-    readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
-    readonly commandHandlers = new Map<string, (data: any) => void>()
+    private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
+    private readonly commandHandlers = new Map<string, (data: any) => void>()
 
     destruct() {
         for(const system of this.systems.values()) {
             system.removeFromEngine()
         }
 
-        this.entities.length = 0
+        this.entities.clear()
         this.systems.clear()
         this.subSystems.clear()
         this.nodes.clear()
@@ -62,10 +64,13 @@ export class Engine {
         this.commandHandlers.delete(command)
     }
 
-    createEntity(id?: string) {
+    createEntity(id = uuid(), addItToEngine = true) {
         const entity = new Entity(id)
-        this.entities.push(entity)
         this.dispatchEvent("entityAdded", entity)
+
+        if(addItToEngine) {
+            this.addEntity(entity)
+        }
 
         return entity
     }
@@ -129,7 +134,7 @@ export class Engine {
     removeEntity(entity: Entity) {
         entity.parent?.removeChild(entity)
 
-        this.entities.splice(this.entities.indexOf(entity), 1)
+        this.entities.delete(entity.id)
 
         const entityComponentConstructors: Set<Function> = new Set()
 
@@ -165,6 +170,13 @@ export class Engine {
     }
 
     addEntity(entity: Entity) {
+        if(entity.getComponent(LabelComponent)) {
+            console.log("label is here")
+        }
+        if(this.entities.has(entity.id)) {
+            return this
+        }
+
         //ez most egy array
         const entityComponentConstructors: Set<Function> = new Set()
 

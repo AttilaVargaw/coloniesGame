@@ -90,7 +90,6 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         const newSpaceship = this.engine.createEntity()
 
         return newSpaceship
-            .addComponent(new LabelComponent(name, { fill: "red" }, 18))
             .addComponent(new PositionComponent(0, 0))
             .addComponent(new JumpDriveComponent())
             .addComponent(new SensorSuiteComponent())
@@ -107,7 +106,11 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                         selectionSystem.onSelectionChanged({ entity: target.parent!, type: "ship" })
                     }
                 })))
-        // .addComponent(new SelectableComponent(newSpaceship, 40, "red"))
+            .addChild(
+                this.engine.createEntity()
+                    .addComponent(new LabelComponent(name, 18))
+                    .addComponent(new ColorComponent("red"))
+                    .addComponent(new PositionComponent(0, 0, 0)))
     }
 
     createSolarSystem({ planets, x, y }: Star) {
@@ -130,7 +133,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         const ret = this.engine.createEntity()
             .addComponent(new PositionComponent(0, 0, 0))
             .addComponent(new RadiusComponent(20))
-            .addComponent(new LabelComponent(name, { fill: "white" }, 18))
+            // .addComponent(new LabelComponent(name, 18, "white"))
             .setParent(parent)
 
         if(population) {
@@ -150,7 +153,11 @@ export class MapSystem extends SystemWithNodes<PathNode> {
                 .addComponent(bodyColor)
         }
 
-        return ret
+        return ret.addChild(
+            this.engine.createEntity()
+                .addComponent(new LabelComponent(name, 18))
+                .addComponent(new ColorComponent("white"))
+                .addComponent(new PositionComponent(0, 0, 0)))
     }
 
     createSector({ x, y, visible }: { x: number, y: number, visible: boolean }) {
@@ -205,7 +212,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
         return this.engine.createEntity()
             .addComponent(new PositionComponent(0, 0))
-            .addComponent(new LabelComponent(name, { fill: "white" }, 18))
+            .addChild(
+                this.engine.createEntity()
+                    .addComponent(new LabelComponent(name, 18))
+                    .addComponent(new ColorComponent("white"))
+                    .addComponent(new PositionComponent(0, 0, 0))
+            )
             .addComponent(new RadiusComponent(radius))
             .addComponent(new ColorComponent("grey"))
             .setParent(parent)

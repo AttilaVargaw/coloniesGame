@@ -6,6 +6,7 @@ import { LabelComponent } from "../../../components/label";
 import { shortByIndex } from "@/lib/shortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { ColorComponent } from "@/ems/components/colorComponent";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
@@ -24,6 +25,8 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
             return;
         }
 
+        console.log("called ")
+
         const ctx = (this.parent as ViewportSystem).viewport.camera.context;
 
         ctx.save();
@@ -37,11 +40,12 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
     protected registerNodes(engine: Engine): this {
         engine.registerNodeType(LabelNode,
-            new Set([PositionComponent, LabelComponent]),
+            new Set([PositionComponent, ColorComponent, LabelComponent]),
             (entity) => new LabelNode(
                 entity,
                 entity.getComponent(PositionComponent)!,
-                entity.getComponent(LabelComponent)!,
+                entity.getComponent(ColorComponent)!,
+                entity.getComponent(LabelComponent)!
             )
         )
 

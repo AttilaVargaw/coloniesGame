@@ -1,9 +1,11 @@
 import { PositionComponent } from "../components/position";
+import { Engine } from "../engine";
 import { Modifier } from "../modifiers/patronGod";
 import { EntityComponent } from "./entityComponent";
 
 export class Entity {
     private readonly _component = new Map<Function, Object>()
+    private engine?: Engine
 
     private revalidatePosition() {
         const position = this.getComponent(PositionComponent)
@@ -17,13 +19,21 @@ export class Entity {
         return this._component
     }
 
-    constructor(public id?: string) {
+    constructor(public id: string) {
 
     }
 
-    readonly children = new Set<Entity>()
-    _parent?: Entity | null = null
-    readonly modifiers: Modifier[] = []
+    private readonly _children = new Set<Entity>()
+    private _parent?: Entity | null = null
+    private readonly _modifiers: Modifier[] = []
+
+    get children() {
+        return this._children
+    }
+
+    get modifiers() {
+        return this._modifiers
+    }
 
     get parent() {
         return this._parent
@@ -39,6 +49,9 @@ export class Entity {
 
         for(const child of entity.children) {
             child.revalidatePosition()
+            if(entity.engine) {
+                entity.engine.addEntity(child)
+            }
         }
 
         return this
@@ -46,9 +59,11 @@ export class Entity {
 
     setParent(parent: Entity | null) {
         this._parent = parent;
-        parent?.children.add(this);
+        parent?.children.add(this)
+        parent?.engine?.addEntity(this)
+        this.engine = parent?.engine
 
-        this.revalidatePosition();
+        this.revalidatePosition()
 
         return this;
     }
