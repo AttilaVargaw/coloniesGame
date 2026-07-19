@@ -18,12 +18,15 @@ export class Game {
     private gameLoopId?: number
 
     constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {
+        const camera = new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 })
+
         this.engine
             .addSystem(IndustrySystem)
             .addSystem(DateSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
-            .addEntity(this.engine.createEntity().addComponent(new ViewportComponent(new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 }))))
+            .addEntity(this.engine.createEntity()
+                .addComponent(new ViewportComponent(camera)))
             .addSystem(MoveSystem)
             .addSystem(SelectionSystem)
             .addSystem(CursorSystem)

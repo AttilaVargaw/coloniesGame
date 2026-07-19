@@ -17,13 +17,13 @@ function App() {
   useEffect(() => {
     if(!map.current) return
 
-    const game = new Game(map.current.getContext("2d", renderingContextSettings)!, solarSystems)
+    const gameInstance = new Game(map.current.getContext("2d", renderingContextSettings)!, solarSystems)
 
-    function updateDate() {
-      setDate(game.engine.getNodeList(DateNode)?.[0].date.ms)
+    const updateDate = () => {
+      setDate(gameInstance.engine.getNodeList(DateNode)[0].date.ms)
     }
 
-    function onOpenInfoWindow({ data, type }: { data: Entity, type: "colony" }) {
+    const onOpenInfoWindow = ({ data, type }: { data: Entity, type: "colony" }) => {
       switch(type) {
         case "colony":
           setCurrentColony(data)
@@ -31,31 +31,33 @@ function App() {
       }
     }
 
-    function eventListener(event: KeyboardEvent) {
-      game.engine?.dispatchEvent("keydown", { data: event })
+    const eventListener = (event: KeyboardEvent) => {
+      gameInstance.engine?.dispatchEvent("keydown", { data: event })
     }
 
-    function onMouseUp(event: MouseEvent) {
+    const onMouseUp = (event: MouseEvent) => {
       const rect = map.current?.getBoundingClientRect()
-      if(!rect) return
-      game.engine?.dispatchEvent("mouseup", { name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
+      if(!rect) {
+        return
+      }
+      gameInstance.engine?.dispatchEvent("mouseup", { name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
     }
 
     document.addEventListener("keydown", eventListener)
     window.addEventListener("mouseup", onMouseUp)
-    game.engine?.subscribe("updateDone", updateDate)
+    gameInstance.engine?.subscribe("updateDone", updateDate)
       .subscribe("selectionChanged", onOpenInfoWindow)
 
-    setGame(game)
+    setGame(gameInstance)
 
     return () => {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      game.engine.unsubscribe("updateDone", updateDate)
-      game.engine.unsubscribe("selectionChanged", onOpenInfoWindow)
+      gameInstance.engine.unsubscribe("updateDone", updateDate)
+      gameInstance.engine.unsubscribe("selectionChanged", onOpenInfoWindow)
 
-      game.destruct()
+      gameInstance.destruct()
 
       setGame(null)
     }
@@ -72,9 +74,7 @@ function App() {
         onMouseDown={(data) => {
           game?.engine.dispatchEvent("mousedown", data)
         }}
-        onMouseUp={(data) => {
-          game?.engine.dispatchEvent("mouseup", data)
-        }}
+
         triggerRedraw={() => game?.engine.addCommand("redraw", {})}
         ref={map}
         onClick={(data) => {
