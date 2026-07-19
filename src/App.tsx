@@ -1,11 +1,11 @@
 import "./App.css";
-import { Screen } from './components/map/screen';
+import { renderingContextSettings, Screen } from './components/map/screen';
 import { useEffect, useRef, useState } from 'react';
 import { Header } from "./components/header/header";
 import { Entity } from "./ems/entities/entity";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { solarSystems, } from "./gameData";
-import { Game, renderingContextSettings } from "./game";
+import { Game } from "./game";
 import { DateNode } from "./ems/systems/DateNode";
 
 function App() {

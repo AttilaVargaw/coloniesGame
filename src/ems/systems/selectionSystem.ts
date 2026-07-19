@@ -127,7 +127,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                 }
             })
             .subscribe("selectionChanged", this.onSelectionChanged)
-        //.subscribe("targetChanged", this.onTargetChanged)
 
         this.nodes = engine.getNodeList(SelectionNode)
 

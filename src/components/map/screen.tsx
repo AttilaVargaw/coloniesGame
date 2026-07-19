@@ -8,6 +8,12 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     return { x, y, event }
 }
 
+export const renderingContextSettings = {
+    alpha: false,
+    desynchronized: true,
+    colorSpace: "srgb",
+} as CanvasRenderingContext2DSettings
+
 export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: { x: number, y: number, event: MouseEvent }) => void,
     onMouseMove: (event: { x: number, y: number, event: MouseEvent }) => void,
@@ -28,15 +34,9 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRe
 
             ref.current.width = width * dpr;
             ref.current.height = (height - 56) * dpr;
-            ref.current.style.width = `${width}px"`;
+            ref.current.style.width = `${width}px`;
             ref.current.style.height = `${height - 56}px`;
-
-            const ctx = ref.current.getContext('2d', {
-                alpha: true,
-                desynchronized: true,
-                colorSpace: "srgb",
-            })!
-            ctx.scale(dpr, dpr);
+            ref.current.getContext('2d', renderingContextSettings)?.scale(dpr, dpr);
 
             triggerRedraw()
         }
@@ -79,7 +79,6 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRe
         onMouseUp(getCursorPosition(ref?.current, event))
     }
 
-    // @TODO refactor
     return <canvas
         ref={ref}
         style={{ imageRendering: "crisp-edges" }}

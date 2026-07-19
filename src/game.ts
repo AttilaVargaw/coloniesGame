@@ -14,12 +14,6 @@ import { ViewportSystem } from "./ems/systems/viewportSystem/viewportSystem"
 import { Star } from "./gameData"
 import Camera from "./lib/camera"
 
-export const renderingContextSettings = {
-    alpha: false,
-    desynchronized: true,
-    colorSpace: "srgb",
-} as CanvasRenderingContext2DSettings
-
 export class Game {
     readonly engine: Engine = new Engine
     private gameLoopId?: number
@@ -40,7 +34,6 @@ export class Game {
             .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
                 if(type === "colony") {
                     document.body.style.cursor = 'default';
-                    //setCurrentColony(entity)
                 }
             })
 
