@@ -97,13 +97,13 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             .addComponent(new RadiusComponent(10))
             .addChild(this.engine.createEntity()
                 .addComponent(new PositionComponent(0, 0, -1))
-                .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ engine, target, data: { event: { shiftKey } } }) => {
-                    const selectionSystem = engine.getSystem(SelectionSystem)
+                .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({  target, data: { event: { shiftKey } } }) => {
+                    const selectionSystem = this.engine?.getSystem(SelectionSystem)
 
                     if(shiftKey) {
-                        selectionSystem.onTargetChanged(target.parent!)
+                        selectionSystem?.onTargetChanged(target.parent!)
                     } else {
-                        selectionSystem.onSelectionChanged({ entity: target.parent!, type: "ship" })
+                        selectionSystem?.onSelectionChanged({ entity: target.parent!, type: "ship" })
                     }
                 })))
             .addChild(
@@ -167,8 +167,8 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             .addComponent(new PositionComponent((x * 100), (y * 100)))
             .addChild(this.engine.createEntity()
                 .addComponent(new PositionComponent(0, 0, -1))
-                .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ engine, target, data: { event: { shiftKey } } }) => {
-                    const selectionSystem = engine.getSystem(SelectionSystem)!
+                .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, data: { event: { shiftKey } } }) => {
+                    const selectionSystem = this.engine?.getSystem(SelectionSystem)!
                     if(shiftKey) {
                         const selection = selectionSystem.currentSelection()
 

@@ -80,7 +80,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                     && correctedPositionX + halfX > x
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
-                    onClick?.({ engine: this.engine, target: entity!, data })
+                    onClick?.({ target: entity!, data })
                 }
             }
         }
