@@ -4,7 +4,7 @@ import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { shortByIndex } from "@/lib/shortByIndex";
+import { shortByDepth } from "@/lib/shortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -75,7 +75,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
 
     private onEntityAdded = () => {
         if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(shortByIndex)
+            this.nodes.sort(shortByDepth)
         }
     }
 }

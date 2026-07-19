@@ -4,7 +4,7 @@ import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { ShapeComponent } from "../../../components/ShapeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { shortByIndex } from "@/lib/shortByIndex";
+import { shortByDepth } from "@/lib/shortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
@@ -85,7 +85,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
 
     private onEntityAdded = () => {
         if (this.sortOnEveryEntityAddition) {
-            this.nodes.sort(shortByIndex)
+            this.nodes.sort(shortByDepth)
         }
     }
 }

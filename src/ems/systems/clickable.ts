@@ -3,7 +3,7 @@ import { ClickableNode } from "./viewportSystem/ClickableNode";
 import { Command, Engine } from "../engine";
 import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
-import { shortByIndex } from "@/lib/shortByIndex";
+import { shortByDepth } from "@/lib/shortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
@@ -23,7 +23,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     }
 
     private onUpdateIndices = () => {
-        this.nodes.sort(shortByIndex)
+        this.nodes.sort(shortByDepth)
     }
 
     addToEngine(engine: Engine): this {
@@ -38,7 +38,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         }))
 
         this.nodes = engine.getNodeList(ClickableNode);
-        this.nodes.sort(shortByIndex)
+        this.nodes.sort(shortByDepth)
         engine.subscribe("entityAdded", this.onUpdateIndices)
 
         this.viewport = engine.getSystem(ViewportSystem)
