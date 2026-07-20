@@ -171,7 +171,8 @@ export class World implements Engine {
     }
 
     reindexEntity(entity: Entity) {
-        this.nodeManager.reindexEntity(entity)
+        const sceneNode = this.entityRegistry.getSceneNode(entity)
+        this.nodeManager.reindexEntity(entity, sceneNode)
 
         return this
     }

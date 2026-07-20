@@ -4,6 +4,7 @@ import { EntityComponent } from "./entityComponent"
 export class Entity {
     private readonly _component = new Map<Function, EntityComponent>()
     private readonly _modifiers: Modifier[] = []
+    private onComponentChanged?: (entity: Entity) => void
 
     get components() {
         return this._component
@@ -15,6 +16,10 @@ export class Entity {
 
     get modifiers() {
         return this._modifiers
+    }
+
+    setComponentChangeHandler(handler: (entity: Entity) => void) {
+        this.onComponentChanged = handler
     }
 
     addModifier(modifier: Modifier) {
@@ -33,11 +38,15 @@ export class Entity {
         this._component.set(component.constructor, component);
         component.entity = this
 
+        this.onComponentChanged?.(this)
+
         return this
     }
 
     removeComponent(component: new (...args: any) => EntityComponent) {
         this._component.delete(component);
+
+        this.onComponentChanged?.(this)
 
         return this
     }

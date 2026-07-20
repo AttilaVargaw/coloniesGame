@@ -33,6 +33,11 @@ export class EntityRegistry {
 
         this.entities.set(entity.id, entity)
 
+        entity.setComponentChangeHandler((e) => {
+            const sceneNode = this.getSceneNode(e)
+            this.nodes.reindexEntity(e, sceneNode)
+        })
+
         const sceneNode = this.getOrCreateSceneNode(entity)
 
         if(parentEntity) {
@@ -65,6 +70,7 @@ export class EntityRegistry {
             for(const descendant of descendants) {
                 this.sceneNodes.delete(descendant.id)
                 this.entities.delete(descendant.id)
+                descendant.setComponentChangeHandler(undefined)
                 this.nodes.removeEntityFromNodes(descendant)
             }
 
@@ -72,6 +78,7 @@ export class EntityRegistry {
         }
 
         this.entities.delete(entity.id)
+        entity.setComponentChangeHandler(undefined)
         this.nodes.removeEntityFromNodes(entity)
 
         this.events.dispatchEvent("entityRemoved", entity)

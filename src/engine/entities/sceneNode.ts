@@ -41,10 +41,7 @@ export class SceneNode {
             return
         }
 
-        this.children.delete(node)
-        node.parent = null
-
-        node.invalidatePositions()
+        node.setParent(null)
     }
 
     getWorldPosition(): [number, number] {

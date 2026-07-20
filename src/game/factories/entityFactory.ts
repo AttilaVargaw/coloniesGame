@@ -125,14 +125,14 @@ export function createSector(engine: World, { x, y, visible }: { x: number, y: n
         }
     }
     ))
-    engine.addEntity(clickArea, sector)
 
     if(visible) {
         sector.addComponent(sectorColor)
-        sector.addComponent(sectorShape)
+            .addComponent(sectorShape)
     }
 
     engine.addEntity(sector)
+    engine.addEntity(clickArea, sector)
 
     return sector
 }

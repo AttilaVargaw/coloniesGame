@@ -3,7 +3,6 @@ import tailwindcss from '@tailwindcss/vite'
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import path from "path";
 import babel from '@rolldown/plugin-babel';
-import { fileURLToPath } from "node:url";
 
 const host = process.env.TAURI_DEV_HOST;
 
