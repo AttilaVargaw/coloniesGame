@@ -37,9 +37,9 @@ export class Game {
         this.engine
             .addSystem(MoveSystem)
             .addSystem(SelectionSystem)
-            .addSystem(CursorSystem)
+            .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
-            .addSystem(ClickableSystem)
+            .addSystem(ClickableSystem, ViewportSystem)
         // .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
         //     if(type === "colony") {
         //         document.body.style.cursor = 'default';

@@ -91,7 +91,7 @@ export class World implements Engine {
         return this.entityRegistry.getSceneNode(entity)
     }
 
-    getSystem<T extends System>(system: new () => T) {
+    getSystem<T extends System>(system: new (...args: any[]) => T) {
         return this.systemRegistry.getSystem(system)
     }
 
@@ -132,13 +132,13 @@ export class World implements Engine {
         return this
     }
 
-    addSystem(system: new () => System) {
-        this.systemRegistry.addSystem(system, this)
+    addSystem(system: new (...args: any[]) => System, ...args: any[]) {
+        this.systemRegistry.addSystem(system, this, ...args.map(cn => this.getSystem(cn)))
 
         return this
     }
 
-    removeSystem(system: new () => System) {
+    removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
 
         return this

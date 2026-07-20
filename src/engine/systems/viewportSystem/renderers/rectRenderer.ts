@@ -9,13 +9,17 @@ import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class RectRenderer extends SystemWithNodes<RectNode> {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
+
     protected filterNodes: ((node: RectNode) => boolean) = (node) => {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
         const margin = Math.max(node.size.width, node.size.height) / 2;
         return isVisible(node.position, camera.visibleBounds, margin);
     };
     protected updateNode(rect: RectNode, _dT?: number): void {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
 
         const ctx = camera.context;
 

@@ -14,10 +14,13 @@ export class ClickEvent extends QueueItem<MouseEvent> {
 }
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
-    protected updateNode(_node: ClickableNode, _dT?: number): void {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
+
+    protected updateNode(_node: ClickableNode, _dt?: number): void {
     }
     private clickQueue?: Queue<ClickEvent>;
-    private viewport?: ViewportSystem;
 
     protected unregisterNodeTypes(): this {
         this.engine?.unregisterNodeType(ClickableNode);
@@ -28,7 +31,6 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     removeFromEngine(): this {
         this.clickQueue = undefined;
-        this.viewport = undefined;
         super.removeFromEngine();
 
         return this
@@ -43,7 +45,8 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             new ClickableNode(
                 entity.getComponent(PositionComponent)!,
                 entity.getComponent(ClickableComponent)!
-            ))
+            )
+        )
 
         //this.engine?.subscribe("entityAdded", this.onUpdateIndices);
 
@@ -56,21 +59,20 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
         this.nodes = engine.getNodeList(ClickableNode);
         this.nodes.sort(sortByDepth)
-        this.viewport = engine.getSystem(ViewportSystem)
 
         return this
     }
 
     update(): void {
-        if(this.nodes.length === 0 || !this.engine || !this.clickQueue?.length || !this.viewport) return;
+        if(this.nodes.length === 0 || !this.engine || !this.clickQueue?.length) return;
 
-        if(this.viewport.consumeDragMoved()) {
+        if(this.viewportSystem.consumeDragMoved()) {
             this.clickQueue.clear()
             return
         }
 
         for(const { data } of this.clickQueue) {
-            const { x, y } = this.viewport.viewport.camera.screenToWorld(data.x, data.y);
+            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node

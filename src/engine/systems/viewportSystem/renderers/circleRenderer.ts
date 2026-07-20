@@ -9,8 +9,12 @@ import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 
 export class CircleRenderer extends SystemWithNodes<CircleNode> {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
+
     protected filterNodes: ((node: CircleNode) => boolean) = (node) => {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
         return isVisible(node.position, camera.visibleBounds, node.radius.radius);
     };
 
@@ -59,7 +63,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
     }
 
     updateNode = (circle: CircleNode) => {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
 
         const ctx = camera.context
 

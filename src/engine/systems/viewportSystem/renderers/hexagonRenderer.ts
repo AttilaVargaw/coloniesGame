@@ -12,13 +12,17 @@ const HEXAGON_SIDES = 6;
 const PIThird = Math.PI / 3;
 
 export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
+
     protected filterNodes: ((node: HexagoneNode) => boolean) = (node) => {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
         return isVisible(node.position, camera.visibleBounds, node.hexagon.radius);
     };
 
     protected updateNode(shape: HexagoneNode, _dT?: number): void {
-        const { camera } = (this.parent as ViewportSystem).viewport;
+        const { camera } = this.viewportSystem.viewport;
 
         const ctx = camera.context
 

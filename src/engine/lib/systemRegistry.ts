@@ -2,22 +2,22 @@ import type { System } from "../systems/system"
 import type { World } from "../core/world"
 
 export class SystemRegistry {
-    private readonly systems: Map<new () => System, System> = new Map()
+    private readonly systems: Map<new (...args: any[]) => System, System> = new Map()
     private readonly subSystems: Map<new () => System, System> = new Map()
 
-    getSystem<T extends System>(system: new () => T) {
+    getSystem<T extends System>(system: new (...args: any[]) => T) {
         return this.systems.get(system) as T
     }
 
-    addSystem(system: new () => System, world: World) {
-        const newSystem = new system()
+    addSystem(system: new (...args: any[]) => System, world: World, ...args: any[]) {
+        const newSystem = new system(...args)
         newSystem.addToEngine(world)
         this.systems.set(system, newSystem)
 
         return this
     }
 
-    removeSystem(system: new () => System) {
+    removeSystem(system: new (...args: any[]) => System) {
         const systemInstance = this.systems.get(system)
         if(systemInstance) {
             systemInstance.removeFromEngine()

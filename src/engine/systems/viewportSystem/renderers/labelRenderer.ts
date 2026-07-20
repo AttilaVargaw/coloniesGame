@@ -9,23 +9,18 @@ import { ViewportSystem } from "../viewportSystem";
 import { ColorComponent } from "@engine/components/colorComponent";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
 
     protected filterNodes: ((node: LabelNode) => boolean) = (node) => {
-        if(!this.parent) {
-            return false;
-        }
-
-        const { viewport: { camera } } = this.parent as ViewportSystem;
+        const { viewport: { camera } } = this.viewportSystem;
 
         return isVisible(node.position, camera.visibleBounds, node.label.size);
     };
 
-    protected updateNode(node: LabelNode, _dT?: number): void {
-        if(!this.parent) {
-            return;
-        }
-
-        const ctx = (this.parent as ViewportSystem).viewport.camera.context;
+    protected updateNode(node: LabelNode, _dt?: number): void {
+        const ctx = this.viewportSystem.viewport.camera.context;
 
         ctx.save();
         node.setColor(ctx);

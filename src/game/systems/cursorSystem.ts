@@ -21,6 +21,10 @@ export class HoverableNode extends PositionNode {
 }
 
 export class CursorSystem extends SystemWithNodes<HoverableNode> {
+    constructor(private readonly viewportSystem: ViewportSystem) {
+        super()
+    }
+
     protected updateNode(_node: HoverableNode, _dT?: number): void {
     }
     removeFromEngine(): this {
@@ -52,7 +56,7 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         if(!mouseMovedCommand.length) return
 
         const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data }) => {
-            const { camera } = this.engine!.getSystem(ViewportSystem)!.viewport
+            const { camera } = this.viewportSystem.viewport
             const { x, y } = camera.screenToWorld(data.x, data.y)
 
             for(const hoverableNode of this.nodes) {

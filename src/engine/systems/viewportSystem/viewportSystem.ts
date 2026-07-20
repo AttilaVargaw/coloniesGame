@@ -79,10 +79,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.nodes = engine.getNodeList(ViewportNode)
 
         this
-            .addSubsystem(new HexagonRenderer)
-            .addSubsystem(new CircleRenderer)
-            .addSubsystem(new RectRenderer)
-            .addSubsystem(new LabelRenderer)
+            .addSubsystem(new HexagonRenderer(this))
+            .addSubsystem(new CircleRenderer(this))
+            .addSubsystem(new RectRenderer(this))
+            .addSubsystem(new LabelRenderer(this))
 
         engine.registerCommandQueue("redraw")
         // .registerCommandQueue("mousedown")

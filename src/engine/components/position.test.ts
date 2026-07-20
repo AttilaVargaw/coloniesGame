@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { PositionComponent } from "@engine/components/position"
 import { Entity } from "@engine/entities/entity"
-import { EntityComponent } from "@engine/entities/entityComponent"
 import { SceneNode } from "@engine/entities/sceneNode"
 
 describe("PositionComponent", () => {

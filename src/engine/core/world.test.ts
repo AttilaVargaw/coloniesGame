@@ -1,10 +1,8 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, } from "vitest"
 import { World } from "./world"
 import { Entity } from "../entities/entity"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import { EntityComponent } from "../entities/entityComponent"
-import { SceneNode } from "../entities/sceneNode"
-import { Queue } from "../lib/commandQueue"
 import { System } from "../systems/system"
 
 class TagComponent extends EntityComponent {
@@ -88,7 +86,7 @@ describe("World", () => {
         const world = makeWorld()
 
         class DummySystem extends System {
-            update() {}
+            update() { }
         }
 
         const ctor = DummySystem as unknown as new () => System
@@ -99,8 +97,8 @@ describe("World", () => {
     it("returns itself from subscribe and unsubscribe for chaining", () => {
         const world = new World()
 
-        expect(world.subscribe("click", () => {})).toBe(world)
-        expect(world.unsubscribe("click", () => {})).toBe(world)
+        expect(world.subscribe("click", () => { })).toBe(world)
+        expect(world.unsubscribe("click", () => { })).toBe(world)
     })
 
     it("returns itself from addCommand and dispatchEvent for chaining", () => {
