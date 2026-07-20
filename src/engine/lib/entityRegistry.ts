@@ -3,8 +3,6 @@ import { SceneNode } from "../entities/sceneNode"
 import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
 import { CommandBus } from "./commandBus"
-import type { World } from "../core/world"
-
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
     private readonly sceneNodes: Map<string, SceneNode> = new Map()
@@ -13,10 +11,6 @@ export class EntityRegistry {
         private readonly nodes: NodeManager,
         private readonly events: EventBus,
         private readonly commands: CommandBus) {
-    }
-
-    setWorld(_world: World) {
-        return this
     }
 
     createEntity(id: string) {
@@ -41,7 +35,7 @@ export class EntityRegistry {
             const parentSceneNode = this.getOrCreateSceneNode(parentEntity)
             sceneNode.setParent(parentSceneNode)
 
-            for (const child of sceneNode.childrenRef) {
+            for(const child of sceneNode.childrenRef) {
                 this.addEntity(child.entity)
             }
         }

@@ -50,7 +50,6 @@ describe("World", () => {
 
     it("does not add the entity to the engine when not explicitly added", () => {
         const world = makeWorld()
-        const entity = world.createEntity(undefined)
 
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
     })
@@ -172,6 +171,7 @@ describe("World", () => {
         const nodes = world.nodes(tagNodeCtor)
 
         expect(nodes).toHaveLength(1)
+        //@ts-ignore
         expect(nodes[0].entity).toBe(entity)
     })
 

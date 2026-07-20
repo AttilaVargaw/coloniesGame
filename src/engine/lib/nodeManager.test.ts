@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, } from "vitest"
 import { NodeManager } from "./nodeManager"
 import { Entity } from "../entities/entity"
 import { SceneNode } from "../entities/sceneNode"

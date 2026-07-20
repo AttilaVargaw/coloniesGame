@@ -284,7 +284,6 @@ describe("World (Engine refactor regression)", () => {
 
     it("unregisters a node type and stops indexing new entities", () => {
         const world = makeWorld()
-        const entity = entityWithTag(world)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
 
         world.unregisterNodeType(tagNodeCtor)

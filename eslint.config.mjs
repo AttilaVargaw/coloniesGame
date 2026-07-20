@@ -39,6 +39,7 @@ export default [
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'tailwindcss/no-custom-classname': 'off',
+      "@typescript-eslint/no-unsafe-function-type": "warn"
     },
     settings: {
       tailwindcss: {

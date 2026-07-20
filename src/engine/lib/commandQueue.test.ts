@@ -1,9 +1,15 @@
 import { describe, it, expect, vi } from "vitest"
 import { Queue, QueueItem } from "./commandQueue"
 
+class QueueItemImplementation<T> extends QueueItem<T> {
+    constructor(data: T) {
+        super(data)
+    }
+}
+
 describe("Queue", () => {
     it("starts empty with no options", () => {
-        const queue = new Queue<number>()
+        const queue = new Queue<any>()
 
         expect(queue.length).toBe(0)
         expect(queue.isEmpty()).toBe(true)
@@ -12,7 +18,7 @@ describe("Queue", () => {
     it("enqueues an item and increments length", () => {
         const queue = new Queue<number>()
 
-        const result = queue.enqueue(new QueueItem(1))
+        const result = queue.enqueue(new QueueItemImplementation(1))
 
         expect(queue.length).toBe(1)
         expect(queue.isEmpty()).toBe(false)
@@ -22,15 +28,15 @@ describe("Queue", () => {
     it("enqueues multiple items via enqueueMany", () => {
         const queue = new Queue<number>()
 
-        queue.enqueueMany([new QueueItem(1), new QueueItem(2), new QueueItem(3)])
+        queue.enqueueMany([new QueueItemImplementation(1), new QueueItemImplementation(2), new QueueItemImplementation(3)])
 
         expect(queue.length).toBe(3)
     })
 
     it("peeks at the first item without removing it", () => {
         const queue = new Queue<number>()
-        queue.enqueue(new QueueItem(10))
-        queue.enqueue(new QueueItem(20))
+        queue.enqueue(new QueueItemImplementation(10))
+        queue.enqueue(new QueueItemImplementation(20))
 
         const first = queue.peek()
 
@@ -45,9 +51,9 @@ describe("Queue", () => {
     })
 
     it("next returns and removes the first item", () => {
-        const queue = new Queue<number>()
-        queue.enqueue(new QueueItem("a"))
-        queue.enqueue(new QueueItem("b"))
+        const queue = new Queue<string>()
+        queue.enqueue(new QueueItemImplementation("a"))
+        queue.enqueue(new QueueItemImplementation("b"))
 
         const item = queue.next()
 
@@ -63,8 +69,8 @@ describe("Queue", () => {
 
     it("clears all items", () => {
         const queue = new Queue<number>()
-        queue.enqueue(new QueueItem(1))
-        queue.enqueue(new QueueItem(2))
+        queue.enqueue(new QueueItemImplementation(1))
+        queue.enqueue(new QueueItemImplementation(2))
 
         const result = queue.clear()
 
@@ -74,9 +80,9 @@ describe("Queue", () => {
     })
 
     it("is iterable", () => {
-        const queue = new Queue<number>()
-        queue.enqueue(new QueueItem("x"))
-        queue.enqueue(new QueueItem("y"))
+        const queue = new Queue<string>()
+        queue.enqueue(new QueueItemImplementation("x"))
+        queue.enqueue(new QueueItemImplementation("y"))
 
         const items = [...queue]
 
@@ -87,9 +93,9 @@ describe("Queue", () => {
         const onOverflow = vi.fn()
         const queue = new Queue<number>({ capacity: 2, onOverflow })
 
-        queue.enqueue(new QueueItem(1))
-        queue.enqueue(new QueueItem(2))
-        queue.enqueue(new QueueItem(3))
+        queue.enqueue(new QueueItemImplementation(1))
+        queue.enqueue(new QueueItemImplementation(2))
+        queue.enqueue(new QueueItemImplementation(3))
 
         expect(queue.length).toBe(2)
         expect(queue.peek()?.data).toBe(2)
@@ -101,7 +107,7 @@ describe("Queue", () => {
         const queue = new Queue<number>()
 
         for(let i = 0; i < 1000; i++) {
-            queue.enqueue(new QueueItem(i))
+            queue.enqueue(new QueueItemImplementation(i))
         }
 
         expect(queue.length).toBe(1000)

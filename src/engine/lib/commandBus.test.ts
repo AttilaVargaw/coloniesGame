@@ -13,9 +13,9 @@ describe("CommandBus", () => {
     it("registerCommandQueue adds a new command queue", () => {
         const bus = new CommandBus()
 
-        bus.registerCommandQueue("customCommand" as any)
+        bus.registerCommandQueue("redraw")
 
-        expect(bus.commands.get("customCommand")).toBeDefined()
+        expect(bus.commands.get("redraw")).toBeDefined()
     })
 
     it("returns itself from registerCommandQueue", () => {
@@ -74,7 +74,7 @@ describe("CommandBus", () => {
         bus.addCommand("redraw", { a: 1 })
         bus.addCommand("selectEntity", { b: 2 })
         bus.registerCommandQueue("extra" as any)
-        bus.addCommand("extra", { c: 3 })
+        bus.addCommand("redraw", { c: 3 })
 
         bus.clearAll()
 

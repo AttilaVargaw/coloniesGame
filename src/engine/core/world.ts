@@ -46,7 +46,6 @@ export class World implements Engine {
         this.eventBus = new EventBus()
         this.commandBus = new CommandBus()
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus, this.commandBus)
-        this.entityRegistry.setWorld(this)
         this.systemRegistry = new SystemRegistry()
     }
 
@@ -113,6 +112,7 @@ export class World implements Engine {
 
     registerNodeType<T extends EntityNode>(
         nodeName: EntityNodeConstructor<T>,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         keys: Set<Function>,
         converter: (entity: Entity) => T) {
         this.nodeManager.registerNodeType(nodeName, keys, converter)
