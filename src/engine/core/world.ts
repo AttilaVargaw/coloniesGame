@@ -90,7 +90,7 @@ export class World implements Engine {
         return this.entityRegistry.getSceneNode(entity)
     }
 
-    getSystem<T extends System>(system: new (...args: any[]) => T) {
+    getSystem<T extends System>(system: new (...args: unknown[]) => T) {
         return this.systemRegistry.getSystem(system)
     }
 
@@ -132,12 +132,14 @@ export class World implements Engine {
         return this
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addSystem(system: new (...args: any[]) => System, ...args: any[]) {
         this.systemRegistry.addSystem(system, this, ...args.map(cn => this.getSystem(cn)))
 
         return this
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
 

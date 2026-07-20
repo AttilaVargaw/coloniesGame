@@ -1,4 +1,3 @@
-import { World } from "@engine/core/world";
 import { Entity } from "@engine/entities/entity";
 import { ClickableComponent } from "@engine/components/clickableComponent";
 import { ColorComponent } from "@engine/components/colorComponent";
@@ -11,12 +10,13 @@ import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel";
 import { SelectionSystem } from "@game/systems/selectionSystem";
 import { Star, Colony } from "../data/types";
 import { IndustryComponent } from "../components/industryComponent";
+import { Engine } from "@/engine/core/engine";
 
 const sectorColor = new ColorComponent("", "grey")
 const sectorShape = new ShapeComponent(6, 40)
 const bodyColor = new ColorComponent("grey")
 
-export function createSpaceship(engine: World, { name }: { name: string }) {
+export function createSpaceship(engine: Engine, { name }: { name: string }) {
     if(!engine) return null
 
     const ship = engine.createEntity()
@@ -50,7 +50,7 @@ export function createSpaceship(engine: World, { name }: { name: string }) {
     return ship
 }
 
-export function createSolarSystem(engine: World, { planets, x, y }: Star, sectors: Map<string, Entity>) {
+export function createSolarSystem(engine: Engine, { planets, x, y }: Star, sectors: Map<string, Entity>) {
     const startPoint = sectors.get([x, y].join(":"))!
     const ret: Entity[] = []
     ret.push(createStar(engine, startPoint)!)
@@ -63,7 +63,7 @@ export function createSolarSystem(engine: World, { planets, x, y }: Star, sector
     return ret
 }
 
-export function createColony(engine: World, { name, population, patronGod }: Colony, parent: Entity) {
+export function createColony(engine: Engine, { name, population, patronGod }: Colony, parent: Entity) {
     if(!engine) return null
 
     const colony = engine.createEntity()
@@ -71,7 +71,7 @@ export function createColony(engine: World, { name, population, patronGod }: Col
     colony.addComponent(new RadiusComponent(20))
 
     if(population) {
-        if (patronGod) {
+        if(patronGod) {
             colony.addModifier(patronGod)
         }
 
@@ -99,7 +99,7 @@ export function createColony(engine: World, { name, population, patronGod }: Col
     return colony
 }
 
-export function createSector(engine: World, { x, y, visible }: { x: number, y: number, visible: boolean }) {
+export function createSector(engine: Engine, { x, y, visible }: { x: number, y: number, visible: boolean }) {
     if(!engine) return null
 
     const sector = engine.createEntity()
@@ -139,7 +139,7 @@ export function createSector(engine: World, { x, y, visible }: { x: number, y: n
     return sector
 }
 
-export function createStar(engine: World, parent: Entity) {
+export function createStar(engine: Engine, parent: Entity) {
     if(!engine) return null
 
     const star = engine.createEntity()
@@ -152,7 +152,7 @@ export function createStar(engine: World, parent: Entity) {
     return star
 }
 
-export function createBody(engine: World, { name, radius }: { x: number, y: number, name: string, radius: number }, parent: Entity) {
+export function createBody(engine: Engine, { name, radius }: { x: number, y: number, name: string, radius: number }, parent: Entity) {
     if(!engine) return null
 
     const body = engine.createEntity()

@@ -1,17 +1,17 @@
-import { World } from "@engine/core/world";
 import { PositionComponent } from "@engine/components/position";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PathComponent } from "../components/pathComponent";
 import { createSector, createSolarSystem, createSpaceship } from "./entityFactory";
 import { solarSystems } from "../data/gameData";
 import { StartState } from "../data/types";
+import { Engine } from "@/engine/core/engine";
 
 const a = 2 * Math.PI / 6;
 const r = 0.4;
 
-export function init(engine: World, mapSize: number) {
-    const viewPort = engine.getSystem(ViewportSystem)
-    viewPort.sortOnEveryEntityAddition = false
+export function init(engine: Engine, mapSize: number) {
+    const viewportSystem = engine.getSystem(ViewportSystem)
+    viewportSystem.sortOnEveryEntityAddition = false
 
     for(let col = 0, y = r, j = 0; y + r * Math.cos(a) < mapSize; y += 2 ** ((j + 1) % 2) * r * Math.sin(a), j = 0, ++col) {
         for(let row = 0, x = r; x + r * (1 + Math.cos(a)) < mapSize; x += r * (1 + Math.cos(a)), y += (-1) ** j++ * r * Math.sin(a), row++) {
@@ -79,5 +79,5 @@ export function init(engine: World, mapSize: number) {
     const sectorNode = engine.getSceneNode(sector0_10)!
     minervaNode.setParent(sectorNode)
 
-    viewPort.sortOnEveryEntityAddition = true
+    viewportSystem.sortOnEveryEntityAddition = true
 }

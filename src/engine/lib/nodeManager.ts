@@ -4,6 +4,7 @@ import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 
 export class NodeManager {
     private readonly _nodes = new Map<typeof EntityNode, EntityNode[]>()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
     private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => EntityNode> = new Map()
 
@@ -19,6 +20,7 @@ export class NodeManager {
 
     registerNodeType<T extends EntityNode>(
         nodeName: EntityNodeConstructor<T>,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         keys: Set<Function>,
         converter: (entity: Entity) => T) {
         if(this._nodes.has(nodeName)) {
@@ -41,6 +43,7 @@ export class NodeManager {
     }
 
     addEntityToNodes(entity: Entity, sceneNode?: SceneNode) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         const entityComponentConstructors: Set<Function> = new Set()
 
         for(const component of entity.components.values()) {
@@ -72,6 +75,7 @@ export class NodeManager {
     }
 
     removeEntityFromNodes(entity: Entity, sceneNode?: SceneNode) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         const entityComponentConstructors: Set<Function> = new Set()
 
         for(const component of entity.components.values()) {

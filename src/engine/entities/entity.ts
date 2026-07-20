@@ -2,6 +2,7 @@ import type { Modifier } from "../modifier"
 import { EntityComponent } from "./entityComponent"
 
 export class Entity {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _component = new Map<Function, EntityComponent>()
     private readonly _modifiers: Modifier[] = []
     private onComponentChanged?: (entity: Entity) => void
@@ -43,6 +44,7 @@ export class Entity {
         return this
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     removeComponent(component: new (...args: any[]) => EntityComponent) {
         this._component.delete(component);
 
@@ -51,6 +53,7 @@ export class Entity {
         return this
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getComponent<T extends new (...args: any[]) => EntityComponent>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
     }

@@ -2,14 +2,14 @@ import type { System } from "../systems/system"
 import type { World } from "../core/world"
 
 export class SystemRegistry {
-    private readonly systems: Map<new (...args: any[]) => System, System> = new Map()
+    private readonly systems: Map<new (...args: unknown[]) => System, System> = new Map()
     private readonly subSystems: Map<new () => System, System> = new Map()
 
-    getSystem<T extends System>(system: new (...args: any[]) => T) {
+    getSystem<T extends System>(system: new (...args: unknown[]) => T) {
         return this.systems.get(system) as T
     }
 
-    addSystem(system: new (...args: any[]) => System, world: World, ...args: any[]) {
+    addSystem(system: new (...args: unknown[]) => System, world: World, ...args: unknown[]) {
         const newSystem = new system(...args)
         newSystem.addToEngine(world)
         this.systems.set(system, newSystem)
@@ -17,7 +17,7 @@ export class SystemRegistry {
         return this
     }
 
-    removeSystem(system: new (...args: any[]) => System) {
+    removeSystem(system: new (...args: unknown[]) => System) {
         const systemInstance = this.systems.get(system)
         if(systemInstance) {
             systemInstance.removeFromEngine()
