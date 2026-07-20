@@ -17,7 +17,7 @@ function App() {
   useEffect(() => {
     if(!map.current) return
 
-    const gameInstance = new Game(map.current.getContext("2d", renderingContextSettings)!, solarSystems)
+    const gameInstance = new Game(map.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, solarSystems)
 
     const updateDate = () => {
       setDate(gameInstance.engine.getNodeList(DateNode)[0].date.ms)
@@ -45,8 +45,8 @@ function App() {
 
     document.addEventListener("keydown", eventListener)
     window.addEventListener("mouseup", onMouseUp)
-    gameInstance.engine?.subscribe("updateDone", updateDate)
-      .subscribe("selectionChanged", onOpenInfoWindow)
+    gameInstance.engine?.subscribe("updateDone", updateDate as (data: unknown) => void)
+      .subscribe("selectionChanged", onOpenInfoWindow as (data: unknown) => void)
 
     setGame(gameInstance)
 
@@ -54,8 +54,8 @@ function App() {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      gameInstance.engine.unsubscribe("updateDone", updateDate)
-      gameInstance.engine.unsubscribe("selectionChanged", onOpenInfoWindow)
+      gameInstance.engine.unsubscribe("updateDone", updateDate as (data: unknown) => void)
+      gameInstance.engine.unsubscribe("selectionChanged", onOpenInfoWindow as (data: unknown) => void)
 
       gameInstance.destruct()
 

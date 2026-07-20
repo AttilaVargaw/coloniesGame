@@ -8,7 +8,6 @@ import type { World } from "../core/world"
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
     private readonly sceneNodes: Map<string, SceneNode> = new Map()
-    private world?: World
 
     constructor(
         private readonly nodes: NodeManager,
@@ -16,9 +15,7 @@ export class EntityRegistry {
         private readonly commands: CommandBus) {
     }
 
-    setWorld(world: World) {
-        this.world = world
-
+    setWorld(_world: World) {
         return this
     }
 

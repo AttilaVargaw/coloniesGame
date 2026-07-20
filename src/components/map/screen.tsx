@@ -8,11 +8,17 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     return { x, y, event }
 }
 
-export const renderingContextSettings = {
+interface RenderingContextSettings {
+    alpha: boolean
+    desynchronized: boolean
+    colorSpace: string
+}
+
+export const renderingContextSettings: RenderingContextSettings = {
     alpha: false,
     desynchronized: true,
     colorSpace: "srgb",
-} as CanvasRenderingContext2DSettings
+}
 
 export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: { x: number, y: number, event: MouseEvent }) => void,
@@ -47,7 +53,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }
         return () => {
             window.removeEventListener('resize', resize)
         }
-    }, [triggerRedraw])
+    }, [ref, triggerRedraw])
 
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {

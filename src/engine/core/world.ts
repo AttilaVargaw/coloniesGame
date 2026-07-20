@@ -95,13 +95,13 @@ export class World implements Engine {
         return this.systemRegistry.getSystem(system)
     }
 
-    subscribe(event: EngineEvents, callback: (data: any) => void) {
+    subscribe(event: EngineEvents, callback: (data: unknown) => void) {
         this.eventBus.subscribe(event, callback)
 
         return this
     }
 
-    unsubscribe(event: EngineEvents, callback: (data: any) => void) {
+    unsubscribe(event: EngineEvents, callback: (data: unknown) => void) {
         this.eventBus.unsubscribe(event, callback)
 
         return this
@@ -166,7 +166,7 @@ export class World implements Engine {
         this.eventBus.dispatchEvent("updateDone", dt)
     }
 
-    getNodeList<T extends Object>(node: EntityNodeConstructor<T>) {
+    getNodeList<T extends object>(node: EntityNodeConstructor<T>) {
         return this.nodeManager.getNodeList(node)
     }
 
@@ -177,7 +177,7 @@ export class World implements Engine {
         return this
     }
 
-    addCommand(command: Commands, data: any) {
+    addCommand(command: Commands, data: unknown) {
         this.commandBus.addCommand(command, data)
 
         return this
@@ -187,7 +187,7 @@ export class World implements Engine {
         return this.commandBus.getCommandQueue(type)
     }
 
-    dispatchEvent(name: EngineEvents, data: any) {
+    dispatchEvent(name: EngineEvents, data: unknown) {
         this.eventBus.dispatchEvent(name, data)
 
         return this

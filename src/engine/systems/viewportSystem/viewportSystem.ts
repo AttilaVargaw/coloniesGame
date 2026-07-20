@@ -12,7 +12,7 @@ import { ViewportInputHandler } from "./viewInputHandler";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    public redrawQueue?: Queue<{}>
+    public redrawQueue?: Queue<unknown>
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 

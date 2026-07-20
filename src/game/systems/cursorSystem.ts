@@ -56,8 +56,9 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         if(!mouseMovedCommand.length) return
 
         const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data }) => {
+            const mouseData = data as { x: number; y: number }
             const { camera } = this.viewportSystem.viewport
-            const { x, y } = camera.screenToWorld(data.x, data.y)
+            const { x, y } = camera.screenToWorld(mouseData.x, mouseData.y)
 
             for(const hoverableNode of this.nodes) {
                 const { hoverable: { size, cursor } } = hoverableNode

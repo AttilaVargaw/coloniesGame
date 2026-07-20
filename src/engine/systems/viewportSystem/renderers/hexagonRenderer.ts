@@ -38,7 +38,11 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
             const x = radius * Math.sin(rotation) + translatedPosX;
             const y = radius * Math.cos(rotation) + translatedPosY;
 
-            (i === 0) ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            if (i === 0) {
+                ctx.moveTo(x, y)
+            } else {
+                ctx.lineTo(x, y)
+            }
         }
         ctx.closePath();
         shape.draw(ctx);

@@ -38,15 +38,17 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'tailwindcss/no-custom-classname': 'off',
     },
     settings: {
       tailwindcss: {
         cssConfigPath: './src/App.css',
+        callees: ['cn', 'clsx'],
       },
       react: { version: 'detect' },
     },
   },
   {
-    ignores: ['dist/**', '.vite/**', 'src-tauri/**', 'coverage/**'],
+    ignores: ['dist/**', '.vite/**', 'src-tauri/**', 'coverage/**', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
   },
 ]

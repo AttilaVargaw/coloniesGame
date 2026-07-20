@@ -19,7 +19,7 @@ export function name(className: string): ClassDecorator {
  * getName(type); // 'Customer'
  * @param type
  */
-export function getName(type: Function): string {
+export function getName(type: abstract new (...args: unknown[]) => unknown): string {
     return Reflect.getMetadata(nameKey, type);
 }
 
@@ -29,6 +29,6 @@ export function getName(type: Function): string {
  * getInstanceName(instance); // 'Customer'
  * @param instance
  */
-export function getInstanceName(instance: Object): string {
+export function getInstanceName(instance: object): string {
     return Reflect.getMetadata(nameKey, instance.constructor);
 }

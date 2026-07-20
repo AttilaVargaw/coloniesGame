@@ -20,7 +20,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     protected updateNode(_node: ClickableNode, _dt?: number): void {
     }
-    private clickQueue?: Queue<ClickEvent>;
+    private clickQueue?: Queue<unknown>
 
     protected unregisterNodeTypes(): this {
         this.engine?.unregisterNodeType(ClickableNode);
@@ -72,7 +72,8 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         }
 
         for(const { data } of this.clickQueue) {
-            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
+            const clickData = data as { event: MouseEvent; x: number; y: number }
+            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(clickData.x, clickData.y);
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
@@ -87,7 +88,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                     && correctedPositionX + halfX > x
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
-                    onClick({ target: entity!, event: data.event })
+                    onClick({ target: entity!, event: clickData.event })
                 }
             }
         }

@@ -1,5 +1,5 @@
 
-export type CommandHandler = (data: any) => void
+export type CommandHandler = (data: unknown) => void
 
 export type QueueOptions<Data> = {
     capacity?: number

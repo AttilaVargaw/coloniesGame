@@ -102,12 +102,14 @@ export class ViewportInputHandler {
         const mouseMovedArray = this.viewportSystem.engineRef.events.get("mouseMoved")!
 
         for(const { data } of mouseMovedArray) {
-            this.pointer = { x: data.x, y: data.y }
+            const mouseData = data as { x: number; y: number }
+            this.pointer = { x: mouseData.x, y: mouseData.y }
         }
 
         for(const { data } of mousedownArray) {
             this.isDragging = true
-            this.lastPointer = { x: data.x, y: data.y }
+            const mouseData = data as { x: number; y: number }
+            this.lastPointer = { x: mouseData.x, y: mouseData.y }
             this.dragMoved = false
             document.body.style.cursor = "grabbing"
         }
@@ -115,14 +117,15 @@ export class ViewportInputHandler {
 
         if(this.isDragging && this.lastPointer) {
             for(const { data } of mouseMovedArray) {
-                const dx = data.x - this.lastPointer.x
-                const dy = data.y - this.lastPointer.y
+                const mouseData = data as { x: number; y: number }
+                const dx = mouseData.x - this.lastPointer.x
+                const dy = mouseData.y - this.lastPointer.y
                 if(dx || dy) {
                     camera.panByPixels(dx, dy)
                     if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
                         this.dragMoved = true
                     }
-                    this.lastPointer = { x: data.x, y: data.y }
+                    this.lastPointer = { x: mouseData.x, y: mouseData.y }
                     this.viewportSystem.redrawQueue!.enqueue({ data: {} })
                 }
             }

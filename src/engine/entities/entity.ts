@@ -18,7 +18,7 @@ export class Entity {
         return this._modifiers
     }
 
-    setComponentChangeHandler(handler: (entity: Entity) => void) {
+    setComponentChangeHandler(handler: ((entity: Entity) => void) | undefined) {
         this.onComponentChanged = handler
     }
 
@@ -43,7 +43,7 @@ export class Entity {
         return this
     }
 
-    removeComponent(component: new (...args: any) => EntityComponent) {
+    removeComponent(component: new (...args: any[]) => EntityComponent) {
         this._component.delete(component);
 
         this.onComponentChanged?.(this)
@@ -51,7 +51,7 @@ export class Entity {
         return this
     }
 
-    getComponent<T extends new (...args: any) => EntityComponent>(component: T) {
+    getComponent<T extends new (...args: any[]) => EntityComponent>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
     }
 }

@@ -13,7 +13,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     }
 
     removeFromEngine(): this {
-        this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged)
+        this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged as (data: unknown) => void)
         this.unselect()
         this.unTarget()
         this.engine?.unregisterNodeType(SelectionNode)

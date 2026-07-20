@@ -8,7 +8,7 @@ export class SceneNode {
 
     constructor(entity: Entity) {
         this.entity = entity;
-        (entity as any).__sceneNode = this
+        (entity as { __sceneNode?: SceneNode }).__sceneNode = this
     }
 
     get parentRef(): SceneNode | null {

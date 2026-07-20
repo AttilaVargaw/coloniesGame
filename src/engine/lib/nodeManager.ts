@@ -32,7 +32,7 @@ export class NodeManager {
         return this
     }
 
-    getNodeList<T extends Object>(node: EntityNodeConstructor<T>) {
+    getNodeList<T extends object>(node: EntityNodeConstructor<T>) {
         if(!this._nodes.has(node)) {
             throw new Error(`Node ${node} does not exist`)
         }

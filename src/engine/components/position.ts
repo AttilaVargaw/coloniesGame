@@ -21,7 +21,7 @@ export class PositionComponent extends EntityComponent implements WorldPosition 
             return [this.absoluteX, this.absoluteY];
         }
 
-        const sceneNode = (this.entity as any)?.__sceneNode as SceneNode | undefined
+        const sceneNode = (this.entity as { __sceneNode?: SceneNode }).__sceneNode as SceneNode | undefined
         const parentPosition = sceneNode?.parentRef?.entity.getComponent(PositionComponent)
 
         if(!parentPosition) {

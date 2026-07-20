@@ -15,7 +15,11 @@ export class RenderableNode extends PositionNode {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        this.color.stroke && ctx.stroke();
-        this.color.fill && ctx.fill();
+        if (this.color.stroke) {
+            ctx.stroke();
+        }
+        if (this.color.fill) {
+            ctx.fill();
+        }
     }
 }

@@ -2,7 +2,7 @@ import { Queue, QueueItem } from "./commandQueue"
 import type { Commands } from "../core/world"
 
 export class CommandBus {
-    readonly commands: Map<Commands, Queue<any>> = new Map([
+    readonly commands: Map<Commands, Queue<unknown>> = new Map([
         ["redraw", new Queue()],
         ["selectEntity", new Queue()],
     ])
@@ -19,7 +19,7 @@ export class CommandBus {
         return this
     }
 
-    addCommand(command: Commands, data: any) {
+    addCommand(command: Commands, data: unknown) {
         this.commands.get(command)?.enqueue({ data })
 
         return this

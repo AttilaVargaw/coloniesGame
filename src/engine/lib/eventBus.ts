@@ -2,7 +2,7 @@ import { Queue, QueueItem } from "./commandQueue"
 import type { EngineEvents } from "../core/world"
 
 export class EventBus {
-    readonly events: Map<EngineEvents, Queue<any>> = new Map([
+    readonly events: Map<EngineEvents, Queue<unknown>> = new Map([
         ["updateDone", new Queue()],
         ["entityAdded", new Queue()],
         ["updateBegin", new Queue()],
@@ -19,9 +19,9 @@ export class EventBus {
         ["componentRemoved", new Queue()],
     ])
 
-    private readonly eventHandlers = new Map<string, Set<(data: any) => void>>()
+    private readonly eventHandlers = new Map<string, Set<(data: unknown) => void>>()
 
-    subscribe(event: EngineEvents, callback: (data: any) => void) {
+    subscribe(event: EngineEvents, callback: (data: unknown) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
 
@@ -33,13 +33,13 @@ export class EventBus {
         return this
     }
 
-    unsubscribe(event: EngineEvents, callback: (data: any) => void) {
+    unsubscribe(event: EngineEvents, callback: (data: unknown) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
         return this
     }
 
-    dispatchEvent(name: EngineEvents, data: any) {
+    dispatchEvent(name: EngineEvents, data: unknown) {
         this.events.get(name)?.enqueue({ data })
 
         return this

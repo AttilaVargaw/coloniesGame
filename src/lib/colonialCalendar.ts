@@ -1,21 +1,30 @@
-let index = 0
 let ms = 0
 
 export const dayMs = 1000 * 60 * 60 * 24
 export const rDayMs = 1 / dayMs
 
-export const months = new Map([
-    [index++, { name: "Martius", days: 31, ms }],
-    [index++, { name: "Aprilis", days: 30, ms: ms += dayMs * 30 }],
-    [index++, { name: "Maius", days: 31, ms: ms += dayMs * 31 }],
-    [index++, { name: "Iunius", days: 30, ms: ms += dayMs * 30 }],
-    [index++, { name: "Quntilis", days: 31, ms: ms += dayMs * 31 }],
-    [index++, { name: "Sextilis", days: 30, ms: ms += dayMs * 30 }],
-    [index++, { name: "September", days: 30, ms: ms += dayMs * 30 }],
-    [index++, { name: "October", days: 31, ms: ms += dayMs * 31 }],
-    [index++, { name: "November", days: 30, ms: ms += dayMs * 30 }],
-    [index++, { name: "December", days: 30, ms: ms += dayMs * 30 }],
-] as const)
+const monthsList: { name: string; days: number; ms: number }[] = []
+monthsList.push({ name: "Martius", days: 31, ms })
+ms += dayMs * 31
+monthsList.push({ name: "Aprilis", days: 30, ms })
+ms += dayMs * 30
+monthsList.push({ name: "Maius", days: 31, ms })
+ms += dayMs * 31
+monthsList.push({ name: "Iunius", days: 30, ms })
+ms += dayMs * 30
+monthsList.push({ name: "Quntilis", days: 31, ms })
+ms += dayMs * 31
+monthsList.push({ name: "Sextilis", days: 30, ms })
+ms += dayMs * 30
+monthsList.push({ name: "September", days: 30, ms })
+ms += dayMs * 30
+monthsList.push({ name: "October", days: 31, ms })
+ms += dayMs * 31
+monthsList.push({ name: "November", days: 30, ms })
+ms += dayMs * 30
+monthsList.push({ name: "December", days: 30, ms })
+
+export const months = new Map(monthsList.map((m, i) => [i, m])) as ReadonlyMap<number, { name: string; days: number; ms: number }>
 
 const monthsArr = [...months.values()]
 
@@ -40,10 +49,10 @@ function getMonthDay(ms: number) {
 }
 
 export function ColonialDate(ms: number) {
-    let date = ms
+    const date = ms
 
     return {
-        ms: date,
+        get ms() { return date },
         get day() { return Math.floor(getMonthDay(date) + 1) },
         get month() { return getMonthIndex(date) + 1 },
         get year() { return Math.floor(getYear(date)) + 1 },

@@ -175,11 +175,10 @@ export default class Camera {
         };
     }
 
-    public screenToWorld(x: number, y: number, obj?: any) {
-        obj = obj || {};
+    public screenToWorld(x: number, y: number, obj: { x: number; y: number } = { x: 0, y: 0 }) {
         obj.x = (x / this.viewport.scale[0]) + this.viewport.left;
         obj.y = (y / this.viewport.scale[1]) + this.viewport.top;
-        return obj as { x: number, y: number };
+        return obj
     }
 
     /**
@@ -190,8 +189,7 @@ export default class Camera {
      * @param {obj can supply an object to be populated with the x/y} obj 
      * @returns 
      */
-    public worldToScreen(x: number, y: number, obj?: any) {
-        obj = obj || {};
+    public worldToScreen(x: number, y: number, obj: { x: number; y: number } = { x: 0, y: 0 }) {
         obj.x = (x - this.viewport.left) * (this.viewport.scale[0]);
         obj.y = (y - this.viewport.top) * (this.viewport.scale[1]);
         return obj;

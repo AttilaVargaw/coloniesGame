@@ -71,7 +71,9 @@ export function createColony(engine: World, { name, population, patronGod }: Col
     colony.addComponent(new RadiusComponent(20))
 
     if(population) {
-        patronGod && colony.addModifier(patronGod)
+        if (patronGod) {
+            colony.addModifier(patronGod)
+        }
 
         colony.addComponent(new ColorComponent("green"))
             .addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
