@@ -30,6 +30,7 @@ export type EngineEvents =
 export type Commands =
     "redraw"
     | "selectEntity"
+    | "setProductionRate"
 
 export type CommandQueueItem = Queue<Commands>
 export type EventQueueItem = Queue<EngineEvents>
@@ -166,6 +167,7 @@ export class World implements Engine {
         this.systemRegistry.update(dt)
 
         this.eventBus.dispatchEvent("updateDone", dt)
+        this.eventBus.processEventHandler("updateDone")
     }
 
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {

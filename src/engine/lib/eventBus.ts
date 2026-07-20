@@ -21,6 +21,23 @@ export class EventBus {
 
     private readonly eventHandlers = new Map<string, Set<(data: unknown) => void>>()
 
+    processEventHandler(event: EngineEvents) {
+        const handlers = this.eventHandlers.get(event)
+        const events = this.events.get(event)
+
+        if(!handlers?.size || !events?.length) {
+            return
+        }
+
+        for(const eventItem of events) {
+            for(const handler of handlers) {
+                handler(eventItem.data)
+            }
+        }
+
+        events.clear()
+    }
+
     subscribe(event: EngineEvents, callback: (data: unknown) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
