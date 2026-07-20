@@ -1,10 +1,10 @@
-import { LabelComponent } from "@/ems/components/label";
-import { Entity } from "@/ems/entities/entity";
+import { LabelComponent } from "@engine/components/label";
+import { Entity } from "@engine/entities/entity";
 
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, Dialog } from "../ui/dialog";
-import { IndustryComponent } from "@/ems/components/industryComponent";
+import { IndustryComponent } from "@game/components/industryComponent";
 import { Slider } from "../ui/slider";
-import { InfoComponent } from "@/ems/components/infoComponent";
+import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
 
 export function ColoniesInforWindow({ entity, setIsOpen }: { entity?: Entity, setIsOpen: (isOpen: boolean) => void }) {

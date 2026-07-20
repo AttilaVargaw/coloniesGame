@@ -4,6 +4,18 @@
       "@/*": [
         "./src/*"
       ],
+      "@engine/*": [
+        "./src/engine/*"
+      ],
+      "@game/*": [
+        "./src/game/*"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ]
     },
     "target": "esnext",
     "useDefineForClassFields": true,

@@ -2,11 +2,11 @@ import "./App.css";
 import { renderingContextSettings, Screen } from './components/map/screen';
 import { useEffect, useRef, useState } from 'react';
 import { Header } from "./components/header/header";
-import { Entity } from "./ems/entities/entity";
+import { Entity } from "@engine/entities/entity";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
-import { solarSystems, } from "./gameData";
-import { Game } from "./game";
-import { DateNode } from "./ems/systems/DateNode";
+import { solarSystems, } from "@game/data/gameData";
+import { Game } from "@game/game";
+import { DateNode } from "@engine/systems/DateNode";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);

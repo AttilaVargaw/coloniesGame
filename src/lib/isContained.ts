@@ -1,5 +1,5 @@
-import { PositionComponent, WorldPosition } from "@/ems/components/position"
-import { SizeComponent } from "@/ems/components/sizeComponent"
+import { PositionComponent, WorldPosition } from "@engine/components/position"
+import { SizeComponent } from "@engine/components/sizeComponent"
 
 export function isContained(node: WorldPosition, { position, size: { height, width } }: { position: PositionComponent, size: SizeComponent }) {
     const [correctedPositionX, correctedPositionY] = position.getAbsolute()

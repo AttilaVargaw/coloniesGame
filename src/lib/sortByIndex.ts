@@ -1,5 +1,5 @@
-import { PositionNode } from "@/ems/systems/viewportSystem/positionNode";
+import { PositionNode } from "@engine/systems/viewportSystem/positionNode";
 
-export function shortByDepth(a: PositionNode, b: PositionNode) {
+export function sortByDepth(a: PositionNode, b: PositionNode) {
     return a.position.z - b.position.z
 }

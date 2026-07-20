@@ -15,6 +15,10 @@ export default defineConfig(async () => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@engine": path.resolve(__dirname, "./src/engine"),
+      "@game": path.resolve(__dirname, "./src/game"),
+      "@lib": path.resolve(__dirname, "./src/lib"),
+      "@components": path.resolve(__dirname, "./src/components"),
     },
   },
   oxc: {

@@ -1,4 +1,4 @@
-import { InfoComponent } from "@/ems/components/infoComponent";
+import { InfoComponent } from "@engine/components/infoComponent";
 import { Badge } from "../ui/badge";
 import { TooltipTrigger, TooltipContent, Tooltip } from "../ui/tooltip";
 
