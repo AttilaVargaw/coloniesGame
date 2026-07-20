@@ -51,10 +51,13 @@ export function init(engine: World, mapSize: number) {
                 nextUp.neighbours.prevDown = pathComponent
             }
 
-            const sector = createSector(engine, { x: y, y: x, visible: true })!.addChild(engine.createEntity()
-                .addComponent(new PositionComponent(-45, 0, -2))
-            )
-                .addComponent(pathComponent)
+            const sector = createSector(engine, { x: y, y: x, visible: true })!
+
+            const label = engine.createEntity()
+            label.addComponent(new PositionComponent(-45, 0, -2))
+            engine.addEntity(label, sector)
+
+            sector.addComponent(pathComponent)
 
             StartState.map.sectors.set(axialCord.join(":"), sector)
             engine.addEntity(sector)
@@ -71,8 +74,10 @@ export function init(engine: World, mapSize: number) {
 
     const minerva = createSpaceship(engine, { name: "Minerva" })!
 
-    StartState.map.sectors.get("0:10")!.addChild(minerva)
-    engine.addEntity(minerva)
+    const sector0_10 = StartState.map.sectors.get("0:10")!
+    const minervaNode = engine.getSceneNode(minerva)!
+    const sectorNode = engine.getSceneNode(sector0_10)!
+    minervaNode.setParent(sectorNode)
 
     viewPort.sortOnEveryEntityAddition = true
 }

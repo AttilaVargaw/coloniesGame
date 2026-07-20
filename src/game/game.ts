@@ -25,14 +25,21 @@ export class Game {
             .addSystem(DateSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
-            .addEntity(this.engine.createEntity()
-                .addComponent(new ViewportComponent(camera)))
+
+        const viewportEntity = this.engine.createEntity()
+        viewportEntity.addComponent(new ViewportComponent(camera))
+        this.engine.addEntity(viewportEntity)
+
+        const dateEntity = this.engine.createEntity()
+        dateEntity.addComponent(new DateComponent(0))
+        this.engine.addEntity(dateEntity)
+
+        this.engine
             .addSystem(MoveSystem)
             .addSystem(SelectionSystem)
             .addSystem(CursorSystem)
             .addSystem(MapSystem)
             .addSystem(ClickableSystem)
-            .addEntity(this.engine.createEntity().addComponent(new DateComponent(0)))
         // .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
         //     if(type === "colony") {
         //         document.body.style.cursor = 'default';

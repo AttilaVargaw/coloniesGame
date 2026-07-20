@@ -19,30 +19,35 @@ const bodyColor = new ColorComponent("grey")
 export function createSpaceship(engine: World, { name }: { name: string }) {
     if(!engine) return null
 
-    const newSpaceship = engine.createEntity()
+    const ship = engine.createEntity()
+    ship.addComponent(new PositionComponent(0, 0))
+    ship.addComponent(new JumpDriveComponent())
+    ship.addComponent(new SensorSuiteComponent())
+    ship.addComponent(new ColorComponent("red"))
+    ship.addComponent(new RadiusComponent(10))
+    engine.addEntity(ship)
 
-    return newSpaceship
-        .addComponent(new PositionComponent(0, 0))
-        .addComponent(new JumpDriveComponent())
-        .addComponent(new SensorSuiteComponent())
-        .addComponent(new ColorComponent("red"))
-        .addComponent(new RadiusComponent(10))
-        .addChild(engine.createEntity()
-            .addComponent(new PositionComponent(0, 0, -1))
-            .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey } }) => {
-                const selectionSystem = engine.getSystem(SelectionSystem)
+    const clickArea = engine.createEntity()
+    clickArea.addComponent(new PositionComponent(0, 0, -1))
+    clickArea.addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey } }) => {
+        const selectionSystem = engine.getSystem(SelectionSystem)
+        const targetSceneNode = engine.getSceneNode(target)!
 
-                if(shiftKey) {
-                    selectionSystem?.onTargetChanged(target.parent!)
-                } else {
-                    selectionSystem?.onSelectionChanged({ entity: target.parent!, type: "ship" })
-                }
-            })))
-        .addChild(
-            engine.createEntity()
-                .addComponent(new LabelComponent(name, 18))
-                .addComponent(new ColorComponent("red"))
-                .addComponent(new PositionComponent(0, 0, 0)))
+        if(shiftKey) {
+            selectionSystem?.onTargetChanged(targetSceneNode.parentRef!.entity)
+        } else {
+            selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
+        }
+    }))
+    engine.addEntity(clickArea, ship)
+
+    const label = engine.createEntity()
+    label.addComponent(new LabelComponent(name, 18))
+    label.addComponent(new ColorComponent("red"))
+    label.addComponent(new PositionComponent(0, 0, 0))
+    engine.addEntity(label, ship)
+
+    return ship
 }
 
 export function createSolarSystem(engine: World, { planets, x, y }: Star, sectors: Map<string, Entity>) {
@@ -61,65 +66,72 @@ export function createSolarSystem(engine: World, { planets, x, y }: Star, sector
 export function createColony(engine: World, { name, population, patronGod }: Colony, parent: Entity) {
     if(!engine) return null
 
-    const ret = engine.createEntity()
-        .addComponent(new PositionComponent(0, 0, 0))
-        .addComponent(new RadiusComponent(20))
-        .setParent(parent)
+    const colony = engine.createEntity()
+    colony.addComponent(new PositionComponent(0, 0, 0))
+    colony.addComponent(new RadiusComponent(20))
+    engine.addEntity(colony, parent)
 
     if(population) {
-        patronGod && ret.addModifier(patronGod)
-        ret.addComponent(new ColorComponent("green"))
+        patronGod && colony.addModifier(patronGod)
+        colony.addComponent(new ColorComponent("green"))
             .addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
             .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
                 if(!engine) {
                     return
                 }
 
-                engine.dispatchEvent("selectionChanged", { data: ret, type: "colony" })
+                engine.dispatchEvent("selectionChanged", { data: colony, type: "colony" })
             })).addComponent(new IndustryComponent(population, 80, population, 1))
     } else {
-        ret.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
+        colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
             .addComponent(bodyColor)
     }
 
-    return ret.addChild(
-        engine.createEntity()
-            .addComponent(new LabelComponent(name, 18))
-            .addComponent(new ColorComponent("white"))
-            .addComponent(new PositionComponent(0, 0, 0)))
+    const label = engine.createEntity()
+    label.addComponent(new LabelComponent(name, 18))
+    label.addComponent(new ColorComponent("white"))
+    label.addComponent(new PositionComponent(0, 0, 0))
+    engine.addEntity(label, colony)
+
+    return colony
 }
 
 export function createSector(engine: World, { x, y, visible }: { x: number, y: number, visible: boolean }) {
     if(!engine) return null
 
     const sector = engine.createEntity()
-        .addComponent(new PositionComponent((x * 100), (y * 100)))
-        .addChild(engine.createEntity()
-            .addComponent(new PositionComponent(0, 0, -1))
-            .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, event: { shiftKey } }) => {
-                const selectionSystem = engine.getSystem(SelectionSystem)!
-                if(shiftKey) {
-                    const selection = selectionSystem.currentSelection()
+    sector.addComponent(new PositionComponent((x * 100), (y * 100)))
 
-                    if(selection) {
-                        selectionSystem.onTargetChanged(target.parent!)
-                        selection.getComponent(JumpDriveComponent)!.target = target
-                    }
-                } else {
-                    if(target.children.size) {
-                        return
-                    }
-                    selectionSystem.unselect()
-                    selectionSystem.unTarget()
-                }
+    const clickArea = engine.createEntity()
+    clickArea.addComponent(new PositionComponent(0, 0, -1))
+    clickArea.addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, event: { shiftKey } }) => {
+        const selectionSystem = engine.getSystem(SelectionSystem)!
+        const targetSceneNode = engine.getSceneNode(target)!
+
+        if(shiftKey) {
+            const selection = selectionSystem.currentSelection()
+
+            if(selection) {
+                selectionSystem.onTargetChanged(targetSceneNode.parentRef!.entity)
+                selection.getComponent(JumpDriveComponent)!.target = target
             }
-            ))
-        )
+        } else {
+            if(targetSceneNode.childrenRef.size) {
+                return
+            }
+            selectionSystem.unselect()
+            selectionSystem.unTarget()
+        }
+    }
+    ))
+    engine.addEntity(clickArea, sector)
 
     if(visible) {
         sector.addComponent(sectorColor)
-            .addComponent(sectorShape)
+        sector.addComponent(sectorShape)
     }
+
+    engine.addEntity(sector)
 
     return sector
 }
@@ -127,26 +139,30 @@ export function createSector(engine: World, { x, y, visible }: { x: number, y: n
 export function createStar(engine: World, parent: Entity) {
     if(!engine) return null
 
-    return engine.createEntity()
-        .addComponent(new PositionComponent(0, 0))
-        .addComponent(new RadiusComponent(50))
-        .addComponent(new ColorComponent("yellow"))
-        .addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
-        .setParent(parent)
+    const star = engine.createEntity()
+    star.addComponent(new PositionComponent(0, 0))
+    star.addComponent(new RadiusComponent(50))
+    star.addComponent(new ColorComponent("yellow"))
+    star.addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
+    engine.addEntity(star, parent)
+
+    return star
 }
 
 export function createBody(engine: World, { name, radius }: { x: number, y: number, name: string, radius: number }, parent: Entity) {
     if(!engine) return null
 
-    return engine.createEntity()
-        .addComponent(new PositionComponent(0, 0))
-        .addChild(
-            engine.createEntity()
-                .addComponent(new LabelComponent(name, 18))
-                .addComponent(new ColorComponent("white"))
-                .addComponent(new PositionComponent(0, 0, 0))
-        )
-        .addComponent(new RadiusComponent(radius))
-        .addComponent(new ColorComponent("grey"))
-        .setParent(parent)
+    const body = engine.createEntity()
+    body.addComponent(new PositionComponent(0, 0))
+    body.addComponent(new RadiusComponent(radius))
+    body.addComponent(new ColorComponent("grey"))
+    engine.addEntity(body, parent)
+
+    const label = engine.createEntity()
+    label.addComponent(new LabelComponent(name, 18))
+    label.addComponent(new ColorComponent("white"))
+    label.addComponent(new PositionComponent(0, 0, 0))
+    engine.addEntity(label, body)
+
+    return body
 }

@@ -14,8 +14,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
     removeFromEngine(): this {
         this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged)
-        // this.engine.unsubscribe("targetChanged", this.onTargetChanged)
-
         this.unselect()
         this.unTarget()
         this.engine?.unregisterNodeType(SelectionNode)
@@ -27,12 +25,20 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     private selector?: Entity
     private targetSelector?: Entity
 
+    private get selectorSceneNode() {
+        return this.selector ? this.engine?.getSceneNode(this.selector) : undefined
+    }
+
+    private get targetSelectorSceneNode() {
+        return this.targetSelector ? this.engine?.getSceneNode(this.targetSelector) : undefined
+    }
+
     currentSelection() {
-        return this.selector?.parent
+        return this.selectorSceneNode?.parentRef?.entity
     }
 
     currentTarget() {
-        return this.targetSelector?.parent
+        return this.targetSelectorSceneNode?.parentRef?.entity
     }
 
     createSpaceshipSelector(color: string) {
@@ -52,19 +58,17 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     }
 
     unselect() {
-        if(!this.engine) return
+        if(!this.engine || !this.selector) return
 
-        this.selector?.parent && this.engine.removeEntity(this.selector)
+        this.engine.removeEntity(this.selector)
         this.selector = undefined
-        //this.selected = undefined
     }
 
     unTarget() {
-        if(!this.engine) return
+        if(!this.engine || !this.targetSelector) return
 
-        this.targetSelector?.parent && this.engine.removeEntity(this.targetSelector)
+        this.engine.removeEntity(this.targetSelector)
         this.targetSelector = undefined
-        //this.selected = undefined
     }
 
     onSelectionChanged = ({ type, entity }: { type: "colony" | "ship" | "sector", entity?: Entity }) => {
@@ -72,7 +76,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.unselect()
 
-        if(this.selector?.parent === entity || !entity) {
+        if(this.selectorSceneNode?.parentRef?.entity === entity || !entity) {
             return this
         }
 
@@ -88,8 +92,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                 break
         }
 
-        entity.addChild(this.selector!)
-        this.engine.addEntity(this.selector!)
+        this.engine.addEntity(this.selector!, entity)
         this.engine.addCommand("redraw", { data: {} })
 
         return this
@@ -106,8 +109,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
             this.targetSelector = this.createSpaceshipSelector("#f004")
         }
 
-        entity.addChild(this.targetSelector!)
-        this.engine.addEntity(this.targetSelector!)
+        this.engine.addEntity(this.targetSelector!, entity)
         this.engine.addCommand("redraw", { data: {} })
 
         return this
@@ -125,7 +127,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                     entity.getComponent(SelectableComponent)!,
                 )
             })
-        //.subscribe("selectionChanged", this.onSelectionChanged)
 
         this.nodes = engine.getNodeList(SelectionNode)
 

@@ -15,18 +15,17 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     protected updateNode(_node: MoveNode, _dT?: number): void {
     }
     update(_dt: number): void {
-        // this.nodes.forEach((node) => {
-        //     node.goalSector = node.position
-        // })
     }
 
     moveNodes = () => {
         if(!this.engine) return
 
         for(const { entity, jumpDrive: { target } } of this.nodes) {
-            if(target && entity && target !== entity.parent) {
-                entity.parent?.removeChild(entity)
-                target.addChild(entity)
+            if(target && entity && target !== entity) {
+                const entityNode = this.engine.getSceneNode(entity)!
+                const targetNode = this.engine.getSceneNode(target)!
+                entityNode.parentRef?.removeChild(entityNode)
+                targetNode.addChild(entityNode)
                 this.engine.addCommand("redraw", { data: {} })
             }
         }
