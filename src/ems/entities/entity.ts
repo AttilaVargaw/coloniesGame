@@ -43,6 +43,16 @@ export class Entity {
         return this.parent
     }
 
+    attachToEngine(engine: World) {
+        this.engine = engine
+
+        for(const child of this.children) {
+            child.attachToEngine(engine)
+        }
+
+        return this
+    }
+
     addChild(entity: Entity) {
         entity.setParent(this)
         entity.revalidatePosition()
@@ -83,13 +93,15 @@ export class Entity {
     addComponent(component: EntityComponent) {
         this._component.set(component.constructor, component);
         component.entity = this
-        //signal that a new component was added
+
+        this.engine?.reindexEntity(this)
 
         return this
     }
 
     removeComponent(component: new (...args: any) => EntityComponent) {
         this._component.delete(component);
+        this.engine?.reindexEntity(this)
         this.engine?.dispatchEvent("componentRemoved", component)
 
         return this

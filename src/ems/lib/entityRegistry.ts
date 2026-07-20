@@ -2,14 +2,22 @@ import { Entity } from "../entities/entity"
 import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
 import { CommandBus } from "./commandBus"
+import type { World } from "../core/world"
 
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
+    private world?: World
 
     constructor(
         private readonly nodes: NodeManager,
         private readonly events: EventBus,
         private readonly commands: CommandBus) {
+    }
+
+    setWorld(world: World) {
+        this.world = world
+
+        return this
     }
 
     createEntity(id: string, addItToEngine = true) {
@@ -29,6 +37,7 @@ export class EntityRegistry {
         }
 
         this.entities.set(entity.id, entity)
+        entity.attachToEngine(this.world!)
 
         this.nodes.addEntityToNodes(entity)
 

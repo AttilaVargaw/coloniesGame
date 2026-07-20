@@ -45,6 +45,21 @@ describe("World (Engine refactor regression)", () => {
         expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(withTag)
     })
 
+    it("re-indexes the node list when a component is added after the entity is in the engine", () => {
+        const world = makeWorld()
+
+        const entity = world.createEntity()
+        world.addEntity(entity)
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+
+        entity.addComponent(new TagComponent())
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
+
+        entity.removeComponent(TagComponent)
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
     it("runs updateBegin handlers during the update loop", () => {
         const world = makeWorld()
         const updateBegin = vi.fn()

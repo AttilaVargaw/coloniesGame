@@ -44,6 +44,7 @@ export class World {
         this.eventBus = new EventBus()
         this.commandBus = new CommandBus()
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus, this.commandBus)
+        this.entityRegistry.setWorld(this)
         this.systemRegistry = new SystemRegistry()
     }
 
@@ -160,6 +161,12 @@ export class World {
 
     getNodeList<T extends Object>(node: EntityNodeConstructor<T>) {
         return this.nodeManager.getNodeList(node)
+    }
+
+    reindexEntity(entity: Entity) {
+        this.nodeManager.reindexEntity(entity)
+
+        return this
     }
 
     addCommand(command: Commands, data: any) {
