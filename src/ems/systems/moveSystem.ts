@@ -15,8 +15,8 @@ export class SensorSuiteComponent {
 // export class ArmorComponent { }
 
 export class MoveNode extends EntityNode {
-    constructor(public position: PositionComponent, public jumpDrive: JumpDriveComponent, public sensorSuite: SensorSuiteComponent) {
-        super()
+    constructor(entity: Entity, public position: PositionComponent, public jumpDrive: JumpDriveComponent, public sensorSuite: SensorSuiteComponent) {
+        super(entity)
     }
 }
 
@@ -32,12 +32,10 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     moveNodes = () => {
         if(!this.engine) return
 
-        for(const { jumpDrive, entity } of this.nodes) {
-            //remove from the old node and move it to the new node
-            if(jumpDrive.target && entity && jumpDrive.target !== entity.parent) {
+        for(const { entity, jumpDrive: { target } } of this.nodes) {
+            if(target && entity && target !== entity.parent) {
                 entity.parent?.removeChild(entity)
-                //this.engine?.removeEntity(entity)
-                jumpDrive.target.addChild(entity)
+                target.addChild(entity)
                 this.engine.addCommand("redraw", { data: {} })
             }
         }
@@ -57,6 +55,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
             (entity) => {
                 return new MoveNode(
+                    entity,
                     entity.getComponent(PositionComponent)!,
                     entity.getComponent(JumpDriveComponent)!,
                     entity.getComponent(SensorSuiteComponent)!
