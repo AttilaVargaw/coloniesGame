@@ -10,6 +10,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem";
 import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel";
 import { SelectionSystem } from "@game/systems/selectionSystem";
 import { Star, Colony } from "../data/types";
+import { IndustryComponent } from "../components/industryComponent";
 
 const sectorColor = new ColorComponent("", "grey")
 const sectorShape = new ShapeComponent(6, 40)
@@ -75,7 +76,7 @@ export function createColony(engine: World, { name, population, patronGod }: Col
                 }
 
                 engine.dispatchEvent("selectionChanged", { data: ret, type: "colony" })
-            }))
+            })).addComponent(new IndustryComponent(population, 80, population, 1))
     } else {
         ret.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
             .addComponent(bodyColor)

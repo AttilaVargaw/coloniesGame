@@ -212,4 +212,127 @@ describe("World (Engine refactor regression)", () => {
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
     })
+
+    it("retrieves a registered system by its constructor", () => {
+        const world = makeWorld()
+
+        class CounterSystem extends System {
+            update() {}
+        }
+
+        const ctor = CounterSystem as unknown as new () => System
+        world.addSystem(ctor)
+        expect(world.getSystem(ctor)).toBeInstanceOf(CounterSystem)
+    })
+
+    it("removes a registered system and stops its update from running", () => {
+        const world = makeWorld()
+        let updates = 0
+
+        class CounterSystem extends System {
+            update() {
+                updates++
+            }
+        }
+
+        const ctor = CounterSystem as unknown as new () => System
+        world.addSystem(ctor)
+        world.update(16)
+        expect(updates).toBe(1)
+
+        world.removeSystem(ctor)
+        world.update(16)
+        expect(updates).toBe(1)
+        expect(world.getSystem(ctor)).toBeUndefined()
+    })
+
+    it("unsubscribes a handler so it no longer receives events", () => {
+        const world = makeWorld()
+        const onClick = vi.fn()
+
+        world.subscribe("click", onClick)
+        world.dispatchEvent("click", { x: 1 })
+        world.update(16)
+        expect(onClick).toHaveBeenCalledTimes(1)
+        expect(onClick).toHaveBeenCalledWith({ x: 1 })
+
+        world.unsubscribe("click", onClick)
+        world.dispatchEvent("click", { x: 2 })
+        world.update(16)
+        expect(onClick).toHaveBeenCalledTimes(1)
+    })
+
+    it("reindexes an entity when called directly", () => {
+        const world = makeWorld()
+        const entity = world.createEntity()
+        world.addEntity(entity)
+        entity.addComponent(new TagComponent())
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+
+        world.reindexEntity(entity)
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
+    })
+
+    it("unregisters a node type and stops indexing new entities", () => {
+        const world = makeWorld()
+        const entity = entityWithTag(world)
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+
+        world.unregisterNodeType(tagNodeCtor)
+
+        expect(() => world.getNodeList(tagNodeCtor)).toThrow()
+
+        const another = world.createEntity()
+        another.addComponent(new TagComponent())
+        world.addEntity(another)
+        expect(() => world.getNodeList(tagNodeCtor)).toThrow()
+    })
+
+    it("removes a subsystem from the registry without throwing", () => {
+        const world = makeWorld()
+
+        class CounterSubsystem extends System {
+            update() {}
+        }
+
+        const ctor = CounterSubsystem as unknown as new () => System
+        world.addSubsystem(ctor)
+        expect(() => world.removeSubSystem(ctor)).not.toThrow()
+        expect(world.removeSubSystem(ctor)).toBe(world)
+    })
+
+    it("registers a custom event queue and allows dispatching events to it", () => {
+        const world = new World()
+        const handler = vi.fn()
+
+        world.registerEventQueue("customEvent" as any)
+        world.subscribe("customEvent" as any, handler)
+        world.dispatchEvent("customEvent" as any, { type: "test" })
+        world.update(16)
+
+        expect(handler).toHaveBeenCalledWith({ type: "test" })
+    })
+
+    it("removes an event queue", () => {
+        const world = new World()
+        world.registerEventQueue("customEvent" as any)
+        expect(world.events.get("customEvent" as any)).toBeInstanceOf(Queue)
+
+        world.removeEventQueue("customEvent" as any)
+        expect(world.events.get("customEvent" as any)).toBeUndefined()
+    })
+
+    it("adds a command to the specified queue", () => {
+        const world = new World()
+        world.addCommand("selectEntity", { id: "test" })
+        expect(world.commands.get("selectEntity")!.length).toBe(1)
+        expect(world.commands.get("selectEntity")!.peek()!.data).toEqual({ id: "test" })
+    })
+
+    it("returns the command queue for a given type", () => {
+        const world = new World()
+        const queue = world.getCommands("redraw")
+        expect(queue).toBeInstanceOf(Queue)
+    })
 })

@@ -1,0 +1,200 @@
+import { describe, it, expect, vi } from "vitest"
+import { World } from "./world"
+import { Entity } from "../entities/entity"
+import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
+import { EntityComponent } from "../entities/entityComponent"
+import { Queue } from "../lib/commandQueue"
+import { System } from "../systems/system"
+
+class TagComponent extends EntityComponent {
+    constructor(public tag: string = "tag", entity?: Entity) {
+        super(entity)
+    }
+}
+
+class TagNode extends EntityNode {
+    constructor(entity?: Entity) {
+        super(entity)
+    }
+}
+
+const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>
+
+function makeWorld() {
+    const world = new World()
+    world.registerNodeType(tagNodeCtor, new Set([TagComponent]), (entity) => new TagNode(entity))
+    return world
+}
+
+function entityWithTag(world: World) {
+    const entity = world.createEntity(undefined, false)
+    entity.addComponent(new TagComponent())
+    world.addEntity(entity)
+    return entity
+}
+
+describe("World", () => {
+    it("creates an entity with a generated UUID by default", () => {
+        const world = new World()
+        const entity = world.createEntity()
+
+        expect(entity.id).toBeDefined()
+        expect(entity.id.length).toBeGreaterThan(0)
+    })
+
+    it("creates an entity with a custom id when provided", () => {
+        const world = new World()
+        const entity = world.createEntity("custom-id")
+
+        expect(entity.id).toBe("custom-id")
+    })
+
+    it("does not add the entity to the engine when addItToEngine is false", () => {
+        const world = makeWorld()
+        const entity = world.createEntity(undefined, false)
+
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
+    it("adds the entity to the engine when addItToEngine is true", () => {
+        const world = makeWorld()
+        const entity = world.createEntity(undefined, true)
+        entity.addComponent(new TagComponent())
+
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+    })
+
+    it("adds an entity to the engine via addEntity", () => {
+        const world = makeWorld()
+        const entity = world.createEntity(undefined, false)
+        entity.addComponent(new TagComponent())
+
+        world.addEntity(entity)
+
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+    })
+
+    it("removes an entity from the engine via removeEntity", () => {
+        const world = makeWorld()
+        const entity = entityWithTag(world)
+
+        world.removeEntity(entity)
+
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
+    it("returns itself from addEntity and removeEntity for chaining", () => {
+        const world = makeWorld()
+        const entity = world.createEntity(undefined, false)
+
+        expect(world.addEntity(entity)).toBe(world)
+        expect(world.removeEntity(entity)).toBe(world)
+    })
+
+    it("returns itself from addSystem and removeSystem for chaining", () => {
+        const world = makeWorld()
+
+        class DummySystem extends System {
+            update() {}
+        }
+
+        const ctor = DummySystem as unknown as new () => System
+        expect(world.addSystem(ctor)).toBe(world)
+        expect(world.removeSystem(ctor)).toBe(world)
+    })
+
+    it("returns itself from subscribe and unsubscribe for chaining", () => {
+        const world = new World()
+
+        expect(world.subscribe("click", () => {})).toBe(world)
+        expect(world.unsubscribe("click", () => {})).toBe(world)
+    })
+
+    it("returns itself from addCommand and dispatchEvent for chaining", () => {
+        const world = new World()
+
+        expect(world.addCommand("redraw", {})).toBe(world)
+        expect(world.dispatchEvent("click", {})).toBe(world)
+    })
+
+    it("returns itself from registerEventQueue and removeEventQueue for chaining", () => {
+        const world = new World()
+
+        expect(world.registerEventQueue("custom" as any)).toBe(world)
+        expect(world.removeEventQueue("custom" as any)).toBe(world)
+    })
+
+    it("returns itself from registerCommandQueue and removeCommandQueue for chaining", () => {
+        const world = new World()
+
+        expect(world.registerCommandQueue("custom" as any)).toBe(world)
+        expect(world.removeCommandQueue("custom" as any)).toBe(world)
+    })
+
+    it("returns itself from reindexEntity for chaining", () => {
+        const world = makeWorld()
+        const entity = world.createEntity()
+
+        expect(world.reindexEntity(entity)).toBe(world)
+    })
+
+    it("does not return itself from destruct", () => {
+        const world = makeWorld()
+
+        expect(world.destruct()).toBeUndefined()
+    })
+
+    it("queues the updateDone event after systems run", () => {
+        const world = makeWorld()
+
+        world.update(16)
+
+        expect(world.events.get("updateDone")!.length).toBe(1)
+        expect(world.events.get("updateDone")!.peek()!.data).toBe(16)
+    })
+
+    it("queues the entityRemoved event when an entity is removed", () => {
+        const world = makeWorld()
+        const entity = entityWithTag(world)
+
+        world.removeEntity(entity)
+
+        expect(world.events.get("entityRemoved")!.length).toBe(1)
+        expect(world.events.get("entityRemoved")!.peek()!.data).toBe(entity)
+    })
+
+    it("clears command queues on destruct", () => {
+        const world = makeWorld()
+        world.addCommand("redraw", {})
+        world.addCommand("selectEntity", { id: "test" })
+
+        world.destruct()
+
+        expect(world.commands.get("redraw")!.length).toBe(0)
+        expect(world.commands.get("selectEntity")!.length).toBe(0)
+    })
+
+    it("returns the nodes list via nodes()", () => {
+        const world = makeWorld()
+        const entity = entityWithTag(world)
+
+        const nodes = world.nodes(tagNodeCtor)
+
+        expect(nodes).toHaveLength(1)
+        expect(nodes[0].entity).toBe(entity)
+    })
+
+    it("registerNodeType returns itself for chaining", () => {
+        const world = new World()
+        const nodeCtor = {} as EntityNodeConstructor<EntityNode>
+
+        expect(world.registerNodeType(nodeCtor, new Set(), () => new EntityNode())).toBe(world)
+    })
+
+    it("unregisters a node type via unregisterNodeType", () => {
+        const world = makeWorld()
+
+        expect(() => world.unregisterNodeType(tagNodeCtor)).not.toThrow()
+        expect(() => world.getNodeList(tagNodeCtor)).toThrow()
+    })
+})
