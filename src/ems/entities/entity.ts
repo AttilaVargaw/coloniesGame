@@ -53,6 +53,16 @@ export class Entity {
         return this
     }
 
+    detachFromEngine() {
+        this.engine = undefined
+
+        for(const child of this.children) {
+            child.detachFromEngine()
+        }
+
+        return this
+    }
+
     addChild(entity: Entity) {
         entity.setParent(this)
         entity.revalidatePosition()

@@ -12,17 +12,31 @@ class TagComponent extends EntityComponent {
     }
 }
 
+class ChildTagComponent extends EntityComponent {
+    constructor(public tag: string = "child", entity?: Entity) {
+        super(entity)
+    }
+}
+
 class TagNode extends EntityNode {
     constructor(entity?: Entity) {
         super(entity)
     }
 }
 
+class ChildTagNode extends EntityNode {
+    constructor(entity?: Entity) {
+        super(entity)
+    }
+}
+
 const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>
+const childTagNodeCtor = ChildTagNode as unknown as EntityNodeConstructor<ChildTagNode>
 
 function makeWorld() {
     const world = new World()
     world.registerNodeType(tagNodeCtor, new Set([TagComponent]), (entity) => new TagNode(entity))
+    world.registerNodeType(childTagNodeCtor, new Set([ChildTagComponent]), (entity) => new ChildTagNode(entity))
     return world
 }
 
@@ -58,6 +72,66 @@ describe("World (Engine refactor regression)", () => {
 
         entity.removeComponent(TagComponent)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
+    it("does not duplicate child nodes when the parent is re-indexed", () => {
+        const world = makeWorld()
+
+        const parent = world.createEntity()
+        const child = world.createEntity()
+        child.addComponent(new ChildTagComponent())
+        parent.addChild(child)
+        world.addEntity(parent)
+
+        expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
+
+        parent.addComponent(new TagComponent())
+        expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
+
+        parent.removeComponent(TagComponent)
+        expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
+    })
+
+    it("removes a node when the last required component is removed", () => {
+        const world = makeWorld()
+
+        const entity = world.createEntity()
+        world.addEntity(entity)
+        entity.addComponent(new TagComponent())
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+
+        entity.removeComponent(TagComponent)
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
+    it("detaches the entity from the engine on removal", () => {
+        const world = makeWorld()
+
+        const entity = world.createEntity()
+        world.addEntity(entity)
+        world.removeEntity(entity)
+
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+
+        entity.addComponent(new TagComponent())
+        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+    })
+
+    it("tears down systems on destruct", () => {
+        const world = makeWorld()
+        let updates = 0
+
+        class CounterSystem extends System {
+            update() {
+                updates++
+            }
+        }
+
+        world.addSystem(CounterSystem as unknown as new () => System)
+        world.destruct()
+
+        world.update(16)
+        expect(updates).toBe(0)
     })
 
     it("runs updateBegin handlers during the update loop", () => {
@@ -117,7 +191,7 @@ describe("World (Engine refactor regression)", () => {
         expect(world.events.get("click")).toBeInstanceOf(Queue)
     })
 
-    it("clears subscribed handlers on destruct", () => {
+    it("clears event queues and subscribed handlers on destruct", () => {
         const world = makeWorld()
         const onClick = vi.fn()
 
@@ -125,8 +199,14 @@ describe("World (Engine refactor regression)", () => {
         world.dispatchEvent("click", {})
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
+        expect(world.events.get("click")!.length).toBe(0)
+
+        world.dispatchEvent("click", {})
+        expect(world.events.get("click")!.length).toBe(1)
 
         world.destruct()
+
+        expect(world.events.get("click")!.length).toBe(0)
 
         world.dispatchEvent("click", {})
         world.update(16)

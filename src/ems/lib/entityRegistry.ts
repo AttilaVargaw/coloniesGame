@@ -51,6 +51,8 @@ export class EntityRegistry {
 
         this.nodes.removeEntityFromNodes(entity)
 
+        entity.detachFromEngine()
+
         for(const child of entity.children) {
             this.removeEntity(child)
         }

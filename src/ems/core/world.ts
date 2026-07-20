@@ -65,6 +65,7 @@ export class World {
         this.entityRegistry.clear()
         this.nodeManager.clear()
         this.commandBus.clearAll()
+        this.eventBus.clearEvents()
         this.eventBus.clearHandlers()
     }
 

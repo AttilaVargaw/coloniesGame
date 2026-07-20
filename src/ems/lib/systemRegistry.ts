@@ -52,6 +52,14 @@ export class SystemRegistry {
     }
 
     clear() {
+        for(const system of this.systems.values()) {
+            system.removeFromEngine()
+        }
+
+        for(const subsystem of this.subSystems.values()) {
+            subsystem.removeFromEngine()
+        }
+
         this.systems.clear()
         this.subSystems.clear()
     }

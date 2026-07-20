@@ -78,6 +78,12 @@ export class EventBus {
     clearHandlers() {
         this.eventHandlers.clear()
     }
+
+    clearEvents() {
+        for(const eventQueue of this.events.values()) {
+            eventQueue.clear()
+        }
+    }
 }
 
 export type { QueueItem }

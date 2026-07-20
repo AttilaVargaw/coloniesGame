@@ -100,14 +100,22 @@ export class NodeManager {
     }
 
     reindexEntity(entity: Entity) {
-        for(const nodes of this._nodes.values()) {
-            for(let i = 0; i < nodes.length; i++) {
-                if(nodes[i].entity === entity) {
-                    nodes.splice(i, 1)
-                    break
+        const removeSubtree = (current: Entity) => {
+            for(const nodes of this._nodes.values()) {
+                for(let i = 0; i < nodes.length; i++) {
+                    if(nodes[i].entity === current) {
+                        nodes.splice(i, 1)
+                        break
+                    }
                 }
             }
+
+            for(const child of current.children) {
+                removeSubtree(child)
+            }
         }
+
+        removeSubtree(entity)
 
         this.addEntityToNodes(entity)
 
