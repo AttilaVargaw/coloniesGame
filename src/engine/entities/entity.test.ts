@@ -85,12 +85,11 @@ describe("Entity", () => {
 })
 
 describe("SceneNode", () => {
-    it("creates a node linked to the entity via __sceneNode", () => {
+    it("creates a node linked to the entity", () => {
         const entity = new Entity("e1")
         const node = new SceneNode(entity)
 
         expect(node.entity).toBe(entity)
-        expect((entity as any).__sceneNode).toBe(node)
     })
 
     it("starts with no parent and no children", () => {
@@ -177,32 +176,6 @@ describe("SceneNode", () => {
 
         expect(x).toBe(110)
         expect(y).toBe(220)
-    })
-
-    it("invalidatePositions propagates to descendants", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const grandchild = new Entity("grandchild")
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
-        const grandchildNode = new SceneNode(grandchild)
-
-        parent.addComponent(new PositionComponent(0, 0))
-        child.addComponent(new PositionComponent(10, 20))
-        grandchild.addComponent(new PositionComponent(5, 5))
-
-        parentNode.addChild(childNode)
-        childNode.addChild(grandchildNode)
-
-        parent.getComponent(PositionComponent)!.dirty = false
-        child.getComponent(PositionComponent)!.dirty = false
-        grandchild.getComponent(PositionComponent)!.dirty = false
-
-        childNode.invalidatePositions()
-
-        expect(parent.getComponent(PositionComponent)!.dirty).toBe(false)
-        expect(child.getComponent(PositionComponent)!.dirty).toBe(true)
-        expect(grandchild.getComponent(PositionComponent)!.dirty).toBe(true)
     })
 
     it("collectDescendants returns all descendants", () => {

@@ -12,7 +12,7 @@ class TagComponent extends EntityComponent {
 }
 
 class TagNode extends EntityNode {
-    constructor(entity?: Entity) {
+    constructor(entity: Entity) {
         super(entity)
     }
 }
@@ -179,7 +179,7 @@ describe("World", () => {
         const world = new World()
         const nodeCtor = {} as EntityNodeConstructor<EntityNode>
 
-        expect(world.registerNodeType(nodeCtor, new Set(), () => new EntityNode())).toBe(world)
+        expect(world.registerNodeType(nodeCtor, new Set(), (entity) => new tagNodeCtor(entity))).toBe(world)
     })
 
     it("unregisters a node type via unregisterNodeType", () => {

@@ -26,7 +26,7 @@ export class PathComponent extends EntityComponent {
 }
 
 export class PathNode extends EntityNode {
-    constructor(public path: PathComponent) {
-        super()
+    constructor(public path: PathComponent, entity: Entity) {
+        super(entity)
     }
 }

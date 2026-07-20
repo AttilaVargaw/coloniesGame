@@ -1,16 +1,11 @@
 import { describe, it, expect, vi } from "vitest"
 import { World } from "@engine/core/world"
 import { Entity } from "@engine/entities/entity"
-import { EntityNode, EntityNodeConstructor } from "@engine/entities/entityNode"
+import { EntityNodeConstructor } from "@engine/entities/entityNode"
 import { EntityComponent } from "@engine/entities/entityComponent"
 import { Queue } from "@engine/lib/commandQueue"
 import { System } from "@engine/systems/system"
-
-class TagComponent extends EntityComponent {
-    constructor(public tag: string = "tag", entity?: Entity) {
-        super(entity)
-    }
-}
+import { TestEntityComponent, TestEntityNode, testEntityNodeCtor, makeWorld, entityWithTag } from "@engine/test-utils"
 
 class ChildTagComponent extends EntityComponent {
     constructor(public tag: string = "child", entity?: Entity) {
@@ -18,34 +13,13 @@ class ChildTagComponent extends EntityComponent {
     }
 }
 
-class TagNode extends EntityNode {
+class ChildTagNode extends TestEntityNode {
     constructor(entity?: Entity) {
         super(entity)
     }
 }
 
-class ChildTagNode extends EntityNode {
-    constructor(entity?: Entity) {
-        super(entity)
-    }
-}
-
-const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>
 const childTagNodeCtor = ChildTagNode as unknown as EntityNodeConstructor<ChildTagNode>
-
-function makeWorld() {
-    const world = new World()
-    world.registerNodeType(tagNodeCtor, new Set([TagComponent]), (entity) => new TagNode(entity))
-    world.registerNodeType(childTagNodeCtor, new Set([ChildTagComponent]), (entity) => new ChildTagNode(entity))
-    return world
-}
-
-function entityWithTag(world: World) {
-    const entity = world.createEntity(undefined)
-    entity.addComponent(new TagComponent())
-    world.addEntity(entity)
-    return entity
-}
 
 describe("World (Engine refactor regression)", () => {
     it("registers a node only for entities that have all required components", () => {
@@ -55,8 +29,8 @@ describe("World (Engine refactor regression)", () => {
         const withoutTag = world.createEntity()
         world.addEntity(withoutTag)
 
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
-        expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(withTag)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)[0].entity).toBe(withTag)
     })
 
     it("re-indexes the node list when reindexEntity is called after a component is added", () => {
@@ -64,20 +38,24 @@ describe("World (Engine refactor regression)", () => {
 
         const entity = world.createEntity()
         world.addEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
 
-        entity.addComponent(new TagComponent())
+        entity.addComponent(new TestEntityComponent())
         world.reindexEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
-        expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)[0].entity).toBe(entity)
 
-        entity.removeComponent(TagComponent)
+        entity.removeComponent(TestEntityComponent)
         world.reindexEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
     })
 
     it("does not duplicate child nodes when the parent is re-indexed", () => {
-        const world = makeWorld()
+        const world = makeWorld().registerNodeType(
+            childTagNodeCtor,
+            new Set([ChildTagComponent]),
+            (entity) => new ChildTagNode(entity)
+        )
 
         const parent = world.createEntity()
         const child = world.createEntity()
@@ -88,11 +66,11 @@ describe("World (Engine refactor regression)", () => {
 
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
 
-        parent.addComponent(new TagComponent())
+        parent.addComponent(new TestEntityComponent())
         world.reindexEntity(parent)
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
 
-        parent.removeComponent(TagComponent)
+        parent.removeComponent(TestEntityComponent)
         world.reindexEntity(parent)
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
     })
@@ -101,27 +79,27 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
 
         const entity = world.createEntity()
-        entity.addComponent(new TagComponent())
+        entity.addComponent(new TestEntityComponent())
         world.addEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
 
-        entity.removeComponent(TagComponent)
+        entity.removeComponent(TestEntityComponent)
         world.reindexEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
     })
 
     it("detaches the entity from the engine on removal", () => {
         const world = makeWorld()
 
         const entity = world.createEntity()
-        entity.addComponent(new TagComponent())
+        entity.addComponent(new TestEntityComponent())
         world.addEntity(entity)
         world.removeEntity(entity)
 
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
 
-        entity.addComponent(new TagComponent())
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        entity.addComponent(new TestEntityComponent())
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
     })
 
     it("tears down systems on destruct", () => {
@@ -168,11 +146,11 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
         const entity = entityWithTag(world)
 
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
 
         world.removeEntity(entity)
 
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
         expect(world.commands.get("redraw")!.length).toBe(1)
     })
 
@@ -224,7 +202,7 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
 
         class CounterSystem extends System {
-            update() {}
+            update() { }
         }
 
         const ctor = CounterSystem as unknown as new () => System
@@ -273,34 +251,34 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
         const entity = world.createEntity()
         world.addEntity(entity)
-        entity.addComponent(new TagComponent())
+        entity.addComponent(new TestEntityComponent())
         world.reindexEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
 
         world.reindexEntity(entity)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
-        expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)[0].entity).toBe(entity)
     })
 
     it("unregisters a node type and stops indexing new entities", () => {
         const world = makeWorld()
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
 
-        world.unregisterNodeType(tagNodeCtor)
+        world.unregisterNodeType(testEntityNodeCtor)
 
-        expect(() => world.getNodeList(tagNodeCtor)).toThrow()
+        expect(() => world.getNodeList(testEntityNodeCtor)).toThrow()
 
         const another = world.createEntity()
-        another.addComponent(new TagComponent())
+        another.addComponent(new TestEntityComponent())
         world.addEntity(another)
-        expect(() => world.getNodeList(tagNodeCtor)).toThrow()
+        expect(() => world.getNodeList(testEntityNodeCtor)).toThrow()
     })
 
     it("removes a subsystem from the registry without throwing", () => {
         const world = makeWorld()
 
         class CounterSubsystem extends System {
-            update() {}
+            update() { }
         }
 
         const ctor = CounterSubsystem as unknown as new () => System

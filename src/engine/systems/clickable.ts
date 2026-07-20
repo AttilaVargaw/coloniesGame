@@ -6,6 +6,7 @@ import { PositionComponent } from "../components/position";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue, QueueItem } from "../lib/commandQueue";
+import { getAbsolute } from "../lib/getAbsolute";
 
 export class ClickEvent extends QueueItem<MouseEvent> {
     constructor(public event: MouseEvent, public x: number, public y: number) {
@@ -44,7 +45,8 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         engine.registerNodeType(ClickableNode, new Set([ClickableComponent]), (entity) =>
             new ClickableNode(
                 entity.getComponent(PositionComponent)!,
-                entity.getComponent(ClickableComponent)!
+                entity.getComponent(ClickableComponent)!,
+                entity
             )
         )
 
@@ -63,7 +65,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         return this
     }
 
-    update(): void {
+    update(_dt: number): void {
         if(this.nodes.length === 0 || !this.engine || !this.clickQueue?.length) return;
 
         if(this.viewportSystem.consumeDragMoved()) {
@@ -77,7 +79,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
-                const [correctedPositionX, correctedPositionY] = node.position.getAbsolute()
+                const [correctedPositionX, correctedPositionY] = getAbsolute(node.entity, this.engine!)
                 const halfX = width / 2
                 const halfY = height / 2
 

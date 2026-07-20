@@ -44,17 +44,23 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     createSpaceshipSelector(color: string) {
         if(!this.engine) return
 
-        return this.engine.createEntity().addComponent(new ColorComponent(color, ""))
+        const entity = this.engine.createEntity()
+        entity.addComponent(new ColorComponent(color, ""))
             .addComponent(new RadiusComponent(20))
-            .addComponent(new PositionComponent(0, 0, -1))
+            .addComponent(new PositionComponent(0, 0, -1, entity))
+
+        return entity
     }
 
     createSectorSelector(color: string) {
         if(!this.engine) return
 
-        return this.engine.createEntity().addComponent(new ColorComponent("", color))
+        const entity = this.engine.createEntity()
+        entity.addComponent(new ColorComponent("", color))
             .addComponent(new ShapeComponent(6, 40))
-            .addComponent(new PositionComponent(0, 0, 1))
+            .addComponent(new PositionComponent(0, 0, 1, entity))
+
+        return entity
     }
 
     unselect() {

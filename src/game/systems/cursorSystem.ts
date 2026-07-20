@@ -1,22 +1,26 @@
 import { World } from "@engine/core/world";
 import { SystemWithNodes } from "@game/systems/system";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
-import { PositionComponent, WorldPosition } from "@engine/components/position";
+import { PositionComponent } from "@engine/components/position";
 import { PositionNode } from "@engine/systems/viewportSystem/positionNode";
 import { EntityComponent } from "@engine/entities/entityComponent";
 import { isContained } from "@lib/isContained";
+import { Entity } from "@/engine/entities/entity";
+import { SizeComponent } from "@/engine/components/sizeComponent";
 
 export class HoverableComponent extends EntityComponent {
     constructor(
         public cursor: "default" | "pointer" | "none" | "not-allowed" = "pointer",
-        public size: { width: number, height: number }) {
-        super()
+        public size: { width: number, height: number },
+        entity?: Entity,
+    ) {
+        super(entity)
     }
 }
 
 export class HoverableNode extends PositionNode {
-    constructor(public position: PositionComponent, public hoverable: HoverableComponent) {
-        super(position);
+    constructor(public position: PositionComponent, public hoverable: HoverableComponent, entity: Entity) {
+        super(position, entity);
     }
 }
 
@@ -40,7 +44,8 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         engine.registerNodeType(HoverableNode, new Set([HoverableComponent]), (entity) =>
             new HoverableNode(
                 entity.getComponent(PositionComponent)!,
-                entity.getComponent(HoverableComponent)!
+                entity.getComponent(HoverableComponent)!,
+                entity
             )
         );
 
@@ -58,12 +63,16 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data }) => {
             const mouseData = data as { x: number; y: number }
             const { camera } = this.viewportSystem.viewport
-            const { x, y } = camera.screenToWorld(mouseData.x, mouseData.y)
+            const position = camera.screenToWorld(mouseData.x, mouseData.y)
 
             for(const hoverableNode of this.nodes) {
                 const { hoverable: { size, cursor } } = hoverableNode
 
-                if(isContained({ x, y } as WorldPosition, { position: hoverableNode.position, size })) {
+                if(isContained(
+                    { x: position.x, y: position.y, z: 0 },
+                    { position: hoverableNode.position, size: size as SizeComponent },
+                    hoverableNode.entity,
+                    this.engine!)) {
                     document.body.style.cursor = cursor;
                     return true
                 }

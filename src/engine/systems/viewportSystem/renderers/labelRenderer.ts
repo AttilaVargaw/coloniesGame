@@ -7,6 +7,7 @@ import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { ColorComponent } from "@engine/components/colorComponent";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -16,7 +17,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
     protected filterNodes: ((node: LabelNode) => boolean) = (node) => {
         const { viewport: { camera } } = this.viewportSystem;
 
-        return isVisible(node.position, camera.visibleBounds, node.label.size);
+        return isVisible(camera.visibleBounds, node.label.size, node.entity!, this.engine!);
     };
 
     protected updateNode(node: LabelNode, _dt?: number): void {
@@ -24,7 +25,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
         ctx.save();
         node.setColor(ctx);
-        ctx.translate(...node.position.getAbsolute());
+        ctx.translate(...getAbsolute(node.entity!, this.engine!));
         ctx.font = `${node.label.size}px Roboto`;
         ctx.fillText(node.label.text, 24, 0);
         //label.draw(ctx);

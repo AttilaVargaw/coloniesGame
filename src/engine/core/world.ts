@@ -168,7 +168,7 @@ export class World implements Engine {
         this.eventBus.dispatchEvent("updateDone", dt)
     }
 
-    getNodeList<T extends object>(node: EntityNodeConstructor<T>) {
+    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
         return this.nodeManager.getNodeList(node)
     }
 

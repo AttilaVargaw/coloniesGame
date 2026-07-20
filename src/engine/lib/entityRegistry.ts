@@ -79,6 +79,10 @@ export class EntityRegistry {
     }
 
     getSceneNode(entity: Entity): SceneNode | undefined {
+        if(!entity) {
+            console.log("break")
+        }
+
         return this.sceneNodes.get(entity.id)
     }
 

@@ -1,29 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
-import { World } from "@engine/core/world"
-import { Entity } from "@engine/entities/entity"
 import { EntityNode, EntityNodeConstructor } from "@engine/entities/entityNode"
-import { EntityComponent } from "@engine/entities/entityComponent"
 import { System, SystemWithNodes } from "@engine/systems/system"
-
-class TagComponent extends EntityComponent {
-    constructor(public tag: string = "tag", entity?: Entity) {
-        super(entity)
-    }
-}
-
-class TagNode extends EntityNode {
-    constructor(entity?: Entity) {
-        super(entity)
-    }
-}
-
-const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>
-
-function makeWorld() {
-    const world = new World()
-    world.registerNodeType(tagNodeCtor, new Set([TagComponent]), (entity) => new TagNode(entity))
-    return world
-}
+import { TestEntityNode, testEntityNodeCtor, makeWorld } from "@engine/test-utils"
 
 describe("System", () => {
     it("adds and removes subsystems", () => {
@@ -98,7 +76,7 @@ describe("System", () => {
         world.registerNodeType(
             system.constructor as unknown as EntityNodeConstructor<EntityNode>,
             new Set(),
-            () => new EntityNode()
+            () => new TestEntityNode()
         )
 
         expect(world.getNodeList(system.constructor as unknown as EntityNodeConstructor<EntityNode>)).toBeDefined()
@@ -127,7 +105,7 @@ describe("System", () => {
         world.registerNodeType(
             ParentSystem as unknown as EntityNodeConstructor<EntityNode>,
             new Set(),
-            () => new EntityNode()
+            () => new TestEntityNode()
         )
 
         child.addToEngine(world)
@@ -135,7 +113,7 @@ describe("System", () => {
         world.registerNodeType(
             ChildSystem as unknown as EntityNodeConstructor<EntityNode>,
             new Set(),
-            () => new EntityNode()
+            () => new TestEntityNode()
         )
 
         parent.removeFromEngine()
@@ -152,11 +130,11 @@ describe("System", () => {
 describe("SystemWithNodes", () => {
     it("clears nodes when removed from engine", () => {
         const world = makeWorld()
-        const nodes = world.getNodeList(tagNodeCtor)
-        expect(nodes).toHaveLength(1)
+        const nodes = world.getNodeList(testEntityNodeCtor)
+        expect(nodes).toHaveLength(0)
 
-        class CounterSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class CounterSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
         const ctor = CounterSystem as unknown as new () => System
@@ -172,15 +150,15 @@ describe("SystemWithNodes", () => {
 
         //@ts-ignore
         expect(system.nodes).toHaveLength(0)
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
+        expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
     })
 
     it("calls updateNode for each registered node", () => {
         const world = makeWorld()
-        const node = world.getNodeList(tagNodeCtor)[0]
+        const node = world.getNodeList(testEntityNodeCtor)[0]
 
-        class CounterSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class CounterSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
         const ctor = CounterSystem as unknown as new () => System
@@ -200,10 +178,10 @@ describe("SystemWithNodes", () => {
 
     it("skips nodes that do not pass the filter", () => {
         const world = makeWorld()
-        const node = world.getNodeList(tagNodeCtor)[0]
+        const node = world.getNodeList(testEntityNodeCtor)[0]
 
-        class CounterSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class CounterSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
         const ctor = CounterSystem as unknown as new () => System
@@ -224,12 +202,12 @@ describe("SystemWithNodes", () => {
     })
 
     it("propagates sortOnEveryEntityAddition to subsystems", () => {
-        class ParentSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class ParentSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
-        class ChildSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class ChildSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
         const parent = new ParentSystem()
@@ -247,12 +225,12 @@ describe("SystemWithNodes", () => {
     it("propagates addToEngine and removeFromEngine to subsystems", () => {
         const world = makeWorld()
 
-        class ParentSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class ParentSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
-        class ChildSystem extends SystemWithNodes<TagNode> {
-            updateNode(_node: TagNode, _dt?: number): void { }
+        class ChildSystem extends SystemWithNodes<TestEntityNode> {
+            updateNode(_node: TestEntityNode, _dt?: number): void { }
         }
 
         const parent = new ParentSystem()

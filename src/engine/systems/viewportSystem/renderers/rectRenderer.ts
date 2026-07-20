@@ -7,6 +7,7 @@ import { ColorComponent } from "../../../components/colorComponent";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export class RectRenderer extends SystemWithNodes<RectNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -16,7 +17,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
     protected filterNodes: ((node: RectNode) => boolean) = (node) => {
         const { camera } = this.viewportSystem.viewport;
         const margin = Math.max(node.size.width, node.size.height) / 2;
-        return isVisible(node.position, camera.visibleBounds, margin);
+        return isVisible( camera.visibleBounds, margin, node.entity!, this.engine!);
     };
     protected updateNode(rect: RectNode, _dT?: number): void {
         const { camera } = this.viewportSystem.viewport;
@@ -25,7 +26,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
 
         ctx.save();
         rect.setColor(ctx);
-        ctx.translate(...rect.position.getAbsolute());
+        ctx.translate(...getAbsolute(rect.entity!, this.engine!));
         ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
         rect.draw(ctx)
         ctx.restore();

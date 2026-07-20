@@ -1,4 +1,6 @@
-import { PositionComponent } from "@engine/components/position";
+import { World } from "@/engine/core/world";
+import { Entity } from "@/engine/entities/entity";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export interface VisibleBounds {
     left: number;
@@ -8,11 +10,12 @@ export interface VisibleBounds {
 }
 
 export function isVisible(
-    position: PositionComponent,
     bounds: VisibleBounds,
-    margin = 0
+    margin = 0,
+    entity: Entity,
+    engine: World
 ): boolean {
-    const [x, y] = position.getAbsolute();
+    const [x, y] = getAbsolute(entity, engine);
     return (
         x + margin >= bounds.left &&
         x - margin <= bounds.right &&

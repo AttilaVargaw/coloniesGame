@@ -1,7 +1,7 @@
 import type { Entity } from "./entity";
 
-export class EntityNode {
-    constructor(public entity?: Entity) { }
+export abstract class EntityNode {
+    constructor(public entity: Entity) { }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -8,7 +8,6 @@ export class SceneNode {
 
     constructor(entity: Entity) {
         this.entity = entity;
-        (entity as { __sceneNode?: SceneNode }).__sceneNode = this
     }
 
     get parentRef(): SceneNode | null {
@@ -28,8 +27,6 @@ export class SceneNode {
 
         this.parent = parent
         parent?.children.add(this)
-
-        this.invalidatePositions()
     }
 
     addChild(node: SceneNode) {
@@ -57,17 +54,6 @@ export class SceneNode {
 
         const [parentX, parentY] = this.parent.getWorldPosition()
         return [parentX + position.x, parentY + position.y]
-    }
-
-    invalidatePositions(): void {
-        const position = this.entity.getComponent(PositionComponent)
-        if(position) {
-            position.dirty = true
-        }
-
-        for(const child of this.children) {
-            child.invalidatePositions()
-        }
     }
 
     collectDescendants(out: Entity[]): void {

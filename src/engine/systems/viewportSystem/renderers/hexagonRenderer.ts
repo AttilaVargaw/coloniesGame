@@ -7,6 +7,7 @@ import { ColorComponent } from "../../../components/colorComponent";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 const HEXAGON_SIDES = 6;
 const PIThird = Math.PI / 3;
@@ -18,7 +19,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
 
     protected filterNodes: ((node: HexagoneNode) => boolean) = (node) => {
         const { camera } = this.viewportSystem.viewport;
-        return isVisible(node.position, camera.visibleBounds, node.hexagon.radius);
+        return isVisible(camera.visibleBounds, node.hexagon.radius, node.entity!, this.engine!);
     };
 
     protected updateNode(shape: HexagoneNode, _dT?: number): void {
@@ -28,7 +29,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
 
         ctx.save();
         shape.setColor(ctx);
-        const [translatedPosX, translatedPosY] = shape.position.getAbsolute();
+        const [translatedPosX, translatedPosY] = getAbsolute(shape.entity!, this.engine!)
 
         ctx.beginPath();
         for(let i = 0; i < HEXAGON_SIDES; i++) {
@@ -38,7 +39,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
             const x = radius * Math.sin(rotation) + translatedPosX;
             const y = radius * Math.cos(rotation) + translatedPosY;
 
-            if (i === 0) {
+            if(i === 0) {
                 ctx.moveTo(x, y)
             } else {
                 ctx.lineTo(x, y)
@@ -92,7 +93,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
     }
 
     private onEntityAdded = () => {
-        if (this.sortOnEveryEntityAddition) {
+        if(this.sortOnEveryEntityAddition) {
             this.nodes.sort(sortByDepth)
         }
     }

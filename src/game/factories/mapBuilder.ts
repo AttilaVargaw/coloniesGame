@@ -54,7 +54,7 @@ export function init(engine: Engine, mapSize: number) {
             const sector = createSector(engine, { x: y, y: x, visible: true })!
 
             const label = engine.createEntity()
-            label.addComponent(new PositionComponent(-45, 0, -2))
+            label.addComponent(new PositionComponent(-45, 0, -2, label))
             engine.addEntity(label, sector)
 
             sector.addComponent(pathComponent)

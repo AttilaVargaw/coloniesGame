@@ -5,8 +5,8 @@ import { Entity } from "@engine/entities/entity";
 
 
 export class RenderableNode extends PositionNode {
-    constructor(position: PositionComponent, public color: ColorComponent, entity?: Entity) {
-        super(position, undefined, entity);
+    constructor(position: PositionComponent, public color: ColorComponent, entity: Entity) {
+        super(position, entity);
     }
 
     setColor(ctx: CanvasRenderingContext2D) {
@@ -15,10 +15,10 @@ export class RenderableNode extends PositionNode {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        if (this.color.stroke) {
+        if(this.color.stroke) {
             ctx.stroke();
         }
-        if (this.color.fill) {
+        if(this.color.fill) {
             ctx.fill();
         }
     }

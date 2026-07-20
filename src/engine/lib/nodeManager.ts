@@ -9,7 +9,7 @@ export class NodeManager {
     private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => EntityNode> = new Map()
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
-        return this._nodes.get(key) as Key[]
+        return this._nodes.get(key)
     }
 
     unregisterNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>): void {
@@ -34,7 +34,7 @@ export class NodeManager {
         return this
     }
 
-    getNodeList<T extends object>(node: EntityNodeConstructor<T>) {
+    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
         if(!this._nodes.has(node)) {
             throw new Error(`Node ${node} does not exist`)
         }

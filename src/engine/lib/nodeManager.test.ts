@@ -18,13 +18,13 @@ class OtherComponent extends EntityComponent {
 }
 
 class TagNode extends EntityNode {
-    constructor(entity?: Entity) {
+    constructor(entity: Entity) {
         super(entity)
     }
 }
 
 class OtherNode extends EntityNode {
-    constructor(entity?: Entity) {
+    constructor(entity: Entity) {
         super(entity)
     }
 }
@@ -57,7 +57,7 @@ describe("NodeManager", () => {
     it("returns the node list for a registered node type", () => {
         const manager = makeNodeManager()
 
-        const list = manager.nodes(tagNodeCtor)
+        const list = manager.nodes(tagNodeCtor)!
 
         expect(list).toBeInstanceOf(Array)
         expect(list.length).toBe(0)
@@ -66,7 +66,7 @@ describe("NodeManager", () => {
     it("throws when registering a duplicate node type", () => {
         const manager = makeNodeManager()
 
-        expect(() => manager.registerNodeType(tagNodeCtor, new Set([TagComponent]), () => new TagNode())).toThrow()
+        expect(() => manager.registerNodeType(tagNodeCtor, new Set([TagComponent]), (entity) => new TagNode(entity))).toThrow()
     })
 
     it("registers multiple node types independently", () => {
