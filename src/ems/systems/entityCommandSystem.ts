@@ -1,4 +1,4 @@
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { Entity } from "../entities/entity";
 import { EntityComponent } from "../entities/entityComponent";
 import { EntityNode } from "../entities/entityNode";
@@ -26,7 +26,7 @@ export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
         }
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         engine
             .registerNodeType(EntityCommandNode,

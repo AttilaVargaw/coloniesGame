@@ -1,4 +1,4 @@
-import { Engine } from "../../../engine";
+import { World } from "../../../core/world";
 import { LabelNode } from "./labelNode";
 import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
@@ -36,7 +36,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
         ctx.restore();
     }
 
-    protected registerNodes(engine: Engine): this {
+    protected registerNodes(engine: World): this {
         engine.registerNodeType(LabelNode,
             new Set([PositionComponent, ColorComponent, LabelComponent]),
             (entity) => new LabelNode(
@@ -60,7 +60,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(LabelNode)
         //engine.subscribe("entityAdded", this.onEntityAdded)

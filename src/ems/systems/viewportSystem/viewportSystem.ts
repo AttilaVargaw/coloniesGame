@@ -1,4 +1,4 @@
-import { Engine } from "../../engine";
+import { World } from "../../core/world";
 import { SystemWithNodes, } from "../system";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
@@ -25,7 +25,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     get viewport() {
-        return this.nodes[0].viewPort
+        return this.nodes?.[0]?.viewPort
     }
 
     private clear(ctx: CanvasRenderingContext2D) {
@@ -57,14 +57,13 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.redrawQueue?.clear()
     }
 
-    registerNodes(engine: Engine) {
+    registerNodes(engine: World) {
         engine.registerNodeType(ViewportNode,
             new Set([
                 ViewportComponent
             ]),
             (entity) => new ViewportNode(
                 entity.getComponent(ViewportComponent)!,
-
             )
         )
 
@@ -73,7 +72,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.inputHandler = new ViewportInputHandler(this)
         this.inputHandler.addToEngine()

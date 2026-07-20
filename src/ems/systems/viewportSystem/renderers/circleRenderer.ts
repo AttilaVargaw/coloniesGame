@@ -1,4 +1,4 @@
-import { Engine } from "../../../engine";
+import { World } from "../../../core/world";
 import { CircleNode } from "./circleNode";
 import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
@@ -14,7 +14,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
         return isVisible(node.position, camera.visibleBounds, node.radius.radius);
     };
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(CircleNode)
         //engine.subscribe("entityAdded", this.onEntityAdded)
@@ -22,7 +22,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
         return this
     }
 
-    protected registerNodes(engine: Engine): this {
+    protected registerNodes(engine: World): this {
         engine.registerNodeType(CircleNode,
             new Set([PositionComponent, RadiusComponent, ColorComponent]),
             (entity) => new CircleNode(

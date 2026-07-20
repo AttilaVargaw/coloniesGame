@@ -1,4 +1,4 @@
-import { Engine } from "../../../engine";
+import { World } from "../../../core/world";
 import { RectNode } from "./rectNode";
 import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
@@ -27,7 +27,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
         ctx.restore();
     }
 
-    protected registerNodes(engine: Engine): this {
+    protected registerNodes(engine: World): this {
         engine.registerNodeType(RectNode,
             new Set([PositionComponent, SizeComponent]),
             (entity) => new RectNode(
@@ -51,7 +51,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(RectNode)
         engine.subscribe("entityAdded", this.onEntityAdded)

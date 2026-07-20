@@ -1,11 +1,11 @@
 import { PositionComponent } from "../components/position";
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { Modifier } from "../modifiers/patronGod";
 import { EntityComponent } from "./entityComponent";
 
 export class Entity {
     private readonly _component = new Map<Function, EntityComponent>()
-    private engine?: Engine
+    private engine?: World
 
     private revalidatePosition() {
         const position = this.getComponent(PositionComponent)

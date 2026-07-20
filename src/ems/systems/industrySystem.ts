@@ -1,5 +1,5 @@
 import { IndustryComponent } from "../components/industryComponent";
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { IndustryNode } from "./IndustryNode";
 import { SystemWithNodes } from "./system";
 
@@ -33,7 +33,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         }
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
 
         engine.registerNodeType(IndustryNode,

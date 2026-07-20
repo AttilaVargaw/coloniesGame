@@ -1,4 +1,4 @@
-import { Engine } from "../../../engine";
+import { World } from "../../../core/world";
 import { HexagoneNode } from "./HexagoneNode";
 import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
@@ -41,7 +41,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
         ctx.restore();
     }
 
-    protected registerNodes(engine: Engine): this {
+    protected registerNodes(engine: World): this {
         engine.registerNodeType(HexagoneNode,
             new Set([PositionComponent, ShapeComponent, ColorComponent]),
             (entity) => new HexagoneNode(
@@ -65,7 +65,7 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(HexagoneNode)
         engine.subscribe("entityAdded", this.onEntityAdded)

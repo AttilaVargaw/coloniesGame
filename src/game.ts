@@ -1,6 +1,6 @@
 import { DateComponent } from "./ems/components/dateComponent"
 import { ViewportComponent } from "./ems/components/viewportComponent"
-import { Engine } from "./ems/engine"
+import { World } from "./ems/core/world"
 import { ButtonPressSystem } from "./ems/systems/buttonPressSystem"
 import { ClickableSystem } from "./ems/systems/clickable"
 import { CursorSystem } from "./ems/systems/cursorSystem"
@@ -14,7 +14,7 @@ import { Star } from "./gameData"
 import Camera from "./lib/camera"
 
 export class Game {
-    readonly engine: Engine = new Engine
+    readonly engine: World = new World
     private gameLoopId?: number
 
     constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {

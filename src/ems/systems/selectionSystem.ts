@@ -1,4 +1,4 @@
-import { Engine } from "../engine"
+import { World } from "../core/world"
 import { Entity } from "../entities/entity"
 import { SystemWithNodes } from "./system"
 import { SelectionNode } from "./SelectionNode"
@@ -116,7 +116,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     update(_dt: number) {
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.engine = engine
             .registerNodeType(SelectionNode, new Set([SelectableComponent]), (entity) => {

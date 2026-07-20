@@ -1,4 +1,4 @@
-import { Engine } from "../engine"
+import { World } from "../core/world"
 import { SystemWithNodes } from "./system"
 import { EventHandlerComponent } from "../components/EventHandlerComponent";
 import { ButtonPressNode } from "./ButtonPressNode";
@@ -15,7 +15,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
 
         this.nodes = engine.getNodeList(ButtonPressNode)
@@ -23,7 +23,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         return this
     }
 
-    protected registerNodes(engine: Engine): this {
+    protected registerNodes(engine: World): this {
         this.engine = engine.registerNodeType(ButtonPressNode, new Set([EventHandlerComponent]), (entity) =>
             new ButtonPressNode(
                 entity,

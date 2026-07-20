@@ -1,4 +1,4 @@
-import { Engine } from "@/ems/engine";
+import { World } from "@/ems/core/world";
 import { SystemWithNodes } from "./system";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { PositionComponent, WorldPosition } from "../components/position";
@@ -30,7 +30,7 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine);
 
         engine.registerNodeType(HoverableNode, new Set([HoverableComponent]), (entity) =>

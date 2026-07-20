@@ -1,8 +1,9 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import tailwindcss from '@tailwindcss/vite'
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import path from "path";
 import babel from '@rolldown/plugin-babel';
+import { fileURLToPath } from "node:url";
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -19,6 +20,11 @@ export default defineConfig(async () => ({
   oxc: {
     target: "es2022",
     decorators: true
+  },
+  test: {
+    environment: "node",
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    exclude: ["src/game.test.ts"],
   },
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

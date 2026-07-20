@@ -1,5 +1,5 @@
 import { Colony, Star, StartState } from "@/gameData";
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { SystemWithNodes } from "./system";
 import { ClickableComponent } from "../components/clickableComponent";
 import { ColorComponent } from "../components/colorComponent";
@@ -226,7 +226,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
         // engine.registerNodeType(PathNode)
 

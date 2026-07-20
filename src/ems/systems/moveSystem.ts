@@ -1,5 +1,5 @@
 import { PositionComponent } from "../components/position";
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { Entity } from "../entities/entity";
 import { EntityNode } from "../entities/entityNode";
 import { SystemWithNodes } from "./system";
@@ -43,7 +43,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         if(!engine) {
             return this
 

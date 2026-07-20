@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid"
 import { ColonialDate } from "@/lib/colonialCalendar";
 import { DateComponent } from "../components/dateComponent";
-import { Engine } from "../engine";
+import { World } from "../core/world";
 import { System } from "./system"
 import { DateNode } from "./DateNode";
 import { Entity } from "../entities/entity";
@@ -33,7 +33,7 @@ export class DateSystem extends System {
         return this
     }
 
-    addToEngine(engine: Engine): this {
+    addToEngine(engine: World): this {
         super.addToEngine(engine)
 
         engine.registerNodeType(DateNode, new Set([DateComponent]), this.dateNodeConverter)
