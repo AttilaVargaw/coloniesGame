@@ -97,7 +97,7 @@ export class EntityRegistry {
     getOrCreateSceneNode(entity: Entity): SceneNode {
         let sceneNode = this.sceneNodes.get(entity.id)
         if(!sceneNode) {
-            sceneNode = new SceneNode(entity)
+            sceneNode = new SceneNode(entity.id, entity)
             this.sceneNodes.set(entity.id, sceneNode)
         }
         return sceneNode

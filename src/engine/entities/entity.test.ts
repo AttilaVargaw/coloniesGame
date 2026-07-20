@@ -88,14 +88,14 @@ describe("Entity", () => {
 describe("SceneNode", () => {
     it("creates a node linked to the entity", () => {
         const entity = new Entity("e1")
-        const node = new SceneNode(entity)
+        const node = new SceneNode(entity.id, entity)
 
         expect(node.entity).toBe(entity)
     })
 
     it("starts with no parent and no children", () => {
         const entity = new Entity("e1")
-        const node = new SceneNode(entity)
+        const node = new SceneNode(entity.id, entity)
 
         expect(node.parentRef).toBeNull()
         expect(node.childrenRef.size).toBe(0)
@@ -104,8 +104,8 @@ describe("SceneNode", () => {
     it("setParent updates both sides", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
 
         childNode.setParent(parentNode)
 
@@ -116,8 +116,8 @@ describe("SceneNode", () => {
     it("addChild / removeChild", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
 
         parentNode.addChild(childNode)
 
@@ -132,7 +132,7 @@ describe("SceneNode", () => {
 
     it("getWorldPosition with no parent", () => {
         const entity = new Entity("e1")
-        const node = new SceneNode(entity)
+        const node = new SceneNode(entity.id, entity)
         entity.addComponent(new PositionComponent(7, 13))
 
         const [x, y] = node.getWorldPosition()
@@ -144,8 +144,8 @@ describe("SceneNode", () => {
     it("getWorldPosition with one level of nesting", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
 
         parent.addComponent(new PositionComponent(100, 200))
         child.addComponent(new PositionComponent(10, 20))
@@ -162,9 +162,9 @@ describe("SceneNode", () => {
         const grandparent = new Entity("grandparent")
         const parent = new Entity("parent")
         const child = new Entity("child")
-        const grandparentNode = new SceneNode(grandparent)
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const grandparentNode = new SceneNode(grandparent.id, grandparent)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
 
         grandparent.addComponent(new PositionComponent(0, 0))
         parent.addComponent(new PositionComponent(100, 200))
@@ -184,10 +184,10 @@ describe("SceneNode", () => {
         const child1 = new Entity("child1")
         const child2 = new Entity("child2")
         const grandchild = new Entity("grandchild")
-        const parentNode = new SceneNode(parent)
-        const child1Node = new SceneNode(child1)
-        const child2Node = new SceneNode(child2)
-        const grandchildNode = new SceneNode(grandchild)
+        const parentNode = new SceneNode(parent.id, parent)
+        const child1Node = new SceneNode(child1.id, child1)
+        const child2Node = new SceneNode(child2.id, child2)
+        const grandchildNode = new SceneNode(grandchild.id, grandchild)
 
         parentNode.addChild(child1Node)
         parentNode.addChild(child2Node)

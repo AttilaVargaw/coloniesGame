@@ -1,13 +1,26 @@
-import { Entity } from "./entity"
+import type { Entity } from "./entity"
 import { PositionComponent } from "../components/position"
 
 export class SceneNode {
-    readonly entity: Entity
+    readonly entityId: string
+    private _entity?: Entity
     private parent: SceneNode | null = null
     private readonly children = new Set<SceneNode>()
 
-    constructor(entity: Entity) {
-        this.entity = entity;
+    constructor(entityId: string, entity?: Entity) {
+        this.entityId = entityId
+        this._entity = entity
+    }
+
+    get entity(): Entity {
+        if (!this._entity) {
+            throw new Error(`SceneNode entity not resolved for id: ${this.entityId}`)
+        }
+        return this._entity
+    }
+
+    setEntity(entity: Entity) {
+        this._entity = entity
     }
 
     get parentRef(): SceneNode | null {

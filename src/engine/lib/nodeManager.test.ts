@@ -122,8 +122,8 @@ describe("NodeManager", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
         parentNode.addChild(childNode)
 
         manager.addEntityToNodes(parent, parentNode)
@@ -164,8 +164,8 @@ describe("NodeManager", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
         parentNode.addChild(childNode)
 
         manager.addEntityToNodes(parent, parentNode)
@@ -195,8 +195,8 @@ describe("NodeManager", () => {
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent)
-        const childNode = new SceneNode(child)
+        const parentNode = new SceneNode(parent.id, parent)
+        const childNode = new SceneNode(child.id, child)
         parentNode.addChild(childNode)
 
         manager.addEntityToNodes(parent, parentNode)

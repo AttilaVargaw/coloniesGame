@@ -67,7 +67,7 @@ export class NodeManager {
             this._nodes.get(nodeName)!.push(nodeConverter(entity))
         }
 
-        const currentNode = sceneNode ?? new SceneNode(entity)
+        const currentNode = sceneNode ?? new SceneNode(entity.id)
 
         for(const child of currentNode.childrenRef) {
             this.addEntityToNodes(child.entity, child)
@@ -101,7 +101,7 @@ export class NodeManager {
             }
         }
 
-        const currentNode = sceneNode ?? new SceneNode(entity)
+        const currentNode = sceneNode ?? new SceneNode(entity.id)
 
         for(const child of currentNode.childrenRef) {
             this.removeEntityFromNodes(child.entity, child)
@@ -124,7 +124,7 @@ export class NodeManager {
             }
         }
 
-        const currentNode = sceneNode ?? new SceneNode(entity)
+        const currentNode = sceneNode ?? new SceneNode(entity.id)
 
         removeSubtree(entity, currentNode)
 
