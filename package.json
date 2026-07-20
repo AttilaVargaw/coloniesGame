@@ -11,7 +11,8 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "jscpd": "jscpd src"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
@@ -50,6 +51,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-tailwindcss": "^4.2.0",
     "globals": "^17.7.0",
+    "jscpd": "^5.0.12",
     "typescript": "~5.9.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
