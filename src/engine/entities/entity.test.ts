@@ -31,14 +31,15 @@ describe("Entity", () => {
         expect(entity.modifiers.length).toBe(0)
     })
 
-    it("adds a component and sets its entity reference", () => {
+    it("adds a component and sets its entityId", () => {
         const entity = new Entity("e1")
         const component = new TestComponent(42)
 
         entity.addComponent(component)
 
         expect(entity.getComponent(TestComponent)).toBe(component)
-        expect(component.entity).toBe(entity)
+        expect(component.entityId).toBe("e1")
+        expect(component.entity).toBeUndefined()
     })
 
     it("retrieves a component by its constructor", () => {

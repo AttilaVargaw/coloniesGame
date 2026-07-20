@@ -37,8 +37,7 @@ export class Entity {
 
     addComponent(component: EntityComponent) {
         this._component.set(component.constructor, component);
-        component.entity = this
-
+        component.entityId = this.id
         this.onComponentChanged?.(this)
 
         return this

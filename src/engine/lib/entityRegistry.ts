@@ -24,7 +24,15 @@ export class EntityRegistry {
 
         this.entities.set(entity.id, entity)
 
+        for(const component of entity.components.values()) {
+            component.entity = entity
+        }
+
         entity.setComponentChangeHandler((e) => {
+            for(const component of e.components.values()) {
+                component.entity = e
+            }
+
             const sceneNode = this.getSceneNode(e)
             this.nodes.reindexEntity(e, sceneNode)
         })
