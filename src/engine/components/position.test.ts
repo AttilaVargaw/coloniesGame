@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 import { PositionComponent } from "@engine/components/position"
 import { Entity } from "@engine/entities/entity"
 import { EntityComponent } from "@engine/entities/entityComponent"
+import { SceneNode } from "@engine/entities/sceneNode"
 
 describe("PositionComponent", () => {
     it("initializes x, y, and z from the constructor", () => {
@@ -57,13 +58,16 @@ describe("PositionComponent", () => {
         expect(component.dirty).toBe(false)
     })
 
-    it("computates absolute position relative to parent", () => {
+    it("computes absolute position relative to parent", () => {
         const parent = new Entity("parent")
-        parent.addComponent(new PositionComponent(100, 200))
-
         const child = new Entity("child")
-        child.setParent(parent)
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
+        parent.addComponent(new PositionComponent(100, 200))
         child.addComponent(new PositionComponent(10, 20))
+
+        childNode.setParent(parentNode)
 
         const childPos = child.getComponent(PositionComponent)!
         const [absX, absY] = childPos.getAbsolute()
@@ -74,24 +78,26 @@ describe("PositionComponent", () => {
 
     it("recalculates absolute position when the parent moves", () => {
         const parent = new Entity("parent")
+        const child = new Entity("child")
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
         const parentPos = new PositionComponent(50, 60)
         parent.addComponent(parentPos)
+        child.addComponent(new PositionComponent(5, 10))
 
-        const child = new Entity("child")
-        child.setParent(parent)
-        const childPos = new PositionComponent(5, 10)
-        child.addComponent(childPos)
+        childNode.setParent(parentNode)
 
-        let [absX, absY] = childPos.getAbsolute()
+        let [absX, absY] = child.getComponent(PositionComponent)!.getAbsolute()
         expect(absX).toBe(55)
         expect(absY).toBe(70)
 
         parentPos.x = 100
         parentPos.y = 200
         parentPos.dirty = true
-        childPos.dirty = true
+        child.getComponent(PositionComponent)!.dirty = true
 
-        const result = childPos.getAbsolute()
+        const result = child.getComponent(PositionComponent)!.getAbsolute()
         expect(result[0]).toBe(105)
         expect(result[1]).toBe(210)
     })

@@ -3,6 +3,7 @@ import { World } from "./world"
 import { Entity } from "../entities/entity"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import { EntityComponent } from "../entities/entityComponent"
+import { SceneNode } from "../entities/sceneNode"
 import { Queue } from "../lib/commandQueue"
 import { System } from "../systems/system"
 
@@ -27,7 +28,7 @@ function makeWorld() {
 }
 
 function entityWithTag(world: World) {
-    const entity = world.createEntity(undefined, false)
+    const entity = world.createEntity()
     entity.addComponent(new TagComponent())
     world.addEntity(entity)
     return entity
@@ -49,24 +50,16 @@ describe("World", () => {
         expect(entity.id).toBe("custom-id")
     })
 
-    it("does not add the entity to the engine when addItToEngine is false", () => {
+    it("does not add the entity to the engine when not explicitly added", () => {
         const world = makeWorld()
-        const entity = world.createEntity(undefined, false)
+        const entity = world.createEntity(undefined)
 
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
     })
 
-    it("adds the entity to the engine when addItToEngine is true", () => {
+    it("adds the entity to the engine via addEntity", () => {
         const world = makeWorld()
-        const entity = world.createEntity(undefined, true)
-        entity.addComponent(new TagComponent())
-
-        expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
-    })
-
-    it("adds an entity to the engine via addEntity", () => {
-        const world = makeWorld()
-        const entity = world.createEntity(undefined, false)
+        const entity = world.createEntity(undefined)
         entity.addComponent(new TagComponent())
 
         world.addEntity(entity)
@@ -85,7 +78,7 @@ describe("World", () => {
 
     it("returns itself from addEntity and removeEntity for chaining", () => {
         const world = makeWorld()
-        const entity = world.createEntity(undefined, false)
+        const entity = world.createEntity()
 
         expect(world.addEntity(entity)).toBe(world)
         expect(world.removeEntity(entity)).toBe(world)

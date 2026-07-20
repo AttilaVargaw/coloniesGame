@@ -1,4 +1,5 @@
 import type { Entity } from "../entities/entity"
+import { SceneNode } from "../entities/sceneNode"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import type { System } from "../systems/system"
 import { v4 as uuid } from "uuid"
@@ -82,8 +83,12 @@ export class World implements Engine {
         return this
     }
 
-    createEntity(id = uuid(), addItToEngine = true) {
-        return this.entityRegistry.createEntity(id, addItToEngine)
+    createEntity(id = uuid()) {
+        return this.entityRegistry.createEntity(id)
+    }
+
+    getSceneNode(entity: Entity): SceneNode | undefined {
+        return this.entityRegistry.getSceneNode(entity)
     }
 
     getSystem<T extends System>(system: new () => T) {
@@ -121,8 +126,8 @@ export class World implements Engine {
         return this
     }
 
-    addEntity(entity: Entity) {
-        this.entityRegistry.addEntity(entity)
+    addEntity(entity: Entity, parentEntity?: Entity | null) {
+        this.entityRegistry.addEntity(entity, parentEntity)
 
         return this
     }

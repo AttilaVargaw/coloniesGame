@@ -2,14 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 import { Entity } from "@engine/entities/entity"
 import { EntityComponent } from "@engine/entities/entityComponent"
 import { PositionComponent } from "@engine/components/position"
-import type { Engine } from "@engine/core/engine"
-
-class MockEngine implements Engine {
-    addEntity = vi.fn()
-    removeEntity = vi.fn()
-    reindexEntity = vi.fn()
-    dispatchEvent = vi.fn()
-}
+import { SceneNode } from "@engine/entities/sceneNode"
 
 class TestComponent extends EntityComponent {
     constructor(public value: number, entity?: Entity) {
@@ -31,102 +24,11 @@ describe("Entity", () => {
         expect(entity.components.size).toBe(0)
     })
 
-    it("exposes an empty children set initially", () => {
-        const entity = new Entity("e1")
-
-        expect(entity.children).toBeInstanceOf(Set)
-        expect(entity.children.size).toBe(0)
-    })
-
     it("exposes an empty modifiers array initially", () => {
         const entity = new Entity("e1")
 
         expect(entity.modifiers).toBeInstanceOf(Array)
         expect(entity.modifiers.length).toBe(0)
-    })
-
-    it("returns null parent initially", () => {
-        const entity = new Entity("e1")
-
-        expect(entity.parent).toBeNull()
-        expect(entity.getParent()).toBeNull()
-    })
-
-    it("attaches itself and all children to the engine", () => {
-        const engine = new MockEngine()
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        parent.addChild(child)
-
-        parent.attachToEngine(engine)
-
-        expect(parent.engine).toBe(engine)
-        expect(child.engine).toBe(engine)
-    })
-
-    it("detaches itself and all children from the engine", () => {
-        const engine = new MockEngine()
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        parent.addChild(child)
-
-        parent.attachToEngine(engine)
-        parent.detachFromEngine()
-
-        expect(parent.engine).toBeUndefined()
-        expect(child.engine).toBeUndefined()
-    })
-
-    it("adds a child and sets its parent", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-
-        parent.addChild(child)
-
-        expect(child.parent).toBe(parent)
-        expect(parent.children.has(child)).toBe(true)
-    })
-
-    it("revalidates positions on the child and its descendants when added", () => {
-        const parent = new Entity("parent")
-        parent.addComponent(new PositionComponent(0, 0))
-
-        const child = new Entity("child")
-        child.addComponent(new PositionComponent(10, 20))
-
-        const grandchild = new Entity("grandchild")
-        grandchild.addComponent(new PositionComponent(5, 5))
-
-        child.addChild(grandchild)
-        parent.addChild(child)
-
-        expect(child.getComponent(PositionComponent)!.dirty).toBe(true)
-        expect(grandchild.getComponent(PositionComponent)!.dirty).toBe(true)
-    })
-
-    it("adds children to the engine when the parent is already attached", () => {
-        const engine = new MockEngine()
-        const parent = new Entity("parent")
-        parent.attachToEngine(engine)
-
-        const child = new Entity("child")
-        parent.addChild(child)
-
-        expect(engine.addEntity).toHaveBeenCalledWith(child)
-    })
-
-    it("sets parent, adds to parent engine, and revalidates position", () => {
-        const parent = new Entity("parent")
-        parent.addComponent(new PositionComponent(100, 200))
-
-        const child = new Entity("child")
-        child.addComponent(new PositionComponent(10, 20))
-
-        child.setParent(parent)
-
-        expect(child.parent).toBe(parent)
-        expect(parent.children.has(child)).toBe(true)
-        expect(child.getComponent(PositionComponent)!.dirty).toBe(true)
     })
 
     it("adds a component and sets its entity reference", () => {
@@ -137,31 +39,6 @@ describe("Entity", () => {
 
         expect(entity.getComponent(TestComponent)).toBe(component)
         expect(component.entity).toBe(entity)
-    })
-
-    it("reindexes the entity in the engine when a component is added", () => {
-        const engine = new MockEngine()
-        const entity = new Entity("e1")
-        entity.attachToEngine(engine)
-
-        entity.addComponent(new TestComponent(1))
-
-        expect(engine.reindexEntity).toHaveBeenCalledWith(entity)
-    })
-
-    it("removes a component and dispatches the componentRemoved event", () => {
-        const engine = new MockEngine()
-        const entity = new Entity("e1")
-        entity.attachToEngine(engine)
-
-        const component = new TestComponent(1)
-        entity.addComponent(component)
-
-        entity.removeComponent(TestComponent)
-
-        expect(entity.getComponent(TestComponent)).toBeUndefined()
-        expect(engine.reindexEntity).toHaveBeenCalledWith(entity)
-        expect(engine.dispatchEvent).toHaveBeenCalledWith("componentRemoved", TestComponent)
     })
 
     it("retrieves a component by its constructor", () => {
@@ -205,21 +82,149 @@ describe("Entity", () => {
         expect(entity.modifiers).not.toContain(modifier)
         expect(modifier.onRemove).toHaveBeenCalledWith(entity)
     })
+})
 
-    it("removes a child and revalidates positions", () => {
+describe("SceneNode", () => {
+    it("creates a node linked to the entity via __sceneNode", () => {
+        const entity = new Entity("e1")
+        const node = new SceneNode(entity)
+
+        expect(node.entity).toBe(entity)
+        expect((entity as any).__sceneNode).toBe(node)
+    })
+
+    it("starts with no parent and no children", () => {
+        const entity = new Entity("e1")
+        const node = new SceneNode(entity)
+
+        expect(node.parentRef).toBeNull()
+        expect(node.childrenRef.size).toBe(0)
+    })
+
+    it("setParent updates both sides", () => {
         const parent = new Entity("parent")
-        parent.addComponent(new PositionComponent(0, 0))
-
         const child = new Entity("child")
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
+        childNode.setParent(parentNode)
+
+        expect(childNode.parentRef).toBe(parentNode)
+        expect(parentNode.childrenRef.has(childNode)).toBe(true)
+    })
+
+    it("addChild / removeChild", () => {
+        const parent = new Entity("parent")
+        const child = new Entity("child")
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
+        parentNode.addChild(childNode)
+
+        expect(childNode.parentRef).toBe(parentNode)
+        expect(parentNode.childrenRef.has(childNode)).toBe(true)
+
+        parentNode.removeChild(childNode)
+
+        expect(childNode.parentRef).toBeNull()
+        expect(parentNode.childrenRef.has(childNode)).toBe(false)
+    })
+
+    it("getWorldPosition with no parent", () => {
+        const entity = new Entity("e1")
+        const node = new SceneNode(entity)
+        entity.addComponent(new PositionComponent(7, 13))
+
+        const [x, y] = node.getWorldPosition()
+
+        expect(x).toBe(7)
+        expect(y).toBe(13)
+    })
+
+    it("getWorldPosition with one level of nesting", () => {
+        const parent = new Entity("parent")
+        const child = new Entity("child")
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
+        parent.addComponent(new PositionComponent(100, 200))
         child.addComponent(new PositionComponent(10, 20))
-        parent.addChild(child)
 
+        childNode.setParent(parentNode)
+
+        const [x, y] = childNode.getWorldPosition()
+
+        expect(x).toBe(110)
+        expect(y).toBe(220)
+    })
+
+    it("getWorldPosition with two levels of nesting", () => {
+        const grandparent = new Entity("grandparent")
+        const parent = new Entity("parent")
+        const child = new Entity("child")
+        const grandparentNode = new SceneNode(grandparent)
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+
+        grandparent.addComponent(new PositionComponent(0, 0))
+        parent.addComponent(new PositionComponent(100, 200))
+        child.addComponent(new PositionComponent(10, 20))
+
+        parentNode.setParent(grandparentNode)
+        childNode.setParent(parentNode)
+
+        const [x, y] = childNode.getWorldPosition()
+
+        expect(x).toBe(110)
+        expect(y).toBe(220)
+    })
+
+    it("invalidatePositions propagates to descendants", () => {
+        const parent = new Entity("parent")
+        const child = new Entity("child")
+        const grandchild = new Entity("grandchild")
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+        const grandchildNode = new SceneNode(grandchild)
+
+        parent.addComponent(new PositionComponent(0, 0))
+        child.addComponent(new PositionComponent(10, 20))
+        grandchild.addComponent(new PositionComponent(5, 5))
+
+        parentNode.addChild(childNode)
+        childNode.addChild(grandchildNode)
+
+        parent.getComponent(PositionComponent)!.dirty = false
+        child.getComponent(PositionComponent)!.dirty = false
+        grandchild.getComponent(PositionComponent)!.dirty = false
+
+        childNode.invalidatePositions()
+
+        expect(parent.getComponent(PositionComponent)!.dirty).toBe(false)
         expect(child.getComponent(PositionComponent)!.dirty).toBe(true)
+        expect(grandchild.getComponent(PositionComponent)!.dirty).toBe(true)
+    })
 
-        parent.removeChild(child)
+    it("collectDescendants returns all descendants", () => {
+        const parent = new Entity("parent")
+        const child1 = new Entity("child1")
+        const child2 = new Entity("child2")
+        const grandchild = new Entity("grandchild")
+        const parentNode = new SceneNode(parent)
+        const child1Node = new SceneNode(child1)
+        const child2Node = new SceneNode(child2)
+        const grandchildNode = new SceneNode(grandchild)
 
-        expect(parent.children.has(child)).toBe(false)
-        expect(child.parent).toBeNull()
-        expect(child.getComponent(PositionComponent)!.dirty).toBe(true)
+        parentNode.addChild(child1Node)
+        parentNode.addChild(child2Node)
+        child1Node.addChild(grandchildNode)
+
+        const descendants: Entity[] = []
+        parentNode.collectDescendants(descendants)
+
+        expect(descendants).toHaveLength(3)
+        expect(descendants).toContain(child1)
+        expect(descendants).toContain(child2)
+        expect(descendants).toContain(grandchild)
     })
 })

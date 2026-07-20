@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { NodeManager } from "./nodeManager"
 import { Entity } from "../entities/entity"
+import { SceneNode } from "../entities/sceneNode"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import { EntityComponent } from "../entities/entityComponent"
 
@@ -116,14 +117,16 @@ describe("NodeManager", () => {
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
     })
 
-    it("recursively adds child entities to matching nodes", () => {
+    it("recursively adds child entities to matching nodes via SceneNode", () => {
         const manager = makeNodeManager()
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        parent.addChild(child)
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+        parentNode.addChild(childNode)
 
-        manager.addEntityToNodes(parent)
+        manager.addEntityToNodes(parent, parentNode)
 
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
         expect(manager.getNodeList(tagNodeCtor)[0].entity).toBe(child)
@@ -156,17 +159,19 @@ describe("NodeManager", () => {
         expect(manager.getNodeList(otherNodeCtor)).toHaveLength(0)
     })
 
-    it("recursively removes child entities from matching nodes", () => {
+    it("recursively removes child entities from matching nodes via SceneNode", () => {
         const manager = makeNodeManager()
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        parent.addChild(child)
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+        parentNode.addChild(childNode)
 
-        manager.addEntityToNodes(parent)
+        manager.addEntityToNodes(parent, parentNode)
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
 
-        manager.removeEntityFromNodes(parent)
+        manager.removeEntityFromNodes(parent, parentNode)
 
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(0)
     })
@@ -185,17 +190,19 @@ describe("NodeManager", () => {
         expect(manager.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
     })
 
-    it("recursively reindexes child entities", () => {
+    it("recursively reindexes child entities via SceneNode", () => {
         const manager = makeNodeManager()
         const parent = new Entity("parent")
         const child = new Entity("child")
         child.addComponent(new TagComponent())
-        parent.addChild(child)
+        const parentNode = new SceneNode(parent)
+        const childNode = new SceneNode(child)
+        parentNode.addChild(childNode)
 
-        manager.addEntityToNodes(parent)
+        manager.addEntityToNodes(parent, parentNode)
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
 
-        manager.reindexEntity(parent)
+        manager.reindexEntity(parent, parentNode)
 
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
         expect(manager.getNodeList(tagNodeCtor)[0].entity).toBe(child)

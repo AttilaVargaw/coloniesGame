@@ -1,4 +1,5 @@
 import { Entity } from "../entities/entity"
+import { SceneNode } from "../entities/sceneNode"
 import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
 import { CommandBus } from "./commandBus"
@@ -6,6 +7,7 @@ import type { World } from "../core/world"
 
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
+    private readonly sceneNodes: Map<string, SceneNode> = new Map()
     private world?: World
 
     constructor(
@@ -20,42 +22,57 @@ export class EntityRegistry {
         return this
     }
 
-    createEntity(id: string, addItToEngine = true) {
-        const entity = new Entity(id)
-        this.events.dispatchEvent("entityAdded", entity)
-
-        if(addItToEngine) {
-            this.addEntity(entity)
-        }
-
-        return entity
+    createEntity(id: string) {
+        return new Entity(id)
     }
 
-    addEntity(entity: Entity) {
+    addEntity(entity: Entity, parentEntity?: Entity | null) {
         if(this.entities.has(entity.id)) {
             return this
         }
 
         this.entities.set(entity.id, entity)
-        entity.attachToEngine(this.world!)
 
-        this.nodes.addEntityToNodes(entity)
+        const sceneNode = this.getOrCreateSceneNode(entity)
+
+        if(parentEntity) {
+            const parentSceneNode = this.getOrCreateSceneNode(parentEntity)
+            sceneNode.setParent(parentSceneNode)
+
+            for (const child of sceneNode.childrenRef) {
+                this.addEntity(child.entity)
+            }
+        }
+
+        this.nodes.addEntityToNodes(entity, sceneNode)
 
         return this
     }
 
     removeEntity(entity: Entity) {
-        entity.parent?.removeChild(entity)
+        if(!this.entities.has(entity.id)) {
+            return this
+        }
+
+        const sceneNode = this.getSceneNode(entity)
+
+        if(sceneNode) {
+            sceneNode.parentRef?.removeChild(sceneNode)
+
+            const descendants: Entity[] = []
+            sceneNode.collectDescendants(descendants)
+
+            for(const descendant of descendants) {
+                this.sceneNodes.delete(descendant.id)
+                this.entities.delete(descendant.id)
+                this.nodes.removeEntityFromNodes(descendant)
+            }
+
+            this.sceneNodes.delete(entity.id)
+        }
 
         this.entities.delete(entity.id)
-
         this.nodes.removeEntityFromNodes(entity)
-
-        entity.detachFromEngine()
-
-        for(const child of entity.children) {
-            this.removeEntity(child)
-        }
 
         this.events.dispatchEvent("entityRemoved", entity)
         this.commands.addCommand("redraw", {})
@@ -63,7 +80,21 @@ export class EntityRegistry {
         return this
     }
 
+    getSceneNode(entity: Entity): SceneNode | undefined {
+        return this.sceneNodes.get(entity.id)
+    }
+
+    getOrCreateSceneNode(entity: Entity): SceneNode {
+        let sceneNode = this.sceneNodes.get(entity.id)
+        if(!sceneNode) {
+            sceneNode = new SceneNode(entity)
+            this.sceneNodes.set(entity.id, sceneNode)
+        }
+        return sceneNode
+    }
+
     clear() {
         this.entities.clear()
+        this.sceneNodes.clear()
     }
 }

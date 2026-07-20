@@ -69,10 +69,10 @@ export function createColony(engine: World, { name, population, patronGod }: Col
     const colony = engine.createEntity()
     colony.addComponent(new PositionComponent(0, 0, 0))
     colony.addComponent(new RadiusComponent(20))
-    engine.addEntity(colony, parent)
 
     if(population) {
         patronGod && colony.addModifier(patronGod)
+
         colony.addComponent(new ColorComponent("green"))
             .addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
             .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
@@ -91,6 +91,7 @@ export function createColony(engine: World, { name, population, patronGod }: Col
     label.addComponent(new LabelComponent(name, 18))
     label.addComponent(new ColorComponent("white"))
     label.addComponent(new PositionComponent(0, 0, 0))
+    engine.addEntity(colony, parent)
     engine.addEntity(label, colony)
 
     return colony

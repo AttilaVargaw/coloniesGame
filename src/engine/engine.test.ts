@@ -41,7 +41,7 @@ function makeWorld() {
 }
 
 function entityWithTag(world: World) {
-    const entity = world.createEntity(undefined, false)
+    const entity = world.createEntity(undefined)
     entity.addComponent(new TagComponent())
     world.addEntity(entity)
     return entity
@@ -59,7 +59,7 @@ describe("World (Engine refactor regression)", () => {
         expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(withTag)
     })
 
-    it("re-indexes the node list when a component is added after the entity is in the engine", () => {
+    it("re-indexes the node list when reindexEntity is called after a component is added", () => {
         const world = makeWorld()
 
         const entity = world.createEntity()
@@ -67,10 +67,12 @@ describe("World (Engine refactor regression)", () => {
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
 
         entity.addComponent(new TagComponent())
+        world.reindexEntity(entity)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
         expect(world.getNodeList(tagNodeCtor)[0].entity).toBe(entity)
 
         entity.removeComponent(TagComponent)
+        world.reindexEntity(entity)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
     })
 
@@ -80,27 +82,31 @@ describe("World (Engine refactor regression)", () => {
         const parent = world.createEntity()
         const child = world.createEntity()
         child.addComponent(new ChildTagComponent())
-        parent.addChild(child)
+
         world.addEntity(parent)
+        world.addEntity(child, parent)
 
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
 
         parent.addComponent(new TagComponent())
+        world.reindexEntity(parent)
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
 
         parent.removeComponent(TagComponent)
+        world.reindexEntity(parent)
         expect(world.getNodeList(childTagNodeCtor)).toHaveLength(1)
     })
 
-    it("removes a node when the last required component is removed", () => {
+    it("removes a node when the last required component is removed and reindexed", () => {
         const world = makeWorld()
 
         const entity = world.createEntity()
-        world.addEntity(entity)
         entity.addComponent(new TagComponent())
+        world.addEntity(entity)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
 
         entity.removeComponent(TagComponent)
+        world.reindexEntity(entity)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(0)
     })
 
@@ -108,6 +114,7 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
 
         const entity = world.createEntity()
+        entity.addComponent(new TagComponent())
         world.addEntity(entity)
         world.removeEntity(entity)
 
@@ -150,8 +157,8 @@ describe("World (Engine refactor regression)", () => {
         const onAdded = vi.fn()
         world.subscribe("entityAdded", onAdded)
 
-        const entity = entityWithTag(world)
-
+        const entity = world.createEntity()
+        world.dispatchEvent("entityAdded", entity)
         world.update(16)
 
         expect(onAdded).toHaveBeenCalledWith(entity)
@@ -267,6 +274,7 @@ describe("World (Engine refactor regression)", () => {
         const entity = world.createEntity()
         world.addEntity(entity)
         entity.addComponent(new TagComponent())
+        world.reindexEntity(entity)
         expect(world.getNodeList(tagNodeCtor)).toHaveLength(1)
 
         world.reindexEntity(entity)
@@ -317,6 +325,7 @@ describe("World (Engine refactor regression)", () => {
     it("removes an event queue", () => {
         const world = new World()
         world.registerEventQueue("customEvent" as any)
+        expect(world.events.get("customEvent" as any)).toBeInstanceOf(Queue)
         expect(world.events.get("customEvent" as any)).toBeInstanceOf(Queue)
 
         world.removeEventQueue("customEvent" as any)

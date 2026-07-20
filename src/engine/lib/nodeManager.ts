@@ -1,4 +1,5 @@
 import { Entity } from "../entities/entity"
+import { SceneNode } from "../entities/sceneNode"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 
 export class NodeManager {
@@ -39,7 +40,7 @@ export class NodeManager {
         return (this._nodes.get(node) ?? []) as T[]
     }
 
-    addEntityToNodes(entity: Entity) {
+    addEntityToNodes(entity: Entity, sceneNode?: SceneNode) {
         const entityComponentConstructors: Set<Function> = new Set()
 
         for(const component of entity.components.values()) {
@@ -63,12 +64,14 @@ export class NodeManager {
             this._nodes.get(nodeName)!.push(nodeConverter(entity))
         }
 
-        for(const child of entity.children) {
-            this.addEntityToNodes(child)
+        const currentNode = sceneNode ?? new SceneNode(entity)
+
+        for(const child of currentNode.childrenRef) {
+            this.addEntityToNodes(child.entity, child)
         }
     }
 
-    removeEntityFromNodes(entity: Entity) {
+    removeEntityFromNodes(entity: Entity, sceneNode?: SceneNode) {
         const entityComponentConstructors: Set<Function> = new Set()
 
         for(const component of entity.components.values()) {
@@ -94,13 +97,15 @@ export class NodeManager {
             }
         }
 
-        for(const child of entity.children) {
-            this.removeEntityFromNodes(child)
+        const currentNode = sceneNode ?? new SceneNode(entity)
+
+        for(const child of currentNode.childrenRef) {
+            this.removeEntityFromNodes(child.entity, child)
         }
     }
 
-    reindexEntity(entity: Entity) {
-        const removeSubtree = (current: Entity) => {
+    reindexEntity(entity: Entity, sceneNode?: SceneNode) {
+        const removeSubtree = (current: Entity, currentNode: SceneNode) => {
             for(const nodes of this._nodes.values()) {
                 for(let i = 0; i < nodes.length; i++) {
                     if(nodes[i].entity === current) {
@@ -110,14 +115,16 @@ export class NodeManager {
                 }
             }
 
-            for(const child of current.children) {
-                removeSubtree(child)
+            for(const child of currentNode.childrenRef) {
+                removeSubtree(child.entity, child)
             }
         }
 
-        removeSubtree(entity)
+        const currentNode = sceneNode ?? new SceneNode(entity)
 
-        this.addEntityToNodes(entity)
+        removeSubtree(entity, currentNode)
+
+        this.addEntityToNodes(entity, currentNode)
 
         return this
     }

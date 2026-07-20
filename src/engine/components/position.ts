@@ -1,5 +1,6 @@
 import type { Entity } from "../entities/entity";
 import { EntityComponent } from "../entities/entityComponent";
+import { SceneNode } from "../entities/sceneNode";
 
 export interface WorldPosition {
     x: number;
@@ -20,13 +21,14 @@ export class PositionComponent extends EntityComponent implements WorldPosition 
             return [this.absoluteX, this.absoluteY];
         }
 
-        const parent = this.entity?.parent?.getComponent(PositionComponent);
+        const sceneNode = (this.entity as any)?.__sceneNode as SceneNode | undefined
+        const parentPosition = sceneNode?.parentRef?.entity.getComponent(PositionComponent)
 
-        if(!parent) {
+        if(!parentPosition) {
             this.absoluteX = this.x;
             this.absoluteY = this.y;
         } else {
-            const [parentX, parentY] = parent.getAbsolute();
+            const [parentX, parentY] = parentPosition.getAbsolute();
             this.absoluteX = parentX + this.x;
             this.absoluteY = parentY + this.y;
         }
