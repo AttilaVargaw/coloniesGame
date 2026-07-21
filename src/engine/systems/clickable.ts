@@ -7,7 +7,7 @@ import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
-import { ClickEvent, EntityAddedEvent } from "../lib/events";
+import { ClickEventData, EntityAddedEvent } from "../lib/events";
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -16,7 +16,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     protected updateNode(_node: ClickableNode, _dt?: number): void {
     }
-    private clickQueue?: Queue<unknown>
+    private clickQueue?: Queue<ClickEventData>
 
     protected unregisterNodeTypes(): this {
         this.engine?.unregisterNodeType(ClickableNode);
@@ -52,8 +52,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     addToEngine(engine: World): this {
         super.addToEngine(engine);
-        this.clickQueue = engine.events.get(ClickEvent);
-
+        this.clickQueue = engine.getEvents(ClickEventData);
         this.nodes = engine.getNodeList(ClickableNode);
         this.nodes.sort(sortByDepth)
 
@@ -69,8 +68,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         }
 
         for(const { data } of this.clickQueue) {
-            const clickData = data as { event: MouseEvent; x: number; y: number }
-            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(clickData.x, clickData.y);
+            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
@@ -85,7 +83,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                     && correctedPositionX + halfX > x
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
-                    onClick({ target: entity!, event: clickData.event })
+                    onClick({ target: entity!, event: data })
                 }
             }
         }

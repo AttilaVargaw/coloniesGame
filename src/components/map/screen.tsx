@@ -1,3 +1,4 @@
+import { MouseEventData } from '@/engine/lib/events';
 import { MouseEvent, ComponentPropsWithRef, useLayoutEffect } from 'react';
 
 function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanvasElement>) {
@@ -5,7 +6,7 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     const x = event.pageX - rect.left
     const y = event.pageY - rect.top
 
-    return { x, y, event }
+    return { x, y, ...event }
 }
 
 interface RenderingContextSettings {
@@ -21,9 +22,9 @@ export const renderingContextSettings: RenderingContextSettings = {
 }
 
 export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
-    onClick: (event: { x: number, y: number, event: MouseEvent }) => void,
-    onMouseMove: (event: { x: number, y: number, event: MouseEvent }) => void,
-    onMouseDown: (event: { x: number, y: number, event: MouseEvent }) => void,
+    onClick: (event: MouseEventData) => void,
+    onMouseMove: (event: MouseEventData) => void,
+    onMouseDown: (event: MouseEventData) => void,
     triggerRedraw: () => void
 }) {
     useLayoutEffect(() => {

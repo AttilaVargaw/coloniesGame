@@ -98,9 +98,9 @@ export class ViewportInputHandler {
         if(!this.viewportSystem.engineRef) return
 
         const camera = this.viewportSystem.viewport.camera
-        const mousedownArray = this.viewportSystem.engineRef.events.get(MousedownEvent)!
-        const mouseupArray = this.viewportSystem.engineRef.events.get(MouseupEvent)!
-        const mouseMovedArray = this.viewportSystem.engineRef.events.get(MousemoveEvent)!
+        const mousedownArray = this.viewportSystem.engineRef.getEvents(MousedownEvent)!
+        const mouseupArray = this.viewportSystem.engineRef.getEvents(MouseupEvent)!
+        const mouseMovedArray = this.viewportSystem.engineRef.getEvents(MousemoveEvent)!
 
         for(const { data } of mouseMovedArray) {
             const mouseData = data as { x: number; y: number }

@@ -12,6 +12,7 @@ import type { Engine } from "./engine"
 import { CommandBase } from "../lib/CommandBase"
 import { EventBase } from "../lib/events"
 import { UpdateBeginEvent, UpdateDoneEvent } from "../lib/events"
+import { Queue } from "../lib/commandQueue"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -28,12 +29,14 @@ export class World implements Engine {
         this.systemRegistry = new SystemRegistry()
     }
 
-    get events() {
-        return this.eventBus.events
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return this.eventBus.events.get(name) as any as Queue<ReturnType<T>>
     }
 
-    get commands() {
-        return this.commandBus.commands
+    getCommands<T extends new (...args: any) => any>(name: T) {
+        return this.commandBus.commands.get(name) as any as Queue<ReturnType<T>>
     }
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
@@ -165,11 +168,6 @@ export class World implements Engine {
         this.commandBus.addCommand(command)
 
         return this
-    }
-
-    // eslint-disable-next-line 
-    getCommands(type: Function) {
-        return this.commandBus.getCommandQueue(type)
     }
 
     dispatchEvent(event: EventBase) {

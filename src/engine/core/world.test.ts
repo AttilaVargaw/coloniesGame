@@ -10,7 +10,7 @@ import { EventBase } from "../lib/events"
 import {
     UpdateDoneEvent,
     EntityRemovedEvent,
-    ClickEvent,
+    ClickEventData,
 } from "../lib/events"
 
 class TagComponent extends EntityComponent {
@@ -104,15 +104,15 @@ describe("World", () => {
     it("returns itself from subscribe and unsubscribe for chaining", () => {
         const world = new World()
 
-        expect(world.subscribe(ClickEvent, () => { })).toBe(world)
-        expect(world.unsubscribe(ClickEvent, () => { })).toBe(world)
+        expect(world.subscribe(ClickEventData, () => { })).toBe(world)
+        expect(world.unsubscribe(ClickEventData, () => { })).toBe(world)
     })
 
     it("returns itself from addCommand and dispatchEvent for chaining", () => {
         const world = new World()
 
         expect(world.addCommand(new RedrawCommand())).toBe(world)
-        expect(world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 0, y: 0 }))).toBe(world)
+        expect(world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 }))).toBe(world)
     })
 
     it("returns itself from registerEventQueue and removeEventQueue for chaining", () => {

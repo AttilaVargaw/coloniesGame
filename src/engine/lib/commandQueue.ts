@@ -6,9 +6,12 @@ export type QueueOptions<Data> = {
     onOverflow?: (dropped: QueueItem<Data>) => void
 }
 
-export abstract class QueueItem<Data> {
-    constructor(public data: Data) { }
-}
+// export abstract class QueueItem<Data extends ojbect> extends Data {
+//     constructor(public data: Data) { }
+// }
+
+type QueueItem<Data> = {
+} & Data
 
 export class Queue<Data, Item extends QueueItem<Data> = QueueItem<Data>> {
     private readonly queue: Item[] = []

@@ -9,13 +9,14 @@ import { Game } from "@game/game";
 import { DateNode } from "@engine/systems/DateNode";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import {
-    UpdateDoneEvent,
-    SelectionChangedEvent,
-    KeydownEvent,
-    MouseupEvent,
-    MousemoveEvent,
-    MousedownEvent,
-    ClickEvent,
+  UpdateDoneEvent,
+  SelectionChangedEvent,
+  KeydownEvent,
+  MouseupEvent,
+  MousemoveEvent,
+  MousedownEvent,
+  ClickEventData,
+  MouseEventData,
 } from "@/engine/lib/events";
 
 function App() {
@@ -79,16 +80,15 @@ function App() {
       <Header time={date} />
       <Screen
         onMouseMove={(data) => {
-          game?.engine.dispatchEvent(new MousemoveEvent(data as any))
+          game?.engine.dispatchEvent(new MousemoveEvent(data as MouseEventData))
         }}
         onMouseDown={(data) => {
-          game?.engine.dispatchEvent(new MousedownEvent(data as any))
+          game?.engine.dispatchEvent(new MousedownEvent(data as MouseEventData))
         }}
-
         triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
         ref={map}
         onClick={(data) => {
-          game?.engine.dispatchEvent(new ClickEvent(data as any))
+          game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData))
         }} />
       {/* <div style={{ display: dynamicData ? "block" : "none" }}>
         <DataWindow header={dynamicDataHeader} data={dynamicData} />

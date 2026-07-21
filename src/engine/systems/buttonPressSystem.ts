@@ -33,7 +33,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
 
         return this
     }
-    
+
     protected unregisterNodeTypes(): this | undefined {
         this.engine?.unregisterNodeType(ButtonPressNode)
         this.engine = undefined
@@ -46,15 +46,14 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
 
         const nodes = this.engine.getNodeList(ButtonPressNode)
 
-        for(const { data } of this.engine.events.get(KeydownEvent)!) {
-            const keyData = data as KeyboardEvent
+        for(const { data } of this.engine.getEvents(KeydownEvent)!) {
             for(const { eventHandler: { button, fn } } of nodes) {
-                if(button === keyData.key) {
-                    fn(keyData)
+                if(button === data.key) {
+                    fn(data)
                 }
             }
         }
 
-        this.engine.events.get(KeydownEvent)!.clear()
+        this.engine.getEvents(KeydownEvent)!.clear()
     }
 }

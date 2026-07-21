@@ -1,4 +1,4 @@
-import { Queue, QueueItem } from "./commandQueue"
+import { Queue } from "./commandQueue"
 import { SelectEntityCommand } from "./SelectEntityCommand"
 import { RedrawCommand } from "./RedrawCommand"
 import { CommandBase } from "./CommandBase"
@@ -30,9 +30,8 @@ export class CommandBus {
         return this
     }
 
-    // eslint-disable-next-line 
-    getCommandQueue<T extends object>(type: Function) {
-        return this.commands.get(type) as T
+    getCommands<T extends (...args: any) => any>(type: T) {
+        return this.commands.get(type) as unknown as Queue<ReturnType<T>>
     }
 
     clearAll() {
@@ -42,4 +41,4 @@ export class CommandBus {
     }
 }
 
-export type { QueueItem }
+// export type { QueueItem }

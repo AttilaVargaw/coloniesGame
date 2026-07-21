@@ -91,7 +91,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         // .registerCommandQueue("mouseup")
         // .registerCommandQueue("mouseMoved")
 
-        this.redrawQueue = engine.commands.get(RedrawCommand)
+        this.redrawQueue = engine.getCommands(RedrawCommand)
 
         return this
     }

@@ -9,7 +9,7 @@ import {
     MonthPassedEvent,
     SelectionChangedEvent,
     ComponentRemovedEvent,
-    ClickEvent,
+    ClickEventData,
     MouseupEvent,
     KeydownEvent,
     KeyupEvent,
@@ -48,7 +48,7 @@ describe("EventBus", () => {
             expect(bus.events.has(MonthPassedEvent)).toBe(true)
             expect(bus.events.has(SelectionChangedEvent)).toBe(true)
             expect(bus.events.has(ComponentRemovedEvent)).toBe(true)
-            expect(bus.events.has(ClickEvent)).toBe(true)
+            expect(bus.events.has(ClickEventData)).toBe(true)
             expect(bus.events.has(MouseupEvent)).toBe(true)
             expect(bus.events.has(KeydownEvent)).toBe(true)
             expect(bus.events.has(KeyupEvent)).toBe(true)
@@ -198,17 +198,17 @@ describe("EventBus", () => {
             const clickHandler = vi.fn()
 
             bus.subscribe(UpdateBeginEvent, updateHandler)
-            bus.subscribe(ClickEvent, clickHandler)
+            bus.subscribe(ClickEventData, clickHandler)
 
             bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.dispatchEvent(new ClickEvent({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
+            bus.dispatchEvent(new ClickEventData({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
 
             bus.processEventHandlers()
 
             expect(updateHandler).toHaveBeenCalledWith(16)
             expect(clickHandler).toHaveBeenCalledWith({ event: {} as globalThis.MouseEvent, x: 0, y: 0 })
             expect(bus.events.get(UpdateBeginEvent)!.length).toBe(0)
-            expect(bus.events.get(ClickEvent)!.length).toBe(0)
+            expect(bus.events.get(ClickEventData)!.length).toBe(0)
         })
 
         it("skips event types with no registered handlers", () => {
@@ -247,12 +247,12 @@ describe("EventBus", () => {
         it("clearHandlers removes all subscribed handlers", () => {
             const handler = vi.fn()
             bus.subscribe(UpdateBeginEvent, handler)
-            bus.subscribe(ClickEvent, handler)
+            bus.subscribe(ClickEventData, handler)
 
             bus.clearHandlers()
 
             bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.dispatchEvent(new ClickEvent({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
+            bus.dispatchEvent(new ClickEventData({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
             bus.processEventHandlers()
 
             expect(handler).not.toHaveBeenCalled()

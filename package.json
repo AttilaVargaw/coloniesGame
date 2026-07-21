@@ -13,7 +13,7 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "jscpd": "jscpd src",
-    "prepare": "husky init"
+    "prepare": "husky"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
@@ -54,7 +54,7 @@
     "globals": "^17.7.0",
     "husky": "^9.1.7",
     "jscpd": "^5.0.12",
-    "typescript": "~5.9.3",
+    "typescript": "6.0.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   },
