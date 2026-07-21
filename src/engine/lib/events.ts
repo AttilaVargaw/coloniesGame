@@ -1,9 +1,11 @@
 import { Entity } from "../entities/entity"
 import { MouseEvent as ReactMouseEvent } from "react"
 
-export interface MouseEventData extends ReactMouseEvent {
-    x: number
-    y: number
+export interface MouseEventData {
+    data: {
+        x: number
+        y: number
+    } & ReactMouseEvent
 }
 
 // eslint-disable-next-line

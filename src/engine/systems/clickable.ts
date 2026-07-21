@@ -67,7 +67,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             return
         }
 
-        for(const data of this.clickQueue) {
+        for(const { data } of this.clickQueue) {
             const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
 
             for(const node of this.nodes) {

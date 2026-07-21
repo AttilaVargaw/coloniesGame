@@ -102,11 +102,11 @@ export class ViewportInputHandler {
         const mouseupArray = this.viewportSystem.engineRef.getEvents(MouseupEvent)!
         const mouseMovedArray = this.viewportSystem.engineRef.getEvents(MousemoveEvent)!
 
-        for(const data of mouseMovedArray) {
+        for(const { data } of mouseMovedArray) {
             this.pointer = { x: data.x, y: data.y }
         }
 
-        for(const data of mousedownArray) {
+        for(const { data } of mousedownArray) {
             this.isDragging = true
             this.lastPointer = { x: data.x, y: data.y }
             this.dragMoved = false
@@ -115,7 +115,7 @@ export class ViewportInputHandler {
         mousedownArray.clear()
 
         if(this.isDragging && this.lastPointer) {
-            for(const data of mouseMovedArray) {
+            for(const { data } of mouseMovedArray) {
                 const dx = data.x - this.lastPointer.x
                 const dy = data.y - this.lastPointer.y
                 if(dx || dy) {
