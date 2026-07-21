@@ -1,11 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { Queue, QueueItem } from "./commandQueue"
-
-class QueueItemImplementation<T> extends QueueItem<T> {
-    constructor(data: T) {
-        super(data)
-    }
-}
+import { Queue } from "./commandQueue"
 
 describe("Queue", () => {
     it("starts empty with no options", () => {
@@ -18,7 +12,7 @@ describe("Queue", () => {
     it("enqueues an item and increments length", () => {
         const queue = new Queue<number>()
 
-        const result = queue.enqueue(new QueueItemImplementation(1))
+        const result = queue.enqueue(1)
 
         expect(queue.length).toBe(1)
         expect(queue.isEmpty()).toBe(false)
@@ -28,19 +22,19 @@ describe("Queue", () => {
     it("enqueues multiple items via enqueueMany", () => {
         const queue = new Queue<number>()
 
-        queue.enqueueMany([new QueueItemImplementation(1), new QueueItemImplementation(2), new QueueItemImplementation(3)])
+        queue.enqueueMany([1, 2, 3])
 
         expect(queue.length).toBe(3)
     })
 
     it("peeks at the first item without removing it", () => {
         const queue = new Queue<number>()
-        queue.enqueue(new QueueItemImplementation(10))
-        queue.enqueue(new QueueItemImplementation(20))
+        queue.enqueue(10)
+        queue.enqueue(20)
 
         const first = queue.peek()
 
-        expect(first?.data).toBe(10)
+        expect(first).toBe(10)
         expect(queue.length).toBe(2)
     })
 
@@ -52,12 +46,12 @@ describe("Queue", () => {
 
     it("next returns and removes the first item", () => {
         const queue = new Queue<string>()
-        queue.enqueue(new QueueItemImplementation("a"))
-        queue.enqueue(new QueueItemImplementation("b"))
+        queue.enqueue(("a"))
+        queue.enqueue(("b"))
 
         const item = queue.next()
 
-        expect(item?.data).toBe("a")
+        expect(item).toBe("a")
         expect(queue.length).toBe(1)
     })
 
@@ -69,8 +63,8 @@ describe("Queue", () => {
 
     it("clears all items", () => {
         const queue = new Queue<number>()
-        queue.enqueue(new QueueItemImplementation(1))
-        queue.enqueue(new QueueItemImplementation(2))
+        queue.enqueue((1))
+        queue.enqueue((2))
 
         const result = queue.clear()
 
@@ -81,44 +75,44 @@ describe("Queue", () => {
 
     it("is iterable", () => {
         const queue = new Queue<string>()
-        queue.enqueue(new QueueItemImplementation("x"))
-        queue.enqueue(new QueueItemImplementation("y"))
+        queue.enqueue(("x"))
+        queue.enqueue(("y"))
 
         const items = [...queue]
 
-        expect(items.map(item => item.data)).toEqual(["x", "y"])
+        expect(items).toEqual(["x", "y"])
     })
 
     it("respects capacity and calls onOverflow when exceeded", () => {
         const onOverflow = vi.fn()
         const queue = new Queue<number>({ capacity: 2, onOverflow })
 
-        queue.enqueue(new QueueItemImplementation(1))
-        queue.enqueue(new QueueItemImplementation(2))
-        queue.enqueue(new QueueItemImplementation(3))
+        queue.enqueue(1)
+        queue.enqueue(2)
+        queue.enqueue(3)
 
         expect(queue.length).toBe(2)
-        expect(queue.peek()?.data).toBe(2)
+        expect(queue.peek()).toBe(2)
         expect(onOverflow).toHaveBeenCalledTimes(1)
-        expect(onOverflow).toHaveBeenCalledWith(expect.objectContaining({ data: 1 }))
+        expect(onOverflow).toHaveBeenCalledWith(1)
     })
 
     it("uses Infinity as default capacity", () => {
         const queue = new Queue<number>()
 
         for(let i = 0; i < 1000; i++) {
-            queue.enqueue(new QueueItemImplementation(i))
+            queue.enqueue(i)
         }
-
         expect(queue.length).toBe(1000)
     })
 
     it("accepts custom QueueItem subclasses", () => {
-        class CustomItem extends QueueItem<string> {
+        class CustomItem {
+            constructor(public data: string) { }
             extra = true
         }
 
-        const queue = new Queue<string, CustomItem>()
+        const queue = new Queue<CustomItem>()
         queue.enqueue(new CustomItem("hello"))
 
         const item = queue.next()

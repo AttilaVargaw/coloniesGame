@@ -2,7 +2,9 @@ import { describe, it, expect, } from "vitest"
 import { CommandBus } from "./commandBus"
 import { RedrawCommand } from "./RedrawCommand"
 import { SelectEntityCommand } from "./SelectEntityCommand"
-import { Queue } from "./commandQueue"
+import { CommandBase } from "./CommandBase"
+
+class CommandBaseImplementation extends CommandBase {}
 
 describe("CommandBus", () => {
     it("initializes with redraw and selectEntity queues", () => {
@@ -58,18 +60,18 @@ describe("CommandBus", () => {
         expect(bus.addCommand(new RedrawCommand())).toBe(bus)
     })
 
-    it("getCommandQueue returns the queue for a registered command", () => {
+    it("getCommands returns the queue for a registered command", () => {
         const bus = new CommandBus()
-        const queue = bus.getCommandQueue<Queue<unknown>>(RedrawCommand)
+        const queue = bus.getCommands(RedrawCommand)
 
         expect(queue).toBeDefined()
         expect(queue?.length).toBe(0)
     })
 
-    it("getCommandQueue returns undefined for unregistered commands", () => {
+    it("getCommands returns undefined for unregistered commands", () => {
         const bus = new CommandBus()
 
-        expect(bus.getCommandQueue("unknown" as any)).toBeUndefined()
+        expect(bus.getCommands(CommandBaseImplementation)).toBeUndefined()
     })
 
     it("clearAll empties all command queues", () => {

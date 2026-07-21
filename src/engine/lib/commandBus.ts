@@ -4,8 +4,7 @@ import { RedrawCommand } from "./RedrawCommand"
 import { CommandBase } from "./CommandBase"
 
 export class CommandBus {
-    // eslint-disable-next-line 
-    readonly commands = new Map<Function, Queue<unknown>>([
+    readonly commands = new Map<abstract new (...args: any) => CommandBase, Queue<CommandBase>>([
         [RedrawCommand, new Queue()],
         [SelectEntityCommand, new Queue()],
     ] as const)
@@ -30,8 +29,8 @@ export class CommandBus {
         return this
     }
 
-    getCommands<T extends (...args: any) => any>(type: T) {
-        return this.commands.get(type) as unknown as Queue<ReturnType<T>>
+    getCommands<T extends new (...args: any) => CommandBase>(type: T) {
+        return this.commands.get(type) as Queue<InstanceType<T>>
     }
 
     clearAll() {
@@ -40,5 +39,3 @@ export class CommandBus {
         }
     }
 }
-
-// export type { QueueItem }

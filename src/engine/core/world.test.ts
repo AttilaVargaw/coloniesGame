@@ -148,8 +148,8 @@ describe("World", () => {
 
         world.update(16)
 
-        expect(world.events.get(UpdateDoneEvent)!.length).toBe(1)
-        expect(world.events.get(UpdateDoneEvent)!.peek()!.data).toBe(16)
+        expect(world.getEvents(UpdateDoneEvent)!.length).toBe(1)
+        expect(world.getEvents(UpdateDoneEvent)!.peek()!.data).toBe(16)
     })
 
     it("queues the entityRemoved event when an entity is removed", () => {
@@ -158,8 +158,8 @@ describe("World", () => {
 
         world.removeEntity(entity)
 
-        expect(world.events.get(EntityRemovedEvent)!.length).toBe(1)
-        expect(world.events.get(EntityRemovedEvent)!.peek()!.data).toBe(entity)
+        expect(world.getEvents(EntityRemovedEvent)!.length).toBe(1)
+        expect(world.getEvents(EntityRemovedEvent)!.peek()!.data).toBe(entity)
     })
 
     it("clears command queues on destruct", () => {
@@ -169,8 +169,8 @@ describe("World", () => {
 
         world.destruct()
 
-        expect(world.commands.get(RedrawCommand)!.length).toBe(0)
-        expect(world.commands.get(SelectEntityCommand)!.length).toBe(0)
+        expect(world.getCommands(RedrawCommand)!.length).toBe(0)
+        expect(world.getCommands(SelectEntityCommand)!.length).toBe(0)
     })
 
     it("returns the nodes list via nodes()", () => {

@@ -29,14 +29,12 @@ export class World implements Engine {
         this.systemRegistry = new SystemRegistry()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.eventBus.events.get(name) as any as Queue<ReturnType<T>>
+    getEvents<T extends abstract new (...args: any) => EventBase<any>>(name: T) {
+        return this.eventBus.events.get(name) as Queue<InstanceType<T>>
     }
 
-    getCommands<T extends new (...args: any) => any>(name: T) {
-        return this.commandBus.commands.get(name) as any as Queue<ReturnType<T>>
+    getCommands<T extends abstract new (...args: any) => CommandBase>(name: T) {
+        return this.commandBus.commands.get(name) as Queue<InstanceType<T>>
     }
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
@@ -78,13 +76,13 @@ export class World implements Engine {
         return this.systemRegistry.getSystem(system)
     }
 
-    subscribe(event: Function, callback: (data: unknown) => void) {
+    subscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
         this.eventBus.subscribe(event, callback)
 
         return this
     }
 
-    unsubscribe(event: Function, callback: (data: unknown) => void) {
+    unsubscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
         this.eventBus.unsubscribe(event, callback)
 
         return this
@@ -176,13 +174,13 @@ export class World implements Engine {
         return this
     }
 
-    registerEventQueue(event: Function) {
+    registerEventQueue(event: abstract new (...args: any) => EventBase) {
         this.eventBus.registerEventQueue(event)
 
         return this
     }
 
-    removeEventQueue(event: Function) {
+    removeEventQueue(event: abstract new (...args: any) => EventBase) {
         this.eventBus.removeEventQueue(event)
 
         return this
