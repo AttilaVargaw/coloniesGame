@@ -42,13 +42,20 @@ export class NodeManager {
         return (this._nodes.get(node) ?? []) as T[]
     }
 
-    addEntityToNodes(entity: Entity, sceneNode?: SceneNode) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    private getEntityComponentConstructors(entity: Entity): Set<Function> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        const entityComponentConstructors: Set<Function> = new Set()
+        const constructors: Set<Function> = new Set()
 
         for(const component of entity.components.values()) {
-            entityComponentConstructors.add(component.constructor)
+            constructors.add(component.constructor)
         }
+
+        return constructors
+    }
+
+    addEntityToNodes(entity: Entity, sceneNode?: SceneNode) {
+        const entityComponentConstructors = this.getEntityComponentConstructors(entity)
 
         for(const nodeName of this.nodeTypes.keys()) {
             let skip = false
@@ -75,12 +82,7 @@ export class NodeManager {
     }
 
     removeEntityFromNodes(entity: Entity, sceneNode?: SceneNode) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        const entityComponentConstructors: Set<Function> = new Set()
-
-        for(const component of entity.components.values()) {
-            entityComponentConstructors.add(component.constructor)
-        }
+        const entityComponentConstructors = this.getEntityComponentConstructors(entity)
 
         for(const nodeName of this.nodeTypes.keys()) {
             const keyValues = [...this.nodeTypes.get(nodeName)!.values()]

@@ -7,30 +7,8 @@ import { ColorComponent } from "../../../components/colorComponent";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
-import { Entity } from "@/engine/entities/entity";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { EntityAddedEvent } from "@/engine/lib/events";
-
-function getAbsolute(entity: Entity, engine: World): [number, number] {
-    const sceneNode = engine.getSceneNode(entity);
-    const parentPosition = sceneNode?.parentRef?.entity;
-
-    let absoluteX: number;
-    let absoluteY: number;
-
-    if(!parentPosition) {
-        const position = entity.getComponent(PositionComponent)!;
-        absoluteX = position.x;
-        absoluteY = position.y;
-    } else {
-        const [parentX, parentY] = getAbsolute(sceneNode.parentRef.entity, engine);
-        const position = entity.getComponent(PositionComponent)!;
-        absoluteX = parentX + position.x;
-        absoluteY = parentY + position.y;
-    }
-
-    return [absoluteX, absoluteY];
-}
-
 
 export class CircleRenderer extends SystemWithNodes<CircleNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
