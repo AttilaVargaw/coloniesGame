@@ -7,6 +7,7 @@ import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesIn
 import { solarSystems, } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { DateNode } from "@engine/systems/DateNode";
+import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
@@ -75,7 +76,7 @@ function App() {
           game?.engine.dispatchEvent("mousedown", data)
         }}
 
-        triggerRedraw={() => game?.engine.addCommand("redraw", {})}
+        triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
         ref={map}
         onClick={(data) => {
           game?.engine.dispatchEvent("click", data)

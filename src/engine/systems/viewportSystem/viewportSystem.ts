@@ -9,6 +9,7 @@ import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { Queue } from "@engine/lib/commandQueue";
 import { ViewportInputHandler } from "./viewInputHandler";
+import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -85,12 +86,12 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new RectRenderer(this))
             .addSubsystem(new LabelRenderer(this))
 
-        engine.registerCommandQueue("redraw")
+        engine.registerCommandQueue(RedrawCommand)
         // .registerCommandQueue("mousedown")
         // .registerCommandQueue("mouseup")
         // .registerCommandQueue("mouseMoved")
 
-        this.redrawQueue = engine.commands.get("redraw")
+        this.redrawQueue = engine.commands.get(RedrawCommand)
 
         return this
     }
@@ -107,7 +108,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
         this.eventHandlers.clear()
 
-        this.engine.removeCommandQueue("redraw")
+        this.engine.removeCommandQueue(RedrawCommand)
         // .removeCommandQueue("mousedown")
         // .removeCommandQueue("mouseup")
         // .removeCommandQueue("mouseMoved")

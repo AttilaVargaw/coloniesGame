@@ -4,6 +4,7 @@ import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent } from "@game/components/vessel";
+import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 
 export class MoveNode extends EntityNode {
     constructor(entity: Entity, public position: PositionComponent, public jumpDrive: JumpDriveComponent, public sensorSuite: SensorSuiteComponent) {
@@ -26,7 +27,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 const targetNode = this.engine.getSceneNode(target)!
                 entityNode.parentRef?.removeChild(entityNode)
                 targetNode.addChild(entityNode)
-                this.engine.addCommand("redraw", { data: {} })
+                this.engine.addCommand(new RedrawCommand)
             }
         }
     }

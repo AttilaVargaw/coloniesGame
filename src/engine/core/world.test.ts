@@ -4,6 +4,8 @@ import { Entity } from "../entities/entity"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import { EntityComponent } from "../entities/entityComponent"
 import { System } from "../systems/system"
+import { RedrawCommand } from "../lib/RedrawCommand"
+import { SelectEntityCommand } from "../lib/SelectEntityCommand"
 
 class TagComponent extends EntityComponent {
     constructor(public tag: string = "tag", entity?: Entity) {
@@ -103,7 +105,7 @@ describe("World", () => {
     it("returns itself from addCommand and dispatchEvent for chaining", () => {
         const world = new World()
 
-        expect(world.addCommand("redraw", {})).toBe(world)
+        expect(world.addCommand(new RedrawCommand())).toBe(world)
         expect(world.dispatchEvent("click", {})).toBe(world)
     })
 
@@ -155,13 +157,13 @@ describe("World", () => {
 
     it("clears command queues on destruct", () => {
         const world = makeWorld()
-        world.addCommand("redraw", {})
-        world.addCommand("selectEntity", { id: "test" })
+        world.addCommand(new RedrawCommand())
+        world.addCommand(new SelectEntityCommand())
 
         world.destruct()
 
-        expect(world.commands.get("redraw")!.length).toBe(0)
-        expect(world.commands.get("selectEntity")!.length).toBe(0)
+        expect(world.commands.get(RedrawCommand)!.length).toBe(0)
+        expect(world.commands.get(SelectEntityCommand)!.length).toBe(0)
     })
 
     it("returns the nodes list via nodes()", () => {

@@ -6,6 +6,8 @@ import { EntityComponent } from "@engine/entities/entityComponent"
 import { Queue } from "@engine/lib/commandQueue"
 import { System } from "@engine/systems/system"
 import { TestEntityComponent, TestEntityNode, testEntityNodeCtor, makeWorld, entityWithTag } from "@engine/test-utils"
+import { RedrawCommand } from "@engine/lib/RedrawCommand"
+import { SelectEntityCommand } from "@engine/lib/SelectEntityCommand"
 
 class ChildTagComponent extends EntityComponent {
     constructor(public tag: string = "child", entity?: Entity) {
@@ -151,7 +153,7 @@ describe("World (Engine refactor regression)", () => {
         world.removeEntity(entity)
 
         expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
-        expect(world.commands.get("redraw")!.length).toBe(1)
+        expect(world.commands.get(RedrawCommand)!.length).toBe(1)
     })
 
     it("runs registered systems during update", () => {
@@ -172,7 +174,7 @@ describe("World (Engine refactor regression)", () => {
 
     it("exposes command and event queues with the expected types", () => {
         const world = new World()
-        expect(world.commands.get("redraw")).toBeInstanceOf(Queue)
+        expect(world.commands.get(RedrawCommand)).toBeInstanceOf(Queue)
         expect(world.events.get("click")).toBeInstanceOf(Queue)
     })
 
@@ -311,14 +313,16 @@ describe("World (Engine refactor regression)", () => {
 
     it("adds a command to the specified queue", () => {
         const world = new World()
-        world.addCommand("selectEntity", { id: "test" })
-        expect(world.commands.get("selectEntity")!.length).toBe(1)
-        expect(world.commands.get("selectEntity")!.peek()!.data).toEqual({ id: "test" })
+        const testEntity = world.createEntity()
+
+        world.addCommand(new SelectEntityCommand(testEntity))
+        expect(world.commands.get(SelectEntityCommand)!.length).toBe(1)
+        expect(world.commands.get(SelectEntityCommand)!.peek()!.data).toBe(testEntity)
     })
 
     it("returns the command queue for a given type", () => {
         const world = new World()
-        const queue = world.getCommands("redraw")
+        const queue = world.getCommands(RedrawCommand)
         expect(queue).toBeInstanceOf(Queue)
     })
 })

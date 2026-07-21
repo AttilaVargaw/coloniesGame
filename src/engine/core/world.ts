@@ -10,6 +10,7 @@ import { CommandBus } from "../lib/commandBus"
 import { SystemRegistry } from "../lib/systemRegistry"
 import { Queue } from "../lib/commandQueue"
 import type { Engine } from "./engine"
+import { CommandBase } from "../lib/CommandBase"
 
 export type EngineEvents =
     "updateDone"
@@ -71,13 +72,15 @@ export class World implements Engine {
         this.eventBus.clearHandlers()
     }
 
-    registerCommandQueue(command: Commands) {
+    // eslint-disable-next-line 
+    registerCommandQueue(command: Function) {
         this.commandBus.registerCommandQueue(command)
 
         return this
     }
 
-    removeCommandQueue(command: Commands) {
+    // eslint-disable-next-line 
+    removeCommandQueue(command: Function) {
         this.commandBus.removeCommandQueue(command)
 
         return this
@@ -181,13 +184,14 @@ export class World implements Engine {
         return this
     }
 
-    addCommand(command: Commands, data: unknown) {
-        this.commandBus.addCommand(command, data)
+    addCommand(command: CommandBase) {
+        this.commandBus.addCommand(command)
 
         return this
     }
 
-    getCommands(type: Commands) {
+    // eslint-disable-next-line 
+    getCommands(type: Function) {
         return this.commandBus.getCommandQueue(type)
     }
 

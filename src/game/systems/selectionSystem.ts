@@ -7,6 +7,7 @@ import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
 import { ShapeComponent } from "@engine/components/ShapeComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
+import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
@@ -99,7 +100,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         }
 
         this.engine.addEntity(this.selector!, entity)
-        this.engine.addCommand("redraw", { data: {} })
+        this.engine.addCommand(new RedrawCommand())
 
         return this
     }
@@ -116,7 +117,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         }
 
         this.engine.addEntity(this.targetSelector!, entity)
-        this.engine.addCommand("redraw", { data: {} })
+        this.engine.addCommand(new RedrawCommand())
 
         return this
     }
