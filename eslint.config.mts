@@ -24,7 +24,7 @@ export default [
     },
     plugins: {
       '@typescript-eslint': ts,
-      react: react,
+      react,
       'react-hooks': reactHooks,
       tailwindcss,
     },

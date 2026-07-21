@@ -20,12 +20,11 @@
     "target": "esnext",
     "useDefineForClassFields": true,
     "lib": [
-      "ES7",
+      "ESNext",
       "DOM",
       "DOM.Iterable",
       "ES2020.BigInt"
     ],
-    "experimentalDecorators": true,
     "module": "es2022",
     "skipLibCheck": true,
     /* Bundler mode */
