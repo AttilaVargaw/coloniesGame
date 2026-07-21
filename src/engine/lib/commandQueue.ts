@@ -3,42 +3,43 @@ export type CommandHandler = (data: unknown) => void
 
 export type QueueOptions<Data> = {
     capacity?: number
-    onOverflow?: (dropped: QueueItem<Data>) => void
+    onOverflow?: (dropped: Data) => void
 }
 
-type QueueItem<Data> = {
-} & Data
+// export interface QueueItem<Data> {
+//     data: Data
+// }
 
-export class Queue<Data, Item extends QueueItem<Data> = QueueItem<Data>> {
-    private readonly queue: Item[] = []
+export class Queue<Data = any> {
+    private readonly queue: Data[] = []
     private readonly capacity: number
-    private readonly onOverflow?: (dropped: Item) => void
+    private readonly onOverflow?: (dropped: Data) => void
 
     constructor(options: QueueOptions<Data> = {}) {
         this.capacity = options.capacity ?? Infinity
         this.onOverflow = options.onOverflow
     }
 
-    enqueue(command: Item): this {
+    enqueue(item?: Data): this {
         if(this.queue.length >= this.capacity) {
             const dropped = this.queue.shift()!
             this.onOverflow?.(dropped)
         }
 
-        this.queue.push(command)
+        this.queue.push(item!)
 
         return this
     }
 
-    enqueueMany(commands: Item[]): this {
-        for(const command of commands) {
-            this.enqueue(command)
+    enqueueMany(items: Data[]): this {
+        for(const item of items) {
+            this.enqueue(item)
         }
 
         return this
     }
 
-    peek(): Item | undefined {
+    peek(): Data | undefined {
         return this.queue[0]
     }
 
@@ -50,7 +51,7 @@ export class Queue<Data, Item extends QueueItem<Data> = QueueItem<Data>> {
         return this.queue.length === 0
     }
 
-    next(): Item | undefined {
+    next(): Data | undefined {
         return this.queue.shift()
     }
 
@@ -60,7 +61,7 @@ export class Queue<Data, Item extends QueueItem<Data> = QueueItem<Data>> {
         return this
     }
 
-    [Symbol.iterator](): Iterator<Item> {
+    [Symbol.iterator](): Iterator<Data> {
         return this.queue[Symbol.iterator]()
     }
 }

@@ -29,12 +29,13 @@ export class World implements Engine {
         this.systemRegistry = new SystemRegistry()
     }
 
+    // eslint-disable-next-line
     getEvents<T extends abstract new (...args: any) => EventBase<any>>(name: T) {
-        return this.eventBus.events.get(name) as Queue<InstanceType<T>>
+        return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
     }
 
     getCommands<T extends abstract new (...args: any) => CommandBase>(name: T) {
-        return this.commandBus.commands.get(name) as Queue<InstanceType<T>>
+        return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T> extends CommandBase<infer U> ? U : never>
     }
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
@@ -76,14 +77,14 @@ export class World implements Engine {
         return this.systemRegistry.getSystem(system)
     }
 
-    subscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
-        this.eventBus.subscribe(event, callback)
+    subscribe(event: Function, callback: (data: unknown) => void) {
+        this.eventBus.subscribe(event as abstract new (...args: any[]) => EventBase, callback)
 
         return this
     }
 
-    unsubscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
-        this.eventBus.unsubscribe(event, callback)
+    unsubscribe(event: Function, callback: (data: unknown) => void) {
+        this.eventBus.unsubscribe(event as abstract new (...args: any[]) => EventBase, callback)
 
         return this
     }
@@ -174,14 +175,14 @@ export class World implements Engine {
         return this
     }
 
-    registerEventQueue(event: abstract new (...args: any) => EventBase) {
-        this.eventBus.registerEventQueue(event)
+    registerEventQueue(event: Function) {
+        this.eventBus.registerEventQueue(event as abstract new (...args: any[]) => EventBase)
 
         return this
     }
 
-    removeEventQueue(event: abstract new (...args: any) => EventBase) {
-        this.eventBus.removeEventQueue(event)
+    removeEventQueue(event: Function) {
+        this.eventBus.removeEventQueue(event as abstract new (...args: any[]) => EventBase)
 
         return this
     }

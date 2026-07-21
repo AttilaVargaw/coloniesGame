@@ -3,7 +3,7 @@ import { Queue } from "./commandQueue"
 
 describe("Queue", () => {
     it("starts empty with no options", () => {
-        const queue = new Queue<any>()
+        const queue = new Queue<number>()
 
         expect(queue.length).toBe(0)
         expect(queue.isEmpty()).toBe(true)
@@ -46,8 +46,8 @@ describe("Queue", () => {
 
     it("next returns and removes the first item", () => {
         const queue = new Queue<string>()
-        queue.enqueue(("a"))
-        queue.enqueue(("b"))
+        queue.enqueue("a")
+        queue.enqueue("b")
 
         const item = queue.next()
 
@@ -63,8 +63,8 @@ describe("Queue", () => {
 
     it("clears all items", () => {
         const queue = new Queue<number>()
-        queue.enqueue((1))
-        queue.enqueue((2))
+        queue.enqueue(1)
+        queue.enqueue(2)
 
         const result = queue.clear()
 
@@ -75,8 +75,8 @@ describe("Queue", () => {
 
     it("is iterable", () => {
         const queue = new Queue<string>()
-        queue.enqueue(("x"))
-        queue.enqueue(("y"))
+        queue.enqueue("x")
+        queue.enqueue("y")
 
         const items = [...queue]
 
@@ -106,7 +106,7 @@ describe("Queue", () => {
         expect(queue.length).toBe(1000)
     })
 
-    it("accepts custom QueueItem subclasses", () => {
+    it("accepts custom QueueItem implementations", () => {
         class CustomItem {
             constructor(public data: string) { }
             extra = true

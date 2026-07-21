@@ -189,19 +189,19 @@ describe("World (Engine refactor regression)", () => {
         const onClick = vi.fn()
 
         world.subscribe(ClickEventData, onClick)
-        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 }))
+        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 } as any))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
         expect(world.getEvents(ClickEventData)!.length).toBe(0)
 
-        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 }))
+        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 } as any))
         expect(world.getEvents(ClickEventData)!.length).toBe(1)
 
         world.destruct()
 
         expect(world.getEvents(ClickEventData)!.length).toBe(0)
 
-        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 }))
+        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 } as any))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
     })
@@ -244,13 +244,13 @@ describe("World (Engine refactor regression)", () => {
         const onClick = vi.fn()
 
         world.subscribe(ClickEventData, onClick)
-        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 1, y: 0 }))
+        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 1, y: 0 } as any))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
         expect(onClick).toHaveBeenCalledWith({ event: {} as MouseEvent, x: 1, y: 0 })
 
         world.unsubscribe(ClickEventData, onClick)
-        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 2, y: 0 }))
+        world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 2, y: 0 } as any))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
     })
@@ -325,7 +325,7 @@ describe("World (Engine refactor regression)", () => {
 
         world.addCommand(new SelectEntityCommand(testEntity))
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(1)
-        expect(world.getCommands(SelectEntityCommand)!.peek()!.data).toBe(testEntity)
+        expect(world.getCommands(SelectEntityCommand)!.peek()).toBe(testEntity)
     })
 
     it("returns the command queue for a given type", () => {

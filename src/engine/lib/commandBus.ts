@@ -4,33 +4,33 @@ import { RedrawCommand } from "./RedrawCommand"
 import { CommandBase } from "./CommandBase"
 
 export class CommandBus {
-    readonly commands = new Map<abstract new (...args: any) => CommandBase, Queue<CommandBase>>([
+    readonly commands = new Map<abstract new (...args: any) => CommandBase, Queue<unknown>>([
         [RedrawCommand, new Queue()],
         [SelectEntityCommand, new Queue()],
     ] as const)
 
     // eslint-disable-next-line 
     registerCommandQueue(command: Function) {
-        this.commands.set(command, new Queue())
+        this.commands.set(command as abstract new (...args: any) => CommandBase, new Queue())
 
         return this
     }
 
     // eslint-disable-next-line 
     removeCommandQueue(command: Function) {
-        this.commands.delete(command)
+        this.commands.delete(command as abstract new (...args: any) => CommandBase)
 
         return this
     }
 
     addCommand(command: CommandBase) {
-        this.commands.get(command.constructor)?.enqueue({ data: command.data })
+        this.commands.get(command.constructor as abstract new (...args: any) => CommandBase)?.enqueue({ data: command.data })
 
         return this
     }
 
-    getCommands<T extends new (...args: any) => CommandBase>(type: T) {
-        return this.commands.get(type) as Queue<InstanceType<T>>
+    getCommands<T extends abstract new (...args: any) => CommandBase>(type: T) {
+        return this.commands.get(type) as unknown as Queue<InstanceType<T> extends CommandBase<infer U> ? U : never>
     }
 
     clearAll() {

@@ -51,7 +51,7 @@ describe("CommandBus", () => {
 
         const queue = bus.commands.get(RedrawCommand)!
         expect(queue.length).toBe(1)
-        expect(queue.peek()?.data).toEqual(undefined)
+        expect(queue.peek()).toEqual(undefined)
     })
 
     it("returns itself from addCommand", () => {

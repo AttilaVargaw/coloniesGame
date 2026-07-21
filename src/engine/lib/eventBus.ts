@@ -18,7 +18,7 @@ import {
 } from "./events"
 
 export class EventBus {
-    readonly events: Map<abstract new (...args: any) => EventBase, Queue<EventBase>> = new Map([
+    readonly events: Map<abstract new (...args: any[]) => EventBase, Queue<EventBase>> = new Map([
         [UpdateBeginEvent, new Queue()],
         [UpdateDoneEvent, new Queue()],
         [EntityAddedEvent, new Queue()],
@@ -35,9 +35,9 @@ export class EventBus {
         [MousemoveEvent, new Queue()],
     ])
 
-    private readonly eventHandlers = new Map<abstract new (...args: any) => EventBase, Set<(data: unknown) => void>>()
+    private readonly eventHandlers = new Map<abstract new (...args: any[]) => EventBase, Set<(data: unknown) => void>>()
 
-    processEventHandler(event: abstract new (...args: any) => EventBase) {
+    processEventHandler(event: abstract new (...args: any[]) => EventBase) {
         const handlers = this.eventHandlers.get(event)
         const events = this.events.get(event)
 
@@ -54,7 +54,7 @@ export class EventBus {
         events.clear()
     }
 
-    subscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
+    subscribe(event: abstract new (...args: any[]) => EventBase, callback: (data: unknown) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
 
@@ -66,25 +66,25 @@ export class EventBus {
         return this
     }
 
-    unsubscribe(event: abstract new (...args: any) => EventBase, callback: (data: unknown) => void) {
+    unsubscribe(event: abstract new (...args: any[]) => EventBase, callback: (data: unknown) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
         return this
     }
 
     dispatchEvent(event: EventBase) {
-        this.events.get(event.constructor)?.enqueue({ data: event.data })
+        this.events.get(event.constructor as abstract new (...args: any[]) => EventBase)?.enqueue({ data: event.data })
 
         return this
     }
 
-    registerEventQueue(event: abstract new (...args: any) => EventBase) {
+    registerEventQueue(event: abstract new (...args: any[]) => EventBase) {
         this.events.set(event, new Queue())
 
         return this
     }
 
-    removeEventQueue(event: abstract new (...args: any) => EventBase) {
+    removeEventQueue(event: abstract new (...args: any[]) => EventBase) {
         this.events.delete(event)
 
         return this
@@ -118,5 +118,3 @@ export class EventBus {
         }
     }
 }
-
-export type { QueueItem }

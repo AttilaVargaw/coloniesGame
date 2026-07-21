@@ -10,7 +10,7 @@ export class ViewportInputHandler {
 
     private readonly heldKeys = new Set<string>()
 
-    constructor(private readonly viewportSystem: ViewportSystem) {}
+    constructor(private readonly viewportSystem: ViewportSystem) { }
 
     private static readonly DRAG_THRESHOLD = 3
     private static readonly ZOOM_SPEED = 1.0015
@@ -39,16 +39,16 @@ export class ViewportInputHandler {
                 camera.lookAt[0] + panX * step,
                 camera.lookAt[1] + panY * step
             )
-            this.viewportSystem.redrawQueue!.enqueue({ data: {} })
+            this.viewportSystem.redrawQueue!.enqueue()
         }
 
         if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
             camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.viewportSystem.redrawQueue!.enqueue({ data: {} })
+            this.viewportSystem.redrawQueue!.enqueue()
         }
         if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.viewportSystem.redrawQueue!.enqueue({ data: {} })
+            this.viewportSystem.redrawQueue!.enqueue()
         }
     }
 
@@ -91,7 +91,7 @@ export class ViewportInputHandler {
 
         camera.zoomBy(factor, screenX, screenY)
 
-        this.viewportSystem.redrawQueue?.enqueue({ data: {} })
+        this.viewportSystem.redrawQueue?.enqueue()
     }
 
     update(dt: number) {
@@ -102,32 +102,29 @@ export class ViewportInputHandler {
         const mouseupArray = this.viewportSystem.engineRef.getEvents(MouseupEvent)!
         const mouseMovedArray = this.viewportSystem.engineRef.getEvents(MousemoveEvent)!
 
-        for(const { data } of mouseMovedArray) {
-            const mouseData = data as { x: number; y: number }
-            this.pointer = { x: mouseData.x, y: mouseData.y }
+        for(const data of mouseMovedArray) {
+            this.pointer = { x: data.x, y: data.y }
         }
 
-        for(const { data } of mousedownArray) {
+        for(const data of mousedownArray) {
             this.isDragging = true
-            const mouseData = data as { x: number; y: number }
-            this.lastPointer = { x: mouseData.x, y: mouseData.y }
+            this.lastPointer = { x: data.x, y: data.y }
             this.dragMoved = false
             document.body.style.cursor = "grabbing"
         }
         mousedownArray.clear()
 
         if(this.isDragging && this.lastPointer) {
-            for(const { data } of mouseMovedArray) {
-                const mouseData = data as { x: number; y: number }
-                const dx = mouseData.x - this.lastPointer.x
-                const dy = mouseData.y - this.lastPointer.y
+            for(const data of mouseMovedArray) {
+                const dx = data.x - this.lastPointer.x
+                const dy = data.y - this.lastPointer.y
                 if(dx || dy) {
                     camera.panByPixels(dx, dy)
                     if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
                         this.dragMoved = true
                     }
-                    this.lastPointer = { x: mouseData.x, y: mouseData.y }
-                    this.viewportSystem.redrawQueue!.enqueue({ data: {} })
+                    this.lastPointer = { x: data.x, y: data.y }
+                    this.viewportSystem.redrawQueue!.enqueue()
                 }
             }
         }

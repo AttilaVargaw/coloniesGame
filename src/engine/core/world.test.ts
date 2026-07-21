@@ -112,13 +112,13 @@ describe("World", () => {
         const world = new World()
 
         expect(world.addCommand(new RedrawCommand())).toBe(world)
-        expect(world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 }))).toBe(world)
+        expect(world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 } as any))).toBe(world)
     })
 
     it("returns itself from registerEventQueue and removeEventQueue for chaining", () => {
         const world = new World()
 
-        class CustomEvent extends EventBase<{ type: string }> {}
+        class CustomEvent extends EventBase<{ type: string }> { }
         expect(world.registerEventQueue(CustomEvent)).toBe(world)
         expect(world.removeEventQueue(CustomEvent)).toBe(world)
     })
@@ -149,7 +149,7 @@ describe("World", () => {
         world.update(16)
 
         expect(world.getEvents(UpdateDoneEvent)!.length).toBe(1)
-        expect(world.getEvents(UpdateDoneEvent)!.peek()!.data).toBe(16)
+        expect(world.getEvents(UpdateDoneEvent)!.peek()).toBe(16)
     })
 
     it("queues the entityRemoved event when an entity is removed", () => {
@@ -159,7 +159,7 @@ describe("World", () => {
         world.removeEntity(entity)
 
         expect(world.getEvents(EntityRemovedEvent)!.length).toBe(1)
-        expect(world.getEvents(EntityRemovedEvent)!.peek()!.data).toBe(entity)
+        expect(world.getEvents(EntityRemovedEvent)!.peek()).toBe(entity)
     })
 
     it("clears command queues on destruct", () => {

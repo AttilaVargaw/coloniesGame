@@ -201,12 +201,12 @@ describe("EventBus", () => {
             bus.subscribe(ClickEventData, clickHandler)
 
             bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.dispatchEvent(new ClickEventData({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
+            bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
 
             bus.processEventHandlers()
 
             expect(updateHandler).toHaveBeenCalledWith(16)
-            expect(clickHandler).toHaveBeenCalledWith({ event: {} as globalThis.MouseEvent, x: 0, y: 0 })
+            expect(clickHandler).toHaveBeenCalledWith({ x: 0, y: 0 })
             expect(bus.events.get(UpdateBeginEvent)!.length).toBe(0)
             expect(bus.events.get(ClickEventData)!.length).toBe(0)
         })
@@ -252,7 +252,7 @@ describe("EventBus", () => {
             bus.clearHandlers()
 
             bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.dispatchEvent(new ClickEventData({ event: {} as globalThis.MouseEvent, x: 0, y: 0 }))
+            bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
             bus.processEventHandlers()
 
             expect(handler).not.toHaveBeenCalled()
