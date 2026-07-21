@@ -8,7 +8,6 @@ import { NodeManager } from "../lib/nodeManager"
 import { EventBus } from "../lib/eventBus"
 import { CommandBus } from "../lib/commandBus"
 import { SystemRegistry } from "../lib/systemRegistry"
-import { Queue } from "../lib/commandQueue"
 import type { Engine } from "./engine"
 import { CommandBase } from "../lib/CommandBase"
 
@@ -27,14 +26,6 @@ export type EngineEvents =
     | "mousedown"
     | "click"
     | "componentRemoved"
-
-export type Commands =
-    "redraw"
-    | "selectEntity"
-    | "setProductionRate"
-
-export type CommandQueueItem = Queue<Commands>
-export type EventQueueItem = Queue<EngineEvents>
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
