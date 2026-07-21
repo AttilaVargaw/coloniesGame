@@ -17,6 +17,7 @@ import {
   MousedownEvent,
   ClickEventData,
   MouseEventData,
+  DayPassedEvent,
 } from "@/engine/lib/events";
 
 function App() {
@@ -65,7 +66,7 @@ function App() {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      gameInstance.engine.unsubscribe(UpdateDoneEvent, updateDate as (data: unknown) => void)
+      gameInstance.engine.unsubscribe(DayPassedEvent, updateDate as (data: unknown) => void)
       gameInstance.engine.unsubscribe(SelectionChangedEvent, onOpenInfoWindow as (data: unknown) => void)
 
       gameInstance.destruct()

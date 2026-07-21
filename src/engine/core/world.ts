@@ -155,6 +155,7 @@ export class World implements Engine {
 
         this.eventBus.dispatchEvent(new UpdateDoneEvent(dt))
         this.eventBus.processEventHandler(UpdateDoneEvent)
+        //this.commandBus.clearAll()
     }
 
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {

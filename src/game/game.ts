@@ -51,6 +51,8 @@ export class Game {
         let previousTime = 0.
 
         const update = (time: number) => {
+            this.gameLoopId = requestAnimationFrame(update)
+
             if(!this.engine) {
                 return
             }
@@ -60,15 +62,9 @@ export class Game {
             previousTime = time
 
             this.engine.update(Math.min(500, dt))
-
-            this.gameLoopId = requestAnimationFrame(update)
         }
 
-        this.gameLoopId = requestAnimationFrame(time => {
-            previousTime = time;
-
-            this.gameLoopId = requestAnimationFrame(update)
-        })
+        update(previousTime)
     }
 
     destruct(): void {

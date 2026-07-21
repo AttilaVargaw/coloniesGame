@@ -15,11 +15,6 @@ export class DateSystem extends System {
     private lastMonth = 0
     private startTime = 0
 
-    private dateNodeConverter = (entity: Entity) => new DateNode(
-        entity,
-        entity.getComponent(DateComponent)!,
-    )
-
     removeFromEngine(): this {
         if(!this.engine) {
             return this
@@ -37,7 +32,10 @@ export class DateSystem extends System {
     addToEngine(engine: World): this {
         super.addToEngine(engine)
 
-        engine.registerNodeType(DateNode, new Set([DateComponent]), this.dateNodeConverter)
+        engine.registerNodeType(DateNode, new Set([DateComponent]), (entity: Entity) => new DateNode(
+            entity,
+            entity.getComponent(DateComponent)!,
+        ))
         this.entity = new Entity(uuid()).addComponent(new DateComponent(this.startTime))
         engine.addEntity(this.entity)
         this.node = engine.getNodeList(DateNode)[0]

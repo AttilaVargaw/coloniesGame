@@ -8,6 +8,8 @@ import { ShapeComponent } from "@engine/components/ShapeComponent";
 import { HoverableComponent } from "@game/systems/cursorSystem";
 import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel";
 import { SelectionSystem } from "@game/systems/selectionSystem";
+import { clearShipPath, setShipPath } from "@game/systems/moveSystem";
+import { MapSystem } from "@game/systems/mapSystem";
 import { Star, Colony } from "../data/types";
 import { IndustryComponent } from "../components/industryComponent";
 import { Engine } from "@/engine/core/engine";
@@ -113,18 +115,30 @@ export function createSector(engine: Engine, { x, y, visible }: { x: number, y: 
         const targetSceneNode = engine.getSceneNode(target)!
 
         if(shiftKey) {
-            const selection = selectionSystem.currentSelection()
+            const selection = selectionSystem.currentSelection()!
+            const selectionsParent = engine.getSceneNode(selection)!.parentRef!.entity
 
             if(selection) {
-                selectionSystem.onTargetChanged(targetSceneNode.parentRef!.entity)
-                selection.getComponent(JumpDriveComponent)!.target = target
+                const targetEntity = targetSceneNode.parentRef!.entity
+                selectionSystem.onTargetChanged(targetEntity)
+                const mapSystem = engine.getSystem(MapSystem)!
+                const path = mapSystem.findPath(selectionsParent, targetEntity)
+                if(path.length > 1) {
+                    setShipPath(selection, path)
+                } else {
+                    selection.getComponent(JumpDriveComponent)!.target = target
+                }
             }
         } else {
             if(targetSceneNode.childrenRef.size) {
                 return
             }
+            const currentSelection = selectionSystem.currentSelection()
             selectionSystem.unselect()
             selectionSystem.unTarget()
+            if(currentSelection) {
+                clearShipPath(currentSelection)
+            }
         }
     }
     ))

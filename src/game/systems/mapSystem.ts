@@ -3,6 +3,8 @@ import { SystemWithNodes } from "./system";
 import { PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
 import { StartState } from "@game/data/types";
+import type { Entity } from "@engine/entities/entity";
+import { aStar } from "@game/utils/pathfinder";
 
 export class MapSystem extends SystemWithNodes<PathNode> {
     protected updateNode(_node: PathNode, _dT?: number): void {
@@ -26,6 +28,10 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         super.addToEngine(engine)
 
         return this
+    }
+
+    findPath(start: Entity, end: Entity): Entity[] {
+        return aStar(start, end, StartState.map.sectors)
     }
 
     init(mapSize: number) {

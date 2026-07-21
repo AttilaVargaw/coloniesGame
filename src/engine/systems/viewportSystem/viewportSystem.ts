@@ -10,6 +10,8 @@ import { LabelRenderer } from "./renderers/labelRenderer";
 import { Queue } from "@engine/lib/commandQueue";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { DEBUG_VISUALIZE_PATHS, getActivePaths } from "@game/systems/moveSystem";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -51,11 +53,40 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
                 this.updateSubsystems(dt);
 
+                if(DEBUG_VISUALIZE_PATHS) {
+                    this.drawDebugPaths(ctx)
+                }
+
                 camera.end();
             }
 
         }
         this.redrawQueue?.clear()
+    }
+
+    private drawDebugPaths(ctx: CanvasRenderingContext2D) {
+        if(!this.engine) return
+
+        const paths = getActivePaths()
+        if(paths.length === 0) return
+
+        for(const { ship, waypoints } of paths) {
+            const [sx, sy] = getAbsolute(ship, this.engine)
+
+            ctx.beginPath()
+            ctx.moveTo(sx, sy)
+
+            for(const waypoint of waypoints) {
+                const [wx, wy] = getAbsolute(waypoint, this.engine)
+                ctx.lineTo(wx, wy)
+            }
+
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.6)"
+            ctx.lineWidth = 2
+            ctx.setLineDash([6, 3])
+            ctx.stroke()
+            ctx.setLineDash([])
+        }
     }
 
     registerNodes(engine: World) {
