@@ -5,6 +5,7 @@ import { World } from "../core/world";
 import { System } from "./system"
 import { DateNode } from "./DateNode";
 import { Entity } from "../entities/entity";
+import { DayPassedEvent, MonthPassedEvent } from "../lib/events";
 
 export class DateSystem extends System {
     private entity?: Entity
@@ -57,7 +58,7 @@ export class DateSystem extends System {
 
         if(this.timeSinceLastDay > 1000 * 60 * 60 * 24) {
             this.timeSinceLastDay = 0
-            this.engine.dispatchEvent("dayPassed", null)
+            this.engine.dispatchEvent(new DayPassedEvent(null))
         }
 
         const date = ColonialDate(node.date.ms)
@@ -65,7 +66,7 @@ export class DateSystem extends System {
         if(this.lastMonth !== date.month) {
             this.lastMonth = date.month
             this.timeSinceLasMonth = 0
-            this.engine.dispatchEvent("monthPassed", null)
+            this.engine.dispatchEvent(new MonthPassedEvent(null))
         }
     }
 }

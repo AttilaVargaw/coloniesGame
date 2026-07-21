@@ -8,6 +8,12 @@ import { System } from "@engine/systems/system"
 import { TestEntityComponent, TestEntityNode, testEntityNodeCtor, makeWorld, entityWithTag } from "@engine/test-utils"
 import { RedrawCommand } from "@engine/lib/RedrawCommand"
 import { SelectEntityCommand } from "@engine/lib/SelectEntityCommand"
+import {
+    UpdateBeginEvent,
+    EntityAddedEvent,
+    ClickEvent,
+} from "@engine/lib/events"
+import { EventBase } from "@engine/lib/events"
 
 class ChildTagComponent extends EntityComponent {
     constructor(public tag: string = "child", entity?: Entity) {
@@ -125,7 +131,7 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
         const updateBegin = vi.fn()
 
-        world.subscribe("updateBegin", updateBegin)
+        world.subscribe(UpdateBeginEvent, updateBegin)
 
         world.update(16)
 
@@ -135,10 +141,10 @@ describe("World (Engine refactor regression)", () => {
     it("fires entityAdded handlers during the update loop", () => {
         const world = makeWorld()
         const onAdded = vi.fn()
-        world.subscribe("entityAdded", onAdded)
+        world.subscribe(EntityAddedEvent, onAdded)
 
         const entity = world.createEntity()
-        world.dispatchEvent("entityAdded", entity)
+        world.dispatchEvent(new EntityAddedEvent(entity))
         world.update(16)
 
         expect(onAdded).toHaveBeenCalledWith(entity)
@@ -175,27 +181,27 @@ describe("World (Engine refactor regression)", () => {
     it("exposes command and event queues with the expected types", () => {
         const world = new World()
         expect(world.commands.get(RedrawCommand)).toBeInstanceOf(Queue)
-        expect(world.events.get("click")).toBeInstanceOf(Queue)
+        expect(world.events.get(ClickEvent)).toBeInstanceOf(Queue)
     })
 
     it("clears event queues and subscribed handlers on destruct", () => {
         const world = makeWorld()
         const onClick = vi.fn()
 
-        world.subscribe("click", onClick)
-        world.dispatchEvent("click", {})
+        world.subscribe(ClickEvent, onClick)
+        world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 0, y: 0 }))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
-        expect(world.events.get("click")!.length).toBe(0)
+        expect(world.events.get(ClickEvent)!.length).toBe(0)
 
-        world.dispatchEvent("click", {})
-        expect(world.events.get("click")!.length).toBe(1)
+        world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 0, y: 0 }))
+        expect(world.events.get(ClickEvent)!.length).toBe(1)
 
         world.destruct()
 
-        expect(world.events.get("click")!.length).toBe(0)
+        expect(world.events.get(ClickEvent)!.length).toBe(0)
 
-        world.dispatchEvent("click", {})
+        world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 0, y: 0 }))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
     })
@@ -237,14 +243,14 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
         const onClick = vi.fn()
 
-        world.subscribe("click", onClick)
-        world.dispatchEvent("click", { x: 1 })
+        world.subscribe(ClickEvent, onClick)
+        world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 1, y: 0 }))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
-        expect(onClick).toHaveBeenCalledWith({ x: 1 })
+        expect(onClick).toHaveBeenCalledWith({ event: {} as MouseEvent, x: 1, y: 0 })
 
-        world.unsubscribe("click", onClick)
-        world.dispatchEvent("click", { x: 2 })
+        world.unsubscribe(ClickEvent, onClick)
+        world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 2, y: 0 }))
         world.update(16)
         expect(onClick).toHaveBeenCalledTimes(1)
     })
@@ -293,9 +299,10 @@ describe("World (Engine refactor regression)", () => {
         const world = new World()
         const handler = vi.fn()
 
-        world.registerEventQueue("customEvent" as any)
-        world.subscribe("customEvent" as any, handler)
-        world.dispatchEvent("customEvent" as any, { type: "test" })
+        class CustomEvent extends EventBase<{ type: string }> {}
+        world.registerEventQueue(CustomEvent)
+        world.subscribe(CustomEvent, handler)
+        world.dispatchEvent(new CustomEvent({ type: "test" }))
         world.update(16)
 
         expect(handler).toHaveBeenCalledWith({ type: "test" })
@@ -303,12 +310,13 @@ describe("World (Engine refactor regression)", () => {
 
     it("removes an event queue", () => {
         const world = new World()
-        world.registerEventQueue("customEvent" as any)
-        expect(world.events.get("customEvent" as any)).toBeInstanceOf(Queue)
-        expect(world.events.get("customEvent" as any)).toBeInstanceOf(Queue)
+        class CustomEvent extends EventBase<{ type: string }> {}
+        world.registerEventQueue(CustomEvent)
+        expect(world.events.get(CustomEvent)).toBeInstanceOf(Queue)
+        expect(world.events.get(CustomEvent)).toBeInstanceOf(Queue)
 
-        world.removeEventQueue("customEvent" as any)
-        expect(world.events.get("customEvent" as any)).toBeUndefined()
+        world.removeEventQueue(CustomEvent)
+        expect(world.events.get(CustomEvent)).toBeUndefined()
     })
 
     it("adds a command to the specified queue", () => {

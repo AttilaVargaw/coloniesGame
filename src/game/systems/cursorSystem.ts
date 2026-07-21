@@ -7,6 +7,7 @@ import { EntityComponent } from "@engine/entities/entityComponent";
 import { isContained } from "@lib/isContained";
 import { Entity } from "@/engine/entities/entity";
 import { SizeComponent } from "@/engine/components/sizeComponent";
+import { MousemoveEvent } from "@/engine/lib/events";
 
 export class HoverableComponent extends EntityComponent {
     constructor(
@@ -57,10 +58,10 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
     update(_dt: number) {
         if(!this.engine) return
 
-        const mouseMovedCommand = this.engine.events.get("mouseMoved")!
+        const mouseMovedCommand = this.engine.events.get(MousemoveEvent)!
         if(!mouseMovedCommand.length) return
 
-        const mouseHit = [...this.engine.events.get("mouseMoved")!].some(({ data }) => {
+        const mouseHit = [...this.engine.events.get(MousemoveEvent)!].some(({ data }) => {
             const mouseData = data as { x: number; y: number }
             const { camera } = this.viewportSystem.viewport
             const position = camera.screenToWorld(mouseData.x, mouseData.y)

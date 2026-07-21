@@ -8,6 +8,15 @@ import { solarSystems, } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { DateNode } from "@engine/systems/DateNode";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
+import {
+    UpdateDoneEvent,
+    SelectionChangedEvent,
+    KeydownEvent,
+    MouseupEvent,
+    MousemoveEvent,
+    MousedownEvent,
+    ClickEvent,
+} from "@/engine/lib/events";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
@@ -33,7 +42,7 @@ function App() {
     }
 
     const eventListener = (event: KeyboardEvent) => {
-      gameInstance.engine?.dispatchEvent("keydown", { data: event })
+      gameInstance.engine?.dispatchEvent(new KeydownEvent(event))
     }
 
     const onMouseUp = (event: MouseEvent) => {
@@ -41,13 +50,13 @@ function App() {
       if(!rect) {
         return
       }
-      gameInstance.engine?.dispatchEvent("mouseup", { name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } })
+      gameInstance.engine?.dispatchEvent(new MouseupEvent({ name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } }))
     }
 
     document.addEventListener("keydown", eventListener)
     window.addEventListener("mouseup", onMouseUp)
-    gameInstance.engine?.subscribe("updateDone", updateDate as (data: unknown) => void)
-      .subscribe("selectionChanged", onOpenInfoWindow as (data: unknown) => void)
+    gameInstance.engine?.subscribe(UpdateDoneEvent, updateDate as (data: unknown) => void)
+      .subscribe(SelectionChangedEvent, onOpenInfoWindow as (data: unknown) => void)
 
     setGame(gameInstance)
 
@@ -55,8 +64,8 @@ function App() {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      gameInstance.engine.unsubscribe("updateDone", updateDate as (data: unknown) => void)
-      gameInstance.engine.unsubscribe("selectionChanged", onOpenInfoWindow as (data: unknown) => void)
+      gameInstance.engine.unsubscribe(UpdateDoneEvent, updateDate as (data: unknown) => void)
+      gameInstance.engine.unsubscribe(SelectionChangedEvent, onOpenInfoWindow as (data: unknown) => void)
 
       gameInstance.destruct()
 
@@ -70,16 +79,16 @@ function App() {
       <Header time={date} />
       <Screen
         onMouseMove={(data) => {
-          game?.engine.dispatchEvent("mouseMoved", data)
+          game?.engine.dispatchEvent(new MousemoveEvent(data as any))
         }}
         onMouseDown={(data) => {
-          game?.engine.dispatchEvent("mousedown", data)
+          game?.engine.dispatchEvent(new MousedownEvent(data as any))
         }}
 
         triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
         ref={map}
         onClick={(data) => {
-          game?.engine.dispatchEvent("click", data)
+          game?.engine.dispatchEvent(new ClickEvent(data as any))
         }} />
       {/* <div style={{ display: dynamicData ? "block" : "none" }}>
         <DataWindow header={dynamicDataHeader} data={dynamicData} />

@@ -2,6 +2,7 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { World } from "@engine/core/world";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
+import { DayPassedEvent } from "@/engine/lib/events";
 
 const magicNumberToGetEarthsDailyPopuplationGrow = 15_000
 
@@ -10,7 +11,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     }
     removeFromEngine(): this {
         this.engine?.unregisterNodeType(IndustryNode)
-        this.engine?.unsubscribe("dayPassed", this.onDayPassed)
+        this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed)
 
         super.removeFromEngine()
 
@@ -42,7 +43,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 entity.getComponent(IndustryComponent)!,
                 entity
             )
-        ).subscribe("dayPassed", this.onDayPassed)
+        ).subscribe(DayPassedEvent, this.onDayPassed)
 
         this.nodes = engine.getNodeList(IndustryNode);
 

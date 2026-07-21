@@ -8,6 +8,7 @@ import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { EntityAddedEvent } from "@/engine/lib/events";
 
 export class RectRenderer extends SystemWithNodes<RectNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -59,7 +60,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
     addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(RectNode)
-        engine.subscribe("entityAdded", this.onEntityAdded)
+        engine.subscribe(EntityAddedEvent, this.onEntityAdded)
 
         return this
     }
@@ -68,7 +69,7 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
         if(!this.engine) {
             return this
         }
-        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
+        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
         this.nodes.length = 0
         super.removeFromEngine()
 

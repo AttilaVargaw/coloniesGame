@@ -8,13 +8,14 @@ import { PositionComponent } from "@engine/components/position"
 import { ShapeComponent } from "@engine/components/ShapeComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { RedrawCommand } from "@/engine/lib/RedrawCommand"
+import { SelectionChangedEvent } from "@/engine/lib/events"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
     }
 
     removeFromEngine(): this {
-        this.engine?.unsubscribe("selectionChanged", this.onSelectionChanged as (data: unknown) => void)
+        this.engine?.unsubscribe(SelectionChangedEvent, this.onSelectionChanged as (data: unknown) => void)
         this.unselect()
         this.unTarget()
         this.engine?.unregisterNodeType(SelectionNode)

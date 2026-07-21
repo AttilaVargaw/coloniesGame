@@ -1,5 +1,6 @@
 import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
+import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 
 export class ViewportInputHandler {
     private isDragging = false
@@ -97,9 +98,9 @@ export class ViewportInputHandler {
         if(!this.viewportSystem.engineRef) return
 
         const camera = this.viewportSystem.viewport.camera
-        const mousedownArray = this.viewportSystem.engineRef.events.get("mousedown")!
-        const mouseupArray = this.viewportSystem.engineRef.events.get("mouseup")!
-        const mouseMovedArray = this.viewportSystem.engineRef.events.get("mouseMoved")!
+        const mousedownArray = this.viewportSystem.engineRef.events.get(MousedownEvent)!
+        const mouseupArray = this.viewportSystem.engineRef.events.get(MouseupEvent)!
+        const mouseMovedArray = this.viewportSystem.engineRef.events.get(MousemoveEvent)!
 
         for(const { data } of mouseMovedArray) {
             const mouseData = data as { x: number; y: number }

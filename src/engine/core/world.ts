@@ -10,22 +10,8 @@ import { CommandBus } from "../lib/commandBus"
 import { SystemRegistry } from "../lib/systemRegistry"
 import type { Engine } from "./engine"
 import { CommandBase } from "../lib/CommandBase"
-
-export type EngineEvents =
-    "updateDone"
-    | "entityAdded"
-    | "updateBegin"
-    | "dayPassed"
-    | "selectionChanged"
-    | "entityRemoved"
-    | "mouseMoved"
-    | "monthPassed"
-    | "mouseup"
-    | "keydown"
-    | "keyup"
-    | "mousedown"
-    | "click"
-    | "componentRemoved"
+import { EventBase } from "../lib/events"
+import { UpdateBeginEvent, UpdateDoneEvent } from "../lib/events"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -89,13 +75,13 @@ export class World implements Engine {
         return this.systemRegistry.getSystem(system)
     }
 
-    subscribe(event: EngineEvents, callback: (data: unknown) => void) {
+    subscribe(event: Function, callback: (data: unknown) => void) {
         this.eventBus.subscribe(event, callback)
 
         return this
     }
 
-    unsubscribe(event: EngineEvents, callback: (data: unknown) => void) {
+    unsubscribe(event: Function, callback: (data: unknown) => void) {
         this.eventBus.unsubscribe(event, callback)
 
         return this
@@ -154,14 +140,14 @@ export class World implements Engine {
     }
 
     update(dt: number) {
-        this.eventBus.dispatchEvent("updateBegin", dt)
+        this.eventBus.dispatchEvent(new UpdateBeginEvent(dt))
 
         this.eventBus.processEventHandlers()
 
         this.systemRegistry.update(dt)
 
-        this.eventBus.dispatchEvent("updateDone", dt)
-        this.eventBus.processEventHandler("updateDone")
+        this.eventBus.dispatchEvent(new UpdateDoneEvent(dt))
+        this.eventBus.processEventHandler(UpdateDoneEvent)
     }
 
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
@@ -186,19 +172,19 @@ export class World implements Engine {
         return this.commandBus.getCommandQueue(type)
     }
 
-    dispatchEvent(name: EngineEvents, data: unknown) {
-        this.eventBus.dispatchEvent(name, data)
+    dispatchEvent(event: EventBase) {
+        this.eventBus.dispatchEvent(event)
 
         return this
     }
 
-    registerEventQueue(event: EngineEvents) {
+    registerEventQueue(event: Function) {
         this.eventBus.registerEventQueue(event)
 
         return this
     }
 
-    removeEventQueue(event: EngineEvents) {
+    removeEventQueue(event: Function) {
         this.eventBus.removeEventQueue(event)
 
         return this

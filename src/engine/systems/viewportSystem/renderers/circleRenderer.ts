@@ -8,6 +8,7 @@ import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { Entity } from "@/engine/entities/entity";
+import { EntityAddedEvent } from "@/engine/lib/events";
 
 function getAbsolute(entity: Entity, engine: World): [number, number] {
     const sceneNode = engine.getSceneNode(entity);
@@ -78,7 +79,7 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
             return this
         }
 
-        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
+        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
         this.nodes.length = 0
         super.removeFromEngine()
 

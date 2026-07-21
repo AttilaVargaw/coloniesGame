@@ -8,6 +8,7 @@ import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { ColorComponent } from "@engine/components/colorComponent";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { EntityAddedEvent } from "@/engine/lib/events";
 
 export class LabelRenderer extends SystemWithNodes<LabelNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -66,7 +67,7 @@ export class LabelRenderer extends SystemWithNodes<LabelNode> {
 
     removeFromEngine(): this {
         if(!this.engine) return this
-        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
+        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
         this.nodes.length = 0
         super.removeFromEngine()
 

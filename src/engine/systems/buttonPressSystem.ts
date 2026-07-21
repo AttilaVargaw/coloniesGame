@@ -2,6 +2,7 @@ import { World } from "@engine/core/world"
 import { SystemWithNodes } from "@engine/systems/system"
 import { EventHandlerComponent } from "@engine/components/EventHandlerComponent";
 import { ButtonPressNode } from "./ButtonPressNode";
+import { KeydownEvent } from "@/engine/lib/events";
 
 export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
     protected updateNode(_node: ButtonPressNode, _dt: number): void {
@@ -45,7 +46,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
 
         const nodes = this.engine.getNodeList(ButtonPressNode)
 
-        for(const { data } of this.engine.events.get("keydown")!) {
+        for(const { data } of this.engine.events.get(KeydownEvent)!) {
             const keyData = data as KeyboardEvent
             for(const { eventHandler: { button, fn } } of nodes) {
                 if(button === keyData.key) {
@@ -54,6 +55,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             }
         }
 
-        this.engine.events.get("keydown")!.clear()
+        this.engine.events.get(KeydownEvent)!.clear()
     }
 }

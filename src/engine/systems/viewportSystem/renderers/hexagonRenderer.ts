@@ -8,6 +8,7 @@ import { sortByDepth } from "@/lib/sortByIndex";
 import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { EntityAddedEvent } from "@/engine/lib/events";
 
 const HEXAGON_SIDES = 6;
 const PIThird = Math.PI / 3;
@@ -77,14 +78,14 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
     addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(HexagoneNode)
-        engine.subscribe("entityAdded", this.onEntityAdded)
+        engine.subscribe(EntityAddedEvent, this.onEntityAdded)
 
         return this
     }
 
     removeFromEngine(): this {
         if(!this.engine) return this
-        this.engine.unsubscribe("entityAdded", this.onEntityAdded)
+        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
         this.engine.unregisterNodeType(HexagoneNode)
         this.nodes.length = 0
         super.removeFromEngine()

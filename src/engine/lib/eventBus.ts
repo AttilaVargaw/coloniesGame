@@ -1,27 +1,43 @@
 import { Queue, QueueItem } from "./commandQueue"
-import type { EngineEvents } from "../core/world"
+import type { EventBase } from "./events"
+import {
+    UpdateBeginEvent,
+    UpdateDoneEvent,
+    EntityAddedEvent,
+    EntityRemovedEvent,
+    DayPassedEvent,
+    MonthPassedEvent,
+    SelectionChangedEvent,
+    ComponentRemovedEvent,
+    ClickEvent,
+    MouseupEvent,
+    KeydownEvent,
+    KeyupEvent,
+    MousedownEvent,
+    MousemoveEvent,
+} from "./events"
 
 export class EventBus {
-    readonly events: Map<EngineEvents, Queue<unknown>> = new Map([
-        ["updateDone", new Queue()],
-        ["entityAdded", new Queue()],
-        ["updateBegin", new Queue()],
-        ["dayPassed", new Queue()],
-        ["selectionChanged", new Queue()],
-        ["entityRemoved", new Queue()],
-        ["mouseMoved", new Queue()],
-        ["monthPassed", new Queue()],
-        ["mouseup", new Queue()],
-        ["mousedown", new Queue()],
-        ["click", new Queue()],
-        ["keydown", new Queue()],
-        ["keyup", new Queue()],
-        ["componentRemoved", new Queue()],
+    readonly events: Map<Function, Queue<unknown>> = new Map([
+        [UpdateBeginEvent, new Queue()],
+        [UpdateDoneEvent, new Queue()],
+        [EntityAddedEvent, new Queue()],
+        [EntityRemovedEvent, new Queue()],
+        [DayPassedEvent, new Queue()],
+        [MonthPassedEvent, new Queue()],
+        [SelectionChangedEvent, new Queue()],
+        [ComponentRemovedEvent, new Queue()],
+        [ClickEvent, new Queue()],
+        [MouseupEvent, new Queue()],
+        [KeydownEvent, new Queue()],
+        [KeyupEvent, new Queue()],
+        [MousedownEvent, new Queue()],
+        [MousemoveEvent, new Queue()],
     ])
 
-    private readonly eventHandlers = new Map<string, Set<(data: unknown) => void>>()
+    private readonly eventHandlers = new Map<Function, Set<(data: unknown) => void>>()
 
-    processEventHandler(event: EngineEvents) {
+    processEventHandler(event: Function) {
         const handlers = this.eventHandlers.get(event)
         const events = this.events.get(event)
 
@@ -38,7 +54,7 @@ export class EventBus {
         events.clear()
     }
 
-    subscribe(event: EngineEvents, callback: (data: unknown) => void) {
+    subscribe(event: Function, callback: (data: unknown) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
 
@@ -50,25 +66,25 @@ export class EventBus {
         return this
     }
 
-    unsubscribe(event: EngineEvents, callback: (data: unknown) => void) {
+    unsubscribe(event: Function, callback: (data: unknown) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
         return this
     }
 
-    dispatchEvent(name: EngineEvents, data: unknown) {
-        this.events.get(name)?.enqueue({ data })
+    dispatchEvent(event: EventBase) {
+        this.events.get(event.constructor)?.enqueue({ data: event.data })
 
         return this
     }
 
-    registerEventQueue(event: EngineEvents) {
+    registerEventQueue(event: Function) {
         this.events.set(event, new Queue())
 
         return this
     }
 
-    removeEventQueue(event: EngineEvents) {
+    removeEventQueue(event: Function) {
         this.events.delete(event)
 
         return this

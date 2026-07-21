@@ -5,6 +5,7 @@ import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent } from "@game/components/vessel";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
+import { DayPassedEvent } from "@/engine/lib/events";
 
 export class MoveNode extends EntityNode {
     constructor(entity: Entity, public position: PositionComponent, public jumpDrive: JumpDriveComponent, public sensorSuite: SensorSuiteComponent) {
@@ -41,7 +42,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         super.addToEngine(engine)
 
         this.engine =
-            engine.subscribe("dayPassed", this.moveNodes)
+            engine.subscribe(DayPassedEvent, this.moveNodes)
         engine.registerNodeType(MoveNode,
             new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
             (entity) => {
@@ -65,7 +66,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         this.engine.unregisterNodeType(MoveNode)
 
-        this.engine.unsubscribe("dayPassed", this.moveNodes)
+        this.engine.unsubscribe(DayPassedEvent, this.moveNodes)
         super.removeFromEngine()
 
         return this

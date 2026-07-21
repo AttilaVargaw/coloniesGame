@@ -5,14 +5,9 @@ import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
-import { Queue, QueueItem } from "../lib/commandQueue";
+import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
-
-export class ClickEvent extends QueueItem<MouseEvent> {
-    constructor(public event: MouseEvent, public x: number, public y: number) {
-        super(event);
-    }
-}
+import { ClickEvent, EntityAddedEvent } from "../lib/events";
 
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -25,7 +20,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     protected unregisterNodeTypes(): this {
         this.engine?.unregisterNodeType(ClickableNode);
-        this.engine?.unsubscribe("entityAdded", this.onUpdateIndices);
+        this.engine?.unsubscribe(EntityAddedEvent, this.onUpdateIndices);
 
         return this;
     }
@@ -57,7 +52,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
     addToEngine(engine: World): this {
         super.addToEngine(engine);
-        this.clickQueue = engine.events.get("click");
+        this.clickQueue = engine.events.get(ClickEvent);
 
         this.nodes = engine.getNodeList(ClickableNode);
         this.nodes.sort(sortByDepth)

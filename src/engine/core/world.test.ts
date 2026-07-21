@@ -6,6 +6,12 @@ import { EntityComponent } from "../entities/entityComponent"
 import { System } from "../systems/system"
 import { RedrawCommand } from "../lib/RedrawCommand"
 import { SelectEntityCommand } from "../lib/SelectEntityCommand"
+import { EventBase } from "../lib/events"
+import {
+    UpdateDoneEvent,
+    EntityRemovedEvent,
+    ClickEvent,
+} from "../lib/events"
 
 class TagComponent extends EntityComponent {
     constructor(public tag: string = "tag", entity?: Entity) {
@@ -98,22 +104,23 @@ describe("World", () => {
     it("returns itself from subscribe and unsubscribe for chaining", () => {
         const world = new World()
 
-        expect(world.subscribe("click", () => { })).toBe(world)
-        expect(world.unsubscribe("click", () => { })).toBe(world)
+        expect(world.subscribe(ClickEvent, () => { })).toBe(world)
+        expect(world.unsubscribe(ClickEvent, () => { })).toBe(world)
     })
 
     it("returns itself from addCommand and dispatchEvent for chaining", () => {
         const world = new World()
 
         expect(world.addCommand(new RedrawCommand())).toBe(world)
-        expect(world.dispatchEvent("click", {})).toBe(world)
+        expect(world.dispatchEvent(new ClickEvent({ event: {} as MouseEvent, x: 0, y: 0 }))).toBe(world)
     })
 
     it("returns itself from registerEventQueue and removeEventQueue for chaining", () => {
         const world = new World()
 
-        expect(world.registerEventQueue("custom" as any)).toBe(world)
-        expect(world.removeEventQueue("custom" as any)).toBe(world)
+        class CustomEvent extends EventBase<{ type: string }> {}
+        expect(world.registerEventQueue(CustomEvent)).toBe(world)
+        expect(world.removeEventQueue(CustomEvent)).toBe(world)
     })
 
     it("returns itself from registerCommandQueue and removeCommandQueue for chaining", () => {
@@ -141,8 +148,8 @@ describe("World", () => {
 
         world.update(16)
 
-        expect(world.events.get("updateDone")!.length).toBe(1)
-        expect(world.events.get("updateDone")!.peek()!.data).toBe(16)
+        expect(world.events.get(UpdateDoneEvent)!.length).toBe(1)
+        expect(world.events.get(UpdateDoneEvent)!.peek()!.data).toBe(16)
     })
 
     it("queues the entityRemoved event when an entity is removed", () => {
@@ -151,8 +158,8 @@ describe("World", () => {
 
         world.removeEntity(entity)
 
-        expect(world.events.get("entityRemoved")!.length).toBe(1)
-        expect(world.events.get("entityRemoved")!.peek()!.data).toBe(entity)
+        expect(world.events.get(EntityRemovedEvent)!.length).toBe(1)
+        expect(world.events.get(EntityRemovedEvent)!.peek()!.data).toBe(entity)
     })
 
     it("clears command queues on destruct", () => {

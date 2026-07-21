@@ -4,6 +4,7 @@ import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
 import { CommandBus } from "./commandBus"
 import { RedrawCommand } from "./RedrawCommand"
+import { EntityRemovedEvent } from "./events"
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
     private readonly sceneNodes: Map<string, SceneNode> = new Map()
@@ -81,7 +82,7 @@ export class EntityRegistry {
         entity.setComponentChangeHandler(undefined)
         this.nodes.removeEntityFromNodes(entity)
 
-        this.events.dispatchEvent("entityRemoved", entity)
+        this.events.dispatchEvent(new EntityRemovedEvent(entity))
         this.commands.addCommand(new RedrawCommand())
 
         return this

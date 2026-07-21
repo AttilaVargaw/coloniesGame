@@ -11,6 +11,7 @@ import { SelectionSystem } from "@game/systems/selectionSystem";
 import { Star, Colony } from "../data/types";
 import { IndustryComponent } from "../components/industryComponent";
 import { Engine } from "@/engine/core/engine";
+import { SelectionChangedEvent } from "@/engine/lib/events";
 
 const sectorColor = new ColorComponent("", "grey")
 const sectorShape = new ShapeComponent(6, 40)
@@ -82,7 +83,7 @@ export function createColony(engine: Engine, { name, population, patronGod }: Co
                     return
                 }
 
-                engine.dispatchEvent("selectionChanged", { data: colony, type: "colony" })
+                engine.dispatchEvent(new SelectionChangedEvent({ data: colony, type: "colony" }))
             })).addComponent(new IndustryComponent(population, 80, population, 1))
     } else {
         colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
