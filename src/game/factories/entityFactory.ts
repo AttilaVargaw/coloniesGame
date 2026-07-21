@@ -25,7 +25,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = engine.createEntity()
     ship.addComponent(new PositionComponent(0, 0))
     ship.addComponent(new JumpDriveComponent())
-    ship.addComponent(new SensorSuiteComponent())
+    ship.addComponent(new SensorSuiteComponent(3))
     ship.addComponent(new ColorComponent("red"))
     ship.addComponent(new RadiusComponent(10))
     engine.addEntity(ship)

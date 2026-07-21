@@ -5,5 +5,7 @@ export class JumpDriveComponent extends EntityComponent {
     target?: Entity
 }
 export class SensorSuiteComponent extends EntityComponent {
-
+    constructor(public range: number) {
+        super()
+    }
 }

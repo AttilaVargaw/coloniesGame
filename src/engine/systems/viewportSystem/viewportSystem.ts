@@ -11,7 +11,7 @@ import { Queue } from "@engine/lib/commandQueue";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { DEBUG_VISUALIZE_PATHS, getActivePaths } from "@game/systems/moveSystem";
+import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -67,25 +67,47 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {
         if(!this.engine) return
 
-        const paths = getActivePaths()
-        if(paths.length === 0) return
+        const remainingPaths = getActivePaths()
+        if(remainingPaths.length > 0) {
+            for(const { ship, waypoints } of remainingPaths) {
+                if(waypoints.length === 0) continue
+                const [sx, sy] = getAbsolute(ship, this.engine)
 
-        for(const { ship, waypoints } of paths) {
-            const [sx, sy] = getAbsolute(ship, this.engine)
+                ctx.beginPath()
+                ctx.moveTo(sx, sy)
 
-            ctx.beginPath()
-            ctx.moveTo(sx, sy)
+                for(const waypoint of waypoints) {
+                    const [wx, wy] = getAbsolute(waypoint, this.engine)
+                    ctx.lineTo(wx, wy)
+                }
 
-            for(const waypoint of waypoints) {
-                const [wx, wy] = getAbsolute(waypoint, this.engine)
-                ctx.lineTo(wx, wy)
+                ctx.strokeStyle = "rgba(255, 215, 0, 0.25)"
+                ctx.lineWidth = 1
+                ctx.setLineDash([4, 4])
+                ctx.stroke()
+                ctx.setLineDash([])
             }
+        }
 
-            ctx.strokeStyle = "rgba(255, 215, 0, 0.6)"
-            ctx.lineWidth = 2
-            ctx.setLineDash([6, 3])
-            ctx.stroke()
-            ctx.setLineDash([])
+        const todayJumps = getTodaysJumps()
+        if(todayJumps.length > 0) {
+            for(const { path } of todayJumps) {
+                if(path.length < 2) continue
+                const [sx, sy] = getAbsolute(path[0], this.engine)
+
+                ctx.beginPath()
+                ctx.moveTo(sx, sy)
+
+                for(let i = 1; i < path.length; i++) {
+                    const [wx, wy] = getAbsolute(path[i], this.engine)
+                    ctx.lineTo(wx, wy)
+                }
+
+                ctx.strokeStyle = "rgba(255, 215, 0, 0.85)"
+                ctx.lineWidth = 2
+                ctx.setLineDash([])
+                ctx.stroke()
+            }
         }
     }
 

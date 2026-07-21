@@ -11,12 +11,23 @@ import { DayPassedEvent } from "@/engine/lib/events";
 export const DEBUG_VISUALIZE_PATHS = true;
 
 const shipWaypoints = new Map<Entity, Entity[]>();
+const todaysJumps = new Map<Entity, Entity[]>();
 
 export function getActivePaths(): { ship: Entity; waypoints: Entity[] }[] {
     const result: { ship: Entity; waypoints: Entity[] }[] = [];
-    for(const [ship, waypoints] of shipWaypoints) {
-        if(waypoints.length > 0) {
+    for (const [ship, waypoints] of shipWaypoints) {
+        if (waypoints.length > 0) {
             result.push({ ship, waypoints });
+        }
+    }
+    return result;
+}
+
+export function getTodaysJumps(): { ship: Entity; path: Entity[] }[] {
+    const result: { ship: Entity; path: Entity[] }[] = [];
+    for (const [ship, path] of todaysJumps) {
+        if (path.length > 0) {
+            result.push({ ship, path });
         }
     }
     return result;
@@ -34,6 +45,15 @@ export function setShipPath(ship: Entity, path: Entity[]) {
 
 export function clearShipPath(ship: Entity) {
     shipWaypoints.delete(ship);
+    const drive = ship.getComponent(JumpDriveComponent);
+    if (drive) {
+        drive.target = undefined;
+    }
+}
+
+export function clearAllPaths() {
+    shipWaypoints.clear()
+    todaysJumps.clear()
 }
 
 export class MoveNode extends EntityNode {
@@ -51,42 +71,51 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     moveNodes = () => {
         if(!this.engine) return
 
-        const toAdvance: [Entity, Entity[]][] = [];
+        todaysJumps.clear();
         const alreadyMoved = new Set<Entity>();
 
-        for(const { entity, jumpDrive: { target } } of this.nodes) {
+        for(const { entity, jumpDrive: { target }, sensorSuite: { range } } of this.nodes) {
             if(!target || entity === target || alreadyMoved.has(entity)) continue
 
-            const entityNode = this.engine.getSceneNode(entity)!
-            const targetNode = this.engine.getSceneNode(target)!
-            entityNode.parentRef?.removeChild(entityNode)
-            targetNode.addChild(entityNode)
+            const waypoints = shipWaypoints.get(entity);
+            const shipNode = this.engine.getSceneNode(entity)!
+
+            if(waypoints && waypoints.length > 0) {
+                const maxJumps = Math.max(1, range);
+                const jumpedCount = Math.min(maxJumps, waypoints.length);
+                const jumped = waypoints.slice(0, jumpedCount);
+                const remaining = waypoints.slice(jumpedCount);
+
+                const currentParent = shipNode.parentRef?.entity ?? entity;
+                const finalSector = jumped[jumped.length - 1];
+                const targetNode = this.engine.getSceneNode(finalSector)!
+                shipNode.parentRef?.removeChild(shipNode)
+                targetNode.addChild(shipNode)
+
+                const drive = entity.getComponent(JumpDriveComponent);
+                if(remaining.length > 0) {
+                    shipWaypoints.set(entity, remaining);
+                    if(drive) {
+                        drive.target = remaining[0];
+                    }
+                } else {
+                    shipWaypoints.delete(entity);
+                    if(drive) {
+                        drive.target = undefined;
+                    }
+                    const selectionSystem = this.engine!.getSystem(SelectionSystem)
+                    selectionSystem?.unTarget()
+                }
+
+                todaysJumps.set(entity, [currentParent, ...jumped]);
+            } else {
+                const targetNode = this.engine.getSceneNode(target)!
+                shipNode.parentRef?.removeChild(shipNode)
+                targetNode.addChild(shipNode)
+            }
+
             this.engine.addCommand(new RedrawCommand)
             alreadyMoved.add(entity)
-
-            const waypoints = shipWaypoints.get(entity);
-            if(waypoints && waypoints.length > 0) {
-                toAdvance.push([entity, waypoints]);
-            }
-        }
-
-        for(const [entity, waypoints] of toAdvance) {
-            console.log({ waypoints })
-            waypoints.shift();
-            const drive = entity.getComponent(JumpDriveComponent);
-
-            if(waypoints.length > 0) {
-                if(drive) {
-                    drive.target = waypoints[0];
-                }
-            } else {
-                shipWaypoints.delete(entity);
-                if(drive) {
-                    drive.target = undefined;
-                }
-                const selectionSystem = this.engine!.getSystem(SelectionSystem)
-                selectionSystem?.unTarget()
-            }
         }
     }
 
