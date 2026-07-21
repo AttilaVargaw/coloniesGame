@@ -36,7 +36,7 @@ export class World implements Engine {
 
     // eslint-disable-next-line
     getCommands<T extends abstract new (...args: any) => CommandBase>(name: T) {
-        return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T> extends CommandBase<infer U> ? U : never>
+        return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T>>
     }
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {

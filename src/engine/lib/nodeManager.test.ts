@@ -39,6 +39,16 @@ function makeNodeManager() {
     return manager
 }
 
+function makeParentChildWithTag() {
+    const parent = new Entity("parent")
+    const child = new Entity("child")
+    child.addComponent(new TagComponent())
+    const parentNode = new SceneNode(parent.id, parent)
+    const childNode = new SceneNode(child.id, child)
+    parentNode.addChild(childNode)
+    return { parent, child, parentNode, childNode }
+}
+
 describe("NodeManager", () => {
     it("returns an empty array for an unregistered node type", () => {
         const manager = makeNodeManager()
@@ -119,12 +129,7 @@ describe("NodeManager", () => {
 
     it("recursively adds child entities to matching nodes via SceneNode", () => {
         const manager = makeNodeManager()
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
-        parentNode.addChild(childNode)
+        const { parent, child, parentNode, } = makeParentChildWithTag()
 
         manager.addEntityToNodes(parent, parentNode)
 
@@ -161,12 +166,7 @@ describe("NodeManager", () => {
 
     it("recursively removes child entities from matching nodes via SceneNode", () => {
         const manager = makeNodeManager()
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
-        parentNode.addChild(childNode)
+        const { parent, parentNode } = makeParentChildWithTag()
 
         manager.addEntityToNodes(parent, parentNode)
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
@@ -192,12 +192,7 @@ describe("NodeManager", () => {
 
     it("recursively reindexes child entities via SceneNode", () => {
         const manager = makeNodeManager()
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        child.addComponent(new TagComponent())
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
-        parentNode.addChild(childNode)
+        const { parent, child, parentNode } = makeParentChildWithTag()
 
         manager.addEntityToNodes(parent, parentNode)
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)

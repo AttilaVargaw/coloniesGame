@@ -299,7 +299,7 @@ describe("World (Engine refactor regression)", () => {
         const world = new World()
         const handler = vi.fn()
 
-        class CustomEvent extends EventBase<{ type: string }> {}
+        class CustomEvent extends EventBase<{ type: string }> { }
         world.registerEventQueue(CustomEvent)
         world.subscribe(CustomEvent, handler)
         world.dispatchEvent(new CustomEvent({ type: "test" }))
@@ -310,7 +310,7 @@ describe("World (Engine refactor regression)", () => {
 
     it("removes an event queue", () => {
         const world = new World()
-        class CustomEvent extends EventBase<{ type: string }> {}
+        class CustomEvent extends EventBase<{ type: string }> { }
         world.registerEventQueue(CustomEvent)
         expect(world.getEvents(CustomEvent)).toBeInstanceOf(Queue)
         expect(world.getEvents(CustomEvent)).toBeInstanceOf(Queue)
@@ -325,7 +325,8 @@ describe("World (Engine refactor regression)", () => {
 
         world.addCommand(new SelectEntityCommand(testEntity))
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(1)
-        expect(world.getCommands(SelectEntityCommand)!.peek()).toBe(testEntity)
+        console.log(world.getCommands(SelectEntityCommand)!.peek(), testEntity)
+        expect(world.getCommands(SelectEntityCommand)!.peek()).toEqual({ data: testEntity })
     })
 
     it("returns the command queue for a given type", () => {

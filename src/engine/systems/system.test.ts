@@ -3,6 +3,10 @@ import { EntityNode, EntityNodeConstructor } from "@engine/entities/entityNode"
 import { System, SystemWithNodes } from "@engine/systems/system"
 import { TestEntityNode, testEntityNodeCtor, makeWorld } from "@engine/test-utils"
 
+class CounterSystem extends SystemWithNodes<TestEntityNode> {
+    updateNode(_node: TestEntityNode, _dt?: number): void { }
+}
+
 describe("System", () => {
     it("adds and removes subsystems", () => {
         //@ts-ignore
@@ -133,10 +137,6 @@ describe("SystemWithNodes", () => {
         const nodes = world.getNodeList(testEntityNodeCtor)
         expect(nodes).toHaveLength(0)
 
-        class CounterSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
         const ctor = CounterSystem as unknown as new () => System
         const system = world.addSystem(ctor).getSystem(ctor)!
 
@@ -157,10 +157,6 @@ describe("SystemWithNodes", () => {
         const world = makeWorld()
         const node = world.getNodeList(testEntityNodeCtor)[0]
 
-        class CounterSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
         const ctor = CounterSystem as unknown as new () => System
         const system = world.addSystem(ctor).getSystem(ctor)!
 
@@ -179,10 +175,6 @@ describe("SystemWithNodes", () => {
     it("skips nodes that do not pass the filter", () => {
         const world = makeWorld()
         const node = world.getNodeList(testEntityNodeCtor)[0]
-
-        class CounterSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
 
         const ctor = CounterSystem as unknown as new () => System
         const system = world.addSystem(ctor).getSystem(ctor)!

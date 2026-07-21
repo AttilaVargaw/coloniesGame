@@ -1,4 +1,3 @@
 
-export abstract class CommandBase<T = unknown> {
-    constructor(public data: T) { }
+export abstract class CommandBase {
 }

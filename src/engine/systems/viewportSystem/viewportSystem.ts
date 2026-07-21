@@ -13,7 +13,7 @@ import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    public redrawQueue?: Queue<undefined>
+    public redrawQueue?: Queue<RedrawCommand>
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 

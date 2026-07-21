@@ -28,14 +28,14 @@ export class CommandBus {
 
     addCommand(command: CommandBase) {
         // eslint-disable-next-line
-        this.commands.get(command.constructor as abstract new (...args: any) => CommandBase)?.enqueue({ data: command.data })
+        this.commands.get(command.constructor as abstract new (...args: any) => CommandBase)?.enqueue(command)
 
         return this
     }
 
     // eslint-disable-next-line
     getCommands<T extends abstract new (...args: any) => CommandBase>(type: T) {
-        return this.commands.get(type) as unknown as Queue<InstanceType<T> extends CommandBase<infer U> ? U : never>
+        return this.commands.get(type) as unknown as Queue<InstanceType<T>>
     }
 
     clearAll() {
