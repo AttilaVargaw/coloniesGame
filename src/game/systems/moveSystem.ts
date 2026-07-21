@@ -15,8 +15,8 @@ const todaysJumps = new Map<Entity, Entity[]>();
 
 export function getActivePaths(): { ship: Entity; waypoints: Entity[] }[] {
     const result: { ship: Entity; waypoints: Entity[] }[] = [];
-    for (const [ship, waypoints] of shipWaypoints) {
-        if (waypoints.length > 0) {
+    for(const [ship, waypoints] of shipWaypoints) {
+        if(waypoints.length > 0) {
             result.push({ ship, waypoints });
         }
     }
@@ -25,8 +25,8 @@ export function getActivePaths(): { ship: Entity; waypoints: Entity[] }[] {
 
 export function getTodaysJumps(): { ship: Entity; path: Entity[] }[] {
     const result: { ship: Entity; path: Entity[] }[] = [];
-    for (const [ship, path] of todaysJumps) {
-        if (path.length > 0) {
+    for(const [ship, path] of todaysJumps) {
+        if(path.length > 0) {
             result.push({ ship, path });
         }
     }
@@ -46,7 +46,7 @@ export function setShipPath(ship: Entity, path: Entity[]) {
 export function clearShipPath(ship: Entity) {
     shipWaypoints.delete(ship);
     const drive = ship.getComponent(JumpDriveComponent);
-    if (drive) {
+    if(drive) {
         drive.target = undefined;
     }
 }
@@ -98,6 +98,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     if(drive) {
                         drive.target = remaining[0];
                     }
+                    todaysJumps.set(entity, [currentParent, ...jumped]);
                 } else {
                     shipWaypoints.delete(entity);
                     if(drive) {
@@ -105,9 +106,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     }
                     const selectionSystem = this.engine!.getSystem(SelectionSystem)
                     selectionSystem?.unTarget()
+                    this.engine.addCommand(new RedrawCommand)
                 }
-
-                todaysJumps.set(entity, [currentParent, ...jumped]);
             } else {
                 const targetNode = this.engine.getSceneNode(target)!
                 shipNode.parentRef?.removeChild(shipNode)

@@ -157,7 +157,7 @@ describe("move system waypoint queue", () => {
 
         expect(ship.getComponent(JumpDriveComponent)!.target).toBeUndefined()
         expect(getActivePaths()).toHaveLength(0)
-        expect(getTodaysJumps()[0].path).toEqual([parentSector, w1])
+        expect(getTodaysJumps()).toHaveLength(0)
         expect(unTargetMock).toHaveBeenCalled()
     })
 
