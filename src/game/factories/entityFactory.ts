@@ -20,10 +20,8 @@ const sectorShape = new ShapeComponent(6, 40)
 const bodyColor = new ColorComponent("grey")
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
-    if(!engine) return null
-
     const ship = engine.createEntity()
-    ship.addComponent(new PositionComponent(0, 0))
+        .addComponent(new PositionComponent(0, 0))
         .addComponent(new JumpDriveComponent())
         .addComponent(new SensorSuiteComponent(3))
         .addComponent(new ColorComponent("red"))
@@ -33,23 +31,23 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
     engine.addEntity(ship)
 
     const clickArea = engine.createEntity()
-    clickArea.addComponent(new PositionComponent(0, 0, -1))
-    clickArea.addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey } }) => {
-        const selectionSystem = engine.getSystem(SelectionSystem)
-        const targetSceneNode = engine.getSceneNode(target)!
+        .addComponent(new PositionComponent(0, 0, -1))
+        .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey } }) => {
+            const selectionSystem = engine.getSystem(SelectionSystem)
+            const targetSceneNode = engine.getSceneNode(target)!
 
-        if(shiftKey) {
-            selectionSystem?.onTargetChanged(targetSceneNode.parentRef!.entity)
-        } else {
-            selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
-        }
-    }))
+            if(shiftKey) {
+                selectionSystem?.onTargetChanged(targetSceneNode.parentRef!.entity)
+            } else {
+                selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
+            }
+        }))
     engine.addEntity(clickArea, ship)
 
     const label = engine.createEntity()
-    label.addComponent(new LabelComponent(name, 18))
-    label.addComponent(new ColorComponent("red"))
-    label.addComponent(new PositionComponent(0, 0, 0))
+        .addComponent(new LabelComponent(name, 18))
+        .addComponent(new ColorComponent("red"))
+        .addComponent(new PositionComponent(0, 0, 0))
     engine.addEntity(label, ship)
 
     return ship
@@ -69,11 +67,9 @@ export function createSolarSystem(engine: Engine, { planets, x, y }: Star, secto
 }
 
 export function createColony(engine: Engine, { name, population, patronGod }: Colony, parent: Entity) {
-    if(!engine) return null
-
     const colony = engine.createEntity()
-    colony.addComponent(new PositionComponent(0, 0, 0))
-    colony.addComponent(new RadiusComponent(20))
+        .addComponent(new PositionComponent(0, 0, 0))
+        .addComponent(new RadiusComponent(20))
 
     if(population) {
         if(patronGod) {
@@ -95,55 +91,54 @@ export function createColony(engine: Engine, { name, population, patronGod }: Co
     }
 
     const label = engine.createEntity()
-    label.addComponent(new LabelComponent(name, 18))
-    label.addComponent(new ColorComponent("white"))
-    label.addComponent(new PositionComponent(0, 0, 0))
+        .addComponent(new LabelComponent(name, 18))
+        .addComponent(new ColorComponent("white"))
+        .addComponent(new PositionComponent(0, 0, 0))
+
     engine.addEntity(colony, parent)
-    engine.addEntity(label, colony)
+        .addEntity(label, colony)
 
     return colony
 }
 
 export function createSector(engine: Engine, { x, y, visible }: { x: number, y: number, visible: boolean }) {
-    if(!engine) return null
-
     const sector = engine.createEntity()
     sector.addComponent(new PositionComponent((x * 100), (y * 100)))
 
     const clickArea = engine.createEntity()
-    clickArea.addComponent(new PositionComponent(0, 0, -1))
-    clickArea.addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, event: { shiftKey } }) => {
-        const selectionSystem = engine.getSystem(SelectionSystem)!
-        const targetSceneNode = engine.getSceneNode(target)!
+        .addComponent(new PositionComponent(0, 0, -1))
+        .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, event: { shiftKey } }) => {
+            const selectionSystem = engine.getSystem(SelectionSystem)!
+            const targetSceneNode = engine.getSceneNode(target)!
 
-        if(shiftKey) {
-            const selection = selectionSystem.currentSelection()!
-            const selectionsParent = engine.getSceneNode(selection)!.parentRef!.entity
+            if(shiftKey) {
+                const selection = selectionSystem.currentSelection()!
+                const selectionsParent = engine.getSceneNode(selection)!.parentRef!.entity
 
-            if(selection) {
-                const targetEntity = targetSceneNode.parentRef!.entity
-                selectionSystem.onTargetChanged(targetEntity)
-                const mapSystem = engine.getSystem(MapSystem)!
-                const path = mapSystem.findPath(selectionsParent, targetEntity)
-                if(path.length > 1) {
-                    setShipPath(selection, path)
-                } else {
-                    selection.getComponent(JumpDriveComponent)!.target = target
+                if(selection) {
+                    const targetEntity = targetSceneNode.parentRef!.entity
+                    selectionSystem.onTargetChanged(targetEntity)
+                    const mapSystem = engine.getSystem(MapSystem)!
+                    const path = mapSystem.findPath(selectionsParent, targetEntity)
+                    if(path.length > 1) {
+                        setShipPath(selection, path)
+                    } else {
+                        selection.getComponent(JumpDriveComponent)!.target = target
+                    }
+                }
+            } else {
+                if(targetSceneNode.childrenRef.size) {
+                    return
+                }
+                const currentSelection = selectionSystem.currentSelection()
+                selectionSystem.unselect()
+                selectionSystem.unTarget()
+                if(currentSelection) {
+                    clearShipPath(currentSelection)
                 }
             }
-        } else {
-            if(targetSceneNode.childrenRef.size) {
-                return
-            }
-            const currentSelection = selectionSystem.currentSelection()
-            selectionSystem.unselect()
-            selectionSystem.unTarget()
-            if(currentSelection) {
-                clearShipPath(currentSelection)
-            }
         }
-    }
-    ))
+        ))
 
     if(visible) {
         sector.addComponent(sectorColor)
@@ -151,37 +146,33 @@ export function createSector(engine: Engine, { x, y, visible }: { x: number, y: 
     }
 
     engine.addEntity(sector)
-    engine.addEntity(clickArea, sector)
+        .addEntity(clickArea, sector)
 
     return sector
 }
 
 export function createStar(engine: Engine, parent: Entity) {
-    if(!engine) return null
-
     const star = engine.createEntity()
-    star.addComponent(new PositionComponent(0, 0))
-    star.addComponent(new RadiusComponent(50))
-    star.addComponent(new ColorComponent("yellow"))
-    star.addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
+        .addComponent(new PositionComponent(0, 0))
+        .addComponent(new RadiusComponent(50))
+        .addComponent(new ColorComponent("yellow"))
+        .addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
     engine.addEntity(star, parent)
 
     return star
 }
 
 export function createBody(engine: Engine, { name, radius }: { x: number, y: number, name: string, radius: number }, parent: Entity) {
-    if(!engine) return null
-
     const body = engine.createEntity()
-    body.addComponent(new PositionComponent(0, 0))
-    body.addComponent(new RadiusComponent(radius))
-    body.addComponent(new ColorComponent("grey"))
+        .addComponent(new PositionComponent(0, 0))
+        .addComponent(new RadiusComponent(radius))
+        .addComponent(new ColorComponent("grey"))
     engine.addEntity(body, parent)
 
     const label = engine.createEntity()
     label.addComponent(new LabelComponent(name, 18))
-    label.addComponent(new ColorComponent("white"))
-    label.addComponent(new PositionComponent(0, 0, 0))
+        .addComponent(new ColorComponent("white"))
+        .addComponent(new PositionComponent(0, 0, 0))
     engine.addEntity(label, body)
 
     return body
