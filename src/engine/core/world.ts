@@ -34,6 +34,7 @@ export class World implements Engine {
         return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
     }
 
+    // eslint-disable-next-line
     getCommands<T extends abstract new (...args: any) => CommandBase>(name: T) {
         return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T> extends CommandBase<infer U> ? U : never>
     }
@@ -77,13 +78,17 @@ export class World implements Engine {
         return this.systemRegistry.getSystem(system)
     }
 
+    // eslint-disable-next-line
     subscribe(event: Function, callback: (data: unknown) => void) {
+        // eslint-disable-next-line
         this.eventBus.subscribe(event as abstract new (...args: any[]) => EventBase, callback)
 
         return this
     }
 
+    // eslint-disable-next-line
     unsubscribe(event: Function, callback: (data: unknown) => void) {
+        // eslint-disable-next-line
         this.eventBus.unsubscribe(event as abstract new (...args: any[]) => EventBase, callback)
 
         return this
@@ -174,14 +179,16 @@ export class World implements Engine {
 
         return this
     }
-
+    // eslint-disable-next-line
     registerEventQueue(event: Function) {
+        // eslint-disable-next-line
         this.eventBus.registerEventQueue(event as abstract new (...args: any[]) => EventBase)
 
         return this
     }
-
+    // eslint-disable-next-line
     removeEventQueue(event: Function) {
+        // eslint-disable-next-line
         this.eventBus.removeEventQueue(event as abstract new (...args: any[]) => EventBase)
 
         return this
