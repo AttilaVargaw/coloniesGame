@@ -4,20 +4,19 @@ import { ColorComponent } from "@engine/components/colorComponent";
 import { LabelComponent } from "@engine/components/label";
 import { PositionComponent } from "@engine/components/position";
 import { RadiusComponent } from "@engine/components/radiusComponent";
-import { ShapeComponent } from "@engine/components/ShapeComponent";
 import { HoverableComponent } from "@game/systems/cursorSystem";
 import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel";
 import { SelectionSystem } from "@game/systems/selectionSystem";
-import { clearShipPath, setShipPath } from "@game/systems/moveSystem";
+import { setShipPath } from "@game/systems/moveSystem";
 import { MapSystem } from "@game/systems/mapSystem";
 import { Star, Colony } from "../data/types";
 import { IndustryComponent } from "../components/industryComponent";
 import { Engine } from "@/engine/core/engine";
 import { SelectionChangedEvent } from "@/engine/lib/events";
 import { OrbitComponent } from "@engine/components/orbitComponent";
+import { SoiComponent } from "@engine/components/soiComponent";
+import { PathComponent } from "../components/pathComponent";
 
-const sectorColor = new ColorComponent("", "grey")
-const sectorShape = new ShapeComponent(6, 40)
 const bodyColor = new ColorComponent("grey")
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
@@ -54,29 +53,89 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
     return ship
 }
 
-export function createSolarSystem(engine: Engine, { planets, x, y }: Star, sectors: Map<string, Entity>) {
-    const startPoint = sectors.get([x, y].join(":"))!
-    const star = createStar(engine, startPoint)!
-    const ret: Entity[] = [star]
+export function createSolarSystem(engine: Engine, { x, y, planets, soi }: Star) {
+    const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000 })
+
+    const binaryPairNames = new Set(["Caprica", "Gemenon"])
+    let pairCreated = false
 
     for(const [, planet] of planets) {
+        if (binaryPairNames.has(planet.name) && !pairCreated) {
+            const capricaData = planets.get("Caprica")!
+            const gemenonData = planets.get("Gemenon")!
+
+            const barycentreOrbitRadius = (capricaData.radius + gemenonData.radius) * 50 / 2
+            const barycentre = engine.createEntity()
+                .addComponent(new PositionComponent(0, 0))
+                .addComponent(new OrbitComponent(
+                    star.id,
+                    barycentreOrbitRadius,
+                    0.3,
+                    Math.random() * Math.PI * 2
+                ))
+                .addComponent(new RadiusComponent(4))
+                .addComponent(new ColorComponent("rgba(255,255,255,0.4)"))
+            engine.addEntity(barycentre, star)
+
+            const { bodyA, bodyB } = createBinaryOrbitPair(
+                engine, barycentre,
+                capricaData.name,
+                gemenonData.name,
+                60
+            )
+
+            bodyA.removeComponent(ColorComponent)
+            bodyA.addComponent(new ColorComponent("green"))
+            bodyA.removeComponent(RadiusComponent)
+            bodyA.addComponent(new RadiusComponent(20))
+            bodyA.addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
+            bodyA.addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
+                engine.dispatchEvent(new SelectionChangedEvent({ data: bodyA, type: "colony" }))
+            }))
+            if (capricaData.population) {
+                bodyA.addComponent(new IndustryComponent(capricaData.population, 80, capricaData.population, 1))
+            }
+            if (capricaData.patronGod) {
+                bodyA.addModifier(capricaData.patronGod)
+            }
+
+            bodyB.removeComponent(ColorComponent)
+            bodyB.addComponent(new ColorComponent("green"))
+            bodyB.removeComponent(RadiusComponent)
+            bodyB.addComponent(new RadiusComponent(20))
+            bodyB.addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
+            bodyB.addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
+                engine.dispatchEvent(new SelectionChangedEvent({ data: bodyB, type: "colony" }))
+            }))
+            if (gemenonData.population) {
+                bodyB.addComponent(new IndustryComponent(gemenonData.population, 80, gemenonData.population, 1))
+            }
+            if (gemenonData.patronGod) {
+                bodyB.addModifier(gemenonData.patronGod)
+            }
+
+            pairCreated = true
+            continue
+        }
+
         const colony = createColony(engine, planet, star)!
         colony.addComponent(new OrbitComponent(
             star.id,
             planet.radius * 50,
-            0,
+            0.15,
             Math.random() * Math.PI * 2
         ))
-        ret.push(colony)
     }
 
-    return ret
+    return star
 }
 
-export function createColony(engine: Engine, { name, population, patronGod }: Colony, parent: Entity) {
+export function createColony(engine: Engine, { name, population, patronGod, soi }: Colony, parent: Entity) {
     const colony = engine.createEntity()
         .addComponent(new PositionComponent(0, 0, 0))
         .addComponent(new RadiusComponent(20))
+        .addComponent(new SoiComponent(soi ?? 100))
+        .addComponent(new PathComponent())
 
     if(population) {
         if(patronGod) {
@@ -85,12 +144,33 @@ export function createColony(engine: Engine, { name, population, patronGod }: Co
 
         colony.addComponent(new ColorComponent("green"))
             .addComponent(new HoverableComponent("pointer", { width: 40, height: 40 },))
-            .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, () => {
+            .addComponent(new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
                 if(!engine) {
                     return
                 }
 
-                engine.dispatchEvent(new SelectionChangedEvent({ data: colony, type: "colony" }))
+                if(shiftKey) {
+                    const selectionSystem = engine.getSystem(SelectionSystem)
+                    const selection = selectionSystem?.currentSelection()
+                    if(selection) {
+                        const target = colony
+                        selectionSystem?.onTargetChanged(target)
+                        const mapSystem = engine.getSystem(MapSystem)
+                        const selectionSceneNode = engine.getSceneNode(selection)!
+                        const selectionsParent = selectionSceneNode.parentRef!.entity
+                        const path = mapSystem?.findPath(selectionsParent, target)
+                        if(path && path.length > 1) {
+                            setShipPath(selection, path)
+                        } else {
+                            const drive = selection.getComponent(JumpDriveComponent)
+                            if(drive) {
+                                drive.target = target
+                            }
+                        }
+                    }
+                } else {
+                    engine.dispatchEvent(new SelectionChangedEvent({ data: colony, type: "colony" }))
+                }
             })).addComponent(new IndustryComponent(population, 80, population, 1))
     } else {
         colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
@@ -108,65 +188,78 @@ export function createColony(engine: Engine, { name, population, patronGod }: Co
     return colony
 }
 
-export function createSector(engine: Engine, { x, y, visible, color }: { x: number, y: number, visible: boolean, color?: ColorComponent }) {
-    const sector = engine.createEntity()
-    sector.addComponent(new PositionComponent(x, y))
-
-    const clickArea = engine.createEntity()
-        .addComponent(new PositionComponent(0, 0, -1))
-        .addComponent(new ClickableComponent(true, { width: 60, height: 60 }, ({ target, event: { shiftKey } }) => {
-            const selectionSystem = engine.getSystem(SelectionSystem)!
-            const targetSceneNode = engine.getSceneNode(target)!
-
-            if(shiftKey) {
-                const selection = selectionSystem.currentSelection()!
-                const selectionsParent = engine.getSceneNode(selection)!.parentRef!.entity
-
-                if(selection) {
-                    const targetEntity = targetSceneNode.parentRef!.entity
-                    selectionSystem.onTargetChanged(targetEntity)
-                    const mapSystem = engine.getSystem(MapSystem)!
-                    const path = mapSystem.findPath(selectionsParent, targetEntity)
-                    if(path.length > 1) {
-                        setShipPath(selection, path)
-                    } else {
-                        selection.getComponent(JumpDriveComponent)!.target = target
-                    }
-                }
-            } else {
-                if(targetSceneNode.childrenRef.size) {
-                    return
-                }
-                const currentSelection = selectionSystem.currentSelection()
-                selectionSystem.unselect()
-                selectionSystem.unTarget()
-                if(currentSelection) {
-                    clearShipPath(currentSelection)
-                }
-            }
-        }
-        ))
-
-    if(visible) {
-        sector.addComponent(color ?? sectorColor)
-            .addComponent(sectorShape)
-    }
-
-    engine.addEntity(sector)
-        .addEntity(clickArea, sector)
-
-    return sector
-}
-
-export function createStar(engine: Engine, parent: Entity) {
+export function createStar(engine: Engine, { x, y, soi }: { x: number, y: number, soi: number }) {
     const star = engine.createEntity()
-        .addComponent(new PositionComponent(0, 0))
+        .addComponent(new PositionComponent(x, y))
         .addComponent(new RadiusComponent(20))
         .addComponent(new ColorComponent("yellow"))
         .addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
-    engine.addEntity(star, parent)
+        .addComponent(new SoiComponent(soi))
+        .addComponent(new PathComponent())
+    engine.addEntity(star)
 
     return star
+}
+
+export function createBinaryOrbitPair(
+    engine: Engine,
+    parent: Entity,
+    nameA: string,
+    nameB: string,
+    separation: number
+) {
+    const angleA = Math.random() * Math.PI * 2
+
+    const bodyA = engine.createEntity()
+        .addComponent(new PositionComponent(0, 0))
+        .addComponent(new RadiusComponent(15))
+        .addComponent(new ColorComponent("cyan"))
+        .addComponent(new HoverableComponent("pointer", { width: 30, height: 30 }))
+        .addComponent(
+            new ClickableComponent(true, { width: 30, height: 30 }, () => {
+                engine.dispatchEvent(
+                    new SelectionChangedEvent({ data: bodyA, type: "colony" })
+                );
+            })
+        )
+        .addComponent(
+            new OrbitComponent(parent.id, separation / 2, 0.5, angleA)
+        )
+        .addComponent(new SoiComponent(100))
+        .addComponent(new PathComponent())
+
+    const bodyB = engine.createEntity()
+        .addComponent(new PositionComponent(0, 0))
+        .addComponent(new RadiusComponent(15))
+        .addComponent(new ColorComponent("magenta"))
+        .addComponent(new HoverableComponent("pointer", { width: 30, height: 30 }))
+        .addComponent(
+            new ClickableComponent(true, { width: 30, height: 30 }, () => {
+                engine.dispatchEvent(
+                    new SelectionChangedEvent({ data: bodyB, type: "colony" })
+                );
+            })
+        )
+        .addComponent(
+            new OrbitComponent(parent.id, separation / 2, 0.5, angleA + Math.PI)
+        )
+        .addComponent(new SoiComponent(100))
+        .addComponent(new PathComponent())
+
+    const labelA = engine.createEntity()
+        .addComponent(new LabelComponent(nameA, 14))
+        .addComponent(new ColorComponent("white"))
+        .addComponent(new PositionComponent(0, -25, 0));
+
+    const labelB = engine.createEntity()
+        .addComponent(new LabelComponent(nameB, 14))
+        .addComponent(new ColorComponent("white"))
+        .addComponent(new PositionComponent(0, -25, 0));
+
+    engine.addEntity(bodyA, parent).addEntity(labelA, bodyA);
+    engine.addEntity(bodyB, parent).addEntity(labelB, bodyB);
+
+    return { bodyA, bodyB };
 }
 
 export function createBody(engine: Engine, { name, radius }: { x: number, y: number, name: string, radius: number }, parent: Entity) {

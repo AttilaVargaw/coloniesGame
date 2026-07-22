@@ -54,7 +54,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return entity
     }
 
-    createSectorSelector(color: string) {
+    createTargetSelector(color: string) {
         if(!this.engine) return
 
         const entity = this.engine.createEntity()
@@ -79,7 +79,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         this.targetSelector = undefined
     }
 
-    onSelectionChanged = ({ type, entity }: { type: "colony" | "ship" | "sector", entity?: Entity }) => {
+    onSelectionChanged = ({ type, entity }: { type: "colony" | "ship" | "attractor", entity?: Entity }) => {
         if(!this.engine) return
 
         this.unselect()
@@ -90,13 +90,11 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         switch(type) {
             case "colony":
-                this.selector = this.createSectorSelector("green")
+            case "attractor":
+                this.selector = this.createTargetSelector("green")
                 break
             case "ship":
                 this.selector = this.createSpaceshipSelector("#0f04")
-                break
-            case "sector":
-                this.selector = this.createSectorSelector("green")
                 break
         }
 
@@ -112,7 +110,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         this.unTarget()
 
         if(entity.getComponent(ShapeComponent)) {
-            this.targetSelector = this.createSectorSelector("red")
+            this.targetSelector = this.createTargetSelector("red")
         } else {
             this.targetSelector = this.createSpaceshipSelector("#f004")
         }

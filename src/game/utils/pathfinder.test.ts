@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect } from "vitest"
 import { aStar } from "./pathfinder"
 import { Entity } from "@/engine/entities/entity"
 import { PathComponent } from "@/game/components/pathComponent"
 import { PositionComponent } from "@/engine/components/position"
 
-function createSectorEntity(id: string, q: number, r: number) {
+function createWaypoint(id: string, x: number, y: number) {
     const entity = new Entity(id)
-    entity.addComponent(new PositionComponent(q * 100, r * 100))
+    entity.addComponent(new PositionComponent(x, y))
 
     const path = new PathComponent()
     path.entity = entity
@@ -15,15 +15,12 @@ function createSectorEntity(id: string, q: number, r: number) {
     return entity
 }
 
-function link(from: Entity, to: Entity, fromDir: keyof PathComponent["neighbours"], toDir: keyof PathComponent["neighbours"]) {
+function link(from: Entity, to: Entity) {
     const fromPath = from.getComponent(PathComponent)!
     const toPath = to.getComponent(PathComponent)!
 
-    ;(fromPath.neighbours as any)[fromDir] = toPath
-    ;(toPath.neighbours as any)[toDir] = fromPath
-
-    fromPath.entity = from
-    toPath.entity = to
+    fromPath.linked.push(toPath)
+    toPath.linked.push(fromPath)
 }
 
 describe("pathfinder", () => {
@@ -56,7 +53,7 @@ describe("pathfinder", () => {
         expect(aStar(start, start)).toEqual([start])
     })
 
-    it("returns empty when there is no path between linked sectors", () => {
+    it("returns empty when there is no path between linked waypoints", () => {
         const a = new Entity("a")
         a.addComponent(new PositionComponent(0, 0))
         a.addComponent(new PathComponent())
@@ -68,21 +65,21 @@ describe("pathfinder", () => {
         expect(aStar(a, c)).toEqual([])
     })
 
-    it("finds a straight-line path across linked sectors", () => {
-        const a = createSectorEntity("a", 0, 0)
-        const b = createSectorEntity("b", 1, 0)
-        const c = createSectorEntity("c", 2, 0)
+    it("finds a straight-line path across linked waypoints", () => {
+        const a = createWaypoint("a", 0, 0)
+        const b = createWaypoint("b", 100, 0)
+        const c = createWaypoint("c", 200, 0)
 
-        link(a, b, "next", "prev")
-        link(b, c, "next", "prev")
+        link(a, b)
+        link(b, c)
 
         const path = aStar(a, c)
         expect(path).toEqual([a, b, c])
     })
 
-    it("returns empty for unreachable sectors", () => {
-        const a = createSectorEntity("a", 0, 0)
-        const c = createSectorEntity("c", 2, 0)
+    it("returns empty for unreachable waypoints", () => {
+        const a = createWaypoint("a", 0, 0)
+        const c = createWaypoint("c", 200, 0)
         // b is missing, so a and c are not linked
 
         expect(aStar(a, c)).toEqual([])

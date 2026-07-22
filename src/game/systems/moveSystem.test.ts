@@ -6,6 +6,10 @@ import { JumpDriveComponent, SensorSuiteComponent } from "@/game/components/vess
 import { SelectionSystem } from "./selectionSystem"
 import { SceneNode } from "@/engine/entities/sceneNode"
 import { MoveNode } from "./moveSystem"
+import { SoiComponent } from "@/engine/components/soiComponent"
+import { OrbitComponent } from "@/engine/components/orbitComponent"
+import { PathComponent } from "@/game/components/pathComponent"
+import { StartState } from "@/game/data/types"
 
 function makeMoveNode(entity: Entity, range: number): MoveNode {
     const pos = entity.getComponent(PositionComponent)!
@@ -16,8 +20,8 @@ function makeMoveNode(entity: Entity, range: number): MoveNode {
 
 describe("move system waypoint queue", () => {
     let ship: Entity
-    let parentSector: Entity
-    let targetSector: Entity
+    let parentTarget: Entity
+    let targetAttractor: Entity
     let parentNode: SceneNode
     let shipNode: SceneNode
     let targetNode: SceneNode
@@ -30,27 +34,35 @@ describe("move system waypoint queue", () => {
         clearAllPaths()
         unTargetMock = vi.fn()
 
-        parentSector = new Entity("parent")
-        parentSector.addComponent(new PositionComponent(0, 0))
+        StartState.map.attractors.clear()
+        StartState.map.waypoints.clear()
 
-        targetSector = new Entity("target")
-        targetSector.addComponent(new PositionComponent(200, 0))
+        parentTarget = new Entity("parent")
+        parentTarget.addComponent(new PositionComponent(0, 0))
+        parentTarget.addComponent(new SoiComponent(0))
+        parentTarget.addComponent(new PathComponent())
+
+        targetAttractor = new Entity("target")
+        targetAttractor.addComponent(new PositionComponent(200, 0))
+        targetAttractor.addComponent(new SoiComponent(300))
+        targetAttractor.addComponent(new PathComponent())
+        StartState.map.attractors.set("target", targetAttractor)
 
         ship = new Entity("ship")
         ship.addComponent(new PositionComponent(0, 0))
         ship.addComponent(new JumpDriveComponent())
         ship.addComponent(new SensorSuiteComponent(2))
 
-        parentNode = new SceneNode(parentSector.id, parentSector)
+        parentNode = new SceneNode(parentTarget.id, parentTarget)
         shipNode = new SceneNode(ship.id, ship)
-        targetNode = new SceneNode(targetSector.id, targetSector)
+        targetNode = new SceneNode(targetAttractor.id, targetAttractor)
 
         shipNode.setParent(parentNode)
 
         sceneNodes = new Map([
             [ship, shipNode],
-            [parentSector, parentNode],
-            [targetSector, targetNode],
+            [parentTarget, parentNode],
+            [targetAttractor, targetNode],
         ])
 
         mockEngine = {
@@ -67,6 +79,8 @@ describe("move system waypoint queue", () => {
 
     afterEach(() => {
         clearAllPaths()
+        StartState.map.attractors.clear()
+        StartState.map.waypoints.clear()
     })
 
     it("does not queue a path of length 1 or less", () => {
@@ -132,11 +146,10 @@ describe("move system waypoint queue", () => {
 
         moveSystem.moveNodes()
 
-        // range 2 => jump to w2 on day 1
-        expect(shipNode.parentRef?.entity).toBe(w2)
+        // range 2 => jump to w2 on day 1, then resolveOrbit re-parents to targetAttractor
         expect(ship.getComponent(JumpDriveComponent)!.target).toBe(w3)
         expect(getActivePaths()[0].waypoints).toEqual([w3, w4])
-        expect(getTodaysJumps()[0].path).toEqual([parentSector, w1, w2])
+        expect(getTodaysJumps()[0].path).toEqual([parentTarget, w1, w2])
     })
 
     it("moveNodes clears the path and unTarget when the final waypoint is reached", () => {
@@ -162,8 +175,9 @@ describe("move system waypoint queue", () => {
     })
 
     it("moveNodes still reparents ships with a direct target but no queued waypoints", () => {
-        ship.getComponent(JumpDriveComponent)!.target = targetSector
+        ship.getComponent(JumpDriveComponent)!.target = targetAttractor
         // no waypoints in shipWaypoints
+        targetAttractor.getComponent(SoiComponent)!.radius = 500
 
         const moveSystem = new MoveSystem()
         ;(moveSystem as any).engine = mockEngine
@@ -171,6 +185,37 @@ describe("move system waypoint queue", () => {
 
         moveSystem.moveNodes()
 
-        expect(shipNode.parentRef?.entity).toBe(targetSector)
+        expect(shipNode.parentRef?.entity).toBe(targetAttractor)
+        const orbit = ship.getComponent(OrbitComponent)
+        expect(orbit).toBeDefined()
+        expect(orbit!.centerEntityId).toBe(targetAttractor.id)
+    })
+
+    it("moveNodes resolves orbit to the closest attractor within SOI", () => {
+        const planet = new Entity("planet")
+        planet.addComponent(new PositionComponent(50, 0))
+        planet.addComponent(new SoiComponent(200))
+        planet.addComponent(new PathComponent())
+        StartState.map.attractors.set("planet", planet)
+
+        const planetNode = new SceneNode(planet.id, planet)
+        sceneNodes.set(planet, planetNode)
+
+        targetAttractor.getComponent(SoiComponent)!.radius = 50
+
+        ship.addComponent(new SensorSuiteComponent(1))
+        setShipPath(ship, [ship, targetAttractor, planet])
+
+        const moveSystem = new MoveSystem()
+        ;(moveSystem as any).engine = mockEngine
+        ;(moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+
+        moveSystem.moveNodes()
+
+        // ship jumped to targetAttractor (range 1)
+        expect(shipNode.parentRef?.entity).toBe(targetAttractor)
+        const orbit = ship.getComponent(OrbitComponent)
+        expect(orbit).toBeDefined()
+        expect(orbit!.centerEntityId).toBe(targetAttractor.id)
     })
 })

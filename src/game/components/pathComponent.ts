@@ -1,5 +1,5 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
-import type { Entity } from "./entity";
+import type { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
 
 export class PathComponent extends EntityComponent {

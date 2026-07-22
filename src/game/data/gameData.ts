@@ -16,13 +16,14 @@ export const solarSystems = new Map<string, Star>([
         name: "Helios Alpha",
         sign: "",
         x: 16, y: 18,
+        soi: 2000,
         planets: new Map([
-            ["Icarus", { radius: 2, name: "Icarus" }],
-            ["Zeus", { radius: 17, name: "Zeus" }],
+            ["Icarus", { radius: 2, name: "Icarus", soi: 90 }],
+            ["Zeus", { radius: 17, name: "Zeus", soi: 160 }],
             ["Caprica", {
                 name: "Caprica",
                 radius: 11,
-                population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
+                population: 4_900_000_000, sign: "♑︎", soi: 130, patronGod: createPatronGodModifier({
                     name: "Apollo",
                     onAdd: (entity) => {
                         return entity
@@ -34,7 +35,7 @@ export const solarSystems = new Map<string, Star>([
             ["Gemenon", {
                 radius: 13,
                 name: "Gemenon",
-                population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
+                population: 2_800_000_000, sign: "♊︎", soi: 150, patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
                     name: "Hera",
                     onAdd: (entity) => {
@@ -45,9 +46,9 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Picon", {
-                name: "Picon",
                 radius: 7,
-                population: 1_400_000_000, sign: "♓︎", patronGod: createPatronGodModifier({
+                name: "Picon",
+                population: 1_400_000_000, sign: "♓︎", soi: 100, patronGod: createPatronGodModifier({
                     name: "Poseidon",
                     onAdd: (entity) => {
                         return entity
@@ -59,7 +60,7 @@ export const solarSystems = new Map<string, Star>([
             ["Tauron", {
                 radius: 9,
                 name: "Tauron",
-                population: 2_500_000_000, sign: "♉︎", patronGod: createPatronGodModifier({
+                population: 2_500_000_000, sign: "♉︎", soi: 110, patronGod: createPatronGodModifier({
                     name: "Ares",
                     onAdd: (entity) => {
                         return entity

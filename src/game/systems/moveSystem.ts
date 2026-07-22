@@ -7,6 +7,10 @@ import { JumpDriveComponent, SensorSuiteComponent } from "@game/components/vesse
 import { SelectionSystem } from "./selectionSystem";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { OrbitComponent } from "@engine/components/orbitComponent";
+import { SoiComponent } from "@engine/components/soiComponent";
+import { StartState } from "@game/data/types";
 
 export const DEBUG_VISUALIZE_PATHS = true;
 
@@ -92,6 +96,12 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 shipNode.parentRef?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
+                const position = entity.getComponent(PositionComponent)
+                if(position) {
+                    position.x = 0
+                    position.y = 0
+                }
+
                 const drive = entity.getComponent(JumpDriveComponent);
                 if(remaining.length > 0) {
                     shipWaypoints.set(entity, remaining);
@@ -112,10 +122,58 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 const targetNode = this.engine.getSceneNode(target)!
                 shipNode.parentRef?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
+
+                const position = entity.getComponent(PositionComponent)
+                if(position) {
+                    position.x = 0
+                    position.y = 0
+                }
             }
 
+            this.resolveOrbit(entity)
             this.engine.addCommand(new RedrawCommand)
             alreadyMoved.add(entity)
+        }
+    }
+
+    private resolveOrbit = (entity: Entity): void => {
+        if(!this.engine) return
+
+        const [shipX, shipY] = getAbsolute(entity, this.engine)
+        let bestSoiEntity: Entity | null = null
+        let bestDist = Infinity
+
+        for(const attractor of StartState.map.attractors.values()) {
+            const [ax, ay] = getAbsolute(attractor, this.engine)
+            const dist = Math.hypot(shipX - ax, shipY - ay)
+            const soi = attractor.getComponent(SoiComponent)?.radius ?? 0
+            if(dist <= soi && dist < bestDist) {
+                bestSoiEntity = attractor
+                bestDist = dist
+            }
+        }
+
+        if(!bestSoiEntity) return
+
+        const shipNode = this.engine.getSceneNode(entity)!
+        const attractorNode = this.engine.getSceneNode(bestSoiEntity)!
+
+        if(shipNode.parentRef?.entity !== bestSoiEntity) {
+            shipNode.parentRef?.removeChild(shipNode)
+            attractorNode.addChild(shipNode)
+        }
+
+        const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
+        const orbit = entity.getComponent(OrbitComponent)
+        const newRadius = Math.max(bestDist, 1)
+        const newAngle = Math.atan2(shipY - ay, shipX - ax)
+
+        if(orbit) {
+            orbit.centerEntityId = bestSoiEntity.id
+            orbit.radius = newRadius
+            orbit.angle = newAngle
+        } else {
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 0, newAngle))
         }
     }
 
@@ -148,6 +206,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     removeFromEngine(): this {
         if(!this.engine) {
             return this
+
         }
 
         this.engine.unregisterNodeType(MoveNode)

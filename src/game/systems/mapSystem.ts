@@ -45,10 +45,15 @@ export class MapSystem extends SystemWithNodes<PathNode> {
     clear() {
         if(!this.engine) return this
 
-        StartState.map.sectors.forEach(sector => {
-            this.engine?.removeEntity(sector)
+        StartState.map.waypoints.forEach(waypoint => {
+            this.engine?.removeEntity(waypoint)
         })
-        StartState.map.sectors.clear()
+        StartState.map.waypoints.clear()
+
+        StartState.map.attractors.forEach(attractor => {
+            this.engine?.removeEntity(attractor)
+        })
+        StartState.map.attractors.clear()
 
         return this
     }
