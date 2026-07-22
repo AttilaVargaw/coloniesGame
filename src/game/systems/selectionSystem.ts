@@ -9,6 +9,7 @@ import { ShapeComponent } from "@engine/components/ShapeComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { SelectionChangedEvent } from "@/engine/lib/events"
+import { SensorSuiteComponent } from "@/game/components/vessel"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
@@ -26,6 +27,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
     private selector?: Entity
     private targetSelector?: Entity
+    private sensorRangeCircle?: Entity
 
     private get selectorSceneNode() {
         return this.selector ? this.engine?.getSceneNode(this.selector) : undefined
@@ -70,6 +72,8 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.engine.removeEntity(this.selector)
         this.selector = undefined
+
+        this.unselectSensorRange()
     }
 
     unTarget() {
@@ -95,6 +99,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                 break
             case "ship":
                 this.selector = this.createSpaceshipSelector("#0f04")
+                this.showSensorRangeForSelection(entity)
                 break
         }
 
@@ -122,6 +127,31 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     }
 
     update(_dt: number) {
+    }
+
+    private showSensorRangeForSelection(entity: Entity) {
+        if(!this.engine || !entity) return
+
+        this.unselectSensorRange()
+
+        const suite = entity.getComponent(SensorSuiteComponent)
+        if(!suite) return
+
+        const circle = this.engine.createEntity()
+            .addComponent(new PositionComponent(0, 0))
+            .addComponent(new RadiusComponent(suite.range * 30))
+            .addComponent(new ColorComponent("", "red"))
+
+        this.sensorRangeCircle = circle
+        this.engine.addEntity(this.sensorRangeCircle!, entity)
+        this.engine.addCommand(new RedrawCommand())
+    }
+
+    private unselectSensorRange() {
+        if(!this.engine || !this.sensorRangeCircle) return
+
+        this.engine.removeEntity(this.sensorRangeCircle)
+        this.sensorRangeCircle = undefined
     }
 
     addToEngine(engine: World): this {

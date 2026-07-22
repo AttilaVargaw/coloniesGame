@@ -154,6 +154,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 if(drive) {
                     drive.target = undefined
                 }
+                const selectionSystem = this.engine!.getSystem(SelectionSystem)
+                selectionSystem?.unTarget()
             }
 
             this.engine.addCommand(new RedrawCommand)

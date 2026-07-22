@@ -1,5 +1,9 @@
 import { Engine } from "@/engine/core/engine"
 import { SelectionChangedEvent } from "@/engine/lib/events"
+import { MapSystem } from "@game/systems/mapSystem"
+import { SelectionSystem } from "@game/systems/selectionSystem"
+import { JumpDriveComponent } from "../components/vessel"
+import { setShipPath } from "@game/systems/moveSystem"
 import { applyComponents } from "./helpers"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
@@ -69,8 +73,28 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
                     new ColorComponent("green"),
                     new RadiusComponent(10),
                     new HoverableComponent("pointer", { width: 40, height: 40 }),
-                    new ClickableComponent(true, { width: 40, height: 40 }, () => {
-                        engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
+                    new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
+                        if(shiftKey) {
+                            const selectionSystem = engine.getSystem(SelectionSystem)
+                            const selection = selectionSystem?.currentSelection()
+                            if(selection) {
+                                selectionSystem?.onTargetChanged(body)
+                                const mapSystem = engine.getSystem(MapSystem)
+                                const selectionSceneNode = engine.getSceneNode(selection)!
+                                const selectionsParent = selectionSceneNode.parentRef!.entity
+                                const path = mapSystem?.findPath(selectionsParent, body)
+                                if(path && path.length > 1) {
+                                    setShipPath(selection, path)
+                                } else {
+                                    const drive = selection.getComponent(JumpDriveComponent)
+                                    if(drive) {
+                                        drive.target = body
+                                    }
+                                }
+                            }
+                        } else {
+                            engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
+                        }
                     })
                 )
                 if(data.population) {

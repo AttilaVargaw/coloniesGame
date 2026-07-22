@@ -105,6 +105,10 @@ export class EntityRegistry {
         return sceneNode
     }
 
+    getAllEntities(): Entity[] {
+        return Array.from(this.entities.values())
+    }
+
     clear() {
         this.entities.clear()
         this.sceneNodes.clear()

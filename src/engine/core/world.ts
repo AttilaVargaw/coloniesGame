@@ -74,6 +74,10 @@ export class World implements Engine {
         return this.entityRegistry.getSceneNode(entity)
     }
 
+    getAllEntities(): Entity[] {
+        return this.entityRegistry.getAllEntities()
+    }
+
     getSystem<T extends System>(system: new (...args: unknown[]) => T) {
         return this.systemRegistry.getSystem(system)
     }

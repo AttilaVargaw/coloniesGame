@@ -7,6 +7,7 @@ import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
+import { MouseEvent } from "react"
 
 export const bodyColor = new ColorComponent("grey")
 
@@ -28,7 +29,7 @@ export function applyComponents(entity: Entity, ...components: EntityComponent[]
 export function createBody(
     engine: Engine,
     { color, radius, hoverCursor, clickWidth, clickHeight, onClick }:
-    { color: string, radius: number, hoverCursor: "default" | "pointer" | "none" | "not-allowed", clickWidth: number, clickHeight: number, onClick: () => void }
+    { color: string, radius: number, hoverCursor: "default" | "pointer" | "none" | "not-allowed", clickWidth: number, clickHeight: number, onClick?: (event: { target: Entity, event: MouseEvent }) => void }
 ) {
     return applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),

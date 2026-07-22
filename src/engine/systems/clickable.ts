@@ -8,7 +8,7 @@ import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, EntityAddedEvent, MouseEventData } from "../lib/events";
-
+import { SelectionSystem } from "@game/systems/selectionSystem";
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
         super()
@@ -69,6 +69,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
         for(const { data } of this.clickQueue) {
             const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
+            let hit = false
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
@@ -84,7 +85,14 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                     && correctedPositionY - halfY < y
                     && correctedPositionY + halfY > y) {
                     onClick({ target: entity!, event: data })
+                    hit = true
                 }
+            }
+
+            if(!hit) {
+                const selectionSystem = this.engine.getSystem(SelectionSystem)
+                selectionSystem?.unselect()
+                this.viewportSystem.redrawQueue?.enqueue()
             }
         }
 

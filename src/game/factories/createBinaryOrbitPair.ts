@@ -5,6 +5,10 @@ import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { createBody, createLabel } from "./helpers"
 import { Entity } from "@engine/entities/entity"
+import { SelectionSystem } from "@game/systems/selectionSystem"
+import { MapSystem } from "@game/systems/mapSystem"
+import { JumpDriveComponent } from "../components/vessel"
+import { setShipPath } from "@game/systems/moveSystem"
 
 export function createBinaryOrbitPair(
     engine: Engine,
@@ -22,10 +26,30 @@ export function createBinaryOrbitPair(
         hoverCursor: "pointer",
         clickWidth: 30,
         clickHeight: 30,
-        onClick: () => {
-            engine.dispatchEvent(
-                new SelectionChangedEvent({ data: bodyA, type: "colony" })
-            );
+        onClick: ({ event: { shiftKey } }) => {
+            if(shiftKey) {
+                const selectionSystem = engine.getSystem(SelectionSystem)
+                const selection = selectionSystem?.currentSelection()
+                if(selection) {
+                    selectionSystem?.onTargetChanged(bodyA)
+                    const mapSystem = engine.getSystem(MapSystem)
+                    const selectionSceneNode = engine.getSceneNode(selection)!
+                    const selectionsParent = selectionSceneNode.parentRef!.entity
+                    const path = mapSystem?.findPath(selectionsParent, bodyA)
+                    if(path && path.length > 1) {
+                        setShipPath(selection, path)
+                    } else {
+                        const drive = selection.getComponent(JumpDriveComponent)
+                        if(drive) {
+                            drive.target = bodyA
+                        }
+                    }
+                }
+            } else {
+                engine.dispatchEvent(
+                    new SelectionChangedEvent({ data: bodyA, type: "colony" })
+                );
+            }
         }
     })
     bodyA.addComponent(
@@ -40,10 +64,30 @@ export function createBinaryOrbitPair(
         hoverCursor: "pointer",
         clickWidth: 30,
         clickHeight: 30,
-        onClick: () => {
-            engine.dispatchEvent(
-                new SelectionChangedEvent({ data: bodyB, type: "colony" })
-            );
+        onClick: ({ event: { shiftKey } }) => {
+            if(shiftKey) {
+                const selectionSystem = engine.getSystem(SelectionSystem)
+                const selection = selectionSystem?.currentSelection()
+                if(selection) {
+                    selectionSystem?.onTargetChanged(bodyB)
+                    const mapSystem = engine.getSystem(MapSystem)
+                    const selectionSceneNode = engine.getSceneNode(selection)!
+                    const selectionsParent = selectionSceneNode.parentRef!.entity
+                    const path = mapSystem?.findPath(selectionsParent, bodyB)
+                    if(path && path.length > 1) {
+                        setShipPath(selection, path)
+                    } else {
+                        const drive = selection.getComponent(JumpDriveComponent)
+                        if(drive) {
+                            drive.target = bodyB
+                        }
+                    }
+                }
+            } else {
+                engine.dispatchEvent(
+                    new SelectionChangedEvent({ data: bodyB, type: "colony" })
+                );
+            }
         }
     })
     bodyB.addComponent(
