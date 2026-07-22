@@ -17,6 +17,7 @@ export type Star = {
     name: string,
     planets: Map<string, Colony>
     soi?: number
+    binaryPairs?: ReadonlyMap<string, number>
 }
 
 export const StartState = {

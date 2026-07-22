@@ -5,11 +5,12 @@ import { SoiComponent } from "@engine/components/soiComponent";
 import { OrbitComponent } from "@engine/components/orbitComponent";
 import { LabelComponent } from "@engine/components/label";
 import { SceneNode } from "@engine/entities/sceneNode";
-import { createSolarSystem, createSpaceship } from "./entityFactory";
 import { solarSystems } from "../data/gameData";
 import { StartState } from "../data/types";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
+import { createSolarSystem } from "./createSolarSystem";
+import { createSpaceship } from "./createSpaceship";
 
 const GRID_SPACING = 100
 const MAP_RADIUS = 1300

@@ -17,6 +17,7 @@ export const solarSystems = new Map<string, Star>([
         sign: "",
         x: 16, y: 18,
         soi: 2000,
+        binaryPairs: new Map([["Caprica-Gemenon", 60]]),
         planets: new Map([
             ["Icarus", { radius: 2, name: "Icarus", soi: 90 }],
             ["Zeus", { radius: 17, name: "Zeus", soi: 160 }],
