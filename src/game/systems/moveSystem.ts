@@ -215,8 +215,9 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             orbit.centerEntityId = bestSoiEntity.id
             orbit.radius = newRadius
             orbit.angle = newAngle
+            orbit.angularSpeed = 1.5 / Math.sqrt(newRadius)
         } else {
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 0.3, newAngle))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 1.5 / Math.sqrt(newRadius), newAngle))
         }
     }
 

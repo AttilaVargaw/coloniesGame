@@ -1,13 +1,16 @@
 import type { Entity } from "@engine/entities/entity";
 import type { Modifier } from "@engine/modifier";
+import { PlanetArchetypes } from "../factories/helpers";
 
 export type Colony = {
     readonly population?: number;
     readonly sign?: string;
     readonly patronGod?: Modifier;
     readonly name: string
+    readonly distanceFromParent: number
     readonly radius: number
     readonly soi?: number
+    readonly archetype: keyof typeof PlanetArchetypes
 }
 
 export type Star = {

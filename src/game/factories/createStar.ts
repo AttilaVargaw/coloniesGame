@@ -19,5 +19,13 @@ export function createStar(engine: Engine, { x, y, soi }: { x: number, y: number
         new TargetableComponent()
     )
     engine.addEntity(star)
+
+    const soiCircle = applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
+        new RadiusComponent(soi),
+        new ColorComponent("", "rgba(0,255,255,0.25)")
+    )
+    engine.addEntity(soiCircle, star)
+
     return star
 }

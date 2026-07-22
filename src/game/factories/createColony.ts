@@ -12,15 +12,16 @@ import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { Colony } from "../data/types"
 import { Engine } from "@/engine/core/engine"
-import { applyComponents, createLabel, bodyColor } from "./helpers"
+import { applyComponents, createLabel, bodyColor, calculateSoi, soiFromRadius } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 
-export function createColony(engine: Engine, { name, population, patronGod, soi }: Colony, parent: Entity) {
-    const colony = applyComponents(engine.createEntity(),
+export function createColony(engine: Engine, { name, population, patronGod, soi, radius, archetype }: Colony, parent: Entity) {
+    const colony = engine.createEntity()
+    applyComponents(colony,
         new PositionComponent(0, 0, 0),
-        new RadiusComponent(10),
-        new SoiComponent(soi ?? 100),
+        new RadiusComponent(radius),
+        new SoiComponent(soi ?? calculateSoi(radius, archetype)),
         new PathComponent()
     )
 
@@ -60,8 +61,15 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
 
     const label = createLabel(engine, name, 18, "white")
 
+    const soiCircle = applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
+        new RadiusComponent(soiFromRadius(colony.getComponent(RadiusComponent)!, archetype).radius),
+        new ColorComponent("", "rgba(0,255,255,0.25)")
+    )
+
     engine.addEntity(colony, parent)
         .addEntity(label, colony)
+        .addEntity(soiCircle, colony)
 
     return colony
 }

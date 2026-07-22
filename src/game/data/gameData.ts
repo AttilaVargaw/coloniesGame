@@ -19,24 +19,28 @@ export const solarSystems = new Map<string, Star>([
         soi: 2000,
         binaryPairs: new Map([["Caprica-Gemenon", 60]]),
         planets: new Map([
-            ["Icarus", { radius: 2, name: "Icarus", soi: 90 }],
-            ["Zeus", { radius: 17, name: "Zeus", soi: 160 }],
+            ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury" }],
+            ["Zeus", { distanceFromParent: 17, radius: 18, name: "Zeus", archetype: "venus" }],
             ["Caprica", {
+                archetype: "earth",
                 name: "Caprica",
-                radius: 11,
-                population: 4_900_000_000, sign: "♑︎", soi: 130, patronGod: createPatronGodModifier({
+                distanceFromParent: 11,
+                radius: 8,
+                population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
                     name: "Apollo",
                     onAdd: (entity) => {
                         return entity
                     }, onRemove: (entity) => {
                         return entity
-                    }, description: "Apollo is one of the Lords of Kobol. His numerous functions and representations include the Sun and light, prophecy, philosophy, truth, logic, inspiration, music, poetry, the arts, purification, medicine, healing, plague, archery, and masculine beauty. He is the son of Zeus and Leto, and the twin brother of Artemis, goddess of the hunt. He is considered to be the most beautiful god."
+                    }, description: "Apollo is one of the Lords of Kobol. His numerous functions and representations include the Sun and light, prophecy, philosophy, truth, logic, inspiration, music, poetry, the arts, purification, medicine, healing, plague, archery, and masculine beauty. He is the son of Zeus and Leto, and the twin brother of Artemis, goddess of the hunt. She is considered to be the most beautiful god."
                 })
             }],
             ["Gemenon", {
-                radius: 13,
+                archetype: "earth",
+                distanceFromParent: 13,
+                radius: 8,
                 name: "Gemenon",
-                population: 2_800_000_000, sign: "♊︎", soi: 150, patronGod: createPatronGodModifier({
+                population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
                     name: "Hera",
                     onAdd: (entity) => {
@@ -47,9 +51,11 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Picon", {
-                radius: 7,
+                archetype: "earth",
+                distanceFromParent: 7,
+                radius: 8,
                 name: "Picon",
-                population: 1_400_000_000, sign: "♓︎", soi: 100, patronGod: createPatronGodModifier({
+                population: 1_400_000_000, sign: "♓︎", patronGod: createPatronGodModifier({
                     name: "Poseidon",
                     onAdd: (entity) => {
                         return entity
@@ -59,9 +65,11 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Tauron", {
-                radius: 9,
+                archetype: "earth",
+                distanceFromParent: 9,
+                radius: 8,
                 name: "Tauron",
-                population: 2_500_000_000, sign: "♉︎", soi: 110, patronGod: createPatronGodModifier({
+                population: 2_500_000_000, sign: "♉︎", patronGod: createPatronGodModifier({
                     name: "Ares",
                     onAdd: (entity) => {
                         return entity
