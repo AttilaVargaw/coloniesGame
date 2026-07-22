@@ -2,6 +2,9 @@ import { PositionComponent } from "@engine/components/position";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PathComponent } from "../components/pathComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
+import { OrbitComponent } from "@engine/components/orbitComponent";
+import { LabelComponent } from "@engine/components/label";
+import { SceneNode } from "@engine/entities/sceneNode";
 import { createSolarSystem, createSpaceship } from "./entityFactory";
 import { solarSystems } from "../data/gameData";
 import { StartState } from "../data/types";
@@ -21,6 +24,16 @@ export function init(engine: Engine, _mapSize: number) {
 
         const star = createSolarSystem(engine, starData)
         StartState.map.attractors.set(starData.name, star)
+
+        const starSceneNode = engine.getSceneNode(star)
+        const attractors: Entity[] = [star]
+        starSceneNode?.childrenRef.forEach(child => {
+            const childEntity = child.entity
+            if(childEntity !== star && childEntity.getComponent(SoiComponent) && childEntity.getComponent(PathComponent)) {
+                attractors.push(childEntity)
+                StartState.map.attractors.set(childEntity.id, childEntity)
+            }
+        })
 
         const waypointGrid = new Map<string, Entity>()
 
@@ -72,15 +85,6 @@ export function init(engine: Engine, _mapSize: number) {
             }
         }
 
-        const starSceneNode = engine.getSceneNode(star)
-        const attractors: Entity[] = [star]
-        starSceneNode?.childrenRef.forEach(child => {
-            const childEntity = child.entity
-            if(childEntity !== star && childEntity.getComponent(SoiComponent) && childEntity.getComponent(PathComponent)) {
-                attractors.push(childEntity)
-            }
-        })
-
         for(const attractor of attractors) {
             const attractorSoi = attractor.getComponent(SoiComponent)!.radius
             const attractorPos = attractor.getComponent(PositionComponent)!
@@ -109,7 +113,29 @@ export function init(engine: Engine, _mapSize: number) {
             const starNode = engine.getSceneNode(star)
             const minerva = createSpaceship(engine, { name: "Minerva" })
             const minervaNode = engine.getSceneNode(minerva)
-            minervaNode?.setParent(starNode!)
+
+            let capricaNode: SceneNode | undefined
+            starNode?.childrenRef.forEach(child => {
+                child.childrenRef.forEach(grandchild => {
+                    grandchild.childrenRef.forEach(greatGrandchild => {
+                        const label = greatGrandchild.entity.getComponent(LabelComponent)
+                        if(label?.text === "Caprica") {
+                            capricaNode = grandchild
+                        }
+                    })
+                })
+            })
+
+            minervaNode?.setParent(capricaNode ?? starNode!)
+
+            const capricaEntity = capricaNode?.entity
+            if(capricaEntity) {
+                const capricaSoi = capricaEntity.getComponent(SoiComponent)?.radius ?? 100
+                const minervaPos = minerva.getComponent(PositionComponent)!
+                minervaPos.x = capricaSoi * 0.6
+                minervaPos.y = 0
+                minerva.addComponent(new OrbitComponent(capricaEntity.id, capricaSoi * 0.6, 0.3, 0))
+            }
         }
     }
 

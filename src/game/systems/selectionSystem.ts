@@ -48,7 +48,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         const entity = this.engine.createEntity()
         entity.addComponent(new ColorComponent(color, ""))
-            .addComponent(new RadiusComponent(20))
+            .addComponent(new RadiusComponent(10))
             .addComponent(new PositionComponent(0, 0, -1, entity))
 
         return entity
@@ -59,7 +59,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         const entity = this.engine.createEntity()
         entity.addComponent(new ColorComponent("", color))
-            .addComponent(new ShapeComponent(6, 40))
+            .addComponent(new ShapeComponent(6, 10))
             .addComponent(new PositionComponent(0, 0, 1, entity))
 
         return entity

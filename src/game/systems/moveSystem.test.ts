@@ -147,8 +147,9 @@ describe("move system waypoint queue", () => {
         moveSystem.moveNodes()
 
         // range 2 => jump to w2 on day 1, then resolveOrbit re-parents to targetAttractor
-        expect(ship.getComponent(JumpDriveComponent)!.target).toBe(w3)
-        expect(getActivePaths()[0].waypoints).toEqual([w3, w4])
+        // remaining waypoints are cleared because ship is now orbiting an attractor
+        expect(ship.getComponent(JumpDriveComponent)!.target).toBeUndefined()
+        expect(getActivePaths()).toHaveLength(0)
         expect(getTodaysJumps()[0].path).toEqual([parentTarget, w1, w2])
     })
 

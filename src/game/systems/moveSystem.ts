@@ -1,4 +1,5 @@
 import { PositionComponent } from "@engine/components/position";
+import { RadiusComponent } from "@engine/components/radiusComponent";
 import { World } from "@engine/core/world";
 import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
@@ -98,8 +99,15 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
                 const position = entity.getComponent(PositionComponent)
                 if(position) {
-                    position.x = 0
-                    position.y = 0
+                    const targetRadius = finalSector.getComponent(RadiusComponent)?.radius ?? 0
+                    const targetSoi = finalSector.getComponent(SoiComponent)?.radius
+                    if(targetSoi) {
+                        position.x = targetRadius + 30
+                        position.y = 0
+                    } else {
+                        position.x = 0
+                        position.y = 0
+                    }
                 }
 
                 const drive = entity.getComponent(JumpDriveComponent);
@@ -125,12 +133,29 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
                 const position = entity.getComponent(PositionComponent)
                 if(position) {
-                    position.x = 0
-                    position.y = 0
+                    const targetRadius = target.getComponent(RadiusComponent)?.radius ?? 0
+                    const targetSoi = target.getComponent(SoiComponent)?.radius
+                    if(targetSoi) {
+                        position.x = targetRadius + 30
+                        position.y = 0
+                    } else {
+                        position.x = 0
+                        position.y = 0
+                    }
                 }
             }
 
             this.resolveOrbit(entity)
+
+            const shipParent = shipNode.parentRef?.entity
+            if(shipParent && shipParent.getComponent(SoiComponent)) {
+                shipWaypoints.delete(entity)
+                const drive = entity.getComponent(JumpDriveComponent)
+                if(drive) {
+                    drive.target = undefined
+                }
+            }
+
             this.engine.addCommand(new RedrawCommand)
             alreadyMoved.add(entity)
         }
@@ -138,6 +163,14 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
     private resolveOrbit = (entity: Entity): void => {
         if(!this.engine) return
+
+        const existingOrbit = entity.getComponent(OrbitComponent)
+        if(existingOrbit) {
+            const currentAttractor = StartState.map.attractors.get(existingOrbit.centerEntityId)
+            if(currentAttractor?.getComponent(SoiComponent)) {
+                return
+            }
+        }
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
         let bestSoiEntity: Entity | null = null
@@ -165,15 +198,22 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
         const orbit = entity.getComponent(OrbitComponent)
-        const newRadius = Math.max(bestDist, 1)
+        const attractorRadius = bestSoiEntity.getComponent(RadiusComponent)?.radius ?? 0
+        const newRadius = attractorRadius + 30
         const newAngle = Math.atan2(shipY - ay, shipX - ax)
+
+        const position = entity.getComponent(PositionComponent)
+        if(position) {
+            position.x = Math.cos(newAngle) * newRadius
+            position.y = Math.sin(newAngle) * newRadius
+        }
 
         if(orbit) {
             orbit.centerEntityId = bestSoiEntity.id
             orbit.radius = newRadius
             orbit.angle = newAngle
         } else {
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 0, newAngle))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 0.3, newAngle))
         }
     }
 
