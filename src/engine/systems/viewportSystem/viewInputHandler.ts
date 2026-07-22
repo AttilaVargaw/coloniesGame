@@ -53,16 +53,30 @@ export class ViewportInputHandler {
     }
 
     addToEngine() {
-        window.addEventListener("wheel", this.onWheel, { passive: false })
+        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
+        if(!canvas) return
+        canvas.addEventListener("mouseenter", () => {
+            window.addEventListener("wheel", this.onWheel, { passive: false })
+        })
+        canvas.addEventListener("mouseleave", () => {
+            window.removeEventListener("wheel", this.onWheel)
+        })
         window.addEventListener("keydown", this.onKeyDown)
         window.addEventListener("keyup", this.onKeyUp)
     }
 
     removeFromEngine() {
-        window.removeEventListener("wheel", this.onWheel)
+        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
+        if(!canvas) return
         window.removeEventListener("keydown", this.onKeyDown)
         window.removeEventListener("keyup", this.onKeyUp)
 
+        canvas.removeEventListener("mouseenter", () => {
+            window.removeEventListener("wheel", this.onWheel)
+        })
+        canvas.removeEventListener("mouseleave", () => {
+            window.removeEventListener("wheel", this.onWheel)
+        })
         this.heldKeys.clear()
     }
 

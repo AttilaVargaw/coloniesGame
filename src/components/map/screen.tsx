@@ -29,13 +29,19 @@ export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }
 }) {
     useLayoutEffect(() => {
         function resize() {
-            //I'm not planning to use a function here at the moment
             if(typeof ref === "function" || !ref?.current) {
                 return
             }
 
+            const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined
+            if(!container) {
+                return
+            }
+
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            const width = window.innerWidth;
+
+            const { clientWidth } = container
+            const width = clientWidth
             const height = window.innerHeight;
 
             ref.current.width = width * dpr;
@@ -49,10 +55,19 @@ export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }
 
         resize()
 
+        const observer = new ResizeObserver(() => resize())
+
+        const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined;
+
+        if(container) {
+            observer.observe(container)
+        }
+
         window.addEventListener('resize', resize)
 
         return () => {
             window.removeEventListener('resize', resize)
+            observer.disconnect()
         }
     }, [ref, triggerRedraw])
 

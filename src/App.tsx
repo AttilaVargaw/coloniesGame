@@ -19,12 +19,14 @@ import {
   MouseEventData,
   DayPassedEvent,
 } from "@/engine/lib/events";
+import { ProductionBar } from "./components/productionBar/productionBar";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
   const [currentColony, setCurrentColony] = useState<Entity>()
   const [date, setDate] = useState(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if(!map.current) return
@@ -79,21 +81,49 @@ function App() {
     <>
       <ColoniesInforWindow entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
       <Header time={date} />
-      <Screen
-        onMouseMove={(data) => {
-          game?.engine.dispatchEvent(new MousemoveEvent(data as MouseEventData))
-        }}
-        onMouseDown={(data) => {
-          game?.engine.dispatchEvent(new MousedownEvent(data as MouseEventData))
-        }}
-        triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
-        ref={map}
-        onClick={(data) => {
-          game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData))
-        }} />
-      {/* <div style={{ display: dynamicData ? "block" : "none" }}>
+      <div className="flex bg-[#002]">
+        <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>
+          <ProductionBar
+            lines={[
+              {
+                name: "Main Orbital shipyard",
+                queue: [
+                  { id: 1, name: "Heavy Cruiser", imageUrl: "", totalDays: 10, remainingDays: 5 },
+                  { id: 2, name: "Light Cruiser", imageUrl: "", totalDays: 10, remainingDays: 5 },
+                  { id: 3, name: "Destroyer", imageUrl: "", totalDays: 10, remainingDays: 5 },
+                ]
+              },
+              {
+                name: "Secondary Shipyard",
+                queue: [
+                  { id: 4, name: "Frigate", imageUrl: "", totalDays: 5, remainingDays: 3 },
+                  { id: 5, name: "Scout", imageUrl: "", totalDays: 5, remainingDays: 3 },
+                ]
+              }
+            ]}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
+          />
+        </div>
+        <div className="flex-1 screenContainer overflow-auto">
+          <Screen
+            className="screenContainer"
+            onMouseMove={(data) => {
+              game?.engine.dispatchEvent(new MousemoveEvent(data as MouseEventData))
+            }}
+            onMouseDown={(data) => {
+              game?.engine.dispatchEvent(new MousedownEvent(data as MouseEventData))
+            }}
+            triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
+            ref={map}
+            onClick={(data) => {
+              game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData))
+            }} />
+        </div>
+        {/* <div style={{ display: dynamicData ? "block" : "none" }}>
         <DataWindow header={dynamicDataHeader} data={dynamicData} />
       </div> */}
+      </div >
     </>
   );
 }
