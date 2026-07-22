@@ -19,7 +19,16 @@ export class Game {
     private gameLoopId?: number
 
     constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {
-        const camera = new Camera(renderingContext, { initialPosition: [1500, 1500], distance: 3000, fieldOfView: Math.PI / 4.0, scaleX: 1.0, scaleY: 1.0, minDistance: 100, maxDistance: 12000 })
+        const firstStar = Array.from(solarSystems.values())[0]
+        const camera = new Camera(renderingContext, {
+            initialPosition: [firstStar.x * 100, firstStar.y * 100],
+            distance: 3000,
+            fieldOfView: Math.PI / 4.0,
+            scaleX: 1.0,
+            scaleY: 1.0,
+            minDistance: 100,
+            maxDistance: 12000
+        })
 
         this.engine
             .addSystem(IndustrySystem)

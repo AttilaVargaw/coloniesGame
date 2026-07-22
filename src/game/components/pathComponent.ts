@@ -1,5 +1,5 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
-import type { Entity } from "@engine/entities/entity";
+import type { Entity } from "./entity";
 import { EntityNode } from "@engine/entities/entityNode";
 
 export class PathComponent extends EntityComponent {
@@ -19,9 +19,22 @@ export class PathComponent extends EntityComponent {
                 nextUp: null,
                 nextDown: null
             },
+        public linked: PathComponent[] = [],
         entity?: Entity,
     ) {
         super(entity)
+    }
+
+    get connections(): PathComponent[] {
+        const result: PathComponent[] = []
+        for (const key of ["next", "prev", "prevDown", "prevUp", "nextUp", "nextDown"] as Array<keyof typeof this.neighbours>) {
+            const n = this.neighbours[key]
+            if (n) result.push(n)
+        }
+        for (const n of this.linked) {
+            if (n) result.push(n)
+        }
+        return result
     }
 }
 

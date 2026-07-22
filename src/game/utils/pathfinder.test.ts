@@ -27,12 +27,6 @@ function link(from: Entity, to: Entity, fromDir: keyof PathComponent["neighbours
 }
 
 describe("pathfinder", () => {
-    let sectors: Map<string, Entity>
-
-    beforeEach(() => {
-        sectors = new Map()
-    })
-
     it("returns empty when start has no PathComponent", () => {
         const start = new Entity("start")
         start.addComponent(new PositionComponent(0, 0))
@@ -40,10 +34,7 @@ describe("pathfinder", () => {
         end.addComponent(new PositionComponent(100, 0))
         end.addComponent(new PathComponent())
 
-        sectors.set("0:0", start)
-        sectors.set("1:0", end)
-
-        expect(aStar(start, end, sectors)).toEqual([])
+        expect(aStar(start, end)).toEqual([])
     })
 
     it("returns empty when end has no PathComponent", () => {
@@ -54,10 +45,7 @@ describe("pathfinder", () => {
         const end = new Entity("end")
         end.addComponent(new PositionComponent(100, 0))
 
-        sectors.set("0:0", start)
-        sectors.set("1:0", end)
-
-        expect(aStar(start, end, sectors)).toEqual([])
+        expect(aStar(start, end)).toEqual([])
     })
 
     it("returns [start] when start equals end", () => {
@@ -65,21 +53,19 @@ describe("pathfinder", () => {
         start.addComponent(new PositionComponent(0, 0))
         start.addComponent(new PathComponent())
 
-        sectors.set("0:0", start)
-
-        expect(aStar(start, start, sectors)).toEqual([start])
+        expect(aStar(start, start)).toEqual([start])
     })
 
-    it("returns empty when end is not in sectors map", () => {
-        const start = new Entity("start")
-        start.addComponent(new PositionComponent(0, 0))
-        start.addComponent(new PathComponent())
+    it("returns empty when there is no path between linked sectors", () => {
+        const a = new Entity("a")
+        a.addComponent(new PositionComponent(0, 0))
+        a.addComponent(new PathComponent())
 
-        const end = new Entity("end")
-        end.addComponent(new PositionComponent(100, 0))
-        end.addComponent(new PathComponent())
+        const c = new Entity("c")
+        c.addComponent(new PositionComponent(200, 0))
+        c.addComponent(new PathComponent())
 
-        expect(aStar(start, end, sectors)).toEqual([])
+        expect(aStar(a, c)).toEqual([])
     })
 
     it("finds a straight-line path across linked sectors", () => {
@@ -90,11 +76,7 @@ describe("pathfinder", () => {
         link(a, b, "next", "prev")
         link(b, c, "next", "prev")
 
-        sectors.set("0:0", a)
-        sectors.set("1:0", b)
-        sectors.set("2:0", c)
-
-        const path = aStar(a, c, sectors)
+        const path = aStar(a, c)
         expect(path).toEqual([a, b, c])
     })
 
@@ -103,9 +85,6 @@ describe("pathfinder", () => {
         const c = createSectorEntity("c", 2, 0)
         // b is missing, so a and c are not linked
 
-        sectors.set("0:0", a)
-        sectors.set("2:0", c)
-
-        expect(aStar(a, c, sectors)).toEqual([])
+        expect(aStar(a, c)).toEqual([])
     })
 })

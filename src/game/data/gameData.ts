@@ -17,7 +17,7 @@ export const solarSystems = new Map<string, Star>([
         sign: "",
         x: 16, y: 18,
         planets: new Map([
-            ["Icarus", { radius: 1, name: "Icarus" }],
+            ["Icarus", { radius: 2, name: "Icarus" }],
             ["Zeus", { radius: 17, name: "Zeus" }],
             ["Caprica", {
                 name: "Caprica",

@@ -31,7 +31,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
     }
 
     findPath(start: Entity, end: Entity): Entity[] {
-        return aStar(start, end, StartState.map.sectors)
+        return aStar(start, end)
     }
 
     init(mapSize: number) {

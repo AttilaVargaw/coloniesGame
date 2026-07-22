@@ -108,9 +108,9 @@ export function createColony(engine: Engine, { name, population, patronGod }: Co
     return colony
 }
 
-export function createSector(engine: Engine, { x, y, visible }: { x: number, y: number, visible: boolean }) {
+export function createSector(engine: Engine, { x, y, visible, color }: { x: number, y: number, visible: boolean, color?: ColorComponent }) {
     const sector = engine.createEntity()
-    sector.addComponent(new PositionComponent((x * 100), (y * 100)))
+    sector.addComponent(new PositionComponent(x, y))
 
     const clickArea = engine.createEntity()
         .addComponent(new PositionComponent(0, 0, -1))
@@ -148,7 +148,7 @@ export function createSector(engine: Engine, { x, y, visible }: { x: number, y: 
         ))
 
     if(visible) {
-        sector.addComponent(sectorColor)
+        sector.addComponent(color ?? sectorColor)
             .addComponent(sectorShape)
     }
 

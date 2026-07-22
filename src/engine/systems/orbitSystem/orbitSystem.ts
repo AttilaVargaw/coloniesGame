@@ -9,13 +9,19 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { StartState } from "@game/data/types";
 import { OrbitComponent } from "@/engine/components/orbitComponent";
 
+const RING_RADIUS = 100
+const MAX_RINGS = 12
+
+function getExpectedRingRadius(orbitRadius: number): number {
+    const ring = Math.max(1, Math.min(MAX_RINGS, Math.round(orbitRadius / RING_RADIUS)))
+    return ring * RING_RADIUS
+}
+
 export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(_node: OrbitNode, _dT?: number): void { }
 
     protected registerNodes(engine: World): this {
         engine.registerNodeType(OrbitNode, new Set([OrbitComponent]), (entity) => {
-            //const parent = engine.getSceneNode(entity)?.parentRef?.entity
-
             return new OrbitNode(entity,
                 entity.getComponent(PositionComponent)!,
                 entity.getComponent(OrbitComponent)!)
@@ -83,24 +89,35 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
             const worldY = centerY + Math.sin(orbit.angle) * orbit.radius
 
             if(parentEntity) {
-                this.snapToClosestSector(entity, worldX, worldY, parentEntity)
+                this.snapToClosestSector(entity, worldX, worldY, parentEntity, orbit.radius)
             }
         }
 
         this.engine?.addCommand(new RedrawCommand())
     }
 
-    private snapToClosestSector = (entity: Entity, worldX: number, worldY: number, parentEntity: Entity): void => {
+    private snapToClosestSector = (entity: Entity, worldX: number, worldY: number, parentEntity: Entity, orbitRadius: number): void => {
         if(!this.engine) return
+
+        const expectedRadius = getExpectedRingRadius(orbitRadius)
+        const [parentX, parentY] = getAbsolute(parentEntity, this.engine)
 
         let closestSector: Entity | null = null
         let closestDist = Infinity
 
         for(const [, sector] of StartState.map.sectors) {
             const pos = sector.getComponent(PositionComponent)!
-            const dx = pos.x - worldX
-            const dy = pos.y - worldY
-            const dist = dx * dx + dy * dy
+            const dx = pos.x - parentX
+            const dy = pos.y - parentY
+            const sectorRadius = Math.sqrt(dx * dx + dy * dy)
+
+            if(Math.abs(sectorRadius - expectedRadius) > RING_RADIUS * 0.5) {
+                continue
+            }
+
+            const toX = pos.x - worldX
+            const toY = pos.y - worldY
+            const dist = toX * toX + toY * toY
 
             if(dist < closestDist) {
                 closestDist = dist
@@ -110,7 +127,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
 
         if(closestSector) {
             const position = entity.getComponent(PositionComponent)!
-            const [parentX, parentY] = getAbsolute(parentEntity, this.engine)
             const sectorPos = closestSector.getComponent(PositionComponent)!
 
             position.x = sectorPos.x - parentX
