@@ -3,6 +3,7 @@ import { SelectionChangedEvent } from "@/engine/lib/events"
 import { SelectionSystem } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { TargetableComponent } from "@engine/components/targetableComponent"
+import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@engine/components/clickableComponent"
 import { applyComponents } from "./helpers"
 import { createStar } from "./createStar"
@@ -20,85 +21,84 @@ import { Star, Colony } from "../data/types"
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map() }: Star) {
     const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000 })
 
-    const createdBinaryPairNames = new Set<string>()
+    const binaryPairPlanetNames = new Set<string>()
 
     for(const [, planet] of planets) {
-        let pairEntry: { key: string, separation: number } | undefined
-
-        for(const [key, separation] of binaryPairs) {
+        for(const [key] of binaryPairs) {
             const [nameA, nameB] = key.split("-")
-            if((planet.name === nameA || planet.name === nameB) && !createdBinaryPairNames.has(key)) {
-                pairEntry = { key, separation }
-                break
+            if(planet.name === nameA || planet.name === nameB) {
+                binaryPairPlanetNames.add(planet.name)
             }
         }
+    }
 
-        if(pairEntry) {
-            const [nameA, nameB] = pairEntry.key.split("-")
-            const partnerName = planet.name === nameA ? nameB : nameA
-            const partnerData = planets.get(partnerName)!
+    for(const [key, separation] of binaryPairs) {
+        const [nameA, nameB] = key.split("-")
+        const planetA = planets.get(nameA)
+        const planetB = planets.get(nameB)
+        if(!planetA || !planetB) continue
 
-            createdBinaryPairNames.add(pairEntry.key)
+        const barycentreOrbitRadius = (planetA.radius + planetB.radius) * 50 / 2
+        const barycentreAngularSpeed = 1.5 / Math.sqrt(barycentreOrbitRadius)
+        const barycentre = applyComponents(engine.createEntity(),
+            new PositionComponent(0, 0),
+            new OrbitComponent(
+                star.id,
+                barycentreOrbitRadius,
+                barycentreAngularSpeed,
+                Math.random() * Math.PI * 2
+            ),
+            new RadiusComponent(4),
+            new ColorComponent("rgba(255,255,255,0.4)")
+        )
+        engine.addEntity(barycentre, star)
 
-            const barycentreOrbitRadius = (planet.radius + partnerData.radius) * 50 / 2
-            const barycentreAngularSpeed = 1.5 / Math.sqrt(barycentreOrbitRadius)
-            const barycentre = applyComponents(engine.createEntity(),
-                new PositionComponent(0, 0),
-                new OrbitComponent(
-                    star.id,
-                    barycentreOrbitRadius,
-                    barycentreAngularSpeed,
-                    Math.random() * Math.PI * 2
-                ),
-                new RadiusComponent(4),
-                new ColorComponent("rgba(255,255,255,0.4)")
-            )
-            engine.addEntity(barycentre, star)
+        const { bodyA, bodyB } = createBinaryOrbitPair(
+            engine, barycentre,
+            nameA,
+            nameB,
+            separation
+        )
 
-            const { bodyA, bodyB } = createBinaryOrbitPair(
-                engine, barycentre,
-                nameA,
-                nameB,
-                pairEntry.separation
-            )
+        const memberA = bodyA
+        const memberB = bodyB
+        const dataA = planetA
+        const dataB = planetB
 
-            const memberA = planet.name === nameA ? bodyA : bodyB
-            const memberB = planet.name === nameA ? bodyB : bodyA
-            const dataA = planet.name === nameA ? planet : partnerData
-            const dataB = planet.name === nameA ? partnerData : planet
-
-            const styleBinaryMember = (body: Entity, data: Colony) => {
-                applyComponents(body,
-                    new ColorComponent("green"),
-                    new TargetableComponent(),
-                    new RadiusComponent(10),
-                    new HoverableComponent("pointer", { width: 40, height: 40 }),
-                    new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
-                        if(shiftKey) {
-                            const targetSystem = engine.getSystem(TargetSystem)
-                            const selectionSystem = engine.getSystem(SelectionSystem)
-                            const selection = selectionSystem?.currentSelection()
-                            if(selection) {
-                                targetSystem?.setTarget(selection, body)
-                            }
-                        } else {
-                            engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
+        const styleBinaryMember = (body: Entity, data: Colony) => {
+            applyComponents(body,
+                new ColorComponent("green"),
+                new SelectableComponent(),
+                new TargetableComponent(),
+                new RadiusComponent(10),
+                new HoverableComponent("pointer", { width: 40, height: 40 }),
+                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
+                    if(shiftKey) {
+                        const targetSystem = engine.getSystem(TargetSystem)
+                        const selectionSystem = engine.getSystem(SelectionSystem)
+                        const selection = selectionSystem?.currentSelection()
+                        if(selection) {
+                            targetSystem?.setTarget(selection, body)
                         }
-                    })
-                )
-                if(data.population) {
-                    body.addComponent(new IndustryComponent(data.population, 80, data.population, 1))
-                }
-                if(data.patronGod) {
-                    body.addModifier(data.patronGod)
-                }
+                    } else {
+                        engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
+                    }
+                })
+            )
+            if(data.population) {
+                body.addComponent(new IndustryComponent(data.population, 80, data.population, 1))
             }
-
-            styleBinaryMember(memberA, dataA)
-            styleBinaryMember(memberB, dataB)
-
-            continue
+            if(data.patronGod) {
+                body.addModifier(data.patronGod)
+            }
         }
+
+        styleBinaryMember(memberA, dataA)
+        styleBinaryMember(memberB, dataB)
+    }
+
+    for(const [, planet] of planets) {
+        if(binaryPairPlanetNames.has(planet.name)) continue
 
         const colony = createColony(engine, planet, star)!
         const orbitRadius = planet.radius * 50
