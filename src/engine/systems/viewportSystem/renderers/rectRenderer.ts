@@ -1,26 +1,27 @@
-import { World } from "../../../core/world";
-import { RectNode } from "./rectNode";
-import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { sortByDepth } from "@/lib/sortByIndex";
-import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { RectNode } from "./rectNode";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { EntityAddedEvent } from "@/engine/lib/events";
+import { isVisible } from "./isVisible";
+import { BaseRenderer } from "./baseRenderer";
 
-export class RectRenderer extends SystemWithNodes<RectNode> {
-    constructor(private readonly viewportSystem: ViewportSystem) {
-        super()
+export class RectRenderer extends BaseRenderer<RectNode> {
+    constructor(viewportSystem: ViewportSystem) {
+        super(viewportSystem,
+            [PositionComponent, SizeComponent],
+            (e) => new RectNode(e, e.getComponent(PositionComponent)!, e.getComponent(SizeComponent)!, e.getComponent(ColorComponent)!),
+        )
     }
 
-    protected filterNodes: ((node: RectNode) => boolean) = (node) => {
+    protected filterNodes = (node: RectNode) => {
         const { camera } = this.viewportSystem.viewport;
         const margin = Math.max(node.size.width, node.size.height) / 2;
-        return isVisible( camera.visibleBounds, margin, node.entity!, this.engine!);
+        return isVisible(camera.visibleBounds, margin, node.entity!, this.engine!);
     };
-    protected updateNode(rect: RectNode, _dT?: number): void {
+
+    protected updateNode(rect: RectNode, _dt?: number): void {
         const { camera } = this.viewportSystem.viewport;
 
         const ctx = camera.context;
@@ -31,54 +32,5 @@ export class RectRenderer extends SystemWithNodes<RectNode> {
         ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
         rect.draw(ctx)
         ctx.restore();
-    }
-
-    protected registerNodes(engine: World): this {
-        engine.registerNodeType(RectNode,
-            new Set([PositionComponent, SizeComponent]),
-            (entity) => new RectNode(
-                entity,
-                entity.getComponent(PositionComponent)!,
-                entity.getComponent(SizeComponent)!,
-                entity.getComponent(ColorComponent)!,
-            )
-        )
-
-        return this
-    }
-
-    protected unregisterNodeTypes(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine.unregisterNodeType(RectNode)
-
-        return this
-    }
-
-    addToEngine(engine: World): this {
-        super.addToEngine(engine)
-        this.nodes = engine.getNodeList(RectNode)
-        engine.subscribe(EntityAddedEvent, this.onEntityAdded)
-
-        return this
-    }
-
-    removeFromEngine(): this {
-        if(!this.engine) {
-            return this
-        }
-        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-        this.nodes.length = 0
-        super.removeFromEngine()
-
-        return this
-    }
-
-    private onEntityAdded = () => {
-        if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(sortByDepth)
-        }
     }
 }

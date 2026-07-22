@@ -1,68 +1,24 @@
-import { World } from "../../../core/world";
-import { CircleNode } from "./circleNode";
-import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { sortByDepth } from "@/lib/sortByIndex";
-import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { CircleNode } from "./circleNode";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { EntityAddedEvent } from "@/engine/lib/events";
+import { isVisible } from "./isVisible";
+import { BaseRenderer } from "./baseRenderer";
 
-export class CircleRenderer extends SystemWithNodes<CircleNode> {
-    constructor(private readonly viewportSystem: ViewportSystem) {
-        super()
+export class CircleRenderer extends BaseRenderer<CircleNode> {
+    constructor(viewportSystem: ViewportSystem) {
+        super(viewportSystem,
+            [PositionComponent, RadiusComponent, ColorComponent],
+            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent)),
+        )
     }
 
-    protected filterNodes: ((node: CircleNode) => boolean) = (node) => {
+    protected filterNodes = (node: CircleNode) => {
         const { camera } = this.viewportSystem.viewport;
         return isVisible(camera.visibleBounds, node.radius.radius, node.entity!, this.engine!);
     };
-
-    addToEngine(engine: World): this {
-        super.addToEngine(engine)
-        this.nodes = engine.getNodeList(CircleNode)
-        //engine.subscribe("entityAdded", this.onEntityAdded)
-
-        return this
-    }
-
-    protected registerNodes(engine: World): this {
-        engine.registerNodeType(CircleNode,
-            new Set([PositionComponent, RadiusComponent, ColorComponent]),
-            (entity) => new CircleNode(
-                entity,
-                entity.getComponent(PositionComponent)!,
-                entity.getComponent(RadiusComponent)!,
-                entity.getComponent(ColorComponent)
-            )
-        )
-
-        return this
-    }
-
-    protected unregisterNodeTypes(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine.unregisterNodeType(CircleNode)
-
-        return this
-    }
-
-    removeFromEngine(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-        this.nodes.length = 0
-        super.removeFromEngine()
-
-        return this
-    }
 
     updateNode = (circle: CircleNode) => {
         const { camera } = this.viewportSystem.viewport;
@@ -79,11 +35,5 @@ export class CircleRenderer extends SystemWithNodes<CircleNode> {
         ctx.closePath();
         circle.draw(ctx);
         ctx.restore();
-    }
-
-    private onEntityAdded = () => {
-        if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(sortByDepth)
-        }
     }
 }

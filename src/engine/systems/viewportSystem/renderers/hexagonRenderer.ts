@@ -1,29 +1,29 @@
-import { World } from "../../../core/world";
-import { HexagoneNode } from "./HexagonNode";
-import { SystemWithNodes } from "../../system";
 import { PositionComponent } from "../../../components/position";
 import { ShapeComponent } from "../../../components/ShapeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
-import { sortByDepth } from "@/lib/sortByIndex";
-import { isVisible } from "./isVisible";
 import { ViewportSystem } from "../viewportSystem";
+import { HexagoneNode } from "./HexagonNode";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { EntityAddedEvent } from "@/engine/lib/events";
+import { isVisible } from "./isVisible";
+import { BaseRenderer } from "./baseRenderer";
 
 const HEXAGON_SIDES = 6;
 const PIThird = Math.PI / 3;
 
-export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
-    constructor(private readonly viewportSystem: ViewportSystem) {
-        super()
+export class HexagonRenderer extends BaseRenderer<HexagoneNode> {
+    constructor(viewportSystem: ViewportSystem) {
+        super(viewportSystem,
+            [PositionComponent, ShapeComponent, ColorComponent],
+            (e) => new HexagoneNode(e, e.getComponent(PositionComponent)!, e.getComponent(ColorComponent)!, e.getComponent(ShapeComponent)!),
+        )
     }
 
-    protected filterNodes: ((node: HexagoneNode) => boolean) = (node) => {
+    protected filterNodes = (node: HexagoneNode) => {
         const { camera } = this.viewportSystem.viewport;
         return isVisible(camera.visibleBounds, node.hexagon.radius, node.entity!, this.engine!);
     };
 
-    protected updateNode(shape: HexagoneNode, _dT?: number): void {
+    protected updateNode(shape: HexagoneNode, _dt?: number): void {
         const { camera } = this.viewportSystem.viewport;
 
         const ctx = camera.context
@@ -49,53 +49,5 @@ export class HexagonRenderer extends SystemWithNodes<HexagoneNode> {
         ctx.closePath();
         shape.draw(ctx);
         ctx.restore();
-    }
-
-    protected registerNodes(engine: World): this {
-        engine.registerNodeType(HexagoneNode,
-            new Set([PositionComponent, ShapeComponent, ColorComponent]),
-            (entity) => new HexagoneNode(
-                entity,
-                entity.getComponent(PositionComponent)!,
-                entity.getComponent(ColorComponent)!,
-                entity.getComponent(ShapeComponent)!,
-            )
-        )
-
-        return this
-    }
-
-    protected unregisterNodeTypes(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine.unregisterNodeType(HexagoneNode)
-
-        return this
-    }
-
-    addToEngine(engine: World): this {
-        super.addToEngine(engine)
-        this.nodes = engine.getNodeList(HexagoneNode)
-        engine.subscribe(EntityAddedEvent, this.onEntityAdded)
-
-        return this
-    }
-
-    removeFromEngine(): this {
-        if(!this.engine) return this
-        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-        this.engine.unregisterNodeType(HexagoneNode)
-        this.nodes.length = 0
-        super.removeFromEngine()
-
-        return this
-    }
-
-    private onEntityAdded = () => {
-        if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(sortByDepth)
-        }
     }
 }
