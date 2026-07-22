@@ -1,11 +1,8 @@
 import { Engine } from "@/engine/core/engine"
-import { SelectionChangedEvent } from "@/engine/lib/events"
-import { SelectionSystem } from "@game/systems/selectionSystem"
-import { TargetSystem } from "@game/systems/targetSystem"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@engine/components/clickableComponent"
-import { applyComponents, calculateSoi } from "./helpers"
+import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
@@ -77,18 +74,7 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
                 new TargetableComponent(),
                 new RadiusComponent(data.radius),
                 new HoverableComponent("pointer", { width: 40, height: 40 }),
-                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey }, worldX, worldY }) => {
-                    if(shiftKey) {
-                        const targetSystem = engine.getSystem(TargetSystem)
-                        const selectionSystem = engine.getSystem(SelectionSystem)
-                        const selection = selectionSystem?.currentSelection()
-                        if(selection) {
-                            targetSystem?.setTarget(selection, body, worldX, worldY)
-                        }
-                    } else {
-                        engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
-                    }
-                })
+                new ClickableComponent(true, { width: 40, height: 40 }, createColonyClickHandler(engine, body)),
             )
             if(data.population) {
                 body.addComponent(new IndustryComponent(data.population, 80, data.population, 1))

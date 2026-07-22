@@ -99,18 +99,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 shipNode.parentRef?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
-                const position = entity.getComponent(PositionComponent)
-                if(position) {
-                    const targetRadius = finalSector.getComponent(RadiusComponent)?.radius ?? 0
-                    const targetSoi = finalSector.getComponent(SoiComponent)?.radius
-                    if(targetSoi) {
-                        position.x = targetRadius + 30
-                        position.y = 0
-                    } else {
-                        position.x = 0
-                        position.y = 0
-                    }
-                }
+                this.positionShipAtTarget(entity, finalSector)
 
                 const drive = entity.getComponent(JumpDriveComponent);
                 if(remaining.length > 0) {
@@ -133,18 +122,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 shipNode.parentRef?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
-                const position = entity.getComponent(PositionComponent)
-                if(position) {
-                    const targetRadius = target.getComponent(RadiusComponent)?.radius ?? 0
-                    const targetSoi = target.getComponent(SoiComponent)?.radius
-                    if(targetSoi) {
-                        position.x = targetRadius + 30
-                        position.y = 0
-                    } else {
-                        position.x = 0
-                        position.y = 0
-                    }
-                }
+                this.positionShipAtTarget(entity, target)
             }
 
             this.resolveOrbit(entity)
@@ -167,8 +145,25 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
+    positionShipAtTarget(entity: Entity, targetEntity: Entity): void {
+        const position = entity.getComponent(PositionComponent)
+        if(!position) return
+
+        const targetRadius = targetEntity.getComponent(RadiusComponent)?.radius ?? 0
+        const targetSoi = targetEntity.getComponent(SoiComponent)?.radius
+        if(targetSoi) {
+            position.x = targetRadius + 30
+            position.y = 0
+        } else {
+            position.x = 0
+            position.y = 0
+        }
+    }
+
     private resolveOrbit = (entity: Entity): void => {
-        if(!this.engine) return
+        if(!this.engine) {
+            return
+        }
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
         let bestSoiEntity: Entity | null = null

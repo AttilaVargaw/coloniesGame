@@ -3,7 +3,6 @@ import { MoveSystem, getActivePaths, getTodaysJumps, setShipPath, clearShipPath,
 import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@/engine/components/position"
 import { JumpDriveComponent, SensorSuiteComponent } from "@/game/components/vessel"
-import { SelectionSystem } from "./selectionSystem"
 import { TargetSystem } from "./targetSystem"
 import { SceneNode } from "@/engine/entities/sceneNode"
 import { MoveNode } from "./moveSystem"

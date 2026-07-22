@@ -5,6 +5,9 @@ import { LabelComponent } from "@engine/components/label"
 import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
+import { SelectionChangedEvent } from "@/engine/lib/events"
+import { SelectionSystem } from "@game/systems/selectionSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
 import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
 import { MouseEvent } from "react"
@@ -76,4 +79,21 @@ export function createBody(
         new HoverableComponent(hoverCursor, { width: clickWidth, height: clickHeight }),
         new ClickableComponent(true, { width: clickWidth, height: clickHeight }, onClick)
     )
+}
+
+export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
+    return ({ event: { shiftKey }, worldX, worldY }: { event: { shiftKey: boolean }, worldX: number, worldY: number }) => {
+        if(!engine) return
+
+        if(shiftKey) {
+            const targetSystem = engine.getSystem(TargetSystem)
+            const selectionSystem = engine.getSystem(SelectionSystem)
+            const selection = selectionSystem?.currentSelection()
+            if(selection) {
+                targetSystem?.setTarget(selection, targetEntity, worldX, worldY)
+            }
+        } else {
+            engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type: "colony" }))
+        }
+    }
 }
