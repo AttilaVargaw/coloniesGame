@@ -2,6 +2,7 @@ import { Plus, ChevronLeft, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "../ui/button";
+import { SelectOptionModal } from "../selectOptionModal/selectOptionModal";
 
 interface QueueItem {
     id: number;
@@ -25,11 +26,13 @@ interface ProductionBarProps {
 
 export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAdd }: ProductionBarProps) {
     const [openLines, setOpenLines] = useState<Set<number>>(new Set(lines.map((_, idx) => idx)));
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
 
     const toggleLine = (idx: number) => {
         setOpenLines(prev => {
             const next = new Set(prev);
-            if (next.has(idx)) {
+            if(next.has(idx)) {
                 next.delete(idx);
             } else {
                 next.add(idx);
@@ -38,8 +41,19 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
         });
     };
 
+    const handleOpenModal = (idx: number) => {
+        setActiveLineIndex(idx);
+        if (!onAdd) setIsModalOpen(true);
+    };
+
+    const modalOptions = activeLineIndex !== null ? [
+        { id: "a", label: "Heavy Cruiser", description: "High armor, long build time" },
+        { id: "b", label: "Light Cruiser", description: "Balanced speed and firepower" },
+        { id: "c", label: "Destroyer", description: "Fast, agile escort" },
+    ] : [];
+
     return (
-        <div className="relative flex h-full flex-col gap-4 overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 p-4 text-neutral-100 shadow-lg transition-all duration-200">
+        <div className="relative flex h-full flex-col gap-4 overflow-hidden border border-neutral-700 bg-neutral-900 p-4 text-neutral-100 shadow-lg transition-all duration-200">
             {/* Expanded content */}
             <div
                 className={`absolute inset-0 flex h-full flex-col gap-4 overflow-y-auto p-4 transition-opacity duration-200 ${collapsed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"}`}
@@ -127,7 +141,7 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
                                         <Button
                                             variant="outline"
                                             size="icon"
-                                            onClick={onAdd}
+                                            onClick={() => handleOpenModal(idx)}
                                             aria-label="Add production item"
                                         >
                                             <Plus className="size-5" aria-hidden="true" />
@@ -147,13 +161,24 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={onToggleCollapse}
+                    onClick={() => { setActiveLineIndex(0); setIsModalOpen(true); }}
                     aria-label="Expand sidebar"
                     className="shrink-0"
                 >
                     <ChevronLeft className="size-5" aria-hidden="true" />
                 </Button>
             </div>
+
+            <SelectOptionModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                title="Add Unit"
+                options={modalOptions}
+                onSelect={(id) => {
+                    console.log("Selected:", id, "for line:", activeLineIndex);
+                    setIsModalOpen(false);
+                }}
+            />
         </div>
     );
 }

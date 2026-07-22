@@ -81,7 +81,7 @@ function App() {
     <>
       <ColoniesInforWindow entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
       <Header time={date} />
-      <div className="flex bg-[#ffff]">
+      <div className="flex bg-black">
         <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>
           <ProductionBar
             lines={[
@@ -105,7 +105,7 @@ function App() {
             onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
           />
         </div>
-        <div className="flex-1 screenContainer overflow-auto">
+        <div className="screenContainer flex-1 overflow-auto ">
           <Screen
             className="screenContainer"
             onMouseMove={(data) => {

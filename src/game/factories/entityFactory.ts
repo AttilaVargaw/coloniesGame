@@ -14,6 +14,7 @@ import { Star, Colony } from "../data/types";
 import { IndustryComponent } from "../components/industryComponent";
 import { Engine } from "@/engine/core/engine";
 import { SelectionChangedEvent } from "@/engine/lib/events";
+import { OrbitComponent } from "@engine/components/orbitComponent";
 
 const sectorColor = new ColorComponent("", "grey")
 const sectorShape = new ShapeComponent(6, 40)
@@ -55,12 +56,18 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 
 export function createSolarSystem(engine: Engine, { planets, x, y }: Star, sectors: Map<string, Entity>) {
     const startPoint = sectors.get([x, y].join(":"))!
-    const ret: Entity[] = []
-    ret.push(createStar(engine, startPoint)!)
+    const star = createStar(engine, startPoint)!
+    const ret: Entity[] = [star]
 
     for(const [, planet] of planets) {
-        const sector = sectors.get(([x + planet.radius, y]).join(":"))!
-        ret.push(createColony(engine, planet, sector)!)
+        const colony = createColony(engine, planet, star)!
+        colony.addComponent(new OrbitComponent(
+            star.id,
+            planet.radius * 50,
+            0,
+            Math.random() * Math.PI * 2
+        ))
+        ret.push(colony)
     }
 
     return ret
@@ -154,7 +161,7 @@ export function createSector(engine: Engine, { x, y, visible }: { x: number, y: 
 export function createStar(engine: Engine, parent: Entity) {
     const star = engine.createEntity()
         .addComponent(new PositionComponent(0, 0))
-        .addComponent(new RadiusComponent(50))
+        .addComponent(new RadiusComponent(20))
         .addComponent(new ColorComponent("yellow"))
         .addComponent(new HoverableComponent("not-allowed", { width: 100, height: 100 },))
     engine.addEntity(star, parent)

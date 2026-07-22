@@ -10,6 +10,7 @@ import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionSystem } from "@game/systems/selectionSystem"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
+import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import { Star } from "@game/data/types"
 import Camera from "@lib/camera"
 
@@ -23,6 +24,7 @@ export class Game {
         this.engine
             .addSystem(IndustrySystem)
             .addSystem(DateSystem)
+            .addSystem(OrbitSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
 

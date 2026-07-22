@@ -15,13 +15,13 @@ export const solarSystems = new Map<string, Star>([
     ["Helios Alpha", {
         name: "Helios Alpha",
         sign: "",
-        x: 16, y: 10,
+        x: 16, y: 18,
         planets: new Map([
-            ["Icarus", { radius: 2, name: "Icarus" }],
-            ["Zeus", { radius: 18, name: "Zeus" }],
+            ["Icarus", { radius: 1, name: "Icarus" }],
+            ["Zeus", { radius: 17, name: "Zeus" }],
             ["Caprica", {
                 name: "Caprica",
-                radius: 12,
+                radius: 11,
                 population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
                     name: "Apollo",
                     onAdd: (entity) => {
@@ -32,7 +32,7 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Gemenon", {
-                radius: 14,
+                radius: 13,
                 name: "Gemenon",
                 population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
@@ -46,7 +46,7 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Picon", {
                 name: "Picon",
-                radius: 6,
+                radius: 7,
                 population: 1_400_000_000, sign: "♓︎", patronGod: createPatronGodModifier({
                     name: "Poseidon",
                     onAdd: (entity) => {
@@ -57,7 +57,7 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Tauron", {
-                radius: 7,
+                radius: 9,
                 name: "Tauron",
                 population: 2_500_000_000, sign: "♉︎", patronGod: createPatronGodModifier({
                     name: "Ares",
