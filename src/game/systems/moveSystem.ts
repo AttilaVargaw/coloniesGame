@@ -5,7 +5,7 @@ import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent } from "@game/components/vessel";
-import { SelectionSystem } from "./selectionSystem";
+import { TargetSystem } from "./targetSystem";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
@@ -122,8 +122,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     if(drive) {
                         drive.target = undefined;
                     }
-                    const selectionSystem = this.engine!.getSystem(SelectionSystem)
-                    selectionSystem?.unTarget()
+                    const targetSystem = this.engine!.getSystem(TargetSystem)
+                    targetSystem?.clearTarget(entity)
                     this.engine.addCommand(new RedrawCommand)
                 }
             } else {
@@ -154,8 +154,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 if(drive) {
                     drive.target = undefined
                 }
-                const selectionSystem = this.engine!.getSystem(SelectionSystem)
-                selectionSystem?.unTarget()
+                const targetSystem = this.engine!.getSystem(TargetSystem)
+                targetSystem?.clearTarget(entity)
             }
 
             this.engine.addCommand(new RedrawCommand)

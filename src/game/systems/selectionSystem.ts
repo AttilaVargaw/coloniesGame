@@ -8,7 +8,7 @@ import { PositionComponent } from "@engine/components/position"
 import { ShapeComponent } from "@engine/components/ShapeComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { RedrawCommand } from "@/engine/lib/RedrawCommand"
-import { SelectionChangedEvent } from "@/engine/lib/events"
+import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
@@ -17,6 +17,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
     removeFromEngine(): this {
         this.engine?.unsubscribe(SelectionChangedEvent, this.onSelectionChanged as (data: unknown) => void)
+        this.engine?.unsubscribe(TargetChangedEvent, this.onTargetChanged as (data: unknown) => void)
         this.unselect()
         this.unTarget()
         this.engine?.unregisterNodeType(SelectionNode)
@@ -84,11 +85,12 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     }
 
     onSelectionChanged = ({ type, entity }: { type: "colony" | "ship" | "attractor", entity?: Entity }) => {
-        if(!this.engine) return
+        if(!this.engine || !entity) return
+        if(!entity.getComponent(SelectableComponent)) return
 
         this.unselect()
 
-        if(this.selectorSceneNode?.parentRef?.entity === entity || !entity) {
+        if(this.selectorSceneNode?.parentRef?.entity === entity) {
             return this
         }
 
@@ -109,18 +111,21 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return this
     }
 
-    onTargetChanged = (entity: Entity) => {
+    private onTargetChanged = ({ ship: _ship, target }: { ship: Entity, target?: Entity }) => {
         if(!this.engine) return
 
         this.unTarget()
 
-        if(entity.getComponent(ShapeComponent)) {
-            this.targetSelector = this.createTargetSelector("red")
-        } else {
-            this.targetSelector = this.createSpaceshipSelector("#f004")
+        if(target) {
+            if(target.getComponent(ShapeComponent)) {
+                this.targetSelector = this.createTargetSelector("red")
+            } else {
+                this.targetSelector = this.createSpaceshipSelector("#f004")
+            }
+
+            this.engine.addEntity(this.targetSelector!, target)
         }
 
-        this.engine.addEntity(this.targetSelector!, entity)
         this.engine.addCommand(new RedrawCommand())
 
         return this
@@ -163,6 +168,8 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
                     entity.getComponent(SelectableComponent)!,
                 )
             })
+            .subscribe(SelectionChangedEvent, this.onSelectionChanged as (data: unknown) => void)
+            .subscribe(TargetChangedEvent, this.onTargetChanged as (data: unknown) => void)
 
         this.nodes = engine.getNodeList(SelectionNode)
 

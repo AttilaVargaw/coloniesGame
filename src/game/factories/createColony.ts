@@ -5,16 +5,16 @@ import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SelectionSystem } from "@game/systems/selectionSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
 import { SelectionChangedEvent } from "@/engine/lib/events"
-import { MapSystem } from "@game/systems/mapSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { JumpDriveComponent } from "../components/vessel"
-import { setShipPath } from "@game/systems/moveSystem"
 import { Colony } from "../data/types"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, createLabel, bodyColor } from "./helpers"
+import { TargetableComponent } from "@engine/components/targetableComponent"
+import { SelectableComponent } from "@engine/components/SelectableComponent"
 
 export function createColony(engine: Engine, { name, population, patronGod, soi }: Colony, parent: Entity) {
     const colony = applyComponents(engine.createEntity(),
@@ -31,6 +31,8 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
 
         applyComponents(colony,
             new ColorComponent("green"),
+            new SelectableComponent(20, "red"),
+            new TargetableComponent(),
             new HoverableComponent("pointer", { width: 40, height: 40 }),
             new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
                 if(!engine) {
@@ -38,23 +40,11 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
                 }
 
                 if(shiftKey) {
+                    const targetSystem = engine.getSystem(TargetSystem)
                     const selectionSystem = engine.getSystem(SelectionSystem)
                     const selection = selectionSystem?.currentSelection()
                     if(selection) {
-                        const target = colony
-                        selectionSystem?.onTargetChanged(target)
-                        const mapSystem = engine.getSystem(MapSystem)
-                        const selectionSceneNode = engine.getSceneNode(selection)!
-                        const selectionsParent = selectionSceneNode.parentRef!.entity
-                        const path = mapSystem?.findPath(selectionsParent, target)
-                        if(path && path.length > 1) {
-                            setShipPath(selection, path)
-                        } else {
-                            const drive = selection.getComponent(JumpDriveComponent)
-                            if(drive) {
-                                drive.target = target
-                            }
-                        }
+                        targetSystem?.setTarget(selection, colony)
                     }
                 } else {
                     engine.dispatchEvent(new SelectionChangedEvent({ data: colony, type: "colony" }))
@@ -64,6 +54,7 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
         )
     } else {
         colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
+            .addComponent(new TargetableComponent(true))
             .addComponent(bodyColor)
     }
 

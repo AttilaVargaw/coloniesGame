@@ -20,6 +20,7 @@ export class EntityRemovedEvent extends EventBase<Entity> { }
 export class DayPassedEvent extends EventBase<null> { }
 export class MonthPassedEvent extends EventBase<null> { }
 export class SelectionChangedEvent extends EventBase<{ data: Entity, type: string }> { }
+export class TargetChangedEvent extends EventBase<{ ship: Entity, target?: Entity }> { }
 export class ComponentRemovedEvent extends EventBase<unknown> { }
 
 // export type ClickEventData = { event: MouseEvent; x: number; y: number }

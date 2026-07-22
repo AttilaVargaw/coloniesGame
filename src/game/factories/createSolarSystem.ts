@@ -1,15 +1,14 @@
 import { Engine } from "@/engine/core/engine"
 import { SelectionChangedEvent } from "@/engine/lib/events"
-import { MapSystem } from "@game/systems/mapSystem"
 import { SelectionSystem } from "@game/systems/selectionSystem"
-import { JumpDriveComponent } from "../components/vessel"
-import { setShipPath } from "@game/systems/moveSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
+import { TargetableComponent } from "@engine/components/targetableComponent"
+import { ClickableComponent } from "@engine/components/clickableComponent"
 import { applyComponents } from "./helpers"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 import { Entity } from "@engine/entities/entity"
-import { ClickableComponent } from "@engine/components/clickableComponent"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
@@ -71,26 +70,16 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             const styleBinaryMember = (body: Entity, data: Colony) => {
                 applyComponents(body,
                     new ColorComponent("green"),
+                    new TargetableComponent(),
                     new RadiusComponent(10),
                     new HoverableComponent("pointer", { width: 40, height: 40 }),
                     new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
                         if(shiftKey) {
+                            const targetSystem = engine.getSystem(TargetSystem)
                             const selectionSystem = engine.getSystem(SelectionSystem)
                             const selection = selectionSystem?.currentSelection()
                             if(selection) {
-                                selectionSystem?.onTargetChanged(body)
-                                const mapSystem = engine.getSystem(MapSystem)
-                                const selectionSceneNode = engine.getSceneNode(selection)!
-                                const selectionsParent = selectionSceneNode.parentRef!.entity
-                                const path = mapSystem?.findPath(selectionsParent, body)
-                                if(path && path.length > 1) {
-                                    setShipPath(selection, path)
-                                } else {
-                                    const drive = selection.getComponent(JumpDriveComponent)
-                                    if(drive) {
-                                        drive.target = body
-                                    }
-                                }
+                                targetSystem?.setTarget(selection, body)
                             }
                         } else {
                             engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))

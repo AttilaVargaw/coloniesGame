@@ -9,6 +9,7 @@ import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, EntityAddedEvent, MouseEventData } from "../lib/events";
 import { SelectionSystem } from "@game/systems/selectionSystem";
+import { TargetSystem } from "@game/systems/targetSystem";
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
         super()
@@ -90,9 +91,26 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             }
 
             if(!hit) {
-                const selectionSystem = this.engine.getSystem(SelectionSystem)
-                selectionSystem?.unselect()
-                this.viewportSystem.redrawQueue?.enqueue()
+                if(data.shiftKey) {
+                    const targetSystem = this.engine.getSystem(TargetSystem)
+                    const selectionSystem = this.engine.getSystem(SelectionSystem)
+                    const selection = selectionSystem?.currentSelection()
+                    if(selection) {
+                        const { camera } = this.viewportSystem.viewport
+                        const { x: worldX, y: worldY } = camera.screenToWorld(data.x, data.y)
+                        const bestEntity = targetSystem?.findNearestTarget(selection, worldX, worldY)
+                        if(bestEntity) {
+                            targetSystem?.setTarget(selection, bestEntity)
+                            hit = true
+                        }
+                    }
+                }
+
+                if(!hit) {
+                    const selectionSystem = this.engine.getSystem(SelectionSystem)
+                    selectionSystem?.unselect()
+                    this.viewportSystem.redrawQueue?.enqueue()
+                }
             }
         }
 

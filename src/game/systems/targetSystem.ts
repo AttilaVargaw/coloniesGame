@@ -1,0 +1,101 @@
+import { World } from "@engine/core/world"
+import { Entity } from "@engine/entities/entity"
+import { SystemWithNodes } from "@game/systems/system"
+import { TargetableNode } from "../../engine/systems/targetNode"
+import { TargetableComponent } from "@/engine/components/targetableComponent"
+import { MapSystem } from "./mapSystem"
+import { JumpDriveComponent } from "@/game/components/vessel"
+import { setShipPath, clearShipPath } from "@/game/systems/moveSystem"
+import { TargetChangedEvent } from "@/engine/lib/events"
+import { RedrawCommand } from "@/engine/lib/RedrawCommand"
+import { getAbsolute } from "@/engine/lib/getAbsolute"
+
+export class TargetSystem extends SystemWithNodes<TargetableNode> {
+    protected updateNode(_node: TargetableNode, _dt?: number): void {
+    }
+
+    protected registerNodes(engine: World): this {
+        engine.registerNodeType(TargetableNode, new Set([TargetableComponent]), (entity) =>
+            new TargetableNode(
+                entity,
+                entity.getComponent(TargetableComponent)!,
+            )
+        )
+
+        return this
+    }
+
+    protected unregisterNodeTypes(): this {
+        this.engine?.unregisterNodeType(TargetableNode)
+
+        return this
+    }
+
+    setTarget(ship: Entity, target: Entity) {
+        if(!this.engine) return
+        if(!target.getComponent(TargetableComponent)) return
+
+        const mapSystem = this.engine.getSystem(MapSystem)
+        const selectionSceneNode = this.engine.getSceneNode(ship)!
+        const selectionsParent = selectionSceneNode.parentRef!.entity
+        const path = mapSystem?.findPath(selectionsParent, target)
+
+        if(path && path.length > 1) {
+            setShipPath(ship, path)
+        } else {
+            const drive = ship.getComponent(JumpDriveComponent)
+            if(drive) {
+                drive.target = target
+            }
+        }
+
+        this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
+        this.engine.addCommand(new RedrawCommand())
+    }
+
+    clearTarget(ship: Entity) {
+        if(!this.engine) return
+
+        clearShipPath(ship)
+        const drive = ship.getComponent(JumpDriveComponent)
+        if(drive) {
+            drive.target = undefined
+        }
+
+        this.engine.dispatchEvent(new TargetChangedEvent({ ship, target: undefined }))
+        this.engine.addCommand(new RedrawCommand())
+    }
+
+    findNearestTarget(ship: Entity, worldX: number, worldY: number): Entity | undefined {
+        if(!this.engine) return undefined
+
+        let bestDist = Infinity
+        let bestEntity: Entity | undefined
+
+        for(const node of this.nodes) {
+            if(node.entity === ship) continue
+            const [ex, ey] = getAbsolute(node.entity, this.engine!)
+            const dist = Math.hypot(ex - worldX, ey - worldY)
+            if(dist < bestDist) {
+                bestDist = dist
+                bestEntity = node.entity
+            }
+        }
+
+        return bestEntity
+    }
+
+    addToEngine(engine: World): this {
+        super.addToEngine(engine)
+        this.nodes = engine.getNodeList(TargetableNode)
+
+        return this
+    }
+
+    removeFromEngine(): this {
+        this.nodes.length = 0
+        super.removeFromEngine()
+
+        return this
+    }
+}

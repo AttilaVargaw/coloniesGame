@@ -6,13 +6,18 @@ import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel"
 import { SelectionSystem } from "@game/systems/selectionSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, createLabel } from "./helpers"
+import { SelectableComponent } from "@engine/components/SelectableComponent"
+import { TargetableComponent } from "@engine/components/targetableComponent"
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),
+        new SelectableComponent(10, "red"),
+        new TargetableComponent(),
         new ColorComponent("red"),
         new RadiusComponent(6),
         new HoverableComponent("pointer", { width: 40, height: 40 }),
@@ -27,7 +32,8 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
             const targetSceneNode = engine.getSceneNode(target)!
 
             if(shiftKey) {
-                selectionSystem?.onTargetChanged(targetSceneNode.parentRef!.entity)
+                const targetSystem = engine.getSystem(TargetSystem)
+                targetSystem?.setTarget(ship, targetSceneNode.parentRef!.entity)
             } else {
                 selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
             }

@@ -6,9 +6,9 @@ import { PathComponent } from "../components/pathComponent"
 import { createBody, createLabel } from "./helpers"
 import { Entity } from "@engine/entities/entity"
 import { SelectionSystem } from "@game/systems/selectionSystem"
-import { MapSystem } from "@game/systems/mapSystem"
-import { JumpDriveComponent } from "../components/vessel"
-import { setShipPath } from "@game/systems/moveSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
+import { TargetableComponent } from "@engine/components/targetableComponent"
+import { SelectableComponent } from "@engine/components/SelectableComponent"
 
 export function createBinaryOrbitPair(
     engine: Engine,
@@ -31,19 +31,8 @@ export function createBinaryOrbitPair(
                 const selectionSystem = engine.getSystem(SelectionSystem)
                 const selection = selectionSystem?.currentSelection()
                 if(selection) {
-                    selectionSystem?.onTargetChanged(bodyA)
-                    const mapSystem = engine.getSystem(MapSystem)
-                    const selectionSceneNode = engine.getSceneNode(selection)!
-                    const selectionsParent = selectionSceneNode.parentRef!.entity
-                    const path = mapSystem?.findPath(selectionsParent, bodyA)
-                    if(path && path.length > 1) {
-                        setShipPath(selection, path)
-                    } else {
-                        const drive = selection.getComponent(JumpDriveComponent)
-                        if(drive) {
-                            drive.target = bodyA
-                        }
-                    }
+                    const targetSystem = engine.getSystem(TargetSystem)
+                    targetSystem?.setTarget(selection, bodyA)
                 }
             } else {
                 engine.dispatchEvent(
@@ -57,6 +46,8 @@ export function createBinaryOrbitPair(
     )
     bodyA.addComponent(new SoiComponent(100))
     bodyA.addComponent(new PathComponent())
+    bodyA.addComponent(new TargetableComponent())
+    bodyA.addComponent(new SelectableComponent())
 
     const bodyB = createBody(engine, {
         color: "magenta",
@@ -69,19 +60,8 @@ export function createBinaryOrbitPair(
                 const selectionSystem = engine.getSystem(SelectionSystem)
                 const selection = selectionSystem?.currentSelection()
                 if(selection) {
-                    selectionSystem?.onTargetChanged(bodyB)
-                    const mapSystem = engine.getSystem(MapSystem)
-                    const selectionSceneNode = engine.getSceneNode(selection)!
-                    const selectionsParent = selectionSceneNode.parentRef!.entity
-                    const path = mapSystem?.findPath(selectionsParent, bodyB)
-                    if(path && path.length > 1) {
-                        setShipPath(selection, path)
-                    } else {
-                        const drive = selection.getComponent(JumpDriveComponent)
-                        if(drive) {
-                            drive.target = bodyB
-                        }
-                    }
+                    const targetSystem = engine.getSystem(TargetSystem)
+                    targetSystem?.setTarget(selection, bodyB)
                 }
             } else {
                 engine.dispatchEvent(
@@ -95,6 +75,8 @@ export function createBinaryOrbitPair(
     )
     bodyB.addComponent(new SoiComponent(100))
     bodyB.addComponent(new PathComponent())
+    bodyB.addComponent(new TargetableComponent())
+    bodyB.addComponent(new SelectableComponent())
 
     const labelA = createLabel(engine, nameA, 14, "white", 0, -25, 0)
     const labelB = createLabel(engine, nameB, 14, "white", 0, -25, 0)

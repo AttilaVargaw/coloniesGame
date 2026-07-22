@@ -4,10 +4,11 @@ import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@/engine/components/position"
 import { JumpDriveComponent, SensorSuiteComponent } from "@/game/components/vessel"
 import { SelectionSystem } from "./selectionSystem"
+import { TargetSystem } from "./targetSystem"
 import { SceneNode } from "@/engine/entities/sceneNode"
 import { MoveNode } from "./moveSystem"
 import { SoiComponent } from "@/engine/components/soiComponent"
-import { OrbitComponent } from "@/engine/components/orbitComponent"
+import { OrbitComponent } from "@engine/components/orbitComponent"
 import { PathComponent } from "@/game/components/pathComponent"
 import { StartState } from "@/game/data/types"
 
@@ -28,11 +29,11 @@ describe("move system waypoint queue", () => {
     let sceneNodes: Map<Entity, SceneNode>
     let mockEngine: any
 
-    let unTargetMock: ReturnType<typeof vi.fn>
+    let clearTargetMock: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
         clearAllPaths()
-        unTargetMock = vi.fn()
+        clearTargetMock = vi.fn()
 
         StartState.map.attractors.clear()
         StartState.map.waypoints.clear()
@@ -69,8 +70,8 @@ describe("move system waypoint queue", () => {
             getSceneNode: (e: Entity) => sceneNodes.get(e),
             addCommand: vi.fn(),
             getSystem: (ctor: new (...args: any[]) => any) => {
-                if (ctor === SelectionSystem) {
-                    return { unTarget: unTargetMock }
+                if (ctor === TargetSystem) {
+                    return { clearTarget: clearTargetMock }
                 }
                 return undefined
             },
@@ -172,7 +173,7 @@ describe("move system waypoint queue", () => {
         expect(ship.getComponent(JumpDriveComponent)!.target).toBeUndefined()
         expect(getActivePaths()).toHaveLength(0)
         expect(getTodaysJumps()).toHaveLength(0)
-        expect(unTargetMock).toHaveBeenCalled()
+        expect(clearTargetMock).toHaveBeenCalled()
     })
 
     it("moveNodes still reparents ships with a direct target but no queued waypoints", () => {
