@@ -65,12 +65,13 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi }: Star) 
             const gemenonData = planets.get("Gemenon")!
 
             const barycentreOrbitRadius = (capricaData.radius + gemenonData.radius) * 50 / 2
+            const barycentreAngularSpeed = 1.5 / Math.sqrt(barycentreOrbitRadius)
             const barycentre = engine.createEntity()
                 .addComponent(new PositionComponent(0, 0))
                 .addComponent(new OrbitComponent(
                     star.id,
                     barycentreOrbitRadius,
-                    0.3,
+                    barycentreAngularSpeed,
                     Math.random() * Math.PI * 2
                 ))
                 .addComponent(new RadiusComponent(4))
@@ -119,10 +120,12 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi }: Star) 
         }
 
         const colony = createColony(engine, planet, star)!
+        const orbitRadius = planet.radius * 50
+        const angularSpeed = 1.5 / Math.sqrt(orbitRadius)
         colony.addComponent(new OrbitComponent(
             star.id,
-            planet.radius * 50,
-            0.15,
+            orbitRadius,
+            angularSpeed,
             Math.random() * Math.PI * 2
         ))
     }
@@ -209,6 +212,7 @@ export function createBinaryOrbitPair(
     separation: number
 ) {
     const angleA = Math.random() * Math.PI * 2
+    const binaryAngularSpeed = 1.5 / Math.sqrt(separation / 2)
 
     const bodyA = engine.createEntity()
         .addComponent(new PositionComponent(0, 0))
@@ -223,7 +227,7 @@ export function createBinaryOrbitPair(
             })
         )
         .addComponent(
-            new OrbitComponent(parent.id, separation / 2, 0.5, angleA)
+            new OrbitComponent(parent.id, separation / 2, binaryAngularSpeed, angleA)
         )
         .addComponent(new SoiComponent(100))
         .addComponent(new PathComponent())
@@ -241,7 +245,7 @@ export function createBinaryOrbitPair(
             })
         )
         .addComponent(
-            new OrbitComponent(parent.id, separation / 2, 0.5, angleA + Math.PI)
+            new OrbitComponent(parent.id, separation / 2, binaryAngularSpeed, angleA + Math.PI)
         )
         .addComponent(new SoiComponent(100))
         .addComponent(new PathComponent())
