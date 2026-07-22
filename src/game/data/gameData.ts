@@ -17,14 +17,14 @@ export const solarSystems = new Map<string, Star>([
         sign: "",
         x: 16, y: 18,
         soi: 2000,
-        binaryPairs: new Map([["Caprica-Gemenon", 60]]),
+        binaryPairs: new Map([["Caprica-Gemenon", 180]]),
         planets: new Map([
             ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury" }],
-            ["Zeus", { distanceFromParent: 17, radius: 18, name: "Zeus", archetype: "venus" }],
+            ["Zeus", { distanceFromParent: 30, radius: 18, name: "Zeus", archetype: "venus" }],
             ["Caprica", {
                 archetype: "earth",
                 name: "Caprica",
-                distanceFromParent: 8,
+                distanceFromParent: 20,
                 radius: 8,
                 population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
                     name: "Apollo",
@@ -37,7 +37,7 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Gemenon", {
                 archetype: "earth",
-                distanceFromParent: 8,
+                distanceFromParent: 24,
                 radius: 8,
                 name: "Gemenon",
                 population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
@@ -52,7 +52,7 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Picon", {
                 archetype: "earth",
-                distanceFromParent: 7,
+                distanceFromParent: 20,
                 radius: 8,
                 name: "Picon",
                 population: 1_400_000_000, sign: "♓︎", patronGod: createPatronGodModifier({
@@ -66,7 +66,7 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Tauron", {
                 archetype: "earth",
-                distanceFromParent: 9,
+                distanceFromParent: 24,
                 radius: 8,
                 name: "Tauron",
                 population: 2_500_000_000, sign: "♉︎", patronGod: createPatronGodModifier({

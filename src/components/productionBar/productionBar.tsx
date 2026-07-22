@@ -161,7 +161,7 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => { setActiveLineIndex(0); setIsModalOpen(true); }}
+                    onClick={onToggleCollapse}
                     aria-label="Expand sidebar"
                     className="shrink-0"
                 >

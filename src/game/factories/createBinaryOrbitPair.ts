@@ -54,11 +54,8 @@ export function createBinaryOrbitPair(
         new ColorComponent("", "rgba(0,255,255,0.25)")
     )
 
-    const labelA = createLabel(engine, colonyA.name, 14, "white", 0, -25, 0)
-    const labelB = createLabel(engine, colonyB.name, 14, "white", 0, -25, 0)
-
-    engine.addEntity(bodyA, parent).addEntity(soiCircleA, bodyA).addEntity(labelA, bodyA);
-    engine.addEntity(bodyB, parent).addEntity(soiCircleB, bodyB).addEntity(labelB, bodyB);
+    engine.addEntity(bodyA, parent).addEntity(soiCircleA, bodyA)
+    engine.addEntity(bodyB, parent).addEntity(soiCircleB, bodyB)
     engine.addEntity(soiCircle2, parent);
 
     return { bodyA, bodyB };
