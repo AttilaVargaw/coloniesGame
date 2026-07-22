@@ -45,8 +45,10 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         if(!this.engine) return
 
         const nodes = this.engine.getNodeList(ButtonPressNode)
+        const keydownEvents = this.engine.getEvents(KeydownEvent)!
 
-        for(const data of this.engine.getEvents(KeydownEvent)!) {
+        //@ts-expect-error just a fix for now
+        for(const { data } of keydownEvents) {
             for(const { eventHandler: { button, fn } } of nodes) {
                 if(button === data.key) {
                     fn(data)
@@ -54,6 +56,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             }
         }
 
-        this.engine.getEvents(KeydownEvent)!.clear()
+        keydownEvents!.clear()
     }
 }

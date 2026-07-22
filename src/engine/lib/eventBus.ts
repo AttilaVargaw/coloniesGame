@@ -79,7 +79,7 @@ export class EventBus {
 
     dispatchEvent(event: EventBase) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.events.get(event.constructor as abstract new (...args: any[]) => EventBase)?.enqueue({ data: event.data })
+        this.events.get(event.constructor as abstract new (...args: any[]) => EventBase)?.enqueue(event)
 
         return this
     }

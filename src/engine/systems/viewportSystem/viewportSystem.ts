@@ -127,10 +127,13 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         return this
     }
 
+    init() {
+        this.inputHandler.addToEngine()
+    }
+
     addToEngine(engine: World): this {
         super.addToEngine(engine)
         this.inputHandler = new ViewportInputHandler(this)
-        this.inputHandler.addToEngine()
         this.nodes = engine.getNodeList(ViewportNode)
 
         this

@@ -40,13 +40,9 @@ export class Game {
             .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
             .addSystem(ClickableSystem, ViewportSystem)
-        // .subscribe("selectionChanged", ({ type }: { entity: Entity, type: string }) => {
-        //     if(type === "colony") {
-        //         document.body.style.cursor = 'default';
-        //     }
-        // })
 
         this.engine.getSystem(MapSystem)!.init(48)
+        this.engine.getSystem(ViewportSystem)!.init()
 
         let previousTime = 0.
 
