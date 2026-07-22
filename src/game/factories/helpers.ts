@@ -10,6 +10,8 @@ import type { EntityComponent } from "@engine/entities/entityComponent"
 import { MouseEvent } from "react"
 import { SoiComponent } from "@/engine/components/soiComponent"
 
+const soiRatio = 0.1
+
 export const PlanetArchetypes = {
     earth: "earth",
     mercury: "mercury",
@@ -36,7 +38,7 @@ export const soiRatios = {
 export const bodyColor = new ColorComponent("grey")
 
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {
-    return radius * soiRatios[archetype]
+    return radius * soiRatios[archetype] * soiRatio
 }
 
 export function soiFromRadius(radiusComponent: RadiusComponent, archetype: keyof typeof soiRatios = "earth") {

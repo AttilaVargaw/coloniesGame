@@ -24,7 +24,7 @@ export const solarSystems = new Map<string, Star>([
             ["Caprica", {
                 archetype: "earth",
                 name: "Caprica",
-                distanceFromParent: 11,
+                distanceFromParent: 8,
                 radius: 8,
                 population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
                     name: "Apollo",
@@ -37,7 +37,7 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Gemenon", {
                 archetype: "earth",
-                distanceFromParent: 13,
+                distanceFromParent: 8,
                 radius: 8,
                 name: "Gemenon",
                 population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
