@@ -31,7 +31,7 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         return this
     }
 
-    setTarget(ship: Entity, target: Entity) {
+    setTarget(ship: Entity, target: Entity, clickX?: number, clickY?: number) {
         if(!this.engine) return
         if(!target.getComponent(TargetableComponent)) return
 
@@ -46,6 +46,14 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
             const drive = ship.getComponent(JumpDriveComponent)
             if(drive) {
                 drive.target = target
+            }
+        }
+
+        if(clickX !== undefined && clickY !== undefined) {
+            const drive = ship.getComponent(JumpDriveComponent)
+            if(drive) {
+                drive.clickX = clickX
+                drive.clickY = clickY
             }
         }
 

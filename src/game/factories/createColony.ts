@@ -34,7 +34,7 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
             new SelectableComponent(20, "red"),
             new TargetableComponent(),
             new HoverableComponent("pointer", { width: 40, height: 40 }),
-            new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
+            new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey }, worldX, worldY }) => {
                 if(!engine) {
                     return
                 }
@@ -44,7 +44,7 @@ export function createColony(engine: Engine, { name, population, patronGod, soi 
                     const selectionSystem = engine.getSystem(SelectionSystem)
                     const selection = selectionSystem?.currentSelection()
                     if(selection) {
-                        targetSystem?.setTarget(selection, colony)
+                        targetSystem?.setTarget(selection, colony, worldX, worldY)
                     }
                 } else {
                     engine.dispatchEvent(new SelectionChangedEvent({ data: colony, type: "colony" }))

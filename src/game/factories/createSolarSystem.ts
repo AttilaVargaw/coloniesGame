@@ -68,17 +68,17 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
         const styleBinaryMember = (body: Entity, data: Colony) => {
             applyComponents(body,
                 new ColorComponent("green"),
-                new SelectableComponent(),
+                new SelectableComponent(10, "green"),
                 new TargetableComponent(),
                 new RadiusComponent(10),
                 new HoverableComponent("pointer", { width: 40, height: 40 }),
-                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey } }) => {
+                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey }, worldX, worldY }) => {
                     if(shiftKey) {
                         const targetSystem = engine.getSystem(TargetSystem)
                         const selectionSystem = engine.getSystem(SelectionSystem)
                         const selection = selectionSystem?.currentSelection()
                         if(selection) {
-                            targetSystem?.setTarget(selection, body)
+                            targetSystem?.setTarget(selection, body, worldX, worldY)
                         }
                     } else {
                         engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))

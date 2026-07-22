@@ -29,7 +29,7 @@ export function applyComponents(entity: Entity, ...components: EntityComponent[]
 export function createBody(
     engine: Engine,
     { color, radius, hoverCursor, clickWidth, clickHeight, onClick }:
-    { color: string, radius: number, hoverCursor: "default" | "pointer" | "none" | "not-allowed", clickWidth: number, clickHeight: number, onClick?: (event: { target: Entity, event: MouseEvent }) => void }
+    { color: string, radius: number, hoverCursor: "default" | "pointer" | "none" | "not-allowed", clickWidth: number, clickHeight: number, onClick?: (event: { target: Entity, event: MouseEvent, worldX?: number, worldY?: number }) => void }
 ) {
     return applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),

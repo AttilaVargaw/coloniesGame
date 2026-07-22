@@ -220,4 +220,24 @@ describe("move system waypoint queue", () => {
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
     })
+
+    it("moveNodes uses click coordinates for orbit radius when the final waypoint is reached", () => {
+        ship.getComponent(JumpDriveComponent)!.target = targetAttractor
+        ship.getComponent(JumpDriveComponent)!.clickX = 100
+        ship.getComponent(JumpDriveComponent)!.clickY = 20
+        ship.addComponent(new SensorSuiteComponent(1))
+        setShipPath(ship, [ship, targetAttractor])
+
+        const moveSystem = new MoveSystem()
+        ;(moveSystem as any).engine = mockEngine
+        ;(moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+
+        moveSystem.moveNodes()
+
+        const orbit = ship.getComponent(OrbitComponent)
+        expect(orbit).toBeDefined()
+        expect(orbit!.centerEntityId).toBe(targetAttractor.id)
+        expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20 - 0))
+        expect(orbit!.angle).toBeCloseTo(Math.atan2(20 - 0, 100 - 200))
+    })
 })

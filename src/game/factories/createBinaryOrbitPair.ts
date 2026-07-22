@@ -26,13 +26,13 @@ export function createBinaryOrbitPair(
         hoverCursor: "pointer",
         clickWidth: 30,
         clickHeight: 30,
-        onClick: ({ event: { shiftKey } }) => {
+        onClick: ({ event: { shiftKey }, worldX, worldY }) => {
             if(shiftKey) {
                 const selectionSystem = engine.getSystem(SelectionSystem)
                 const selection = selectionSystem?.currentSelection()
                 if(selection) {
                     const targetSystem = engine.getSystem(TargetSystem)
-                    targetSystem?.setTarget(selection, bodyA)
+                    targetSystem?.setTarget(selection, bodyA, worldX, worldY)
                 }
             } else {
                 engine.dispatchEvent(
@@ -47,7 +47,7 @@ export function createBinaryOrbitPair(
     bodyA.addComponent(new SoiComponent(100))
     bodyA.addComponent(new PathComponent())
     bodyA.addComponent(new TargetableComponent())
-    bodyA.addComponent(new SelectableComponent())
+    bodyA.addComponent(new SelectableComponent(10, "green"))
 
     const bodyB = createBody(engine, {
         color: "magenta",
@@ -55,13 +55,13 @@ export function createBinaryOrbitPair(
         hoverCursor: "pointer",
         clickWidth: 30,
         clickHeight: 30,
-        onClick: ({ event: { shiftKey } }) => {
+        onClick: ({ event: { shiftKey }, worldX, worldY }) => {
             if(shiftKey) {
                 const selectionSystem = engine.getSystem(SelectionSystem)
                 const selection = selectionSystem?.currentSelection()
                 if(selection) {
                     const targetSystem = engine.getSystem(TargetSystem)
-                    targetSystem?.setTarget(selection, bodyB)
+                    targetSystem?.setTarget(selection, bodyB, worldX, worldY)
                 }
             } else {
                 engine.dispatchEvent(
@@ -76,7 +76,7 @@ export function createBinaryOrbitPair(
     bodyB.addComponent(new SoiComponent(100))
     bodyB.addComponent(new PathComponent())
     bodyB.addComponent(new TargetableComponent())
-    bodyB.addComponent(new SelectableComponent())
+    bodyB.addComponent(new SelectableComponent(10, "green"))
 
     const labelA = createLabel(engine, nameA, 14, "white", 0, -25, 0)
     const labelB = createLabel(engine, nameB, 14, "white", 0, -25, 0)

@@ -27,13 +27,13 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 
     const clickArea = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0, -1),
-        new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey } }) => {
+        new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey }, worldX, worldY }) => {
             const selectionSystem = engine.getSystem(SelectionSystem)
             const targetSceneNode = engine.getSceneNode(target)!
 
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
-                targetSystem?.setTarget(ship, targetSceneNode.parentRef!.entity)
+                targetSystem?.setTarget(ship, targetSceneNode.parentRef!.entity, worldX, worldY)
             } else {
                 selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
             }

@@ -69,10 +69,10 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         }
 
         for(const { data } of this.clickQueue) {
-            const { x, y } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y);
+            const { x: worldX, y: worldY } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y)
             let hit = false
 
-            for(const node of this.nodes) {
+            for(let node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
                 const [correctedPositionX, correctedPositionY] = getAbsolute(node.entity, this.engine!)
                 const halfX = width / 2
@@ -81,11 +81,11 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                 if(
                     onClick &&
                     clickable
-                    && correctedPositionX - halfX < x
-                    && correctedPositionX + halfX > x
-                    && correctedPositionY - halfY < y
-                    && correctedPositionY + halfY > y) {
-                    onClick({ target: entity!, event: data })
+                    && correctedPositionX - halfX < worldX
+                    && correctedPositionX + halfX > worldX
+                    && correctedPositionY - halfY < worldY
+                    && correctedPositionY + halfY > worldY) {
+                    onClick({ target: entity!, event: data, worldX, worldY })
                     hit = true
                 }
             }
@@ -100,7 +100,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                         const { x: worldX, y: worldY } = camera.screenToWorld(data.x, data.y)
                         const bestEntity = targetSystem?.findNearestTarget(selection, worldX, worldY)
                         if(bestEntity) {
-                            targetSystem?.setTarget(selection, bestEntity)
+                            targetSystem?.setTarget(selection, bestEntity, worldX, worldY)
                             hit = true
                         }
                     }

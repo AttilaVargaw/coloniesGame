@@ -53,6 +53,8 @@ export function clearShipPath(ship: Entity) {
     const drive = ship.getComponent(JumpDriveComponent);
     if(drive) {
         drive.target = undefined;
+        drive.clickX = undefined;
+        drive.clickY = undefined;
     }
 }
 
@@ -153,6 +155,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 const drive = entity.getComponent(JumpDriveComponent)
                 if(drive) {
                     drive.target = undefined
+                    drive.clickX = undefined
+                    drive.clickY = undefined
                 }
                 const targetSystem = this.engine!.getSystem(TargetSystem)
                 targetSystem?.clearTarget(entity)
@@ -165,14 +169,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
     private resolveOrbit = (entity: Entity): void => {
         if(!this.engine) return
-
-        const existingOrbit = entity.getComponent(OrbitComponent)
-        if(existingOrbit) {
-            const currentAttractor = StartState.map.attractors.get(existingOrbit.centerEntityId)
-            if(currentAttractor?.getComponent(SoiComponent)) {
-                return
-            }
-        }
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
         let bestSoiEntity: Entity | null = null
@@ -201,8 +197,13 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
         const orbit = entity.getComponent(OrbitComponent)
         const attractorRadius = bestSoiEntity.getComponent(RadiusComponent)?.radius ?? 0
-        const newRadius = attractorRadius + 30
-        const newAngle = Math.atan2(shipY - ay, shipX - ax)
+        const drive = entity.getComponent(JumpDriveComponent)
+        const newAngle = (drive && drive.clickX !== undefined && drive.clickY !== undefined)
+            ? Math.atan2(drive.clickY - ay, drive.clickX - ax)
+            : Math.atan2(shipY - ay, shipX - ax)
+        const newRadius = (drive && drive.clickX !== undefined && drive.clickY !== undefined)
+            ? Math.hypot(drive.clickX - ax, drive.clickY - ay)
+            : attractorRadius + 30
 
         const position = entity.getComponent(PositionComponent)
         if(position) {
