@@ -11,6 +11,7 @@ export type Colony = {
     readonly radius: number
     readonly soi?: number
     readonly archetype: keyof typeof PlanetArchetypes
+    readonly eccentricity?: number
 }
 
 export type Star = {

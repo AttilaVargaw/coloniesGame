@@ -46,7 +46,8 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
                 star.id,
                 barycentreOrbitRadius,
                 barycentreAngularSpeed,
-                Math.random() * Math.PI * 2
+                Math.random() * Math.PI * 2,
+                planetA.eccentricity ?? 0
             ),
             new RadiusComponent(4),
             new ColorComponent("rgba(255,255,255,0.4)"),
@@ -98,7 +99,8 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             star.id,
             orbitRadius,
             angularSpeed,
-            Math.random() * Math.PI * 2
+            Math.random() * Math.PI * 2,
+            planet.eccentricity ?? 0
         ))
     }
 

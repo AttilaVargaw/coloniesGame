@@ -18,15 +18,33 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
             return
         }
 
-        orbit.angle += orbit.angularSpeed * dt / 1000
-        const twoPi = Math.PI * 2
-        if(orbit.angle > twoPi || orbit.angle < -twoPi) {
-            orbit.angle = orbit.angle % twoPi
-        }
+        orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * dt / 1000) % (Math.PI * 2)
+        if(orbit.meanAnomaly < 0) orbit.meanAnomaly += Math.PI * 2
+
+        const E = this.solveKepler(orbit.meanAnomaly, orbit.eccentricity)
+        const a = orbit.radius
+        const r = a * (1 - orbit.eccentricity * Math.cos(E))
+
+        const theta = 2 * Math.atan2(
+            Math.sqrt(1 + orbit.eccentricity) * Math.sin(E / 2),
+            Math.sqrt(Math.max(0.0001, 1 - orbit.eccentricity)) * Math.cos(E / 2)
+        )
 
         const position = entity.getComponent(PositionComponent)!
-        position.x = Math.cos(orbit.angle) * orbit.radius
-        position.y = Math.sin(orbit.angle) * orbit.radius
+        position.x = r * Math.cos(theta)
+        position.y = r * Math.sin(theta)
+    }
+
+    private solveKepler(meanAnomaly: number, e: number): number {
+        if(e < 1e-6) return meanAnomaly
+
+        let E = meanAnomaly
+        for(let i = 0; i < 20; i++) {
+            const dE = (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E))
+            E -= dE
+            if(Math.abs(dE) < 1e-9) break
+        }
+        return E
     }
 
     update(dt: number): void {

@@ -12,6 +12,7 @@ import { ViewportInputHandler } from "./viewInputHandler";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
+import { OrbitNode } from "../orbitSystem/orbitNode";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -55,6 +56,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
                 if(DEBUG_VISUALIZE_PATHS) {
                     this.drawDebugPaths(ctx)
+                    this.drawOrbits(ctx)
                 }
 
                 camera.end();
@@ -108,6 +110,40 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 ctx.setLineDash([])
                 ctx.stroke()
             }
+        }
+    }
+
+    private drawOrbits(ctx: CanvasRenderingContext2D) {
+        if(!this.engine) return
+
+        const orbitNodes = this.engine.getNodeList(OrbitNode)
+
+        for(const node of orbitNodes) {
+            const sceneNode = this.engine.getSceneNode(node.entity)
+            const parentEntity = sceneNode?.parentRef?.entity
+            if(!parentEntity) continue
+
+            const [cx, cy] = getAbsolute(parentEntity, this.engine)
+            const { radius: a, eccentricity: e } = node.orbit
+            const b = node.orbit.semiMinorAxis
+
+            const focusOffset = a * e
+
+            ctx.beginPath()
+            ctx.ellipse(
+                cx - focusOffset,
+                cy,
+                a,
+                b,
+                0,
+                0,
+                Math.PI * 2
+            )
+            ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
+            ctx.lineWidth = 1
+            ctx.setLineDash([2, 4])
+            ctx.stroke()
+            ctx.setLineDash([])
         }
     }
 

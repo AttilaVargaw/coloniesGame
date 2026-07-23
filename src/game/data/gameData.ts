@@ -19,14 +19,14 @@ export const solarSystems = new Map<string, Star>([
         soi: 2000,
         binaryPairs: new Map([["Caprica-Gemenon", 180]]),
         planets: new Map([
-            ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury" }],
-            ["Zeus", { distanceFromParent: 30, radius: 18, name: "Zeus", archetype: "venus" }],
+            ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
+            ["Zeus", { distanceFromParent: 30, radius: 18, name: "Zeus", archetype: "venus", eccentricity: 0.007 }],
             ["Caprica", {
                 archetype: "earth",
                 name: "Caprica",
                 distanceFromParent: 20,
                 radius: 8,
-                population: 4_900_000_000, sign: "♑︎", patronGod: createPatronGodModifier({
+                population: 4_900_000_000, sign: "♑︎", eccentricity: 0.017, patronGod: createPatronGodModifier({
                     name: "Apollo",
                     onAdd: (entity) => {
                         return entity
@@ -40,7 +40,7 @@ export const solarSystems = new Map<string, Star>([
                 distanceFromParent: 24,
                 radius: 8,
                 name: "Gemenon",
-                population: 2_800_000_000, sign: "♊︎", patronGod: createPatronGodModifier({
+                population: 2_800_000_000, sign: "♊︎", eccentricity: 0.02, patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
                     name: "Hera",
                     onAdd: (entity) => {
@@ -55,7 +55,7 @@ export const solarSystems = new Map<string, Star>([
                 distanceFromParent: 20,
                 radius: 8,
                 name: "Picon",
-                population: 1_400_000_000, sign: "♓︎", patronGod: createPatronGodModifier({
+                population: 1_400_000_000, sign: "♓︎", eccentricity: 0.015, patronGod: createPatronGodModifier({
                     name: "Poseidon",
                     onAdd: (entity) => {
                         return entity
@@ -66,10 +66,10 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Tauron", {
                 archetype: "earth",
-                distanceFromParent: 24,
+                distanceFromParent: 28,
                 radius: 8,
                 name: "Tauron",
-                population: 2_500_000_000, sign: "♉︎", patronGod: createPatronGodModifier({
+                population: 2_500_000_000, sign: "♉︎", eccentricity: 0.025, patronGod: createPatronGodModifier({
                     name: "Ares",
                     onAdd: (entity) => {
                         return entity

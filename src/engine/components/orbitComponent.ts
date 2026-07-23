@@ -5,8 +5,13 @@ export class OrbitComponent extends EntityComponent {
         public centerEntityId: string,
         public radius: number,
         public angularSpeed: number,
-        public angle: number = 0
+        public meanAnomaly: number = 0,
+        public eccentricity: number = 0
     ) {
         super();
+    }
+
+    get semiMinorAxis(): number {
+        return Math.max(0, this.radius * Math.sqrt(1 - this.eccentricity ** 2))
     }
 }

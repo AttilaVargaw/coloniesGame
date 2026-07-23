@@ -237,6 +237,6 @@ describe("move system waypoint queue", () => {
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
         expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20 - 0))
-        expect(orbit!.angle).toBeCloseTo(Math.atan2(20 - 0, 100 - 200))
+        expect(orbit!.meanAnomaly).toBeCloseTo(Math.atan2(20 - 0, 100 - 200))
     })
 })

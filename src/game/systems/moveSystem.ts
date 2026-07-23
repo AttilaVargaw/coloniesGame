@@ -15,6 +15,38 @@ import { StartState } from "@game/data/types";
 
 export const DEBUG_VISUALIZE_PATHS = true;
 
+function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
+    if(e < 1e-6) return trueAnomaly
+
+    const cosTrue = Math.cos(trueAnomaly)
+    const cosE = (e + cosTrue) / (1 + e * cosTrue)
+    const sinE = Math.sqrt(Math.max(0, 1 - e * e)) * Math.sin(trueAnomaly) / (1 + e * cosTrue)
+    const E = Math.atan2(sinE, cosE)
+
+    return E - e * Math.sin(E)
+}
+
+function positionOnOrbit(radius: number, eccentricity: number, meanAnomaly: number): { x: number, y: number } {
+    if(eccentricity < 1e-6) {
+        return { x: Math.cos(meanAnomaly) * radius, y: Math.sin(meanAnomaly) * radius }
+    }
+
+    let E = meanAnomaly
+    for(let i = 0; i < 20; i++) {
+        const dE = (E - eccentricity * Math.sin(E) - meanAnomaly) / (1 - eccentricity * Math.cos(E))
+        E -= dE
+        if(Math.abs(dE) < 1e-10) break
+    }
+
+    const r = radius * (1 - eccentricity * Math.cos(E))
+    const theta = 2 * Math.atan2(
+        Math.sqrt(1 + eccentricity) * Math.sin(E / 2),
+        Math.sqrt(Math.max(1e-10, 1 - eccentricity)) * Math.cos(E / 2)
+    )
+
+    return { x: r * Math.cos(theta), y: r * Math.sin(theta) }
+}
+
 const shipWaypoints = new Map<Entity, Entity[]>();
 const todaysJumps = new Map<Entity, Entity[]>();
 
@@ -190,7 +222,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
 
         const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
-        const orbit = entity.getComponent(OrbitComponent)
         const attractorRadius = bestSoiEntity.getComponent(RadiusComponent)?.radius ?? 0
         const drive = entity.getComponent(JumpDriveComponent)
         const newAngle = (drive && drive.clickX !== undefined && drive.clickY !== undefined)
@@ -200,19 +231,24 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             ? Math.hypot(drive.clickX - ax, drive.clickY - ay)
             : attractorRadius + 30
 
+        const orbit = entity.getComponent(OrbitComponent)
+        const e = orbit?.eccentricity ?? 0
+        const meanAnomaly = trueAnomalyToMeanAnomaly(newAngle, e)
+        const pos = positionOnOrbit(newRadius, e, meanAnomaly)
+
         const position = entity.getComponent(PositionComponent)
         if(position) {
-            position.x = Math.cos(newAngle) * newRadius
-            position.y = Math.sin(newAngle) * newRadius
+            position.x = pos.x
+            position.y = pos.y
         }
 
         if(orbit) {
             orbit.centerEntityId = bestSoiEntity.id
             orbit.radius = newRadius
-            orbit.angle = newAngle
+            orbit.meanAnomaly = meanAnomaly
             orbit.angularSpeed = 1.5 / Math.sqrt(newRadius)
         } else {
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 1.5 / Math.sqrt(newRadius), newAngle))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 1.5 / Math.sqrt(newRadius), meanAnomaly))
         }
     }
 
