@@ -11,4 +11,6 @@ export interface Engine {
     reindexEntity(entity: Entity): void;
     dispatchEvent(event: EventBase): void;
     getSceneNode(entity: Entity): SceneNode | undefined;
+    subscribe<T extends EventBase>(event: new (...args: unknown[]) => T, callback: (data: T) => void): void;
+    unsubscribe<T extends EventBase>(event: new (...args: unknown[]) => T, callback: (data: T) => void): void;
 }

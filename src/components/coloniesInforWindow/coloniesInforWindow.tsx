@@ -6,24 +6,41 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { Slider } from "../ui/slider";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
+import { useState } from "react";
 
-export function ColoniesInforWindow({ entity, setIsOpen }: { entity?: Entity, setIsOpen: (isOpen: boolean) => void }) {
-    if(!entity) return null
+export function useRerender() {
+    const [, rerender] = useState(false)
 
+    return () => setTimeout(() => {
+        rerender((prev) => !prev)
+    }, 5);
+}
+
+export function ColoniesInforWindow({ entity, setIsOpen, onConsumerGoodsRatioChange }: {
+    entity?: Entity,
+    setIsOpen: (isOpen: boolean) => void,
+    onConsumerGoodsRatioChange: (colony: Entity, newValue: number) => void
+}) {
+    const rerender = useRerender()
+
+    if(!entity) {
+        return null
+    }
+
+    const industry = entity.getComponent(IndustryComponent)!
     const name = entity.getComponent(LabelComponent)
-    const { consumerGoodsRatio, happiness, population, production } = entity.getComponent(IndustryComponent)!
     const info = entity.getComponent(InfoComponent)
 
-    return <Dialog modal open={!!entity} onOpenChange={setIsOpen}>
+    return <Dialog modal open={!!industry} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-sm" >
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>
                 <DialogDescription>
                     {info && <PatronGoodInfo info={info} />}
                     <br />
-                    Happiness: {(happiness * 100).toLocaleString()}
+                    Happiness: {(industry.happiness * 100).toLocaleString()}
                     <br />
-                    Population: {Math.floor(population).toLocaleString()}
+                    Population: {Math.floor(industry.population).toLocaleString()}
                     <br />
                 </DialogDescription>
                 <DialogDescription>
@@ -34,19 +51,20 @@ export function ColoniesInforWindow({ entity, setIsOpen }: { entity?: Entity, se
                 </DialogDescription>
 
                 <DialogDescription>
-                    Full production: {production.toLocaleString()}
+                    Full production: {industry.production.toLocaleString()}
                     <br />
                 </DialogDescription>
 
                 <DialogDescription>
                     Growth:
                     <br />
-                    Consumer goods ratio: {consumerGoodsRatio * 100}%
+                    Consumer goods ratio: {industry.consumerGoodsRatio * 100}%
                     <br />
                     <Slider onValueChange={([value]) => {
-                        entity.getComponent(IndustryComponent)!.consumerGoodsRatio = value
+                        rerender()
+                        onConsumerGoodsRatioChange(entity, value)
                     }}
-                        defaultValue={[consumerGoodsRatio]}
+                        defaultValue={[industry.consumerGoodsRatio]}
                         step={0.1}
                         min={0}
                         max={1} />

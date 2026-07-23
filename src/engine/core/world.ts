@@ -30,12 +30,12 @@ export class World implements Engine {
     }
 
     // eslint-disable-next-line
-    getEvents<T extends abstract new (...args: any) => EventBase<any>>(name: T) {
+    getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
         return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
     }
 
     // eslint-disable-next-line
-    getCommands<T extends abstract new (...args: any) => CommandBase>(name: T) {
+    getCommands<T extends new (...args: any) => CommandBase>(name: T) {
         return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T>>
     }
 
@@ -83,17 +83,19 @@ export class World implements Engine {
     }
 
     // eslint-disable-next-line
-    subscribe(event: Function, callback: (data: unknown) => void) {
-        // eslint-disable-next-line
-        this.eventBus.subscribe(event as abstract new (...args: any[]) => EventBase, callback)
+    //@ts-ignore
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    subscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void): this {
+        this.eventBus.subscribe(event, callback)
 
         return this
     }
 
     // eslint-disable-next-line
-    unsubscribe(event: Function, callback: (data: unknown) => void) {
-        // eslint-disable-next-line
-        this.eventBus.unsubscribe(event as abstract new (...args: any[]) => EventBase, callback)
+    //@ts-ignore 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void): this {
+        this.eventBus.unsubscribe(event, callback)
 
         return this
     }
@@ -187,14 +189,14 @@ export class World implements Engine {
     // eslint-disable-next-line
     registerEventQueue(event: Function) {
         // eslint-disable-next-line
-        this.eventBus.registerEventQueue(event as abstract new (...args: any[]) => EventBase)
+        this.eventBus.registerEventQueue(event as new (...args: any[]) => EventBase)
 
         return this
     }
     // eslint-disable-next-line
     removeEventQueue(event: Function) {
         // eslint-disable-next-line
-        this.eventBus.removeEventQueue(event as abstract new (...args: any[]) => EventBase)
+        this.eventBus.removeEventQueue(event as new (...args: any[]) => EventBase)
 
         return this
     }

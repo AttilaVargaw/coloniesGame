@@ -24,8 +24,8 @@ export const solarSystems = new Map<string, Star>([
             ["Zeus", {
                 distanceFromParent: 30, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, moons:
                     new Map([
-                        ["Nike", { distanceFromParent: 0.8, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.6 }],
-                        ["Hebe", { distanceFromParent: 0.6, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.4 }]
+                        ["Nike", { distanceFromParent: 2.1, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.3 }],
+                        ["Hebe", { distanceFromParent: 4, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.7 }]
                     ])
             }],
             ["Caprica", {

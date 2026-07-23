@@ -15,6 +15,7 @@ import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import { Star } from "@game/data/types"
 import Camera from "@lib/camera"
 import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, STARMAP_COORD_SCALE } from "./constants"
+import { CommandBase } from "@/engine/lib/CommandBase"
 
 export class Game {
     readonly engine: World = new World
@@ -83,5 +84,9 @@ export class Game {
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)
         }
+    }
+
+    onCommand<T extends new (...args: any) => CommandBase>(command: T) {
+        return this.engine.getCommands(command)
     }
 }

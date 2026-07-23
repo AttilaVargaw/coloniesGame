@@ -20,6 +20,7 @@ import {
   DayPassedEvent,
 } from "@/engine/lib/events";
 import { ProductionBar } from "./components/productionBar/productionBar";
+import { SetConsumerGoodsRatioCommand } from "./game/systems/industrySystem";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
@@ -79,7 +80,11 @@ function App() {
 
   return (
     <>
-      <ColoniesInforWindow entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
+      <ColoniesInforWindow onConsumerGoodsRatioChange={(colony, newValue) => {
+        console.log("newValue", newValue)
+        setCurrentColony(colony)
+        game?.onCommand(SetConsumerGoodsRatioCommand).enqueue(new SetConsumerGoodsRatioCommand(newValue, colony))
+      }} entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
       <Header time={date} />
       <div className="flex bg-black">
         <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>
