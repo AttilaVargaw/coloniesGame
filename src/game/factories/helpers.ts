@@ -1,33 +1,19 @@
 import { Entity } from "@engine/entities/entity"
-import { ClickableComponent } from "@engine/components/clickableComponent"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { LabelComponent } from "@engine/components/label"
 import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
-import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SelectionChangedEvent } from "@/engine/lib/events"
 import { SelectionSystem } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
-import { MouseEvent } from "react"
 import { SoiComponent } from "@/engine/components/soiComponent"
 
 const soiRatio = 0.1
 
-export const PlanetArchetypes = {
-    kobol: "kobol",
-    mercury: "mercury",
-    venus: "venus",
-    mars: "mars",
-    jupiter: "jupiter",
-    saturn: "saturn",
-    uranus: "uranus",
-    neptune: "neptune",
-} as const
-
-// Pluto is not a planet anymore
 export const soiRatios = {
+    earth: 145.2,
     kobol: 145.2,
     mercury: 45.9,
     venus: 100,
@@ -65,20 +51,6 @@ export function applyComponents(entity: Entity, ...components: EntityComponent[]
         entity.addComponent(component)
     }
     return entity
-}
-
-export function createBody(
-    engine: Engine,
-    { color, radius, hoverCursor, clickWidth, clickHeight, onClick }:
-        { color: string, radius: number, hoverCursor: "default" | "pointer" | "none" | "not-allowed", clickWidth: number, clickHeight: number, onClick?: (event: { target: Entity, event: MouseEvent, worldX?: number, worldY?: number }) => void }
-) {
-    return applyComponents(engine.createEntity(),
-        new PositionComponent(0, 0),
-        new RadiusComponent(radius),
-        new ColorComponent(color),
-        new HoverableComponent(hoverCursor, { width: clickWidth, height: clickHeight }),
-        new ClickableComponent(true, { width: clickWidth, height: clickHeight }, onClick)
-    )
 }
 
 export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {

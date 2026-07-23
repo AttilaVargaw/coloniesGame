@@ -7,7 +7,7 @@ import { UNIVERSE_SCALE, BARYCENTRE_RADIUS } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
-import { createBinaryOrbitPair, createOrbitingBody } from "./createBinaryOrbitPair"
+import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 import { Entity } from "@engine/entities/entity"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
@@ -43,18 +43,18 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
 
         const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * UNIVERSE_SCALE / 2
         const barycentreAngularSpeed = angularSpeed(barycentreOrbitRadius)
-    const barycentre = applyComponents(engine.createEntity(),
-        new PositionComponent(0, 0),
-        new OrbitComponent(
-            star.id,
-            barycentreOrbitRadius,
-            barycentreAngularSpeed,
-            Math.random() * Math.PI * 2,
-            planetA.eccentricity ?? 0
-        ),
-        new RadiusComponent(BARYCENTRE_RADIUS),
-        new ColorComponent("rgba(255,255,255,0.4)")
-    )
+        const barycentre = applyComponents(engine.createEntity(),
+            new PositionComponent(0, 0),
+            new OrbitComponent(
+                star.id,
+                barycentreOrbitRadius,
+                barycentreAngularSpeed,
+                Math.random() * Math.PI * 2,
+                planetA.eccentricity ?? 0
+            ),
+            new RadiusComponent(BARYCENTRE_RADIUS),
+            new ColorComponent("rgba(255,255,255,0.4)")
+        )
         engine.addEntity(barycentre, star)
 
         const { bodyA, bodyB } = createBinaryOrbitPair(
@@ -118,37 +118,16 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
     for(const [, planet] of planets) {
         if(binaryPairPlanetNames.has(planet.name)) continue
 
-        const colony = createColony(engine, planet, star)!
-        const orbitRadius = planet.distanceFromParent * UNIVERSE_SCALE
-        const orbitAngularSpeed = angularSpeed(orbitRadius)
-        colony.addComponent(new OrbitComponent(
-            star.id,
-            orbitRadius,
-            orbitAngularSpeed,
-            Math.random() * Math.PI * 2,
-            planet.eccentricity ?? 0
-        ))
-
-        if(planet.vessels) {
-            for(const vessel of planet.vessels) {
-                createVessel(engine, colony, vessel)
+        createColony({
+            engine,
+            data: planet,
+            parent: star,
+            orbitArgs: {
+                radius: planet.distanceFromParent * UNIVERSE_SCALE,
+                angle: Math.random() * Math.PI * 2,
+                eccentricity: planet.eccentricity ?? 0,
             }
-        }
-
-        if(planet.moons) {
-            for(const [, moon] of planet.moons ?? []) {
-                const moonOrbitRadius = moon.distanceFromParent * UNIVERSE_SCALE
-                const { body: moonBody, soiCircle: moonSoi } = createOrbitingBody(
-                    engine,
-                    colony,
-                    moonOrbitRadius,
-                    moon,
-                    Math.random() * Math.PI * 2
-                )
-                engine.addEntity(moonBody, colony)
-                    .addEntity(moonSoi, moonBody)
-            }
-        }
+        })
     }
 
     return star
