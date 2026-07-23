@@ -28,13 +28,15 @@ export function init(engine: Engine, _mapSize: number) {
 
         const starSceneNode = engine.getSceneNode(star)
         const attractors: Entity[] = [star]
-        starSceneNode?.childrenRef.forEach(child => {
-            const childEntity = child.entity
+        
+        const descendants: Entity[] = []
+        starSceneNode?.collectDescendants(descendants)
+        for(const childEntity of descendants) {
             if(childEntity !== star && childEntity.getComponent(SoiComponent) && childEntity.getComponent(PathComponent)) {
                 attractors.push(childEntity)
                 StartState.map.attractors.set(childEntity.id, childEntity)
             }
-        })
+        }
 
         const waypointGrid = new Map<string, Entity>()
 

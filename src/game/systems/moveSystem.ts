@@ -184,7 +184,9 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const targetRadius = targetEntity.getComponent(RadiusComponent)?.radius ?? 0
         const targetSoi = targetEntity.getComponent(SoiComponent)?.radius
         if(targetSoi) {
-            position.x = targetRadius + 30
+            const soiDepth = Math.max(0, targetSoi - targetRadius)
+            const buffer = Math.min(30, soiDepth * 0.5)
+            position.x = targetRadius + buffer
             position.y = 0
         } else {
             position.x = 0
@@ -198,30 +200,36 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
-        let bestSoiEntity: Entity | null = null
-        let bestDist = Infinity
 
-        for(const attractor of StartState.map.attractors.values()) {
+        const attractors = [...StartState.map.attractors.values()]
+        attractors.sort((a, b) => {
+            const soiA = a.getComponent(SoiComponent)?.radius ?? 0
+            const soiB = b.getComponent(SoiComponent)?.radius ?? 0
+            return soiA - soiB
+        })
+
+        for(const attractor of attractors) {
             const [ax, ay] = getAbsolute(attractor, this.engine)
             const dist = Math.hypot(shipX - ax, shipY - ay)
             const soi = attractor.getComponent(SoiComponent)?.radius ?? 0
-            if(dist <= soi && dist < bestDist) {
-                bestSoiEntity = attractor
-                bestDist = dist
+
+            if(dist <= soi) {
+                this.orbit(this.engine, entity, attractor, shipX, shipY)
+                return
             }
         }
+    }
 
-        if(!bestSoiEntity) return
-
-        const shipNode = this.engine.getSceneNode(entity)!
-        const attractorNode = this.engine.getSceneNode(bestSoiEntity)!
+    private orbit(engine: World, entity: Entity, bestSoiEntity: Entity, shipX: number, shipY: number) {
+        const shipNode = engine.getSceneNode(entity)!
+        const attractorNode = engine.getSceneNode(bestSoiEntity)!
 
         if(shipNode.parentRef?.entity !== bestSoiEntity) {
             shipNode.parentRef?.removeChild(shipNode)
             attractorNode.addChild(shipNode)
         }
 
-        const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
+        const [ax, ay] = getAbsolute(bestSoiEntity, engine)
         const attractorRadius = bestSoiEntity.getComponent(RadiusComponent)?.radius ?? 0
         const drive = entity.getComponent(JumpDriveComponent)
         const newAngle = (drive && drive.clickX !== undefined && drive.clickY !== undefined)

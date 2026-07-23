@@ -2,7 +2,7 @@ import { Engine } from "@/engine/core/engine"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@engine/components/clickableComponent"
-import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
+import { applyComponents, createColonyClickHandler } from "./helpers"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
@@ -14,7 +14,6 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { Star, Colony } from "../data/types"
-import { SoiComponent } from "@/engine/components/soiComponent"
 
 const sizeConstant = 50
 
@@ -40,19 +39,18 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
 
         const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * sizeConstant / 2
         const barycentreAngularSpeed = 1.5 / Math.sqrt(barycentreOrbitRadius)
-        const barycentre = applyComponents(engine.createEntity(),
-            new PositionComponent(0, 0),
-            new OrbitComponent(
-                star.id,
-                barycentreOrbitRadius,
-                barycentreAngularSpeed,
-                Math.random() * Math.PI * 2,
-                planetA.eccentricity ?? 0
-            ),
-            new RadiusComponent(4),
-            new ColorComponent("rgba(255,255,255,0.4)"),
-            new SoiComponent(calculateSoi(separation, "earth"))
-        )
+    const barycentre = applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
+        new OrbitComponent(
+            star.id,
+            barycentreOrbitRadius,
+            barycentreAngularSpeed,
+            Math.random() * Math.PI * 2,
+            planetA.eccentricity ?? 0
+        ),
+        new RadiusComponent(4),
+        new ColorComponent("rgba(255,255,255,0.4)")
+    )
         engine.addEntity(barycentre, star)
 
         const { bodyA, bodyB } = createBinaryOrbitPair(

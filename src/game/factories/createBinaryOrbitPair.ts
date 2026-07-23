@@ -17,7 +17,7 @@ function createBinaryBody(
     colony: Pick<Colony, "name" | "radius" | "distanceFromParent" | "soi" | "archetype" | "patronGod" | "eccentricity">,
     angle: number
 ) {
-    const angularSpeed = 1.5 / Math.sqrt(separation / 2)
+    const angularSpeed = 1.5 / Math.sqrt(separation)
     const body = createColony(engine, colony, parent)
     body.addComponent(new OrbitComponent(parent.id, separation / 2, angularSpeed, angle, colony.eccentricity ?? 0))
     body.removeComponent(SelectableComponent)
