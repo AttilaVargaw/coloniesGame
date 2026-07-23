@@ -2,17 +2,12 @@ import { PositionComponent } from "@engine/components/position";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PathComponent } from "../components/pathComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
-import { OrbitComponent } from "@engine/components/orbitComponent";
-import { LabelComponent } from "@engine/components/label";
-import { SceneNode } from "@engine/entities/sceneNode";
 import { solarSystems } from "../data/gameData";
 import { StartState } from "../data/types";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
 import { createSolarSystem } from "./createSolarSystem";
-import { createSpaceship } from "./createSpaceship";
 import { GRID_SPACING, MAP_RADIUS, STARMAP_COORD_SCALE } from "../constants";
-import { angularSpeed } from "../utils/orbital";
 
 export function init(engine: Engine, _mapSize: number) {
     const viewportSystem = engine.getSystem(ViewportSystem)
@@ -27,7 +22,7 @@ export function init(engine: Engine, _mapSize: number) {
 
         const starSceneNode = engine.getSceneNode(star)
         const attractors: Entity[] = [star]
-        
+
         const descendants: Entity[] = []
         starSceneNode?.collectDescendants(descendants)
         for(const childEntity of descendants) {
@@ -106,39 +101,6 @@ export function init(engine: Engine, _mapSize: number) {
             const wpPath = wp.getComponent(PathComponent)!
             const unique = new Set(wpPath.linked)
             wpPath.linked = Array.from(unique)
-        }
-    }
-
-    for(const [systemName] of solarSystems) {
-        if(systemName === "Helios Alpha") {
-            const star = StartState.map.attractors.get(systemName)!
-            const starNode = engine.getSceneNode(star)
-            const minerva = createSpaceship(engine, { name: "Minerva" })
-            const minervaNode = engine.getSceneNode(minerva)
-
-            let capricaNode: SceneNode | undefined
-            starNode?.childrenRef.forEach(child => {
-                child.childrenRef.forEach(grandchild => {
-                    grandchild.childrenRef.forEach(greatGrandchild => {
-                        const label = greatGrandchild.entity.getComponent(LabelComponent)
-                        if(label?.text === "Caprica") {
-                            capricaNode = grandchild
-                        }
-                    })
-                })
-            })
-
-            minervaNode?.setParent(capricaNode ?? starNode!)
-
-            const capricaEntity = capricaNode?.entity
-            if(capricaEntity) {
-                const capricaSoi = capricaEntity.getComponent(SoiComponent)?.radius ?? 100
-                const minervaPos = minerva.getComponent(PositionComponent)!
-                minervaPos.x = capricaSoi * 0.6
-                minervaPos.y = 0
-                const minervaOrbitRadius = capricaSoi * 0.6
-                minerva.addComponent(new OrbitComponent(capricaEntity.id, minervaOrbitRadius, angularSpeed(minervaOrbitRadius), 0))
-            }
         }
     }
 

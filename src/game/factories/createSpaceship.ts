@@ -11,6 +11,10 @@ import { applyComponents, createLabel } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE } from "../constants"
+import { OrbitComponent } from "@engine/components/orbitComponent"
+import { angularSpeed } from "../utils/orbital"
+import { Vessel } from "../data/types"
+import { Entity } from "@engine/entities/entity"
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = applyComponents(engine.createEntity(),
@@ -44,6 +48,30 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 
     const label = createLabel(engine, name, 18, "red")
     engine.addEntity(label, ship)
+
+    return ship
+}
+
+export function createVessel(
+    engine: Engine,
+    parent: Entity,
+    { name, radius, orbitRadius, angle }: Vessel
+) {
+    const ship = createSpaceship(engine, { name })
+    ship.getComponent(RadiusComponent)!.radius = radius
+
+    const orbitAngle = angle ?? Math.random() * Math.PI * 2
+    ship.addComponent(new OrbitComponent(parent.id, orbitRadius, angularSpeed(orbitRadius), orbitAngle))
+
+    const pos = ship.getComponent(PositionComponent)!
+    pos.x = Math.cos(orbitAngle) * orbitRadius
+    pos.y = Math.sin(orbitAngle) * orbitRadius
+
+    const shipNode = engine.getSceneNode(ship)
+    const parentNode = engine.getSceneNode(parent)
+    if(shipNode && parentNode) {
+        shipNode.setParent(parentNode)
+    }
 
     return ship
 }

@@ -1,7 +1,7 @@
-export const UNIVERSE_SCALE = 150
+export const UNIVERSE_SCALE = 80
 export const GRID_SPACING = 100
 export const MAP_RADIUS = 1300
-export const STARMAP_COORD_SCALE = 100
+export const STARMAP_COORD_SCALE = 80
 
 export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
@@ -22,4 +22,4 @@ export const KEPLER_EPSILON_TIGHT = 1e-10
 export const KEPLER_MAX_ITERATIONS = 20
 
 export const SHIP_ORBIT_BUFFER_RATIO = 0.5
-export const ORBITAL_SPEED = 100
+export const ORBITAL_SPEED = 50

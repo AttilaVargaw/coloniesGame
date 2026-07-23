@@ -20,15 +20,16 @@ export const solarSystems = new Map<string, Star>([
         binaryPairs: new Map([["Caprica-Gemenon", 180]]),
         planets: new Map([
             ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
+            ["Persephone", { distanceFromParent: 44, radius: 4, name: "Persephone", archetype: "mercury", eccentricity: 0.4 }],
             ["Zeus", {
                 distanceFromParent: 30, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, moons:
                     new Map([
-                        ["Nike", { distanceFromParent: 0.8, radius: 5, name: "Nike", archetype: "mars" }],
-                        ["Hebe", { distanceFromParent: 0.5, radius: 5, name: "Hebe", archetype: "mars" }]
+                        ["Nike", { distanceFromParent: 0.8, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.6 }],
+                        ["Hebe", { distanceFromParent: 0.6, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.4 }]
                     ])
             }],
             ["Caprica", {
-                archetype: "kobolian",
+                archetype: "kobol",
                 name: "Caprica",
                 distanceFromParent: 20,
                 radius: 8,
@@ -39,10 +40,13 @@ export const solarSystems = new Map<string, Star>([
                     }, onRemove: (entity) => {
                         return entity
                     }, description: "Apollo is one of the Lords of Kobol. His numerous functions and representations include the Sun and light, prophecy, philosophy, truth, logic, inspiration, music, poetry, the arts, purification, medicine, healing, plague, archery, and masculine beauty. He is the son of Zeus and Leto, and the twin brother of Artemis, goddess of the hunt. She is considered to be the most beautiful god."
-                })
+                }),
+                vessels: [
+                    { name: "Minerva", radius: 4, orbitRadius: 50, angle: 0 }
+                ]
             }],
             ["Gemenon", {
-                archetype: "kobolian",
+                archetype: "kobol",
                 distanceFromParent: 24,
                 radius: 8,
                 name: "Gemenon",
@@ -57,7 +61,7 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Picon", {
-                archetype: "kobolian",
+                archetype: "kobol",
                 distanceFromParent: 20,
                 radius: 8,
                 name: "Picon",
@@ -71,9 +75,9 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Tauron", {
-                archetype: "kobolian",
+                archetype: "kobol",
                 moons: new Map([
-                    ["Minos", { distanceFromParent: 0.4, radius: 5, name: "Minos", archetype: "mars" }]
+                    ["Minos", { distanceFromParent: 0.4, radius: 5, name: "Minos", archetype: "mars", eccentricity: 0.1 }]
                 ]),
                 distanceFromParent: 23,
                 radius: 8,

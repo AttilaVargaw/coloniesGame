@@ -2,7 +2,7 @@ import { Engine } from "@/engine/core/engine"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@engine/components/clickableComponent"
-import { applyComponents, createColonyClickHandler } from "./helpers"
+import { applyComponents } from "./helpers"
 import { UNIVERSE_SCALE, BARYCENTRE_RADIUS } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
@@ -15,7 +15,11 @@ import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { IndustryComponent } from "../components/industryComponent"
+import { SelectionSystem } from "@game/systems/selectionSystem"
+import { TargetSystem } from "@game/systems/targetSystem"
+import { SelectionChangedEvent } from "@/engine/lib/events"
 import { Star, Colony } from "../data/types"
+import { createVessel } from "./createSpaceship"
 
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map() }: Star) {
     const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000 })
@@ -63,8 +67,6 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
 
         const memberA = bodyA
         const memberB = bodyB
-        const dataA = planetA
-        const dataB = planetB
 
         const styleBinaryMember = (body: Entity, data: Colony) => {
             applyComponents(body,
@@ -73,7 +75,22 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
                 new TargetableComponent(),
                 new RadiusComponent(data.radius),
                 new HoverableComponent("pointer", { width: 40, height: 40 }),
-                new ClickableComponent(true, { width: 40, height: 40 }, createColonyClickHandler(engine, body)),
+                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey }, worldX, worldY }) => {
+                    if(!engine) {
+                        return
+                    }
+
+                    if(shiftKey) {
+                        const targetSystem = engine.getSystem(TargetSystem)
+                        const selectionSystem = engine.getSystem(SelectionSystem)
+                        const selection = selectionSystem?.currentSelection()
+                        if(selection) {
+                            targetSystem?.setTarget(selection, body, worldX, worldY)
+                        }
+                    } else {
+                        engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
+                    }
+                }),
             )
             if(data.population) {
                 body.addComponent(new IndustryComponent(data.population, 80, data.population, 1))
@@ -83,8 +100,19 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             }
         }
 
-        styleBinaryMember(memberA, dataA)
-        styleBinaryMember(memberB, dataB)
+        styleBinaryMember(memberA, planetA)
+        styleBinaryMember(memberB, planetB)
+
+        if(planetA.vessels) {
+            for(const v of planetA.vessels) {
+                createVessel(engine, memberA, v)
+            }
+        }
+        if(planetB.vessels) {
+            for(const v of planetB.vessels) {
+                createVessel(engine, memberB, v)
+            }
+        }
     }
 
     for(const [, planet] of planets) {
@@ -100,6 +128,12 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             Math.random() * Math.PI * 2,
             planet.eccentricity ?? 0
         ))
+
+        if(planet.vessels) {
+            for(const vessel of planet.vessels) {
+                createVessel(engine, colony, vessel)
+            }
+        }
 
         if(planet.moons) {
             for(const [, moon] of planet.moons ?? []) {

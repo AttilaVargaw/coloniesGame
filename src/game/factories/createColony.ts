@@ -13,12 +13,12 @@ import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 
-export function createColony(engine: Engine, { name, population, patronGod, soi, radius, archetype }: Colony, parent: Entity) {
+export function createColony(engine: Engine, { name, population, patronGod, radius, archetype }: Colony, parent: Entity) {
     const colony = engine.createEntity()
     applyComponents(colony,
         new PositionComponent(0, 0, 0),
         new RadiusComponent(radius),
-        new SoiComponent(soi ?? calculateSoi(radius, archetype)),
+        new SoiComponent(calculateSoi(radius, archetype)),
         new PathComponent()
     )
 

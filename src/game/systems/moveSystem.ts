@@ -203,22 +203,28 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
 
+        const drive = entity.getComponent(JumpDriveComponent)
+        const useClick = drive && drive.clickX !== undefined && drive.clickY !== undefined
+
         const attractors = [...StartState.map.attractors.values()]
-        attractors.sort((a, b) => {
-            const soiA = a.getComponent(SoiComponent)?.radius ?? 0
-            const soiB = b.getComponent(SoiComponent)?.radius ?? 0
-            return soiA - soiB
-        })
+
+        let bestSoiEntity: Entity | null = null
+        let bestDist = Infinity
 
         for(const attractor of attractors) {
             const [ax, ay] = getAbsolute(attractor, this.engine)
-            const dist = Math.hypot(shipX - ax, shipY - ay)
             const soi = attractor.getComponent(SoiComponent)?.radius ?? 0
+            const distToShip = Math.hypot(shipX - ax, shipY - ay)
+            const distToClick = useClick ? Math.hypot(drive.clickX! - ax, drive.clickY! - ay) : distToShip
 
-            if(dist <= soi) {
-                this.orbit(this.engine, entity, attractor, shipX, shipY)
-                return
+            if(distToShip <= soi && distToClick < bestDist) {
+                bestSoiEntity = attractor
+                bestDist = distToClick
             }
+        }
+
+        if(bestSoiEntity) {
+            this.orbit(this.engine, entity, bestSoiEntity, shipX, shipY)
         }
     }
 
