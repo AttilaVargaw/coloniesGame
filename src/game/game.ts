@@ -14,6 +14,7 @@ import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import { Star } from "@game/data/types"
 import Camera from "@lib/camera"
+import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, STARMAP_COORD_SCALE } from "./constants"
 
 export class Game {
     readonly engine: World = new World
@@ -22,13 +23,13 @@ export class Game {
     constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {
         const firstStar = Array.from(solarSystems.values())[0]
         const camera = new Camera(renderingContext, {
-            initialPosition: [firstStar.x * 100, firstStar.y * 100],
-            distance: 3000,
-            fieldOfView: Math.PI / 4.0,
+            initialPosition: [firstStar.x * STARMAP_COORD_SCALE, firstStar.y * STARMAP_COORD_SCALE],
+            distance: CAMERA_INITIAL_DISTANCE,
+            fieldOfView: FIELD_OF_VIEW,
             scaleX: 1.0,
             scaleY: 1.0,
-            minDistance: 100,
-            maxDistance: 12000
+            minDistance: CAMERA_MIN_DISTANCE,
+            maxDistance: CAMERA_MAX_DISTANCE
         })
 
         this.engine

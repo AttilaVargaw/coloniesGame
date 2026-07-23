@@ -10,6 +10,7 @@ import { RadiusComponent } from "@engine/components/radiusComponent"
 import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
+import { COLONY_SELECTION_RADIUS, SHIP_CLICK_SIZE } from "../constants"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
@@ -51,7 +52,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         const entity = this.engine.createEntity()
         entity.addComponent(new ColorComponent(color, ""))
-            .addComponent(new RadiusComponent(10))
+            .addComponent(new RadiusComponent(COLONY_SELECTION_RADIUS))
             .addComponent(new PositionComponent(0, 0, -1, entity))
 
         return entity
@@ -144,7 +145,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         const circle = this.engine.createEntity()
             .addComponent(new PositionComponent(0, 0))
-            .addComponent(new RadiusComponent(suite.range * 30))
+            .addComponent(new RadiusComponent(suite.range * SHIP_CLICK_SIZE))
             .addComponent(new ColorComponent("", "red"))
 
         this.sensorRangeCircle = circle

@@ -11,12 +11,14 @@ import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitComponent } from "@engine/components/orbitComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
+import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "@game/data/types";
+import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO } from "../constants";
 
 export const DEBUG_VISUALIZE_PATHS = true;
 
 function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
-    if(e < 1e-6) return trueAnomaly
+    if(e < KEPLER_EPSILON) return trueAnomaly
 
     const cosTrue = Math.cos(trueAnomaly)
     const cosE = (e + cosTrue) / (1 + e * cosTrue)
@@ -27,21 +29,21 @@ function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
 }
 
 function positionOnOrbit(radius: number, eccentricity: number, meanAnomaly: number): { x: number, y: number } {
-    if(eccentricity < 1e-6) {
+    if(eccentricity < KEPLER_EPSILON) {
         return { x: Math.cos(meanAnomaly) * radius, y: Math.sin(meanAnomaly) * radius }
     }
 
     let E = meanAnomaly
-    for(let i = 0; i < 20; i++) {
+    for(let i = 0; i < KEPLER_MAX_ITERATIONS; i++) {
         const dE = (E - eccentricity * Math.sin(E) - meanAnomaly) / (1 - eccentricity * Math.cos(E))
         E -= dE
-        if(Math.abs(dE) < 1e-10) break
+        if(Math.abs(dE) < KEPLER_EPSILON_TIGHT) break
     }
 
     const r = radius * (1 - eccentricity * Math.cos(E))
     const theta = 2 * Math.atan2(
         Math.sqrt(1 + eccentricity) * Math.sin(E / 2),
-        Math.sqrt(Math.max(1e-10, 1 - eccentricity)) * Math.cos(E / 2)
+            Math.sqrt(Math.max(KEPLER_EPSILON_TIGHT, 1 - eccentricity)) * Math.cos(E / 2)
     )
 
     return { x: r * Math.cos(theta), y: r * Math.sin(theta) }
@@ -185,7 +187,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const targetSoi = targetEntity.getComponent(SoiComponent)?.radius
         if(targetSoi) {
             const soiDepth = Math.max(0, targetSoi - targetRadius)
-            const buffer = Math.min(30, soiDepth * 0.5)
+            const buffer = Math.min(SHIP_ORBIT_BUFFER_RATIO * targetSoi, soiDepth * 0.5)
             position.x = targetRadius + buffer
             position.y = 0
         } else {
@@ -254,9 +256,9 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             orbit.centerEntityId = bestSoiEntity.id
             orbit.radius = newRadius
             orbit.meanAnomaly = meanAnomaly
-            orbit.angularSpeed = 1.5 / Math.sqrt(newRadius)
+            orbit.angularSpeed = angularSpeed(newRadius)
         } else {
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, 1.5 / Math.sqrt(newRadius), meanAnomaly))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, angularSpeed(newRadius), meanAnomaly))
         }
     }
 

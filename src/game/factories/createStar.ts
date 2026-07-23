@@ -7,11 +7,12 @@ import { PathComponent } from "../components/pathComponent"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
+import { STAR_RADIUS } from "../constants"
 
 export function createStar(engine: Engine, { x, y, soi }: { x: number, y: number, soi: number }) {
     const star = applyComponents(engine.createEntity(),
         new PositionComponent(x, y),
-        new RadiusComponent(20),
+        new RadiusComponent(STAR_RADIUS),
         new ColorComponent("yellow"),
         new HoverableComponent("not-allowed", { width: 100, height: 100 }),
         new SoiComponent(soi),

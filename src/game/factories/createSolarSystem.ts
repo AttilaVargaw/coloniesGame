@@ -3,6 +3,8 @@ import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@engine/components/clickableComponent"
 import { applyComponents, createColonyClickHandler } from "./helpers"
+import { UNIVERSE_SCALE, BARYCENTRE_RADIUS } from "../constants"
+import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
@@ -14,8 +16,6 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { Star, Colony } from "../data/types"
-
-const sizeConstant = 50
 
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map() }: Star) {
     const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000 })
@@ -37,8 +37,8 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
         const planetB = planets.get(nameB)
         if(!planetA || !planetB) continue
 
-        const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * sizeConstant / 2
-        const barycentreAngularSpeed = 1.5 / Math.sqrt(barycentreOrbitRadius)
+        const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * UNIVERSE_SCALE / 2
+        const barycentreAngularSpeed = angularSpeed(barycentreOrbitRadius)
     const barycentre = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
         new OrbitComponent(
@@ -48,7 +48,7 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             Math.random() * Math.PI * 2,
             planetA.eccentricity ?? 0
         ),
-        new RadiusComponent(4),
+        new RadiusComponent(BARYCENTRE_RADIUS),
         new ColorComponent("rgba(255,255,255,0.4)")
     )
         engine.addEntity(barycentre, star)
@@ -91,12 +91,12 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
         if(binaryPairPlanetNames.has(planet.name)) continue
 
         const colony = createColony(engine, planet, star)!
-        const orbitRadius = planet.distanceFromParent * sizeConstant
-        const angularSpeed = 1.5 / Math.sqrt(orbitRadius)
+        const orbitRadius = planet.distanceFromParent * UNIVERSE_SCALE
+        const orbitAngularSpeed = angularSpeed(orbitRadius)
         colony.addComponent(new OrbitComponent(
             star.id,
             orbitRadius,
-            angularSpeed,
+            orbitAngularSpeed,
             Math.random() * Math.PI * 2,
             planet.eccentricity ?? 0
         ))

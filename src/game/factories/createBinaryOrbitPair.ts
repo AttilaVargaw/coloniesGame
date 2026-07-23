@@ -1,6 +1,7 @@
 import { Engine } from "@/engine/core/engine"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { calculateSoi } from "./helpers"
+import { angularSpeed } from "../utils/orbital"
 import { Entity } from "@engine/entities/entity"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
@@ -17,9 +18,9 @@ function createBinaryBody(
     colony: Pick<Colony, "name" | "radius" | "distanceFromParent" | "soi" | "archetype" | "patronGod" | "eccentricity">,
     angle: number
 ) {
-    const angularSpeed = 1.5 / Math.sqrt(separation)
+    const bodyAngularSpeed = angularSpeed(separation)
     const body = createColony(engine, colony, parent)
-    body.addComponent(new OrbitComponent(parent.id, separation / 2, angularSpeed, angle, colony.eccentricity ?? 0))
+    body.addComponent(new OrbitComponent(parent.id, separation / 2, bodyAngularSpeed, angle, colony.eccentricity ?? 0))
     body.removeComponent(SelectableComponent)
     body.addComponent(new SelectableComponent(10, "green"))
 

@@ -10,6 +10,7 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, createLabel } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
+import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE } from "../constants"
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = applyComponents(engine.createEntity(),
@@ -19,15 +20,15 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new SelectableComponent(10, "red"),
         new TargetableComponent(),
         new ColorComponent("red"),
-        new RadiusComponent(6),
-        new HoverableComponent("pointer", { width: 40, height: 40 }),
+        new RadiusComponent(SHIP_RADIUS),
+        new HoverableComponent("pointer", { width: SHIP_CLICK_SIZE, height: SHIP_CLICK_SIZE }),
     )
 
     engine.addEntity(ship)
 
     const clickArea = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0, -1),
-        new ClickableComponent(true, { width: 40, height: 40 }, ({ target, event: { shiftKey }, worldX, worldY }) => {
+        new ClickableComponent(true, { width: COLONY_CLICK_SIZE, height: COLONY_CLICK_SIZE }, ({ target, event: { shiftKey }, worldX, worldY }) => {
             const selectionSystem = engine.getSystem(SelectionSystem)
             const targetSceneNode = engine.getSceneNode(target)!
 

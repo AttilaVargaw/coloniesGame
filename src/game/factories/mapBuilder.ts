@@ -11,17 +11,16 @@ import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
 import { createSolarSystem } from "./createSolarSystem";
 import { createSpaceship } from "./createSpaceship";
-
-const GRID_SPACING = 100
-const MAP_RADIUS = 1300
+import { GRID_SPACING, MAP_RADIUS, STARMAP_COORD_SCALE } from "../constants";
+import { angularSpeed } from "../utils/orbital";
 
 export function init(engine: Engine, _mapSize: number) {
     const viewportSystem = engine.getSystem(ViewportSystem)
     viewportSystem.sortOnEveryEntityAddition = false
 
     for(const [, starData] of solarSystems) {
-        const cx = starData.x * 100
-        const cy = starData.y * 100
+        const cx = starData.x * STARMAP_COORD_SCALE
+        const cy = starData.y * STARMAP_COORD_SCALE
 
         const star = createSolarSystem(engine, starData)
         StartState.map.attractors.set(starData.name, star)
@@ -137,7 +136,8 @@ export function init(engine: Engine, _mapSize: number) {
                 const minervaPos = minerva.getComponent(PositionComponent)!
                 minervaPos.x = capricaSoi * 0.6
                 minervaPos.y = 0
-                minerva.addComponent(new OrbitComponent(capricaEntity.id, capricaSoi * 0.6, 0.3, 0))
+                const minervaOrbitRadius = capricaSoi * 0.6
+                minerva.addComponent(new OrbitComponent(capricaEntity.id, minervaOrbitRadius, angularSpeed(minervaOrbitRadius), 0))
             }
         }
     }
