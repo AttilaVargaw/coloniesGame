@@ -52,31 +52,37 @@ export class ViewportInputHandler {
         }
     }
 
+    private onMouseEnter = () => {
+        window.addEventListener("wheel", this.onWheel, { passive: false })
+    }
+
+    private onMouseLeave = () => {
+        window.removeEventListener("wheel", this.onWheel)
+    }
+
     addToEngine() {
         const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
-        if(!canvas) return
-        canvas.addEventListener("mouseenter", () => {
-            window.addEventListener("wheel", this.onWheel, { passive: false })
-        })
-        canvas.addEventListener("mouseleave", () => {
-            window.removeEventListener("wheel", this.onWheel)
-        })
+        if(!canvas) {
+            return
+        }
+
+        canvas.addEventListener("mouseenter", this.onMouseEnter)
+        canvas.addEventListener("mouseleave", this.onMouseLeave)
         window.addEventListener("keydown", this.onKeyDown)
         window.addEventListener("keyup", this.onKeyUp)
     }
 
     removeFromEngine() {
         const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
-        if(!canvas) return
+        if(!canvas) {
+            return
+
+        }
+
         window.removeEventListener("keydown", this.onKeyDown)
         window.removeEventListener("keyup", this.onKeyUp)
-
-        canvas.removeEventListener("mouseenter", () => {
-            window.removeEventListener("wheel", this.onWheel)
-        })
-        canvas.removeEventListener("mouseleave", () => {
-            window.removeEventListener("wheel", this.onWheel)
-        })
+        canvas.removeEventListener("mouseenter", this.onMouseEnter)
+        canvas.removeEventListener("mouseleave", this.onMouseLeave)
         this.heldKeys.clear()
     }
 
