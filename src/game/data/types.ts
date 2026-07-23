@@ -12,6 +12,7 @@ export type Colony = {
     readonly soi?: number
     readonly archetype: keyof typeof PlanetArchetypes
     readonly eccentricity?: number
+    readonly moons?: ReadonlyMap<string, Colony>
 }
 
 export type Star = {

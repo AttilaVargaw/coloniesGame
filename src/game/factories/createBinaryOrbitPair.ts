@@ -11,18 +11,16 @@ import { Colony } from "../data/types"
 import { applyComponents } from "./helpers"
 import { createColony } from "./createColony"
 
-function createBinaryBody(
+export function createOrbitingBody(
     engine: Engine,
     parent: Entity,
-    separation: number,
+    orbitRadius: number,
     colony: Pick<Colony, "name" | "radius" | "distanceFromParent" | "soi" | "archetype" | "patronGod" | "eccentricity">,
     angle: number
 ) {
-    const bodyAngularSpeed = angularSpeed(separation)
+    const bodyAngularSpeed = angularSpeed(orbitRadius)
     const body = createColony(engine, colony, parent)
-    body.addComponent(new OrbitComponent(parent.id, separation / 2, bodyAngularSpeed, angle, colony.eccentricity ?? 0))
-    body.removeComponent(SelectableComponent)
-    body.addComponent(new SelectableComponent(10, "green"))
+    body.addComponent(new OrbitComponent(parent.id, orbitRadius, bodyAngularSpeed, angle, colony.eccentricity ?? 0))
 
     const soiCircle = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
@@ -41,8 +39,14 @@ export function createBinaryOrbitPair(
     separation: number
 ) {
     const angleA = Math.random() * Math.PI * 2
-    const { body: bodyA, soiCircle: soiCircleA } = createBinaryBody(engine, parent, separation, colonyA, angleA)
-    const { body: bodyB, soiCircle: soiCircleB } = createBinaryBody(engine, parent, separation, colonyB, angleA + Math.PI)
+    const barycentreOrbitRadius = separation / 2
+    const { body: bodyA, soiCircle: soiCircleA } = createOrbitingBody(engine, parent, barycentreOrbitRadius, colonyA, angleA)
+    const { body: bodyB, soiCircle: soiCircleB } = createOrbitingBody(engine, parent, barycentreOrbitRadius, colonyB, angleA + Math.PI)
+
+    bodyA.removeComponent(SelectableComponent)
+    bodyA.addComponent(new SelectableComponent(10, "green"))
+    bodyB.removeComponent(SelectableComponent)
+    bodyB.addComponent(new SelectableComponent(10, "green"))
 
     engine.addEntity(bodyA, parent)
         .addEntity(soiCircleA, bodyA)

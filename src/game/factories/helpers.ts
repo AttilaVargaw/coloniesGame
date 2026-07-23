@@ -16,7 +16,7 @@ import { SoiComponent } from "@/engine/components/soiComponent"
 const soiRatio = 0.1
 
 export const PlanetArchetypes = {
-    earth: "earth",
+    kobol: "kobol",
     mercury: "mercury",
     venus: "venus",
     mars: "mars",
@@ -28,7 +28,7 @@ export const PlanetArchetypes = {
 
 // Pluto is not a planet anymore
 export const soiRatios = {
-    earth: 145.2,
+    kobol: 145.2,
     mercury: 45.9,
     venus: 100,
     mars: 170,
@@ -44,7 +44,7 @@ export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) 
     return radius * soiRatios[archetype] * soiRatio
 }
 
-export function soiFromRadius(radiusComponent: RadiusComponent, archetype: keyof typeof soiRatios = "earth") {
+export function soiFromRadius(radiusComponent: RadiusComponent, archetype: keyof typeof soiRatios = "kobol") {
     if(!radiusComponent) {
         return new SoiComponent(0)
     }

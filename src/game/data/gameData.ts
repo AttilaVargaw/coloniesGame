@@ -20,9 +20,15 @@ export const solarSystems = new Map<string, Star>([
         binaryPairs: new Map([["Caprica-Gemenon", 180]]),
         planets: new Map([
             ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
-            ["Zeus", { distanceFromParent: 30, radius: 18, name: "Zeus", archetype: "venus", eccentricity: 0.007 }],
+            ["Zeus", {
+                distanceFromParent: 30, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, moons:
+                    new Map([
+                        ["Nike", { distanceFromParent: 0.8, radius: 5, name: "Nike", archetype: "mars" }],
+                        ["Hebe", { distanceFromParent: 0.5, radius: 5, name: "Hebe", archetype: "mars" }]
+                    ])
+            }],
             ["Caprica", {
-                archetype: "earth",
+                archetype: "kobolian",
                 name: "Caprica",
                 distanceFromParent: 20,
                 radius: 8,
@@ -36,7 +42,7 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Gemenon", {
-                archetype: "earth",
+                archetype: "kobolian",
                 distanceFromParent: 24,
                 radius: 8,
                 name: "Gemenon",
@@ -51,7 +57,7 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Picon", {
-                archetype: "earth",
+                archetype: "kobolian",
                 distanceFromParent: 20,
                 radius: 8,
                 name: "Picon",
@@ -65,8 +71,11 @@ export const solarSystems = new Map<string, Star>([
                 })
             }],
             ["Tauron", {
-                archetype: "earth",
-                distanceFromParent: 28,
+                archetype: "kobolian",
+                moons: new Map([
+                    ["Minos", { distanceFromParent: 0.4, radius: 5, name: "Minos", archetype: "mars" }]
+                ]),
+                distanceFromParent: 23,
                 radius: 8,
                 name: "Tauron",
                 population: 2_500_000_000, sign: "♉︎", eccentricity: 0.025, patronGod: createPatronGodModifier({
@@ -78,6 +87,6 @@ export const solarSystems = new Map<string, Star>([
                     }, description: "Ares is the god of war and courage. He is one of the Lords of Kobol, and the son of Zeus and Hera. He embodies the physical valor necessary for success in war but can also personify sheer brutality and bloodlust, in contrast to his sister Athena, whose martial functions include military strategy and generalship. An association with Ares endows places, objects, and other deities with a savage, dangerous, or militarized quality."
                 })
             }]
-        ] as const)
-    }],
+        ])
+    } as Star],
 ] as const)

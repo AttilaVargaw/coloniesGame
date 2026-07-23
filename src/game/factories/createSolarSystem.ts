@@ -7,7 +7,7 @@ import { UNIVERSE_SCALE, BARYCENTRE_RADIUS } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
 import { createColony } from "./createColony"
-import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
+import { createBinaryOrbitPair, createOrbitingBody } from "./createBinaryOrbitPair"
 import { Entity } from "@engine/entities/entity"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
@@ -100,6 +100,21 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             Math.random() * Math.PI * 2,
             planet.eccentricity ?? 0
         ))
+
+        if(planet.moons) {
+            for(const [, moon] of planet.moons ?? []) {
+                const moonOrbitRadius = moon.distanceFromParent * UNIVERSE_SCALE
+                const { body: moonBody, soiCircle: moonSoi } = createOrbitingBody(
+                    engine,
+                    colony,
+                    moonOrbitRadius,
+                    moon,
+                    Math.random() * Math.PI * 2
+                )
+                engine.addEntity(moonBody, colony)
+                    .addEntity(moonSoi, moonBody)
+            }
+        }
     }
 
     return star

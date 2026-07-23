@@ -1,4 +1,4 @@
-export const UNIVERSE_SCALE = 200
+export const UNIVERSE_SCALE = 150
 export const GRID_SPACING = 100
 export const MAP_RADIUS = 1300
 export const STARMAP_COORD_SCALE = 100

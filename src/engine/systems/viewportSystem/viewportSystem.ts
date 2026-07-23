@@ -140,7 +140,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 Math.PI * 2
             )
             ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
-            ctx.lineWidth = 1
+            ctx.lineWidth = 3
             ctx.setLineDash([2, 4])
             ctx.stroke()
             ctx.setLineDash([])
