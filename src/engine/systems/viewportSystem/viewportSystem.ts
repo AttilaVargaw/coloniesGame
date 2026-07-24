@@ -52,12 +52,12 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
                 camera.begin();
 
-                this.updateSubsystems(dt);
-
                 if(DEBUG_VISUALIZE_PATHS) {
                     this.drawDebugPaths(ctx)
                     this.drawOrbits(ctx)
                 }
+
+                this.updateSubsystems(dt);
 
                 camera.end();
             }

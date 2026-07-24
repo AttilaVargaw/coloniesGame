@@ -4,7 +4,7 @@ import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
-import { JumpDriveComponent, SensorSuiteComponent } from "../components/vessel"
+import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
 import { SelectionSystem } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, createLabel } from "./helpers"
@@ -21,6 +21,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new PositionComponent(0, 0),
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),
+        new FuelComponent(100, 1),
         new SelectableComponent(10, "red"),
         new TargetableComponent(),
         new ColorComponent("red"),

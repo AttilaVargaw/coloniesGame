@@ -8,7 +8,7 @@ import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { Colony } from "../data/types"
 import { Engine } from "@/engine/core/engine"
-import { applyComponents, createLabel, bodyColor, calculateSoi, soiFromRadius, createColonyClickHandler } from "./helpers"
+import { applyComponents, createLabel, calculateSoi, soiFromRadius, createColonyClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
@@ -42,17 +42,17 @@ export function createColony({ engine, data, parent, orbitArgs }: CreateColonyAr
         }
 
         applyComponents(colony,
-            new ColorComponent("green"),
+            new ColorComponent("green", "", true),
             new SelectableComponent(20, "red"),
             new TargetableComponent(),
             new HoverableComponent("pointer", { width: 40, height: 40 }),
             new ClickableComponent(true, { width: 40, height: 40 }, createColonyClickHandler(engine, colony)),
-            new IndustryComponent(data.population, 80, data.population, 1)
+            new IndustryComponent(data.population, 80, data.population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
         )
     } else {
         colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
             .addComponent(new TargetableComponent(true))
-            .addComponent(bodyColor)
+            .addComponent(new ColorComponent("grey", "", true))
     }
 
     const label = createLabel(engine, data.name, 18, "white")

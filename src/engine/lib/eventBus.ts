@@ -58,7 +58,7 @@ export class EventBus {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void) {
+    subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void) {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
 

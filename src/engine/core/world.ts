@@ -78,14 +78,14 @@ export class World implements Engine {
         return this.entityRegistry.getAllEntities()
     }
 
-    getSystem<T extends System>(system: new (...args: unknown[]) => T) {
+    getSystem<T extends System>(system: new (...args: any[]) => T) {
         return this.systemRegistry.getSystem(system)
     }
 
     // eslint-disable-next-line
     //@ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void): this {
+    subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void): this {
         this.eventBus.subscribe(event, callback)
 
         return this
@@ -94,7 +94,7 @@ export class World implements Engine {
     // eslint-disable-next-line
     //@ts-ignore 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void): this {
+    unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: any) => void): this {
         this.eventBus.unsubscribe(event, callback)
 
         return this

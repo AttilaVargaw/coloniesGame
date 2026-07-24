@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect } from "vitest"
 import { World } from "@/engine/core/world"
 import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@/engine/components/position"
@@ -9,9 +9,8 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { IndustryComponent } from "@/game/components/industryComponent"
-import { createColony, CreateColonyArgs } from "./createColony"
 import { Colony } from "@/game/data/types"
-import { SceneNode } from "@/engine/entities/sceneNode"
+import { createColony } from "./createColony"
 
 function makeColonyData(overrides: Partial<Colony> = {}): Colony {
     return {

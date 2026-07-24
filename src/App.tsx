@@ -3,13 +3,13 @@ import { renderingContextSettings, Screen } from './components/map/screen';
 import { useEffect, useRef, useState } from 'react';
 import { Header } from "./components/header/header";
 import { Entity } from "@engine/entities/entity";
+import { IndustryComponent } from "@game/components/industryComponent";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { solarSystems, } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { DateNode } from "@engine/systems/DateNode";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import {
-  UpdateDoneEvent,
   SelectionChangedEvent,
   KeydownEvent,
   MouseupEvent,
@@ -20,7 +20,6 @@ import {
   DayPassedEvent,
 } from "@/engine/lib/events";
 import { ProductionBar } from "./components/productionBar/productionBar";
-import { SetConsumerGoodsRatioCommand } from "./game/systems/industrySystem";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
@@ -28,6 +27,8 @@ function App() {
   const [currentColony, setCurrentColony] = useState<Entity>()
   const [date, setDate] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  const [, rerender] = useState(true)
 
   useEffect(() => {
     if(!map.current) return
@@ -60,8 +61,10 @@ function App() {
 
     document.addEventListener("keydown", eventListener)
     window.addEventListener("mouseup", onMouseUp)
-    gameInstance.engine?.subscribe(UpdateDoneEvent, updateDate as (data: unknown) => void)
-      .subscribe(SelectionChangedEvent, onOpenInfoWindow as (data: unknown) => void)
+
+    gameInstance.engine?.subscribe(DayPassedEvent, rerender)
+      .subscribe(DayPassedEvent, updateDate)
+      .subscribe(SelectionChangedEvent, onOpenInfoWindow)
 
     setGame(gameInstance)
 
@@ -69,21 +72,31 @@ function App() {
       document.removeEventListener("keydown", eventListener)
       window.removeEventListener("mouseup", onMouseUp)
 
-      gameInstance.engine.unsubscribe(DayPassedEvent, updateDate as (data: unknown) => void)
-      gameInstance.engine.unsubscribe(SelectionChangedEvent, onOpenInfoWindow as (data: unknown) => void)
-
-      gameInstance.destruct()
+      gameInstance.engine
+        .unsubscribe(DayPassedEvent, rerender)
+        .unsubscribe(DayPassedEvent, updateDate)
+        .unsubscribe(SelectionChangedEvent, onOpenInfoWindow)
+        .destruct()
 
       setGame(null)
     }
-  }, [])
+  }, [rerender])
 
   return (
     <>
-      <ColoniesInforWindow onConsumerGoodsRatioChange={(colony, newValue) => {
-        console.log("newValue", newValue)
-        setCurrentColony(colony)
-        game?.onCommand(SetConsumerGoodsRatioCommand).enqueue(new SetConsumerGoodsRatioCommand(newValue, colony))
+      <ColoniesInforWindow engine={game?.engine} onAllocationChange={(colony, type, value) => {
+        const industry = colony.getComponent(IndustryComponent)
+        if(industry) {
+          switch(type) {
+            case "civilian":
+              industry.civilianAllocation = value
+              break
+            case "military":
+              industry.militaryAllocation = value
+              break
+          }
+        }
+        rerender(p => !p)
       }} entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
       <Header time={date} />
       <div className="flex bg-black">

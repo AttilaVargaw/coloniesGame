@@ -70,7 +70,7 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
 
         const styleBinaryMember = (body: Entity, data: Colony) => {
             applyComponents(body,
-                new ColorComponent("green"),
+                new ColorComponent("green", "", true),
                 new SelectableComponent(10, "green"),
                 new TargetableComponent(),
                 new RadiusComponent(data.radius),

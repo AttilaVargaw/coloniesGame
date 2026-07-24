@@ -4,7 +4,7 @@ import { World } from "@engine/core/world";
 import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
-import { JumpDriveComponent, SensorSuiteComponent } from "@game/components/vessel";
+import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "@game/components/vessel";
 import { TargetSystem } from "./targetSystem";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
@@ -117,6 +117,18 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         for(const { entity, jumpDrive: { target }, sensorSuite: { range } } of this.nodes) {
             if(!target || entity === target || alreadyMoved.has(entity)) continue
+
+            const fuel = entity.getComponent(FuelComponent)
+            if(fuel) {
+                const pos = entity.getComponent(PositionComponent)
+                const targetPos = target.getComponent(PositionComponent)
+                if(pos && targetPos) {
+                    const dist = Math.hypot(targetPos.x - pos.x, targetPos.y - pos.y)
+                    const cost = dist * fuel.consumptionRate * 0.01
+                    if(fuel.tylium < cost) continue
+                    fuel.tylium -= cost
+                }
+            }
 
             const waypoints = shipWaypoints.get(entity);
             const shipNode = this.engine.getSceneNode(entity)!

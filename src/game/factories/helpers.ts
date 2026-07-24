@@ -24,7 +24,7 @@ export const soiRatios = {
     neptune: 3525,
 } as const
 
-export const bodyColor = new ColorComponent("grey")
+export const bodyColor = new ColorComponent("grey", "", true)
 
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {
     return radius * soiRatios[archetype] * soiRatio

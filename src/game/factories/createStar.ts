@@ -13,7 +13,7 @@ export function createStar(engine: Engine, { x, y, soi }: { x: number, y: number
     const star = applyComponents(engine.createEntity(),
         new PositionComponent(x, y),
         new RadiusComponent(STAR_RADIUS),
-        new ColorComponent("yellow"),
+        new ColorComponent("yellow", "", true),
         new HoverableComponent("not-allowed", { width: 100, height: 100 }),
         new SoiComponent(soi),
         new PathComponent(),
@@ -22,11 +22,11 @@ export function createStar(engine: Engine, { x, y, soi }: { x: number, y: number
     engine.addEntity(star)
 
     const soiCircle = applyComponents(engine.createEntity(),
-        new PositionComponent(0, 0),
+        new PositionComponent(x, y),
         new RadiusComponent(soi),
         new ColorComponent("", "rgba(0,255,255,0.25)")
     )
-    engine.addEntity(soiCircle, star)
+    engine.addEntity(soiCircle)
 
     return star
 }

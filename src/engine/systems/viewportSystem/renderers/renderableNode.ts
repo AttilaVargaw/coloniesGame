@@ -10,8 +10,8 @@ export class RenderableNode extends PositionNode {
     }
 
     setColor(ctx: CanvasRenderingContext2D) {
-        ctx.fillStyle = this.color.fill ?? "";
-        ctx.strokeStyle = this.color.stroke ?? "";
+        ctx.fillStyle = this.color.fill || "";
+        ctx.strokeStyle = this.color.stroke || "";
     }
 
     draw(ctx: CanvasRenderingContext2D) {

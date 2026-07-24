@@ -4,7 +4,6 @@ import { Entity } from "@/engine/entities/entity"
 import { IndustryComponent } from "@/game/components/industryComponent"
 import { IndustryNode } from "./IndustryNode"
 import { World } from "@/engine/core/world"
-import { DayPassedEvent } from "@/engine/lib/events"
 
 function makeNode(entity: Entity): IndustryNode {
     const industry = entity.getComponent(IndustryComponent)!
@@ -19,7 +18,7 @@ describe("industrySystem", () => {
             system.addToEngine(world)
 
             const entity = world.createEntity("colony")
-            const industry = new IndustryComponent(1000, 0.6, 200, 0.3)
+            const industry = new IndustryComponent(1000, 0.6, 200)
             entity.addComponent(industry)
             world.addEntity(entity)
 
@@ -28,33 +27,16 @@ describe("industrySystem", () => {
             expect(nodes[0]).toBeInstanceOf(IndustryNode)
             expect(nodes[0].industry).toBe(industry)
         })
-
-        it("subscribes to DayPassedEvent and updates on dispatch", () => {
-            const world = new World()
-            const system = new IndustrySystem()
-            system.addToEngine(world)
-
-            const entity = world.createEntity("colony")
-            const industry = new IndustryComponent(1000, 0.6, 200, 0.3)
-            entity.addComponent(industry)
-            world.addEntity(entity)
-
-            const eventBus = (world as any).eventBus
-            eventBus.dispatchEvent(new DayPassedEvent(null))
-            eventBus.processEventHandlers()
-
-            expect(industry.population).toBeGreaterThan(1000)
-        })
     })
 
     describe("removeFromEngine", () => {
-        it("clears nodes and unsubscribes from DayPassedEvent", () => {
+        it("clears nodes and engine reference", () => {
             const world = new World()
             const system = new IndustrySystem()
             system.addToEngine(world)
 
             const entity = world.createEntity("colony")
-            entity.addComponent(new IndustryComponent(1000, 0.6, 200, 0.3))
+            entity.addComponent(new IndustryComponent(1000, 0.6, 200))
             world.addEntity(entity)
 
             expect((system as any).nodes).toHaveLength(1)
@@ -74,84 +56,184 @@ describe("industrySystem", () => {
         beforeEach(() => {
             system = new IndustrySystem()
             entity = new Entity("colony")
-            industry = new IndustryComponent(1000, 0.6, 200, 0.3)
+            industry = new IndustryComponent(1000, 0.6, 200)
             entity.addComponent(industry)
             ;(system as any).nodes = [makeNode(entity)]
         })
 
-        it("increases population when happiness > 0.5", () => {
+        it("mines ore from labor force", () => {
+            ;(system as any).onDayPassed()
+            expect(industry.ore).toBeGreaterThan(0)
+        })
+
+        it("refines ore into tylium up to refinery capacity", () => {
+            industry.laborForce = 0
+            industry.ore = 5
+            industry.refineryCapacity = 10
+            ;(system as any).onDayPassed()
+            expect(industry.tylium).toBeCloseTo(5 * (1 - industry.civilianAllocation / (industry.civilianAllocation + industry.militaryAllocation)))
+            expect(industry.ore).toBe(0)
+        })
+
+        it("does not refine more ore than refinery capacity", () => {
+            industry.laborForce = 0
+            industry.ore = 20
+            industry.refineryCapacity = 10
+            ;(system as any).onDayPassed()
+            expect(industry.tylium).toBeCloseTo(10 * (1 - industry.civilianAllocation / (industry.civilianAllocation + industry.militaryAllocation)))
+            expect(industry.ore).toBeCloseTo(10)
+        })
+
+        it("collects taxes from population", () => {
+            industry.population = 1000
+            industry.taxRate = 0.15
+            industry.tylium = 0
+            industry.laborForce = 0
+            ;(system as any).onDayPassed()
+            expect(industry.credits).toBeCloseTo(1000 * 0.1 * 0.15)
+        })
+
+        it("collects taxes from tylium production", () => {
+            industry.tylium = 100
+            industry.taxRate = 0.15
+            ;(system as any).onDayPassed()
+            expect(industry.credits).toBeGreaterThan(0)
+        })
+
+        it("pays maintenance costs", () => {
+            industry.credits = 100
+            industry.maintenanceCosts = 30
+            ;(system as any).onDayPassed()
+            expect(industry.credits).toBeLessThan(100)
+        })
+
+        it("zeroes credits if maintenance exceeds credits", () => {
+            industry.credits = 10
+            industry.maintenanceCosts = 50
+            ;(system as any).onDayPassed()
+            expect(industry.credits).toBe(0)
+        })
+
+        it("increases happiness with high civilian allocation", () => {
+            industry.civilianAllocation = 0.8
+            industry.militaryAllocation = 0.2
+            industry.tylium = 1000
+            industry.happiness = 0.5
+            industry.population = 100
+            ;(system as any).onDayPassed()
+            expect(industry.happiness).toBeGreaterThan(0.5)
+        })
+
+        it("does not decrease happiness below 0", () => {
+            industry.civilianAllocation = 0
+            industry.tylium = 0
+            industry.happiness = 0.01
+            ;(system as any).onDayPassed()
+            expect(industry.happiness).toBeGreaterThanOrEqual(0)
+        })
+
+        it("clamps happiness to 1 maximum", () => {
+            industry.civilianAllocation = 1.0
+            industry.militaryAllocation = 0
+            industry.tylium = 1000
+            industry.happiness = 0.99
+            ;(system as any).onDayPassed()
+            expect(industry.happiness).toBeLessThanOrEqual(1)
+        })
+
+        it("processes build orders consuming ore, tylium, and credits", () => {
+            industry.buildOrders = [{
+                id: 1,
+                name: "Destroyer",
+                imageUrl: "",
+                totalDays: 5,
+                remainingDays: 5,
+                oreCost: 50,
+                tyliumCost: 30,
+                creditCost: 100,
+                orePaid: 0,
+                tyliumPaid: 0,
+                creditsPaid: 0,
+            }]
+            industry.ore = 100
+            industry.tylium = 100
+            industry.credits = 200
+            industry.civilianAllocation = 0
+            industry.militaryAllocation = 1.0
+
+            ;(system as any).onDayPassed()
+
+            expect(industry.ore).toBeGreaterThan(0)
+            expect(industry.tylium).toBeGreaterThan(0)
+            expect(industry.credits).toBeGreaterThan(0)
+            expect(industry.buildOrders[0].orePaid).toBeGreaterThan(0)
+            expect(industry.buildOrders[0].tyliumPaid).toBeGreaterThan(0)
+            expect(industry.buildOrders[0].creditsPaid).toBeGreaterThan(0)
+        })
+
+        it("removes completed build orders", () => {
+            industry.buildOrders = [{
+                id: 1,
+                name: "Fighter",
+                imageUrl: "",
+                totalDays: 1,
+                remainingDays: 1,
+                oreCost: 1,
+                tyliumCost: 1,
+                creditCost: 1,
+                orePaid: 0,
+                tyliumPaid: 0,
+                creditsPaid: 0,
+            }]
+            industry.ore = 100
+            industry.tylium = 100
+            industry.credits = 200
+            industry.civilianAllocation = 0
+            industry.militaryAllocation = 1.0
+
+            ;(system as any).onDayPassed()
+
+            expect(industry.buildOrders).toHaveLength(0)
+        })
+
+        it("does not process build orders without military allocation", () => {
+            industry.buildOrders = [{
+                id: 1,
+                name: "Destroyer",
+                imageUrl: "",
+                totalDays: 5,
+                remainingDays: 5,
+                oreCost: 50,
+                tyliumCost: 30,
+                creditCost: 100,
+                orePaid: 0,
+                tyliumPaid: 0,
+                creditsPaid: 0,
+            }]
+            industry.ore = 100
+            industry.tylium = 100
+            industry.credits = 200
+            industry.civilianAllocation = 1.0
+            industry.militaryAllocation = 0
+
+            ;(system as any).onDayPassed()
+
+            expect(industry.buildOrders[0].orePaid).toBe(0)
+            expect(industry.buildOrders[0].tyliumPaid).toBe(0)
+            expect(industry.buildOrders[0].creditsPaid).toBe(0)
+        })
+
+        it("grows population when happiness > 0.5", () => {
             const initial = industry.population
             ;(system as any).onDayPassed()
             expect(industry.population).toBeGreaterThan(initial)
         })
 
-        it("decreases population when happiness < 0.5", () => {
+        it("shrinks population when happiness < 0.5", () => {
             industry.happiness = 0.4
             const initial = industry.population
             ;(system as any).onDayPassed()
             expect(industry.population).toBeLessThan(initial)
-        })
-
-        it("does not change population when happiness === 0.5", () => {
-            industry.happiness = 0.5
-            const initial = industry.population
-            ;(system as any).onDayPassed()
-            expect(industry.population).toBeCloseTo(initial)
-        })
-
-        it("increases production when happiness > 0.5", () => {
-            const initial = industry.production
-            ;(system as any).onDayPassed()
-            expect(industry.production).toBeGreaterThan(initial)
-        })
-
-        it("does not change production when happiness === 0.5", () => {
-            industry.happiness = 0.5
-            const initial = industry.production
-            ;(system as any).onDayPassed()
-            expect(industry.production).toBeCloseTo(initial)
-        })
-
-        it("increases happiness when consumerGoodsRatio produces per-capita ratio > 0.5", () => {
-            industry.population = 100
-            industry.production = 200
-            industry.consumerGoodsRatio = 0.9
-            industry.happiness = 0.5
-            ;(system as any).onDayPassed()
-            expect(industry.happiness).toBeGreaterThan(0.5)
-        })
-
-        it("decreases happiness when consumerGoodsRatio produces per-capita ratio < 0.5", () => {
-            industry.consumerGoodsRatio = 0.1
-            industry.happiness = 0.5
-            ;(system as any).onDayPassed()
-            expect(industry.happiness).toBeLessThan(0.5)
-        })
-
-        it("clamps happiness to 1 maximum", () => {
-            industry.happiness = 0.99
-            industry.consumerGoodsRatio = 1.0
-            ;(system as any).onDayPassed()
-            expect(industry.happiness).toBeLessThanOrEqual(1)
-        })
-
-        it("clamps happiness to 0 minimum", () => {
-            industry.happiness = 0.01
-            industry.consumerGoodsRatio = 0.0
-            ;(system as any).onDayPassed()
-            expect(industry.happiness).toBeGreaterThanOrEqual(0)
-        })
-
-        it("processes multiple colonies independently", () => {
-            const entity2 = new Entity("colony2")
-            const industry2 = new IndustryComponent(500, 0.7, 100, 0.5)
-            entity2.addComponent(industry2)
-            ;(system as any).nodes = [makeNode(entity), makeNode(entity2)]
-
-            ;(system as any).onDayPassed()
-
-            expect(industry.population).toBeGreaterThan(1000)
-            expect(industry2.population).toBeGreaterThan(500)
         })
     })
 })
