@@ -54,18 +54,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             shadeCircle(ctx, 0, 0, circle.radius.radius)
         }
 
-        // if(circle.color.fill) {
-        //     const r = circle.radius.radius
-        //     const gradient = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.05, 0, 0, r)
-        //     gradient.addColorStop(0, circle.color.fill)
-        //     gradient.addColorStop(0.6, circle.color.fill)
-        //     gradient.addColorStop(1, circle.color.fill)
-        //     ctx.fillStyle = gradient
-        //     ctx.beginPath()
-        //     ctx.arc(0, 0, r, 0, Math.PI * 2)
-        //     ctx.fill()
-        // }
-
         ctx.restore();
     }
 }
