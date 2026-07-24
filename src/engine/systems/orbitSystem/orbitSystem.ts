@@ -1,4 +1,4 @@
-import { World } from "../../core/world";
+import type { Engine } from "../../core/engine";
 import { SystemWithNodes } from "../system";
 import { OrbitNode } from "./orbitNode";
 import { PositionComponent } from "../../components/position";
@@ -62,7 +62,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         }
     }
 
-    protected registerNodes(engine: World): this {
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(OrbitNode, new Set([OrbitComponent]), (entity) => {
             return new OrbitNode(entity,
                 entity.getComponent(PositionComponent)!,
@@ -82,7 +82,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         return this
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         this.nodes = this.engine!.getNodeList(OrbitNode)

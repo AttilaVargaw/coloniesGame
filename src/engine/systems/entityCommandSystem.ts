@@ -1,8 +1,8 @@
-import { World } from "@engine/core/world";
 import { Entity } from "@engine/entities/entity";
 import { EntityComponent } from "@engine/entities/entityComponent";
 import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@engine/systems/system";
+import { Engine } from "../core/engine";
 
 class EntityCommandComponent extends EntityComponent {
     commands: ((entity: Entity) => Entity)[] = []
@@ -26,7 +26,7 @@ export class EntityCommandSystem extends SystemWithNodes<EntityCommandNode> {
         }
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         engine
             .registerNodeType(EntityCommandNode,

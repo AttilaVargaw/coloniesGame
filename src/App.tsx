@@ -7,84 +7,40 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { solarSystems, } from "@game/data/gameData";
 import { Game } from "@game/game";
-import { DateNode } from "@engine/systems/DateNode";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
+import { ProductionBar } from "./components/productionBar/productionBar";
+import { GameContext } from "./hooks/useGameContext";
+import type { Engine } from "@/engine/core/engine";
 import {
-  SelectionChangedEvent,
-  KeydownEvent,
-  MouseupEvent,
   MousemoveEvent,
   MousedownEvent,
   ClickEventData,
   MouseEventData,
-  DayPassedEvent,
 } from "@/engine/lib/events";
-import { ProductionBar } from "./components/productionBar/productionBar";
 
 function App() {
   const map = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
   const [currentColony, setCurrentColony] = useState<Entity>()
-  const [date, setDate] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
-  const [, rerender] = useState(true)
+  const engine: Engine | null = (game?.engine ?? null) as Engine | null
 
   useEffect(() => {
     if(!map.current) return
 
     const gameInstance = new Game(map.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, solarSystems)
 
-    const updateDate = () => {
-      setDate(gameInstance.engine.getNodeList(DateNode)[0].date.ms)
-    }
-
-    const onOpenInfoWindow = ({ data, type }: { data: Entity, type: "colony" }) => {
-      switch(type) {
-        case "colony":
-          setCurrentColony(data)
-          break
-      }
-    }
-
-    const eventListener = (event: KeyboardEvent) => {
-      gameInstance.engine?.dispatchEvent(new KeydownEvent(event))
-    }
-
-    const onMouseUp = (event: MouseEvent) => {
-      const rect = map.current?.getBoundingClientRect()
-      if(!rect) {
-        return
-      }
-      gameInstance.engine?.dispatchEvent(new MouseupEvent({ name: "mouseup", data: { x: event.pageX - rect.left, y: event.pageY - rect.top, event } }))
-    }
-
-    document.addEventListener("keydown", eventListener)
-    window.addEventListener("mouseup", onMouseUp)
-
-    gameInstance.engine?.subscribe(DayPassedEvent, rerender)
-      .subscribe(DayPassedEvent, updateDate)
-      .subscribe(SelectionChangedEvent, onOpenInfoWindow)
-
     setGame(gameInstance)
 
     return () => {
-      document.removeEventListener("keydown", eventListener)
-      window.removeEventListener("mouseup", onMouseUp)
-
-      gameInstance.engine
-        .unsubscribe(DayPassedEvent, rerender)
-        .unsubscribe(DayPassedEvent, updateDate)
-        .unsubscribe(SelectionChangedEvent, onOpenInfoWindow)
-        .destruct()
-
+      gameInstance.destruct()
       setGame(null)
     }
-  }, [rerender])
+  }, [])
 
   return (
-    <>
-      <ColoniesInforWindow engine={game?.engine} onAllocationChange={(colony, type, value) => {
+    <GameContext.Provider value={engine}>
+      <ColoniesInforWindow onAllocationChange={(colony, type, value) => {
         const industry = colony.getComponent(IndustryComponent)
         if(industry) {
           switch(type) {
@@ -96,9 +52,8 @@ function App() {
               break
           }
         }
-        rerender(p => !p)
       }} entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
-      <Header time={date} />
+      <Header />
       <div className="flex bg-black">
         <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>
           <ProductionBar
@@ -138,12 +93,9 @@ function App() {
               game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData))
             }} />
         </div>
-        {/* <div style={{ display: dynamicData ? "block" : "none" }}>
-        <DataWindow header={dynamicDataHeader} data={dynamicData} />
-      </div> */}
       </div >
-    </>
+    </GameContext.Provider>
   );
 }
 
-export default App;
+export default App

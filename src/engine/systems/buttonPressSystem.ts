@@ -1,8 +1,8 @@
-import { World } from "@engine/core/world"
 import { SystemWithNodes } from "@engine/systems/system"
 import { EventHandlerComponent } from "@engine/components/EventHandlerComponent";
 import { ButtonPressNode } from "./ButtonPressNode";
 import { KeydownEvent } from "@/engine/lib/events";
+import { Engine } from "../core/engine";
 
 export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
     protected updateNode(_node: ButtonPressNode, _dt: number): void {
@@ -16,7 +16,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         return this
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         this.nodes = engine.getNodeList(ButtonPressNode)
@@ -24,7 +24,7 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         return this
     }
 
-    protected registerNodes(engine: World): this {
+    protected registerNodes(engine: Engine): this {
         this.engine = engine.registerNodeType(ButtonPressNode, new Set([EventHandlerComponent]), (entity) =>
             new ButtonPressNode(
                 entity,
@@ -47,7 +47,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
         const nodes = this.engine.getNodeList(ButtonPressNode)
         const keydownEvents = this.engine.getEvents(KeydownEvent)!
 
-        //@ts-expect-error just a fix for now
         for(const { data } of keydownEvents) {
             for(const { eventHandler: { button, fn } } of nodes) {
                 if(button === data.key) {

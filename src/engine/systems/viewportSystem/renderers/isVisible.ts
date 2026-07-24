@@ -1,4 +1,4 @@
-import { World } from "@/engine/core/world";
+import { Engine } from "@/engine/core/engine";
 import { Entity } from "@/engine/entities/entity";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 
@@ -13,7 +13,7 @@ export function isVisible(
     bounds: VisibleBounds,
     margin = 0,
     entity: Entity,
-    engine: World
+    engine: Engine
 ): boolean {
     const [x, y] = getAbsolute(entity, engine);
     return (

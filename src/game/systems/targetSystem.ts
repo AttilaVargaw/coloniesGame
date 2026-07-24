@@ -1,4 +1,3 @@
-import { World } from "@engine/core/world"
 import { Entity } from "@engine/entities/entity"
 import { SystemWithNodes } from "@game/systems/system"
 import { TargetableNode } from "../../engine/systems/targetNode"
@@ -9,12 +8,13 @@ import { setShipPath, clearShipPath } from "@/game/systems/moveSystem"
 import { TargetChangedEvent } from "@/engine/lib/events"
 import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
+import { Engine } from "@/engine/core/engine"
 
 export class TargetSystem extends SystemWithNodes<TargetableNode> {
     protected updateNode(_node: TargetableNode, _dt?: number): void {
     }
 
-    protected registerNodes(engine: World): this {
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(TargetableNode, new Set([TargetableComponent]), (entity) =>
             new TargetableNode(
                 entity,
@@ -93,7 +93,7 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         return bestEntity
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(TargetableNode)
 

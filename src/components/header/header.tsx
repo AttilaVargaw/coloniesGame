@@ -1,6 +1,8 @@
 import { ColonialDate } from "@/lib/colonialCalendar"
+import { useGameDate } from "@/hooks/useGameDate"
 
-export function Header({ time }: { time: number }) {
+export function Header() {
+    const time = useGameDate()
     const date = ColonialDate(time)
 
     return (

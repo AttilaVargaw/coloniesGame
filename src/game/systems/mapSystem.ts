@@ -1,10 +1,10 @@
-import { World } from "@engine/core/world";
 import { SystemWithNodes } from "./system";
 import { PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
 import { StartState } from "@game/data/types";
 import type { Entity } from "@engine/entities/entity";
 import { aStar } from "@game/utils/pathfinder";
+import { Engine } from "@/engine/core/engine";
 
 export class MapSystem extends SystemWithNodes<PathNode> {
     protected updateNode(_node: PathNode, _dT?: number): void {
@@ -24,7 +24,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         return this

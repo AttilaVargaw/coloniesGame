@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import type { Engine } from "@/engine/core/engine"
 import { World } from "@/engine/core/world"
 import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@/engine/components/position"
@@ -24,7 +25,7 @@ function makeColonyData(overrides: Partial<Colony> = {}): Colony {
 
 describe("createColony", () => {
     it("creates a colony entity with base components", () => {
-        const world = new World()
+        const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
         const colony = createColony({
@@ -42,7 +43,7 @@ describe("createColony", () => {
     })
 
     it("adds interactive components when population is present", () => {
-        const world = new World()
+        const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
         const colony = createColony({
@@ -57,7 +58,7 @@ describe("createColony", () => {
     })
 
     it("adds orbit component and sets initial position when orbitArgs is provided", () => {
-        const world = new World()
+        const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
         const colony = createColony({
@@ -83,7 +84,7 @@ describe("createColony", () => {
     })
 
     it("recursively creates moons inside the colony", () => {
-        const world = new World()
+        const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
         const moonData: Colony = {
@@ -110,7 +111,7 @@ describe("createColony", () => {
     })
 
     it("creates vessels attached to the colony", () => {
-        const world = new World()
+        const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
         const colony = createColony({

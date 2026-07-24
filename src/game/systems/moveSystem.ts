@@ -1,6 +1,5 @@
 import { PositionComponent } from "@engine/components/position";
 import { RadiusComponent } from "@engine/components/radiusComponent";
-import { World } from "@engine/core/world";
 import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
@@ -14,6 +13,7 @@ import { SoiComponent } from "@engine/components/soiComponent";
 import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "@game/data/types";
 import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO } from "../constants";
+import { Engine } from "@/engine/core/engine";
 
 export const DEBUG_VISUALIZE_PATHS = true;
 
@@ -43,7 +43,7 @@ function positionOnOrbit(radius: number, eccentricity: number, meanAnomaly: numb
     const r = radius * (1 - eccentricity * Math.cos(E))
     const theta = 2 * Math.atan2(
         Math.sqrt(1 + eccentricity) * Math.sin(E / 2),
-            Math.sqrt(Math.max(KEPLER_EPSILON_TIGHT, 1 - eccentricity)) * Math.cos(E / 2)
+        Math.sqrt(Math.max(KEPLER_EPSILON_TIGHT, 1 - eccentricity)) * Math.cos(E / 2)
     )
 
     return { x: r * Math.cos(theta), y: r * Math.sin(theta) }
@@ -240,7 +240,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
-    private orbit(engine: World, entity: Entity, bestSoiEntity: Entity, shipX: number, shipY: number) {
+    private orbit(engine: Engine, entity: Entity, bestSoiEntity: Entity, shipX: number, shipY: number) {
         const shipNode = engine.getSceneNode(entity)!
         const attractorNode = engine.getSceneNode(bestSoiEntity)!
 
@@ -280,7 +280,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         if(!engine) {
             return this
 

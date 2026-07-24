@@ -1,8 +1,8 @@
-import { World } from "../core/world"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
+import type { Engine } from "../core/engine"
 
 export abstract class System {
-    protected engine?: World
+    protected engine?: Engine
     protected subsystems = new Set<System>()
     protected parent?: System
 
@@ -34,7 +34,7 @@ export abstract class System {
         return this
     }
 
-    protected registerNodes(engine: World) {
+    protected registerNodes(engine: Engine) {
         for(const subsystem of this.subsystems) {
             subsystem.registerNodes(engine)
         }
@@ -56,7 +56,7 @@ export abstract class System {
         return this
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         this.engine = engine
         this.registerNodes(engine)
 
@@ -98,7 +98,7 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
         }
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         return this

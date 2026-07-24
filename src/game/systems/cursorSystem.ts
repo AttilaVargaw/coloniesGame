@@ -1,4 +1,3 @@
-import { World } from "@engine/core/world";
 import { SystemWithNodes } from "@game/systems/system";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PositionComponent } from "@engine/components/position";
@@ -8,6 +7,7 @@ import { isContained } from "@lib/isContained";
 import { Entity } from "@/engine/entities/entity";
 import { SizeComponent } from "@/engine/components/sizeComponent";
 import { MousemoveEvent } from "@/engine/lib/events";
+import { Engine } from "@/engine/core/engine";
 
 export class HoverableComponent extends EntityComponent {
     constructor(
@@ -39,7 +39,7 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
         return this
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine);
 
         engine.registerNodeType(HoverableNode, new Set([HoverableComponent]), (entity) =>

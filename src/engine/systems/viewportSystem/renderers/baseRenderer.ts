@@ -1,4 +1,4 @@
-import { World } from "../../../core/world";
+import type { Engine } from "@/engine/core/engine";
 import { SystemWithNodes } from "../../system";
 import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "../viewportSystem";
@@ -24,7 +24,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         this.nodeFactory = nodeFactory
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.nodes = engine.getNodeList(this.constructor as any)
@@ -47,7 +47,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return this
     }
 
-    protected registerNodes(engine: World): this {
+    protected registerNodes(engine: Engine): this {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         engine.registerNodeType(this.constructor as any, new Set(this.components), this.nodeFactory,)
 

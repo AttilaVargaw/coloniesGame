@@ -1,6 +1,6 @@
 import { SystemWithNodes } from "./system";
 import { ClickableNode } from "./viewportSystem/ClickableNode";
-import { World } from "../core/world";
+import type { Engine } from "@/engine/core/engine";
 import { ClickableComponent } from "../components/clickableComponent";
 import { PositionComponent } from "../components/position";
 import { sortByDepth } from "@/lib/sortByIndex";
@@ -37,7 +37,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         this.nodes.sort(sortByDepth)
     }
 
-    protected registerNodes(engine: World): this {
+    protected registerNodes(engine: Engine): this {
         engine.registerNodeType(ClickableNode, new Set([ClickableComponent]), (entity) =>
             new ClickableNode(
                 entity.getComponent(PositionComponent)!,
@@ -51,7 +51,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         return this
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine);
         this.clickQueue = engine.getEvents(ClickEventData);
         this.nodes = engine.getNodeList(ClickableNode);

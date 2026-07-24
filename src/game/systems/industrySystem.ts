@@ -1,8 +1,8 @@
 import { IndustryComponent } from "@game/components/industryComponent";
-import { World } from "@engine/core/world";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent } from "@/engine/lib/events";
+import { Engine } from "@/engine/core/engine";
 
 const ORE_PER_LABOR = 0.5
 const BASE_CIVILIAN_GOODS_PER_REFINED = 0.1
@@ -89,7 +89,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         }
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         engine.registerNodeType(IndustryNode,
             new Set([IndustryComponent]),

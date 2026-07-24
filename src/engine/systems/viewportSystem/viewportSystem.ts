@@ -1,4 +1,4 @@
-import { World } from "../../core/world";
+import type { Engine } from "@/engine/core/engine";
 import { SystemWithNodes, } from "../system";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
@@ -7,7 +7,6 @@ import { CircleRenderer } from "./renderers/circleRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
-import { Queue } from "@engine/lib/commandQueue";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
@@ -16,7 +15,7 @@ import { OrbitNode } from "../orbitSystem/orbitNode";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    public redrawQueue?: Queue<RedrawCommand>
+    public redrawQueue?: any
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 
@@ -63,7 +62,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
         }
-        this.redrawQueue?.clear()
+        if(this.redrawQueue) {
+            this.redrawQueue.length = 0
+        }
     }
 
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {
@@ -147,7 +148,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
     }
 
-    registerNodes(engine: World) {
+    registerNodes(engine: Engine) {
         engine.registerNodeType(ViewportNode,
             new Set([
                 ViewportComponent
@@ -167,7 +168,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.inputHandler.addToEngine()
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.inputHandler = new ViewportInputHandler(this)
         this.nodes = engine.getNodeList(ViewportNode)

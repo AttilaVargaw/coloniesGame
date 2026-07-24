@@ -1,8 +1,8 @@
 import { PositionComponent } from "../components/position";
-import { World } from "../core/world";
+import type { Engine } from "../core/engine";
 import { Entity } from "../entities/entity";
 
-export function getAbsolute(entity: Entity, engine: World): [number, number] {
+export function getAbsolute(entity: Entity, engine: Engine): [number, number] {
     const sceneNode = engine.getSceneNode(entity);
     const parentPosition = sceneNode?.parentRef?.entity;
 

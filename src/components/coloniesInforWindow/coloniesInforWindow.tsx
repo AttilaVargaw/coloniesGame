@@ -6,41 +6,17 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { Slider } from "../ui/slider";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
-import { useEffect, useCallback, useState } from "react";
-import { UpdateDoneEvent } from "@/engine/lib/events";
-import type { Engine } from "@/engine/core/engine";
+import { useState } from "react";
+import { useGameRerender } from "@/hooks/useGameRerender";
 
-// function GrowthText({ growth }: { growth: string }) {
-//     const growthN = parseFloat(growth)
-//     if(growthN > 0) {
-//         return <span className="text-green-500">+{growthN.toFixed(2)}</span>
-//     } else if(growthN < 0) {
-//         return <span className="text-red-500">{growthN.toFixed(2)}</span>
-//     } else {
-//         return <span className="text-gray-500">0.00</span>
-//     }
-// }
-
-export function ColoniesInforWindow({ entity, engine, setIsOpen, onAllocationChange }: {
+export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
     entity?: Entity,
-    engine?: Engine,
     setIsOpen: (isOpen: boolean) => void,
     onAllocationChange: (colony: Entity, type: "civilian" | "military", value: number) => void
 }) {
     const [civilianValue, setCivilianValue] = useState(0.5)
     const [militaryValue, setMilitaryValue] = useState(0.3)
-    const [, setValue] = useState(true)
-    const rerender = useCallback(() => setValue(p => !p), [])
-
-    useEffect(() => {
-        if(!engine) {
-            return
-        }
-
-        engine.subscribe(UpdateDoneEvent, rerender)
-
-        return () => engine.unsubscribe(UpdateDoneEvent, rerender)
-    }, [engine, rerender])
+    useGameRerender()
 
     if(!entity) {
         return null
@@ -59,6 +35,11 @@ export function ColoniesInforWindow({ entity, engine, setIsOpen, onAllocationCha
                     <br />
                     Happiness: {(industry.happiness * 100).toLocaleString()}%
                     <br />
+                    {(() => {
+                        const popGrowth = (industry.happiness - 0.5) * industry.population / 15000
+                        const fmt = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}/day`
+                        return <>Growth: {fmt(popGrowth)}<br /></>
+                    })()}
                 </DialogDescription>
 
                 <DialogDescription>

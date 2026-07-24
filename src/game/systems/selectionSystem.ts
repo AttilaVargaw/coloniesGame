@@ -1,4 +1,3 @@
-import { World } from "@engine/core/world"
 import { Entity } from "@engine/entities/entity"
 import { SystemWithNodes } from "@engine/systems/system"
 import { SelectionNode } from "@game/systems/SelectionNode"
@@ -11,6 +10,7 @@ import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 import { COLONY_SELECTION_RADIUS, SHIP_CLICK_SIZE } from "../constants"
+import { Engine } from "@/engine/core/engine"
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
@@ -160,7 +160,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         this.sensorRangeCircle = undefined
     }
 
-    addToEngine(engine: World): this {
+    addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.engine = engine
             .registerNodeType(SelectionNode, new Set([SelectableComponent]), (entity) => {
