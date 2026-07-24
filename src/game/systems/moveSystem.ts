@@ -5,7 +5,6 @@ import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "@game/components/vessel";
 import { TargetSystem } from "./targetSystem";
-import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitComponent } from "@engine/components/orbitComponent";
@@ -161,7 +160,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     }
                     const targetSystem = this.engine!.getSystem(TargetSystem)
                     targetSystem?.clearTarget(entity)
-                    this.engine.addCommand(new RedrawCommand)
                 }
             } else {
                 const targetNode = this.engine.getSceneNode(target)!
@@ -186,7 +184,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 targetSystem?.clearTarget(entity)
             }
 
-            this.engine.addCommand(new RedrawCommand)
             alreadyMoved.add(entity)
         }
     }

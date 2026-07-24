@@ -1,12 +1,10 @@
 import { Queue } from "./commandQueue"
 import { SelectEntityCommand } from "./SelectEntityCommand"
-import { RedrawCommand } from "./RedrawCommand"
 import { CommandBase } from "./CommandBase"
 
 export class CommandBus {
     // eslint-disable-next-line
     readonly commands = new Map<new (...args: any) => CommandBase, Queue<unknown>>([
-        [RedrawCommand, new Queue()],
         [SelectEntityCommand, new Queue()],
     ] as const)
 

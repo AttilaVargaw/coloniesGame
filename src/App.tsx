@@ -7,7 +7,6 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { solarSystems, } from "@game/data/gameData";
 import { Game } from "@game/game";
-import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { ProductionBar } from "./components/productionBar/productionBar";
 import { GameContext } from "./hooks/useGameContext";
 import { useSelectionChanged } from "./hooks/useSelectionChanged";
@@ -81,7 +80,6 @@ function AppInner({ setCurrentColony, game, currentColony, sidebarCollapsed, set
             const mouseData = data as unknown as { x: number; y: number; event: MouseEvent }
             game?.engine.dispatchEvent(new MouseupEvent({ name: "mouseup", data: { x: mouseData.x, y: mouseData.y, event: mouseData.event } }))
           }}
-          triggerRedraw={() => game?.engine.addCommand(new RedrawCommand())}
           ref={map}
           onClick={(data) => {
             game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData))

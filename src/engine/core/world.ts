@@ -25,7 +25,7 @@ export class World implements Engine {
         this.nodeManager = new NodeManager()
         this.eventBus = new EventBus()
         this.commandBus = new CommandBus()
-        this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus, this.commandBus)
+        this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus)
         this.systemRegistry = new SystemRegistry()
     }
 

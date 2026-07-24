@@ -8,15 +8,11 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { HexagonRenderer } from "./renderers/hexagonRenderer";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { ViewportInputHandler } from "./viewInputHandler";
-import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
-import { Queue } from "@/engine/lib/commandQueue";
-
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    public redrawQueue?: Queue<RedrawCommand>
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 
@@ -45,25 +41,23 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         this.inputHandler.update(dt)
 
-        if(this.redrawQueue?.length) {
-            for(const { viewPort: { camera } } of this.nodes) {
-                const ctx = camera.context
-                this.clear(ctx)
+        for(const { viewPort: { camera } } of this.nodes) {
+            const ctx = camera.context
+            this.clear(ctx)
 
-                camera.begin();
+            camera.begin();
 
-                if(DEBUG_VISUALIZE_PATHS) {
-                    this.drawDebugPaths(ctx)
-                    this.drawOrbits(ctx)
-                }
-
-                this.updateSubsystems(dt);
-
-                camera.end();
+            if(DEBUG_VISUALIZE_PATHS) {
+                this.drawDebugPaths(ctx)
+                this.drawOrbits(ctx)
             }
 
+            this.updateSubsystems(dt);
+
+            camera.end();
         }
-        this.redrawQueue?.clear()
+
+
     }
 
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {
@@ -178,13 +172,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new RectRenderer(this))
             .addSubsystem(new LabelRenderer(this))
 
-        engine.registerCommandQueue(RedrawCommand)
-        // .registerCommandQueue("mousedown")
-        // .registerCommandQueue("mouseup")
-        // .registerCommandQueue("mouseMoved")
-
-        this.redrawQueue = engine.getCommands(RedrawCommand)
-
         return this
     }
 
@@ -200,13 +187,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
         this.eventHandlers.clear()
 
-        this.engine.removeCommandQueue(RedrawCommand)
-        // .removeCommandQueue("mousedown")
-        // .removeCommandQueue("mouseup")
-        // .removeCommandQueue("mouseMoved")
-
         this.nodes.length = 0
-        this.redrawQueue = undefined
 
         super.removeFromEngine()
 

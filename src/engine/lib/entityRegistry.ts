@@ -2,8 +2,6 @@ import { Entity } from "../entities/entity"
 import { SceneNode } from "../entities/sceneNode"
 import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
-import { CommandBus } from "./commandBus"
-import { RedrawCommand } from "./RedrawCommand"
 import { EntityRemovedEvent } from "./events"
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
@@ -11,8 +9,8 @@ export class EntityRegistry {
 
     constructor(
         private readonly nodes: NodeManager,
-        private readonly events: EventBus,
-        private readonly commands: CommandBus) {
+        private readonly events: EventBus
+    ) {
     }
 
     createEntity(id: string) {
@@ -83,7 +81,6 @@ export class EntityRegistry {
         this.nodes.removeEntityFromNodes(entity)
 
         this.events.dispatchEvent(new EntityRemovedEvent(entity))
-        this.commands.addCommand(new RedrawCommand())
 
         return this
     }

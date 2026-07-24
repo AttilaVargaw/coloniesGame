@@ -3,7 +3,6 @@ import { SystemWithNodes } from "../system";
 import { OrbitNode } from "./orbitNode";
 import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
-import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 
 export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
@@ -55,10 +54,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
                 continue
             }
             this.updateNode(node, dt)
-        }
-
-        if(this.engine) {
-            this.engine.addCommand(new RedrawCommand())
         }
     }
 

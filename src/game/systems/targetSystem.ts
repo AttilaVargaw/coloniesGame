@@ -6,7 +6,6 @@ import { MapSystem } from "./mapSystem"
 import { JumpDriveComponent } from "@/game/components/vessel"
 import { setShipPath, clearShipPath } from "@/game/systems/moveSystem"
 import { TargetChangedEvent } from "@/engine/lib/events"
-import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { Engine } from "@/engine/core/engine"
 
@@ -58,7 +57,6 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         }
 
         this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
-        this.engine.addCommand(new RedrawCommand())
     }
 
     clearTarget(ship: Entity) {
@@ -71,7 +69,6 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         }
 
         this.engine.dispatchEvent(new TargetChangedEvent({ ship, target: undefined }))
-        this.engine.addCommand(new RedrawCommand())
     }
 
     findNearestTarget(ship: Entity, worldX: number, worldY: number): Entity | undefined {

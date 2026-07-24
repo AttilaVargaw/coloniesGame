@@ -39,16 +39,13 @@ export class ViewportInputHandler {
                 camera.lookAt[0] + panX * step,
                 camera.lookAt[1] + panY * step
             )
-            this.viewportSystem.redrawQueue!.enqueue()
         }
 
         if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
             camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.viewportSystem.redrawQueue!.enqueue()
         }
         if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
-            this.viewportSystem.redrawQueue!.enqueue()
         }
     }
 
@@ -110,8 +107,6 @@ export class ViewportInputHandler {
         const factor = Math.pow(ViewportInputHandler.WHEEL_ZOOM_SPEED, event.deltaY)
 
         camera.zoomBy(factor, screenX, screenY)
-
-        this.viewportSystem.redrawQueue?.enqueue()
     }
 
     update(dt: number) {
@@ -144,7 +139,6 @@ export class ViewportInputHandler {
                         this.dragMoved = true
                     }
                     this.lastPointer = { x: data.x, y: data.y }
-                    this.viewportSystem.redrawQueue!.enqueue()
                 }
             }
         }

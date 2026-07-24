@@ -1,26 +1,25 @@
 import { describe, it, expect, } from "vitest"
 import { CommandBus } from "./commandBus"
-import { RedrawCommand } from "./RedrawCommand"
 import { SelectEntityCommand } from "./SelectEntityCommand"
 import { CommandBase } from "./CommandBase"
+import { SelectionChangedEvent } from "./events"
 
-class CommandBaseImplementation extends CommandBase {}
+class CommandBaseImplementation extends CommandBase { }
 
 describe("CommandBus", () => {
     it("initializes with redraw and selectEntity queues", () => {
         const bus = new CommandBus()
 
-        expect(bus.commands.get(RedrawCommand)).toBeInstanceOf(Object)
         expect(bus.commands.get(SelectEntityCommand)).toBeInstanceOf(Object)
-        expect(bus.commands.size).toBe(2)
+        expect(bus.commands.size).toBe(1)
     })
 
     it("registerCommandQueue adds a new command queue", () => {
         const bus = new CommandBus()
 
-        bus.registerCommandQueue(RedrawCommand)
+        bus.registerCommandQueue(SelectionChangedEvent)
 
-        expect(bus.commands.get(RedrawCommand)).toBeDefined()
+        expect(bus.commands.get(SelectionChangedEvent)).toBeDefined()
     })
 
     it("returns itself from registerCommandQueue", () => {
@@ -35,7 +34,7 @@ describe("CommandBus", () => {
         bus.removeCommandQueue(SelectEntityCommand)
 
         expect(bus.commands.get(SelectEntityCommand)).toBeUndefined()
-        expect(bus.commands.size).toBe(1)
+        expect(bus.commands.size).toBe(0)
     })
 
     it("returns itself from removeCommandQueue", () => {
@@ -47,9 +46,9 @@ describe("CommandBus", () => {
     it("addCommand enqueues data to the specified queue", () => {
         const bus = new CommandBus()
 
-        bus.addCommand(new RedrawCommand())
+        bus.addCommand(new SelectEntityCommand)
 
-        const queue = bus.commands.get(RedrawCommand)!
+        const queue = bus.commands.get(SelectEntityCommand)!
         expect(queue.length).toBe(1)
         expect(queue.peek()).toEqual({})
     })
@@ -57,12 +56,12 @@ describe("CommandBus", () => {
     it("returns itself from addCommand", () => {
         const bus = new CommandBus()
 
-        expect(bus.addCommand(new RedrawCommand())).toBe(bus)
+        expect(bus.addCommand(SelectionChangedEvent)).toBe(bus)
     })
 
     it("getCommands returns the queue for a registered command", () => {
         const bus = new CommandBus()
-        const queue = bus.getCommands(RedrawCommand)
+        const queue = bus.getCommands(SelectEntityCommand)
 
         expect(queue).toBeDefined()
         expect(queue?.length).toBe(0)
@@ -76,10 +75,10 @@ describe("CommandBus", () => {
 
     it("clearAll empties all command queues", () => {
         const bus = new CommandBus()
-        bus.addCommand(new RedrawCommand())
+        bus.addCommand(SelectionChangedEvent)
         bus.addCommand(new SelectEntityCommand())
         bus.registerCommandQueue("extra" as any)
-        bus.addCommand(new RedrawCommand())
+        bus.addCommand(SelectionChangedEvent)
 
         bus.clearAll()
 

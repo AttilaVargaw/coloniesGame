@@ -4,9 +4,8 @@ import { Entity } from "../entities/entity"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import { EntityComponent } from "../entities/entityComponent"
 import { System } from "../systems/system"
-import { RedrawCommand } from "../lib/RedrawCommand"
 import { SelectEntityCommand } from "../lib/SelectEntityCommand"
-import { EventBase } from "../lib/events"
+import { EventBase, SelectionChangedEvent } from "../lib/events"
 import {
     UpdateDoneEvent,
     EntityRemovedEvent,
@@ -111,7 +110,7 @@ describe("World", () => {
     it("returns itself from addCommand and dispatchEvent for chaining", () => {
         const world = new World()
 
-        expect(world.addCommand(new RedrawCommand())).toBe(world)
+        expect(world.addCommand(SelectionChangedEvent)).toBe(world)
         expect(world.dispatchEvent(new ClickEventData({ event: {} as MouseEvent, x: 0, y: 0 } as any))).toBe(world)
     })
 
@@ -164,27 +163,24 @@ describe("World", () => {
 
     it("clears command queues on destruct", () => {
         const world = makeWorld()
-        world.addCommand(new RedrawCommand())
+        world.addCommand(new SelectEntityCommand())
         world.addCommand(new SelectEntityCommand())
 
         world.destruct()
 
-        expect(world.getCommands(RedrawCommand)!.length).toBe(0)
+        expect(world.getCommands(SelectEntityCommand)!.length).toBe(0)
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(0)
     })
 
     //It fails for now
     it("clears command queues at the end of each update tick", { fails: true }, () => {
         const world = makeWorld()
-        world.addCommand(new RedrawCommand())
         world.addCommand(new SelectEntityCommand())
 
-        expect(world.getCommands(RedrawCommand)!.length).toBe(1)
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(1)
 
         world.update(16)
 
-        expect(world.getCommands(RedrawCommand)!.length).toBe(0)
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(0)
     })
 

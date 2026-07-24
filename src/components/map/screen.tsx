@@ -21,12 +21,11 @@ export const renderingContextSettings: RenderingContextSettings = {
     colorSpace: "srgb",
 }
 
-export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
+export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: MouseEventData) => void,
     onMouseMove: (event: MouseEventData) => void,
     onMouseDown: (event: MouseEventData) => void,
     onMouseUp: (event: MouseEventData) => void,
-    triggerRedraw: () => void
 }) {
     useLayoutEffect(() => {
         function resize() {
@@ -52,8 +51,6 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRe
             const ctx = ref.current.getContext('2d')
             ctx?.resetTransform()
             ctx?.scale(dpr, dpr);
-
-            triggerRedraw()
         }
 
         resize()
@@ -72,7 +69,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRe
             window.removeEventListener('resize', resize)
             observer.disconnect()
         }
-    }, [ref, triggerRedraw])
+    }, [ref])
 
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {

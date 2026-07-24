@@ -6,7 +6,6 @@ import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
 import { ShapeComponent } from "@engine/components/ShapeComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
-import { RedrawCommand } from "@/engine/lib/RedrawCommand"
 import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 import { COLONY_SELECTION_RADIUS, SHIP_CLICK_SIZE } from "../constants"
@@ -107,7 +106,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         }
 
         this.engine.addEntity(this.selector!, entity)
-        this.engine.addCommand(new RedrawCommand())
 
         return this
     }
@@ -127,7 +125,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
             this.engine.addEntity(this.targetSelector!, target)
         }
 
-        this.engine.addCommand(new RedrawCommand())
 
         return this
     }
@@ -150,7 +147,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.sensorRangeCircle = circle
         this.engine.addEntity(this.sensorRangeCircle!, entity)
-        this.engine.addCommand(new RedrawCommand())
     }
 
     private unselectSensorRange() {

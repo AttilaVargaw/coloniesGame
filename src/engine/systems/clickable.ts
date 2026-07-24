@@ -109,7 +109,6 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                 if(!hit) {
                     const selectionSystem = this.engine.getSystem(SelectionSystem)
                     selectionSystem?.unselect()
-                    this.viewportSystem.redrawQueue?.enqueue()
                 }
             }
         }
