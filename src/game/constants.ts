@@ -6,7 +6,6 @@ export const STARMAP_COORD_SCALE = 80
 export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
 export const COLONY_SELECTION_RADIUS = 10
-export const BARYCENTRE_RADIUS = 4
 export const SHIP_CLICK_SIZE = 40
 export const COLONY_CLICK_SIZE = 40
 export const SENSOR_SUITE_DEFAULT_RANGE = 3

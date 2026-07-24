@@ -2,38 +2,36 @@ import { Engine } from "@/engine/core/engine"
 import { Entity } from "@engine/entities/entity"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { Colony } from "../data/types"
-import { createColony } from "./createColony"
+import { createBody } from "./createBody"
 
 export function createBinaryOrbitPair(
     engine: Engine,
     parent: Entity,
-    colonyA: Pick<Colony, "name" | "radius" | "distanceFromParent" | "archetype" | "patronGod" | "moons">,
-    colonyB: Pick<Colony, "name" | "radius" | "distanceFromParent" | "archetype" | "patronGod" | "moons">,
+    colonyA: Colony,
+    colonyB: Colony,
     separation: number
 ) {
     const angleA = Math.random() * Math.PI * 2
     const barycentreOrbitRadius = separation / 2
 
-    const bodyA = createColony({
-        engine,
-        data: { ...colonyA, population: 0 },
-        parent,
-        orbitArgs: {
-            radius: barycentreOrbitRadius,
-            angle: angleA,
-            eccentricity: 0,
-        }
+    const makeOrbitArgs = (angle: number) => ({
+        radius: barycentreOrbitRadius,
+        angle,
+        eccentricity: 0,
     })
 
-    const bodyB = createColony({
+    const bodyA = createBody({
         engine,
-        data: { ...colonyB, population: 0 },
+        data: colonyA,
         parent,
-        orbitArgs: {
-            radius: barycentreOrbitRadius,
-            angle: angleA + Math.PI,
-            eccentricity: 0,
-        }
+        orbitArgs: makeOrbitArgs(angleA)
+    })
+
+    const bodyB = createBody({
+        engine,
+        data: colonyB,
+        parent,
+        orbitArgs: makeOrbitArgs(angleA + Math.PI)
     })
 
     bodyA.removeComponent(SelectableComponent)

@@ -21,6 +21,8 @@ export type Colony = {
     readonly eccentricity?: number
     readonly moons?: ReadonlyMap<string, Colony>
     readonly vessels?: Vessel[]
+    readonly angle?: number
+    readonly color: string
 }
 
 export type Star = {
@@ -31,6 +33,7 @@ export type Star = {
     planets: Map<string, Colony>
     soi?: number
     binaryPairs?: ReadonlyMap<string, number>
+    color: string
 }
 
 export const StartState = {

@@ -13,7 +13,7 @@ export class SceneNode {
     }
 
     get entity(): Entity {
-        if (!this._entity) {
+        if(!this._entity) {
             throw new Error(`SceneNode entity not resolved for id: ${this.entityId}`)
         }
         return this._entity
@@ -69,10 +69,13 @@ export class SceneNode {
         return [parentX + position.x, parentY + position.y]
     }
 
-    collectDescendants(out: Entity[]): void {
+    collectDescendants() {
+        const ret: Entity[] = []
+
         for(const child of this.children) {
-            out.push(child.entity)
-            child.collectDescendants(out)
+            ret.concat(child.collectDescendants())
         }
+
+        return ret
     }
 }

@@ -15,20 +15,22 @@ export const solarSystems = new Map<string, Star>([
     ["Helios Alpha", {
         name: "Helios Alpha",
         sign: "",
+        color: "#fffcc9",
         x: 16, y: 18,
         soi: 2000,
         binaryPairs: new Map([["Caprica-Gemenon", 180]]),
         planets: new Map([
-            ["Icarus", { distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
-            ["Persephone", { distanceFromParent: 44, radius: 4, name: "Persephone", archetype: "mercury", eccentricity: 0.4 }],
+            ["Icarus", { color: "#f99838", distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
+            ["Persephone", { color: "#b1b3ba", distanceFromParent: 44, radius: 4, name: "Persephone", archetype: "mercury", eccentricity: 0.4 }],
             ["Zeus", {
-                distanceFromParent: 30, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, moons:
+                color: "#928262", distanceFromParent: 30, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, moons:
                     new Map([
-                        ["Nike", { distanceFromParent: 2.1, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.3 }],
-                        ["Hebe", { distanceFromParent: 4, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.7 }]
+                        ["Nike", { color: "#c7d9d7", distanceFromParent: 2.1, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.3 }],
+                        ["Hebe", { color: "#777678", distanceFromParent: 4, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.7 }]
                     ])
             }],
             ["Caprica", {
+                color: "#879cb8",
                 archetype: "kobol",
                 name: "Caprica",
                 distanceFromParent: 20,
@@ -49,6 +51,7 @@ export const solarSystems = new Map<string, Star>([
                 archetype: "kobol",
                 distanceFromParent: 24,
                 radius: 8,
+                color: "#a08156",
                 name: "Gemenon",
                 population: 2_800_000_000, sign: "♊︎", eccentricity: 0.02, patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
@@ -64,6 +67,7 @@ export const solarSystems = new Map<string, Star>([
                 archetype: "kobol",
                 distanceFromParent: 20,
                 radius: 8,
+                color: "#56738c",
                 name: "Picon",
                 population: 1_400_000_000, sign: "♓︎", eccentricity: 0.015, patronGod: createPatronGodModifier({
                     name: "Poseidon",
@@ -76,8 +80,9 @@ export const solarSystems = new Map<string, Star>([
             }],
             ["Tauron", {
                 archetype: "kobol",
+                color: "#887266",
                 moons: new Map([
-                    ["Minos", { distanceFromParent: 0.4, radius: 5, name: "Minos", archetype: "mars", eccentricity: 0.1 }]
+                    ["Minos", { color: "#97958c", distanceFromParent: 0.4, radius: 5, name: "Minos", archetype: "mars", eccentricity: 0.1 }]
                 ]),
                 distanceFromParent: 23,
                 radius: 8,

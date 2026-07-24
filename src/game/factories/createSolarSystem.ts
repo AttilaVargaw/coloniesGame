@@ -1,28 +1,17 @@
 import { Engine } from "@/engine/core/engine"
-import { TargetableComponent } from "@engine/components/targetableComponent"
-import { SelectableComponent } from "@engine/components/SelectableComponent"
-import { ClickableComponent } from "@engine/components/clickableComponent"
 import { applyComponents } from "./helpers"
-import { UNIVERSE_SCALE, BARYCENTRE_RADIUS } from "../constants"
+import { UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
-import { createColony } from "./createColony"
+import { createBody } from "./createBody"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
-import { Entity } from "@engine/entities/entity"
-import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent } from "@engine/components/position"
-import { RadiusComponent } from "@engine/components/radiusComponent"
-import { HoverableComponent } from "@game/systems/cursorSystem"
 import { OrbitComponent } from "@engine/components/orbitComponent"
-import { IndustryComponent } from "../components/industryComponent"
-import { SelectionSystem } from "@game/systems/selectionSystem"
-import { TargetSystem } from "@game/systems/targetSystem"
-import { SelectionChangedEvent } from "@/engine/lib/events"
-import { Star, Colony } from "../data/types"
+import { Star } from "../data/types"
 import { createVessel } from "./createSpaceship"
 
-export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map() }: Star) {
-    const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000 })
+export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map(), color }: Star) {
+    const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000, color })
 
     const binaryPairPlanetNames = new Set<string>()
 
@@ -37,9 +26,12 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
 
     for(const [key, separation] of binaryPairs) {
         const [nameA, nameB] = key.split("-")
-        const planetA = planets.get(nameA)
-        const planetB = planets.get(nameB)
-        if(!planetA || !planetB) continue
+        const planetA = planets.get(nameA)!
+        const planetB = planets.get(nameB)!
+
+        if(!planetA || !planetB) {
+            continue
+        }
 
         const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * UNIVERSE_SCALE / 2
         const barycentreAngularSpeed = angularSpeed(barycentreOrbitRadius)
@@ -52,8 +44,6 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
                 Math.random() * Math.PI * 2,
                 planetA.eccentricity ?? 0
             ),
-            new RadiusComponent(BARYCENTRE_RADIUS),
-            new ColorComponent("rgba(255,255,255,0.4)")
         )
         engine.addEntity(barycentre, star)
 
@@ -65,52 +55,15 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             separation
         )
 
-        const memberA = bodyA
-        const memberB = bodyB
-
-        const styleBinaryMember = (body: Entity, data: Colony) => {
-            applyComponents(body,
-                new ColorComponent("green", "", true),
-                new SelectableComponent(10, "green"),
-                new TargetableComponent(),
-                new RadiusComponent(data.radius),
-                new HoverableComponent("pointer", { width: 40, height: 40 }),
-                new ClickableComponent(true, { width: 40, height: 40 }, ({ event: { shiftKey }, worldX, worldY }) => {
-                    if(!engine) {
-                        return
-                    }
-
-                    if(shiftKey) {
-                        const targetSystem = engine.getSystem(TargetSystem)
-                        const selectionSystem = engine.getSystem(SelectionSystem)
-                        const selection = selectionSystem?.currentSelection()
-                        if(selection) {
-                            targetSystem?.setTarget(selection, body, worldX, worldY)
-                        }
-                    } else {
-                        engine.dispatchEvent(new SelectionChangedEvent({ data: body, type: "colony" }))
-                    }
-                }),
-            )
-            if(data.population) {
-                body.addComponent(new IndustryComponent(data.population, 80, data.population, 1))
-            }
-            if(data.patronGod) {
-                body.addModifier(data.patronGod)
-            }
-        }
-
-        styleBinaryMember(memberA, planetA)
-        styleBinaryMember(memberB, planetB)
-
         if(planetA.vessels) {
             for(const v of planetA.vessels) {
-                createVessel(engine, memberA, v)
+                createVessel(engine, bodyA, v)
             }
         }
+
         if(planetB.vessels) {
             for(const v of planetB.vessels) {
-                createVessel(engine, memberB, v)
+                createVessel(engine, bodyB, v)
             }
         }
     }
@@ -118,7 +71,7 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
     for(const [, planet] of planets) {
         if(binaryPairPlanetNames.has(planet.name)) continue
 
-        createColony({
+        createBody({
             engine,
             data: planet,
             parent: star,

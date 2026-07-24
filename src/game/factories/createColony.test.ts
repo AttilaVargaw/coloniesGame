@@ -11,7 +11,7 @@ import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { IndustryComponent } from "@/game/components/industryComponent"
 import { Colony } from "@/game/data/types"
-import { createColony } from "./createColony"
+import { createBody } from "./createBody"
 
 function makeColonyData(overrides: Partial<Colony> = {}): Colony {
     return {
@@ -28,7 +28,7 @@ describe("createColony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createColony({
+        const colony = createBody({
             engine: world,
             data: makeColonyData(),
             parent,
@@ -46,7 +46,7 @@ describe("createColony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createColony({
+        const colony = createBody({
             engine: world,
             data: makeColonyData({ population: 1000 }),
             parent,
@@ -61,7 +61,7 @@ describe("createColony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createColony({
+        const colony = createBody({
             engine: world,
             data: makeColonyData(),
             parent,
@@ -94,7 +94,7 @@ describe("createColony", () => {
             archetype: "kobol",
         }
 
-        const colony = createColony({
+        const colony = createBody({
             engine: world,
             data: makeColonyData({ moons: new Map([["Moon", moonData]]) }),
             parent,
@@ -114,7 +114,7 @@ describe("createColony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createColony({
+        const colony = createBody({
             engine: world,
             data: makeColonyData({ vessels: [{ name: "Ship1", radius: 4, orbitRadius: 50, angle: 0 }] }),
             parent,

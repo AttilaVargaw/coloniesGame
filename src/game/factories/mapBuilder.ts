@@ -23,9 +23,7 @@ export function init(engine: Engine, _mapSize: number) {
         const starSceneNode = engine.getSceneNode(star)
         const attractors: Entity[] = [star]
 
-        const descendants: Entity[] = []
-        starSceneNode?.collectDescendants(descendants)
-        for(const childEntity of descendants) {
+        for(const childEntity of starSceneNode!.collectDescendants()) {
             if(childEntity !== star && childEntity.getComponent(SoiComponent) && childEntity.getComponent(PathComponent)) {
                 attractors.push(childEntity)
                 StartState.map.attractors.set(childEntity.id, childEntity)

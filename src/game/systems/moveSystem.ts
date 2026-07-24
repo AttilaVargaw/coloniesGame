@@ -212,9 +212,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         const [shipX, shipY] = getAbsolute(entity, this.engine)
 
-        const drive = entity.getComponent(JumpDriveComponent)
-        const useClick = drive && drive.clickX !== undefined && drive.clickY !== undefined
-
         const attractors = [...StartState.map.attractors.values()]
 
         let bestSoiEntity: Entity | null = null
@@ -224,11 +221,10 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             const [ax, ay] = getAbsolute(attractor, this.engine)
             const soi = attractor.getComponent(SoiComponent)?.radius ?? 0
             const distToShip = Math.hypot(shipX - ax, shipY - ay)
-            const distToClick = useClick ? Math.hypot(drive.clickX! - ax, drive.clickY! - ay) : distToShip
 
-            if(distToShip <= soi && distToClick < bestDist) {
+            if(distToShip <= soi && distToShip < bestDist) {
                 bestSoiEntity = attractor
-                bestDist = distToClick
+                bestDist = distToShip
             }
         }
 

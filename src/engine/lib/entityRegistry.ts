@@ -63,8 +63,8 @@ export class EntityRegistry {
         if(sceneNode) {
             sceneNode.parentRef?.removeChild(sceneNode)
 
-            const descendants: Entity[] = []
-            sceneNode.collectDescendants(descendants)
+            const descendants =
+                sceneNode.collectDescendants()
 
             for(const descendant of descendants) {
                 this.sceneNodes.delete(descendant.id)

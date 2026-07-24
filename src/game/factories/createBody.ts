@@ -6,7 +6,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { Colony } from "../data/types"
+import { Colony as BodyCreationData } from "../data/types"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, createLabel, calculateSoi, soiFromRadius, createColonyClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
@@ -15,10 +15,11 @@ import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createVessel } from "./createSpaceship"
+import { UNIVERSE_SCALE } from "../constants"
 
 export interface CreateColonyArgs {
     engine: Engine
-    data: Pick<Colony, "name" | "population" | "patronGod" | "radius" | "archetype" | "vessels" | "moons">
+    data: BodyCreationData
     parent: Entity
     orbitArgs?: {
         radius: number
@@ -27,13 +28,14 @@ export interface CreateColonyArgs {
     }
 }
 
-export function createColony({ engine, data, parent, orbitArgs }: CreateColonyArgs): Entity {
+export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs): Entity {
     const colony = engine.createEntity()
     applyComponents(colony,
         new PositionComponent(0, 0, 0),
         new RadiusComponent(data.radius),
         new SoiComponent(calculateSoi(data.radius, data.archetype)),
-        new PathComponent()
+        new PathComponent(),
+        new ColorComponent(data.color, "", true)
     )
 
     if(data.population) {
@@ -42,7 +44,6 @@ export function createColony({ engine, data, parent, orbitArgs }: CreateColonyAr
         }
 
         applyComponents(colony,
-            new ColorComponent("green", "", true),
             new SelectableComponent(20, "red"),
             new TargetableComponent(),
             new HoverableComponent("pointer", { width: 40, height: 40 }),
@@ -51,8 +52,7 @@ export function createColony({ engine, data, parent, orbitArgs }: CreateColonyAr
         )
     } else {
         colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
-            .addComponent(new TargetableComponent(true))
-            .addComponent(new ColorComponent("grey", "", true))
+            .addComponent(new TargetableComponent())
     }
 
     const label = createLabel(engine, data.name, 18, "white")
@@ -76,21 +76,20 @@ export function createColony({ engine, data, parent, orbitArgs }: CreateColonyAr
             angle,
             orbitArgs.eccentricity ?? 0
         ))
-        const pos = colony.getComponent(PositionComponent)
-        if(pos) {
-            pos.x = Math.cos(angle) * orbitArgs.radius
-            pos.y = Math.sin(angle) * orbitArgs.radius
-        }
+        const pos = colony.getComponent(PositionComponent)!
+
+        pos.x = Math.cos(angle) * orbitArgs.radius
+        pos.y = Math.sin(angle) * orbitArgs.radius
     }
 
     if(data.moons) {
         for(const [, moon] of data.moons) {
-            createColony({
+            createBody({
                 engine,
                 data: moon,
                 parent: colony,
                 orbitArgs: {
-                    radius: moon.distanceFromParent * 50,
+                    radius: moon.distanceFromParent * UNIVERSE_SCALE,
                     angle: Math.random() * Math.PI * 2,
                     eccentricity: moon.eccentricity ?? 0,
                 }
