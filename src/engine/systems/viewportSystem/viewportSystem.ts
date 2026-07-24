@@ -12,10 +12,11 @@ import { RedrawCommand } from "@/engine/lib/RedrawCommand";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
+import { Queue } from "@/engine/lib/commandQueue";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
-    public redrawQueue?: any
+    public redrawQueue?: Queue<RedrawCommand>
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 
@@ -62,9 +63,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
         }
-        if(this.redrawQueue) {
-            this.redrawQueue.length = 0
-        }
+        this.redrawQueue?.clear()
     }
 
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {

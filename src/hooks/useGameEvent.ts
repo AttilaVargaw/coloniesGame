@@ -9,10 +9,11 @@ export function useGameEvent<T extends EventBase>(
   const engine = useGameEngine()
 
   useEffect(() => {
-    engine.subscribe(event, callback)
-
+    if(!engine) return
+    const currentEngine = engine
+    currentEngine.subscribe(event, callback)
     return () => {
-      engine.unsubscribe(event, callback)
+      currentEngine.unsubscribe(event, callback)
     }
   }, [engine, event, callback])
 }

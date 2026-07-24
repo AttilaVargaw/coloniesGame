@@ -21,10 +21,11 @@ export const renderingContextSettings: RenderingContextSettings = {
     colorSpace: "srgb",
 }
 
-export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
+export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, triggerRedraw, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: MouseEventData) => void,
     onMouseMove: (event: MouseEventData) => void,
     onMouseDown: (event: MouseEventData) => void,
+    onMouseUp: (event: MouseEventData) => void,
     triggerRedraw: () => void
 }) {
     useLayoutEffect(() => {
@@ -95,10 +96,18 @@ export function Screen({ onClick, onMouseMove, onMouseDown, triggerRedraw, ref }
         onMouseDown(getCursorPosition(ref?.current, event))
     }
 
+    const handleMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
+        if(typeof ref === "function" || !ref?.current) {
+            return
+        }
+        onMouseUp(getCursorPosition(ref?.current, event))
+    }
+
     return <canvas
         ref={ref}
         style={{ imageRendering: "crisp-edges" }}
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
         onClick={handleClick} />;
 }

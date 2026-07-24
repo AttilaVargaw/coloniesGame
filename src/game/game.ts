@@ -41,11 +41,11 @@ export class Game {
             .addSystem(ViewportSystem)
 
         const viewportEntity = this.engine.createEntity()
-        viewportEntity.addComponent(new ViewportComponent(camera))
+            .addComponent(new ViewportComponent(camera))
         this.engine.addEntity(viewportEntity)
 
         const dateEntity = this.engine.createEntity()
-        dateEntity.addComponent(new DateComponent(0))
+            .addComponent(new DateComponent(0))
         this.engine.addEntity(dateEntity)
 
         this.engine

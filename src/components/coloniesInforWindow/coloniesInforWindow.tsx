@@ -7,7 +7,8 @@ import { Slider } from "../ui/slider";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
 import { useState } from "react";
-import { useGameRerender } from "@/hooks/useGameRerender";
+import { useGameEvent } from "@/hooks/useGameEvent";
+import { DayPassedEvent } from "@/engine/lib/events";
 
 export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
     entity?: Entity,
@@ -16,17 +17,21 @@ export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
 }) {
     const [civilianValue, setCivilianValue] = useState(0.5)
     const [militaryValue, setMilitaryValue] = useState(0.3)
-    useGameRerender()
+    const [industry, setIndustry] = useState<IndustryComponent | null>(null)
+
+    useGameEvent(DayPassedEvent, () => {
+        if(entity) {
+            setIndustry({ ...entity!.getComponent(IndustryComponent)! })
+        }
+    })
 
     if(!entity) {
         return null
     }
-
-    const industry = entity.getComponent(IndustryComponent)!
     const name = entity.getComponent(LabelComponent)
     const info = entity.getComponent(InfoComponent)
 
-    return <Dialog modal open={!!industry} onOpenChange={setIsOpen}>
+    return industry && <Dialog modal open={!!industry} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-sm" >
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>

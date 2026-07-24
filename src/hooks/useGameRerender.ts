@@ -1,10 +1,12 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { useGameEvent } from "./useGameEvent"
 import { UpdateDoneEvent } from "@/engine/lib/events"
 
 export function useGameRerender() {
   const [, setValue] = useState(true)
-  const rerender = useCallback(() => setValue(p => !p), [])
+  const rerender = () => {
+    setValue(p => !p)
+  }
 
   useGameEvent(UpdateDoneEvent, rerender)
 
