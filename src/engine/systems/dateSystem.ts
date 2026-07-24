@@ -6,6 +6,7 @@ import { System } from "./system"
 import { DateNode } from "./DateNode";
 import { Entity } from "../entities/entity";
 import { DayPassedEvent, MonthPassedEvent } from "../lib/events";
+import { TIME_ACCELERATION } from "@/game/constants";
 
 export class DateSystem extends System {
     private entity?: Entity
@@ -49,10 +50,10 @@ export class DateSystem extends System {
         }
 
         const node = this.node
-        node.date.ms += dt * 1000 * 50
+        node.date.ms += dt * TIME_ACCELERATION
 
-        this.timeSinceLastDay += dt * 1000 * 100
-        this.timeSinceLasMonth += dt * 1000 * 100
+        this.timeSinceLastDay += dt * TIME_ACCELERATION
+        this.timeSinceLasMonth += dt * TIME_ACCELERATION
 
         if(this.timeSinceLastDay > 1000 * 60 * 60 * 24) {
             this.timeSinceLastDay = 0

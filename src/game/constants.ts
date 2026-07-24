@@ -23,3 +23,4 @@ export const KEPLER_MAX_ITERATIONS = 20
 
 export const SHIP_ORBIT_BUFFER_RATIO = 0.5
 export const ORBITAL_SPEED = 50
+export const TIME_ACCELERATION = 50000

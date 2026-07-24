@@ -5,7 +5,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 if [ "$BRANCH" = "master" ]; then
   echo "You are on the 'master' branch. Running tests before commit..."
-  pnpm test
+pnpm test
   EXIT_CODE=$?
 
   if [ $EXIT_CODE -ne 0 ]; then

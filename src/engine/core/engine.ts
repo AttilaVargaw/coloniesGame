@@ -12,7 +12,7 @@ export interface Engine {
     addEntity(entity: Entity, parentEntity?: Entity | null): this;
     removeEntity(entity: Entity): void;
     reindexEntity(entity: Entity): void;
-    dispatchEvent(event: EventBase): void;
+    dispatchEvent(event: EventBase): this;
     getSceneNode(entity: Entity): SceneNode | undefined;
     subscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this;
     unsubscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this;
