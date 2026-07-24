@@ -13,6 +13,9 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "jscpd": "jscpd src",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:install": "playwright install --with-deps",
     "prepare": "husky"
   },
   "dependencies": {
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^26.1.1",
