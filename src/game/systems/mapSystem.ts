@@ -55,6 +55,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         })
         StartState.map.attractors.clear()
 
+        StartState.map.grids.forEach(grid => {
+            grid.waypoints.clear()
+            grid.attractors.clear()
+        })
+        StartState.map.grids.clear()
+
         return this
     }
 }

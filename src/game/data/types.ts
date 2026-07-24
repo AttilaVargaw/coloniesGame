@@ -1,6 +1,7 @@
 import type { Entity } from "@engine/entities/entity";
 import type { Modifier } from "@engine/modifier";
 import { soiRatios } from "../factories/helpers";
+import type { WaypointGrid } from "../factories/waypointGrid";
 
 export type Vessel = {
     readonly name: string
@@ -37,5 +38,9 @@ export type Star = {
 }
 
 export const StartState = {
-    map: { waypoints: new Map<string, Entity>(), attractors: new Map<string, Entity>() },
+    map: {
+        waypoints: new Map<string, Entity>(),
+        attractors: new Map<string, Entity>(),
+        grids: new Map<string, WaypointGrid>(),
+    },
 } as const

@@ -1,6 +1,6 @@
 import { Engine } from "@/engine/core/engine"
 import { applyComponents } from "./helpers"
-import { UNIVERSE_SCALE } from "../constants"
+import { STARMAP_COORD_SCALE, UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
 import { createBody } from "./createBody"
@@ -11,7 +11,7 @@ import { Star } from "../data/types"
 import { createVessel } from "./createSpaceship"
 
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map(), color }: Star) {
-    const star = createStar(engine, { x: x * 100, y: y * 100, soi: soi ?? 2000, color })
+    const star = createStar(engine, { x: x * STARMAP_COORD_SCALE, y: y * STARMAP_COORD_SCALE, soi: soi ?? 2000, color })
 
     const binaryPairPlanetNames = new Set<string>()
 
