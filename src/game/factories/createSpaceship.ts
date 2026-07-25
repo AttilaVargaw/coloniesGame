@@ -28,13 +28,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new ColorComponent("red"),
         new RadiusComponent(SHIP_RADIUS),
         new HoverableComponent("pointer", { width: SHIP_CLICK_SIZE, height: SHIP_CLICK_SIZE }),
-        new LabelComponent(name, 18, { x: 0, y: 20, z: 1 }, "red")
-    )
-
-    engine.addEntity(ship)
-
-    const clickArea = applyComponents(engine.createEntity(),
-        new PositionComponent(0, 0, -1),
+        new LabelComponent(name, 18, { x: 0, y: 20, z: 1 }, "red"),
         new ClickableComponent(true, { width: COLONY_CLICK_SIZE, height: COLONY_CLICK_SIZE }, ({ target, event: { shiftKey }, worldX, worldY }) => {
             const selectionSystem = engine.getSystem(SelectionSystem)
             const targetSceneNode = engine.getSceneNode(target)!
@@ -47,7 +41,8 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
             }
         })
     )
-    engine.addEntity(clickArea, ship)
+
+    engine.addEntity(ship)
 
     return ship
 }
