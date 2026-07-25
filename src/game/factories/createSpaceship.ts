@@ -31,13 +31,12 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new LabelComponent(name, 18, { x: 0, y: 20, z: 1 }, "red"),
         new ClickableComponent(true, { width: COLONY_CLICK_SIZE, height: COLONY_CLICK_SIZE }, ({ target, event: { shiftKey }, worldX, worldY }) => {
             const selectionSystem = engine.getSystem(SelectionSystem)
-            const targetSceneNode = engine.getSceneNode(target)!
 
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
-                targetSystem?.setTarget(ship, targetSceneNode.parentRef!.entity, worldX, worldY)
+                targetSystem?.setTarget(ship, target, worldX, worldY)
             } else {
-                selectionSystem?.onSelectionChanged({ entity: targetSceneNode.parentRef!.entity, type: "ship" })
+                selectionSystem?.onSelectionChanged({ entity: target, type: "ship" })
             }
         })
     )

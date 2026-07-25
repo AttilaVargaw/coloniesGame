@@ -12,7 +12,29 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
+
+const mulberry32 = (seed: number) => {
+    seed |= 0
+    return () => {
+        seed = seed + 0x6D2B79F5 | 0
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed)
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+        return ((t ^ t >>> 14) >>> 0) / 4294967296
+    }
+}
+
+const rng = mulberry32(42)
+const createStarfield = (count: number) => {
+    return Array.from({ length: count }, () => ({
+        x: rng(),
+        y: rng(),
+        r: 0.5 + rng() * 1.0,
+        opacity: 0.3 + rng() * 0.6,
+    }))
+}
+
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
+    private readonly starfield: { x: number; y: number; r: number; opacity: number }[] = createStarfield(512)
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
@@ -37,6 +59,20 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
+    private drawStarfield(ctx: CanvasRenderingContext2D) {
+        const w = ctx.canvas.width
+        const h = ctx.canvas.height
+        ctx.save()
+        ctx.fillStyle = "#ffffff"
+        for(const s of this.starfield) {
+            ctx.globalAlpha = s.opacity
+            ctx.beginPath()
+            ctx.arc(s.x * w, s.y * h, s.r, 0, TWO_PI)
+            ctx.fill()
+        }
+        ctx.restore()
+    }
+
     update(dt: number) {
         if(!this.engine) return
 
@@ -45,6 +81,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
             this.clear(ctx)
+            this.drawStarfield(ctx)
 
             camera.begin();
 
