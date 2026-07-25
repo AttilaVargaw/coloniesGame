@@ -9,7 +9,9 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
         const { orbit, entity } = node
 
-        if(!this.engine) return
+        if(!this.engine) {
+            return
+        }
 
         const sceneNode = this.engine.getSceneNode(entity)
         const parentEntity = sceneNode?.parentRef?.entity
@@ -19,7 +21,9 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         }
 
         orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * dt / 1000) % TWO_PI
-        if(orbit.meanAnomaly < 0) orbit.meanAnomaly += TWO_PI
+        if(orbit.meanAnomaly < 0) {
+            orbit.meanAnomaly += TWO_PI
+        }
 
         const E = this.solveKepler(orbit.meanAnomaly, orbit.eccentricity)
         const a = orbit.radius
@@ -42,7 +46,9 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         for(let i = 0; i < 20; i++) {
             const dE = (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E))
             E -= dE
-            if(Math.abs(dE) < 1e-9) break
+            if(Math.abs(dE) < 1e-9) {
+                break
+            }
         }
         return E
     }

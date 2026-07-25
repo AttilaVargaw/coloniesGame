@@ -39,6 +39,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
 
+    get isDragging() {
+        return this.inputHandler.isDragging
+    }
+
     get engineRef() {
         return this.engine
     }
@@ -94,63 +98,63 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             camera.end();
         }
-
-
     }
 
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {
-        if(!this.engine) return
-
-        const remainingPaths = getActivePaths()
-        if(remainingPaths.length > 0) {
-            for(const { ship, waypoints } of remainingPaths) {
-                if(waypoints.length === 0) continue
-                const [sx, sy] = getAbsolute(ship, this.engine)
-
-                ctx.beginPath()
-                ctx.moveTo(sx, sy)
-
-                for(const waypoint of waypoints) {
-                    const [wx, wy] = getAbsolute(waypoint, this.engine)
-                    ctx.lineTo(wx, wy)
-                }
-
-                ctx.strokeStyle = "rgba(255, 215, 0, 0.25)"
-                ctx.lineWidth = 1
-                ctx.setLineDash([4, 4])
-                ctx.stroke()
-                ctx.setLineDash([])
-            }
+        if(!this.engine) {
+            return
         }
 
-        const todayJumps = getTodaysJumps()
-        if(todayJumps.length > 0) {
-            for(const { path } of todayJumps) {
-                if(path.length < 2) continue
-                const [sx, sy] = getAbsolute(path[0], this.engine)
+        for(const { ship, waypoints } of getActivePaths()) {
+            if(waypoints.length === 0) {
+                continue
 
-                ctx.beginPath()
-                ctx.moveTo(sx, sy)
-
-                for(let i = 1; i < path.length; i++) {
-                    const [wx, wy] = getAbsolute(path[i], this.engine)
-                    ctx.lineTo(wx, wy)
-                }
-
-                ctx.strokeStyle = "rgba(255, 215, 0, 0.85)"
-                ctx.lineWidth = 2
-                ctx.setLineDash([])
-                ctx.stroke()
             }
+            const [sx, sy] = getAbsolute(ship, this.engine)
+
+            ctx.beginPath()
+            ctx.moveTo(sx, sy)
+
+            for(const waypoint of waypoints) {
+                const [wx, wy] = getAbsolute(waypoint, this.engine)
+                ctx.lineTo(wx, wy)
+            }
+
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.25)"
+            ctx.lineWidth = 1
+            ctx.setLineDash([4, 4])
+            ctx.stroke()
+            ctx.setLineDash([])
+        }
+
+        for(const { path } of getTodaysJumps()) {
+            if(path.length < 2) {
+                continue
+            }
+            const [sx, sy] = getAbsolute(path[0], this.engine)
+
+            ctx.beginPath()
+            ctx.moveTo(sx, sy)
+
+            for(let i = 1; i < path.length; i++) {
+                const [wx, wy] = getAbsolute(path[i], this.engine)
+                ctx.lineTo(wx, wy)
+            }
+
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.85)"
+            ctx.lineWidth = 2
+            ctx.setLineDash([])
+            ctx.stroke()
         }
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {
-        if(!this.engine) return
+        if(!this.engine) {
+            return
 
-        const orbitNodes = this.engine.getNodeList(OrbitNode)
+        }
 
-        for(const node of orbitNodes) {
+        for(const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
             const parentEntity = sceneNode?.parentRef?.entity
             if(!parentEntity) continue

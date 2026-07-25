@@ -3,7 +3,7 @@ import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 
 export class ViewportInputHandler {
-    private isDragging = false
+    private _isDragging = false
     private lastPointer: { x: number, y: number } | null = null
     private dragMoved = false
     private pointer: { x: number, y: number } = { x: 0, y: 0 }
@@ -17,6 +17,10 @@ export class ViewportInputHandler {
     private static readonly KEY_PAN_SPEED = 250
     private static readonly WHEEL_ZOOM_SPEED = 1.0015
 
+    get isDragging() {
+        return this._isDragging
+    }
+
     consumeDragMoved() {
         const moved = this.dragMoved
         this.dragMoved = false
@@ -24,7 +28,7 @@ export class ViewportInputHandler {
     }
 
     private applyKeyScroll(dt: number, camera: Camera) {
-        const { pointer } = this
+        const pointer = this.pointer
 
         let panX = 0
         let panY = 0
@@ -41,10 +45,10 @@ export class ViewportInputHandler {
             )
         }
 
-        if(this.heldKeys.has("+") || this.heldKeys.has("=")) {
+        if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
             camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
         }
-        if(this.heldKeys.has("-") || this.heldKeys.has("_")) {
+        if(this.heldKeys.has("+") || this.heldKeys.has("_")) {
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), pointer.x, pointer.y)
         }
     }
@@ -73,7 +77,6 @@ export class ViewportInputHandler {
         const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
         if(!canvas) {
             return
-
         }
 
         window.removeEventListener("keydown", this.onKeyDown)
@@ -122,14 +125,14 @@ export class ViewportInputHandler {
         }
 
         for(const { data } of mousedownArray) {
-            this.isDragging = true
+            this._isDragging = true
             this.lastPointer = { x: data.x, y: data.y }
             this.dragMoved = false
             document.body.style.cursor = "grabbing"
         }
         mousedownArray.clear()
 
-        if(this.isDragging && this.lastPointer) {
+        if(this._isDragging && this.lastPointer) {
             for(const { data } of mouseMovedArray) {
                 const dx = data.x - this.lastPointer.x
                 const dy = data.y - this.lastPointer.y
@@ -144,7 +147,7 @@ export class ViewportInputHandler {
         }
 
         if(mouseupArray.length) {
-            this.isDragging = false
+            this._isDragging = false
             this.lastPointer = null
             document.body.style.cursor = "default"
         }

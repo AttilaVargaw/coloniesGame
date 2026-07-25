@@ -58,6 +58,10 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
     update(_dt: number) {
         if(!this.engine) return
 
+        if(this.viewportSystem.isDragging) {
+            return
+        }
+
         const mouseMovedCommand = this.engine.getEvents(MousemoveEvent)!
         if(!mouseMovedCommand.length) return
 
