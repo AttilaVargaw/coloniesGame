@@ -1,6 +1,5 @@
 import type { Engine } from "@/engine/core/engine";
 import { SystemWithNodes } from "../../system";
-import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "../viewportSystem";
 import { EntityAddedEvent } from "@/engine/lib/events";
 import { RenderableNode } from "./renderableNode";
@@ -67,7 +66,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     private onEntityAdded = () => {
         if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort(sortByDepth)
+            this.nodes.sort((a, b) => a.zIndex - b.zIndex)
         }
     }
 }

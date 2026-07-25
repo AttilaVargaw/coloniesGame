@@ -1,12 +1,11 @@
 import { ColorComponent } from "@engine/components/colorComponent";
-import { PositionNode } from "../positionNode";
-import { PositionComponent } from "@engine/components/position";
 import { Entity } from "@engine/entities/entity";
+import { EntityNode } from "@/engine/entities/entityNode";
 
 
-export class RenderableNode extends PositionNode {
-    constructor(position: PositionComponent, public color: ColorComponent, entity: Entity) {
-        super(position, entity);
+export class RenderableNode extends EntityNode {
+    constructor(public color: ColorComponent, entity: Entity, public zIndex = 0) {
+        super(entity);
     }
 
     setColor(ctx: CanvasRenderingContext2D) {

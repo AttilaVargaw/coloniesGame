@@ -6,6 +6,6 @@ import { RenderableNode } from "./renderableNode";
 
 export class LabelNode extends RenderableNode {
     constructor(entity: Entity, public position: PositionComponent, public color: ColorComponent, public label: LabelComponent) {
-        super(position, color, entity);
+        super(color, entity);
     }
 }

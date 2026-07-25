@@ -1,7 +1,4 @@
 import { Entity } from "@engine/entities/entity"
-import { ColorComponent } from "@engine/components/colorComponent"
-import { LabelComponent } from "@engine/components/label"
-import { PositionComponent } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { SelectionChangedEvent } from "@/engine/lib/events"
 import { SelectionSystem } from "@game/systems/selectionSystem"
@@ -34,14 +31,6 @@ export function soiFromRadius(radiusComponent: RadiusComponent, archetype: keyof
     }
 
     return new SoiComponent(calculateSoi(radiusComponent.radius, archetype))
-}
-
-export function createLabel(engine: Engine, text: string, fontSize = 18, color = "white", x = 0, y = 0, z = 0) {
-    return applyComponents(engine.createEntity(),
-        new LabelComponent(text, fontSize),
-        new ColorComponent(color),
-        new PositionComponent(x, y, z)
-    )
 }
 
 export function applyComponents(entity: Entity, ...components: EntityComponent[]) {

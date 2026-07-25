@@ -7,6 +7,6 @@ import { HexagonComponent } from "@engine/components/hexagonComponent";
 
 export class HexagoneNode extends RenderableNode {
     constructor(entity: Entity, public position: PositionComponent, public color: ColorComponent, public hexagon: HexagonComponent) {
-        super(position, color, entity);
+        super(color, entity);
     }
 }

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { DateComponent } from "@engine/components/dateComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
 import { World } from "@engine/core/world"

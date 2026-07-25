@@ -6,6 +6,6 @@ import { RenderableNode } from "./renderableNode";
 
 export class CircleNode extends RenderableNode {
     constructor(entity: Entity, public position: PositionComponent, public radius: RadiusComponent, public color: ColorComponent = new ColorComponent("red")) {
-        super(position, color, entity);
+        super(color, entity);
     }
 }

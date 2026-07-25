@@ -2,8 +2,6 @@ import { SystemWithNodes } from "./system";
 import { ClickableNode } from "./viewportSystem/ClickableNode";
 import type { Engine } from "@/engine/core/engine";
 import { ClickableComponent } from "../components/clickableComponent";
-import { PositionComponent } from "../components/position";
-import { sortByDepth } from "@/lib/sortByIndex";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
@@ -34,13 +32,12 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     }
 
     private onUpdateIndices = () => {
-        this.nodes.sort(sortByDepth)
+        this.nodes.sort((a, b) => a.clickable.zIndex - b.clickable.zIndex)
     }
 
     protected registerNodes(engine: Engine): this {
         engine.registerNodeType(ClickableNode, new Set([ClickableComponent]), (entity) =>
             new ClickableNode(
-                entity.getComponent(PositionComponent)!,
                 entity.getComponent(ClickableComponent)!,
                 entity
             )
@@ -55,7 +52,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         super.addToEngine(engine);
         this.clickQueue = engine.getEvents(ClickEventData);
         this.nodes = engine.getNodeList(ClickableNode);
-        this.nodes.sort(sortByDepth)
+        this.nodes.sort()
 
         return this
     }

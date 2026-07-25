@@ -28,7 +28,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         node.setColor(ctx);
         ctx.translate(...getAbsolute(node.entity!, this.engine!));
         ctx.font = `${node.label.size}px Roboto`;
-        ctx.fillText(node.label.text, 24, 0);
+        ctx.fillText(node.label.text, node.label.offset.x, node.label.offset.y);
         ctx.restore();
     }
 }

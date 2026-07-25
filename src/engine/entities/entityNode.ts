@@ -1,6 +1,6 @@
 import type { Entity } from "./entity";
 
-export abstract class EntityNode {
+export class EntityNode {
     constructor(public entity: Entity) { }
 }
 

@@ -1,11 +1,9 @@
 import { ClickableComponent } from "@engine/components/clickableComponent";
-import { PositionComponent } from "@engine/components/position";
 import { Entity } from "@engine/entities/entity";
-import { PositionNode } from "./positionNode";
+import { EntityNode } from "@/engine/entities/entityNode";
 
-
-export class ClickableNode extends PositionNode {
-    constructor(position: PositionComponent, public clickable: ClickableComponent, entity: Entity) {
-        super(position, entity);
+export class ClickableNode extends EntityNode {
+    constructor(public clickable: ClickableComponent, entity: Entity) {
+        super(entity);
     }
 }

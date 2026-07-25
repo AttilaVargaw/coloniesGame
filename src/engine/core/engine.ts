@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 import type { Entity } from "../entities/entity";
 import { SceneNode } from "../entities/sceneNode";
 import { System } from "../systems/system";

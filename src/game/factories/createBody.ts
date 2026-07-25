@@ -8,7 +8,7 @@ import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { Colony as BodyCreationData } from "../data/types"
 import { Engine } from "@/engine/core/engine"
-import { applyComponents, createLabel, calculateSoi, soiFromRadius, createColonyClickHandler } from "./helpers"
+import { applyComponents, calculateSoi, soiFromRadius, createColonyClickHandler, soiRatios } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
@@ -16,6 +16,7 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createVessel } from "./createSpaceship"
 import { UNIVERSE_SCALE } from "../constants"
+import { LabelComponent } from "@/engine/components/label"
 
 export interface CreateColonyArgs {
     engine: Engine
@@ -28,6 +29,14 @@ export interface CreateColonyArgs {
     }
 }
 
+function createSoiCircle(colony: Entity, archetype: keyof typeof soiRatios, engine: Engine) {
+    return applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
+        new RadiusComponent(soiFromRadius(colony.getComponent(RadiusComponent)!, archetype).radius),
+        new ColorComponent("", "rgba(0,255,255,0.25)")
+    )
+}
+
 export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs): Entity {
     const colony = engine.createEntity()
     applyComponents(colony,
@@ -35,7 +44,9 @@ export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs
         new RadiusComponent(data.radius),
         new SoiComponent(calculateSoi(data.radius, data.archetype)),
         new PathComponent(),
-        new ColorComponent(data.color, "", true)
+        new ColorComponent(data.color, "", true),
+        new LabelComponent(data.name, 18, { x: data.radius + 8, y: 0, z: 1 }, "white"),
+        new TargetableComponent(),
     )
 
     if(data.population) {
@@ -45,26 +56,18 @@ export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs
 
         applyComponents(colony,
             new SelectableComponent(20, "red"),
-            new TargetableComponent(),
             new HoverableComponent("pointer", { width: 40, height: 40 }),
             new ClickableComponent(true, { width: 40, height: 40 }, createColonyClickHandler(engine, colony)),
             new IndustryComponent(data.population, 80, data.population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
         )
     } else {
-        colony.addComponent(new HoverableComponent("not-allowed", { width: 40, height: 40 },))
-            .addComponent(new TargetableComponent())
+        applyComponents(colony,
+            new HoverableComponent("not-allowed", { width: 40, height: 40 }))
     }
 
-    const label = createLabel(engine, data.name, 18, "white")
-
-    const soiCircle = applyComponents(engine.createEntity(),
-        new PositionComponent(0, 0),
-        new RadiusComponent(soiFromRadius(colony.getComponent(RadiusComponent)!, data.archetype).radius),
-        new ColorComponent("", "rgba(0,255,255,0.25)")
-    )
+    const soiCircle = createSoiCircle(colony, data.archetype, engine)
 
     engine.addEntity(colony, parent)
-        .addEntity(label, colony)
         .addEntity(soiCircle, colony)
 
     if(orbitArgs) {

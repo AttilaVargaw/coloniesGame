@@ -1,5 +1,5 @@
-import { PositionNode } from "@engine/systems/viewportSystem/positionNode";
+import { PositionComponent } from "@/engine/components/position"
 
-export function sortByDepth(a: PositionNode, b: PositionNode) {
-    return a.position.z - b.position.z
+export function sortByZIndex({ position: { z: aZ } }: { position: PositionComponent }, { position: { z: bZ } }: { position: PositionComponent }) {
+    return aZ - bZ
 }

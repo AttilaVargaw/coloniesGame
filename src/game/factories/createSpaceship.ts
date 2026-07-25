@@ -7,7 +7,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
 import { SelectionSystem } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
-import { applyComponents, createLabel } from "./helpers"
+import { applyComponents } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE } from "../constants"
@@ -15,6 +15,7 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { Vessel } from "../data/types"
 import { Entity } from "@engine/entities/entity"
+import { LabelComponent } from "@/engine/components/label"
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = applyComponents(engine.createEntity(),
@@ -27,6 +28,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new ColorComponent("red"),
         new RadiusComponent(SHIP_RADIUS),
         new HoverableComponent("pointer", { width: SHIP_CLICK_SIZE, height: SHIP_CLICK_SIZE }),
+        new LabelComponent(name, 18, { x: 0, y: 20, z: 1 }, "red")
     )
 
     engine.addEntity(ship)
@@ -46,9 +48,6 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         })
     )
     engine.addEntity(clickArea, ship)
-
-    const label = createLabel(engine, name, 18, "red")
-    engine.addEntity(label, ship)
 
     return ship
 }

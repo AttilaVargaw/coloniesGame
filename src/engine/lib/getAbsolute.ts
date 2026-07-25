@@ -6,16 +6,12 @@ export function getAbsolute(entity: Entity, engine: Engine): [number, number] {
     const sceneNode = engine.getSceneNode(entity);
     const parentPosition = sceneNode?.parentRef?.entity;
 
-    let absoluteX: number;
-    let absoluteY: number;
+    const position = entity.getComponent(PositionComponent)!;
+    let absoluteX = position.x;
+    let absoluteY = position.y;
 
-    if(!parentPosition) {
-        const position = entity.getComponent(PositionComponent)!;
-        absoluteX = position.x;
-        absoluteY = position.y;
-    } else {
+    if(parentPosition) {
         const [parentX, parentY] = getAbsolute(sceneNode.parentRef.entity, engine);
-        const position = entity.getComponent(PositionComponent)!;
         absoluteX = parentX + position.x;
         absoluteY = parentY + position.y;
     }
