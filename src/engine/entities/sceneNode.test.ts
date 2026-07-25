@@ -184,8 +184,8 @@ describe("SceneNode", () => {
         parentNode.addChild(child2Node)
         child1Node.addChild(grandchildNode)
 
-        const descendants: Entity[] = []
-        parentNode.collectDescendants(descendants)
+        const descendants: Entity[] =
+            parentNode.collectDescendants()
 
         expect(descendants).toHaveLength(3)
         expect(descendants).toContain(child1)
@@ -197,8 +197,8 @@ describe("SceneNode", () => {
         const entity = new Entity("e1")
         const node = new SceneNode(entity.id, entity)
 
-        const descendants: Entity[] = []
-        node.collectDescendants(descendants)
+        const descendants: Entity[] =
+            node.collectDescendants()
 
         expect(descendants).toHaveLength(0)
     })

@@ -3,40 +3,55 @@ import { Entity } from "@engine/entities/entity"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { Colony } from "../data/types"
 import { createBody } from "./createBody"
+import { OrbitComponent } from "@/engine/components/orbitComponent"
+import { PositionComponent } from "@/engine/components/position"
+import { UNIVERSE_SCALE } from "../constants"
+import { angularSpeed } from "../utils/orbital"
+import { applyComponents } from "./helpers"
+
+const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
+    radius: barycentreOrbitRadius,
+    angle,
+    eccentricity: 0,
+})
 
 export function createBinaryOrbitPair(
     engine: Engine,
     parent: Entity,
-    colonyA: Colony,
-    colonyB: Colony,
-    separation: number
+    planetA: Colony,
+    planetB: Colony,
+    separation: number,
 ) {
     const angleA = Math.random() * Math.PI * 2
-    const barycentreOrbitRadius = separation / 2
-
-    const makeOrbitArgs = (angle: number) => ({
-        radius: barycentreOrbitRadius,
-        angle,
-        eccentricity: 0,
-    })
+    const barycentreOrbitRadius = (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE
+    const barycentre = applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
+        new OrbitComponent(
+            parent.id,
+            (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE,
+            angularSpeed(barycentreOrbitRadius),
+            Math.random() * Math.PI * 2,
+            planetA.eccentricity ?? 0
+        ),
+    )
 
     const bodyA = createBody({
         engine,
-        data: colonyA,
-        parent,
-        orbitArgs: makeOrbitArgs(angleA)
+        data: planetA,
+        parent: barycentre,
+        orbitArgs: makeOrbitArgs(angleA, separation * UNIVERSE_SCALE)
     })
 
     const bodyB = createBody({
         engine,
-        data: colonyB,
-        parent,
-        orbitArgs: makeOrbitArgs(angleA + Math.PI)
+        data: planetB,
+        parent: barycentre,
+        orbitArgs: makeOrbitArgs(angleA + Math.PI, separation * UNIVERSE_SCALE)
     })
 
-    bodyA.removeComponent(SelectableComponent)
+    engine.addEntity(barycentre, parent)
+
     bodyA.addComponent(new SelectableComponent(10, "green"))
-    bodyB.removeComponent(SelectableComponent)
     bodyB.addComponent(new SelectableComponent(10, "green"))
 
     return { bodyA, bodyB };

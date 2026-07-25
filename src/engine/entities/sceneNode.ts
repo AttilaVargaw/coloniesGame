@@ -70,10 +70,11 @@ export class SceneNode {
     }
 
     collectDescendants() {
-        const ret: Entity[] = []
+        let ret: Entity[] = []
 
         for(const child of this.children) {
-            ret.concat(child.collectDescendants())
+            ret.push(child.entity)
+            ret.splice(0, 0, ...child.collectDescendants())
         }
 
         return ret

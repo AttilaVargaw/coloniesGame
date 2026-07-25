@@ -15,6 +15,7 @@ import { createBody } from "./createBody"
 
 function makeColonyData(overrides: Partial<Colony> = {}): Colony {
     return {
+        color: "blue",
         name: "Earth",
         distanceFromParent: 10,
         radius: 5,
@@ -92,6 +93,7 @@ describe("createColony", () => {
             distanceFromParent: 2,
             radius: 3,
             archetype: "kobol",
+            color: "grey",
         }
 
         const colony = createBody({
@@ -103,8 +105,8 @@ describe("createColony", () => {
 
         const colonyNode = world.getSceneNode(colony)
         expect(colonyNode).toBeDefined()
-        const descendants: Entity[] = []
-        colonyNode!.collectDescendants(descendants)
+        const descendants: Entity[] =
+            colonyNode!.collectDescendants()
 
         const moon = descendants.find(e => e.getComponent(OrbitComponent)?.centerEntityId === colony.id)
         expect(moon).toBeDefined()
@@ -123,8 +125,8 @@ describe("createColony", () => {
 
         const colonyNode = world.getSceneNode(colony)
         expect(colonyNode).toBeDefined()
-        const descendants: Entity[] = []
-        colonyNode!.collectDescendants(descendants)
+        const descendants: Entity[] =
+            colonyNode!.collectDescendants()
 
         const ship = descendants.find(e => e.getComponent(OrbitComponent)?.centerEntityId === colony.id)
         expect(ship).toBeDefined()

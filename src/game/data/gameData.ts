@@ -18,7 +18,7 @@ export const solarSystems = new Map<string, Star>([
         color: "#fffcc9",
         x: 16, y: 18,
         soi: 2000,
-        binaryPairs: new Map([["Caprica-Gemenon", 180]]),
+        binaryPairs: new Map([["Caprica-Gemenon", 1.45]]),
         planets: new Map([
             ["Icarus", { color: "#f99838", distanceFromParent: 2, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2 }],
             ["Persephone", { color: "#b1b3ba", distanceFromParent: 44, radius: 4, name: "Persephone", archetype: "mercury", eccentricity: 0.4 }],
@@ -33,7 +33,7 @@ export const solarSystems = new Map<string, Star>([
                 color: "#879cb8",
                 archetype: "kobol",
                 name: "Caprica",
-                distanceFromParent: 20,
+                distanceFromParent: 24,
                 radius: 8,
                 population: 4_900_000_000, sign: "♑︎", eccentricity: 0.017, patronGod: createPatronGodModifier({
                     name: "Apollo",

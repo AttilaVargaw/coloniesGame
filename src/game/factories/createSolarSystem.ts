@@ -1,14 +1,9 @@
 import { Engine } from "@/engine/core/engine"
-import { applyComponents } from "./helpers"
 import { STARMAP_COORD_SCALE, UNIVERSE_SCALE } from "../constants"
-import { angularSpeed } from "../utils/orbital"
 import { createStar } from "./createStar"
 import { createBody } from "./createBody"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
-import { PositionComponent } from "@engine/components/position"
-import { OrbitComponent } from "@engine/components/orbitComponent"
 import { Star } from "../data/types"
-import { createVessel } from "./createSpaceship"
 
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map(), color }: Star) {
     const star = createStar(engine, { x: x * STARMAP_COORD_SCALE, y: y * STARMAP_COORD_SCALE, soi: soi ?? 2000, color })
@@ -29,43 +24,13 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
         const planetA = planets.get(nameA)!
         const planetB = planets.get(nameB)!
 
-        if(!planetA || !planetB) {
-            continue
-        }
-
-        const barycentreOrbitRadius = (planetA.distanceFromParent + planetB.distanceFromParent) * UNIVERSE_SCALE / 2
-        const barycentreAngularSpeed = angularSpeed(barycentreOrbitRadius)
-        const barycentre = applyComponents(engine.createEntity(),
-            new PositionComponent(0, 0),
-            new OrbitComponent(
-                star.id,
-                barycentreOrbitRadius,
-                barycentreAngularSpeed,
-                Math.random() * Math.PI * 2,
-                planetA.eccentricity ?? 0
-            ),
-        )
-        engine.addEntity(barycentre, star)
-
-        const { bodyA, bodyB } = createBinaryOrbitPair(
+        createBinaryOrbitPair(
             engine,
-            barycentre,
+            star,
             planetA,
             planetB,
             separation
         )
-
-        if(planetA.vessels) {
-            for(const v of planetA.vessels) {
-                createVessel(engine, bodyA, v)
-            }
-        }
-
-        if(planetB.vessels) {
-            for(const v of planetB.vessels) {
-                createVessel(engine, bodyB, v)
-            }
-        }
     }
 
     for(const [, planet] of planets) {
