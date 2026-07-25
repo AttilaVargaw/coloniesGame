@@ -59,6 +59,28 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
     }
 
+    setTargetForOrbitSelection(ship: Entity, target: Entity, _worldX?: number, _worldY?: number) {
+        if(!this.engine) return
+        if(!target.getComponent(TargetableComponent)) return
+
+        const mapSystem = this.engine.getSystem(MapSystem)
+        const selectionSceneNode = this.engine.getSceneNode(ship)!
+        const selectionsParent = selectionSceneNode.parentRef!.entity
+        const path = mapSystem?.findPath(selectionsParent, target)
+
+        if(path && path.length > 1) {
+            setShipPath(ship, path)
+        } else {
+            const drive = ship.getComponent(JumpDriveComponent)
+            if(drive) {
+                drive.target = target
+                drive.isOrbitSelecting = true
+            }
+        }
+
+        this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
+    }
+
     clearTarget(ship: Entity) {
         if(!this.engine) return
 

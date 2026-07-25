@@ -114,13 +114,14 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         todaysJumps.clear();
         const alreadyMoved = new Set<Entity>();
 
-        for(const { entity, jumpDrive: { target }, sensorSuite: { range } } of this.nodes) {
-            if(!target || entity === target || alreadyMoved.has(entity)) continue
+        for(const { entity, jumpDrive, sensorSuite: { range } } of this.nodes) {
+            if(!jumpDrive.target || entity === jumpDrive.target || alreadyMoved.has(entity)) continue
+            if(jumpDrive.isOrbitSelecting) continue
 
             const fuel = entity.getComponent(FuelComponent)
             if(fuel) {
                 const pos = entity.getComponent(PositionComponent)
-                const targetPos = target.getComponent(PositionComponent)
+                const targetPos = jumpDrive.target.getComponent(PositionComponent)
                 if(pos && targetPos) {
                     const dist = Math.hypot(targetPos.x - pos.x, targetPos.y - pos.y)
                     const cost = dist * fuel.consumptionRate * 0.01
@@ -162,11 +163,11 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     targetSystem?.clearTarget(entity)
                 }
             } else {
-                const targetNode = this.engine.getSceneNode(target)!
+                const targetNode = this.engine.getSceneNode(jumpDrive.target)!
                 shipNode.parentRef?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
-                this.positionShipAtTarget(entity, target)
+                this.positionShipAtTarget(entity, jumpDrive.target)
             }
 
             this.resolveOrbit(entity)

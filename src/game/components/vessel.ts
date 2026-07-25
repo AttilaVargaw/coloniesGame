@@ -5,6 +5,7 @@ export class JumpDriveComponent extends EntityComponent {
     target?: Entity
     clickX?: number
     clickY?: number
+    isOrbitSelecting?: boolean
 }
 
 export class SensorSuiteComponent extends EntityComponent {

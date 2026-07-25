@@ -113,7 +113,10 @@ export class ViewportInputHandler {
     }
 
     update(dt: number) {
-        if(!this.viewportSystem.engineRef) return
+        if(!this.viewportSystem.engineRef) {
+            return
+
+        }
 
         const camera = this.viewportSystem.viewport.camera
         const mousedownArray = this.viewportSystem.engineRef.getEvents(MousedownEvent)!

@@ -97,7 +97,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                         const { x: worldX, y: worldY } = camera.screenToWorld(data.x, data.y)
                         const bestEntity = targetSystem?.findNearestTarget(selection, worldX, worldY)
                         if(bestEntity) {
-                            targetSystem?.setTarget(selection, bestEntity, worldX, worldY)
+                            targetSystem?.setTargetForOrbitSelection(selection, bestEntity, worldX, worldY)
                             hit = true
                         }
                     }

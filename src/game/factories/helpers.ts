@@ -49,7 +49,7 @@ export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
             const selectionSystem = engine.getSystem(SelectionSystem)
             const selection = selectionSystem?.currentSelection()
             if(selection) {
-                targetSystem?.setTarget(selection, targetEntity, worldX, worldY)
+                targetSystem?.setTargetForOrbitSelection(selection, targetEntity, worldX, worldY)
             }
         } else {
             engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type: "colony" }))

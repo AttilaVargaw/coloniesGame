@@ -12,6 +12,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
+import { OrbitSelectionSystem } from "@/game/systems/orbitSelectionSystem";
 
 const mulberry32 = (seed: number) => {
     seed |= 0
@@ -213,6 +214,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new CircleRenderer(this))
             .addSubsystem(new RectRenderer(this))
             .addSubsystem(new LabelRenderer(this))
+            .addSubsystem(new OrbitSelectionSystem(this))
 
         return this
     }

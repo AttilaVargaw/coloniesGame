@@ -59,13 +59,14 @@ export class EventBus {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void) {
+        if(event === MousemoveEvent) {
+            console.log("subscribing to mousemove")
+        }
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
-
-            return this
+        } else {
+            this.eventHandlers.get(event)!.add(callback)
         }
-
-        this.eventHandlers.get(event)?.add(callback)
 
         return this
     }

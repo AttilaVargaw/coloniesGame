@@ -6,7 +6,9 @@ export abstract class System {
     protected subsystems = new Set<System>()
     protected parent?: System
 
-    update(_dt: number): void { }
+    update(_dt: number): void {
+
+    }
 
     updateSubsystems(dt: number): void {
         for(const subsystem of this.subsystems) {
