@@ -12,6 +12,7 @@
     "coverage": "vitest run --coverage",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
+    "knip": "knip",
     "jscpd": "jscpd src",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
@@ -58,6 +59,7 @@
     "globals": "^17.7.0",
     "husky": "^9.1.7",
     "jscpd": "^5.0.12",
+    "knip": "^6.29.0",
     "typescript": "6.0.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
