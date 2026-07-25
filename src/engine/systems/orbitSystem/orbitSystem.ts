@@ -3,6 +3,7 @@ import { SystemWithNodes } from "../system";
 import { OrbitNode } from "./orbitNode";
 import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
+import { TWO_PI } from "@/game/constants";
 
 export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
@@ -17,8 +18,8 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
             return
         }
 
-        orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * dt / 1000) % (Math.PI * 2)
-        if(orbit.meanAnomaly < 0) orbit.meanAnomaly += Math.PI * 2
+        orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * dt / 1000) % TWO_PI
+        if(orbit.meanAnomaly < 0) orbit.meanAnomaly += TWO_PI
 
         const E = this.solveKepler(orbit.meanAnomaly, orbit.eccentricity)
         const a = orbit.radius

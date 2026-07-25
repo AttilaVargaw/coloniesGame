@@ -6,6 +6,7 @@ import { CircleNode } from "./circleNode";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { isVisible } from "./isVisible";
 import { BaseRenderer } from "./baseRenderer";
+import { TWO_PI } from "@/game/constants";
 
 function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
     const gradient = ctx.createRadialGradient(
@@ -18,7 +19,7 @@ function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius
 
     ctx.fillStyle = gradient
     ctx.beginPath()
-    ctx.arc(x, y, radius, 0, Math.PI * 2)
+    ctx.arc(x, y, radius, 0, TWO_PI)
     ctx.fill()
 }
 
@@ -46,7 +47,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         ctx.translate(...getAbsolute(circle.entity!, this.engine!));
 
         ctx.beginPath();
-        ctx.arc(0, 0, circle.radius.radius, 0, Math.PI * 2);
+        ctx.arc(0, 0, circle.radius.radius, 0, TWO_PI);
         ctx.closePath();
         circle.draw(ctx);
 

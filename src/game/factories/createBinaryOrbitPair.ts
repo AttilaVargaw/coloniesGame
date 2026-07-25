@@ -5,7 +5,7 @@ import { Colony } from "../data/types"
 import { createBody } from "./createBody"
 import { OrbitComponent } from "@/engine/components/orbitComponent"
 import { PositionComponent } from "@/engine/components/position"
-import { UNIVERSE_SCALE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { applyComponents } from "./helpers"
 
@@ -22,7 +22,7 @@ export function createBinaryOrbitPair(
     planetB: Colony,
     separation: number,
 ) {
-    const angleA = Math.random() * Math.PI * 2
+    const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE
     const barycentre = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
@@ -30,7 +30,7 @@ export function createBinaryOrbitPair(
             parent.id,
             (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE,
             angularSpeed(barycentreOrbitRadius),
-            Math.random() * Math.PI * 2,
+            Math.random() * TWO_PI,
             planetA.eccentricity ?? 0
         ),
     )

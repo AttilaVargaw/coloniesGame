@@ -11,6 +11,7 @@ import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
+import { TWO_PI } from "@/game/constants";
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private readonly eventHandlers: Set<Entity> = new Set()
@@ -131,7 +132,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 b,
                 0,
                 0,
-                Math.PI * 2
+                TWO_PI
             )
             ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
             ctx.lineWidth = 3

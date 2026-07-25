@@ -15,7 +15,7 @@ import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createVessel } from "./createSpaceship"
-import { UNIVERSE_SCALE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { LabelComponent } from "@/engine/components/label"
 
 export interface CreateColonyArgs {
@@ -49,20 +49,23 @@ export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs
         new TargetableComponent(),
     )
 
+    const clickSize = data.radius * 2
+    const clickSquare = { width: clickSize, height: clickSize }
+
     if(data.population) {
         if(data.patronGod) {
             colony.addModifier(data.patronGod)
         }
 
         applyComponents(colony,
-            new SelectableComponent(20, "red"),
-            new HoverableComponent("pointer", { width: 40, height: 40 }),
-            new ClickableComponent(true, { width: 40, height: 40 }, createColonyClickHandler(engine, colony)),
+            new SelectableComponent(clickSize, "red"),
+            new HoverableComponent("pointer", clickSquare),
+            new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, colony)),
             new IndustryComponent(data.population, 80, data.population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
         )
     } else {
         applyComponents(colony,
-            new HoverableComponent("not-allowed", { width: 40, height: 40 }))
+            new HoverableComponent("not-allowed", clickSquare))
     }
 
     const soiCircle = createSoiCircle(colony, data.archetype, engine)
@@ -71,7 +74,7 @@ export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs
         .addEntity(soiCircle, colony)
 
     if(orbitArgs) {
-        const angle = orbitArgs.angle ?? Math.random() * Math.PI * 2
+        const angle = orbitArgs.angle ?? Math.random() * TWO_PI
         colony.addComponent(new OrbitComponent(
             parent.id,
             orbitArgs.radius,
@@ -93,7 +96,7 @@ export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs
                 parent: colony,
                 orbitArgs: {
                     radius: moon.distanceFromParent * UNIVERSE_SCALE,
-                    angle: Math.random() * Math.PI * 2,
+                    angle: Math.random() * TWO_PI,
                     eccentricity: moon.eccentricity ?? 0,
                 }
             })

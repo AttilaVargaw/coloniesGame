@@ -10,7 +10,7 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
-import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE } from "../constants"
+import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE, TWO_PI } from "../constants"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { Vessel } from "../data/types"
@@ -55,7 +55,7 @@ export function createVessel(
     const ship = createSpaceship(engine, { name })
     ship.getComponent(RadiusComponent)!.radius = radius
 
-    const orbitAngle = angle ?? Math.random() * Math.PI * 2
+    const orbitAngle = angle ?? Math.random() * TWO_PI
     ship.addComponent(new OrbitComponent(parent.id, orbitRadius, angularSpeed(orbitRadius), orbitAngle))
 
     const pos = ship.getComponent(PositionComponent)!

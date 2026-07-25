@@ -1,5 +1,5 @@
 import { Engine } from "@/engine/core/engine"
-import { STARMAP_COORD_SCALE, UNIVERSE_SCALE } from "../constants"
+import { STARMAP_COORD_SCALE, TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { createStar } from "./createStar"
 import { createBody } from "./createBody"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
@@ -42,7 +42,7 @@ export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPa
             parent: star,
             orbitArgs: {
                 radius: planet.distanceFromParent * UNIVERSE_SCALE,
-                angle: Math.random() * Math.PI * 2,
+                angle: Math.random() * TWO_PI,
                 eccentricity: planet.eccentricity ?? 0,
             }
         })
