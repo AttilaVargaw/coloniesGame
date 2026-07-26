@@ -1,55 +1,44 @@
-import js from '@eslint/js'
-import ts from '@typescript-eslint/eslint-plugin'
-import tsParser from '@typescript-eslint/parser'
-import react from 'eslint-plugin-react'
-import reactHooks from 'eslint-plugin-react-hooks'
-import tailwindcss from 'eslint-plugin-tailwindcss'
-import globals from 'globals'
+import eslintReact from "@eslint-react/eslint-plugin";
+import eslintJs from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
 
-export default [
-  js.configs.recommended,
+export default defineConfig(
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["'src-tauri'"],
+    // Extend recommended rule sets from:
+    // 1. ESLint JS's recommended rules
+    // 2. TypeScript ESLint recommended rules
+    // 3. ESLint React's recommended-typescript rules
+    extends: [
+      eslintJs.configs.recommended,
+      tseslint.configs.recommended,
+      eslintReact.configs["recommended-typescript"],
+    ],
+    // Configure language/parsing options
     languageOptions: {
-      parser: tsParser,
+      // Use TypeScript ESLint parser for TypeScript files
+      parser: tseslint.parser,
       parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        ecmaFeatures: { jsx: true },
-      },
-      globals: {
-        ...globals.browser,
-        ...globals.node,
+        // Enable project service for better TypeScript integration
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
-    plugins: {
-      '@typescript-eslint': ts,
-      react,
-      'react-hooks': reactHooks,
-      tailwindcss,
-    },
+    // Custom rule overrides (modify rule levels or disable rules)
     rules: {
-      ...ts.configs.recommended.rules,
-      ...react.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
-      ...tailwindcss.configs.recommended.rules,
+      "@eslint-react/no-missing-key": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "off",
+      "@eslint-react/use-state": "off",
+    },
 
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'react/react-in-jsx-scope': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'tailwindcss/no-custom-classname': 'off',
-      "@typescript-eslint/no-unsafe-function-type": "warn"
-    },
-    settings: {
-      tailwindcss: {
-        cssConfigPath: './src/App.css',
-        callees: ['cn', 'clsx'],
-      },
-      react: { version: 'detect' },
-    },
   },
-  {
-    ignores: ['dist/**', '.vite/**', 'src-tauri/**', 'coverage/**', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
-  },
-]
+);

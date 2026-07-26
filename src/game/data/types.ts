@@ -1,41 +1,49 @@
 import type { Entity } from "@engine/entities/entity";
 import type { Modifier } from "@engine/modifier";
-import { soiRatios } from "../factories/helpers";
+import { PlanetArchetype } from "../factories/helpers";
 import type { WaypointGrid } from "../factories/waypointGrid";
 
-export type Vessel = {
+export type VesselBlueprint = {
     readonly name: string
     readonly radius: number
-    readonly orbitRadius: number
+    readonly orbit: OrbitBlueprint
+}
+
+export type OrbitBlueprint = {
+    readonly radius: number
+    readonly eccentricity?: number
     readonly angle?: number
 }
 
-export type Colony = {
-    readonly population?: number;
+export type TribalData = {
+    readonly name: string
     readonly sign?: string;
     readonly patronGod?: Modifier;
-    readonly name: string
-    readonly distanceFromParent: number
-    readonly radius: number
-    readonly soi?: number
-    readonly archetype: keyof typeof soiRatios
-    readonly eccentricity?: number
-    readonly moons?: ReadonlyMap<string, Colony>
-    readonly vessels?: Vessel[]
-    readonly angle?: number
-    readonly color: string
+    readonly population: number;
 }
 
-export type Star = {
-    sign: string
-    x: number
-    y: number
-    name: string,
-    planets: Map<string, Colony>
-    soi?: number
-    binaryPairs?: ReadonlyMap<string, number>
-    color: string
+export type BodyBlueprint = {
+    readonly tribe?: TribalData
+    readonly name: string
+    readonly radius: number
+    readonly archetype: PlanetArchetype
+    readonly children?: BodyBlueprint[]
+    readonly vessels?: VesselBlueprint[]
+    // readonly angle: number
+    readonly color: string
+    readonly binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint], separation: number, orbit: OrbitBlueprint }[]
+    readonly orbit: OrbitBlueprint
 }
+
+// export type Star = {
+//     sign: string
+//     x: number
+//     y: number
+//     name: string,
+//     planets: Map<string, Colony>
+//     soi?: number
+//     color: string
+// }
 
 export const StartState = {
     map: {

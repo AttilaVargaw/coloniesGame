@@ -1,52 +1,77 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PositionComponent } from "@engine/components/position";
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PathComponent } from "../components/pathComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
-import { solarSystems } from "../data/gameData";
+import { MapCreationData } from "../data/gameData";
 import { StartState } from "../data/types";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
 import { createSolarSystem } from "./createSolarSystem";
 import { UNIVERSE_SCALE, TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
+import { createBinaryOrbitPair } from "./createBinaryOrbitPair";
+import { createBody } from "./createBody";
+import { applyComponents } from "./helpers";
+import { RadiusComponent } from "@/engine/components/radiusComponent";
+import { ColorComponent } from "@/engine/components/colorComponent";
 
-export function init(engine: Engine, _mapSize: number) {
+export function init(engine: Engine) {
     const viewportSystem = engine.getSystem(ViewportSystem)
     viewportSystem.sortOnEveryEntityAddition = false
 
-    for(const [starName, starData] of solarSystems) {
-        const cx = starData.x * UNIVERSE_SCALE
-        const cy = starData.y * UNIVERSE_SCALE
+    const root = engine.createEntity(MapCreationData.name)
+    applyComponents(root,
+        new PositionComponent(0, 0, 0),
+        new RadiusComponent(10),
+        new SoiComponent(0),
+        new PathComponent(),
+        new ColorComponent("red"),
+    )
+    const map = createBody(MapCreationData, root, engine)
 
-        const star = createSolarSystem(engine, starData)
-        StartState.map.attractors.set(starData.name, star)
+    // for(const body of MapCreationData.children!) {
+    //     const cx = starData.x * UNIVERSE_SCALE
+    //     const cy = starData.y * UNIVERSE_SCALE
 
-        const starSceneNode = engine.getSceneNode(star)
-        if(!starSceneNode) continue
-        const attractors: Entity[] = [star]
+    //     const star = createSolarSystem(engine, starData)
+    //     StartState.map.attractors.set(starData.name, star)
 
-        for(const childEntity of starSceneNode.collectDescendants()) {
-            if(
-                childEntity !== star &&
-                childEntity.getComponent(SoiComponent) &&
-                childEntity.getComponent(PathComponent)
-            ) {
-                attractors.push(childEntity)
-                StartState.map.attractors.set(childEntity.id, childEntity)
-            }
-        }
+    //     const starSceneNode = engine.getSceneNode(star)
+    //     if(!starSceneNode) continue
+    //     const attractors: Entity[] = [star]
 
-        const grid = new WaypointGrid(starName, star, DEFAULT_RINGS)
-        StartState.map.grids.set(starName, grid)
+    //     for(const childEntity of starSceneNode.collectDescendants()) {
+    //         if(
+    //             childEntity !== star &&
+    //             childEntity.getComponent(SoiComponent) &&
+    //             childEntity.getComponent(PathComponent)
+    //         ) {
+    //             attractors.push(childEntity)
+    //             StartState.map.attractors.set(childEntity.id, childEntity)
+    //         }
+    //     }
 
-        createWaypoints(engine, grid, starSceneNode!)
-        linkAngularNeighbors(grid)
-        linkRadialNeighbors(grid)
-        linkAttractors(grid, attractors, cx, cy)
-        deduplicateLinks(grid)
-    }
+    //     const grid = new WaypointGrid(starName, star, DEFAULT_RINGS)
+    //     StartState.map.grids.set(starName, grid)
 
-    linkStarBridges()
+    //     createWaypoints(engine, grid, starSceneNode!)
+    //     linkAngularNeighbors(grid)
+    //     linkRadialNeighbors(grid)
+    //     linkAttractors(grid, attractors, cx, cy)
+    //     deduplicateLinks(grid)
+
+        // if(starData.binaryPairs) {
+        //     for(const binaryPair of starData.binaryPairs) {
+        //         const [first, second] = binaryPair[0].split("-")
+        //         createBinaryOrbitPair(engine, cocalus, starData.planets.get(first)!, starData.planets.get(second)!, binaryPair[1])
+        //     }
+        // }
+
+    //     // stars.set(starName, star)
+    // }
+
+    // linkStarBridges()
 
     viewportSystem.sortOnEveryEntityAddition = true
 }
@@ -177,28 +202,28 @@ function deduplicateLinks(grid: WaypointGrid): void {
     }
 }
 
-function linkStarBridges(): void {
-    const stars = Array.from(solarSystems.values())
-    const BRIDGE_THRESHOLD = 5000
+// function linkStarBridges(): void {
+//     const stars = Array.from(map.solarSystems.values())
+//     const BRIDGE_THRESHOLD = 5000
 
-    for(let i = 0; i < stars.length; i++) {
-        for(let j = i + 1; j < stars.length; j++) {
-            const starA = stars[i]
-            const starB = stars[j]
-            const ax = starA.x * UNIVERSE_SCALE
-            const ay = starA.y * UNIVERSE_SCALE
-            const bx = starB.x * UNIVERSE_SCALE
-            const by = starB.y * UNIVERSE_SCALE
-            const dist = Math.hypot(ax - bx, ay - by)
+//     for(let i = 0; i < stars.length; i++) {
+//         for(let j = i + 1; j < stars.length; j++) {
+//             const starA = stars[i]
+//             const starB = stars[j]
+//             const ax = starA.x * UNIVERSE_SCALE
+//             const ay = starA.y * UNIVERSE_SCALE
+//             const bx = starB.x * UNIVERSE_SCALE
+//             const by = starB.y * UNIVERSE_SCALE
+//             const dist = Math.hypot(ax - bx, ay - by)
 
-            if(dist < BRIDGE_THRESHOLD) {
-                const gridA = StartState.map.grids.get(starA.name)!
-                const gridB = StartState.map.grids.get(starB.name)!
-                bridgeGrids(gridA, gridB)
-            }
-        }
-    }
-}
+//             if(dist < BRIDGE_THRESHOLD) {
+//                 const gridA = StartState.map.grids.get(starA.name)!
+//                 const gridB = StartState.map.grids.get(starB.name)!
+//                 bridgeGrids(gridA, gridB)
+//             }
+//         }
+//     }
+// }
 
 function bridgeGrids(gridA: WaypointGrid, gridB: WaypointGrid): void {
     const outerRingA = gridA.rings[gridA.getRingCount() - 1]

@@ -9,6 +9,10 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
         const { orbit, entity } = node
 
+        if(!node.orbit.radius) {
+            return
+        }
+
         if(!this.engine) {
             return
         }

@@ -8,7 +8,7 @@ export interface MouseEventData {
     } & ReactMouseEvent
 }
 
-// eslint-disable-next-line
+ 
 export abstract class EventBase<T = any> {
     constructor(public data: T) { }
 }

@@ -5,7 +5,7 @@ import { Header } from "./components/header/header";
 import { Entity } from "@engine/entities/entity";
 import { IndustryComponent } from "@game/components/industryComponent";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
-import { solarSystems, } from "@game/data/gameData";
+import { MapCreationData } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { ProductionBar } from "./components/productionBar/productionBar";
 import { GameContext } from "./hooks/useGameContext";
@@ -90,15 +90,15 @@ function AppInner({ setCurrentColony, game, currentColony, sidebarCollapsed, set
 }
 
 function App() {
-  const map = useRef<HTMLCanvasElement>(null);
+  const mapRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
   const [currentColony, setCurrentColony] = useState<Entity>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
-    if(!map.current) return
+    if(!mapRef.current) return
 
-    const gameInstance = new Game(map.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, solarSystems)
+    const gameInstance = new Game(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
 
     setGame(gameInstance)
 
@@ -108,16 +108,16 @@ function App() {
     }
   }, [])
 
-  return <GameContext.Provider value={game?.engine ?? null}>
+  return <GameContext value={game?.engine ?? null}>
     <AppInner
       setCurrentColony={setCurrentColony}
       game={game}
       currentColony={currentColony}
       sidebarCollapsed={sidebarCollapsed}
       setSidebarCollapsed={setSidebarCollapsed}
-      map={map}
+      map={mapRef}
     />
-  </GameContext.Provider>
+  </GameContext>
 }
 
 export default App

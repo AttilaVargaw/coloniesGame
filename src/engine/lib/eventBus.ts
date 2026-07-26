@@ -18,7 +18,7 @@ import {
 } from "./events"
 
 export class EventBus {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     readonly events: Map<new (...args: any[]) => EventBase, Queue<EventBase>> = new Map([
         [UpdateBeginEvent, new Queue()],
         [UpdateDoneEvent, new Queue()],
@@ -36,10 +36,10 @@ export class EventBus {
         [MousemoveEvent, new Queue()],
     ])
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     private readonly eventHandlers = new Map<new (...args: any[]) => EventBase, Set<(data: unknown) => void>>()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     processEventHandler(event: new (...args: any[]) => EventBase) {
         const handlers = this.eventHandlers.get(event)
         const events = this.events.get(event)
@@ -57,7 +57,7 @@ export class EventBus {
         events.clear()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void) {
         if(event === MousemoveEvent) {
             console.log("subscribing to mousemove")
@@ -71,7 +71,7 @@ export class EventBus {
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
@@ -79,20 +79,20 @@ export class EventBus {
     }
 
     dispatchEvent(event: EventBase) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         this.events.get(event.constructor as new (...args: any[]) => EventBase)?.enqueue(event)
 
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     registerEventQueue(event: new (...args: any[]) => EventBase) {
         this.events.set(event, new Queue())
 
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     removeEventQueue(event: new (...args: any[]) => EventBase) {
         this.events.delete(event)
 

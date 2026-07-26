@@ -43,7 +43,7 @@ export class Entity {
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     removeComponent(component: new (...args: any[]) => EntityComponent) {
         this._component.delete(component);
 
@@ -52,7 +52,7 @@ export class Entity {
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     getComponent<T extends new (...args: any[]) => EntityComponent>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
     }

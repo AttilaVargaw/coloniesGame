@@ -29,12 +29,12 @@ export class World implements Engine {
         this.systemRegistry = new SystemRegistry()
     }
 
-    // eslint-disable-next-line
+     
     getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
         return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
     }
 
-    // eslint-disable-next-line
+     
     getCommands<T extends new (...args: any) => CommandBase>(name: T) {
         return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T>>
     }
@@ -84,7 +84,7 @@ export class World implements Engine {
 
     // eslint-disable-next-line
     //@ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void): this {
         this.eventBus.subscribe(event, callback)
 
@@ -93,7 +93,7 @@ export class World implements Engine {
 
     // eslint-disable-next-line
     //@ts-ignore 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: any) => void): this {
         this.eventBus.unsubscribe(event, callback)
 
@@ -126,14 +126,14 @@ export class World implements Engine {
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     addSystem(system: new (...args: any[]) => System, ...args: any[]) {
         this.systemRegistry.addSystem(system, this, ...args.map(cn => this.getSystem(cn)))
 
         return this
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
 
@@ -188,14 +188,14 @@ export class World implements Engine {
     }
     // eslint-disable-next-line
     registerEventQueue(event: Function) {
-        // eslint-disable-next-line
+         
         this.eventBus.registerEventQueue(event as new (...args: any[]) => EventBase)
 
         return this
     }
     // eslint-disable-next-line
     removeEventQueue(event: Function) {
-        // eslint-disable-next-line
+         
         this.eventBus.removeEventQueue(event as new (...args: any[]) => EventBase)
 
         return this

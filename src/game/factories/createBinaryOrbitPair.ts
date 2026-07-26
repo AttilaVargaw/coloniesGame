@@ -1,13 +1,16 @@
 import { Engine } from "@/engine/core/engine"
 import { Entity } from "@engine/entities/entity"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
-import { Colony } from "../data/types"
 import { createBody } from "./createBody"
 import { OrbitComponent } from "@/engine/components/orbitComponent"
 import { PositionComponent } from "@/engine/components/position"
 import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { applyComponents } from "./helpers"
+import { BodyBlueprint } from "../data/types"
+import { RadiusComponent } from "@/engine/components/radiusComponent"
+import { LabelComponent } from "@/engine/components/label"
+import { ColorComponent } from "@/engine/components/colorComponent"
 
 const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
     radius: barycentreOrbitRadius,
@@ -18,36 +21,42 @@ const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
 export function createBinaryOrbitPair(
     engine: Engine,
     parent: Entity,
-    planetA: Colony,
-    planetB: Colony,
+    planetA: BodyBlueprint,
+    planetB: BodyBlueprint,
     separation: number,
+    radius: number,
+    angle?: number
 ) {
-    const angleA = Math.random() * TWO_PI
-    const barycentreOrbitRadius = (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE
+    //const angleA = Math.random() * TWO_PI
+    const barycentreOrbitRadius = radius / 2 * UNIVERSE_SCALE
     const barycentre = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
         new OrbitComponent(
             parent.id,
             (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE,
             angularSpeed(barycentreOrbitRadius),
-            Math.random() * TWO_PI,
-            planetA.eccentricity ?? 0
+            angle ?? Math.random() * TWO_PI,
+            planetA.orbit.eccentricity ?? 0
         ),
+        new RadiusComponent(10),
+        new LabelComponent("barycentre", 18, { x: 25, y: 0, z: 1 }, "white"),
+        new ColorComponent("white")
     )
 
-    const bodyA = createBody({
-        engine,
-        data: planetA,
-        parent: barycentre,
-        orbitArgs: makeOrbitArgs(angleA, separation * UNIVERSE_SCALE)
-    })
+    planetA.orbit = makeOrbitArgs(0, separation * UNIVERSE_SCALE)
+    planetB.orbit = makeOrbitArgs(Math.PI, separation * UNIVERSE_SCALE)
 
-    const bodyB = createBody({
+    const bodyA = createBody(
+        planetA,
+        barycentre,
         engine,
-        data: planetB,
-        parent: barycentre,
-        orbitArgs: makeOrbitArgs(angleA + Math.PI, separation * UNIVERSE_SCALE)
-    })
+    )
+
+    const bodyB = createBody(
+        planetB,
+        barycentre,
+        engine,
+    )
 
     engine.addEntity(barycentre, parent)
 

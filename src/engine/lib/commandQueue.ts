@@ -6,7 +6,7 @@ export type QueueOptions<Data> = {
     onOverflow?: (dropped: Data) => void
 }
 
-// eslint-disable-next-line
+ 
 export class Queue<Data = any> {
     private readonly queue: Data[] = []
     private readonly capacity: number

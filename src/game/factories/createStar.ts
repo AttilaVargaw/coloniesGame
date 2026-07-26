@@ -18,7 +18,6 @@ export function createStar(engine: Engine, { x, y, soi, color }: { x: number, y:
         new SoiComponent(soi),
         new PathComponent(),
         new TargetableComponent()
-
     )
     engine.addEntity(star)
 

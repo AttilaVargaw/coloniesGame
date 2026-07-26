@@ -69,7 +69,7 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             const { x: worldX, y: worldY } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y)
             let hit = false
 
-            for(let node of this.nodes) {
+            for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
                 const [correctedPositionX, correctedPositionY] = getAbsolute(node.entity, this.engine!)
                 const halfX = width / 2

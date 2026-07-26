@@ -6,7 +6,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { Colony as BodyCreationData } from "../data/types"
+import { BodyBlueprint } from "../data/types"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, calculateSoi, soiFromRadius, createColonyClickHandler, soiRatios } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
@@ -15,19 +15,9 @@ import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createVessel } from "./createSpaceship"
-import { TWO_PI, UNIVERSE_SCALE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE, } from "../constants"
 import { LabelComponent } from "@/engine/components/label"
-
-export interface CreateColonyArgs {
-    engine: Engine
-    data: BodyCreationData
-    parent: Entity
-    orbitArgs?: {
-        radius: number
-        angle?: number
-        eccentricity?: number
-    }
-}
+import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 
 function createSoiCircle(colony: Entity, archetype: keyof typeof soiRatios, engine: Engine) {
     return applyComponents(engine.createEntity(),
@@ -37,77 +27,87 @@ function createSoiCircle(colony: Entity, archetype: keyof typeof soiRatios, engi
     )
 }
 
-export function createBody({ engine, data, parent, orbitArgs }: CreateColonyArgs): Entity {
-    const colony = engine.createEntity()
-    applyComponents(colony,
+export function createBody({
+    radius,
+    archetype,
+    color,
+    name,
+    tribe,
+    orbit,
+    vessels,
+    children,
+    binaryPairs
+}: BodyBlueprint, parent: Entity, engine: Engine): Entity {
+    const body = engine.createEntity(`planet-${name}`)
+
+    applyComponents(body,
         new PositionComponent(0, 0, 0),
-        new RadiusComponent(data.radius),
-        new SoiComponent(calculateSoi(data.radius, data.archetype)),
+        new RadiusComponent(radius),
+        new SoiComponent(calculateSoi(radius, archetype)),
         new PathComponent(),
-        new ColorComponent(data.color, "", true),
-        new LabelComponent(data.name, 18, { x: data.radius + 8, y: 0, z: 1 }, "white"),
+        new ColorComponent(color, "", true),
+        new LabelComponent(name, 18, { x: radius + 8, y: 0, z: 1 }, "white"),
         new TargetableComponent(),
     )
 
-    const clickSize = data.radius * 2
+    const clickSize = radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
 
-    if(data.population) {
-        if(data.patronGod) {
-            colony.addModifier(data.patronGod)
+    if(tribe) {
+        if(tribe.patronGod) {
+            body.addModifier(tribe.patronGod)
         }
 
-        applyComponents(colony,
+        applyComponents(body,
             new SelectableComponent(clickSize, "red"),
             new HoverableComponent("pointer", clickSquare),
-            new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, colony)),
-            new IndustryComponent(data.population, 80, data.population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
+            new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
+            new IndustryComponent(tribe.population, 80, tribe.population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
         )
     } else {
-        applyComponents(colony,
+        applyComponents(body,
             new HoverableComponent("not-allowed", clickSquare))
     }
 
-    const soiCircle = createSoiCircle(colony, data.archetype, engine)
+    const soiCircle = createSoiCircle(body, archetype, engine)
 
-    engine.addEntity(colony, parent)
-        .addEntity(soiCircle, colony)
+    engine.addEntity(body, parent)
+        .addEntity(soiCircle, body)
 
-    if(orbitArgs) {
-        const angle = orbitArgs.angle ?? Math.random() * TWO_PI
-        colony.addComponent(new OrbitComponent(
+    if(orbit) {
+        const angle = orbit.angle ?? Math.random() * TWO_PI
+        body.addComponent(new OrbitComponent(
             parent.id,
-            orbitArgs.radius,
-            angularSpeed(orbitArgs.radius),
+            orbit.radius * UNIVERSE_SCALE,
+            angularSpeed(orbit.radius * UNIVERSE_SCALE),
             angle,
-            orbitArgs.eccentricity ?? 0
+            orbit.eccentricity ?? 0
         ))
-        const pos = colony.getComponent(PositionComponent)!
+        const pos = body.getComponent(PositionComponent)!
 
-        pos.x = Math.cos(angle) * orbitArgs.radius
-        pos.y = Math.sin(angle) * orbitArgs.radius
+        pos.x = Math.cos(angle) * orbit.radius
+        pos.y = Math.sin(angle) * orbit.radius
     }
 
-    if(data.moons) {
-        for(const [, moon] of data.moons) {
-            createBody({
-                engine,
-                data: moon,
-                parent: colony,
-                orbitArgs: {
-                    radius: moon.distanceFromParent * UNIVERSE_SCALE,
-                    angle: Math.random() * TWO_PI,
-                    eccentricity: moon.eccentricity ?? 0,
-                }
-            })
+    if(children) {
+        for(const blueprint of children) {
+            createBody(blueprint,
+                body,
+                engine)
         }
     }
 
-    if(data.vessels) {
-        for(const vessel of data.vessels) {
-            createVessel(engine, colony, vessel)
+    if(vessels) {
+        for(const vessel of vessels) {
+            createVessel(engine, body, vessel)
         }
     }
 
-    return colony
+    if(binaryPairs) {
+        for(const { bodies: [first, second], separation, orbit: { radius, angle } } of binaryPairs) {
+            createBinaryOrbitPair(engine, body, first, second, separation, radius, angle)
+        }
+    }
+
+    return body
 }

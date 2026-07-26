@@ -25,7 +25,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.nodes = engine.getNodeList(this.constructor as any)
         engine.subscribe(EntityAddedEvent, this.onEntityAdded)
 
@@ -38,7 +37,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         }
 
         this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         this.engine.unregisterNodeType(this.constructor as any)
         this.nodes.length = 0
         super.removeFromEngine()
@@ -47,7 +46,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
     }
 
     protected registerNodes(engine: Engine): this {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         engine.registerNodeType(this.constructor as any, new Set(this.components), this.nodeFactory,)
 
         return this
@@ -58,7 +56,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             return this
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.engine.unregisterNodeType(this.constructor as any)
 
         return this

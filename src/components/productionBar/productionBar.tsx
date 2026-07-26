@@ -25,7 +25,7 @@ interface ProductionBarProps {
 }
 
 export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAdd }: ProductionBarProps) {
-    const [openLines, setOpenLines] = useState<Set<number>>(new Set(lines.map((_, idx) => idx)));
+    const [openLines, setOpenLines] = useState<Set<number>>(() => new Set(lines.map((_, idx) => idx)));
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
 
@@ -43,7 +43,7 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
 
     const handleOpenModal = (idx: number) => {
         setActiveLineIndex(idx);
-        if (!onAdd) setIsModalOpen(true);
+        if(!onAdd) setIsModalOpen(true);
     };
 
     const modalOptions = activeLineIndex !== null ? [

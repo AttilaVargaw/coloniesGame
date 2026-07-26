@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { DateComponent } from "@engine/components/dateComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
@@ -14,17 +14,18 @@ import { SelectionSystem } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
-import { Star } from "@game/data/types"
 import Camera from "@lib/camera"
 import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, UNIVERSE_SCALE } from "./constants"
 import { CommandBase } from "@/engine/lib/CommandBase"
+import { BodyBlueprint } from "./data/types"
 
 export class Game {
     readonly engine: World = new World
     private gameLoopId?: number
 
-    constructor(public renderingContext: CanvasRenderingContext2D, public solarSystems: Map<string, Star>) {
-        const firstStar = Array.from(solarSystems.values())[0]
+    constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
+        const firstStar = { x: 0, y: 0 }
+
         const camera = new Camera(renderingContext, {
             initialPosition: [firstStar.x * UNIVERSE_SCALE, firstStar.y * UNIVERSE_SCALE],
             distance: CAMERA_INITIAL_DISTANCE,

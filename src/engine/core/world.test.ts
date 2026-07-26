@@ -191,8 +191,7 @@ describe("World", () => {
         const nodes = world.nodes(tagNodeCtor)
 
         expect(nodes).toHaveLength(1)
-        //@ts-ignore
-        expect(nodes[0].entity).toBe(entity)
+        expect(nodes?.[0].entity).toBe(entity)
     })
 
     it("registerNodeType returns itself for chaining", () => {

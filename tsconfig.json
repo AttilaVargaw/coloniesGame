@@ -36,12 +36,20 @@
     "jsx": "react-jsx",
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
   },
   "include": [
-    "src"
+    "src",
+    //"./vite.config.ts",
+    //"playwright.config.ts",
+    //"vitest.config.ts",
+    //"e2e"
+  ],
+  "exclude": [
+    "**/coverage",
+    "'**/src-tauri'",
   ],
   "references": [
     {

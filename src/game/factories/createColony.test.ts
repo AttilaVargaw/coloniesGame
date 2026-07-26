@@ -10,30 +10,31 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { IndustryComponent } from "@/game/components/industryComponent"
-import { Colony } from "@/game/data/types"
 import { createBody } from "./createBody"
+import { BodyBlueprint } from "../data/types"
 
-function makeColonyData(overrides: Partial<Colony> = {}): Colony {
+function makeColonyData(overrides: Partial<BodyBlueprint> = {}): BodyBlueprint {
     return {
-        color: "blue",
+        tribe: undefined,
         name: "Earth",
-        distanceFromParent: 10,
         radius: 5,
         archetype: "earth",
+        color: "blue",
+        orbit: { radius: 10 },
         ...overrides,
     }
 }
 
-describe("createColony", () => {
+describe("createBody", () => {
     it("creates a colony entity with base components", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createBody({
-            engine: world,
-            data: makeColonyData(),
+        const colony = createBody(
+            makeColonyData(),
             parent,
-        })
+            world
+        )
 
         expect(colony).toBeDefined()
 
@@ -43,40 +44,40 @@ describe("createColony", () => {
         expect(colony.getComponent(PathComponent)).toBeDefined()
     })
 
-    it("adds interactive components when population is present", () => {
+    it("adds interactive components when tribe is present", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const colony = createBody({
-            engine: world,
-            data: makeColonyData({ population: 1000 }),
+        const colony = createBody(
+            makeColonyData({
+                tribe: { population: 1000, name: "Human" },
+            }),
             parent,
-        })
+            world
+        )
 
         expect(colony.getComponent(SelectableComponent)).toBeDefined()
         expect(colony.getComponent(ClickableComponent)).toBeDefined()
         expect(colony.getComponent(IndustryComponent)).toBeDefined()
     })
 
-    it("adds orbit component and sets initial position when orbitArgs is provided", () => {
+    it("adds orbit component and sets initial position when orbit is provided", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
+        const planet = world.createEntity("planet")
 
-        const colony = createBody({
-            engine: world,
-            data: makeColonyData(),
-            parent,
-            orbitArgs: {
-                radius: 100,
-                angle: 0,
-                eccentricity: 0.1,
-            }
-        })
+        const colony = createBody(
+            makeColonyData({
+                orbit: { radius: 100, angle: 0, eccentricity: 0.1 },
+            }),
+            planet,
+            world
+        )
 
         const orbit = colony.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
-        expect(orbit!.centerEntityId).toBe(parent.id)
-        expect(orbit!.radius).toBe(100)
+        expect(orbit!.centerEntityId).toBe(planet.id)
+        expect(orbit!.radius).toBeCloseTo(4000)
         expect(orbit!.eccentricity).toBe(0.1)
 
         const pos = colony.getComponent(PositionComponent)!
@@ -84,24 +85,26 @@ describe("createColony", () => {
         expect(pos.y).toBeCloseTo(0)
     })
 
-    it("recursively creates moons inside the colony", () => {
+    it("recursively creates children inside the colony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
 
-        const moonData: Colony = {
+        const moonData: BodyBlueprint = {
             name: "Moon",
-            distanceFromParent: 2,
             radius: 3,
             archetype: "kobol",
             color: "grey",
+            orbit: { radius: 2 },
         }
 
-        const colony = createBody({
-            engine: world,
-            data: makeColonyData({ moons: new Map([["Moon", moonData]]) }),
+        const colony = createBody(
+            makeColonyData({
+                children: [moonData],
+                orbit: { radius: 100, angle: 0 },
+            }),
             parent,
-            orbitArgs: { radius: 100, angle: 0 },
-        })
+            world
+        )
 
         const colonyNode = world.getSceneNode(colony)
         expect(colonyNode).toBeDefined()
@@ -115,13 +118,16 @@ describe("createColony", () => {
     it("creates vessels attached to the colony", () => {
         const world = new World() as unknown as Engine
         const parent = world.createEntity("parent")
+        const planet = world.createEntity("planet")
 
-        const colony = createBody({
-            engine: world,
-            data: makeColonyData({ vessels: [{ name: "Ship1", radius: 4, orbitRadius: 50, angle: 0 }] }),
-            parent,
-            orbitArgs: { radius: 100, angle: 0 },
-        })
+        const colony = createBody(
+            makeColonyData({
+                vessels: [{ name: "Ship1", radius: 4, orbit: { radius: 50, angle: 0 } }],
+                orbit: { radius: 100, angle: 0 },
+            }),
+            planet,
+            world
+        )
 
         const colonyNode = world.getSceneNode(colony)
         expect(colonyNode).toBeDefined()

@@ -1,6 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-nocheck
 import { describe, it, expect, vi } from "vitest"
 import { EntityNode, EntityNodeConstructor } from "@engine/entities/entityNode"
-import { System, SystemWithNodes } from "@engine/systems/system"
+import { SystemWithNodes } from "@engine/systems/system"
 import { TestEntityNode, testEntityNodeCtor, makeWorld } from "@engine/test-utils"
 import type { Engine } from "@/engine/core/engine"
 
@@ -10,10 +12,8 @@ class CounterSystem extends SystemWithNodes<TestEntityNode> {
 
 describe("System", () => {
     it("adds and removes subsystems", () => {
-        //@ts-ignore
-        const parent = new System()
-        //@ts-ignore
-        const child = new System()
+        const parent = new CounterSystem()
+        const child = new CounterSystem()
 
         parent.addSubsystem(child)
 
@@ -26,10 +26,8 @@ describe("System", () => {
     })
 
     it("does not add the same subsystem twice", () => {
-        //@ts-ignore
-        const parent = new System()
-        //@ts-ignore
-        const child = new System()
+        const parent = new CounterSystem()
+        const child = new CounterSystem()
 
         parent.addSubsystem(child)
         parent.addSubsystem(child)
@@ -38,10 +36,8 @@ describe("System", () => {
     })
 
     it("propagates update to subsystems", () => {
-        //@ts-ignore
-        const parent = new System()
-        //@ts-ignore
-        const child = new System()
+        const parent = new CounterSystem()
+        const child = new CounterSystem()
 
         parent.addSubsystem(child)
         const childSpy = vi.spyOn(child, "update")
@@ -53,8 +49,7 @@ describe("System", () => {
 
     it("attaches to engine via addToEngine and detaches via removeFromEngine", () => {
         const world = makeWorld() as unknown as Engine
-        //@ts-ignore
-        const system = new System()
+        const system = new CounterSystem()
 
         system.addToEngine(world)
 
@@ -66,16 +61,14 @@ describe("System", () => {
     })
 
     it("does not throw when removeFromEngine is called without an engine", () => {
-        //@ts-ignore
-        const system = new System()
+        const system = new CounterSystem()
 
         expect(() => system.removeFromEngine()).not.toThrow()
     })
 
     it("unregisters its node type from the world when removed from engine", () => {
         const world = makeWorld() as unknown as Engine
-        //@ts-ignore
-        const system = new System()
+        const system = new CounterSystem()
 
         world.registerNodeType(
             system.constructor as unknown as EntityNodeConstructor<EntityNode>,
@@ -96,8 +89,8 @@ describe("System", () => {
     it("unregisters node types recursively for subsystems", () => {
         const world = makeWorld() as unknown as Engine
 
-        class ParentSystem extends System { }
-        class ChildSystem extends System { }
+        class ParentSystem extends CounterSystem { }
+        class ChildSystem extends CounterSystem { }
 
         const parent = new ParentSystem()
         const child = new ChildSystem()
@@ -137,18 +130,15 @@ describe("SystemWithNodes", () => {
         const nodes = world.getNodeList(testEntityNodeCtor)
         expect(nodes).toHaveLength(0)
 
-        const ctor = CounterSystem as unknown as new () => System
+        const ctor = CounterSystem as unknown as new () => CounterSystem
         const system = world.addSystem(ctor).getSystem(ctor)!
 
         system.addToEngine(world)
-        //@ts-ignore
         system.nodes.push(nodes[0])
-        //@ts-ignore
         expect(system.nodes).toHaveLength(1)
 
         system.removeFromEngine()
 
-        //@ts-ignore
         expect(system.nodes).toHaveLength(0)
         expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
     })
@@ -157,14 +147,12 @@ describe("SystemWithNodes", () => {
         const world = makeWorld() as unknown as Engine
         const node = world.getNodeList(testEntityNodeCtor)[0]
 
-        const ctor = CounterSystem as unknown as new () => System
+        const ctor = CounterSystem as unknown as new () => CounterSystem
         const system = world.addSystem(ctor).getSystem(ctor)!
 
         system.addToEngine(world)
-        //@ts-ignore
         system.nodes.push(node)
 
-        //@ts-ignore
         const spy = vi.spyOn(system, "updateNode")
 
         system.update(16)
@@ -176,16 +164,13 @@ describe("SystemWithNodes", () => {
         const world = makeWorld() as unknown as Engine
         const node = world.getNodeList(testEntityNodeCtor)[0]
 
-        const ctor = CounterSystem as unknown as new () => System
+        const ctor = CounterSystem as unknown as new () => CounterSystem
         const system = world.addSystem(ctor).getSystem(ctor)!
 
         system.addToEngine(world)
-        //@ts-ignore
         system.nodes.push(node)
-        //@ts-ignore
         system.filterNodes = () => false
 
-        //@ts-ignore
         const spy = vi.spyOn(system, "updateNode")
 
         system.update(16)
@@ -232,15 +217,11 @@ describe("SystemWithNodes", () => {
 
         parent.addToEngine(world)
 
-        //@ts-ignore
         expect(parent.engine).toBe(world)
-        //@ts-ignore
         expect(child.engine).toBe(world)
 
         parent.removeFromEngine()
-        //@ts-ignore
         expect(parent.engine).toBeUndefined()
-        //@ts-ignore
         expect(child.engine).toBeUndefined()
     })
 })

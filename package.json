@@ -11,7 +11,7 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --fix",
+    "lint:fix": "eslint ./src --fix",
     "knip": "knip",
     "jscpd": "jscpd src",
     "e2e": "playwright test",
@@ -52,17 +52,16 @@
     "@vitejs/plugin-react": "^6.0.4",
     "@vitest/coverage-v8": "^4.1.10",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.5",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-tailwindcss": "^4.2.0",
+    "eslint": "^10.8.0",
     "globals": "^17.7.0",
     "husky": "^9.1.7",
     "jscpd": "^5.0.12",
     "knip": "^6.29.0",
     "typescript": "6.0.3",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@eslint-react/eslint-plugin": "^5.18.0",
+    "typescript-eslint": "^8.65.0"
   },
   "packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b"
 }

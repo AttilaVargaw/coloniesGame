@@ -19,7 +19,10 @@ export const soiRatios = {
     saturn: 940,
     uranus: 2040,
     neptune: 3525,
+    sol: 10000,
 } as const
+
+export type PlanetArchetype = keyof typeof soiRatios
 
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {
     return radius * soiRatios[archetype] * soiRatio

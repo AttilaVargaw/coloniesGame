@@ -70,7 +70,7 @@ export class SceneNode {
     }
 
     collectDescendants() {
-        let ret: Entity[] = []
+        const ret: Entity[] = []
 
         for(const child of this.children) {
             ret.push(child.entity)
