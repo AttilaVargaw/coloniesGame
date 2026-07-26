@@ -1,12 +1,12 @@
 import { Engine } from "@/engine/core/engine"
-import { STARMAP_COORD_SCALE, TWO_PI, UNIVERSE_SCALE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { createStar } from "./createStar"
 import { createBody } from "./createBody"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 import { Star } from "../data/types"
 
 export function createSolarSystem(engine: Engine, { x, y, planets, soi, binaryPairs = new Map(), color }: Star) {
-    const star = createStar(engine, { x: x * STARMAP_COORD_SCALE, y: y * STARMAP_COORD_SCALE, soi: soi ?? 2000, color })
+    const star = createStar(engine, { x: x * UNIVERSE_SCALE, y: y * UNIVERSE_SCALE, soi: soi ?? 2000, color })
 
     const binaryPairPlanetNames = new Set<string>()
 

@@ -7,26 +7,26 @@ import { StartState } from "../data/types";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
 import { createSolarSystem } from "./createSolarSystem";
-import { STARMAP_COORD_SCALE, TWO_PI } from "../constants";
+import { UNIVERSE_SCALE, TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
 
 export function init(engine: Engine, _mapSize: number) {
     const viewportSystem = engine.getSystem(ViewportSystem)
     viewportSystem.sortOnEveryEntityAddition = false
 
-    for (const [starName, starData] of solarSystems) {
-        const cx = starData.x * STARMAP_COORD_SCALE
-        const cy = starData.y * STARMAP_COORD_SCALE
+    for(const [starName, starData] of solarSystems) {
+        const cx = starData.x * UNIVERSE_SCALE
+        const cy = starData.y * UNIVERSE_SCALE
 
         const star = createSolarSystem(engine, starData)
         StartState.map.attractors.set(starData.name, star)
 
         const starSceneNode = engine.getSceneNode(star)
-        if (!starSceneNode) continue
+        if(!starSceneNode) continue
         const attractors: Entity[] = [star]
 
-        for (const childEntity of starSceneNode.collectDescendants()) {
-            if (
+        for(const childEntity of starSceneNode.collectDescendants()) {
+            if(
                 childEntity !== star &&
                 childEntity.getComponent(SoiComponent) &&
                 childEntity.getComponent(PathComponent)
@@ -56,15 +56,15 @@ function createWaypoints(
     grid: WaypointGrid,
     starSceneNode: NonNullable<ReturnType<typeof engine.getSceneNode>>
 ): void {
-    for (let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
+    for(let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
         const ring = grid.rings[ringIdx]
-        for (let angleIdx = 0; angleIdx < ring.waypointCount; angleIdx++) {
+        for(let angleIdx = 0; angleIdx < ring.waypointCount; angleIdx++) {
             const angle = (angleIdx / ring.waypointCount) * ring.spread
             const wx = Math.cos(angle) * ring.radius
             const wy = Math.sin(angle) * ring.radius
             const key = grid.getKey(ringIdx, angleIdx)
 
-            if (StartState.map.waypoints.has(key)) continue
+            if(StartState.map.waypoints.has(key)) continue
 
             const waypoint = engine.createEntity()
                 .addComponent(new PositionComponent(wx, wy))
@@ -72,7 +72,7 @@ function createWaypoints(
             engine.addEntity(waypoint)
 
             const wpNode = engine.getSceneNode(waypoint)
-            if (wpNode) starSceneNode.addChild(wpNode)
+            if(wpNode) starSceneNode.addChild(wpNode)
 
             StartState.map.waypoints.set(key, waypoint)
             grid.waypoints.set(key, waypoint)
@@ -81,11 +81,11 @@ function createWaypoints(
 }
 
 function linkAngularNeighbors(grid: WaypointGrid): void {
-    for (let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
+    for(let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
         const ring = grid.rings[ringIdx]
         const count = ring.waypointCount
 
-        for (let angleIdx = 0; angleIdx < count; angleIdx++) {
+        for(let angleIdx = 0; angleIdx < count; angleIdx++) {
             const wp = grid.getWaypoint(ringIdx, angleIdx)!
             const wpPath = wp.getComponent(PathComponent)!
             const nextAngleIdx = (angleIdx + 1) % count
@@ -93,27 +93,27 @@ function linkAngularNeighbors(grid: WaypointGrid): void {
 
             const next = grid.getWaypoint(ringIdx, nextAngleIdx)
             const prev = grid.getWaypoint(ringIdx, prevAngleIdx)
-            if (next) wpPath.linked.push(next.getComponent(PathComponent)!)
-            if (prev) wpPath.linked.push(prev.getComponent(PathComponent)!)
+            if(next) wpPath.linked.push(next.getComponent(PathComponent)!)
+            if(prev) wpPath.linked.push(prev.getComponent(PathComponent)!)
         }
     }
 }
 
 function linkRadialNeighbors(grid: WaypointGrid): void {
-    for (let ringIdx = 1; ringIdx < grid.getRingCount(); ringIdx++) {
+    for(let ringIdx = 1; ringIdx < grid.getRingCount(); ringIdx++) {
         const ring = grid.rings[ringIdx]
         const prevRing = grid.rings[ringIdx - 1]
         const count = ring.waypointCount
         const prevCount = prevRing.waypointCount
 
-        for (let angleIdx = 0; angleIdx < count; angleIdx++) {
+        for(let angleIdx = 0; angleIdx < count; angleIdx++) {
             const wp = grid.getWaypoint(ringIdx, angleIdx)!
             const wpPath = wp.getComponent(PathComponent)!
             const angle = (angleIdx / count) * ring.spread
 
             const prevAngleIdx = Math.round((angle / prevRing.spread) * prevCount) % prevCount
             const prev = grid.getWaypoint(ringIdx - 1, prevAngleIdx)
-            if (prev) wpPath.linked.push(prev.getComponent(PathComponent)!)
+            if(prev) wpPath.linked.push(prev.getComponent(PathComponent)!)
         }
     }
 }
@@ -124,7 +124,7 @@ function linkAttractors(
     cx: number,
     cy: number
 ): void {
-    for (const attractor of attractors) {
+    for(const attractor of attractors) {
         const attractorSoi = attractor.getComponent(SoiComponent)!.radius
         const attractorPos = attractor.getComponent(PositionComponent)!
         const attractorPath = attractor.getComponent(PathComponent)!
@@ -133,29 +133,33 @@ function linkAttractors(
 
         let closestRingIdx = 0
         let closestDist = Infinity
-        for (let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
+        for(let ringIdx = 0; ringIdx < grid.getRingCount(); ringIdx++) {
             const ringDist = Math.abs(grid.rings[ringIdx].radius - distFromStar)
-            if (ringDist < closestDist) {
+            if(ringDist < closestDist) {
                 closestDist = ringDist
                 closestRingIdx = ringIdx
             }
         }
 
         const ringsToCheck = new Set<number>([closestRingIdx])
-        if (closestRingIdx > 0) ringsToCheck.add(closestRingIdx - 1)
-        if (closestRingIdx < grid.getRingCount() - 1) ringsToCheck.add(closestRingIdx + 1)
+        if(closestRingIdx > 0) {
+            ringsToCheck.add(closestRingIdx - 1)
+        }
+        if(closestRingIdx < grid.getRingCount() - 1) {
+            ringsToCheck.add(closestRingIdx + 1)
+        }
 
-        for (const ringIdx of ringsToCheck) {
+        for(const ringIdx of ringsToCheck) {
             const ring = grid.rings[ringIdx]
 
-            for (let angleIdx = 0; angleIdx < ring.waypointCount; angleIdx++) {
+            for(let angleIdx = 0; angleIdx < ring.waypointCount; angleIdx++) {
                 const wp = grid.getWaypoint(ringIdx, angleIdx)!
                 const wpPos = wp.getComponent(PositionComponent)!
                 const wpWorldX = cx + wpPos.x
                 const wpWorldY = cy + wpPos.y
                 const dist = Math.hypot(wpWorldX - attractorPos.x, wpWorldY - attractorPos.y)
 
-                if (dist <= attractorSoi) {
+                if(dist <= attractorSoi) {
                     const wpPath = wp.getComponent(PathComponent)!
                     attractorPath.linked.push(wpPath)
                     wpPath.linked.push(attractorPath)
@@ -166,7 +170,7 @@ function linkAttractors(
 }
 
 function deduplicateLinks(grid: WaypointGrid): void {
-    for (const [, wp] of grid.waypoints) {
+    for(const [, wp] of grid.waypoints) {
         const wpPath = wp.getComponent(PathComponent)!
         const unique = new Set(wpPath.linked)
         wpPath.linked = Array.from(unique)
@@ -177,17 +181,17 @@ function linkStarBridges(): void {
     const stars = Array.from(solarSystems.values())
     const BRIDGE_THRESHOLD = 5000
 
-    for (let i = 0; i < stars.length; i++) {
-        for (let j = i + 1; j < stars.length; j++) {
+    for(let i = 0; i < stars.length; i++) {
+        for(let j = i + 1; j < stars.length; j++) {
             const starA = stars[i]
             const starB = stars[j]
-            const ax = starA.x * STARMAP_COORD_SCALE
-            const ay = starA.y * STARMAP_COORD_SCALE
-            const bx = starB.x * STARMAP_COORD_SCALE
-            const by = starB.y * STARMAP_COORD_SCALE
+            const ax = starA.x * UNIVERSE_SCALE
+            const ay = starA.y * UNIVERSE_SCALE
+            const bx = starB.x * UNIVERSE_SCALE
+            const by = starB.y * UNIVERSE_SCALE
             const dist = Math.hypot(ax - bx, ay - by)
 
-            if (dist < BRIDGE_THRESHOLD) {
+            if(dist < BRIDGE_THRESHOLD) {
                 const gridA = StartState.map.grids.get(starA.name)!
                 const gridB = StartState.map.grids.get(starB.name)!
                 bridgeGrids(gridA, gridB)
@@ -217,7 +221,7 @@ function bridgeGrids(gridA: WaypointGrid, gridB: WaypointGrid): void {
     const wpA = gridA.getWaypoint(gridA.getRingCount() - 1, angleIdxA)
     const wpB = gridB.getWaypoint(gridB.getRingCount() - 1, angleIdxB)
 
-    if (wpA && wpB) {
+    if(wpA && wpB) {
         const pathA = wpA.getComponent(PathComponent)!
         const pathB = wpB.getComponent(PathComponent)!
         pathA.linked.push(pathB)

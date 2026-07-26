@@ -1,14 +1,8 @@
 export const UNIVERSE_SCALE = 80
-export const GRID_SPACING = 100
-export const MAP_RADIUS = 1300
-export const STARMAP_COORD_SCALE = 80
 
 export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
-export const COLONY_SELECTION_RADIUS = 10
-export const SHIP_CLICK_SIZE = 40
-export const COLONY_CLICK_SIZE = 40
-export const SENSOR_SUITE_DEFAULT_RANGE = 3
+export const SENSOR_SUITE_DEFAULT_RANGE = 30
 
 export const FIELD_OF_VIEW = Math.PI / 4
 export const CAMERA_INITIAL_DISTANCE = 3000

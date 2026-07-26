@@ -10,7 +10,7 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
-import { SHIP_RADIUS, SHIP_CLICK_SIZE, COLONY_CLICK_SIZE, TWO_PI } from "../constants"
+import { SHIP_RADIUS,  TWO_PI } from "../constants"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { Vessel } from "../data/types"
@@ -23,13 +23,13 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),
         new FuelComponent(100, 1),
-        new SelectableComponent(10, "red"),
+        new SelectableComponent(SHIP_RADIUS, "red"),
         new TargetableComponent(),
         new ColorComponent("red"),
         new RadiusComponent(SHIP_RADIUS),
-        new HoverableComponent("pointer", { width: SHIP_CLICK_SIZE, height: SHIP_CLICK_SIZE }),
+        new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
         new LabelComponent(name, 18, { x: 0, y: 20, z: 1 }, "red"),
-        new ClickableComponent(true, { width: COLONY_CLICK_SIZE, height: COLONY_CLICK_SIZE }, ({ target, event: { shiftKey }, worldX, worldY }) => {
+        new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, ({ target, event: { shiftKey }, worldX, worldY }) => {
             const selectionSystem = engine.getSystem(SelectionSystem)
 
             if(shiftKey) {

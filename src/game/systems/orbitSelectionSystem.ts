@@ -98,10 +98,10 @@ export class OrbitSelectionSystem extends System {
                 return
             }
 
-            const [updatedCx, updatedCy] = getAbsolute(target, this.engine)
+            const [updatedCx, updatedCy] = [this.selection.cx, this.selection.cy]
             const camera = this.viewport.viewport.camera
             const { x: mx, y: my } = camera.screenToWorld(this.mouseX, this.mouseY)
-            const dist = Math.hypot((mx - updatedCx), my - updatedCy)
+            const dist = Math.hypot(mx - updatedCx, my - updatedCy)
             const r = Math.max(minRadius, Math.min(maxRadius, dist))
 
             this.drawPreview(camera, target, r)
