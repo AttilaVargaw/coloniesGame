@@ -3,7 +3,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { HomeworldBlueprint, ObitingBodyBlueprint } from "../data/types"
+import { BodyBlueprint, HomeworldBlueprint } from "../data/types"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
@@ -23,8 +23,8 @@ export function createBody({
     children,
     binaryPairs,
     marker,
-}: ObitingBodyBlueprint, parent: Entity, engine: Engine): Entity {
-    const body = createMarker(engine, marker)
+}: BodyBlueprint, parent: Entity, engine: Engine): Entity {
+    const body = createMarker(engine, { shade: true, ...marker })
 
     const angle = orbit.angle ?? Math.random() * TWO_PI
 
@@ -77,7 +77,8 @@ export function createBody({
 export function createHomeworld(blueprint: HomeworldBlueprint, parent: Entity, engine: Engine) {
     const body = createBody(blueprint, parent, engine)
 
-    const { tribe, marker, population } = blueprint
+    const { tribe, marker } = blueprint
+    const population = tribe?.population ?? 0
 
     if(tribe) {
         if(tribe?.patronGod) {

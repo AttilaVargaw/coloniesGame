@@ -2,44 +2,53 @@ import type { Entity } from "@engine/entities/entity";
 import type { Modifier } from "@engine/modifier";
 import { PlanetArchetype } from "../factories/helpers";
 import type { WaypointGrid } from "../factories/waypointGrid";
+import { WorldPosition } from "@/engine/components/position";
 
 export type MapMarker = {
     readonly radius: number
     readonly color: string
-    readonly label: string
+    readonly label?: string
     readonly labelColor?: string
     readonly textSize?: number
+    readonly shade?: boolean
+    readonly offset?: WorldPosition
 }
 
-export type ObitingBodyBlueprint = {
-    readonly orbit: OrbitBlueprint
-    marker: MapMarker
-    readonly archetype: PlanetArchetype
-    readonly children?: HomeworldBlueprint[]
-    readonly vessels?: VesselBlueprint[]
-    readonly binaryPairs?: { bodies: [HomeworldBlueprint, HomeworldBlueprint], separation: number, orbit: OrbitBlueprint }[]
-    readonly population: number;
-}
-
-export type VesselBlueprint = {
-    marker: MapMarker
-    orbit: OrbitBlueprint
+export type OrbitalBlueprint = {
+    readonly radius: number
+    readonly eccentricity?: number
+    readonly angle?: number
 }
 
 export type TribalData = {
     readonly name: string
+    readonly population: number
     readonly sign?: string;
     readonly patronGod?: Modifier;
 }
 
-export type HomeworldBlueprint = {
+export type BodyBlueprint = {
+    readonly name: string
+    readonly radius?: number
+    readonly archetype: PlanetArchetype
+    readonly color?: string
+    readonly marker: MapMarker
+    readonly orbit: OrbitalBlueprint
     readonly tribe?: TribalData
-} & ObitingBodyBlueprint
+    readonly children?: BodyBlueprint[]
+    readonly vessels?: VesselBlueprint[]
+    readonly binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint], separation: number, orbit: OrbitalBlueprint }[]
+}
 
-export type OrbitBlueprint = {
-    readonly radius: number
-    readonly eccentricity?: number
-    readonly angle?: number
+export type HomeworldBlueprint = BodyBlueprint & {
+    readonly tribe: TribalData
+}
+
+export type ObitingBodyBlueprint = BodyBlueprint
+
+export type VesselBlueprint = {
+    readonly marker: MapMarker
+    readonly orbit: OrbitalBlueprint
 }
 
 export const StartState = {

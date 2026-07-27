@@ -10,6 +10,14 @@ import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 import { Engine } from "@/engine/core/engine"
 import { SHIP_RADIUS } from "../constants"
+import { createMarker } from "../factories/createSpaceship"
+
+function createSpaceshipSelector(engine: Engine, color: string) {
+    const entity = createMarker(engine, { color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } })
+
+    return entity
+}
+
 
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
@@ -46,28 +54,6 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return this.targetSelectorSceneNode?.parentRef?.entity
     }
 
-    createSpaceshipSelector(color: string) {
-        if(!this.engine) return
-
-        const entity = this.engine.createEntity()
-        entity.addComponent(new ColorComponent(color, ""))
-            .addComponent(new RadiusComponent(SHIP_RADIUS * 2))
-            .addComponent(new PositionComponent(0, 0, -1, entity))
-
-        return entity
-    }
-
-    createTargetSelector(color: string) {
-        if(!this.engine) return
-
-        const entity = this.engine.createEntity()
-        entity.addComponent(new ColorComponent("", color))
-            .addComponent(new ShapeComponent(6, 10))
-            .addComponent(new PositionComponent(0, 0, 1, entity))
-
-        return entity
-    }
-
     unselect() {
         if(!this.engine || !this.selector) return
 
@@ -97,10 +83,10 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         switch(type) {
             case "colony":
             case "attractor":
-                this.selector = this.createTargetSelector("green")
+                this.selector = createSpaceshipSelector(this.engine, "green")
                 break
             case "ship":
-                this.selector = this.createSpaceshipSelector("#0f04")
+                this.selector = createSpaceshipSelector(this.engine, "#0f04")
                 this.showSensorRangeForSelection(entity)
                 break
         }
@@ -117,9 +103,9 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         if(target) {
             if(target.getComponent(ShapeComponent)) {
-                this.targetSelector = this.createTargetSelector("red")
+                this.targetSelector = createSpaceshipSelector(this.engine, "red")
             } else {
-                this.targetSelector = this.createSpaceshipSelector("#f004")
+                this.targetSelector = createSpaceshipSelector(this.engine, "#f004")
             }
 
             this.engine.addEntity(this.targetSelector!, target)

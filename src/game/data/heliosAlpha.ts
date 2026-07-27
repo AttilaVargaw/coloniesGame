@@ -3,29 +3,37 @@ import { ObitingBodyBlueprint } from "./types";
 
 export const solarisAlpha = {
     name: "Helios Alpha",
-    color: "#fffcc9",
+    marker: { color: "#fffcc9", radius: 10, label: "Helios Alpha" },
     archetype: "sol",
-    radius: 10,
     orbit: { radius: 40, angle: 0, eccentricity: 0 },
-    // binaryPairs: new Map([["Caprica-Gemenon", 1.45]]),
     children: [
         {
-            color: "#f99838", orbit: {
-                radius: 2,
-            }, angle: 0, radius: 4, name: "Icarus", archetype: "mercury", eccentricity: 0.2
+            marker: { color: "#f99838", radius: 4, label: "Icarus" },
+            archetype: "mercury",
+            orbit: { radius: 2, angle: 0 },
+            name: "Icarus",
         },
-        { color: "#b1b3ba", orbit: { radius: 44, angle: 0, eccentricity: 0.4 }, distanceFromParent: 44, radius: 4, name: "Persephone", archetype: "mercury", eccentricity: 0.4 },
         {
-            color: "#928262", distanceFromParent: 30, orbit: { radius: 30, angle: 0, eccentricity: 0.007 }, radius: 40, name: "Zeus", archetype: "venus", eccentricity: 0.007, children: [
-                { orbit: { radius: 2.1, angle: 0, eccentricity: 0.3 }, color: "#c7d9d7", distanceFromParent: 2.1, radius: 5, name: "Nike", archetype: "mars", eccentricity: 0.3 },
-                { orbit: { radius: 4, angle: 0, eccentricity: 0.7 }, color: "#777678", distanceFromParent: 4, radius: 5, name: "Hebe", archetype: "mars", eccentricity: 0.7 }
+            marker: { color: "#b1b3ba", radius: 4, label: "Persephone" },
+            archetype: "mercury",
+            orbit: { radius: 44, angle: 0, eccentricity: 0.4 },
+            name: "Persephone",
+        },
+        {
+            marker: { color: "#928262", radius: 40, label: "Zeus" },
+            archetype: "venus",
+            orbit: { radius: 30, angle: 0, eccentricity: 0.007 },
+            name: "Zeus",
+            children: [
+                { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 2.1, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
+                { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 4, angle: 0, eccentricity: 0.7 }, name: "Hebe", archetype: "mars" }
             ]
         },
         {
-            color: "#879cb8",
+            marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
+            orbit: { radius: 24, angle: 0, eccentricity: 0.017 },
             name: "Caprica",
-            radius: 8,
             tribe: {
                 population: 4900000000,
                 sign: "♑︎",
@@ -39,28 +47,16 @@ export const solarisAlpha = {
                 }),
             },
             vessels: [
-                { name: "Minerva", radius: 4, orbit: { radius: 50, angle: 0, eccentricity: 0.007 } }
+                { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 50, angle: 0, eccentricity: 0.007 } }
             ],
-            angle: 0,
-            orbit: {
-                eccentricity: 0.017,
-                radius: 24,
-            }
         },
         {
+            marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
-            distanceFromParent: 24,
-            radius: 8,
-            color: "#a08156",
+            orbit: { radius: 24, angle: 0, eccentricity: 0.02 },
             name: "Gemenon",
-            angle: 0,
-            orbit: {
-                eccentricity: 0.02,
-                radius: 24,
-            },
             tribe: {
                 population: 2800000000, sign: "♊︎",
-                eccentricity: 0.02,
                 name: "Gemenese",
                 patronGod: createPatronGodModifier({
                     modifiers: { fertility: "+2" },
@@ -74,18 +70,13 @@ export const solarisAlpha = {
             }
         },
         {
+            marker: { color: "#56738c", radius: 8, label: "Picon" },
             archetype: "kobol",
-            distanceFromParent: 20,
-            radius: 8,
-            color: "#56738c",
+            orbit: { radius: 20, angle: 0, eccentricity: 0.015 },
             name: "Picon",
-            orbit: {
-                eccentricity: 0.015,
-                radius: 20,
-            },
             tribe: {
                 "name": "Piconese",
-                population: 1400000000, sign: "♓︎", eccentricity: 0.015, patronGod: createPatronGodModifier({
+                population: 1400000000, sign: "♓︎", patronGod: createPatronGodModifier({
                     name: "Poseidon",
                     onAdd: (entity) => {
                         return entity;
@@ -96,16 +87,9 @@ export const solarisAlpha = {
             }
         },
         {
-            orbit: {
-                eccentricity: 0.025,
-                radius: 23,
-            },
+            marker: { color: "#887266", radius: 8, label: "Tauron" },
             archetype: "kobol",
-            color: "#887266",
-            children: [
-                { orbit: { radius: 5, eccentricity: 0.1, angle: 0 }, color: "#97958c", radius: 5, name: "Minos", archetype: "mars" }
-            ],
-            radius: 8,
+            orbit: { radius: 23, angle: 0, eccentricity: 0.025 },
             name: "Tauron",
             tribe: {
                 name: "Minos",

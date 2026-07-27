@@ -7,14 +7,13 @@ import { MapCreationData } from "../data/gameData";
 import { StartState } from "../data/types";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
-import { createSolarSystem } from "./createSolarSystem";
+import { applyComponents } from "./helpers";
+import { RadiusComponent } from "@/engine/components/radiusComponent";
+import { ColorComponent } from "@/engine/components/colorComponent";
 import { UNIVERSE_SCALE, TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair";
 import { createBody } from "./createBody";
-import { applyComponents } from "./helpers";
-import { RadiusComponent } from "@/engine/components/radiusComponent";
-import { ColorComponent } from "@/engine/components/colorComponent";
 
 export function init(engine: Engine) {
     const viewportSystem = engine.getSystem(ViewportSystem)

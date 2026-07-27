@@ -33,7 +33,7 @@ export function createBinaryOrbitPair(
         new PositionComponent(0, 0),
         new OrbitComponent(
             parent.id,
-            (planetA.radius + planetB.radius) / 2 * UNIVERSE_SCALE,
+             (planetA.marker.radius + planetB.marker.radius) / 2 * UNIVERSE_SCALE,
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
             planetA.orbit.eccentricity ?? 0

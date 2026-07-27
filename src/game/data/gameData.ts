@@ -5,11 +5,9 @@ import { heliosGamma } from "./heliosGamma";
 import { heliosDelta } from "./heliosDelta";
 
 export const MapCreationData = {
-    angle: 0,
+    marker: { color: "red", radius: 10, label: "universe-root" },
     archetype: "kobol",
-    color: "red",
     name: "universe-root",
-    radius: 10,
     orbit: { radius: 0, angle: 0, eccentricity: 0 },
     vessels: [],
     binaryPairs: [{

@@ -1,7 +1,7 @@
 import { Engine } from "@/engine/core/engine"
 import { ClickableComponent } from "@engine/components/clickableComponent"
 import { ColorComponent } from "@engine/components/colorComponent"
-import { PositionComponent } from "@engine/components/position"
+import { PositionComponent, WorldPosition } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
@@ -17,12 +17,18 @@ import { MapMarker, VesselBlueprint } from "../data/types"
 import { Entity } from "@engine/entities/entity"
 import { LabelComponent } from "@/engine/components/label"
 
-export function createMarker(engine: Engine, { color, radius, label, labelColor = "red", textSize = 18 }: MapMarker) {
-    return applyComponents(engine.createEntity(),
+export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false }: MapMarker) {
+    const marker = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
-        new ColorComponent(color),
-        new RadiusComponent(radius),
-        new LabelComponent(label, textSize, { x: 0, y: 20, z: 1 }, labelColor))
+        new ColorComponent(color, "", shade),
+        new RadiusComponent(radius))
+
+
+    if(label) {
+        marker.addComponent(new LabelComponent(label, textSize, offset ?? { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor))
+    }
+
+    return marker
 }
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
