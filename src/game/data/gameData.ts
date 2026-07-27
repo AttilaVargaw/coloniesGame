@@ -1,19 +1,8 @@
-import { InfoComponent } from "@engine/components/infoComponent";
-import type { Entity } from "@engine/entities/entity";
-import type { BodyBlueprint } from "./types";
+import type { ObitingBodyBlueprint } from "./types";
 import { solarisAlpha } from "./heliosAlpha";
 import { solarisBeta } from "./heliosBeta";
 import { heliosGamma } from "./heliosGamma";
 import { heliosDelta } from "./heliosDelta";
-
-export function createPatronGodModifier({ name, description, onAdd, onRemove, modifiers }: { modifiers?: Record<string, string>, description: string, name: string, onAdd: (entity: Entity) => Entity, onRemove: (entity: Entity) => Entity }) {
-    const nameComponent = new InfoComponent({ patronGod: name, description, ...modifiers })
-
-    return {
-        onAdd: (entity: Entity) => onAdd(entity).addComponent(nameComponent),
-        onRemove: (entity: Entity) => onRemove(entity.removeComponent(InfoComponent)),
-    }
-}
 
 export const MapCreationData = {
     angle: 0,
@@ -24,9 +13,9 @@ export const MapCreationData = {
     orbit: { radius: 0, angle: 0, eccentricity: 0 },
     vessels: [],
     binaryPairs: [{
-        separation: 1,
+        separation: 4,
         orbit: {
-            radius: 1,
+            radius: 4,
             angle: 0
         },
         bodies: [
@@ -34,14 +23,14 @@ export const MapCreationData = {
             solarisAlpha,
         ]
     }, {
-        separation: 1,
+        separation: 2,
         orbit: {
             angle: Math.PI,
-            radius: 1
+            radius: 4
         },
         bodies: [
             heliosGamma,
             heliosDelta,
         ]
     }]
-} as const as BodyBlueprint
+} as const as ObitingBodyBlueprint

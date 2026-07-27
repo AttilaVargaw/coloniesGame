@@ -1,9 +1,9 @@
-import { createPatronGodModifier } from "./gameData";
-import { BodyBlueprint } from "./types";
+import { createPatronGodModifier } from "./createPatronGodModifier";
+import { ObitingBodyBlueprint } from "./types";
 
 export const heliosGamma = {
     orbit: {
-        radius: 100,
+        radius: 40,
         eccentricity: 0.01
     },
     archetype: "sol",
@@ -19,9 +19,10 @@ export const heliosGamma = {
             color: "",
             archetype: "kobol",
             radius: 8,
+            population: 450000000,
             tribe: {
                 name: "Scorpian",
-                population: 450000000, sign: "♏︎", patronGod: createPatronGodModifier({
+                sign: "♏︎", patronGod: createPatronGodModifier({
                     name: "Dionysus",
                     description: "Dyonysus is the Lord of wine-making, orchards, fruit, vegetation, fertility, festivity, insanity, ritual madness, religious ecstasy, and theatre. His wine, music, and ecstatic dance were considered to free his followers from self-conscious fear and care, and subvert the oppressive restraints of the powerful. His thyrsus, a fennel-stem sceptre, sometimes wound with ivy and dripping with honey, is both a beneficent wand and a weapon used to destroy those who oppose his cult and the freedoms he represents. Those who partook of his mysteries were believed to become possessed and empowered by the god himself.",
                     onAdd: (entity) => {
@@ -78,4 +79,4 @@ export const heliosGamma = {
             }
         }
     ],
-} as const as BodyBlueprint;
+} as const as ObitingBodyBlueprint;

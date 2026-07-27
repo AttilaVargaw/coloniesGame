@@ -100,7 +100,7 @@ export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
 
                         return (
                             <>
-                                Population: {Math.floor(industry.population).toLocaleString()} <span className="text-neutral-400">({fmt(popGrowth)})</span><br />
+                                Population: {Math.floor(industry.population * industry.workingPopulationRatio).toLocaleString()} <span className="text-neutral-400">({fmt(popGrowth)})</span><br />
                                 Ore: {Math.floor(industry.ore).toLocaleString()} <span className="text-neutral-400">({fmt(oreGrowth)})</span><br />
                                 Tylium: {Math.floor(industry.tylium).toLocaleString()} <span className="text-neutral-400">({fmt(tyliumGrowth)})</span><br />
                                 Credits: {Math.floor(industry.credits).toLocaleString()} <span className="text-neutral-400">({fmt(creditsGrowth)})</span><br />

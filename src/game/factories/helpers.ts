@@ -24,6 +24,14 @@ export const soiRatios = {
 
 export type PlanetArchetype = keyof typeof soiRatios
 
+export function descartesToPolar(orbitAngle: number, orbitRadius: number) {
+    return [
+        Math.cos(orbitAngle) * orbitRadius,
+        Math.sin(orbitAngle) * orbitRadius,
+        0
+    ] as [number, number, number]
+}
+
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {
     return radius * soiRatios[archetype] * soiRatio
 }

@@ -28,6 +28,7 @@ export class IndustryComponent extends EntityComponent {
         public militaryAllocation: number = 0.3,
         public buildOrders: BuildOrder[] = [],
         public maintenanceCosts: number = 0,
+        public workingPopulationRatio: number = 0.6
     ) {
         super()
     }

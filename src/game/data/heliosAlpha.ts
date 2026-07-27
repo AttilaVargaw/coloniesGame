@@ -1,12 +1,12 @@
-import { createPatronGodModifier } from "./gameData";
-import { BodyBlueprint } from "./types";
+import { createPatronGodModifier } from "./createPatronGodModifier";
+import { ObitingBodyBlueprint } from "./types";
 
 export const solarisAlpha = {
     name: "Helios Alpha",
     color: "#fffcc9",
     archetype: "sol",
     radius: 10,
-    orbit: { radius: 10, angle: 0, eccentricity: 0 },
+    orbit: { radius: 40, angle: 0, eccentricity: 0 },
     // binaryPairs: new Map([["Caprica-Gemenon", 1.45]]),
     children: [
         {
@@ -39,7 +39,7 @@ export const solarisAlpha = {
                 }),
             },
             vessels: [
-                { name: "Minerva", radius: 4, orbitRadius: 50, angle: 0 }
+                { name: "Minerva", radius: 4, orbit: { radius: 50, angle: 0, eccentricity: 0.007 } }
             ],
             angle: 0,
             orbit: {
@@ -121,4 +121,4 @@ export const solarisAlpha = {
             }
         }
     ]
-} as const as BodyBlueprint;
+} as const as ObitingBodyBlueprint;
