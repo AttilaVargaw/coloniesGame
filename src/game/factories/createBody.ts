@@ -3,7 +3,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { BodyBlueprint, HomeworldBlueprint } from "../data/types"
+import { BodyBlueprint } from "../data/types"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
@@ -23,6 +23,7 @@ export function createBody({
     children,
     binaryPairs,
     marker,
+    population
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
     const body = createMarker(engine, { shade: true, ...marker })
 
@@ -71,23 +72,7 @@ export function createBody({
         }
     }
 
-    return body
-}
-
-export function createHomeworld(blueprint: HomeworldBlueprint, parent: Entity, engine: Engine) {
-    const body = createBody(blueprint, parent, engine)
-
-    const { tribe, marker } = blueprint
-    const population = tribe?.population ?? 0
-
-    if(tribe) {
-        if(tribe?.patronGod) {
-            body.addModifier(tribe.patronGod)
-        }
-
-        const clickSize = marker.radius * 2
-        const clickSquare = { width: clickSize, height: clickSize }
-
+    if(population !== undefined) {
         applyComponents(body,
             new SelectableComponent(clickSize, "red"),
             new HoverableComponent("pointer", clickSquare),

@@ -18,7 +18,6 @@ function createSpaceshipSelector(engine: Engine, color: string) {
     return entity
 }
 
-
 export class SelectionSystem extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
     }

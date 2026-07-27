@@ -23,7 +23,6 @@ export function createMarker(engine: Engine, { offset, color, radius, label, lab
         new ColorComponent(color, "", shade),
         new RadiusComponent(radius))
 
-
     if(label) {
         marker.addComponent(new LabelComponent(label, textSize, offset ?? { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor))
     }

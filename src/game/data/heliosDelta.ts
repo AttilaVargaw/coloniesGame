@@ -6,8 +6,19 @@ export const heliosDelta = {
     archetype: "sol",
     orbit: { radius: 10, angle: 0, eccentricity: 0 },
     children: [
-        { marker: { color: "red", radius: 10, label: "Canceron" }, archetype: "kobol", orbit: { radius: 10 }, name: "Canceron", tribe: { population: 6_700_000_000, sign: "♍︎", name: "Virgonese" } },
-        { marker: { color: "red", radius: 10, label: "Aquaria" }, archetype: "kobol", orbit: { radius: 10 }, name: "Aquaria", tribe: { population: 25_000, sign: "︎♌︎", name: "Leonid" } },
-        { marker: { color: "red", radius: 10, label: "Aerilon" }, archetype: "kobol", orbit: { radius: 10 }, name: "Aerilon", tribe: { population: 1_200_000_000, sign: "︎♌︎", name: "Leonid" } },
+        {
+            marker: { color: "red", radius: 10, label: "Canceron" },
+            archetype: "kobol", orbit: { radius: 10 },
+            name: "Canceron",
+            population: 6_700_000_000,
+        },
+        {
+            marker: { color: "red", radius: 10, label: "Aquaria" },
+            archetype: "kobol", orbit: { radius: 10 }, name: "Aquaria", population: 25_000
+        },
+        {
+            marker: { color: "red", radius: 10, label: "Aerilon" },
+            archetype: "kobol", orbit: { radius: 10 }, name: "Aerilon", population: 1_200_000_000
+        },
     ],
 } as const as ObitingBodyBlueprint;

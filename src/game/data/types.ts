@@ -22,27 +22,27 @@ export type OrbitalBlueprint = {
 
 export type TribalData = {
     readonly name: string
-    readonly population: number
     readonly sign?: string;
     readonly patronGod?: Modifier;
 }
 
 export type BodyBlueprint = {
+    readonly population?: number
     readonly name: string
     readonly radius?: number
     readonly archetype: PlanetArchetype
     readonly color?: string
     readonly marker: MapMarker
     readonly orbit: OrbitalBlueprint
-    readonly tribe?: TribalData
+    //readonly tribe?: TribalData
     readonly children?: BodyBlueprint[]
     readonly vessels?: VesselBlueprint[]
     readonly binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint], separation: number, orbit: OrbitalBlueprint }[]
 }
 
-export type HomeworldBlueprint = BodyBlueprint & {
-    readonly tribe: TribalData
-}
+// export type HomeworldBlueprint = BodyBlueprint & {
+//     readonly tribe: TribalData
+// }
 
 export type ObitingBodyBlueprint = BodyBlueprint
 

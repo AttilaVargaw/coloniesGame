@@ -31,29 +31,26 @@ export function createBinaryOrbitPair(
     const barycentreOrbitRadius = radius / 2 * UNIVERSE_SCALE
     const barycentre = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
+        new RadiusComponent(10),
+        new LabelComponent("barycentre", 18, { x: 25, y: 0, z: 1 }, "white"),
         new OrbitComponent(
             parent.id,
-             (planetA.marker.radius + planetB.marker.radius) / 2 * UNIVERSE_SCALE,
+            (planetA.marker.radius + planetB.marker.radius) / 2 * UNIVERSE_SCALE,
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
             planetA.orbit.eccentricity ?? 0
         ),
-        new RadiusComponent(10),
-        new LabelComponent("barycentre", 18, { x: 25, y: 0, z: 1 }, "white"),
         new ColorComponent("white")
     )
 
-    planetA.orbit = makeOrbitArgs(0, separation * UNIVERSE_SCALE)
-    planetB.orbit = makeOrbitArgs(Math.PI, separation * UNIVERSE_SCALE)
-
     const bodyA = createBody(
-        planetA,
+        { ...planetA, orbit: makeOrbitArgs(0, separation * UNIVERSE_SCALE) },
         barycentre,
         engine,
     )
 
     const bodyB = createBody(
-        planetB,
+        { ...planetB, orbit: makeOrbitArgs(Math.PI, separation * UNIVERSE_SCALE) },
         barycentre,
         engine,
     )

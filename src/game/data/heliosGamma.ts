@@ -2,6 +2,7 @@ import { createPatronGodModifier } from "./createPatronGodModifier";
 import { ObitingBodyBlueprint } from "./types";
 
 export const heliosGamma = {
+    name: "Helios Gamma",
     marker: { color: "#f5f5f5", radius: 10, label: "Helios Gamma" },
     orbit: { radius: 40, eccentricity: 0.01 },
     archetype: "sol",
@@ -11,8 +12,8 @@ export const heliosGamma = {
             orbit: { radius: 10, eccentricity: 0.01 },
             name: "Scorpia",
             archetype: "kobol",
+            population: 450000000,
             tribe: {
-                population: 450000000,
                 name: "Scorpian",
                 sign: "♏︎", patronGod: createPatronGodModifier({
                     name: "Dionysus",
@@ -31,8 +32,9 @@ export const heliosGamma = {
             name: "Sagitarron",
             archetype: "kobol",
             orbit: { radius: 8, eccentricity: 0.1 },
+            population: 1700000000,
             tribe: {
-                population: 1700000000, sign: "♐︎", patronGod: createPatronGodModifier({
+                sign: "♐︎", patronGod: createPatronGodModifier({
                     description: "Zeus is the supreme Lord of the Kobolian pantheon. He is a sky and thunder god, who rules as king of the lords on Kobol. Zeus is the child of Cronus and Rhea.",
                     name: "Zeus",
                     onAdd: (entity) => {
@@ -49,18 +51,7 @@ export const heliosGamma = {
             name: "Libran",
             archetype: "kobol",
             orbit: { radius: 8, eccentricity: 0.1 },
-            tribe: {
-                population: 2100000, sign: "♎︎", patronGod: createPatronGodModifier({
-                    description: "Athena is the Lord of Kobol associated with wisdom, warfare, and handicraft. Her major symbols include owls, olive trees, snakes, and the gorgoneion. In art, she is generally depicted wearing a helmet and holding a spear.",
-                    name: "Athena",
-                    onAdd: (entity) => {
-                        return entity;
-                    }, onRemove: (entity) => {
-                        return entity;
-                    }
-                }),
-                name: "Libran"
-            }
+            population: 2100000,
         }
     ],
 } as const as ObitingBodyBlueprint;

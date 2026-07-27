@@ -34,8 +34,8 @@ export const solarisAlpha = {
             archetype: "kobol",
             orbit: { radius: 24, angle: 0, eccentricity: 0.017 },
             name: "Caprica",
+            population: 4900000000,
             tribe: {
-                population: 4900000000,
                 sign: "♑︎",
                 patronGod: createPatronGodModifier({
                     name: "Apollo",
@@ -55,54 +55,21 @@ export const solarisAlpha = {
             archetype: "kobol",
             orbit: { radius: 24, angle: 0, eccentricity: 0.02 },
             name: "Gemenon",
-            tribe: {
-                population: 2800000000, sign: "♊︎",
-                name: "Gemenese",
-                patronGod: createPatronGodModifier({
-                    modifiers: { fertility: "+2" },
-                    name: "Hera",
-                    onAdd: (entity) => {
-                        return entity;
-                    }, onRemove: (entity) => {
-                        return entity;
-                    }, description: "Hera is the goddess of marriage, women, and family, and the protector of women during childbirth. In mythology, she is queen among the twelve Lord of Kobol, sister and wife of Zeus, and daughter of the Titans Cronus and Rhea."
-                }),
-            }
+            population: 2800000000,
         },
         {
             marker: { color: "#56738c", radius: 8, label: "Picon" },
             archetype: "kobol",
             orbit: { radius: 20, angle: 0, eccentricity: 0.015 },
             name: "Picon",
-            tribe: {
-                "name": "Piconese",
-                population: 1400000000, sign: "♓︎", patronGod: createPatronGodModifier({
-                    name: "Poseidon",
-                    onAdd: (entity) => {
-                        return entity;
-                    }, onRemove: (entity) => {
-                        return entity;
-                    }, description: "Poseidon is one of the twelve Lords of Kobol. Presiding over the sea, storms, earthquakes and horses. He was the protector of seafarers."
-                }),
-            }
+            population: 1400000000,
         },
         {
             marker: { color: "#887266", radius: 8, label: "Tauron" },
             archetype: "kobol",
             orbit: { radius: 23, angle: 0, eccentricity: 0.025 },
             name: "Tauron",
-            tribe: {
-                name: "Minos",
-                population: 2500000000, sign: "♉︎",
-                patronGod: createPatronGodModifier({
-                    name: "Ares",
-                    onAdd: (entity) => {
-                        return entity;
-                    }, onRemove: (entity) => {
-                        return entity;
-                    }, description: "Ares is the god of war and courage. He is one of the Lords of Kobol, and the son of Zeus and Hera. He embodies the physical valor necessary for success in war but can also personify sheer brutality and bloodlust, in contrast to his sister Athena, whose martial functions include military strategy and generalship. An association with Ares endows places, objects, and other deities with a savage, dangerous, or militarized quality."
-                }),
-            }
+
         }
     ]
 } as const as ObitingBodyBlueprint;
