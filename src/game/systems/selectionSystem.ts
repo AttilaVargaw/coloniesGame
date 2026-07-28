@@ -9,7 +9,7 @@ import { RadiusComponent } from "@engine/components/radiusComponent"
 import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 import { Engine } from "@/engine/core/engine"
-import { SHIP_RADIUS } from "../constants"
+import { SHIP_RADIUS, UNIVERSE_SCALE } from "../constants"
 import { createMarker } from "../factories/createSpaceship"
 
 function createSpaceshipSelector(engine: Engine, color: string) {
@@ -127,7 +127,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         const circle = this.engine.createEntity()
             .addComponent(new PositionComponent(0, 0))
-            .addComponent(new RadiusComponent(suite.range))
+            .addComponent(new RadiusComponent(suite.range * UNIVERSE_SCALE))
             .addComponent(new ColorComponent("", "red"))
 
         this.sensorRangeCircle = circle

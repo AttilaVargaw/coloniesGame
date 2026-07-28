@@ -9,7 +9,8 @@ import { MoveNode } from "./moveSystem"
 import { SoiComponent } from "@/engine/components/soiComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { PathComponent } from "@/game/components/pathComponent"
-import { StartState } from "@/game/data/types"
+import { StartState } from "../data/StartState"
+import { UNIVERSE_SCALE } from "../constants"
 
 function makeMoveNode(entity: Entity, range: number): MoveNode {
     const pos = entity.getComponent(PositionComponent)!
@@ -69,7 +70,7 @@ describe("move system waypoint queue", () => {
             getSceneNode: (e: Entity) => sceneNodes.get(e),
             addCommand: vi.fn(),
             getSystem: (ctor: new (...args: any[]) => any) => {
-                if (ctor === TargetSystem) {
+                if(ctor === TargetSystem) {
                     return { clearTarget: clearTargetMock }
                 }
                 return undefined
@@ -141,8 +142,8 @@ describe("move system waypoint queue", () => {
         setShipPath(ship, [ship, w1, w2, w3, w4])
 
         const moveSystem = new MoveSystem()
-        ;(moveSystem as any).engine = mockEngine
-        ;(moveSystem as any).nodes = [makeMoveNode(ship, 2)]
+            ; (moveSystem as any).engine = mockEngine
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 2)]
 
         moveSystem.moveNodes()
 
@@ -164,8 +165,8 @@ describe("move system waypoint queue", () => {
         setShipPath(ship, [ship, w1])
 
         const moveSystem = new MoveSystem()
-        ;(moveSystem as any).engine = mockEngine
-        ;(moveSystem as any).nodes = [makeMoveNode(ship, 3)]
+            ; (moveSystem as any).engine = mockEngine
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 3)]
 
         moveSystem.moveNodes()
 
@@ -181,8 +182,8 @@ describe("move system waypoint queue", () => {
         targetAttractor.getComponent(SoiComponent)!.radius = 500
 
         const moveSystem = new MoveSystem()
-        ;(moveSystem as any).engine = mockEngine
-        ;(moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+            ; (moveSystem as any).engine = mockEngine
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 1)]
 
         moveSystem.moveNodes()
 
@@ -208,8 +209,8 @@ describe("move system waypoint queue", () => {
         setShipPath(ship, [ship, targetAttractor, planet])
 
         const moveSystem = new MoveSystem()
-        ;(moveSystem as any).engine = mockEngine
-        ;(moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+            ; (moveSystem as any).engine = mockEngine
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 1)]
 
         moveSystem.moveNodes()
 
@@ -228,15 +229,15 @@ describe("move system waypoint queue", () => {
         setShipPath(ship, [ship, targetAttractor])
 
         const moveSystem = new MoveSystem()
-        ;(moveSystem as any).engine = mockEngine
-        ;(moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+            ; (moveSystem as any).engine = mockEngine
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 1)]
 
         moveSystem.moveNodes()
 
         const orbit = ship.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
-        expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20 - 0))
-        expect(orbit!.meanAnomaly).toBeCloseTo(Math.atan2(20 - 0, 100 - 200))
+        expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20) * UNIVERSE_SCALE)
+        expect(orbit!.meanAnomaly).toBeCloseTo(Math.atan2(20, 100 - 200))
     })
 })

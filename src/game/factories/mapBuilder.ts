@@ -4,15 +4,14 @@ import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PathComponent } from "../components/pathComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
 import { MapCreationData } from "../data/gameData";
-import { StartState } from "../data/types";
+import { StartState } from "../data/StartState";
 import { Engine } from "@/engine/core/engine";
 import type { Entity } from "@engine/entities/entity";
 import { applyComponents } from "./helpers";
 import { RadiusComponent } from "@/engine/components/radiusComponent";
 import { ColorComponent } from "@/engine/components/colorComponent";
-import { UNIVERSE_SCALE, TWO_PI } from "../constants";
+import { TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
-import { createBinaryOrbitPair } from "./createBinaryOrbitPair";
 import { createBody } from "./createBody";
 
 export function init(engine: Engine) {
@@ -60,12 +59,12 @@ export function init(engine: Engine) {
     //     linkAttractors(grid, attractors, cx, cy)
     //     deduplicateLinks(grid)
 
-        // if(starData.binaryPairs) {
-        //     for(const binaryPair of starData.binaryPairs) {
-        //         const [first, second] = binaryPair[0].split("-")
-        //         createBinaryOrbitPair(engine, cocalus, starData.planets.get(first)!, starData.planets.get(second)!, binaryPair[1])
-        //     }
-        // }
+    // if(starData.binaryPairs) {
+    //     for(const binaryPair of starData.binaryPairs) {
+    //         const [first, second] = binaryPair[0].split("-")
+    //         createBinaryOrbitPair(engine, cocalus, starData.planets.get(first)!, starData.planets.get(second)!, binaryPair[1])
+    //     }
+    // }
 
     //     // stars.set(starName, star)
     // }

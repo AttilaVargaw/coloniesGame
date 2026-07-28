@@ -17,7 +17,7 @@ import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import Camera from "@lib/camera"
 import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, UNIVERSE_SCALE } from "./constants"
 import { CommandBase } from "@/engine/lib/CommandBase"
-import { BodyBlueprint } from "./data/types"
+import { BodyBlueprint } from "./data/BodyBlueprint"
 
 export class Game {
     readonly engine: World = new World

@@ -10,10 +10,11 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, descartesToPolar } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
-import { SHIP_RADIUS, TWO_PI } from "../constants"
+import { SHIP_RADIUS, TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
-import { MapMarker, VesselBlueprint } from "../data/types"
+import { VesselBlueprint } from "../data/VesselBlueprint"
+import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { LabelComponent } from "@/engine/components/label"
 
@@ -89,7 +90,7 @@ export function createVessel(
                 selectionSystem?.onSelectionChanged({ entity: target, type: "ship" })
             }
         }),
-        new OrbitComponent(parent.id, orbitRadius, angularSpeed(orbitRadius), orbitAngle)
+        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle)
     )
 
     engine.addEntity(ship)

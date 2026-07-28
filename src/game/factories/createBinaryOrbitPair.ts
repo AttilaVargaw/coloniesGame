@@ -7,13 +7,13 @@ import { PositionComponent } from "@/engine/components/position"
 import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { applyComponents } from "./helpers"
-import { BodyBlueprint } from "../data/types"
+import { BodyBlueprint } from "../data/BodyBlueprint"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { LabelComponent } from "@/engine/components/label"
 import { ColorComponent } from "@/engine/components/colorComponent"
 
 const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
-    radius: barycentreOrbitRadius,
+    radius: barycentreOrbitRadius * UNIVERSE_SCALE,
     angle,
     eccentricity: 0,
 })
@@ -24,8 +24,10 @@ export function createBinaryOrbitPair(
     planetA: BodyBlueprint,
     planetB: BodyBlueprint,
     separation: number,
-    radius: number,
-    angle?: number
+    { radius, angle }: {
+        radius: number,
+        angle?: number
+    }
 ) {
     //const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = radius / 2 * UNIVERSE_SCALE
@@ -35,7 +37,7 @@ export function createBinaryOrbitPair(
         new LabelComponent("barycentre", 18, { x: 25, y: 0, z: 1 }, "white"),
         new OrbitComponent(
             parent.id,
-            (planetA.marker.radius + planetB.marker.radius) / 2 * UNIVERSE_SCALE,
+            (planetA.orbit.radius + planetB.orbit.radius) / 2 * UNIVERSE_SCALE,
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
             planetA.orbit.eccentricity ?? 0
@@ -44,13 +46,13 @@ export function createBinaryOrbitPair(
     )
 
     const bodyA = createBody(
-        { ...planetA, orbit: makeOrbitArgs(0, separation * UNIVERSE_SCALE) },
+        { ...planetA, orbit: makeOrbitArgs(0, separation) },
         barycentre,
         engine,
     )
 
     const bodyB = createBody(
-        { ...planetB, orbit: makeOrbitArgs(Math.PI, separation * UNIVERSE_SCALE) },
+        { ...planetB, orbit: makeOrbitArgs(Math.PI, separation) },
         barycentre,
         engine,
     )

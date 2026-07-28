@@ -1,11 +1,11 @@
+import { BodyBlueprint } from "./BodyBlueprint";
 import { createPatronGodModifier } from "./createPatronGodModifier";
-import { ObitingBodyBlueprint } from "./types";
 
 export const solarisAlpha = {
     name: "Helios Alpha",
     marker: { color: "#fffcc9", radius: 10, label: "Helios Alpha" },
     archetype: "sol",
-    orbit: { radius: 40, angle: 0, eccentricity: 0 },
+    orbit: { radius: 300, angle: 0, eccentricity: 0 },
     children: [
         {
             marker: { color: "#f99838", radius: 4, label: "Icarus" },
@@ -47,7 +47,7 @@ export const solarisAlpha = {
                 }),
             },
             vessels: [
-                { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 50, angle: 0, eccentricity: 0.007 } }
+                { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 10, angle: 0, eccentricity: 0.007 } }
             ],
         },
         {
@@ -62,7 +62,7 @@ export const solarisAlpha = {
             archetype: "kobol",
             orbit: { radius: 20, angle: 0, eccentricity: 0.015 },
             name: "Picon",
-            population: 1400000000,
+            population: 1_400_000_000,
         },
         {
             marker: { color: "#887266", radius: 8, label: "Tauron" },
@@ -72,4 +72,4 @@ export const solarisAlpha = {
 
         }
     ]
-} as const as ObitingBodyBlueprint;
+} as const as BodyBlueprint;

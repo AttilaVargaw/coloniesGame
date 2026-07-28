@@ -9,6 +9,7 @@ import { PatronGoodInfo } from "./patronGoodInfo";
 import { useState } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent } from "@/engine/lib/events";
+import { getPopulationBreakdown } from "@/game/data/getPopulationBreakdown";
 
 export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
     entity?: Entity,
@@ -70,45 +71,20 @@ export function ColoniesInforWindow({ entity, setIsOpen, onAllocationChange }: {
                     </div>
                     <br />
                     {(() => {
-                        const safeTotal = Math.max(1, industry.civilianAllocation + industry.militaryAllocation)
-                        const civilianFuel = industry.tylium * (industry.civilianAllocation / safeTotal)
-                        const militaryFuel = industry.tylium * (industry.militaryAllocation / safeTotal)
-                        const oreMined = industry.laborForce * 0.5
-                        const oreRefined = Math.min(industry.ore + oreMined, industry.refineryCapacity)
-                        const populationTax = industry.population * 0.1 * industry.taxRate
-                        const industryTax = industry.tylium * 0.05 * industry.taxRate
-                        const totalCreditsIn = populationTax + industryTax
-
-                        let buildOrderOrePerDay = 0
-                        let buildOrderTyliumPerDay = 0
-                        let buildOrderCreditsPerDay = 0
-
-                        if(industry.buildOrders.length > 0 && militaryFuel > 0) {
-                            const perOrder = militaryFuel / industry.buildOrders.length
-                            for(const order of industry.buildOrders) {
-                                buildOrderOrePerDay += Math.min(order.oreCost - order.orePaid, industry.ore / industry.buildOrders.length)
-                                buildOrderTyliumPerDay += Math.min(order.tyliumCost - order.tyliumPaid, perOrder)
-                                buildOrderCreditsPerDay += Math.min(order.creditCost - order.creditsPaid, industry.credits / industry.buildOrders.length)
-                            }
-                        }
-
-                        const oreGrowth = oreMined - oreRefined - buildOrderOrePerDay
-                        const tyliumGrowth = oreRefined - civilianFuel - buildOrderTyliumPerDay
-                        const creditsGrowth = totalCreditsIn - industry.maintenanceCosts - buildOrderCreditsPerDay
                         const popGrowth = (industry.happiness - 0.5) * industry.population / 15000
                         const fmt = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}/day`
 
                         return (
                             <>
-                                Population: {Math.floor(industry.population * industry.workingPopulationRatio).toLocaleString()} <span className="text-neutral-400">({fmt(popGrowth)})</span><br />
-                                Ore: {Math.floor(industry.ore).toLocaleString()} <span className="text-neutral-400">({fmt(oreGrowth)})</span><br />
-                                Tylium: {Math.floor(industry.tylium).toLocaleString()} <span className="text-neutral-400">({fmt(tyliumGrowth)})</span><br />
-                                Credits: {Math.floor(industry.credits).toLocaleString()} <span className="text-neutral-400">({fmt(creditsGrowth)})</span><br />
+                                Full Population: {Math.floor(industry.population).toLocaleString()} <span className="text-neutral-400">({fmt(popGrowth)})</span><br />
+                                Working Population: {Math.floor(industry.population * industry.workingPopulationRatio).toLocaleString()}
+
+                                {Object.entries(getPopulationBreakdown(industry.population)).map(([key, value]) => {
+                                    return <div key={key}>{key}: {Math.floor(value).toLocaleString()}</div>
+                                })}
                             </>
                         )
                     })()}
-                    Refinery capacity: {industry.refineryCapacity.toLocaleString()}/day<br />
-                    Build queue: {industry.buildOrders.length} order(s)<br />
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter>

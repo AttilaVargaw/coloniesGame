@@ -1,10 +1,10 @@
-import { ObitingBodyBlueprint } from "./types";
+import { BodyBlueprint } from "./BodyBlueprint";
 
 export const solarisBeta = {
     name: "Helios Beta",
     marker: { color: "#fffcc9", radius: 40, label: "Helios Beta" },
     archetype: "sol",
-    orbit: { radius: 10, angle: 0, eccentricity: 0 },
+    orbit: { radius: 300, angle: 0, eccentricity: 0 },
     children: [
         {
             population: 4300000000,
@@ -15,4 +15,4 @@ export const solarisBeta = {
             marker: { color: "red", radius: 10, label: "Leonis" }, archetype: "kobol", orbit: { radius: 10 }, name: "Leonis"
         },
     ],
-} as const as ObitingBodyBlueprint;
+} as const as BodyBlueprint;

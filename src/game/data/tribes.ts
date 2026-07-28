@@ -1,5 +1,5 @@
 import { createPatronGodModifier } from "./createPatronGodModifier";
-import { TribalData } from "./types";
+import { TribalData } from "./TribalData";
 
 export const tribes = new Map<string, TribalData>([
     ["Gemenese", {

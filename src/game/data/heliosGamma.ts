@@ -1,10 +1,10 @@
+import { BodyBlueprint } from "./BodyBlueprint";
 import { createPatronGodModifier } from "./createPatronGodModifier";
-import { ObitingBodyBlueprint } from "./types";
 
 export const heliosGamma = {
     name: "Helios Gamma",
     marker: { color: "#f5f5f5", radius: 10, label: "Helios Gamma" },
-    orbit: { radius: 40, eccentricity: 0.01 },
+    orbit: { radius: 300, eccentricity: 0.01 },
     archetype: "sol",
     children: [
         {
@@ -54,4 +54,4 @@ export const heliosGamma = {
             population: 2100000,
         }
     ],
-} as const as ObitingBodyBlueprint;
+} as const as BodyBlueprint

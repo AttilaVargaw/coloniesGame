@@ -6,8 +6,8 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
 import { SoiComponent } from "@/engine/components/soiComponent"
+import { UNIVERSE_SCALE } from "../constants"
 
-const soiRatio = 0.1
 
 export const soiRatios = {
     earth: 145.2,
@@ -20,6 +20,7 @@ export const soiRatios = {
     uranus: 2040,
     neptune: 3525,
     sol: 10000,
+    baricenter: 1
 } as const
 
 export type PlanetArchetype = keyof typeof soiRatios
@@ -33,7 +34,7 @@ export function descartesToPolar(orbitAngle: number, orbitRadius: number) {
 }
 
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {
-    return radius * soiRatios[archetype] * soiRatio
+    return radius * soiRatios[archetype] * UNIVERSE_SCALE
 }
 
 export function soiFromRadius(radiusComponent: RadiusComponent, archetype: keyof typeof soiRatios = "kobol") {

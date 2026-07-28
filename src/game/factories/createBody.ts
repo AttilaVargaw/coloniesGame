@@ -3,7 +3,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
-import { BodyBlueprint } from "../data/types"
+import { BodyBlueprint } from "../data/BodyBlueprint"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
@@ -33,7 +33,7 @@ export function createBody({
         new OrbitComponent(
             parent.id,
             orbit.radius * UNIVERSE_SCALE,
-            angularSpeed(orbit.radius * UNIVERSE_SCALE),
+            angularSpeed(orbit.radius),
             angle,
             orbit.eccentricity ?? 0
         ),
@@ -47,7 +47,6 @@ export function createBody({
 
     applyComponents(body,
         new HoverableComponent("not-allowed", clickSquare))
-
 
     engine.addEntity(body, parent)
         .addEntity(createSoiCircle(body, archetype, engine), body)
@@ -67,8 +66,8 @@ export function createBody({
     }
 
     if(binaryPairs) {
-        for(const { bodies: [first, second], separation, orbit: { radius, angle } } of binaryPairs) {
-            createBinaryOrbitPair(engine, body, first, second, separation, radius, angle)
+        for(const { bodies: [first, second], separation, orbit } of binaryPairs) {
+            createBinaryOrbitPair(engine, body, first, second, separation, orbit)
         }
     }
 
@@ -83,3 +82,4 @@ export function createBody({
 
     return body
 }
+

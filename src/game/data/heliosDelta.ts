@@ -1,8 +1,8 @@
-import { ObitingBodyBlueprint } from "./types";
+import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosDelta = {
     name: "Helios Delta",
-    marker: { color: "#fffcc9", radius: 40, label: "Helios Delta" },
+    marker: { color: "#fffcc9", radius: 300, label: "Helios Delta" },
     archetype: "sol",
     orbit: { radius: 10, angle: 0, eccentricity: 0 },
     children: [
@@ -21,4 +21,4 @@ export const heliosDelta = {
             archetype: "kobol", orbit: { radius: 10 }, name: "Aerilon", population: 1_200_000_000
         },
     ],
-} as const as ObitingBodyBlueprint;
+} as const as BodyBlueprint;

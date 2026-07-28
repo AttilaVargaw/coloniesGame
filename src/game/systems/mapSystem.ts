@@ -1,7 +1,7 @@
 import { SystemWithNodes } from "./system";
 import { PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
-import { StartState } from "@game/data/types";
+import { StartState } from "../data/StartState";
 import type { Entity } from "@engine/entities/entity";
 import { aStar } from "@game/utils/pathfinder";
 import { Engine } from "@/engine/core/engine";

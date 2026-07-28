@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest"
 import type { Engine } from "@/engine/core/engine"
 import { World } from "@/engine/core/world"
-import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { SoiComponent } from "@/engine/components/soiComponent"
@@ -11,23 +10,21 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { IndustryComponent } from "@/game/components/industryComponent"
-import { createBody, createHomeworld } from "./createBody"
-import { BodyBlueprint, HomeworldBlueprint } from "../data/types"
-import { TWO_PI } from "../constants"
+import { createBody, } from "./createBody"
+import { BodyBlueprint } from "../data/BodyBlueprint"
+import { UNIVERSE_SCALE } from "../constants"
 
 const bodyBlueprint = (overrides: Partial<BodyBlueprint> = {}): BodyBlueprint => ({
     marker: { color: "blue", radius: 5, label: "TestBody" },
-    archetype: "earth",
+    archetype: "kobol",
     orbit: { radius: 10, angle: 0 },
+    name: "TestBody",
+    population: 1000,
     ...overrides,
 })
 
-const homeworldBlueprint = (overrides: Partial<HomeworldBlueprint> = {}): HomeworldBlueprint => ({
+const homeworldBlueprint = (overrides: Partial<BodyBlueprint> = {}): BodyBlueprint => ({
     ...bodyBlueprint(),
-    tribe: {
-        name: "Test Tribe",
-        population: 1000,
-    },
     ...overrides,
 })
 
@@ -41,7 +38,7 @@ describe("createBody", () => {
         expect(body).toBeDefined()
         expect(body.getComponent(PositionComponent)).toBeDefined()
         expect(body.getComponent(RadiusComponent)?.radius).toBe(5)
-        expect(body.getComponent(SoiComponent)?.radius).toBeCloseTo(5 * 145.2 * 0.1)
+        expect(body.getComponent(SoiComponent)?.radius).toBeCloseTo(5 * 145.2 * UNIVERSE_SCALE)
         expect(body.getComponent(PathComponent)).toBeDefined()
         expect(body.getComponent(OrbitComponent)).toBeDefined()
         expect(body.getComponent(TargetableComponent)).toBeDefined()
@@ -90,7 +87,6 @@ describe("createBody", () => {
 
     it("creates vessels attached to the body", () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("parent")
         const planet = engine.createEntity("planet")
 
         const body = createBody(bodyBlueprint({
@@ -112,7 +108,7 @@ describe("createHomeworld", () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
-        const colony = createHomeworld(homeworldBlueprint(), parent, engine)
+        const colony = createBody(homeworldBlueprint(), parent, engine)
 
         expect(colony.getComponent(SelectableComponent)).toBeDefined()
         expect(colony.getComponent(ClickableComponent)).toBeDefined()
@@ -124,8 +120,8 @@ describe("createHomeworld", () => {
         const parent = engine.createEntity("parent")
 
         const population = 5000
-        const colony = createHomeworld(homeworldBlueprint({
-            tribe: { name: "Test", population },
+        const colony = createBody(homeworldBlueprint({
+            population,
         }), parent, engine)
 
         const industry = colony.getComponent(IndustryComponent)
