@@ -13,19 +13,22 @@
 */
 
 export type Population = {
-    readonly farmer: number;
-    readonly miner: number;
-    readonly scientist: number;
-    readonly armyMen: number;
-    readonly navalReservist: number;
-    readonly worker: number;
-    readonly student: number;
-    readonly unemployed: number;
-    readonly healtcarePersonal: number;
-    readonly policeMen: number;
-    readonly marines: number;
-    readonly teacher: number;
-    readonly serviceWorker: number;
-    readonly clergy: number;
-    readonly activeNavymen: number;
+    farmer: number;
+    miner: number;
+    scientist: number;
+    armyMen: number;
+    navalReservist: number;
+    worker: number;
+    student: number;
+    unemployed: number;
+    healtcarePersonal: number;
+    policeMen: number;
+    marines: number;
+    teacher: number;
+    serviceWorker: number;
+    clergy: number;
+    activeNavymen: number;
+    retired: number;
 };
+
+export type ReadonlyPopulation = Readonly<Population>;
