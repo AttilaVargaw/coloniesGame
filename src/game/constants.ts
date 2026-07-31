@@ -1,4 +1,4 @@
-export const UNIVERSE_SCALE = 40
+export const UNIVERSE_SCALE = 20
 
 export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
@@ -21,3 +21,9 @@ export const TIME_ACCELERATION = 50000
 export const workingRatio = 0.6
 export const pensionerRatio = 0.2
 export const studentRatio = 0.2
+
+export const MAX_SOLAR_SYSTEM_DISTNACE = 100 * UNIVERSE_SCALE
+export const HABITABLE_ZONE = [0.95, 1.37] as const
+export const SOLAR_UNIT = UNIVERSE_SCALE
+
+export const STAR_SIZE = 30

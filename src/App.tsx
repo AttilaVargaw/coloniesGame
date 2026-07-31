@@ -1,7 +1,6 @@
 import "./App.css";
 import { renderingContextSettings } from './components/map/screen';
 import { useEffect, useRef, useState } from 'react';
-import { Entity } from "@engine/entities/entity";
 import { MapCreationData } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { GameContext } from "./hooks/useGameContext";
@@ -10,7 +9,6 @@ import { AppInner } from "./AppInner";
 function App() {
   const mapRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
-  const [currentColony, setCurrentColony] = useState<Entity>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
@@ -28,9 +26,7 @@ function App() {
 
   return <GameContext value={game?.engine ?? null}>
     <AppInner
-      setCurrentColony={setCurrentColony}
       game={game}
-      currentColony={currentColony}
       sidebarCollapsed={sidebarCollapsed}
       setSidebarCollapsed={setSidebarCollapsed}
       map={mapRef}

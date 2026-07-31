@@ -20,15 +20,15 @@ export type Population = {
     navalReservist: number;
     worker: number;
     student: number;
-    unemployed: number;
     healtcarePersonal: number;
     policeMen: number;
     marines: number;
     teacher: number;
     serviceWorker: number;
     clergy: number;
-    activeNavymen: number;
+    //activeNavymen: number;
     retired: number;
+    clerks: number;
 };
 
 export type ReadonlyPopulation = Readonly<Population>;

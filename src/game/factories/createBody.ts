@@ -15,6 +15,12 @@ import { createMarker, createVessel } from "./createSpaceship"
 import { TWO_PI, UNIVERSE_SCALE, } from "../constants"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 import { createSoiCircle } from "./createSoiCircle"
+import { createStarterPopulation } from "../data/getPopulationBreakdown"
+import { createStarterIndustry } from "./createStarterIndustry"
+import { createStarterWarehouse } from "./createStarterWarehouse"
+import { RadiusComponent } from "@/engine/components/radiusComponent"
+import { ColorComponent } from "@/engine/components/colorComponent"
+import { PositionComponent } from "@/engine/components/position"
 
 export function createBody({
     archetype,
@@ -23,7 +29,8 @@ export function createBody({
     children,
     binaryPairs,
     marker,
-    population
+    population,
+    rings
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
     const body = createMarker(engine, { shade: true, ...marker })
 
@@ -66,8 +73,8 @@ export function createBody({
     }
 
     if(binaryPairs) {
-        for(const { bodies: [first, second], separation, orbit } of binaryPairs) {
-            createBinaryOrbitPair(engine, body, first, second, separation, orbit)
+        for(const { bodies: [first, second], separation, orbit, children } of binaryPairs) {
+            createBinaryOrbitPair(engine, body, first, second, separation, orbit, children)
         }
     }
 
@@ -76,10 +83,23 @@ export function createBody({
             new SelectableComponent(clickSize, "red"),
             new HoverableComponent("pointer", clickSquare),
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
-            new IndustryComponent(population, 80, population, 0, 0, 0, 10, 0.15, 0.5, 0.3, [], 0)
+            new IndustryComponent(createStarterIndustry(), createStarterWarehouse(population), createStarterPopulation(population))
         )
+    }
+
+    if(rings?.length) {
+        for(const { color, innerRadius, outerRadius } of rings) {
+            const ringsEntity = engine.createEntity()
+            engine.addEntity(ringsEntity, body)
+            applyComponents(ringsEntity, new RadiusComponent(innerRadius), new ColorComponent("", color), new PositionComponent(0, 0, 0))
+
+            const ringsEntity2 = engine.createEntity()
+            engine.addEntity(ringsEntity2, body)
+            applyComponents(ringsEntity2, new RadiusComponent(outerRadius), new ColorComponent("", color), new PositionComponent(0, 0, 0))
+
+
+        }
     }
 
     return body
 }
-

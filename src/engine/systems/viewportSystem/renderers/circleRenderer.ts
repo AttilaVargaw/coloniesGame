@@ -44,15 +44,15 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         ctx.save();
         circle.setColor(ctx);
 
-        ctx.translate(...getAbsolute(circle.entity!, this.engine!));
+        const position = getAbsolute(circle.entity!, this.engine!);
 
         ctx.beginPath();
-        ctx.arc(0, 0, circle.radius.radius, 0, TWO_PI);
+        ctx.arc(...position, circle.radius.radius, 0, TWO_PI);
         ctx.closePath();
         circle.draw(ctx);
 
         if(circle.color.shade) {
-            shadeCircle(ctx, 0, 0, circle.radius.radius)
+            shadeCircle(ctx, ...position, circle.radius.radius)
         }
 
         ctx.restore();

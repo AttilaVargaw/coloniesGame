@@ -1,14 +1,16 @@
+import { SOLAR_UNIT } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 import { createPatronGodModifier } from "./createPatronGodModifier";
 
 export const heliosGamma = {
     name: "Helios Gamma",
-    marker: { color: "#f5f5f5", radius: 10, label: "Helios Gamma" },
+    marker: { color: "#fbf988", radius: 10, label: "Helios Gamma" },
     orbit: { radius: 300, eccentricity: 0.01 },
     archetype: "sol",
     children: [
+        { archetype: "mercury", marker: { color: "#caa17f", radius: 8, label: "Thanatos" }, orbit: { radius: 0.35 * SOLAR_UNIT, angle: 2, eccentricity: 0.017 }, },
         {
-            marker: { color: "", radius: 8, label: "Scorpia" },
+            marker: { color: "#909ec0", radius: 8, label: "Scorpia" },
             orbit: { radius: 10, eccentricity: 0.01 },
             name: "Scorpia",
             archetype: "kobol",
@@ -28,7 +30,7 @@ export const heliosGamma = {
             }
         },
         {
-            marker: { color: "", radius: 8, label: "Sagitarron" },
+            marker: { color: "#837a79", radius: 8, label: "Sagitarron" },
             name: "Sagitarron",
             archetype: "kobol",
             orbit: { radius: 8, eccentricity: 0.1 },
@@ -47,11 +49,23 @@ export const heliosGamma = {
             },
         },
         {
-            marker: { color: "", radius: 8, label: "Libran" },
+            marker: { color: "#759477", radius: 8, label: "Libran" },
             name: "Libran",
             archetype: "kobol",
             orbit: { radius: 8, eccentricity: 0.1 },
             population: 2100000,
+            children: [
+                { archetype: "mercury", marker: { color: "#909ec0", radius: 4, label: "Herse" }, orbit: { radius: 3.1 }, name: "Herse" },
+                { archetype: "mercury", marker: { color: "#7e816b", radius: 4, label: "Herse" }, orbit: { radius: 2.5 }, name: "Pandrossos" }
+            ]
+        },
+        {
+            archetype: "saturn",
+            marker: { color: "#e9d46f", radius: 20, label: "Ophion" },
+            orbit: { radius: 7 * SOLAR_UNIT },
+            rings: [
+                { color: "#847e67", innerRadius: 30, outerRadius: 40 }
+            ]
         }
     ],
 } as const as BodyBlueprint

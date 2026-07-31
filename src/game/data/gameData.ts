@@ -3,6 +3,7 @@ import { solarisBeta } from "./heliosBeta";
 import { heliosGamma } from "./heliosGamma";
 import { heliosDelta } from "./heliosDelta";
 import { BodyBlueprint } from "./BodyBlueprint";
+import { SOLAR_UNIT } from "../constants";
 
 export const MapCreationData = {
     marker: { color: "#000", radius: 10, label: "" },
@@ -11,20 +12,31 @@ export const MapCreationData = {
     orbit: { radius: 0, angle: 0, eccentricity: 0 },
     vessels: [],
     binaryPairs: [{
-        separation: 2,
+        children: [
+            {
+                archetype: "jupiter",
+                marker: { color: "#48a4ad", radius: 20, label: "Ragnar" },
+                name: "Ragnar",
+                orbit: {
+                    radius: 6 * SOLAR_UNIT,
+                    angle: 0, eccentricity: 0
+                }
+            }
+        ],
+        separation: 2 * SOLAR_UNIT,
         orbit: {
-            radius: 6,
+            radius: 300,
             angle: 0
         },
         bodies: [
             solarisBeta,
             solarisAlpha,
-        ]
+        ],
     }, {
         separation: 2,
         orbit: {
             angle: Math.PI,
-            radius: 4
+            radius: 300
         },
         bodies: [
             heliosGamma,

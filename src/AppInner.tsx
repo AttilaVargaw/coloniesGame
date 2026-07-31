@@ -1,38 +1,19 @@
-import { RefObject } from "react";
+import { RefObject, } from "react";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { Header } from "./components/header/header";
 import { Screen } from "./components/map/screen";
 import { ProductionBar } from "./components/productionBar/productionBar";
-import { Entity } from "./engine/entities/entity";
 import { MousemoveEvent, MouseEventData, MousedownEvent, MouseupEvent, ClickEventData } from "./engine/lib/events";
-import { IndustryComponent } from "./game/components/industryComponent";
 import { Game } from "./game/game";
-import { useSelectionChanged } from "./hooks/useSelectionChanged";
 
-export function AppInner({ setCurrentColony, game, currentColony, sidebarCollapsed, setSidebarCollapsed, map }: {
-  setCurrentColony: (entity: Entity | undefined) => void;
+export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
   game: Game | null;
-  currentColony: Entity | undefined;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void;
   map: RefObject<HTMLCanvasElement | null>;
 }) {
-  useSelectionChanged(setCurrentColony);
-
   return <>
-    <ColoniesInforWindow onAllocationChange={(colony, type, value) => {
-      const industry = colony.getComponent(IndustryComponent);
-      if(industry) {
-        switch(type) {
-          case "civilian":
-            industry.civilianAllocation = value;
-            break;
-          case "military":
-            industry.militaryAllocation = value;
-            break;
-        }
-      }
-    }} entity={currentColony} setIsOpen={(isOpen) => setCurrentColony(isOpen ? currentColony : undefined)} />
+    <ColoniesInforWindow />
     <Header />
     <div className="flex bg-black">
       <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>

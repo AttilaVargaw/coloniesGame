@@ -1,4 +1,4 @@
- 
+
 import { useEffect } from "react"
 import { useGameEngine } from "./useGameContext"
 import type { EventBase } from "@/engine/lib/events"

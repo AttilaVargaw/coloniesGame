@@ -3,12 +3,83 @@ import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
+import { getLowestRatio, Goods } from "../data/Goods";
+import { createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { IndustrialSectors } from "../components/Factories";
+import { Population } from "../data/Population";
+import { createStarterPopulation } from "../data/getPopulationBreakdown";
 
-const ORE_PER_LABOR = 0.5
-const BASE_CIVILIAN_GOODS_PER_REFINED = 0.1
-const HAPPINESS_GOODS_THRESHOLD = 0.01
-const POPULATION_TAX_RATE = 0.1
-const INDUSTRY_TAX_RATE = 0.05
+export const generateIndustrialSector = ({ name, workerRequirement, goodsRequirements, goodsProduction }: { name: keyof Partial<IndustrialSectors>, workerRequirement: Partial<Population>, goodsRequirements: Partial<Goods>, goodsProduction: Partial<Goods> }) => {
+    const reducer = ({ workerRatio, remainingWorkers, remainingGoods, sumGoodsProduction, sumGoodsRequirements, workingWorkers }: { remainingGoods: Goods, remainingWorkers: Population, workerRatio: number, sumGoodsRequirements: Partial<Goods>, sumGoodsProduction: Partial<Goods>, workingWorkers: Population }, sectorLevels: IndustrialSectors,) => {
+        const lowestRatio = Math.min(
+            getLowestRatio(workerRequirement, remainingWorkers, sectorLevels[name as keyof IndustrialSectors], workerRatio) || 0,
+            getLowestRatio(goodsRequirements, remainingGoods, sectorLevels[name as keyof IndustrialSectors], workerRatio) || 0
+        )
+
+        const productionRatio = lowestRatio * sectorLevels[name as keyof IndustrialSectors]
+
+        return {
+            workingWorkers: {
+                ...Object.entries(workerRequirement)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: workingWorkers[key as keyof Population] + value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), workingWorkers)
+            },
+            remainingWorkers: {
+                ...Object.entries(workerRequirement)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingWorkers[key as keyof Population] - value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingWorkers)
+            },
+            remainingGoods: {
+                ...Object.entries(goodsRequirements)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] - value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingGoods),
+                ...Object.entries(goodsProduction)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] + value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingGoods),
+            },
+            sumGoodsRequirements: {
+                ...Object.entries(goodsRequirements).reduce((acc, [key, value]) => ({
+                    ...acc,
+                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio * sectorLevels[name as keyof IndustrialSectors]
+                }), sumGoodsRequirements)
+            },
+            sumGoodsProduction: {
+                ...Object.entries(goodsProduction).reduce((acc, [key, value]) => ({
+                    ...acc,
+                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio * sectorLevels[name as keyof IndustrialSectors]
+                }), sumGoodsProduction)
+            }
+        }
+    }
+
+    return reducer
+}
+
+type IndustryReducer = ReturnType<typeof generateIndustrialSector>
+type IndustryReducerReturn = ReturnType<IndustryReducer>
+
+const createIndustryReducers = {
+    agriculturalFactory: generateIndustrialSector({ name: "agriculturalFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { agriculturalGoods: 1 } }),
+    ammunitionFactory: generateIndustrialSector({ name: "ammunitionFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { ammunition: 1 } }),
+    buildingSector: generateIndustrialSector({ name: "buildingSector", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    consumerFactory: generateIndustrialSector({ name: "consumerFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { consumerGoods: 1 } }),
+    electricityFactory: generateIndustrialSector({ name: "electricityFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { electricity: 1 } }),
+    foodFactory: generateIndustrialSector({ name: "foodFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { food: 1 } }),
+    furnitureFactory: generateIndustrialSector({ name: "furnitureFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    machineryFactory: generateIndustrialSector({ name: "machineryFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { machinery: 1 } }),
+    medicineFactory: generateIndustrialSector({ name: "medicineFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { medicine: 1 } }),
+    metalFactory: generateIndustrialSector({ name: "metalFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: {} }),
+    nuclearWeaponFactory: generateIndustrialSector({ name: "nuclearWeaponFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { nuclearWeapons: 1 } }),
+    environmentFactor: generateIndustrialSector({ name: "environmentFactor", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { environmentFactor: 1 } }),
+    forestry: generateIndustrialSector({ name: "forestry", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { wood: 1 } }),
+    oilFactory: generateIndustrialSector({ name: "oilFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { oil: 1 } }),
+    oilRig: generateIndustrialSector({ name: "oilRig", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { oil: 1 } }),
+    orbitalBuildingSector: generateIndustrialSector({ name: "orbitalBuildingSector", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    orbitalFactory: generateIndustrialSector({ name: "orbitalFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    spaceport: generateIndustrialSector({ name: "spaceport", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    spaceTransport: generateIndustrialSector({ name: "spaceTransport", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    uraniumFactory: generateIndustrialSector({ name: "uraniumFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { uranium: 1 } }),
+    weaponFactory: generateIndustrialSector({ name: "weaponFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { weapons: 1 } }),
+    services: generateIndustrialSector({ name: "services", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { services: 1 } }),
+    tourism: generateIndustrialSector({ name: "tourism", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { tourism: 1 } }),
+    waterFactory: generateIndustrialSector({ name: "waterFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { water: 1 } }),
+} satisfies Record<keyof IndustrialSectors, IndustryReducer>
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     protected updateNode(_node: IndustryNode, _dT?: number): void {
@@ -22,70 +93,27 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     }
 
     private onDayPassed = () => {
-        for(const node of this.nodes) {
-            const ind = node.industry
+        for(const { industry } of this.nodes) {
 
-            // 1. Mine ore
-            const oreMined = ind.laborForce * ORE_PER_LABOR
-            ind.ore += oreMined
+            // const fertility = (industry.goods.happiness - 0.5) / 15000
+            //industry.population.student += fertility * industry.population
 
-            // 2. Refine ore → tylium
-            const refined = Math.min(ind.ore, ind.refineryCapacity)
-            ind.ore -= refined
-            ind.tylium += refined
+            const { sumGoodsProduction, sumGoodsRequirements, workingWorkers, remainingWorkers } = Object.entries(createIndustryReducers).reduce((acc, [, reducer]) => reducer({
+                ...acc,
+                workerRatio: 1,
+            }, industry.sectors), {
+                remainingWorkers: industry.population,
+                remainingGoods: industry.goods,
+                sumGoodsRequirements: createStarterWarehouse(0),
+                sumGoodsProduction: createStarterWarehouse(0),
+                workingWorkers: createStarterPopulation(0),
+            } as IndustryReducerReturn)
 
-            // 3. Collect taxes
-            const populationTax = ind.population * POPULATION_TAX_RATE * ind.taxRate
-            const industryTax = ind.tylium * INDUSTRY_TAX_RATE * ind.taxRate
-            ind.credits += populationTax + industryTax
-
-            // 4. Pay maintenance costs
-            if(ind.maintenanceCosts > 0 && ind.credits >= ind.maintenanceCosts) {
-                ind.credits -= ind.maintenanceCosts
-            } else if(ind.maintenanceCosts > 0) {
-                ind.credits = 0
-            }
-
-            // 5. Allocate tylium between civilian and military (conceptual)
-            const totalAlloc = ind.civilianAllocation + ind.militaryAllocation
-            const safeTotal = totalAlloc > 0 ? totalAlloc : 1
-            const civilianFuel = ind.tylium * (ind.civilianAllocation / safeTotal)
-            const militaryFuel = ind.tylium * (ind.militaryAllocation / safeTotal)
-
-            // 6. Civilian goods → happiness
-            const goodsPerCapita = (civilianFuel * BASE_CIVILIAN_GOODS_PER_REFINED) / Math.max(1, ind.population)
-            ind.happiness = Math.min(1, Math.max(0, ind.happiness + (goodsPerCapita - HAPPINESS_GOODS_THRESHOLD) * 0.1))
-
-            // 7. Military: process build queue (consumes ore, tylium, credits)
-            if(ind.buildOrders.length > 0 && militaryFuel > 0) {
-                const perOrder = militaryFuel / ind.buildOrders.length
-                for(const order of [...ind.buildOrders]) {
-                    const orePortion = Math.min(order.oreCost - order.orePaid, ind.ore / ind.buildOrders.length)
-                    const creditPortion = Math.min(order.creditCost - order.creditsPaid, ind.credits / ind.buildOrders.length)
-                    const tyliumPortion = Math.min(order.tyliumCost - order.tyliumPaid, perOrder)
-
-                    order.orePaid += orePortion
-                    order.tyliumPaid += tyliumPortion
-                    order.creditsPaid += creditPortion
-                    ind.ore -= orePortion
-                    ind.tylium -= tyliumPortion
-                    ind.credits -= creditPortion
-
-                    if(order.orePaid >= order.oreCost && order.tyliumPaid >= order.tyliumCost && order.creditsPaid >= order.creditCost) {
-                        order.remainingDays = Math.max(0, order.remainingDays - 1)
-                        if(order.remainingDays <= 0) {
-                            ind.buildOrders = ind.buildOrders.filter(o => o !== order)
-                        }
-                    }
-                }
-            }
-
-            // 8. Deduct tylium used for civilian goods
-            ind.tylium -= civilianFuel
-
-            // 9. Population growth
-            const fertility = (ind.happiness - 0.5) / 15000
-            ind.population += fertility * ind.population
+            industry.goodsRequirements = sumGoodsRequirements
+            industry.goodsProduction = sumGoodsProduction
+            //industry.goodsChange = remainingGoods
+            industry.workingWorkers = workingWorkers
+            industry.freeWorkers = remainingWorkers
         }
     }
 

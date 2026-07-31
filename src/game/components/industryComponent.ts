@@ -1,4 +1,10 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
+import { IndustrialSectors } from "./Factories";
+import { Goods } from "../data/Goods";
+import { Population } from "../data/Population";
+import { createStarterIndustry, createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createStarterPopulation } from "../data/getPopulationBreakdown";
+import { sumValues } from "@/lib/utils";
 
 export type BuildOrder = {
     id: number
@@ -15,21 +21,27 @@ export type BuildOrder = {
 }
 
 export class IndustryComponent extends EntityComponent {
+    //public sectorChange = createStarterIndustry()
+    public goodsChange: Goods
+    public populationChange: Population
+    public goodsRequirements: Partial<Goods>
+    public goodsProduction: Partial<Goods>
+    public workingWorkers: Population
+    public freeWorkers: Population
+
     constructor(
-        public population: number,
-        public happiness: number,
-        public laborForce: number,
-        public ore: number = 0,
-        public tylium: number = 0,
-        public credits: number = 0,
-        public refineryCapacity: number = 10,
-        public taxRate: number = 0.15,
-        public civilianAllocation: number = 0.5,
-        public militaryAllocation: number = 0.3,
-        public buildOrders: BuildOrder[] = [],
-        public maintenanceCosts: number = 0,
-        public workingPopulationRatio: number = 0.6
+        public readonly sectors: IndustrialSectors,
+        public readonly goods: Goods,
+        public readonly population: Population,
     ) {
         super()
+
+        this.goodsChange = createStarterWarehouse(sumValues(population))
+        this.populationChange = createStarterPopulation(0)
+        this.goodsRequirements = createStarterWarehouse(0)
+        this.sectors = createStarterIndustry()
+        this.goodsProduction = createStarterWarehouse(0)
+        this.workingWorkers = createStarterPopulation(0)
+        this.freeWorkers = createStarterPopulation(0)
     }
 }

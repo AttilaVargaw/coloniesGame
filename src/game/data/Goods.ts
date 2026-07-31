@@ -1,91 +1,42 @@
-import { Population, ReadonlyPopulation } from "./Population";
-
 export type Goods = {
-    readonly food: number;
-    readonly tylium: number;
-    readonly metals: number;
-    readonly uranium: number;
-    readonly agriculturalGoods: number;
-    readonly consumerGoods: number;
-    readonly ammunition: number;
-    readonly machinery: number;
-    readonly medicine: number;
-    readonly furniture: number;
-    readonly wood: number;
-    readonly weapons: number;
-    readonly oil: number;
-    readonly nuclearWeapons: number;
-    readonly spaceTransport: number;
-    readonly tourism: number;
-    readonly water: number
+    food: number;
+    tylium: number;
+    metals: number;
+    uranium: number;
+    agriculturalGoods: number;
+    consumerGoods: number;
+    ammunition: number;
+    machinery: number;
+    medicine: number;
+    furniture: number;
+    wood: number;
+    weapons: number;
+    oil: number;
+    nuclearWeapons: number;
+    spaceTransport: number;
+    tourism: number;
+    water: number
+    electricity: number
+    services: number
+    environmentFactor: number
+    money: number,
+    happiness: number
 }
 
-export type Factories = {
-    readonly electricityFactory: number
-    readonly foodFactory: number
-    readonly metalFactory: number
-    readonly uraniumFactory: number
-    readonly agriculturalFactory: number
-    readonly consumerFactory: number
-    readonly ammunitionFactory: number
-    readonly machineryFactory: number
-    readonly medicineFactory: number
-    readonly buildingSector: number
-    readonly nuclearWeaponFactory: number
-    readonly furnitureFactory: number
-    readonly weaponFactory: number
-    readonly forestry: number
-    readonly oilFactory: number
-    readonly oilRig: number
-    readonly orbitalBuildingSector: number
-    readonly orbitalFactory: number
-    readonly spaceport: number
-    readonly spaceTransport: number
-    readonly tourism: number
-    readonly services: number
-    readonly environmentFactor: number
-    readonly waterFactory: number
-}
+export type ReadonlyGoods = Readonly<Goods>
 
-type FactoryConfig = {
-    readonly workers: Map<keyof Population, number>
-    readonly reducer: RescourceReducer
-}
+export function getLowestRatio(requirements: Record<string, number>, available: Record<string, number>, level: number, workerRatio: number) {
+    const workerRatios = {} as Record<string, number>
 
-const generateRescource = ({ name, workerRequirement, goods }: { name: keyof Goods, workerRequirement: Map<keyof ReadonlyPopulation, number>, goods: Goods, goodsRequirements: Map<keyof Goods, number> }) => {
-    const reducer = ({ population, factoryLevel, workerRatio }: { population: Population, factoryLevel: number, workerRatio: number }) => {
-        const remainingWorkers = population
+    for(const [key, requirement] of Object.entries(requirements) as ([string, number])[]) {
+        const t = available[key] - requirement * level * workerRatio
 
-        const workerRequirementSum = workerRequirement.entries().reduce((acc, [key, value]) => {
-            acc[key] = value * factoryLevel * workerRatio
-
-            if(remainingWorkers[key] - value < 0) {
-                acc[key] = remainingWorkers[key]
-                remainingWorkers[key] = 0
-            } else {
-                remainingWorkers[key] -= acc[key]
-            }
-
-            return acc
-        }, new Map<keyof Population, number>());
-
-        const lowestRatio = Math.min(...Object.values(workerRequirementSum).map((value, index) => value / Object.values(population)[index]))
-        const lowestRequirementRatio = Object.entries(workerRequirementSum).reduce((acc, [key, value]) => { })
-
-        return {
-            remainingWorkers,
-            goods: {
-                ...goods,
-                [name]: lowestRatio * factoryLevel
-            }
+        if(t > 0) {
+            workerRatios[key] = 1
+        } else {
+            workerRatios[key] = available[key] / (requirement * level * workerRatio)
         }
     }
 
-    return {
-        reducer,
-        workerRequirement
-    }
+    return Math.min(...Object.values(workerRatios))
 }
-
-type RescourceReducer = (state: Goods, action: Factories, workers: Population) => Goods;
-
