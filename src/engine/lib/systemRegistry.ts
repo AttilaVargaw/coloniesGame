@@ -3,7 +3,6 @@ import type { World } from "../core/world"
 
 export class SystemRegistry {
     private readonly systems: Map<new (...args: unknown[]) => System, System> = new Map()
-    private readonly subSystems: Map<new () => System, System> = new Map()
 
     getSystem<T extends System>(system: new (...args: unknown[]) => T) {
         return this.systems.get(system) as T
@@ -27,24 +26,6 @@ export class SystemRegistry {
         return this
     }
 
-    addSubsystem(subsystem: new () => System, world: World) {
-        const newSubsystem = new subsystem()
-        this.subSystems.set(subsystem, newSubsystem)
-        newSubsystem.addToEngine(world)
-
-        return this
-    }
-
-    removeSubSystem(subsystem: new () => System) {
-        const system = this.subSystems.get(subsystem)
-        if(system) {
-            system.removeFromEngine()
-        }
-        this.subSystems.delete(subsystem)
-
-        return this
-    }
-
     update(dt: number) {
         for(const system of this.systems.values()) {
             system.update(dt)
@@ -56,11 +37,6 @@ export class SystemRegistry {
             system.removeFromEngine()
         }
 
-        for(const subsystem of this.subSystems.values()) {
-            subsystem.removeFromEngine()
-        }
-
         this.systems.clear()
-        this.subSystems.clear()
     }
 }

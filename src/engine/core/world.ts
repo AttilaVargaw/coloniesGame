@@ -140,18 +140,6 @@ export class World implements Engine {
         return this
     }
 
-    addSubsystem(subsystem: new () => System) {
-        this.systemRegistry.addSubsystem(subsystem, this)
-
-        return this
-    }
-
-    removeSubSystem(subsystem: new () => System) {
-        this.systemRegistry.removeSubSystem(subsystem)
-
-        return this
-    }
-
     update(dt: number) {
         this.eventBus.dispatchEvent(new UpdateBeginEvent(dt))
 

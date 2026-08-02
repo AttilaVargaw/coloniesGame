@@ -3,17 +3,11 @@ import { SystemWithNodes, } from "../system";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
 import { Entity } from "@engine/entities/entity";
-import { CircleRenderer } from "./renderers/circleRenderer";
-import { RectRenderer } from "./renderers/rectRenderer";
-import { HexagonRenderer } from "./renderers/hexagonRenderer";
-import { LabelRenderer } from "./renderers/labelRenderer";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
-import { OrbitSelectionSystem } from "@/game/systems/orbitSelectionSystem";
-import { ShapeRenderer } from "./renderers/shapeRenderer";
 
 const mulberry32 = (seed: number) => {
     seed |= 0
@@ -82,7 +76,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     update(dt: number) {
         if(!this.engine) {
             return
-
         }
 
         this.inputHandler.update(dt)
@@ -98,8 +91,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 this.drawDebugPaths(ctx)
                 this.drawOrbits(ctx)
             }
-
-            this.updateSubsystems(dt);
 
             camera.end();
         }
@@ -204,8 +195,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             )
         )
 
-        super.registerNodes(engine)
-
         return this
     }
 
@@ -217,14 +206,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         super.addToEngine(engine)
         this.inputHandler = new ViewportInputHandler(this)
         this.nodes = engine.getNodeList(ViewportNode)
-
-        this
-            .addSubsystem(new HexagonRenderer(this))
-            .addSubsystem(new CircleRenderer(this))
-            .addSubsystem(new RectRenderer(this))
-            .addSubsystem(new LabelRenderer(this))
-            .addSubsystem(new OrbitSelectionSystem(this))
-            .addSubsystem(new ShapeRenderer(this))
 
         return this
     }

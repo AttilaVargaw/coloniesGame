@@ -42,7 +42,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
         const ctx = camera.context
 
-        ctx.save();
+        camera.begin();
         circle.setColor(ctx);
         ctx.lineWidth = circle.thickness.thickness;
 
@@ -57,6 +57,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             shadeCircle(ctx, ...position, circle.radius.radius)
         }
 
-        ctx.restore();
+        camera.end();
     }
 }

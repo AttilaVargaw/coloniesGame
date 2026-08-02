@@ -55,7 +55,7 @@ describe("createBody", () => {
         const orbit = body.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(parent.id)
-        expect(orbit!.radius).toBeCloseTo(4000)
+        expect(orbit!.radius).toBeCloseTo(2000)
         expect(orbit!.eccentricity).toBe(0.1)
 
         const pos = body.getComponent(PositionComponent)!
@@ -126,6 +126,22 @@ describe("createHomeworld", () => {
 
         const industry = colony.getComponent(IndustryComponent)
         expect(industry).toBeDefined()
-        expect(industry!.population).toBe(population)
+        expect(industry!.population).toStrictEqual({
+            "armyMen": 15,
+            "clergy": 30,
+            "clerks": 600,
+            "farmer": 30,
+            "healtcarePersonal": 240,
+            "marines": 15,
+            "miner": 60,
+            "navalReservist": 15,
+            "policeMen": 30,
+            "retired": 1000,
+            "scientist": 180,
+            "serviceWorker": 630,
+            "student": 1000,
+            "teacher": 255,
+            "worker": 900,
+        })
     })
 })

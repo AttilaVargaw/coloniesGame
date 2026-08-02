@@ -11,42 +11,6 @@ class CounterSystem extends SystemWithNodes<TestEntityNode> {
 }
 
 describe("System", () => {
-    it("adds and removes subsystems", () => {
-        const parent = new CounterSystem()
-        const child = new CounterSystem()
-
-        parent.addSubsystem(child)
-
-        expect(parent.subsystems.has(child)).toBe(true)
-        expect(child.parent).toBe(parent)
-
-        parent.removeSubsystem(child)
-
-        expect(parent.subsystems.has(child)).toBe(false)
-    })
-
-    it("does not add the same subsystem twice", () => {
-        const parent = new CounterSystem()
-        const child = new CounterSystem()
-
-        parent.addSubsystem(child)
-        parent.addSubsystem(child)
-
-        expect(parent.subsystems.size).toBe(1)
-    })
-
-    it("propagates update to subsystems", () => {
-        const parent = new CounterSystem()
-        const child = new CounterSystem()
-
-        parent.addSubsystem(child)
-        const childSpy = vi.spyOn(child, "update")
-
-        parent.updateSubsystems(16)
-
-        expect(childSpy).toHaveBeenCalledWith(16)
-    })
-
     it("attaches to engine via addToEngine and detaches via removeFromEngine", () => {
         const world = makeWorld() as unknown as Engine
         const system = new CounterSystem()
@@ -83,43 +47,6 @@ describe("System", () => {
 
         expect(() =>
             world.getNodeList(system.constructor as unknown as EntityNodeConstructor<EntityNode>)
-        ).toThrow()
-    })
-
-    it("unregisters node types recursively for subsystems", () => {
-        const world = makeWorld() as unknown as Engine
-
-        class ParentSystem extends CounterSystem { }
-        class ChildSystem extends CounterSystem { }
-
-        const parent = new ParentSystem()
-        const child = new ChildSystem()
-
-        parent.addSubsystem(child)
-
-        parent.addToEngine(world)
-
-        world.registerNodeType(
-            ParentSystem as unknown as EntityNodeConstructor<EntityNode>,
-            new Set(),
-            () => new TestEntityNode()
-        )
-
-        child.addToEngine(world)
-
-        world.registerNodeType(
-            ChildSystem as unknown as EntityNodeConstructor<EntityNode>,
-            new Set(),
-            () => new TestEntityNode()
-        )
-
-        parent.removeFromEngine()
-
-        expect(() =>
-            world.getNodeList(ParentSystem as unknown as EntityNodeConstructor<EntityNode>)
-        ).toThrow()
-        expect(() =>
-            world.getNodeList(ChildSystem as unknown as EntityNodeConstructor<EntityNode>)
         ).toThrow()
     })
 })
@@ -176,52 +103,5 @@ describe("SystemWithNodes", () => {
         system.update(16)
 
         expect(spy).not.toHaveBeenCalled()
-    })
-
-    it("propagates sortOnEveryEntityAddition to subsystems", () => {
-        class ParentSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
-        class ChildSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
-        const parent = new ParentSystem()
-        const child = new ChildSystem()
-
-        parent.addSubsystem(child)
-
-        expect(child.sortOnEveryEntityAddition).toBe(false)
-
-        parent.sortOnEveryEntityAddition = true
-
-        expect(child.sortOnEveryEntityAddition).toBe(true)
-    })
-
-    it("propagates addToEngine and removeFromEngine to subsystems", () => {
-        const world = makeWorld() as unknown as Engine
-
-        class ParentSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
-        class ChildSystem extends SystemWithNodes<TestEntityNode> {
-            updateNode(_node: TestEntityNode, _dt?: number): void { }
-        }
-
-        const parent = new ParentSystem()
-        const child = new ChildSystem()
-
-        parent.addSubsystem(child)
-
-        parent.addToEngine(world)
-
-        expect(parent.engine).toBe(world)
-        expect(child.engine).toBe(world)
-
-        parent.removeFromEngine()
-        expect(parent.engine).toBeUndefined()
-        expect(child.engine).toBeUndefined()
     })
 })

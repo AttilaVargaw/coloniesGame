@@ -279,19 +279,6 @@ describe("World (Engine refactor regression)", () => {
         expect(() => world.getNodeList(testEntityNodeCtor)).toThrow()
     })
 
-    it("removes a subsystem from the registry without throwing", () => {
-        const world = makeWorld()
-
-        class CounterSubsystem extends System {
-            update() { }
-        }
-
-        const ctor = CounterSubsystem as unknown as new () => System
-        world.addSubsystem(ctor)
-        expect(() => world.removeSubSystem(ctor)).not.toThrow()
-        expect(world.removeSubSystem(ctor)).toBe(world)
-    })
-
     it("registers a custom event queue and allows dispatching events to it", () => {
         const world = new World()
         const handler = vi.fn()

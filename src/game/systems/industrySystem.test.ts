@@ -50,19 +50,4 @@ describe("industrySystem", () => {
             expect((system as any).engine).toBeUndefined()
         })
     })
-
-    describe("onDayPassed", () => {
-        let system: IndustrySystem
-        let entity: Entity
-        let industry: IndustryComponent
-
-        beforeEach(() => {
-            system = new IndustrySystem()
-            entity = new Entity("colony")
-            industry = new IndustryComponent(createStarterIndustry(), createStarterWarehouse(1000), createStarterPopulation(1000))
-            entity.addComponent(industry)
-                ; (system as any).nodes = [makeNode(entity)]
-        })
-
-    })
 })

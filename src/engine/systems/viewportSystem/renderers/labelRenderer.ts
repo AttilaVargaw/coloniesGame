@@ -22,13 +22,16 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
     };
 
     protected updateNode(node: LabelNode, _dt?: number): void {
-        const ctx = this.viewportSystem.viewport.camera.context;
+        const { viewport: { camera } } = this.viewportSystem;
+        const ctx = camera.context;
 
-        ctx.save();
+        camera.begin();
+
         node.setColor(ctx);
         ctx.translate(...getAbsolute(node.entity!, this.engine!));
         ctx.font = `${node.label.size}px Roboto`;
         ctx.fillText(node.label.text, node.label.offset.x, node.label.offset.y);
-        ctx.restore();
+
+        camera.end();
     }
 }

@@ -18,6 +18,11 @@ import Camera from "@lib/camera"
 import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, UNIVERSE_SCALE } from "./constants"
 import { CommandBase } from "@/engine/lib/CommandBase"
 import { BodyBlueprint } from "./data/BodyBlueprint"
+import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRenderer"
+import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
+import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
+import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
+import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 
 export class Game {
     readonly engine: World = new World
@@ -58,6 +63,11 @@ export class Game {
             .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
             .addSystem(ClickableSystem, ViewportSystem)
+            .addSystem(ShapeRenderer, ViewportSystem)
+            .addSystem(CircleRenderer, ViewportSystem)
+            .addSystem(LabelRenderer, ViewportSystem)
+            .addSystem(RectRenderer, ViewportSystem)
+            .addSystem(OrbitSelectionSystem, ViewportSystem)
 
         this.engine.getSystem(MapSystem)!.init(48)
         this.engine.getSystem(ViewportSystem)!.init()
