@@ -11,6 +11,7 @@ import { SensorSuiteComponent } from "@/game/components/vessel"
 import { Engine } from "@/engine/core/engine"
 import { SHIP_RADIUS, UNIVERSE_SCALE } from "../constants"
 import { createMarker } from "../factories/createSpaceship"
+import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 
 function createSpaceshipSelector(engine: Engine, color: string) {
     const entity = createMarker(engine, { color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } })
@@ -129,6 +130,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
             .addComponent(new PositionComponent(0, 0))
             .addComponent(new RadiusComponent(suite.range * UNIVERSE_SCALE))
             .addComponent(new ColorComponent("", "red"))
+            .addComponent(new ThicknessComponent(1))
 
         this.sensorRangeCircle = circle
         this.engine.addEntity(this.sensorRangeCircle!, entity)

@@ -13,6 +13,7 @@ import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/sys
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
 import { OrbitSelectionSystem } from "@/game/systems/orbitSelectionSystem";
+import { ShapeRenderer } from "./renderers/shapeRenderer";
 
 const mulberry32 = (seed: number) => {
     seed |= 0
@@ -79,7 +80,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     update(dt: number) {
-        if(!this.engine) return
+        if(!this.engine) {
+            return
+
+        }
 
         this.inputHandler.update(dt)
 
@@ -152,13 +156,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private drawOrbits(ctx: CanvasRenderingContext2D) {
         if(!this.engine) {
             return
-
         }
 
         for(const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
             const parentEntity = sceneNode?.parentRef?.entity
-            if(!parentEntity) continue
+            if(!parentEntity) {
+                continue
+            }
+
+            ctx.save()
 
             const [cx, cy] = getAbsolute(parentEntity, this.engine)
             const { radius: a, eccentricity: e } = node.orbit
@@ -181,6 +188,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             ctx.setLineDash([2, 4])
             ctx.stroke()
             ctx.setLineDash([])
+
+            ctx.restore()
         }
     }
 
@@ -215,6 +224,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             .addSubsystem(new RectRenderer(this))
             .addSubsystem(new LabelRenderer(this))
             .addSubsystem(new OrbitSelectionSystem(this))
+            .addSubsystem(new ShapeRenderer(this))
 
         return this
     }

@@ -9,11 +9,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
         const { orbit, entity } = node
 
-        if(!node.orbit.radius) {
-            return
-        }
-
-        if(!this.engine) {
+        if(!node.orbit.radius || !this.engine) {
             return
         }
 
@@ -44,7 +40,9 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     }
 
     private solveKepler(meanAnomaly: number, e: number): number {
-        if(e < 1e-6) return meanAnomaly
+        if(e < 1e-6) {
+            return meanAnomaly
+        }
 
         let E = meanAnomaly
         for(let i = 0; i < 20; i++) {
@@ -55,17 +53,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
             }
         }
         return E
-    }
-
-    update(dt: number): void {
-        const nodesSnapshot = [...this.nodes]
-
-        for(const node of nodesSnapshot) {
-            if(this.filterNodes && !this.filterNodes(node)) {
-                continue
-            }
-            this.updateNode(node, dt)
-        }
     }
 
     protected registerNodes(engine: Engine): this {
@@ -97,7 +84,10 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     }
 
     removeFromEngine(): this {
-        if(!this.engine) return this
+        if(!this.engine) {
+            return this
+
+        }
 
         this.nodes.length = 0
         super.removeFromEngine()

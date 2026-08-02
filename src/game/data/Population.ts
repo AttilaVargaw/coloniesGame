@@ -26,7 +26,6 @@ export type Population = {
     teacher: number;
     serviceWorker: number;
     clergy: number;
-    //activeNavymen: number;
     retired: number;
     clerks: number;
 };

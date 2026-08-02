@@ -12,7 +12,9 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
-    if(!mapRef.current) return
+    if(!mapRef.current) {
+      return
+    }
 
     const gameInstance = new Game(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
 

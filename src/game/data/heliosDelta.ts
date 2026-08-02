@@ -9,7 +9,7 @@ export const heliosDelta = {
     children: [
         {
             marker: { color: "#6a7a82", radius: 10, label: "Canceron" },
-            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: 0 },
+            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 3 * 2, eccentricity: 0.007 },
             name: "Canceron",
             population: 6_700_000_000,
         },
@@ -19,7 +19,7 @@ export const heliosDelta = {
         },
         {
             marker: { color: "#ced0dd", radius: 10, label: "Aerilon" },
-            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 2 }, name: "Aerilon", population: 1_200_000_000
+            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: 0, eccentricity: 0.007 }, name: "Aerilon", population: 1_200_000_000
         },
         {
             marker: { color: "#ecd591", radius: 10, label: "Styx" },
@@ -32,7 +32,7 @@ export const heliosDelta = {
         {
             marker: { color: "#ae4937", radius: 40, label: "Hestia" },
             archetype: "venus",
-            orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007 },
+            orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007 },
             name: "Hestia",
             children: [
                 { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 2.1, angle: 0, eccentricity: 0.3 }, name: "Rhea", archetype: "mercury" },
@@ -40,4 +40,4 @@ export const heliosDelta = {
             ]
         },
     ],
-} as const as BodyBlueprint;
+} as const satisfies BodyBlueprint;

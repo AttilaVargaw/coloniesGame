@@ -1,6 +1,7 @@
 import { PositionComponent } from "../../../components/position";
 import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
+import { ThicknessComponent } from "../../../components/thicknessComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
@@ -10,7 +11,7 @@ import { TWO_PI } from "@/game/constants";
 
 function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
     const gradient = ctx.createRadialGradient(
-        x - radius * 0.3, y - radius * 0.3, radius * 0.1,  // highlight offset
+        x - radius * 0.3, y - radius * 0.3, radius * 0.1,
         x, y, radius
     )
     gradient.addColorStop(0, "rgba(255,255,255,0.25)")
@@ -26,8 +27,8 @@ function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius
 export class CircleRenderer extends BaseRenderer<CircleNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
-            [PositionComponent, RadiusComponent, ColorComponent],
-            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent)),
+            [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent],
+            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent)),
         )
     }
 
@@ -43,6 +44,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
         ctx.save();
         circle.setColor(ctx);
+        ctx.lineWidth = circle.thickness.thickness;
 
         const position = getAbsolute(circle.entity!, this.engine!);
 

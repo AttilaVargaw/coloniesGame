@@ -17,12 +17,14 @@ import { VesselBlueprint } from "../data/VesselBlueprint"
 import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { LabelComponent } from "@/engine/components/label"
+import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 
 export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false }: MapMarker) {
     const marker = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
         new ColorComponent(color, "", shade),
-        new RadiusComponent(radius))
+        new RadiusComponent(radius),
+        new ThicknessComponent(1))
 
     if(label) {
         marker.addComponent(new LabelComponent(label, textSize, offset ?? { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor))

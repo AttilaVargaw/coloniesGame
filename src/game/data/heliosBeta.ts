@@ -24,17 +24,20 @@ export const solarisBeta = {
             marker: { color: "#829873", radius: 10, label: "Leonis" }, archetype: "kobol", orbit: { radius: 0.95 * SOLAR_UNIT }, name: "Leonis"
         },
         {
+            name: "Hera",
             archetype: "saturn",
             //name: "Hera",
             marker: { color: "#c67242", radius: 20, label: "Hera" },
             orbit: { radius: 7 * SOLAR_UNIT },
             children: [
                 {
+                    name: "Euboea",
                     archetype: "mercury",
                     marker: { color: "#888374", radius: 4, label: "Euboea" },
                     orbit: { radius: 2.4 },
                 },
                 {
+                    name: "Iris",
                     archetype: "mercury",
                     marker: { color: "#71877d", radius: 4, label: "Iris" },
                     orbit: { radius: 1.8, eccentricity: 0.02 },
@@ -42,4 +45,4 @@ export const solarisBeta = {
             ]
         }
     ],
-} as const as BodyBlueprint;
+} as const satisfies BodyBlueprint;

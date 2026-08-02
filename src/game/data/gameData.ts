@@ -43,4 +43,4 @@ export const MapCreationData = {
             heliosDelta,
         ]
     }]
-} as const as BodyBlueprint
+} as const satisfies BodyBlueprint

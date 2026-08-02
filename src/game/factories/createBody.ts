@@ -21,6 +21,8 @@ import { createStarterWarehouse } from "./createStarterWarehouse"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { PositionComponent } from "@/engine/components/position"
+import { ThicknessComponent } from "@/engine/components/thicknessComponent"
+import { createAsteroid } from "./createAsteroid"
 
 export function createBody({
     archetype,
@@ -30,7 +32,8 @@ export function createBody({
     binaryPairs,
     marker,
     population,
-    rings
+    rings,
+    asteroidBelts
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
     const body = createMarker(engine, { shade: true, ...marker })
 
@@ -91,14 +94,26 @@ export function createBody({
         for(const { color, innerRadius, outerRadius } of rings) {
             const ringsEntity = engine.createEntity()
             engine.addEntity(ringsEntity, body)
-            applyComponents(ringsEntity, new RadiusComponent(innerRadius), new ColorComponent("", color), new PositionComponent(0, 0, 0))
-
-            const ringsEntity2 = engine.createEntity()
-            engine.addEntity(ringsEntity2, body)
-            applyComponents(ringsEntity2, new RadiusComponent(outerRadius), new ColorComponent("", color), new PositionComponent(0, 0, 0))
-
-
+            applyComponents(ringsEntity,
+                new RadiusComponent(innerRadius * UNIVERSE_SCALE),
+                new ColorComponent("", color),
+                new PositionComponent(0, 0, 0),
+                new ThicknessComponent((outerRadius - innerRadius) * UNIVERSE_SCALE))
         }
+    }
+
+    if(asteroidBelts?.length) {
+        for(const { innerRadius, } of asteroidBelts) {
+            const ringsEntity = createAsteroid({
+                radius: innerRadius,
+                angle: 0,
+                eccentricity: 0,
+            }, body, engine)
+            ringsEntity.addComponent(new SoiComponent(calculateSoi(20, "uranus")))
+
+            engine.addEntity(ringsEntity, body)
+        }
+
     }
 
     return body

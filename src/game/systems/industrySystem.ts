@@ -21,28 +21,28 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
         return {
             workingWorkers: {
                 ...Object.entries(workerRequirement)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: workingWorkers[key as keyof Population] + value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), workingWorkers)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: workingWorkers[key as keyof Population] + value * productionRatio }), workingWorkers)
             },
             remainingWorkers: {
                 ...Object.entries(workerRequirement)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingWorkers[key as keyof Population] - value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingWorkers)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingWorkers[key as keyof Population] - value * productionRatio }), remainingWorkers)
             },
             remainingGoods: {
                 ...Object.entries(goodsRequirements)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] - value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingGoods),
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] - value * productionRatio }), remainingGoods),
                 ...Object.entries(goodsProduction)
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] + value * productionRatio * sectorLevels[name as keyof IndustrialSectors] }), remainingGoods),
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key as keyof Goods] + value * productionRatio }), remainingGoods),
             },
             sumGoodsRequirements: {
                 ...Object.entries(goodsRequirements).reduce((acc, [key, value]) => ({
                     ...acc,
-                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio * sectorLevels[name as keyof IndustrialSectors]
+                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio
                 }), sumGoodsRequirements)
             },
             sumGoodsProduction: {
                 ...Object.entries(goodsProduction).reduce((acc, [key, value]) => ({
                     ...acc,
-                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio * sectorLevels[name as keyof IndustrialSectors]
+                    [key]: (acc[key as keyof Goods] ?? 0) + value * productionRatio
                 }), sumGoodsProduction)
             }
         }

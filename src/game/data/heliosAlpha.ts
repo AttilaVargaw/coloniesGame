@@ -1,14 +1,6 @@
 import { BodyBlueprint } from "./BodyBlueprint";
 import { SOLAR_UNIT, STAR_SIZE } from "@game/constants"
 
-// const testR = generateRescource({
-//     population: starterPopulation,
-//     goods: starterGoods,
-//     goodsRequirements: {},
-//     name: "water",
-//     workerRequirement: { worker: 10, clerks: 10 }
-// })
-
 export const solarisAlpha = {
     name: "Helios Alpha",
     marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha" },
@@ -74,7 +66,10 @@ export const solarisAlpha = {
         },
 
     ],
+    rings: [
+        { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
+    ],
     asteroidBelts: [
-        { color: "#808080", innerRadius: 1.5 * SOLAR_UNIT, outerRadius: 1.7 * SOLAR_UNIT }
+        { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
     ]
-} as const as BodyBlueprint;
+} as const satisfies BodyBlueprint;

@@ -115,7 +115,6 @@ export class ViewportInputHandler {
     update(dt: number) {
         if(!this.viewportSystem.engineRef) {
             return
-
         }
 
         const camera = this.viewportSystem.viewport.camera

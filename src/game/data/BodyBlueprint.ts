@@ -15,5 +15,5 @@ export type BodyBlueprint = {
     readonly vessels?: VesselBlueprint[];
     readonly binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[] }[];
     readonly rings?: { innerRadius: number; outerRadius: number; color: string }[];
-    readonly asteroidBelts?: { innerRadius: number; outerRadius: number; color: string }[];
+    readonly asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, }[];
 };

@@ -13,6 +13,5 @@ export const occupationStarterRatio = {
     teacher: 8.5,
     serviceWorker: 21,
     clergy: 1,
-    //activeNavymen: 0,
     clerks: 20,
 } as const as Population;

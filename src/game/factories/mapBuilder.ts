@@ -13,6 +13,8 @@ import { ColorComponent } from "@/engine/components/colorComponent";
 import { TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
 import { createBody } from "./createBody";
+import { ThicknessComponent } from "@/engine/components/thicknessComponent";
+import { createAsteroid } from "./createAsteroid";
 
 export function init(engine: Engine) {
     const viewportSystem = engine.getSystem(ViewportSystem)
@@ -25,6 +27,7 @@ export function init(engine: Engine) {
         new SoiComponent(0),
         new PathComponent(),
         new ColorComponent("red"),
+        new ThicknessComponent(1)
     )
     const map = createBody(MapCreationData, root, engine)
 
