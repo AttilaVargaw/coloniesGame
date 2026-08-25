@@ -1,6 +1,8 @@
 import path from 'path'
 import { defineConfig } from 'vitest/config'
 
+const dirname = import.meta.dirname
+
 export default defineConfig({
     test: {
         coverage: {
@@ -13,11 +15,11 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            "@": path.resolve(__dirname, "./src"),
-            "@engine": path.resolve(__dirname, "./src/engine"),
-            "@game": path.resolve(__dirname, "./src/game"),
-            "@lib": path.resolve(__dirname, "./src/lib"),
-            "@components": path.resolve(__dirname, "./src/components"),
+            "@": path.resolve(dirname, "./src"),
+            "@engine": path.resolve(dirname, "./src/engine"),
+            "@game": path.resolve(dirname, "./src/game"),
+            "@lib": path.resolve(dirname, "./src/lib"),
+            "@components": path.resolve(dirname, "./src/components"),
         },
 
     }
