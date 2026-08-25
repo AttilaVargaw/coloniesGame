@@ -6,7 +6,7 @@ import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { Queue } from "../lib/commandQueue";
 import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, EntityAddedEvent, MouseEventData } from "../lib/events";
-import { SelectionSystem } from "@game/systems/selectionSystem";
+import { SelectionManager } from "@game/systems/selectionSystem";
 import { TargetSystem } from "@game/systems/targetSystem";
 export class ClickableSystem extends SystemWithNodes<ClickableNode> {
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -66,8 +66,8 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
         }
 
         for(const { data } of this.clickQueue) {
-            const { x: worldX, y: worldY } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y)
             let hit = false
+            const { x: worldX, y: worldY } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y)
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
@@ -88,14 +88,17 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
             }
 
             if(!hit) {
+                const selectionSystem = this.engine.getSystem(SelectionManager)
+
                 if(data.shiftKey) {
                     const targetSystem = this.engine.getSystem(TargetSystem)
-                    const selectionSystem = this.engine.getSystem(SelectionSystem)
-                    const selection = selectionSystem?.currentSelection()
+                    const selection = selectionSystem?.currentSelection
+
                     if(selection) {
                         const { camera } = this.viewportSystem.viewport
                         const { x: worldX, y: worldY } = camera.screenToWorld(data.x, data.y)
                         const bestEntity = targetSystem?.findNearestTarget(selection, worldX, worldY)
+
                         if(bestEntity) {
                             targetSystem?.setTargetForOrbitSelection(selection, bestEntity, worldX, worldY)
                             hit = true
@@ -104,7 +107,6 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
                 }
 
                 if(!hit) {
-                    const selectionSystem = this.engine.getSystem(SelectionSystem)
                     selectionSystem?.unselect()
                 }
             }

@@ -2,24 +2,15 @@ import { Entity } from "@engine/entities/entity"
 import { SystemWithNodes } from "@engine/systems/system"
 import { SelectionNode } from "@game/systems/SelectionNode"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
-import { ColorComponent } from "@engine/components/colorComponent"
-import { PositionComponent } from "@engine/components/position"
 import { ShapeComponent } from "@engine/components/ShapeComponent"
-import { RadiusComponent } from "@engine/components/radiusComponent"
 import { SelectionChangedEvent, TargetChangedEvent } from "@/engine/lib/events"
 import { SensorSuiteComponent } from "@/game/components/vessel"
 import { Engine } from "@/engine/core/engine"
-import { SHIP_RADIUS, UNIVERSE_SCALE } from "../constants"
-import { createMarker } from "../factories/createSpaceship"
-import { ThicknessComponent } from "@/engine/components/thicknessComponent"
+import { UNIVERSE_SCALE } from "../constants"
+import { createSpaceshipSelector } from "./createSpaceshipSelector"
+import { createCircle } from "./createCircle"
 
-function createSpaceshipSelector(engine: Engine, color: string) {
-    const entity = createMarker(engine, { color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } })
-
-    return entity
-}
-
-export class SelectionSystem extends SystemWithNodes<SelectionNode> {
+export class SelectionManager extends SystemWithNodes<SelectionNode> {
     protected updateNode(_node: SelectionNode, _dT?: number): void {
     }
 
@@ -46,12 +37,12 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         return this.targetSelector ? this.engine?.getSceneNode(this.targetSelector) : undefined
     }
 
-    currentSelection() {
-        return this.selectorSceneNode?.parentRef?.entity
+    get currentSelection() {
+        return this.selectorSceneNode?.parent?.entity
     }
 
-    currentTarget() {
-        return this.targetSelectorSceneNode?.parentRef?.entity
+    get currentTarget() {
+        return this.targetSelectorSceneNode?.parent?.entity
     }
 
     unselect() {
@@ -76,7 +67,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
 
         this.unselect()
 
-        if(this.selectorSceneNode?.parentRef?.entity === entity) {
+        if(this.selectorSceneNode?.parent?.entity === entity) {
             return this
         }
 
@@ -111,11 +102,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
             this.engine.addEntity(this.targetSelector!, target)
         }
 
-
         return this
-    }
-
-    update(_dt: number) {
     }
 
     private showSensorRangeForSelection(entity: Entity) {
@@ -126,11 +113,7 @@ export class SelectionSystem extends SystemWithNodes<SelectionNode> {
         const suite = entity.getComponent(SensorSuiteComponent)
         if(!suite) return
 
-        const circle = this.engine.createEntity()
-            .addComponent(new PositionComponent(0, 0))
-            .addComponent(new RadiusComponent(suite.range * UNIVERSE_SCALE))
-            .addComponent(new ColorComponent("", "red"))
-            .addComponent(new ThicknessComponent(1))
+        const circle = createCircle(this.engine, "red", suite.range * UNIVERSE_SCALE)
 
         this.sensorRangeCircle = circle
         this.engine.addEntity(this.sensorRangeCircle!, entity)

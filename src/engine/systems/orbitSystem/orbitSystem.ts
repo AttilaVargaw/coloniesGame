@@ -14,7 +14,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         }
 
         const sceneNode = this.engine.getSceneNode(entity)
-        const parentEntity = sceneNode?.parentRef?.entity
+        const parentEntity = sceneNode?.parent?.entity
 
         if(!parentEntity) {
             return

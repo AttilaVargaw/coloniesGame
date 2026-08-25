@@ -7,7 +7,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { TWO_PI } from "@/game/constants"
-import { SelectionSystem } from "@game/systems/selectionSystem"
+import { SelectionManager } from "@game/systems/selectionSystem"
 import Camera from "@lib/camera"
 import { Entity } from "@engine/entities/entity"
 
@@ -120,9 +120,9 @@ export class OrbitSelectionSystem extends System {
 
     private detectOrbitSelection() {
         if(!this.engine) return
-        const selectionSystem = this.engine.getSystem(SelectionSystem)
+        const selectionSystem = this.engine.getSystem(SelectionManager)
         if(!selectionSystem) return
-        const ship = selectionSystem.currentSelection()
+        const ship = selectionSystem.currentSelection
         if(!ship) return
 
         const drive = ship.getComponent(JumpDriveComponent)

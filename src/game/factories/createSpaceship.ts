@@ -5,7 +5,7 @@ import { PositionComponent, WorldPosition } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
-import { SelectionSystem } from "@game/systems/selectionSystem"
+import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, descartesToPolar } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
@@ -50,7 +50,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new TargetableComponent(),
         new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
         new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, ({ target, event: { shiftKey }, worldX, worldY }) => {
-            const selectionSystem = engine.getSystem(SelectionSystem)
+            const selectionSystem = engine.getSystem(SelectionManager)
 
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
@@ -83,7 +83,7 @@ export function createVessel(
         new RadiusComponent(SHIP_RADIUS),
         new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
         new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, ({ target, event: { shiftKey }, worldX, worldY }) => {
-            const selectionSystem = engine.getSystem(SelectionSystem)
+            const selectionSystem = engine.getSystem(SelectionManager)
 
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
@@ -100,7 +100,7 @@ export function createVessel(
     const shipNode = engine.getSceneNode(ship)
     const parentNode = engine.getSceneNode(parent)
     if(shipNode && parentNode) {
-        shipNode.setParent(parentNode)
+        shipNode.parent = parentNode
     }
 
     return ship

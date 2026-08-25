@@ -7,7 +7,7 @@ import { SOLAR_UNIT } from "../constants";
 
 export const MapCreationData = {
     marker: { color: "#000", radius: 10, label: "" },
-    archetype: "kobol",
+    archetype: "baricenter",
     name: "universe-root",
     orbit: { radius: 0, angle: 0, eccentricity: 0 },
     vessels: [],
@@ -20,10 +20,17 @@ export const MapCreationData = {
                 orbit: {
                     radius: 6 * SOLAR_UNIT,
                     angle: 0, eccentricity: 0
-                }
+                },
+                children: [
+                    {
+                        archetype: "venus", marker: { color: "blue", radius: 2, label: "Sigurd" }, name: "Sigurd", orbit: {
+                            radius: 3,
+                        }
+                    }
+                ]
             }
         ],
-        separation: 2 * SOLAR_UNIT,
+        separation: .5 * SOLAR_UNIT,
         orbit: {
             radius: 300,
             angle: 0
@@ -33,7 +40,7 @@ export const MapCreationData = {
             solarisAlpha,
         ],
     }, {
-        separation: 2,
+        separation: .5 * SOLAR_UNIT,
         orbit: {
             angle: Math.PI,
             radius: 300

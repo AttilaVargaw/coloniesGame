@@ -1,7 +1,7 @@
 import { Entity } from "@engine/entities/entity"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { SelectionChangedEvent } from "@/engine/lib/events"
-import { SelectionSystem } from "@game/systems/selectionSystem"
+import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
@@ -58,8 +58,8 @@ export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
 
         if(shiftKey) {
             const targetSystem = engine.getSystem(TargetSystem)
-            const selectionSystem = engine.getSystem(SelectionSystem)
-            const selection = selectionSystem?.currentSelection()
+            const selectionSystem = engine.getSystem(SelectionManager)
+            const selection = selectionSystem?.currentSelection
             if(selection) {
                 targetSystem?.setTargetForOrbitSelection(selection, targetEntity, worldX, worldY)
             }

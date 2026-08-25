@@ -58,7 +58,7 @@ describe("move system waypoint queue", () => {
         shipNode = new SceneNode(ship.id, ship)
         targetNode = new SceneNode(targetAttractor.id, targetAttractor)
 
-        shipNode.setParent(parentNode)
+        shipNode.parent = parentNode
 
         sceneNodes = new Map([
             [ship, shipNode],
@@ -187,7 +187,7 @@ describe("move system waypoint queue", () => {
 
         moveSystem.moveNodes()
 
-        expect(shipNode.parentRef?.entity).toBe(targetAttractor)
+        expect(shipNode.parent?.entity).toBe(targetAttractor)
         const orbit = ship.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
@@ -215,7 +215,7 @@ describe("move system waypoint queue", () => {
         moveSystem.moveNodes()
 
         // ship jumped to targetAttractor (range 1)
-        expect(shipNode.parentRef?.entity).toBe(targetAttractor)
+        expect(shipNode.parent?.entity).toBe(targetAttractor)
         const orbit = ship.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)

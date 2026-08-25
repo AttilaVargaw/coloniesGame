@@ -151,7 +151,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         for(const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
-            const parentEntity = sceneNode?.parentRef?.entity
+            const parentEntity = sceneNode?.parent?.entity
             if(!parentEntity) {
                 continue
             }

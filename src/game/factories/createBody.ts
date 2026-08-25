@@ -18,11 +18,9 @@ import { createSoiCircle } from "./createSoiCircle"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
-import { RadiusComponent } from "@/engine/components/radiusComponent"
-import { ColorComponent } from "@/engine/components/colorComponent"
-import { PositionComponent } from "@/engine/components/position"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { createAsteroid } from "./createAsteroid"
+import { createCircle } from "../systems/createCircle"
 
 export function createBody({
     archetype,
@@ -92,13 +90,10 @@ export function createBody({
 
     if(rings?.length) {
         for(const { color, innerRadius, outerRadius } of rings) {
-            const ringsEntity = engine.createEntity()
+            const ringsEntity = createCircle(engine, color, innerRadius * UNIVERSE_SCALE)
             engine.addEntity(ringsEntity, body)
-            applyComponents(ringsEntity,
-                new RadiusComponent(innerRadius * UNIVERSE_SCALE),
-                new ColorComponent("", color),
-                new PositionComponent(0, 0, 0),
-                new ThicknessComponent((outerRadius - innerRadius) * UNIVERSE_SCALE))
+
+            applyComponents(ringsEntity, new ThicknessComponent((outerRadius - innerRadius) * UNIVERSE_SCALE))
         }
     }
 

@@ -5,7 +5,7 @@ export class Entity {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _component = new Map<Function, EntityComponent>()
     private readonly _modifiers: Modifier[] = []
-    private onComponentChanged?: (entity: Entity) => void
+    private _onComponentChanged?: (entity: Entity) => void
 
     get components() {
         return this._component
@@ -19,8 +19,8 @@ export class Entity {
         return this._modifiers
     }
 
-    setComponentChangeHandler(handler: ((entity: Entity) => void) | undefined) {
-        this.onComponentChanged = handler
+    set onComponentChanged(handler: ((entity: Entity) => void) | undefined) {
+        this._onComponentChanged = handler
     }
 
     addModifier(modifier: Modifier) {
@@ -38,21 +38,19 @@ export class Entity {
     addComponent(component: EntityComponent) {
         this._component.set(component.constructor, component);
         component.entityId = this.id
-        this.onComponentChanged?.(this)
+        this._onComponentChanged?.(this)
 
         return this
     }
 
-     
     removeComponent(component: new (...args: any[]) => EntityComponent) {
         this._component.delete(component);
 
-        this.onComponentChanged?.(this)
+        this._onComponentChanged?.(this)
 
         return this
     }
 
-     
     getComponent<T extends new (...args: any[]) => EntityComponent>(component: T) {
         return this._component.get(component) as InstanceType<T> | undefined
     }

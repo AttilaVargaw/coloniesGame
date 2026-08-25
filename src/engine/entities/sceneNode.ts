@@ -1,11 +1,15 @@
-import type { Entity } from "./entity"
+import { Entity } from "./entity"
 import { PositionComponent } from "../components/position"
 
 export class SceneNode {
     readonly entityId: string
     private _entity?: Entity
-    private parent: SceneNode | null = null
-    private readonly children = new Set<SceneNode>()
+    private _parent: SceneNode | null = null
+    private readonly _children = new Set<SceneNode>()
+
+    get children() {
+        return this._children
+    }
 
     constructor(entityId: string, entity?: Entity) {
         this.entityId = entityId
@@ -19,31 +23,31 @@ export class SceneNode {
         return this._entity
     }
 
-    setEntity(entity: Entity) {
+    set entity(entity: Entity) {
         this._entity = entity
     }
 
-    get parentRef(): SceneNode | null {
-        return this.parent
+    get parent(): SceneNode | null {
+        return this._parent
     }
 
     get childrenRef(): ReadonlySet<SceneNode> {
         return this.children
     }
 
-    setParent(parent: SceneNode | null) {
-        if(this.parent === parent) {
+    set parent(parent: SceneNode | null) {
+        if(this._parent === parent) {
             return
         }
 
-        this.parent?.children.delete(this)
+        this._parent?.children.delete(this)
 
-        this.parent = parent
+        this._parent = parent
         parent?.children.add(this)
     }
 
     addChild(node: SceneNode) {
-        node.setParent(this)
+        node.parent = this
     }
 
     removeChild(node: SceneNode) {
@@ -51,7 +55,7 @@ export class SceneNode {
             return
         }
 
-        node.setParent(null)
+        node.parent = null
     }
 
     getWorldPosition(): [number, number] {
@@ -61,22 +65,20 @@ export class SceneNode {
             return [0, 0]
         }
 
-        if(!this.parent) {
+        if(!this._parent) {
             return [position.x, position.y]
         }
 
-        const [parentX, parentY] = this.parent.getWorldPosition()
+        const [parentX, parentY] = this._parent.getWorldPosition()
         return [parentX + position.x, parentY + position.y]
     }
 
-    collectDescendants() {
-        const ret: Entity[] = []
-
-        for(const child of this.children) {
-            ret.push(child.entity)
-            ret.splice(0, 0, ...child.collectDescendants())
+    // Thx ai, why entity[]?
+    collectDescendants(): Entity[] {
+        if(this.children.size) {
+            return this._children.values().flatMap(c => [c._entity!, ...c.collectDescendants()]).toArray()
+        } else {
+            return [] as Entity[]
         }
-
-        return ret
     }
 }

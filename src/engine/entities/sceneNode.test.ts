@@ -21,7 +21,7 @@ describe("SceneNode", () => {
         const node = new SceneNode("e1")
         const entity = new Entity("e1")
 
-        node.setEntity(entity)
+        node.entity = entity
 
         expect(node.entity).toBe(entity)
     })
@@ -30,7 +30,7 @@ describe("SceneNode", () => {
         const entity = new Entity("e1")
         const node = new SceneNode(entity.id, entity)
 
-        expect(node.parentRef).toBeNull()
+        expect(node.parent).toBeNull()
         expect(node.childrenRef.size).toBe(0)
     })
 
@@ -40,9 +40,9 @@ describe("SceneNode", () => {
         const parentNode = new SceneNode(parent.id, parent)
         const childNode = new SceneNode(child.id, child)
 
-        childNode.setParent(parentNode)
+        childNode.parent = parentNode
 
-        expect(childNode.parentRef).toBe(parentNode)
+        expect(childNode.parent).toBe(parentNode)
         expect(parentNode.childrenRef.has(childNode)).toBe(true)
     })
 
@@ -52,8 +52,8 @@ describe("SceneNode", () => {
         const parentNode = new SceneNode(parent.id, parent)
         const childNode = new SceneNode(child.id, child)
 
-        childNode.setParent(parentNode)
-        childNode.setParent(parentNode)
+        childNode.parent = parentNode
+        childNode.parent = parentNode
 
         expect(parentNode.childrenRef.size).toBe(1)
     })
@@ -66,10 +66,10 @@ describe("SceneNode", () => {
         const parentBNode = new SceneNode(parentB.id, parentB)
         const childNode = new SceneNode(child.id, child)
 
-        childNode.setParent(parentANode)
-        childNode.setParent(parentBNode)
+        childNode.parent = parentANode
+        childNode.parent = parentBNode
 
-        expect(childNode.parentRef).toBe(parentBNode)
+        expect(childNode.parent).toBe(parentBNode)
         expect(parentANode.childrenRef.has(childNode)).toBe(false)
         expect(parentBNode.childrenRef.has(childNode)).toBe(true)
     })
@@ -82,7 +82,7 @@ describe("SceneNode", () => {
 
         parentNode.addChild(childNode)
 
-        expect(childNode.parentRef).toBe(parentNode)
+        expect(childNode.parent).toBe(parentNode)
         expect(parentNode.childrenRef.has(childNode)).toBe(true)
     })
 
@@ -95,7 +95,7 @@ describe("SceneNode", () => {
         parentNode.addChild(childNode)
         parentNode.removeChild(childNode)
 
-        expect(childNode.parentRef).toBeNull()
+        expect(childNode.parent).toBeNull()
         expect(parentNode.childrenRef.has(childNode)).toBe(false)
     })
 
@@ -107,7 +107,7 @@ describe("SceneNode", () => {
 
         parentNode.removeChild(childNode)
 
-        expect(childNode.parentRef).toBeNull()
+        expect(childNode.parent).toBeNull()
         expect(parentNode.childrenRef.size).toBe(0)
     })
 
@@ -141,7 +141,7 @@ describe("SceneNode", () => {
         parent.addComponent(new PositionComponent(100, 200))
         child.addComponent(new PositionComponent(10, 20))
 
-        childNode.setParent(parentNode)
+        childNode.parent = parentNode
 
         const [x, y] = childNode.getWorldPosition()
 
@@ -161,8 +161,8 @@ describe("SceneNode", () => {
         parent.addComponent(new PositionComponent(100, 200))
         child.addComponent(new PositionComponent(10, 20))
 
-        parentNode.setParent(grandparentNode)
-        childNode.setParent(parentNode)
+        parentNode.parent = grandparentNode
+        childNode.parent = parentNode
 
         const [x, y] = childNode.getWorldPosition()
 

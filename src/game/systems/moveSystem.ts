@@ -139,10 +139,10 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 const jumped = waypoints.slice(0, jumpedCount);
                 const remaining = waypoints.slice(jumpedCount);
 
-                const currentParent = shipNode.parentRef?.entity ?? entity;
+                const currentParent = shipNode.parent?.entity ?? entity;
                 const finalSector = jumped[jumped.length - 1];
                 const targetNode = this.engine.getSceneNode(finalSector)!
-                shipNode.parentRef?.removeChild(shipNode)
+                shipNode.parent?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
                 this.positionShipAtTarget(entity, finalSector)
@@ -164,7 +164,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                 }
             } else {
                 const targetNode = this.engine.getSceneNode(jumpDrive.target)!
-                shipNode.parentRef?.removeChild(shipNode)
+                shipNode.parent?.removeChild(shipNode)
                 targetNode.addChild(shipNode)
 
                 this.positionShipAtTarget(entity, jumpDrive.target)
@@ -172,7 +172,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
             this.resolveOrbit(entity)
 
-            const shipParent = shipNode.parentRef?.entity
+            const shipParent = shipNode.parent?.entity
             if(shipParent && shipParent.getComponent(SoiComponent)) {
                 shipWaypoints.delete(entity)
                 const drive = entity.getComponent(JumpDriveComponent)
@@ -199,11 +199,10 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             const soiDepth = Math.max(0, targetSoi - targetRadius)
             const buffer = Math.min(SHIP_ORBIT_BUFFER_RATIO * targetSoi, soiDepth * 0.5)
             position.x = targetRadius + buffer
-            position.y = 0
         } else {
             position.x = 0
-            position.y = 0
         }
+        position.y = 0
     }
 
     private resolveOrbit = (entity: Entity): void => {
@@ -238,8 +237,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const shipNode = engine.getSceneNode(entity)!
         const attractorNode = engine.getSceneNode(bestSoiEntity)!
 
-        if(shipNode.parentRef?.entity !== bestSoiEntity) {
-            shipNode.parentRef?.removeChild(shipNode)
+        if(shipNode.parent?.entity !== bestSoiEntity) {
+            shipNode.parent?.removeChild(shipNode)
             attractorNode.addChild(shipNode)
         }
 
@@ -256,12 +255,12 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const orbit = entity.getComponent(OrbitComponent)
         const e = orbit?.eccentricity ?? 0
         const meanAnomaly = trueAnomalyToMeanAnomaly(newAngle, e)
-        const pos = positionOnOrbit(newRadius, e, meanAnomaly)
+        const { x, y } = positionOnOrbit(newRadius, e, meanAnomaly)
 
         const position = entity.getComponent(PositionComponent)
         if(position) {
-            position.x = pos.x
-            position.y = pos.y
+            position.x = x
+            position.y = y
         }
 
         if(orbit) {
@@ -277,7 +276,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     addToEngine(engine: Engine): this {
         if(!engine) {
             return this
-
         }
 
         super.addToEngine(engine)
@@ -303,7 +301,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     removeFromEngine(): this {
         if(!this.engine) {
             return this
-
         }
 
         this.engine.unregisterNodeType(MoveNode)

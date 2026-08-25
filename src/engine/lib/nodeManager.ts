@@ -85,7 +85,7 @@ export class NodeManager {
         const entityComponentConstructors = this.getEntityComponentConstructors(entity)
 
         for(const nodeName of this.nodeTypes.keys()) {
-            const keyValues = [...this.nodeTypes.get(nodeName)!.values()]
+            const keyValues = this.nodeTypes.get(nodeName)!.values().toArray()
 
             if(keyValues.every((nodeConstructor) => entityComponentConstructors.has(nodeConstructor))) {
                 const nodes = this._nodes.get(nodeName)

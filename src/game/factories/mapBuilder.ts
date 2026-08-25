@@ -75,6 +75,8 @@ export function init(engine: Engine) {
     // linkStarBridges()
 
     viewportSystem.sortOnEveryEntityAddition = true
+
+    return engine
 }
 
 function createWaypoints(

@@ -34,12 +34,10 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         return aStar(start, end)
     }
 
-    init(_mapSize: number) {
+    init() {
         if(!this.engine) return this
 
-        init(this.engine)
-
-        return this
+        return init(this.engine)
     }
 
     clear() {

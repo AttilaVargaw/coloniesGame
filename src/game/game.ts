@@ -10,7 +10,7 @@ import { DateSystem } from "@engine/systems/dateSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
-import { SelectionSystem } from "@game/systems/selectionSystem"
+import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
@@ -58,7 +58,7 @@ export class Game {
 
         this.engine
             .addSystem(MoveSystem)
-            .addSystem(SelectionSystem)
+            .addSystem(SelectionManager)
             .addSystem(TargetSystem)
             .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
@@ -69,10 +69,10 @@ export class Game {
             .addSystem(RectRenderer, ViewportSystem)
             .addSystem(OrbitSelectionSystem, ViewportSystem)
 
-        this.engine.getSystem(MapSystem)!.init(48)
-        this.engine.getSystem(ViewportSystem)!.init()
+        this.engine.getSystem(MapSystem).init()
+        this.engine.getSystem(ViewportSystem).init()
 
-        let previousTime = 0.
+        let previousTime = 0.0
 
         const update = (time: number) => {
             this.gameLoopId = requestAnimationFrame(update)

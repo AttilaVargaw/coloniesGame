@@ -4,6 +4,7 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import path from "path";
 import babel from '@rolldown/plugin-babel';
 
+const dirname = import.meta.dirname
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
@@ -13,11 +14,11 @@ export default defineConfig(async () => ({
   })],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@engine": path.resolve(__dirname, "./src/engine"),
-      "@game": path.resolve(__dirname, "./src/game"),
-      "@lib": path.resolve(__dirname, "./src/lib"),
-      "@components": path.resolve(__dirname, "./src/components"),
+      "@": path.resolve(dirname, "./src"),
+      "@engine": path.resolve(dirname, "./src/engine"),
+      "@game": path.resolve(dirname, "./src/game"),
+      "@lib": path.resolve(dirname, "./src/lib"),
+      "@components": path.resolve(dirname, "./src/components"),
     },
   },
   oxc: {
@@ -49,6 +50,5 @@ export default defineConfig(async () => ({
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
-
   },
 }));

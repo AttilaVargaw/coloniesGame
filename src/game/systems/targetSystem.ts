@@ -36,7 +36,7 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
 
         const mapSystem = this.engine.getSystem(MapSystem)
         const selectionSceneNode = this.engine.getSceneNode(ship)!
-        const selectionsParent = selectionSceneNode.parentRef!.entity
+        const selectionsParent = selectionSceneNode.parent!.entity
         const path = mapSystem?.findPath(selectionsParent, target)
 
         if(path && path.length > 1) {
@@ -65,7 +65,7 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
 
         const mapSystem = this.engine.getSystem(MapSystem)
         const selectionSceneNode = this.engine.getSceneNode(ship)!
-        const selectionsParent = selectionSceneNode.parentRef!.entity
+        const selectionsParent = selectionSceneNode.parent!.entity
         const path = mapSystem?.findPath(selectionsParent, target)
 
         if(path && path.length > 1) {

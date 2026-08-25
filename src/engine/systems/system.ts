@@ -3,14 +3,12 @@ import type { Engine } from "../core/engine"
 
 export abstract class System {
     protected engine?: Engine
-    protected parent?: System
 
     update(_dt: number): void {
 
     }
 
     protected registerNodes(_engine: Engine) {
-
         return this
     }
 

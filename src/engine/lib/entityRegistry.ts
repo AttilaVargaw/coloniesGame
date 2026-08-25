@@ -28,7 +28,7 @@ export class EntityRegistry {
             component.entity = entity
         }
 
-        entity.setComponentChangeHandler((e) => {
+        entity.onComponentChanged = ((e) => {
             for(const component of e.components.values()) {
                 component.entity = e
             }
@@ -40,8 +40,7 @@ export class EntityRegistry {
         const sceneNode = this.getOrCreateSceneNode(entity)
 
         if(parentEntity) {
-            const parentSceneNode = this.getOrCreateSceneNode(parentEntity)
-            sceneNode.setParent(parentSceneNode)
+            sceneNode.parent = this.getOrCreateSceneNode(parentEntity)
 
             for(const child of sceneNode.childrenRef) {
                 this.addEntity(child.entity)
@@ -61,7 +60,7 @@ export class EntityRegistry {
         const sceneNode = this.getSceneNode(entity)
 
         if(sceneNode) {
-            sceneNode.parentRef?.removeChild(sceneNode)
+            sceneNode.parent?.removeChild(sceneNode)
 
             const descendants =
                 sceneNode.collectDescendants()
@@ -69,7 +68,7 @@ export class EntityRegistry {
             for(const descendant of descendants) {
                 this.sceneNodes.delete(descendant.id)
                 this.entities.delete(descendant.id)
-                descendant.setComponentChangeHandler(undefined)
+                descendant.onComponentChanged = undefined
                 this.nodes.removeEntityFromNodes(descendant)
             }
 
@@ -77,7 +76,7 @@ export class EntityRegistry {
         }
 
         this.entities.delete(entity.id)
-        entity.setComponentChangeHandler(undefined)
+        entity.onComponentChanged = undefined
         this.nodes.removeEntityFromNodes(entity)
 
         this.events.dispatchEvent(new EntityRemovedEvent(entity))
