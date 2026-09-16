@@ -65,7 +65,32 @@ export default class Camera {
         this.updateViewport()
     }
 
-    private computeViewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number } {
+    private viewBasisCache: {
+        fx: number
+        fy: number
+        fz: number
+        rx: number
+        ry: number
+        rz: number
+        ux: number
+        uy: number
+        uz: number
+        camX: number
+        camY: number
+        camZ: number
+    } | null = null
+
+    private viewBasisDirty = true
+
+    private markViewDirty() {
+        this.viewBasisDirty = true
+    }
+
+    private ensureViewBasis() {
+        if (!this.viewBasisDirty && this.viewBasisCache) {
+            return this.viewBasisCache
+        }
+
         const cosPitch = Math.cos(this.pitch)
         const sinPitch = Math.sin(this.pitch)
         const cosYaw = Math.cos(this.yaw)
@@ -110,7 +135,15 @@ export default class Camera {
         const uy = rz * fx - rx * fz
         const uz = rx * fy - ry * fx
 
-        return { fx, fy, fz, rx, ry, rz, ux, uy, uz }
+        this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ }
+        this.viewBasisDirty = false
+
+        return this.viewBasisCache
+    }
+
+    private computeViewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number; camX: number; camY: number; camZ: number } {
+        const basis = this.ensureViewBasis()
+        return { ...basis }
     }
 
     begin() {
@@ -148,6 +181,7 @@ export default class Camera {
     public zoomTo(z: number) {
         this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z))
         this.updateViewport()
+        this.markViewDirty()
     }
 
     public zoomToAnchored(z: number, screenX: number, screenY: number) {
@@ -184,6 +218,11 @@ export default class Camera {
         this.lookAt[1] = y
         this.lookAt[2] = z
         this.updateViewport()
+        this.markViewDirty()
+    }
+
+    public invalidateViewBasis() {
+        this.markViewDirty()
     }
 
     public get visibleBounds() {
