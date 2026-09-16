@@ -1,5 +1,5 @@
 import { OrbitComponent } from "@/engine/components/orbitComponent"
-import { UNIVERSE_SCALE } from "../constants"
+import { UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import { applyComponents } from "./helpers"
 import { Engine } from "@/engine/core/engine"
@@ -14,6 +14,7 @@ export function createAsteroid({
     radius, angle, eccentricity,
 }: OrbitalBlueprint, parent: Entity, engine: Engine) {
     const asteroid = engine.createEntity()
+    const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
 
     applyComponents(asteroid,
         new OrbitComponent(
@@ -21,7 +22,8 @@ export function createAsteroid({
             radius * UNIVERSE_SCALE,
             angularSpeed(radius),
             angle,
-            eccentricity ?? 0
+            eccentricity ?? 0,
+            inclination
         ),
         new ColorComponent("red", ""),
         new ThicknessComponent(1),

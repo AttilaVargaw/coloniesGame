@@ -48,8 +48,7 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
             game?.engine.dispatchEvent(new MousedownEvent(data as MouseEventData));
           }}
           onMouseUp={(data) => {
-            const mouseData = data as unknown as { x: number; y: number; event: MouseEvent; };
-            game?.engine.dispatchEvent(new MouseupEvent({ name: "mouseup", data: { x: mouseData.x, y: mouseData.y, event: mouseData.event } }));
+            game?.engine.dispatchEvent(new MouseupEvent(data as MouseEventData));
           }}
           ref={map}
           onClick={(data) => {

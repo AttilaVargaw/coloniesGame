@@ -21,13 +21,18 @@ const mulberry32 = (seed: number) => {
 
 const rng = mulberry32(42)
 const createStarfield = (count: number) => {
-    return Array.from({ length: count }, () => ({
-        x: (rng() - 0.5) * 20000,
-        y: (rng() - 0.5) * 20000,
-        z: rng() * 5000,
-        r: 0.5 + rng() * 1.0,
-        opacity: 0.3 + rng() * 0.6,
-    }))
+    return Array.from({ length: count }, () => {
+        const theta = rng() * Math.PI * 2
+        const phi = Math.acos(2 * rng() - 1)
+        const r = 50000 + rng() * 150000
+        return {
+            x: r * Math.sin(phi) * Math.cos(theta),
+            y: r * Math.sin(phi) * Math.sin(theta),
+            z: r * Math.cos(phi),
+            r: 0.5 + rng() * 1.0,
+            opacity: 0.3 + rng() * 0.6,
+        }
+    })
 }
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
@@ -69,9 +74,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if (!projected) {
                 continue
             }
-            ctx.globalAlpha = s.opacity * Math.min(1, projected.scale * 0.05)
+            ctx.globalAlpha = s.opacity * Math.min(1, projected.scale * 80)
+            const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200))
             ctx.beginPath()
-            ctx.arc(projected.x, projected.y, s.r * projected.scale, 0, TWO_PI)
+            ctx.arc(projected.x, projected.y, radius, 0, TWO_PI)
             ctx.fill()
         }
         ctx.restore()

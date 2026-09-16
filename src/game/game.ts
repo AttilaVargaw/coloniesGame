@@ -39,8 +39,8 @@ export class Game {
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            azimuth: 0,
-            elevation: Math.PI / 4,
+            yaw: 0,
+            pitch: Math.PI / 2,
         })
 
         this.engine

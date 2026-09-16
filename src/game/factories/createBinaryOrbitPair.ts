@@ -1,7 +1,7 @@
 import { Engine } from "@/engine/core/engine"
 import { Entity } from "@engine/entities/entity"
 import { createBody } from "./createBody"
-import { TWO_PI, UNIVERSE_SCALE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { OrbitComponent } from "@/engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
@@ -26,13 +26,15 @@ export function createBinaryOrbitPair(
 ) {
     //const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = radius * UNIVERSE_SCALE
+    const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
     const barycentre = applyComponents(createMarker(engine, { color: "white", radius: 10, label: "barycentre", labelColor: "white" }),
         new OrbitComponent(
             parent.id,
             barycentreOrbitRadius,
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
-            eccentricity ?? 0
+            eccentricity ?? 0,
+            inclination
         ),
     )
 

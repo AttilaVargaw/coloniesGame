@@ -11,7 +11,7 @@ import { OrbitComponent } from "@engine/components/orbitComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
 import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "../data/StartState";
-import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, UNIVERSE_SCALE } from "../constants";
+import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
 import { Engine } from "@/engine/core/engine";
 
 export const DEBUG_VISUALIZE_PATHS = true;
@@ -269,7 +269,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             orbit.meanAnomaly = meanAnomaly
             orbit.angularSpeed = angularSpeed(newRadius)
         } else {
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius * UNIVERSE_SCALE, angularSpeed(newRadius), meanAnomaly))
+            const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius * UNIVERSE_SCALE, angularSpeed(newRadius), meanAnomaly, 0, inclination))
         }
     }
 

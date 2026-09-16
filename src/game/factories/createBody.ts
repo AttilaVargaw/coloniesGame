@@ -12,7 +12,7 @@ import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createMarker, createVessel } from "./createSpaceship"
-import { TWO_PI, UNIVERSE_SCALE, } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
 import { createSoiCircle } from "./createSoiCircle"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
@@ -43,7 +43,8 @@ export function createBody({
             orbit.radius * UNIVERSE_SCALE,
             angularSpeed(orbit.radius),
             angle,
-            orbit.eccentricity ?? 0
+            orbit.eccentricity ?? 0,
+            orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0]))
         ),
         new SoiComponent(calculateSoi(marker.radius, archetype)),
         new PathComponent(),

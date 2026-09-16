@@ -8,7 +8,7 @@ export interface MouseEventData {
     } & ReactMouseEvent
 }
 
- 
+
 export abstract class EventBase<T = any> {
     constructor(public data: T) { }
 }
@@ -25,10 +25,9 @@ export class ComponentRemovedEvent extends EventBase<unknown> { }
 
 // export type ClickEventData = { event: MouseEvent; x: number; y: number }
 export class ClickEventData extends EventBase<MouseEventData> { }
-export type MouseupEventData = { name: string; data: { x: number; y: number; event: MouseEvent } }
-export class MouseupEvent extends EventBase<MouseupEventData> { }
 
 export class KeydownEvent extends EventBase<KeyboardEvent> { }
 export class KeyupEvent extends EventBase<KeyboardEvent> { }
 export class MousedownEvent extends EventBase<MouseEventData> { }
 export class MousemoveEvent extends EventBase<MouseEventData> { }
+export class MouseupEvent extends EventBase<MouseEventData> { }

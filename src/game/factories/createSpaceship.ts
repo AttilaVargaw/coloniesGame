@@ -10,7 +10,7 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, descartesToPolar } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
-import { SHIP_RADIUS, TWO_PI, UNIVERSE_SCALE } from "../constants"
+import { SHIP_RADIUS, TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { VesselBlueprint } from "../data/VesselBlueprint"
@@ -69,9 +69,10 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 export function createVessel(
     engine: Engine,
     parent: Entity,
-    { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle } }: VesselBlueprint
+    { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle, inclination } }: VesselBlueprint
 ) {
     const orbitAngle = angle ?? Math.random() * TWO_PI
+    const orbitInclination = inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0]))
 
     const ship = applyComponents(createMarker(engine, { color, radius, label, labelColor, textSize }),
         new PositionComponent(...descartesToPolar(orbitAngle, orbitRadius)),
@@ -92,7 +93,7 @@ export function createVessel(
                 selectionSystem?.onSelectionChanged({ entity: target, type: "ship" })
             }
         }),
-        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle)
+        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle, 0, orbitInclination)
     )
 
     engine.addEntity(ship)

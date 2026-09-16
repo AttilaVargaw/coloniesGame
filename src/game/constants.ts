@@ -4,7 +4,7 @@ export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30
 
-export const FIELD_OF_VIEW = Math.PI / 4
+export const FIELD_OF_VIEW = Math.PI / 3
 export const CAMERA_INITIAL_DISTANCE = 3000
 export const CAMERA_MIN_DISTANCE = 100
 export const CAMERA_MAX_DISTANCE = 120000
@@ -27,4 +27,4 @@ export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
 
 export const STAR_SIZE = 30
-export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.3] as const
+export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const

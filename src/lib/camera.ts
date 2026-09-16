@@ -7,8 +7,8 @@ export interface ProjectedPoint {
 
 export default class Camera {
     lookAt: [number, number, number]
-    azimuth: number
-    elevation: number
+    yaw: number
+    pitch: number
     distance: number
     fieldOfView: number
     minDistance: number
@@ -31,8 +31,8 @@ export default class Camera {
     constructor(public renderingContext: CanvasRenderingContext2D, settings = {
         distance: 1000.0,
         initialPosition: [0, 0, 0] as [number, number, number],
-        azimuth: 0,
-        elevation: Math.PI / 4,
+        yaw: 0,
+        pitch: Math.PI / 2,
         fieldOfView: Math.PI / 4.0,
         scaleX: 1.0,
         scaleY: 1.0,
@@ -44,8 +44,8 @@ export default class Camera {
         this.minDistance = settings.minDistance
         this.maxDistance = settings.maxDistance
         this.lookAt = settings.initialPosition
-        this.azimuth = settings.azimuth
-        this.elevation = settings.elevation
+        this.yaw = settings.yaw
+        this.pitch = settings.pitch
         this.fieldOfView = settings.fieldOfView
         this.viewport = {
             left: 0,
@@ -63,6 +63,54 @@ export default class Camera {
 
     private init() {
         this.updateViewport()
+    }
+
+    private computeViewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number } {
+        const cosPitch = Math.cos(this.pitch)
+        const sinPitch = Math.sin(this.pitch)
+        const cosYaw = Math.cos(this.yaw)
+        const sinYaw = Math.sin(this.yaw)
+
+        const camX = this.lookAt[0] + this.distance * cosPitch * sinYaw
+        const camY = this.lookAt[1] + this.distance * cosPitch * cosYaw
+        const camZ = this.lookAt[2] + this.distance * sinPitch
+
+        let fx = this.lookAt[0] - camX
+        let fy = this.lookAt[1] - camY
+        let fz = this.lookAt[2] - camZ
+        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
+        fx /= fLen
+        fy /= fLen
+        fz /= fLen
+
+        let rx: number
+        let ry: number
+        let rz: number
+        if (Math.abs(fy) > 0.9999) {
+            const worldRight = [1, 0, 0]
+            const proj = worldRight[0] * fx + worldRight[1] * fy + worldRight[2] * fz
+            rx = worldRight[0] - proj * fx
+            ry = worldRight[1] - proj * fy
+            rz = worldRight[2] - proj * fz
+            const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+            rx /= rLen
+            ry /= rLen
+            rz /= rLen
+        } else {
+            rx = -fz
+            ry = 0
+            rz = fx
+            const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+            rx /= rLen
+            ry /= rLen
+            rz /= rLen
+        }
+
+        const ux = ry * fz - rz * fy
+        const uy = rz * fx - rx * fz
+        const uz = rx * fy - ry * fx
+
+        return { fx, fy, fz, rx, ry, rz, ux, uy, uz }
     }
 
     begin() {
@@ -147,9 +195,13 @@ export default class Camera {
         }
     }
 
-    public screenToWorld(x: number, y: number, obj: { x: number; y: number } = { x: 0, y: 0 }) {
-        obj.x = (x / this.viewport.scale[0]) + this.viewport.left
-        obj.y = (y / this.viewport.scale[1]) + this.viewport.top
+    public screenToWorld(x: number, y: number, obj: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 }) {
+        const ray = this.screenToWorldRay(x, y)
+        const [dx, dy, dz] = ray.direction
+        const t = (this.lookAt[2] - ray.origin[2]) / dz
+        obj.x = ray.origin[0] + dx * t
+        obj.y = ray.origin[1] + dy * t
+        obj.z = this.lookAt[2]
         return obj
     }
 
@@ -162,35 +214,8 @@ export default class Camera {
         return obj
     }
 
-    private getBasisVectors(): { right: [number, number, number]; up: [number, number, number] } {
-        const cosElev = Math.cos(this.elevation)
-        const sinElev = Math.sin(this.elevation)
-        const cosAzim = Math.cos(this.azimuth)
-        const sinAzim = Math.sin(this.azimuth)
-
-        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
-        const camY = this.lookAt[1] + this.distance * cosElev
-        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
-
-        let fx = this.lookAt[0] - camX
-        let fy = this.lookAt[1] - camY
-        let fz = this.lookAt[2] - camZ
-        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
-        fx /= fLen
-        fy /= fLen
-        fz /= fLen
-
-        let rx = -fz
-        let ry = 0
-        let rz = fx
-        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
-        rx /= rLen
-        ry /= rLen
-        rz /= rLen
-
-        const ux = ry * fz - rz * fy
-        const uy = rz * fx - rx * fz
-        const uz = rx * fy - ry * fx
+    public getBasisVectors(): { right: [number, number, number]; up: [number, number, number] } {
+        const { rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
 
         return {
             right: [rx, ry, rz],
@@ -199,34 +224,11 @@ export default class Camera {
     }
 
     public project(wx: number, wy: number, wz: number): ProjectedPoint | null {
-        const cosElev = Math.cos(this.elevation)
-        const sinElev = Math.sin(this.elevation)
-        const cosAzim = Math.cos(this.azimuth)
-        const sinAzim = Math.sin(this.azimuth)
+        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
 
-        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
-        const camY = this.lookAt[1] + this.distance * cosElev
-        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
-
-        let fx = this.lookAt[0] - camX
-        let fy = this.lookAt[1] - camY
-        let fz = this.lookAt[2] - camZ
-        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
-        fx /= fLen
-        fy /= fLen
-        fz /= fLen
-
-        let rx = -fz
-        let ry = 0
-        let rz = fx
-        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
-        rx /= rLen
-        ry /= rLen
-        rz /= rLen
-
-        const ux = ry * fz - rz * fy
-        const uy = rz * fx - rx * fz
-        const uz = rx * fy - ry * fx
+        const camX = this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw)
+        const camY = this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw)
+        const camZ = this.lookAt[2] + this.distance * Math.sin(this.pitch)
 
         const vx = wx - camX
         const vy = wy - camY
@@ -249,34 +251,11 @@ export default class Camera {
     }
 
     public screenToWorldRay(screenX: number, screenY: number): { origin: [number, number, number]; direction: [number, number, number] } {
-        const cosElev = Math.cos(this.elevation)
-        const sinElev = Math.sin(this.elevation)
-        const cosAzim = Math.cos(this.azimuth)
-        const sinAzim = Math.sin(this.azimuth)
+        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
 
-        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
-        const camY = this.lookAt[1] + this.distance * cosElev
-        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
-
-        let fx = this.lookAt[0] - camX
-        let fy = this.lookAt[1] - camY
-        let fz = this.lookAt[2] - camZ
-        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
-        fx /= fLen
-        fy /= fLen
-        fz /= fLen
-
-        let rx = -fz
-        let ry = 0
-        let rz = fx
-        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
-        rx /= rLen
-        ry /= rLen
-        rz /= rLen
-
-        const ux = ry * fz - rz * fy
-        const uy = rz * fx - rx * fz
-        const uz = rx * fy - ry * fx
+        const camX = this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw)
+        const camY = this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw)
+        const camZ = this.lookAt[2] + this.distance * Math.sin(this.pitch)
 
         const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
 
