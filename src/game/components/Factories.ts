@@ -1,29 +1,29 @@
 
-export type IndustrialSectors = {
-    readonly electricityFactory: number;
-    readonly foodFactory: number;
-    readonly metalFactory: number;
-    readonly uraniumFactory: number;
-    readonly agriculturalFactory: number;
-    readonly consumerFactory: number;
-    readonly ammunitionFactory: number;
-    readonly machineryFactory: number;
-    readonly medicineFactory: number;
-    readonly buildingSector: number;
-    readonly nuclearWeaponFactory: number;
-    readonly furnitureFactory: number;
-    readonly weaponFactory: number;
-    readonly forestry: number;
-    readonly oilFactory: number;
-    readonly oilRig: number;
-    readonly orbitalBuildingSector: number;
-    readonly orbitalFactory: number;
-    readonly spaceport: number;
-    readonly spaceTransport: number;
-    readonly tourism: number;
-    readonly services: number;
-    readonly environmentFactor: number;
-    readonly waterFactory: number;
-};
+export type IndustrialSectors = Readonly<{
+    electricityFactory: number;
+    foodFactory: number;
+    metalFactory: number;
+    uraniumFactory: number;
+    agriculturalFactory: number;
+    consumerFactory: number;
+    ammunitionFactory: number;
+    machineryFactory: number;
+    medicineFactory: number;
+    buildingSector: number;
+    nuclearWeaponFactory: number;
+    furnitureFactory: number;
+    weaponFactory: number;
+    forestry: number;
+    oilFactory: number;
+    oilRig: number;
+    orbitalBuildingSector: number;
+    orbitalFactory: number;
+    spaceport: number;
+    spaceTransport: number;
+    tourism: number;
+    services: number;
+    environmentFactor: number;
+    waterFactory: number;
+}>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

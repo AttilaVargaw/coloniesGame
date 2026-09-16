@@ -5,6 +5,21 @@ import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
 import { TWO_PI } from "@/game/constants";
 
+function solveKepler(meanAnomaly: number, e: number): number {
+    if(e < 1e-6) {
+        return meanAnomaly
+    }
+
+    let E = meanAnomaly
+    for(let i = 0; i < 20; i++) {
+        const dE = (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E))
+        E -= dE
+        if(Math.abs(dE) < 1e-9) {
+            break
+        }
+    }
+    return E
+}
 export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     protected updateNode(node: OrbitNode, dt: number): void {
         const { orbit, entity } = node
@@ -25,7 +40,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
             orbit.meanAnomaly += TWO_PI
         }
 
-        const E = this.solveKepler(orbit.meanAnomaly, orbit.eccentricity)
+        const E = solveKepler(orbit.meanAnomaly, orbit.eccentricity)
         const a = orbit.radius
         const r = a * (1 - orbit.eccentricity * Math.cos(E))
 
@@ -37,22 +52,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         const position = entity.getComponent(PositionComponent)!
         position.x = r * Math.cos(theta)
         position.y = r * Math.sin(theta)
-    }
-
-    private solveKepler(meanAnomaly: number, e: number): number {
-        if(e < 1e-6) {
-            return meanAnomaly
-        }
-
-        let E = meanAnomaly
-        for(let i = 0; i < 20; i++) {
-            const dE = (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E))
-            E -= dE
-            if(Math.abs(dE) < 1e-9) {
-                break
-            }
-        }
-        return E
     }
 
     protected registerNodes(engine: Engine): this {
@@ -86,7 +85,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
     removeFromEngine(): this {
         if(!this.engine) {
             return this
-
         }
 
         this.nodes.length = 0

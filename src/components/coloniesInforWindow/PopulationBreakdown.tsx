@@ -1,14 +1,24 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Population } from "@/game/data/Population";
-import { sumValues } from "@/lib/utils";
+import { Population, sumPopulation } from "@/game/data/Population";
 import { convertToReadable } from "@/lib/utils";
 
+function Sum(...args: number[]) {
+    let sum = 0
+
+    for(const it of args) {
+        sum += it
+    }
+
+    return sum
+}
+
+const fmt = (v: number) => <span color="red">
+    {`(${v.toFixed(1)}/day)`}
+</span>;
+
 export function PopulationBreakdown({ industry }: { industry: IndustryComponent; }) {
-    const fmt = (v: number) => <span color="red">
-        {`(${v.toFixed(1)}/day)`}
-    </span>;
-    const populationSum = sumValues(industry.population);
-    const popGrowth = (industry.goods.happiness - 0.5) * industry.goods.happiness / 15000;
+    const populationSum = sumPopulation(industry.population);
+    const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
 
     return (
         <>
@@ -23,14 +33,16 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                     <tr>
                         <td> Working Population</td>
                         <td>
-                            {convertToReadable(populationSum - industry.population.retired - industry.population.student)}
+                            {convertToReadable(populationSum - industry.population.retired.number - industry.population.student.number)}
                         </td>
                     </tr>
                 </tbody>
                 <tbody>
                     {Object.entries((industry.population)).map(([key, value]) => {
+                        const { number, populationChange } = value
+
                         return <tr key={key}>
-                            <td>{key}</td><td>{convertToReadable(value)} ({convertToReadable(industry.workingWorkers[key as keyof Population])} is working)</td>
+                            <td>{key}</td><td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number ?? 0)} is working) ({convertToReadable(populationChange ?? 0)})</td>
                         </tr>;
                     })}
                 </tbody>

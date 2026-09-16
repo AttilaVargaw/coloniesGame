@@ -14,4 +14,4 @@ export const occupationStarterRatio = {
     serviceWorker: 21,
     clergy: 1,
     clerks: 20,
-} as const as Population;
+} as const as Record<keyof Population, number>;

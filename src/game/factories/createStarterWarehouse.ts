@@ -5,7 +5,7 @@ import { Goods } from "../data/Goods";
 export function createStarterWarehouse(population: number) {
     return {
         water: population * 50,
-        food: population * 50,
+        basicFood: population * 50,
         agriculturalGoods: population * 1,
         ammunition: population * 1,
         consumerGoods: population * 50,
@@ -17,7 +17,6 @@ export function createStarterWarehouse(population: number) {
         uranium: population * 10,
         environmentFactor: population * 0.8,
         furniture: population * 50,
-        happiness: population * 1,
         metals: population * 10,
         money: population * 10,
         nuclearWeapons: population * 0,
@@ -26,6 +25,11 @@ export function createStarterWarehouse(population: number) {
         tourism: population * 0,
         weapons: population * 10,
         wood: population * 10,
+        dividents: 0,
+        food: population * 50,
+        luxuryFood: population * 10,
+        luxuryFurniture: population * 10,
+        ordnance: 0,
     } satisfies Goods;
 }
 
