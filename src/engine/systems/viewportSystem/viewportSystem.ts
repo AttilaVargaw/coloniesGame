@@ -69,17 +69,31 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const { camera } = this.viewport
         ctx.save()
         ctx.fillStyle = "#ffffff"
+
+        const buckets = new Map<number, { x: number; y: number; r: number }[]>()
         for(const s of this.starfield) {
             const projected = camera.project(s.x, s.y, s.z)
             if (!projected) {
                 continue
             }
-            ctx.globalAlpha = s.opacity * Math.min(1, projected.scale * 80)
+            const alpha = s.opacity * Math.min(1, projected.scale * 80)
             const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200))
+            const bucket = Math.round(alpha * 10) / 10
+
+            if (!buckets.has(bucket)) buckets.set(bucket, [])
+            buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius })
+        }
+
+        for(const [alpha, stars] of buckets) {
+            ctx.globalAlpha = alpha
             ctx.beginPath()
-            ctx.arc(projected.x, projected.y, radius, 0, TWO_PI)
+            for(const star of stars) {
+                ctx.moveTo(star.x + star.r, star.y)
+                ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+            }
             ctx.fill()
         }
+
         ctx.restore()
     }
 

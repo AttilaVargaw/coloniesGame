@@ -7,19 +7,32 @@ import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
 import { TWO_PI } from "@/game/constants";
 
-function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
-    const gradient = ctx.createRadialGradient(
-        x - radius * 0.3, y - radius * 0.3, radius * 0.1,
-        x, y, radius
+const SHADE_SIZE = 128
+
+const shadeSprite = (() => {
+    const canvas = document.createElement("canvas")
+    canvas.width = SHADE_SIZE
+    canvas.height = SHADE_SIZE
+    const octx = canvas.getContext("2d")!
+    octx.beginPath()
+    octx.arc(SHADE_SIZE / 2, SHADE_SIZE / 2, SHADE_SIZE / 2, 0, TWO_PI)
+    octx.clip()
+
+    const gradient = octx.createRadialGradient(
+        SHADE_SIZE * 0.35, SHADE_SIZE * 0.35, SHADE_SIZE * 0.05,
+        SHADE_SIZE * 0.5, SHADE_SIZE * 0.5, SHADE_SIZE * 0.5
     )
     gradient.addColorStop(0, "rgba(255,255,255,0.25)")
     gradient.addColorStop(0.5, "rgba(255,255,255,0.05)")
     gradient.addColorStop(1, "rgba(0,0,0,0.35)")
+    octx.fillStyle = gradient
+    octx.fillRect(0, 0, SHADE_SIZE, SHADE_SIZE)
+    return canvas
+})()
 
-    ctx.fillStyle = gradient
-    ctx.beginPath()
-    ctx.arc(x, y, radius, 0, TWO_PI)
-    ctx.fill()
+function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
+    const size = radius * 2
+    ctx.drawImage(shadeSprite, x - size / 2, y - size / 2, size, size)
 }
 
 export class CircleRenderer extends BaseRenderer<CircleNode> {
