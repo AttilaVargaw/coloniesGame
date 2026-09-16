@@ -7,7 +7,7 @@ import { OrbitComponent } from "@/engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { applyComponents } from "./helpers"
 import { OrbitalBlueprint } from "../data/OrbitalBlueprint"
-import { createMarker } from "./createSpaceship"
+import { PositionComponent } from "@/engine/components/position"
 
 const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
     radius: barycentreOrbitRadius * UNIVERSE_SCALE,
@@ -27,7 +27,8 @@ export function createBinaryOrbitPair(
     //const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = radius * UNIVERSE_SCALE
     const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
-    const barycentre = applyComponents(createMarker(engine, { color: "white", radius: 10, label: "barycentre", labelColor: "white" }),
+    const barycentre = applyComponents(engine.createEntity(),
+        new PositionComponent(0, 0),
         new OrbitComponent(
             parent.id,
             barycentreOrbitRadius,

@@ -16,13 +16,13 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
             </thead>
             <tbody>
                 {Object.entries(goods).map(([key, value]) => {
-                    const addition = goodsProduction[key as keyof Goods] ?? 0;
-                    const used = goodsRequirements[key as keyof Goods] ?? 0;
+                    const addition = goodsProduction[key as keyof Goods] || 0;
+                    const used = goodsRequirements[key as keyof Goods] || 0;
 
                     return <tr key={key}>
                         <td>{key}</td>
-                        <td>{convertToReadable(value)}</td>
-                        <td style={{ textAlign: "center" }}>{addition - used}</td>
+                        <td>{convertToReadable(value || 0)}</td>
+                        <td style={{ textAlign: "center" }}>{addition - (used || 0)}</td>
                         <td style={{ textAlign: "center" }}>{addition}</td>
                         <td style={{ textAlign: "center" }}>{used}</td>
                     </tr>

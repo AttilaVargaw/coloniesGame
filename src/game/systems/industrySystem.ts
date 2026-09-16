@@ -7,7 +7,7 @@ import { getPrices, Goods } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { baseSalaries, getGoodRequirementsAndQoL, Population } from "../data/Population";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
-import { industryReducers } from "./industryReducers";
+import { industryReducers } from "./factoryBlueprints";
 import { IndustryReducerReturn } from "./generateIndustrialSector";
 import { populationGrowth } from "../data/populationHelpers";
 
@@ -49,8 +49,9 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 const { number } = population
                 const { requirements, qol } = getGoodRequirementsAndQoL(baseSalaries[key as keyof Population], getPrices(), population)
 
-                industry.population[key as keyof Population].qol = qol
-                industry.population[key as keyof Population].populationChange = populationGrowth(qol) * number
+                population.qol = qol
+                population.populationChange = populationGrowth(qol) * number
+                population.wealth += baseSalaries[key as keyof Population] * number
 
                 for(const it in requirements) {
                     industry.goodsRequirements[it as keyof Goods] = requirements[it as keyof Goods] * population.number + (industry.goodsRequirements[it as keyof Goods] ?? 0)
@@ -61,6 +62,10 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 acc[key as keyof Goods] = value - industry.goodsRequirements[key as keyof Goods]!
                 return acc
             }, createStarterWarehouse(0))
+
+            for(const it in industry.goods) {
+                industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods]
+            }
         }
     }
 

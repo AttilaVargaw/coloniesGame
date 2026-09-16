@@ -24,8 +24,8 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
     }: ReducerInput,
         sectorLevels: IndustrialSectors) => {
         const lowestRatio = Math.min(
-            getLowestPopulationRatio(workerRequirement, remainingWorkers, sectorLevels[name as keyof IndustrialSectors], workerRatio) || 0,
-            getLowestGoodsRatio(goodsRequirements, remainingGoods, sectorLevels[name as keyof IndustrialSectors], workerRatio) || 0
+            getLowestPopulationRatio(workerRequirement, remainingWorkers, sectorLevels[name as keyof IndustrialSectors], workerRatio),
+            getLowestGoodsRatio(goodsRequirements, remainingGoods, sectorLevels[name as keyof IndustrialSectors], workerRatio)
         );
 
         const productionRatio = lowestRatio * sectorLevels[name as keyof IndustrialSectors];

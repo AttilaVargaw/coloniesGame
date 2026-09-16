@@ -4,7 +4,7 @@ import { DialogContent, DialogTitle, Dialog, DialogHeader, DialogFooter } from "
 import { IndustryComponent } from "@game/components/industryComponent";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
@@ -65,7 +65,8 @@ export function ColoniesInforWindow() {
         </DialogContent>
     </Dialog >
 }
-function DialogInner(industry: IndustryComponent | null, page: string): import("react").ReactNode {
+
+function DialogInner(industry: IndustryComponent | null, page: string): ReactNode {
     if(!industry) return <></>;
 
     switch(page) {

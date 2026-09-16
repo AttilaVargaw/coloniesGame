@@ -1,13 +1,33 @@
 import { generateIndustrialSector } from "./generateIndustrialSector";
 
 export const industryReducers = Object.entries({
-    agriculturalFactory: generateIndustrialSector({ name: "agriculturalFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { agriculturalGoods: 1 } }),
+    agriculturalFactory: generateIndustrialSector({
+        name: "agriculturalFactory",
+        goodsRequirements: {},
+        workerRequirement: { worker: 1 },
+        goodsProduction: { agriculturalGoods: 100_000, basicFood: 100_000, food: 100_000 }
+    }),
     ammunitionFactory: generateIndustrialSector({ name: "ammunitionFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { ammunition: 1 } }),
     buildingSector: generateIndustrialSector({ name: "buildingSector", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
-    consumerFactory: generateIndustrialSector({ name: "consumerFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { consumerGoods: 1 } }),
+    consumerFactory: generateIndustrialSector({
+        name: "consumerFactory",
+        goodsRequirements: {},
+        workerRequirement: { worker: 1 },
+        goodsProduction: { consumerGoods: 100_000 }
+    }),
     electricityFactory: generateIndustrialSector({ name: "electricityFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { electricity: 1 } }),
-    foodFactory: generateIndustrialSector({ name: "foodFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { basicFood: 1 } }),
-    furnitureFactory: generateIndustrialSector({ name: "furnitureFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { furniture: 1 } }),
+    foodFactory: generateIndustrialSector({
+        name: "foodFactory",
+        goodsRequirements: {},
+        workerRequirement: { worker: 1 },
+        goodsProduction: { basicFood: 100_000_000, luxuryFood: 10_000, food: 100_000 }
+    }),
+    furnitureFactory: generateIndustrialSector({
+        name: "furnitureFactory",
+        goodsRequirements: {},
+        workerRequirement: { worker: 1 },
+        goodsProduction: { furniture: 100_000, luxuryFurniture: 10_000 }
+    }),
     machineryFactory: generateIndustrialSector({ name: "machineryFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { machinery: 1 } }),
     medicineFactory: generateIndustrialSector({ name: "medicineFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: { medicine: 1 } }),
     metalFactory: generateIndustrialSector({ name: "metalFactory", goodsRequirements: {}, workerRequirement: { worker: 1 }, goodsProduction: {} }),

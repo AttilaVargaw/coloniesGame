@@ -2,7 +2,7 @@ import { EntityComponent } from "@engine/entities/entityComponent";
 import { IndustrialSectors } from "./Factories";
 import { Goods } from "../data/Goods";
 import { Population, sumPopulation } from "../data/Population";
-import { createStarterIndustry, createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 
 export type BuildOrder = {
@@ -38,7 +38,6 @@ export class IndustryComponent extends EntityComponent {
         this.goodsChange = createStarterWarehouse(sumPopulation(population))
         this.populationChange = createStarterPopulation(0)
         this.goodsRequirements = createStarterWarehouse(0)
-        this.sectors = createStarterIndustry()
         this.goodsProduction = createStarterWarehouse(0)
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)

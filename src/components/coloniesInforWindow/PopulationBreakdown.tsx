@@ -42,7 +42,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                         const { number, populationChange } = value
 
                         return <tr key={key}>
-                            <td>{key}</td><td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number ?? 0)} is working) ({convertToReadable(populationChange ?? 0)})</td>
+                            <td>{key}</td><td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)} is working) ({convertToReadable(populationChange || 0)})</td>
                         </tr>;
                     })}
                 </tbody>

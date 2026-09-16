@@ -81,7 +81,7 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
         }
     }
 
-    return Math.min(...Object.values(workerRatios))
+    return Math.min(...Object.values(workerRatios), 1)
 }
 
 // export function getQol(population: keyof Population, goodPrices: Goods) {
@@ -94,7 +94,7 @@ function affordability(salary: number, goodsPrices: Goods, requirements: Record<
     return ret
 }
 
-export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number }: PopulationBreakdown) {
+export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number, wealth }: PopulationBreakdown) {
     let qol = 0
 
     const packets = new CumulativeLinkedList<Goods>({
@@ -132,7 +132,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     }, {} as Record<keyof Goods, number>)
 
     for(const { data, id } of packets.cumulative) {
-        if(affordability(salary, goodsPrices, data) >= 0) {
+        if(affordability(salary + wealth, goodsPrices, data) >= 0) {
             qol = Number(id)
 
             for(const [key, value] of Object.entries(data)) {
