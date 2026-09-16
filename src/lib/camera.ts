@@ -1,33 +1,52 @@
-/**
- * Camera by @robashton returns Camera object.
- *  constructor initial parameters:
- *  @param {context} str *required 
- *  @param {settings} str *optional
-  */
-export default class Camera {
-    distance: number;
-    lookAt: [number, number];
-    minDistance: number;
-    maxDistance: number;
-    private fieldOfView: number;
-    private viewport: { left: number; right: number; top: number; bottom: number; width: number; height: number; scale: [number, number]; };
-    private aspectRatio: number = 1.0;
+export interface ProjectedPoint {
+    x: number
+    y: number
+    scale: number
+    depth: number
+}
 
-    constructor(public context: CanvasRenderingContext2D, settings = {
+export default class Camera {
+    lookAt: [number, number, number]
+    azimuth: number
+    elevation: number
+    distance: number
+    fieldOfView: number
+    minDistance: number
+    maxDistance: number
+    private aspectRatio: number = 1.0
+    public context: CanvasRenderingContext2D
+
+    private viewport: {
+        left: number
+        right: number
+        top: number
+        bottom: number
+        width: number
+        height: number
+        scale: [number, number]
+        cssWidth: number
+        cssHeight: number
+    }
+
+    constructor(public renderingContext: CanvasRenderingContext2D, settings = {
         distance: 1000.0,
-        initialPosition: [0, 0] as [number, number],
+        initialPosition: [0, 0, 0] as [number, number, number],
+        azimuth: 0,
+        elevation: Math.PI / 4,
         fieldOfView: Math.PI / 4.0,
         scaleX: 1.0,
         scaleY: 1.0,
         minDistance: 100.0,
         maxDistance: 12000.0,
     }) {
-        this.distance = settings.distance;
-        this.minDistance = settings.minDistance;
-        this.maxDistance = settings.maxDistance;
-        this.lookAt = settings.initialPosition;
-        this.context = context;
-        this.fieldOfView = settings.fieldOfView;
+        this.context = renderingContext
+        this.distance = settings.distance
+        this.minDistance = settings.minDistance
+        this.maxDistance = settings.maxDistance
+        this.lookAt = settings.initialPosition
+        this.azimuth = settings.azimuth
+        this.elevation = settings.elevation
+        this.fieldOfView = settings.fieldOfView
         this.viewport = {
             left: 0,
             right: 0,
@@ -35,163 +54,243 @@ export default class Camera {
             bottom: 0,
             width: 0,
             height: 0,
-            scale: [settings.scaleX || 1.0, settings.scaleY || 1.0]
-        };
-        this.init();
+            scale: [settings.scaleX || 1.0, settings.scaleY || 1.0],
+            cssWidth: 0,
+            cssHeight: 0,
+        }
+        this.init()
     }
 
-    /**
-     * Camera Initialization
-     * -Initial calculations.
-     */
     private init() {
-        this.updateViewport();
+        this.updateViewport()
     }
 
-    /**
-     * Applies to canvas context the parameters:
-     *  -Scale
-     *  -Translation
-     */
     begin() {
-        this.context.save();
-        this.applyScale();
-        this.applyTranslation();
+        this.context.save()
+        this.applyScale()
+        this.applyTranslation()
     }
 
-    /**
-     * 2d Context restore() method
-     */
     end() {
-        this.context.restore();
+        this.context.restore()
     }
 
-    /**
-     * 2d Context scale(Camera.viewport.scale[0], Camera.viewport.scale[0]) method
-     */
     private applyScale() {
-        this.context.scale(this.viewport.scale[0], this.viewport.scale[1]);
+        this.context.scale(this.viewport.scale[0], this.viewport.scale[1])
     }
 
-    /**
-     * 2d Context translate(-Camera.viewport.left, -Camera.viewport.top) method
-     */
     private applyTranslation() {
-        this.context.translate(-this.viewport.left, -this.viewport.top);
+        this.context.translate(-this.viewport.left, -this.viewport.top)
     }
 
-    /**
-     * Camera.viewport data update
-     */
     private updateViewport() {
-        this.aspectRatio = this.context.canvas.width / this.context.canvas.height;
-        this.viewport.width = this.distance * Math.tan(this.fieldOfView);
-        this.viewport.height = this.viewport.width / this.aspectRatio;
-        this.viewport.left = this.lookAt[0] - (this.viewport.width / 2.0);
-        this.viewport.top = this.lookAt[1] - (this.viewport.height / 2.0);
-        this.viewport.right = this.viewport.left + this.viewport.width;
-        this.viewport.bottom = this.viewport.top + this.viewport.height;
-        this.viewport.scale[0] = this.context.canvas.width / this.viewport.width;
-        this.viewport.scale[1] = this.context.canvas.height / this.viewport.height;
+        this.aspectRatio = this.context.canvas.width / this.context.canvas.height
+        this.viewport.width = this.distance * Math.tan(this.fieldOfView)
+        this.viewport.height = this.viewport.width / this.aspectRatio
+        this.viewport.left = this.lookAt[0] - (this.viewport.width / 2.0)
+        this.viewport.top = this.lookAt[1] - (this.viewport.height / 2.0)
+        this.viewport.right = this.viewport.left + this.viewport.width
+        this.viewport.bottom = this.viewport.top + this.viewport.height
+        this.viewport.scale[0] = this.context.canvas.width / this.viewport.width
+        this.viewport.scale[1] = this.context.canvas.height / this.viewport.height
+        this.viewport.cssWidth = this.context.canvas.clientWidth || this.context.canvas.width
+        this.viewport.cssHeight = this.context.canvas.clientHeight || this.context.canvas.height
     }
 
-    /**
-     * Zooms to certain z distance, clamped to the configured bounds.
-     * @param {*z distance} z 
-     */
     public zoomTo(z: number) {
-        this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z));
-        this.updateViewport();
+        this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z))
+        this.updateViewport()
     }
 
-    /**
-     * Zoom while keeping the world point currently under (screenX, screenY) fixed.
-     * Used so the map grows/shrinks around the cursor instead of the world origin.
-     * @param {target z distance} z 
-     * @param {screen-space x relative to the canvas} screenX 
-     * @param {screen-space y relative to the canvas} screenY 
-     */
     public zoomToAnchored(z: number, screenX: number, screenY: number) {
-        const before = this.screenToWorld(screenX, screenY);
-        this.zoomTo(z);
-        const after = this.screenToWorld(screenX, screenY);
+        const before = this.screenToWorld(screenX, screenY)
+        this.zoomTo(z)
+        const after = this.screenToWorld(screenX, screenY)
         this.moveTo(
             this.lookAt[0] + (before.x - after.x),
-            this.lookAt[1] + (before.y - after.y)
-        );
+            this.lookAt[1] + (before.y - after.y),
+            this.lookAt[2]
+        )
     }
 
-    /**
-     * Multiplicative zoom (smooth, frame-rate independent feel). 1 = no change.
-     * @param {zoom factor} factor 
-     * @param {screen-space x relative to the canvas} screenX 
-     * @param {screen-space y relative to the canvas} screenY 
-     */
     public zoomBy(factor: number, screenX: number, screenY: number) {
-        this.zoomToAnchored(this.distance * factor, screenX, screenY);
+        this.zoomToAnchored(this.distance * factor, screenX, screenY)
     }
 
-    /**
-     * Moves the centre of the viewport by a pixel delta in screen space, converting
-     * it to world space using the current viewport scale. Subtracts because dragging
-     * right should move the world right / camera left (point under cursor stays fixed).
-     * @param {pixel delta on x axis} dxPixels
-     * @param {pixel delta on y axis} dyPixels
-     */
     public panByPixels(dxPixels: number, dyPixels: number) {
-        const worldDeltaX = dxPixels / this.viewport.scale[0];
-        const worldDeltaY = dyPixels / this.viewport.scale[1];
-        this.moveTo(this.lookAt[0] - worldDeltaX, this.lookAt[1] - worldDeltaY);
+        const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
+        const worldDeltaRight = (dxPixels / f) * this.distance
+        const worldDeltaUp = (-dyPixels / f) * this.distance
+
+        const { right, up } = this.getBasisVectors()
+
+        this.moveTo(
+            this.lookAt[0] + worldDeltaRight * right[0] + worldDeltaUp * up[0],
+            this.lookAt[1] + worldDeltaRight * right[1] + worldDeltaUp * up[1],
+            this.lookAt[2] + worldDeltaRight * right[2] + worldDeltaUp * up[2],
+        )
     }
 
-    /**
-     * Moves the centre of the viewport to new x, y coords (updates Camera.lookAt)
-     * @param {x axis coord} x 
-     * @param {y axis coord} y 
-     */
-    moveTo(x: number, y: number) {
-        this.lookAt[0] = x;
-        this.lookAt[1] = y;
-        this.updateViewport();
+    moveTo(x: number, y: number, z: number) {
+        this.lookAt[0] = x
+        this.lookAt[1] = y
+        this.lookAt[2] = z
+        this.updateViewport()
     }
-    /**
-     * Transform a coordinate pair from screen coordinates (relative to the canvas) into world coordinates (useful for intersection between mouse and entities)
-     * Optional: obj can supply an object to be populated with the x/y (for object-reuse in garbage collection efficient code)
-     * @param {x axis coord} x 
-     * @param {y axis coord} y 
-     * @param {obj can supply an object to be populated with the x/y} obj 
-     * @returns 
-     */
-    /**
-     * Visible world-space rectangle (left/right/top/bottom).
-     * Useful for culling entities outside the viewport.
-     */
+
     public get visibleBounds() {
         return {
-            left: this.viewport.left,
-            right: this.viewport.right,
-            top: this.viewport.top,
-            bottom: this.viewport.bottom,
-        };
+            left: 0,
+            right: this.viewport.cssWidth,
+            top: 0,
+            bottom: this.viewport.cssHeight,
+        }
     }
 
     public screenToWorld(x: number, y: number, obj: { x: number; y: number } = { x: 0, y: 0 }) {
-        obj.x = (x / this.viewport.scale[0]) + this.viewport.left;
-        obj.y = (y / this.viewport.scale[1]) + this.viewport.top;
+        obj.x = (x / this.viewport.scale[0]) + this.viewport.left
+        obj.y = (y / this.viewport.scale[1]) + this.viewport.top
         return obj
     }
 
-    /**
-     * Transform a coordinate pair from world coordinates into screen coordinates (relative to the canvas) - useful for placing DOM elements over the scene.
-     * Optional: obj can supply an object to be populated with the x/y (for object-reuse in garbage collection efficient code).
-     * @param {x axis coord} x 
-     * @param {y axis coord} y  
-     * @param {obj can supply an object to be populated with the x/y} obj 
-     * @returns 
-     */
-    public worldToScreen(x: number, y: number, obj: { x: number; y: number } = { x: 0, y: 0 }) {
-        obj.x = (x - this.viewport.left) * (this.viewport.scale[0]);
-        obj.y = (y - this.viewport.top) * (this.viewport.scale[1]);
-        return obj;
+    public worldToScreen(x: number, y: number, z = 0, obj: { x: number; y: number } = { x: 0, y: 0 }) {
+        const projected = this.project(x, y, z)
+        if (projected) {
+            obj.x = projected.x
+            obj.y = projected.y
+        }
+        return obj
     }
-};
+
+    private getBasisVectors(): { right: [number, number, number]; up: [number, number, number] } {
+        const cosElev = Math.cos(this.elevation)
+        const sinElev = Math.sin(this.elevation)
+        const cosAzim = Math.cos(this.azimuth)
+        const sinAzim = Math.sin(this.azimuth)
+
+        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
+        const camY = this.lookAt[1] + this.distance * cosElev
+        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
+
+        let fx = this.lookAt[0] - camX
+        let fy = this.lookAt[1] - camY
+        let fz = this.lookAt[2] - camZ
+        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
+        fx /= fLen
+        fy /= fLen
+        fz /= fLen
+
+        let rx = -fz
+        let ry = 0
+        let rz = fx
+        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+        rx /= rLen
+        ry /= rLen
+        rz /= rLen
+
+        const ux = ry * fz - rz * fy
+        const uy = rz * fx - rx * fz
+        const uz = rx * fy - ry * fx
+
+        return {
+            right: [rx, ry, rz],
+            up: [ux, uy, uz],
+        }
+    }
+
+    public project(wx: number, wy: number, wz: number): ProjectedPoint | null {
+        const cosElev = Math.cos(this.elevation)
+        const sinElev = Math.sin(this.elevation)
+        const cosAzim = Math.cos(this.azimuth)
+        const sinAzim = Math.sin(this.azimuth)
+
+        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
+        const camY = this.lookAt[1] + this.distance * cosElev
+        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
+
+        let fx = this.lookAt[0] - camX
+        let fy = this.lookAt[1] - camY
+        let fz = this.lookAt[2] - camZ
+        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
+        fx /= fLen
+        fy /= fLen
+        fz /= fLen
+
+        let rx = -fz
+        let ry = 0
+        let rz = fx
+        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+        rx /= rLen
+        ry /= rLen
+        rz /= rLen
+
+        const ux = ry * fz - rz * fy
+        const uy = rz * fx - rx * fz
+        const uz = rx * fy - ry * fx
+
+        const vx = wx - camX
+        const vy = wy - camY
+        const vz = wz - camZ
+
+        const x = vx * rx + vy * ry + vz * rz
+        const y = vx * ux + vy * uy + vz * uz
+        const z = vx * fx + vy * fy + vz * fz
+
+        if (z <= 0.01) {
+            return null
+        }
+
+        const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
+        const screenX = (x / z) * f + this.viewport.cssWidth / 2
+        const screenY = -(y / z) * f + this.viewport.cssHeight / 2
+        const scale = f / z
+
+        return { x: screenX, y: screenY, scale, depth: z }
+    }
+
+    public screenToWorldRay(screenX: number, screenY: number): { origin: [number, number, number]; direction: [number, number, number] } {
+        const cosElev = Math.cos(this.elevation)
+        const sinElev = Math.sin(this.elevation)
+        const cosAzim = Math.cos(this.azimuth)
+        const sinAzim = Math.sin(this.azimuth)
+
+        const camX = this.lookAt[0] + this.distance * sinElev * sinAzim
+        const camY = this.lookAt[1] + this.distance * cosElev
+        const camZ = this.lookAt[2] + this.distance * sinElev * cosAzim
+
+        let fx = this.lookAt[0] - camX
+        let fy = this.lookAt[1] - camY
+        let fz = this.lookAt[2] - camZ
+        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
+        fx /= fLen
+        fy /= fLen
+        fz /= fLen
+
+        let rx = -fz
+        let ry = 0
+        let rz = fx
+        const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
+        rx /= rLen
+        ry /= rLen
+        rz /= rLen
+
+        const ux = ry * fz - rz * fy
+        const uy = rz * fx - rx * fz
+        const uz = rx * fy - ry * fx
+
+        const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
+
+        const ndcX = (screenX - this.viewport.cssWidth / 2) / f
+        const ndcY = -(screenY - this.viewport.cssHeight / 2) / f
+
+        const dirX = rx * ndcX + ux * ndcY + fx
+        const dirY = ry * ndcX + uy * ndcY + fy
+        const dirZ = rz * ndcX + uz * ndcY + fz
+        const dLen = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ)
+
+        return {
+            origin: [camX, camY, camZ],
+            direction: [dirX / dLen, dirY / dLen, dirZ / dLen],
+        }
+    }
+}

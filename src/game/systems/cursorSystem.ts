@@ -3,9 +3,7 @@ import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PositionComponent } from "@engine/components/position";
 import { PositionNode } from "@engine/systems/viewportSystem/positionNode";
 import { EntityComponent } from "@engine/entities/entityComponent";
-import { isContained } from "@lib/isContained";
 import { Entity } from "@/engine/entities/entity";
-import { SizeComponent } from "@/engine/components/sizeComponent";
 import { MousemoveEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 
@@ -67,16 +65,22 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
 
         const mouseHit = [...mouseMovedCommand].some(({ data }) => {
             const { camera } = this.viewportSystem.viewport
-            const position = camera.screenToWorld(data.x, data.y)
 
             for(const hoverableNode of this.nodes) {
                 const { hoverable: { size, cursor } } = hoverableNode
+                const projected = camera.project(hoverableNode.position.x, hoverableNode.position.y, hoverableNode.position.z)
+                if (!projected) {
+                    continue
+                }
 
-                if(isContained(
-                    { x: position.x, y: position.y, z: 0 },
-                    { position: hoverableNode.position, size: size as SizeComponent },
-                    hoverableNode.entity,
-                    this.engine!)) {
+                const halfX = (size.width / 2) * projected.scale
+                const halfY = (size.height / 2) * projected.scale
+
+                if(
+                    projected.x - halfX < data.x
+                    && projected.x + halfX > data.x
+                    && projected.y - halfY < data.y
+                    && projected.y + halfY > data.y) {
                     document.body.style.cursor = cursor;
                     return true
                 }

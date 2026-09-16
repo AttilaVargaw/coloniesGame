@@ -27,3 +27,4 @@ export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
 
 export const STAR_SIZE = 30
+export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.3] as const

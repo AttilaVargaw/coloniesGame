@@ -26,11 +26,21 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
         const ctx = camera.context;
 
-        camera.begin();
+        const [wx, wy, wz] = getAbsolute(rect.entity!, this.engine!);
+        const projected = camera.project(wx, wy, wz)
+        if (!projected) {
+            return
+        }
+
         rect.setColor(ctx);
-        ctx.translate(...getAbsolute(rect.entity!, this.engine!));
-        ctx.fillRect(-rect.size.width / 2, -rect.size.height / 2, rect.size.width, rect.size.height);
+        const screenWidth = rect.size.width * projected.scale
+        const screenHeight = rect.size.height * projected.scale
+        ctx.fillRect(
+            projected.x - screenWidth / 2,
+            projected.y - screenHeight / 2,
+            screenWidth,
+            screenHeight
+        )
         rect.draw(ctx)
-        camera.end();
     }
 }

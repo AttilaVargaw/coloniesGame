@@ -42,21 +42,24 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
         const ctx = camera.context
 
-        camera.begin();
-        circle.setColor(ctx);
-        ctx.lineWidth = circle.thickness.thickness;
+        const [wx, wy, wz] = getAbsolute(circle.entity!, this.engine!);
+        const projected = camera.project(wx, wy, wz)
+        if (!projected) {
+            return
+        }
 
-        const position = getAbsolute(circle.entity!, this.engine!);
+        circle.setColor(ctx);
+        ctx.lineWidth = circle.thickness.thickness * projected.scale
+
+        const screenRadius = circle.radius.radius * projected.scale
 
         ctx.beginPath();
-        ctx.arc(...position, circle.radius.radius, 0, TWO_PI);
+        ctx.arc(projected.x, projected.y, screenRadius, 0, TWO_PI);
         ctx.closePath();
         circle.draw(ctx);
 
         if(circle.color.shade) {
-            shadeCircle(ctx, ...position, circle.radius.radius)
+            shadeCircle(ctx, projected.x, projected.y, screenRadius)
         }
-
-        camera.end();
     }
 }

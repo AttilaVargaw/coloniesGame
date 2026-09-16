@@ -31,9 +31,15 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
 
         const ctx = camera.context
 
-        camera.begin();
+        const [wx, wy, wz] = getAbsolute(entity, this.engine!);
+        const projected = camera.project(wx, wy, wz)
+        if (!projected) {
+            return
+        }
 
-        ctx.translate(...getAbsolute(entity, this.engine!));
+        ctx.save()
+        ctx.translate(projected.x, projected.y)
+        ctx.scale(projected.scale, projected.scale)
         node.setColor(ctx);
         ctx.beginPath();
 
@@ -43,7 +49,6 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
 
         ctx.closePath();
         node.draw(ctx)
-
-        camera.end();
+        ctx.restore()
     }
 }

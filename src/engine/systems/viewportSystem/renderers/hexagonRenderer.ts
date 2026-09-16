@@ -28,17 +28,22 @@ export class HexagonRenderer extends BaseRenderer<HexagoneNode> {
 
         const ctx = camera.context
 
-        ctx.save();
+        const [wx, wy, wz] = getAbsolute(shape.entity!, this.engine!)
+        const projected = camera.project(wx, wy, wz)
+        if (!projected) {
+            return
+        }
+
+        ctx.save()
         shape.setColor(ctx);
-        const [translatedPosX, translatedPosY] = getAbsolute(shape.entity!, this.engine!)
+        const screenRadius = shape.hexagon.radius * projected.scale
 
         ctx.beginPath();
         for(let i = 0; i < HEXAGON_SIDES; i++) {
             const rotation = PIThird * i;
-            const { radius } = shape.hexagon;
 
-            const x = radius * Math.sin(rotation) + translatedPosX;
-            const y = radius * Math.cos(rotation) + translatedPosY;
+            const x = screenRadius * Math.sin(rotation) + projected.x;
+            const y = screenRadius * Math.cos(rotation) + projected.y;
 
             if(i === 0) {
                 ctx.moveTo(x, y)

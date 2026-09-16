@@ -29,16 +29,18 @@ export class Game {
     private gameLoopId?: number
 
     constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
-        const firstStar = { x: 0, y: 0 }
+        const firstStar = { x: 0, y: 0, z: 0 }
 
         const camera = new Camera(renderingContext, {
-            initialPosition: [firstStar.x * UNIVERSE_SCALE, firstStar.y * UNIVERSE_SCALE],
+            initialPosition: [firstStar.x * UNIVERSE_SCALE, firstStar.y * UNIVERSE_SCALE, firstStar.z * UNIVERSE_SCALE],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,
             scaleX: 1.0,
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
-            maxDistance: CAMERA_MAX_DISTANCE
+            maxDistance: CAMERA_MAX_DISTANCE,
+            azimuth: 0,
+            elevation: Math.PI / 4,
         })
 
         this.engine

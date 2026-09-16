@@ -25,13 +25,20 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         const { viewport: { camera } } = this.viewportSystem;
         const ctx = camera.context;
 
-        camera.begin();
+        const [wx, wy, wz] = getAbsolute(node.entity!, this.engine!)
+        const projected = camera.project(wx, wy, wz)
+        if (!projected) {
+            return
+        }
 
+        ctx.save()
         node.setColor(ctx);
-        ctx.translate(...getAbsolute(node.entity!, this.engine!));
-        ctx.font = `${node.label.size}px Roboto`;
-        ctx.fillText(node.label.text, node.label.offset.x, node.label.offset.y);
+        const screenSize = node.label.size * projected.scale
+        const offsetX = (node.label.offset.x || 0) * projected.scale
+        const offsetY = (node.label.offset.y || 0) * projected.scale
 
-        camera.end();
+        ctx.font = `${screenSize}px Roboto`;
+        ctx.fillText(node.label.text, projected.x + offsetX, projected.y + offsetY);
+        ctx.restore()
     }
 }

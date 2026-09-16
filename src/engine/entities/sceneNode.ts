@@ -58,19 +58,19 @@ export class SceneNode {
         node.parent = null
     }
 
-    getWorldPosition(): [number, number] {
+    getWorldPosition(): [number, number, number] {
         const position = this.entity.getComponent(PositionComponent)
 
         if(!position) {
-            return [0, 0]
+            return [0, 0, 0]
         }
 
         if(!this._parent) {
-            return [position.x, position.y]
+            return [position.x, position.y, position.z]
         }
 
-        const [parentX, parentY] = this._parent.getWorldPosition()
-        return [parentX + position.x, parentY + position.y]
+        const [parentX, parentY, parentZ] = this._parent.getWorldPosition()
+        return [parentX + position.x, parentY + position.y, parentZ + position.z]
     }
 
     // Thx ai, why entity[]?

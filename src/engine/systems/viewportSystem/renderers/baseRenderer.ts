@@ -4,17 +4,17 @@ import { ViewportSystem } from "../viewportSystem";
 import { EntityAddedEvent } from "@/engine/lib/events";
 import { RenderableNode } from "./renderableNode";
 import { Entity } from "@/engine/entities/entity";
+import { PositionComponent } from "@/engine/components/position";
+import { EntityComponent } from "@/engine/entities/entityComponent";
 
 export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithNodes<N> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    protected readonly components: Function[];
+    protected readonly components: (new (...args: any[]) => EntityComponent)[];
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
 
     constructor(
         viewportSystem: ViewportSystem,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        components: Function[],
+        components: (new (...args: any[]) => EntityComponent)[],
         nodeFactory: (entity: Entity) => N,
     ) {
         super()
@@ -37,7 +37,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         }
 
         this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-         
+          
         this.engine.unregisterNodeType(this.constructor as any)
         this.nodes.length = 0
         super.removeFromEngine()
@@ -65,5 +65,36 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         if(this.sortOnEveryEntityAddition) {
             this.nodes.sort((a, b) => a.zIndex - b.zIndex)
         }
+    }
+
+    update(dt: number): void {
+        const { camera } = this.viewportSystem.viewport
+        if (!camera) {
+            return
+        }
+
+        const sorted = this.nodes.filter(node => !this.filterNodes || this.filterNodes(node))
+        sorted.sort((a, b) => {
+            const [ax, ay, az] = this.getWorldPosition(a)
+            const [bx, by, bz] = this.getWorldPosition(b)
+            const aProj = camera.project(ax, ay, az)
+            const bProj = camera.project(bx, by, bz)
+            const aDepth = aProj ? aProj.depth : 0
+            const bDepth = bProj ? bProj.depth : 0
+            return bDepth - aDepth
+        })
+
+        for(const node of sorted) {
+            this.updateNode(node, dt)
+        }
+    }
+
+    private getWorldPosition(node: N): [number, number, number] {
+        const sceneNode = this.engine?.getSceneNode(node.entity)
+        if (!sceneNode) {
+            const pos = node.entity.getComponent(PositionComponent)
+            return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
+        }
+        return sceneNode.getWorldPosition()
     }
 }

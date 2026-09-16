@@ -41,7 +41,8 @@ export class ViewportInputHandler {
             const step = ViewportInputHandler.KEY_PAN_SPEED * (dt / 1000) * (camera.distance / 1000)
             camera.moveTo(
                 camera.lookAt[0] + panX * step,
-                camera.lookAt[1] + panY * step
+                camera.lookAt[1] + panY * step,
+                camera.lookAt[2]
             )
         }
 

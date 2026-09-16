@@ -152,14 +152,18 @@ export class OrbitSelectionSystem extends System {
         }
 
         const ctx = camera.context
-        const [cx, cy] = getAbsolute(target, this.engine)
+        const [cx, cy, cz] = getAbsolute(target, this.engine)
+        const projected = camera.project(cx, cy, cz)
+        if (!projected) {
+            return
+        }
 
         ctx.save()
         ctx.strokeStyle = "rgba(255, 255, 100, 0.6)"
         ctx.lineWidth = 4
         ctx.setLineDash([4, 4])
         ctx.beginPath()
-        ctx.arc(cx, cy, r, 0, TWO_PI)
+        ctx.arc(projected.x, projected.y, r * projected.scale, 0, TWO_PI)
         ctx.stroke()
         ctx.restore()
     }

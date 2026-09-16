@@ -6,7 +6,8 @@ export class OrbitComponent extends EntityComponent {
         public radius: number,
         public angularSpeed: number,
         public meanAnomaly: number = 0,
-        public eccentricity: number = 0
+        public eccentricity: number = 0,
+        public inclination: number = 0
     ) {
         super();
     }

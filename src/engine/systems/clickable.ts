@@ -67,23 +67,29 @@ export class ClickableSystem extends SystemWithNodes<ClickableNode> {
 
         for(const { data } of this.clickQueue) {
             let hit = false
-            const { x: worldX, y: worldY } = this.viewportSystem.viewport.camera.screenToWorld(data.x, data.y)
+            const { camera } = this.viewportSystem.viewport
 
             for(const node of this.nodes) {
                 const { clickable: { size: { width, height }, clickable, onClick, entity } } = node
-                const [correctedPositionX, correctedPositionY] = getAbsolute(node.entity, this.engine!)
-                const halfX = width / 2
-                const halfY = height / 2
+                const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
+                const projected = camera.project(entityX, entityY, entityZ)
+                if (!projected) {
+                    continue
+                }
+
+                const halfX = (width / 2) * projected.scale
+                const halfY = (height / 2) * projected.scale
 
                 if(
                     onClick &&
                     clickable
-                    && correctedPositionX - halfX < worldX
-                    && correctedPositionX + halfX > worldX
-                    && correctedPositionY - halfY < worldY
-                    && correctedPositionY + halfY > worldY) {
-                    onClick({ target: entity!, event: data, worldX, worldY })
+                    && projected.x - halfX < data.x
+                    && projected.x + halfX > data.x
+                    && projected.y - halfY < data.y
+                    && projected.y + halfY > data.y) {
+                    onClick({ target: entity!, event: data, worldX: entityX, worldY: entityY })
                     hit = true
+                    break
                 }
             }
 

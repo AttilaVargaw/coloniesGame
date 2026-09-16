@@ -22,15 +22,16 @@ const mulberry32 = (seed: number) => {
 const rng = mulberry32(42)
 const createStarfield = (count: number) => {
     return Array.from({ length: count }, () => ({
-        x: rng(),
-        y: rng(),
+        x: (rng() - 0.5) * 20000,
+        y: (rng() - 0.5) * 20000,
+        z: rng() * 5000,
         r: 0.5 + rng() * 1.0,
         opacity: 0.3 + rng() * 0.6,
     }))
 }
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
-    private readonly starfield: { x: number; y: number; r: number; opacity: number }[] = createStarfield(512)
+    private readonly starfield: { x: number; y: number; z: number; r: number; opacity: number }[] = createStarfield(512)
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private readonly eventHandlers: Set<Entity> = new Set()
     private inputHandler!: ViewportInputHandler
@@ -60,14 +61,17 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     private drawStarfield(ctx: CanvasRenderingContext2D) {
-        const w = ctx.canvas.width
-        const h = ctx.canvas.height
+        const { camera } = this.viewport
         ctx.save()
         ctx.fillStyle = "#ffffff"
         for(const s of this.starfield) {
-            ctx.globalAlpha = s.opacity
+            const projected = camera.project(s.x, s.y, s.z)
+            if (!projected) {
+                continue
+            }
+            ctx.globalAlpha = s.opacity * Math.min(1, projected.scale * 0.05)
             ctx.beginPath()
-            ctx.arc(s.x * w, s.y * h, s.r, 0, TWO_PI)
+            ctx.arc(projected.x, projected.y, s.r * projected.scale, 0, TWO_PI)
             ctx.fill()
         }
         ctx.restore()
@@ -85,14 +89,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.clear(ctx)
             this.drawStarfield(ctx)
 
-            camera.begin();
-
             if(DEBUG_VISUALIZE_PATHS) {
                 this.drawDebugPaths(ctx)
                 this.drawOrbits(ctx)
             }
-
-            camera.end();
         }
     }
 
@@ -101,19 +101,28 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             return
         }
 
+        const { camera } = this.viewport
+        ctx.save()
         for(const { ship, waypoints } of getActivePaths()) {
             if(waypoints.length === 0) {
                 continue
-
             }
-            const [sx, sy] = getAbsolute(ship, this.engine)
+
+            const [sx, sy, sz] = getAbsolute(ship, this.engine)
+            const startProjected = camera.project(sx, sy, sz)
+            if (!startProjected) {
+                continue
+            }
 
             ctx.beginPath()
-            ctx.moveTo(sx, sy)
+            ctx.moveTo(startProjected.x, startProjected.y)
 
             for(const waypoint of waypoints) {
-                const [wx, wy] = getAbsolute(waypoint, this.engine)
-                ctx.lineTo(wx, wy)
+                const [wx, wy, wz] = getAbsolute(waypoint, this.engine)
+                const projected = camera.project(wx, wy, wz)
+                if (projected) {
+                    ctx.lineTo(projected.x, projected.y)
+                }
             }
 
             ctx.strokeStyle = "rgba(255, 215, 0, 0.25)"
@@ -127,14 +136,21 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if(path.length < 2) {
                 continue
             }
-            const [sx, sy] = getAbsolute(path[0], this.engine)
+            const [sx, sy, sz] = getAbsolute(path[0], this.engine)
+            const startProjected = camera.project(sx, sy, sz)
+            if (!startProjected) {
+                continue
+            }
 
             ctx.beginPath()
-            ctx.moveTo(sx, sy)
+            ctx.moveTo(startProjected.x, startProjected.y)
 
             for(let i = 1; i < path.length; i++) {
-                const [wx, wy] = getAbsolute(path[i], this.engine)
-                ctx.lineTo(wx, wy)
+                const [wx, wy, wz] = getAbsolute(path[i], this.engine)
+                const projected = camera.project(wx, wy, wz)
+                if (projected) {
+                    ctx.lineTo(projected.x, projected.y)
+                }
             }
 
             ctx.strokeStyle = "rgba(255, 215, 0, 0.85)"
@@ -142,6 +158,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             ctx.setLineDash([])
             ctx.stroke()
         }
+        ctx.restore()
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {
@@ -149,6 +166,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             return
         }
 
+        const { camera } = this.viewport
+        ctx.save()
         for(const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
             const parentEntity = sceneNode?.parent?.entity
@@ -156,32 +175,41 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
-            ctx.save()
-
-            const [cx, cy] = getAbsolute(parentEntity, this.engine)
-            const { radius: a, eccentricity: e } = node.orbit
+            const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
+            const { radius: a, eccentricity: e, inclination } = node.orbit
             const b = node.orbit.semiMinorAxis
 
             const focusOffset = a * e
+            const inclinationAngle = inclination || 0
+            const cosI = Math.cos(inclinationAngle)
+            const sinI = Math.sin(inclinationAngle)
 
             ctx.beginPath()
-            ctx.ellipse(
-                cx - focusOffset,
-                cy,
-                a,
-                b,
-                0,
-                0,
-                TWO_PI
-            )
+            const segments = 64
+            for(let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * TWO_PI
+                const x = a * Math.cos(angle) - focusOffset
+                const y = b * Math.sin(angle)
+                const worldX = cx + x
+                const worldY = cy + y * cosI
+                const worldZ = cz + y * sinI
+                const projected = camera.project(worldX, worldY, worldZ)
+                if (!projected) {
+                    continue
+                }
+                if (i === 0) {
+                    ctx.moveTo(projected.x, projected.y)
+                } else {
+                    ctx.lineTo(projected.x, projected.y)
+                }
+            }
             ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
             ctx.lineWidth = 3
             ctx.setLineDash([2, 4])
             ctx.stroke()
             ctx.setLineDash([])
-
-            ctx.restore()
         }
+        ctx.restore()
     }
 
     registerNodes(engine: Engine) {

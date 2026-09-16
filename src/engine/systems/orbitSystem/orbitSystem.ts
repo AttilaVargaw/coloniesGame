@@ -50,8 +50,13 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         )
 
         const position = entity.getComponent(PositionComponent)!
+        const inclination = orbit.inclination || 0
+        const cosI = Math.cos(inclination)
+        const sinI = Math.sin(inclination)
+
         position.x = r * Math.cos(theta)
-        position.y = r * Math.sin(theta)
+        position.y = r * Math.sin(theta) * cosI
+        position.z = r * Math.sin(theta) * sinI
     }
 
     protected registerNodes(engine: Engine): this {
