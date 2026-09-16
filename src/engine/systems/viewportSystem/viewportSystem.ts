@@ -190,10 +190,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.save()
 
         ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
-        ctx.lineWidth = 3
-        ctx.setLineDash([2, 4])
-
-        ctx.beginPath()
+        ctx.lineWidth = 1
+        //ctx.setLineDash([2, 4])
 
         const cssWidth = camera.cssWidth
         const cssHeight = camera.cssHeight
@@ -207,10 +205,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
             const orbit = node.orbit
-
-            if (!orbit.cachedPoints.length) {
-                orbit.rebuildCache()
-            }
 
             const center = camera.project(cx, cy, cz)
             if (!center) {
@@ -229,15 +223,21 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
+            const segments = Math.max(24, Math.min(72, Math.round(screenRadius / 2)))
             const inclinationAngle = orbit.inclination || 0
             const cosI = Math.cos(inclinationAngle)
             const sinI = Math.sin(inclinationAngle)
+            const b = orbit.semiMinorAxis
+            const focusOffset = orbit.radius * orbit.eccentricity
 
-            for (let i = 0; i < orbit.cachedPoints.length; i++) {
-                const p = orbit.cachedPoints[i]
-                const worldX = cx + p.x
-                const worldY = cy + p.y * cosI
-                const worldZ = cz + p.y * sinI
+            ctx.beginPath()
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * TWO_PI
+                const x = orbit.radius * Math.cos(angle) - focusOffset
+                const y = b * Math.sin(angle)
+                const worldX = cx + x
+                const worldY = cy + y * cosI
+                const worldZ = cz + y * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
                 if (!projected) {
                     continue
@@ -248,9 +248,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                     ctx.lineTo(projected.x, projected.y)
                 }
             }
+            ctx.stroke()
         }
 
-        ctx.stroke()
         ctx.setLineDash([])
         ctx.restore()
     }
