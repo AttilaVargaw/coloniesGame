@@ -68,6 +68,10 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         const viewport = this.viewportSystem.viewport
         if(!viewport) return
 
+        // if(this.viewportSystem.isDragging) {
+        //     return
+        // }
+
         const camera = viewport.camera
         const { target, offset, smoothFactor } = node.follow
 

@@ -177,6 +177,14 @@ export default class Camera {
         this.viewport.cssHeight = this.context.canvas.clientHeight || this.context.canvas.height
     }
 
+    public get cssWidth(): number {
+        return this.viewport.cssWidth
+    }
+
+    public get cssHeight(): number {
+        return this.viewport.cssHeight
+    }
+
     public zoomTo(z: number) {
         this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z))
         this.updateViewport()

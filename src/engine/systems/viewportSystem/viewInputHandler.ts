@@ -10,6 +10,8 @@ export class ViewportInputHandler {
     private pointer: { x: number, y: number } = { x: 0, y: 0 }
 
     private readonly heldKeys = new Set<string>()
+    private accumulatedZoom = 0
+    private lastWheelScreen = { x: 0, y: 0 }
 
     constructor(private readonly viewportSystem: ViewportSystem) { }
 
@@ -144,11 +146,11 @@ export class ViewportInputHandler {
 
         const { camera } = this.viewportSystem.viewport
         const rect = camera.context.canvas.getBoundingClientRect()
-        const screenX = event.clientX - rect.left
-        const screenY = event.clientY - rect.top
-        const factor = Math.pow(ViewportInputHandler.WHEEL_ZOOM_SPEED, event.deltaY)
-
-        camera.zoomBy(factor, screenX, screenY)
+        this.lastWheelScreen = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        }
+        this.accumulatedZoom += event.deltaY
     }
 
     update(dt: number) {
@@ -214,5 +216,14 @@ export class ViewportInputHandler {
 
         this.applyKeyScroll(dt, camera)
         this.applyEdgePan(dt, camera)
+
+        if (this.accumulatedZoom !== 0) {
+            camera.zoomBy(
+                Math.pow(ViewportInputHandler.WHEEL_ZOOM_SPEED, this.accumulatedZoom),
+                this.lastWheelScreen.x,
+                this.lastWheelScreen.y
+            )
+            this.accumulatedZoom = 0
+        }
     }
 }

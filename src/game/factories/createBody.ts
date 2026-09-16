@@ -58,7 +58,7 @@ export function createBody({
         new HoverableComponent("not-allowed", clickSquare))
 
     engine.addEntity(body, parent)
-        .addEntity(createSoiCircle(body, archetype, engine), body)
+    // .addEntity(createSoiCircle(body, archetype, engine), body)
 
     if(children) {
         for(const blueprint of children) {

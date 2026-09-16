@@ -72,9 +72,9 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
         }
 
         switch(type) {
-            case "colony":
             case "attractor":
-                this.selector = createSpaceshipSelector(this.engine, "green")
+                break
+            case "colony":
                 break
             case "ship":
                 this.selector = createSpaceshipSelector(this.engine, "#0f04")
@@ -82,7 +82,9 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
                 break
         }
 
-        this.engine.addEntity(this.selector!, data)
+        if(this.selector) {
+            this.engine.addEntity(this.selector, data)
+        }
 
         return this
     }

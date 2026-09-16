@@ -21,17 +21,21 @@ export function ColoniesInforWindow() {
     useSelectionChanged(setCurrentColony);
 
     useGameEvent(DayPassedEvent, useCallback(() => {
-        if(currentColonyRef.current && currentColonyRef.current?.getComponent(IndustryComponent)) {
+        if(currentColonyRef.current?.getComponent(IndustryComponent)) {
             setIndustry({ ...currentColonyRef.current!.getComponent(IndustryComponent)! })
         }
     }, []))
 
     useGameEvent(SelectionChangedEvent, ({ type, data }) => {
+        console.log({ type })
         if(type === "colony") {
             if(data) {
                 setCurrentColony(data)
                 setIndustry({ ...data!.getComponent(IndustryComponent)! })
             }
+        } else {
+            setCurrentColony(undefined)
+            setIndustry(null)
         }
     })
 

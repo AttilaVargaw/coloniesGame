@@ -110,7 +110,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.drawStarfield(ctx)
 
             if(DEBUG_VISUALIZE_PATHS) {
-                this.drawDebugPaths(ctx)
+            //     this.drawDebugPaths(ctx)
                 this.drawOrbits(ctx)
             }
         }
@@ -182,37 +182,62 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {
-        if(!this.engine) {
+        if (!this.engine) {
             return
         }
 
         const { camera } = this.viewport
         ctx.save()
-        for(const node of this.engine.getNodeList(OrbitNode)) {
+
+        ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
+        ctx.lineWidth = 3
+        ctx.setLineDash([2, 4])
+
+        ctx.beginPath()
+
+        const cssWidth = camera.cssWidth
+        const cssHeight = camera.cssHeight
+
+        for (const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
             const parentEntity = sceneNode?.parent?.entity
-            if(!parentEntity) {
+            if (!parentEntity) {
                 continue
             }
 
             const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
-            const { radius: a, eccentricity: e, inclination } = node.orbit
-            const b = node.orbit.semiMinorAxis
+            const orbit = node.orbit
 
-            const focusOffset = a * e
-            const inclinationAngle = inclination || 0
+            if (!orbit.cachedPoints.length) {
+                orbit.rebuildCache()
+            }
+
+            const center = camera.project(cx, cy, cz)
+            if (!center) {
+                continue
+            }
+
+            const boundingRadius = orbit.radius * (1 + orbit.eccentricity)
+            const screenRadius = boundingRadius * center.scale
+
+            if (
+                center.x + screenRadius < 0 ||
+                center.x - screenRadius > cssWidth ||
+                center.y + screenRadius < 0 ||
+                center.y - screenRadius > cssHeight
+            ) {
+                continue
+            }
+
+            const inclinationAngle = orbit.inclination || 0
             const cosI = Math.cos(inclinationAngle)
             const sinI = Math.sin(inclinationAngle)
 
-            ctx.beginPath()
-            const segments = 64
-            for(let i = 0; i <= segments; i++) {
-                const angle = (i / segments) * TWO_PI
-                const x = a * Math.cos(angle) - focusOffset
-                const y = b * Math.sin(angle)
-                const worldX = cx + x
-                const worldY = cy + y * cosI
-                const worldZ = cz + y * sinI
+            for (let i = 0; i < orbit.cachedPoints.length; i++) {
+                const p = orbit.cachedPoints[i]
+                const worldX = cx + p.x
+                const worldY = cy + p.y * cosI
+                const worldZ = cz + p.y * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
                 if (!projected) {
                     continue
@@ -223,12 +248,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                     ctx.lineTo(projected.x, projected.y)
                 }
             }
-            ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
-            ctx.lineWidth = 3
-            ctx.setLineDash([2, 4])
-            ctx.stroke()
-            ctx.setLineDash([])
         }
+
+        ctx.stroke()
+        ctx.setLineDash([])
         ctx.restore()
     }
 

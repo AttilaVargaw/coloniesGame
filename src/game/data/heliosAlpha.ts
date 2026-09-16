@@ -67,9 +67,9 @@ export const solarisAlpha = {
 
     ],
     rings: [
-        { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
+        // { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
     ],
     asteroidBelts: [
-        { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
+       // { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
     ]
 } as const satisfies BodyBlueprint;
