@@ -108,32 +108,31 @@ export default class Camera {
         fy /= fLen
         fz /= fLen
 
+        const worldUp = [0, 0, 1]
+
         let rx: number
         let ry: number
         let rz: number
-        if (Math.abs(fy) > 0.9999) {
-            const worldRight = [1, 0, 0]
-            const proj = worldRight[0] * fx + worldRight[1] * fy + worldRight[2] * fz
-            rx = worldRight[0] - proj * fx
-            ry = worldRight[1] - proj * fy
-            rz = worldRight[2] - proj * fz
-            const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
-            rx /= rLen
-            ry /= rLen
-            rz /= rLen
-        } else {
-            rx = -fz
+        let ux: number
+        let uy: number
+        let uz: number
+        if (Math.abs(fx * worldUp[0] + fy * worldUp[1] + fz * worldUp[2]) > 0.9999) {
+            rx = 1
             ry = 0
-            rz = fx
+            rz = 0
+        } else {
+            rx = fy * worldUp[2] - fz * worldUp[1]
+            ry = fz * worldUp[0] - fx * worldUp[2]
+            rz = fx * worldUp[1] - fy * worldUp[0]
             const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
             rx /= rLen
             ry /= rLen
             rz /= rLen
         }
 
-        const ux = ry * fz - rz * fy
-        const uy = rz * fx - rx * fz
-        const uz = rx * fy - ry * fx
+        ux = ry * fz - rz * fy
+        uy = rz * fx - rx * fz
+        uz = rx * fy - ry * fx
 
         this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ }
         this.viewBasisDirty = false
