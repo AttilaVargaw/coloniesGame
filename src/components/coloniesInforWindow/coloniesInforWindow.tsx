@@ -4,7 +4,7 @@ import { DialogContent, DialogTitle, Dialog, DialogHeader, DialogFooter } from "
 import { IndustryComponent } from "@game/components/industryComponent";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState, useCallback } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
@@ -16,13 +16,15 @@ import { IndustryBreakdown } from "./IndustryBreakdown";
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
     const [currentColony, setCurrentColony] = useState<Entity>()
+    const currentColonyRef = useRef(currentColony)
+    currentColonyRef.current = currentColony
     useSelectionChanged(setCurrentColony);
 
-    useGameEvent(DayPassedEvent, () => {
-        if(currentColony) {
-            setIndustry({ ...currentColony!.getComponent(IndustryComponent)! })
+    useGameEvent(DayPassedEvent, useCallback(() => {
+        if(currentColonyRef.current) {
+            setIndustry({ ...currentColonyRef.current!.getComponent(IndustryComponent)! })
         }
-    })
+    }, []))
 
     useGameEvent(SelectionChangedEvent, ({ type, data }) => {
         if(type === "colony") {
