@@ -45,6 +45,8 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             industry.workingWorkers = workingWorkers
             industry.freeWorkers = remainingWorkers
 
+            // console.log(workingWorkers)
+
             Object.entries(industry.population).forEach(([key, population]) => {
                 const { number } = population
                 const { requirements, qol } = getGoodRequirementsAndQoL(baseSalaries[key as keyof Population], getPrices(), population)

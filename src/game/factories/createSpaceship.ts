@@ -5,11 +5,11 @@ import { PositionComponent, WorldPosition } from "@engine/components/position"
 import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
-import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
 import { applyComponents, descartesToPolar } from "./helpers"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
+import { SelectionChangedEvent } from "@/engine/lib/events"
 import { SHIP_RADIUS, TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
@@ -50,13 +50,11 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
         new TargetableComponent(),
         new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
         new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, ({ target, event: { shiftKey }, worldX, worldY }) => {
-            const selectionSystem = engine.getSystem(SelectionManager)
-
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
                 targetSystem?.setTarget(ship, target, worldX, worldY)
             } else {
-                selectionSystem?.onSelectionChanged({ entity: target, type: "ship" })
+                engine.dispatchEvent(new SelectionChangedEvent({ data: target, type: "ship" }))
             }
         })
     )
@@ -84,13 +82,11 @@ export function createVessel(
         new RadiusComponent(SHIP_RADIUS),
         new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
         new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, ({ target, event: { shiftKey }, worldX, worldY }) => {
-            const selectionSystem = engine.getSystem(SelectionManager)
-
             if(shiftKey) {
                 const targetSystem = engine.getSystem(TargetSystem)
                 targetSystem?.setTarget(ship, target, worldX, worldY)
             } else {
-                selectionSystem?.onSelectionChanged({ entity: target, type: "ship" })
+                engine.dispatchEvent(new SelectionChangedEvent({ data: target, type: "ship" }))
             }
         }),
         new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle, 0, orbitInclination)

@@ -61,13 +61,13 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
         this.targetSelector = undefined
     }
 
-    onSelectionChanged = ({ type, entity }: { type: "colony" | "ship" | "attractor", entity?: Entity }) => {
-        if(!this.engine || !entity) return
-        if(!entity.getComponent(SelectableComponent)) return
+    onSelectionChanged = ({ type, data }: { type: "colony" | "ship" | "attractor", data?: Entity }) => {
+        if(!this.engine || !data) return
+        if(!data.getComponent(SelectableComponent)) return
 
         this.unselect()
 
-        if(this.selectorSceneNode?.parent?.entity === entity) {
+        if(this.selectorSceneNode?.parent?.entity === data) {
             return this
         }
 
@@ -78,11 +78,11 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
                 break
             case "ship":
                 this.selector = createSpaceshipSelector(this.engine, "#0f04")
-                this.showSensorRangeForSelection(entity)
+                this.showSensorRangeForSelection(data)
                 break
         }
 
-        this.engine.addEntity(this.selector!, entity)
+        this.engine.addEntity(this.selector!, data)
 
         return this
     }

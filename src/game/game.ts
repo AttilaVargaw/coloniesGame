@@ -23,6 +23,7 @@ import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circle
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
+import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
 
 export class Game {
     readonly engine: World = new World
@@ -70,6 +71,9 @@ export class Game {
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
             .addSystem(OrbitSelectionSystem, ViewportSystem)
+            .addSystem(CameraFollowSystem, ViewportSystem)
+
+        viewportEntity.addComponent(new CameraFollowComponent())
 
         this.engine.getSystem(MapSystem).init()
         this.engine.getSystem(ViewportSystem).init()

@@ -21,7 +21,7 @@ export function ColoniesInforWindow() {
     useSelectionChanged(setCurrentColony);
 
     useGameEvent(DayPassedEvent, useCallback(() => {
-        if(currentColonyRef.current) {
+        if(currentColonyRef.current && currentColonyRef.current?.getComponent(IndustryComponent)) {
             setIndustry({ ...currentColonyRef.current!.getComponent(IndustryComponent)! })
         }
     }, []))

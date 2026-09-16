@@ -28,8 +28,8 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
             getLowestGoodsRatio(goodsRequirements, remainingGoods, sectorLevels[name as keyof IndustrialSectors], workerRatio)
         );
 
+        //itt valami még nem jó
         const productionRatio = lowestRatio * sectorLevels[name as keyof IndustrialSectors];
-
         const workerRequirementEntries = Object.entries(workerRequirement) as [keyof Population, number][];
         const goodsRequirementsEntries = Object.entries(goodsRequirements) as [keyof Goods, number][];
         const goodsProductionEntries = Object.entries(goodsProduction) as [keyof Goods, number][];

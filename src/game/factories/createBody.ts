@@ -5,7 +5,7 @@ import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { Engine } from "@/engine/core/engine"
-import { applyComponents, calculateSoi, createColonyClickHandler } from "./helpers"
+import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
@@ -86,6 +86,12 @@ export function createBody({
             new HoverableComponent("pointer", clickSquare),
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
             new IndustryComponent(createStarterIndustry(), createStarterWarehouse(population), createStarterPopulation(population))
+        )
+    } else {
+        applyComponents(body,
+            new SelectableComponent(clickSize, "red"),
+            new HoverableComponent("pointer", clickSquare),
+            new ClickableComponent(true, clickSquare, createAttractorClickHandler(engine, body))
         )
     }
 

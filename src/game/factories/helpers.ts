@@ -68,3 +68,20 @@ export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
         }
     }
 }
+
+export function createAttractorClickHandler(engine: Engine, targetEntity: Entity) {
+    return ({ event: { shiftKey }, worldX, worldY }: { event: { shiftKey: boolean }, worldX: number, worldY: number }) => {
+        if(!engine) return
+
+        if(shiftKey) {
+            const targetSystem = engine.getSystem(TargetSystem)
+            const selectionSystem = engine.getSystem(SelectionManager)
+            const selection = selectionSystem?.currentSelection
+            if(selection) {
+                targetSystem?.setTargetForOrbitSelection(selection, targetEntity, worldX, worldY)
+            }
+        } else {
+            engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type: "attractor" }))
+        }
+    }
+}
