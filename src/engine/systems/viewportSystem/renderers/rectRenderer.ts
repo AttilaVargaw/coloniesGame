@@ -3,8 +3,6 @@ import { SizeComponent } from "../../../components/sizeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { RectNode } from "./rectNode";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { isVisible } from "./isVisible";
 import { BaseRenderer } from "./baseRenderer";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
@@ -15,22 +13,13 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         )
     }
 
-    protected filterNodes = (node: RectNode) => {
-        const { camera } = this.viewportSystem.viewport;
-        const margin = Math.max(node.size.width, node.size.height) / 2;
-        return isVisible(camera.visibleBounds, margin, node.entity!, this.engine!);
-    };
+    protected getCullMargin(node: RectNode): number {
+        return Math.max(node.size.width, node.size.height) / 2
+    }
 
     protected updateNode(rect: RectNode, _dt?: number): void {
-        const { camera } = this.viewportSystem.viewport;
-
-        const ctx = camera.context;
-
-        const [wx, wy, wz] = getAbsolute(rect.entity!, this.engine!);
-        const projected = camera.project(wx, wy, wz)
-        if (!projected) {
-            return
-        }
+        const { projected } = this.getProjected(rect)
+        const ctx = this.viewportSystem.viewport.camera.context;
 
         rect.setColor(ctx);
         const screenWidth = rect.size.width * projected.scale

@@ -3,8 +3,6 @@ import { ShapeComponent } from "../../../components/ShapeComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { HexagoneNode } from "./HexagonNode";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { isVisible } from "./isVisible";
 import { BaseRenderer } from "./baseRenderer";
 
 const HEXAGON_SIDES = 6;
@@ -18,21 +16,13 @@ export class HexagonRenderer extends BaseRenderer<HexagoneNode> {
         )
     }
 
-    protected filterNodes = (node: HexagoneNode) => {
-        const { camera } = this.viewportSystem.viewport;
-        return isVisible(camera.visibleBounds, node.hexagon.radius, node.entity!, this.engine!);
-    };
+    protected getCullMargin(node: HexagoneNode): number {
+        return node.hexagon.radius
+    }
 
     protected updateNode(shape: HexagoneNode, _dt?: number): void {
-        const { camera } = this.viewportSystem.viewport;
-
-        const ctx = camera.context
-
-        const [wx, wy, wz] = getAbsolute(shape.entity!, this.engine!)
-        const projected = camera.project(wx, wy, wz)
-        if (!projected) {
-            return
-        }
+        const { projected } = this.getProjected(shape)
+        const ctx = this.viewportSystem.viewport.camera.context
 
         ctx.save()
         shape.setColor(ctx);

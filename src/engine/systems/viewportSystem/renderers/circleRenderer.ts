@@ -4,8 +4,6 @@ import { ColorComponent } from "../../../components/colorComponent";
 import { ThicknessComponent } from "../../../components/thicknessComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { isVisible } from "./isVisible";
 import { BaseRenderer } from "./baseRenderer";
 import { TWO_PI } from "@/game/constants";
 
@@ -32,21 +30,13 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         )
     }
 
-    protected filterNodes = (node: CircleNode) => {
-        const { camera } = this.viewportSystem.viewport;
-        return isVisible(camera.visibleBounds, node.radius.radius, node.entity!, this.engine!);
-    };
+    protected getCullMargin(node: CircleNode): number {
+        return node.radius.radius
+    }
 
-    updateNode = (circle: CircleNode) => {
-        const { camera } = this.viewportSystem.viewport;
-
-        const ctx = camera.context
-
-        const [wx, wy, wz] = getAbsolute(circle.entity!, this.engine!);
-        const projected = camera.project(wx, wy, wz)
-        if (!projected) {
-            return
-        }
+    updateNode = (circle: CircleNode, _dt?: number) => {
+        const { projected } = this.getProjected(circle)
+        const ctx = this.viewportSystem.viewport.camera.context
 
         circle.setColor(ctx);
         ctx.lineWidth = circle.thickness.thickness * projected.scale

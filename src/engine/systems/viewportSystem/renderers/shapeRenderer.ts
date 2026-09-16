@@ -3,9 +3,7 @@ import { PositionComponent } from "@/engine/components/position";
 import { ThicknessComponent } from "@/engine/components/thicknessComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { BaseRenderer } from "./baseRenderer";
-import { isVisible } from "./isVisible";
 import { ShapeComponent, ShapeNode } from "./shapeNode";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export class ShapeRenderer extends BaseRenderer<ShapeNode> {
     constructor(viewportSystem: ViewportSystem) {
@@ -19,23 +17,14 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
             ))
     }
 
-    protected filterNodes = (node: ShapeNode) => {
-        const { camera } = this.viewportSystem.viewport;
-        return isVisible(camera.visibleBounds, Math.max(node.width, node.height) / 2, node.entity!, this.engine!);
-        //return true;
-    };
+    protected getCullMargin(node: ShapeNode): number {
+        return Math.max(node.width, node.height) / 2
+    }
 
-    updateNode = (node: ShapeNode) => {
-        const { shape: { path }, entity } = node;
-        const { camera } = this.viewportSystem.viewport;
-
-        const ctx = camera.context
-
-        const [wx, wy, wz] = getAbsolute(entity, this.engine!);
-        const projected = camera.project(wx, wy, wz)
-        if (!projected) {
-            return
-        }
+    updateNode = (node: ShapeNode, _dt?: number) => {
+        const { projected } = this.getProjected(node)
+        const ctx = this.viewportSystem.viewport.camera.context
+        const { path } = node.shape
 
         ctx.save()
         ctx.translate(projected.x, projected.y)

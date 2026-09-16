@@ -6,11 +6,13 @@ import { RenderableNode } from "./renderableNode";
 import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
 import { EntityComponent } from "@/engine/entities/entityComponent";
+import { ProjectedPoint } from "@/lib/camera";
 
 export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithNodes<N> {
     protected readonly components: (new (...args: any[]) => EntityComponent)[];
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
+    private projectedCache = new Map<N, { worldPos: [number, number, number]; projected: ProjectedPoint }>()
 
     constructor(
         viewportSystem: ViewportSystem,
@@ -73,20 +75,53 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             return
         }
 
-        const sorted = this.nodes.filter(node => !this.filterNodes || this.filterNodes(node))
-        sorted.sort((a, b) => {
-            const [ax, ay, az] = this.getWorldPosition(a)
-            const [bx, by, bz] = this.getWorldPosition(b)
-            const aProj = camera.project(ax, ay, az)
-            const bProj = camera.project(bx, by, bz)
-            const aDepth = aProj ? aProj.depth : 0
-            const bDepth = bProj ? bProj.depth : 0
-            return bDepth - aDepth
+        this.projectedCache.clear()
+        const entries: N[] = []
+
+        for (const node of this.nodes) {
+            const worldPos = this.getWorldPosition(node)
+            const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
+            if (!projected) {
+                continue
+            }
+
+            const margin = this.getCullMargin(node)
+            const scaledMargin = margin * projected.scale
+            const bounds = camera.visibleBounds
+            if (
+                projected.x + scaledMargin < bounds.left ||
+                projected.x - scaledMargin > bounds.right ||
+                projected.y + scaledMargin < bounds.top ||
+                projected.y - scaledMargin > bounds.bottom
+            ) {
+                continue
+            }
+
+            this.projectedCache.set(node, { worldPos, projected })
+            entries.push(node)
+        }
+
+        entries.sort((a, b) => {
+            const aProj = this.projectedCache.get(a)!.projected
+            const bProj = this.projectedCache.get(b)!.projected
+            return bProj.depth - aProj.depth
         })
 
-        for(const node of sorted) {
+        for (const node of entries) {
             this.updateNode(node, dt)
         }
+    }
+
+    protected getCullMargin(_node: N): number {
+        return 0
+    }
+
+    protected getProjected(node: N): { worldPos: [number, number, number]; projected: ProjectedPoint } {
+        const entry = this.projectedCache.get(node)
+        if (!entry) {
+            throw new Error(`Node ${node.entity.id} not found in projection cache`)
+        }
+        return entry
     }
 
     private getWorldPosition(node: N): [number, number, number] {

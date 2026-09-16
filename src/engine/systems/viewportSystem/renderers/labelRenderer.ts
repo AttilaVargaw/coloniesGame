@@ -3,8 +3,6 @@ import { LabelComponent } from "../../../components/label";
 import { ColorComponent } from "@engine/components/colorComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { LabelNode } from "./labelNode";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { isVisible } from "./isVisible";
 import { BaseRenderer } from "./baseRenderer";
 
 export class LabelRenderer extends BaseRenderer<LabelNode> {
@@ -15,21 +13,13 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         )
     }
 
-    protected filterNodes = (node: LabelNode) => {
-        const { viewport: { camera } } = this.viewportSystem;
-
-        return isVisible(camera.visibleBounds, node.label.size, node.entity!, this.engine!);
-    };
+    protected getCullMargin(node: LabelNode): number {
+        return node.label.size
+    }
 
     protected updateNode(node: LabelNode, _dt?: number): void {
-        const { viewport: { camera } } = this.viewportSystem;
-        const ctx = camera.context;
-
-        const [wx, wy, wz] = getAbsolute(node.entity!, this.engine!)
-        const projected = camera.project(wx, wy, wz)
-        if (!projected) {
-            return
-        }
+        const { projected } = this.getProjected(node)
+        const ctx = this.viewportSystem.viewport.camera.context;
 
         ctx.save()
         node.setColor(ctx);
