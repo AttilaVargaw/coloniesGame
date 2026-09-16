@@ -39,7 +39,7 @@ export class ViewportInputHandler {
         if(this.heldKeys.has("d")) panRight += 1
         if(this.heldKeys.has("a")) panRight -= 1
         if(this.heldKeys.has("w")) panUp += 1
-        if(this.heldKeys.has("s")) panUp += 1
+        if(this.heldKeys.has("s")) panUp -= 1
 
         if(panRight || panUp) {
             const { right, up } = camera.getBasisVectors()
@@ -185,7 +185,7 @@ export class ViewportInputHandler {
                     if(this.dragButton === 2) {
                         camera.panByPixels(dx, dy)
                     } else if(this.dragButton === 1) {
-                        camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
+                        camera.yaw += dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
                         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch + dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
                         camera.invalidateViewBasis()
                     }
