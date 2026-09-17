@@ -20,6 +20,7 @@ export type Goods = {
     machinery: number;
     medicine: number;
     wood: number;
+    lumber: number;
     oil: number;
     spaceTransport: number;
 
@@ -56,6 +57,7 @@ export const basePrices = {
     machinery: 10,
     medicine: 10,
     wood: 10,
+    lumber: 20,
     oil: 50,
     spaceTransport: 10_000,
 

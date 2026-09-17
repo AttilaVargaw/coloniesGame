@@ -2,22 +2,31 @@ import { generateIndustrialSector } from "./generateIndustrialSector";
 
 export const industryReducers = Object.entries({
     mine: generateIndustrialSector({
-        name: "mine", goodsRequirements: { machinery: 10 }, workerRequirement: { miner: 10, clerks: 1 }, goodsProduction: { metals: 70, uranium: 6, tylium: 2 }
+        name: "mine", goodsRequirements: { machinery: 10, electricity: 1 }, workerRequirement: { miner: 10, clerks: 1 }, goodsProduction: { metals: 70, uranium: 6, tylium: 2 }
     }),
     oilRig: generateIndustrialSector({
-        name: "oilRig", goodsRequirements: { machinery: 10 }, workerRequirement: { worker: 20, clerks: 5 }, goodsProduction: { oil: 150 }
+        name: "oilRig", goodsRequirements: { machinery: 10, electricity: 1 }, workerRequirement: { worker: 20, clerks: 5 }, goodsProduction: { oil: 150 }
     }),
     forestry: generateIndustrialSector({
-        name: "forestry", goodsRequirements: {}, workerRequirement: { worker: 3, clergy: 1 }, goodsProduction: { wood: 180 }
+        name: "forestry", goodsRequirements: { ammunition: 1, chemicals: 5 }, workerRequirement: { worker: 3, clergy: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, basicFood: 10 }
     }),
     farm: generateIndustrialSector({
-        name: "farm", goodsRequirements: { machinery: 5, water: 10 }, workerRequirement: { farmer: 5, clerks: 1 }, goodsProduction: { agriculturalGoods: 100, basicFood: 60 }
+        name: "farm", goodsRequirements: { machinery: 5, water: 10, chemicals: 10 }, workerRequirement: { farmer: 5, clerks: 1 }, goodsProduction: { agriculturalGoods: 100, basicFood: 60 }
+    }),
+    fishery: generateIndustrialSector({
+        name: "fishery", goodsRequirements: { machinery: 3 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { basicFood: 80, agriculturalGoods: 30 }
     }),
     foodFactory: generateIndustrialSector({
         name: "foodFactory",
         goodsRequirements: { agriculturalGoods: 22, machinery: 8 },
         workerRequirement: { worker: 5, clerks: 1 },
-        goodsProduction: { food: 45, luxuryFood: 6 }
+        goodsProduction: { food: 150, }
+    }),
+    luxuryFood: generateIndustrialSector({
+        name: "luxuryFood",
+        goodsRequirements: { machinery: 6, electricity: 18 },
+        workerRequirement: { worker: 10, clerks: 1 },
+        goodsProduction: { luxuryFood: 22 }
     }),
     waterTreatment: generateIndustrialSector({
         name: "waterTreatment", goodsRequirements: { electricity: 8, machinery: 6 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { water: 220 }
@@ -29,7 +38,7 @@ export const industryReducers = Object.entries({
         name: "metalFactory", goodsRequirements: { metals: 12, machinery: 8, electricity: 20 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { metals: 55 }
     }),
     lumberMill: generateIndustrialSector({
-        name: "lumberMill", goodsRequirements: { wood: 35, machinery: 6 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { furniture: 40 }
+        name: "lumberMill", goodsRequirements: { wood: 35, machinery: 6 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { furniture: 40, lumber: 40 }
     }),
     machineryFactory: generateIndustrialSector({
         name: "machineryFactory", goodsRequirements: { metals: 12, electricity: 18 }, workerRequirement: { worker: 1, clerks: 1 }, goodsProduction: { machinery: 14 }
@@ -41,7 +50,7 @@ export const industryReducers = Object.entries({
         name: "consumerFactory", goodsRequirements: { furniture: 12, chemicals: 8, machinery: 8, electricity: 22 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { consumerGoods: 18 }
     }),
     furnitureFactory: generateIndustrialSector({
-        name: "furnitureFactory", goodsRequirements: { furniture: 10, chemicals: 4, machinery: 6, electricity: 20 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { luxuryFurniture: 6 }
+        name: "furnitureFactory", goodsRequirements: { lumber: 10, chemicals: 4, machinery: 6, electricity: 20 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { luxuryFurniture: 6 }
     }),
     ammunitionFactory: generateIndustrialSector({
         name: "ammunitionFactory", goodsRequirements: { metals: 12, chemicals: 8, machinery: 10, electricity: 22 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { ammunition: 35 }
