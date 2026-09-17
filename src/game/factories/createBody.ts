@@ -14,13 +14,16 @@ import { angularSpeed } from "../utils/orbital"
 import { createMarker, createVessel } from "./createSpaceship"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
-import { createSoiCircle } from "./createSoiCircle"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
-import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { createAsteroid } from "./createAsteroid"
-import { createCircle } from "../systems/createCircle"
+import { PositionComponent } from "@/engine/components/position"
+import { RingComponent } from "@engine/components/ringComponent"
+import { Radius } from "lucide-react"
+import { RadiusComponent } from "@/engine/components/radiusComponent"
+import { ColorComponent } from "@/engine/components/colorComponent"
+import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 
 export function createBody({
     archetype,
@@ -97,10 +100,12 @@ export function createBody({
 
     if(rings?.length) {
         for(const { color, innerRadius, outerRadius } of rings) {
-            const ringsEntity = createCircle(engine, color, innerRadius * UNIVERSE_SCALE)
-            engine.addEntity(ringsEntity, body)
-
-            applyComponents(ringsEntity, new ThicknessComponent((outerRadius - innerRadius) * UNIVERSE_SCALE))
+            const ringEntity = engine.createEntity()
+                .addComponent(new PositionComponent(0, 0))
+                .addComponent(new RadiusComponent(outerRadius))
+                .addComponent(new ColorComponent("", color))
+                .addComponent(new ThicknessComponent(5))
+            engine.addEntity(ringEntity, body)
         }
     }
 

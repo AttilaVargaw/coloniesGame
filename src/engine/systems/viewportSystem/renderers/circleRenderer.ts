@@ -6,6 +6,7 @@ import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
 import { TWO_PI } from "@/game/constants";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 const SHADE_SIZE = 128
 
@@ -48,21 +49,66 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     updateNode = (circle: CircleNode, _dt?: number) => {
-        const { projected } = this.getProjected(circle)
-        const ctx = this.viewportSystem.viewport.camera.context
+        if (!this.engine) {
+            return
+        }
 
-        circle.setColor(ctx);
-        ctx.lineWidth = circle.thickness.thickness * projected.scale
+        const { camera } = this.viewportSystem.viewport
+        const ctx = camera.context
 
-        const screenRadius = circle.radius.radius * projected.scale
+        const [cx, cy, cz] = getAbsolute(circle.entity, this.engine)
+        const radius = circle.radius.radius
+        const thickness = circle.thickness.thickness
 
-        ctx.beginPath();
-        ctx.arc(projected.x, projected.y, screenRadius, 0, TWO_PI);
-        ctx.closePath();
-        circle.draw(ctx);
+        const center = camera.project(cx, cy, cz)
+        if (!center) {
+            return
+        }
 
-        if(circle.color.shade) {
-            shadeCircle(ctx, projected.x, projected.y, screenRadius)
+        const screenRadius = radius * center.scale
+
+        if (
+            center.x + screenRadius < 0 ||
+            center.x - screenRadius > camera.cssWidth ||
+            center.y + screenRadius < 0 ||
+            center.y - screenRadius > camera.cssHeight
+        ) {
+            return
+        }
+
+        ctx.beginPath()
+        if (circle.color.shade) {
+            ctx.arc(center.x, center.y, screenRadius, 0, TWO_PI)
+        } else {
+            const segments = Math.max(32, Math.min(128, Math.round(screenRadius / 2)))
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * TWO_PI
+                const worldX = cx + radius * Math.cos(angle)
+                const worldY = cy + radius * Math.sin(angle)
+                const worldZ = cz
+                const projected = camera.project(worldX, worldY, worldZ)
+                if (!projected) {
+                    continue
+                }
+                if (i === 0) {
+                    ctx.moveTo(projected.x, projected.y)
+                } else {
+                    ctx.lineTo(projected.x, projected.y)
+                }
+            }
+        }
+        ctx.closePath()
+        circle.setColor(ctx)
+        ctx.lineWidth = thickness * center.scale
+        if (circle.color.fill) {
+            ctx.fill()
+        }
+        if (circle.color.stroke) {
+            ctx.stroke()
+        }
+
+        if (circle.color.shade) {
+            shadeCircle(ctx, center.x, center.y, screenRadius)
         }
     }
 }

@@ -87,7 +87,7 @@ export default class Camera {
     }
 
     private ensureViewBasis() {
-        if (!this.viewBasisDirty && this.viewBasisCache) {
+        if(!this.viewBasisDirty && this.viewBasisCache) {
             return this.viewBasisCache
         }
 
@@ -113,10 +113,8 @@ export default class Camera {
         let rx: number
         let ry: number
         let rz: number
-        let ux: number
-        let uy: number
-        let uz: number
-        if (Math.abs(fx * worldUp[0] + fy * worldUp[1] + fz * worldUp[2]) > 0.9999) {
+
+        if(Math.abs(fx * worldUp[0] + fy * worldUp[1] + fz * worldUp[2]) > 0.9999) {
             rx = 1
             ry = 0
             rz = 0
@@ -130,9 +128,9 @@ export default class Camera {
             rz /= rLen
         }
 
-        ux = ry * fz - rz * fy
-        uy = rz * fx - rx * fz
-        uz = rx * fy - ry * fx
+        const ux = ry * fz - rz * fy
+        const uy = rz * fx - rx * fz
+        const uz = rx * fy - ry * fx
 
         this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ }
         this.viewBasisDirty = false
@@ -183,6 +181,19 @@ export default class Camera {
 
     public get cssHeight(): number {
         return this.viewport.cssHeight
+    }
+
+    public get cameraPosition(): [number, number, number] {
+        return [
+            this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
+            this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
+            this.lookAt[2] + this.distance * Math.sin(this.pitch),
+        ]
+    }
+
+    public get viewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number } {
+        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
+        return { fx, fy, fz, rx, ry, rz, ux, uy, uz }
     }
 
     public zoomTo(z: number) {
@@ -253,7 +264,7 @@ export default class Camera {
 
     public worldToScreen(x: number, y: number, z = 0, obj: { x: number; y: number } = { x: 0, y: 0 }) {
         const projected = this.project(x, y, z)
-        if (projected) {
+        if(projected) {
             obj.x = projected.x
             obj.y = projected.y
         }
@@ -284,7 +295,7 @@ export default class Camera {
         const y = vx * ux + vy * uy + vz * uz
         const z = vx * fx + vy * fy + vz * fz
 
-        if (z <= 0.01) {
+        if(z <= 0.01) {
             return null
         }
 

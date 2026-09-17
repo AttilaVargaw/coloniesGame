@@ -10,7 +10,7 @@ export function sumValues(o: { [key: string]: number }) {
 }
 
 export function convertToReadable(n: number) {
-    if(n > 1000000000) {
+    if(Math.abs(n) > 1000000000) {
         return `${(n / 1000000000).toFixed(1)}B`;
     } else if(n > 1000000) {
         return `${(n / 1000000).toFixed(1)}M`;

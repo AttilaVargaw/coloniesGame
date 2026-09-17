@@ -22,9 +22,9 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                     return <tr key={key}>
                         <td>{key}</td>
                         <td>{convertToReadable(value || 0)}</td>
-                        <td style={{ textAlign: "center" }}>{addition - (used || 0)}</td>
-                        <td style={{ textAlign: "center" }}>{addition}</td>
-                        <td style={{ textAlign: "center" }}>{used}</td>
+                        <td style={{ textAlign: "center" }}>{convertToReadable(addition - (used || 0))}</td>
+                        <td style={{ textAlign: "center" }}>{convertToReadable(addition)}</td>
+                        <td style={{ textAlign: "center" }}>{convertToReadable(used)}</td>
                     </tr>
                 })}
             </tbody>
