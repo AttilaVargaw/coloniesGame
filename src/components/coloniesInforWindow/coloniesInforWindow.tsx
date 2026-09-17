@@ -50,7 +50,7 @@ export function ColoniesInforWindow() {
     const [page, setPage] = useState<string>("population")
 
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
-        <DialogContent className="bg-[#1c1c1c] text-popover-foreground">
+        <DialogContent className="bg-[#1c1c1c] text-popover-foreground min-w-3xl">
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>
             </DialogHeader>
@@ -60,7 +60,7 @@ export function ColoniesInforWindow() {
             }}>
                 {info && <PatronGoodInfo info={info} />}
                 {
-                    DialogInner(industry, page)
+                    DialogInner(industry, page, currentColony)
                 }
             </div>
             <DialogFooter>
@@ -78,7 +78,7 @@ export function ColoniesInforWindow() {
     </Dialog >
 }
 
-function DialogInner(industry: IndustryComponent | null, page: string): ReactNode {
+function DialogInner(industry: IndustryComponent | null, page: string, entity?: Entity): ReactNode {
     if(!industry) return <></>;
 
     switch(page) {
@@ -87,7 +87,7 @@ function DialogInner(industry: IndustryComponent | null, page: string): ReactNod
         case "warehouse":
             return <WarehouseBreakdown industry={industry} />;
         case "industry":
-            return <IndustryBreakdown industry={industry} />;
+            return <IndustryBreakdown industry={industry} entity={entity!} />;
     }
 }
 

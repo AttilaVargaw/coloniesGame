@@ -4,6 +4,7 @@ import { Goods } from "../data/Goods";
 import { Population, sumPopulation } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
+import { createStarterSectorWealth } from "../factories/createStarterIndustry";
 
 export type BuildOrder = {
     id: number
@@ -27,9 +28,11 @@ export class IndustryComponent extends EntityComponent {
     public goodsProduction: Partial<Goods>
     public workingWorkers: Population
     public freeWorkers: Population
+    public sectorWealth: Record<keyof IndustrialSectors, number>
+    public sectorProfits: Record<keyof IndustrialSectors, number>
 
     constructor(
-        public readonly sectors: IndustrialSectors,
+        public sectors: IndustrialSectors,
         public readonly goods: Goods,
         public readonly population: Population,
     ) {
@@ -41,5 +44,7 @@ export class IndustryComponent extends EntityComponent {
         this.goodsProduction = createStarterWarehouse(0)
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)
+        this.sectorWealth = createStarterSectorWealth()
+        this.sectorProfits = createStarterSectorWealth()
     }
 }

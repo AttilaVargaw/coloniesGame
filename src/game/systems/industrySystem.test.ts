@@ -1,17 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest"
+import { describe, it, expect } from "vitest"
 import { IndustrySystem } from "./industrySystem"
-import { Entity } from "@/engine/entities/entity"
 import { IndustryComponent } from "@/game/components/industryComponent"
 import { IndustryNode } from "./IndustryNode"
 import { World } from "@/engine/core/world"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "../factories/createStarterIndustry"
 import { createStarterWarehouse } from "../factories/createStarterWarehouse"
-
-function makeNode(entity: Entity): IndustryNode {
-    const industry = entity.getComponent(IndustryComponent)!
-    return new IndustryNode(industry, entity)
-}
 
 describe("industrySystem", () => {
     describe("addToEngine", () => {

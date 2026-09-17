@@ -5,7 +5,7 @@ import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
-import type { IndustryReducerReturn } from "../systems/generateIndustrialSector";
+import type { IndustryReducerReturn, SectorResult } from "../systems/generateIndustrialSector";
 
 export interface IndustryTickInput {
     entityId: string;
@@ -27,6 +27,7 @@ export interface IndustryTickResult {
         requirements: Record<string, number>;
     }>;
     goodsChange: Goods;
+    sectorProfits: Record<string, number>;
 }
 
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
@@ -58,17 +59,32 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sumGoodsRequirements: createStarterWarehouse(0),
             sumGoodsProduction: createStarterWarehouse(0),
             workingWorkers: createStarterPopulation(0),
+            sectorResult: {
+                name: "",
+                consumedGoods: {},
+                producedGoods: {},
+                workersEmployed: {},
+                productionRatio: 1,
+                inputLevel: 0,
+                outputLevel: 0,
+            },
         };
 
+        const sectorResults: Record<string, SectorResult> = {};
         const reducerResult = industryReducers.reduce(
-            (_acc, [, reducer]) =>
-                reducer(
+            (_acc, [name, reducer]) => {
+                const result = reducer(
                     {
                         ..._acc,
                         workerRatio: 1,
                     },
                     sectors
-                ),
+                );
+                if (result.sectorResult) {
+                    sectorResults[name] = result.sectorResult;
+                }
+                return result;
+            },
             initial
         ) as IndustryReducerReturn;
 
@@ -97,6 +113,23 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             };
         }
 
+        const sectorProfits: Record<string, number> = {};
+        for (const result of Object.values(sectorResults)) {
+            const revenue = Object.entries(result.producedGoods).reduce((sum, [key, amount]) => {
+                if (!amount) return sum;
+                return sum + amount * getPrices()[key as keyof Goods];
+            }, 0);
+            const inputCosts = Object.entries(result.consumedGoods).reduce((sum, [key, amount]) => {
+                if (!amount) return sum;
+                return sum + amount * getPrices()[key as keyof Goods];
+            }, 0);
+            const laborCosts = Object.entries(result.workersEmployed).reduce((sum, [key, amount]) => {
+                if (!amount) return sum;
+                return sum + amount * baseSalaries[key as keyof Population];
+            }, 0);
+            sectorProfits[result.name] = revenue - inputCosts - laborCosts;
+        }
+
         const goodsChange = Object.entries({ ...goodsProduction, ...goodsRequirements }).reduce(
             (acc, [key]) => {
                 acc[key as keyof Goods] = (goodsProduction[key as keyof Goods] ?? 0) - (goodsRequirements[key as keyof Goods] ?? 0);
@@ -113,6 +146,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             freeWorkers: remainingWorkers,
             populationUpdates,
             goodsChange,
+            sectorProfits,
         });
     }
 

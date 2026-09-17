@@ -104,9 +104,9 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
         0: {
             basicFood: 0.5,
             water: 0.5,
-            faith: 5,
+            faith: 4,
             lawEnforcement: 1,
-            healthcare: 5
+            healthcare: 4
         },
         10: {
             basicFood: 1,
@@ -114,32 +114,31 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
             water: 1,
             healthcare: 3
         },
-    20: {
-        consumerGoods: 1,
-        furniture: 1,
-        healthcare: 2,
-        buildings: 0.5
-    },
-    40: {
-        faith: 1.5,
-        services: 1,
-        electricity: 1,
-        food: 1,
-        luxuryFood: 0.2,
-        basicFood: 0.5,
-        furniture: 1.5,
-        healthcare: 1,
-        buildings: 1
-    },
-    50: {},
-    80: {
-        faith: 1,
-        tourism: 1,
-        luxuryFood: 1,
-        luxuryFurniture: 1,
-        healthcare: 0.5,
-        buildings: 1.5
-    }
+        20: {
+            consumerGoods: 1,
+            furniture: 1,
+            healthcare: 2,
+            buildings: 0.5
+        },
+        40: {
+            faith: 1.5,
+            services: 1,
+            electricity: 1,
+            food: 1,
+            luxuryFood: 0.2,
+            basicFood: 0.5,
+            furniture: 1.5,
+            healthcare: 1,
+            buildings: 1
+        },
+        50: {},
+        80: {
+            faith: 1,
+            tourism: 1,
+            luxuryFood: 1,
+            luxuryFurniture: 1,
+            buildings: 1.5
+        }
     })
 
     const requirements = (Object.entries(packets.head.next!.data) as [keyof Goods, number][]).reduce((prev, [key, value]) => {

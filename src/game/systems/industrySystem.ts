@@ -5,7 +5,10 @@ import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
+import type { IndustrialSectors } from "../components/Factories";
 import type { IndustryTickInput, IndustryTickResult } from "../workers/industryTick.worker";
+import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
+import { sectorUpgradeCosts } from "../systems/factoryBlueprints";
 
 const workerUrl = new URL("../workers/industryTick.worker.ts", import.meta.url);
 
@@ -29,6 +32,30 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     private ensureWorker() {
         if(!this.worker) {
             this.worker = createIndustryWorker(this.handleWorkerMessage);
+        }
+    }
+
+    private processUpgradeCommands() {
+        const commands = this.engine?.getCommands(UpgradeSectorCommand);
+        if (!commands) return;
+
+        for (const cmd of [...commands]) {
+            const upgradeCmd = cmd as UpgradeSectorCommand;
+            const node = this.nodes.find(n => n.entity.id === upgradeCmd.entityId);
+            if (!node) continue;
+
+            const industry = node.industry;
+            const sectorName = upgradeCmd.sectorName;
+            const currentLevel = industry.sectors[sectorName];
+            const cost = Math.round(sectorUpgradeCosts[sectorName] * currentLevel);
+
+            if (industry.sectorWealth[sectorName] >= cost) {
+                industry.sectorWealth[sectorName] -= cost;
+                industry.sectors = {
+                    ...industry.sectors,
+                    [sectorName]: currentLevel + 1,
+                };
+            }
         }
     }
 
@@ -57,6 +84,12 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 pop.wealth = update.wealth;
             }
 
+            for (const [sector, profit] of Object.entries(result.sectorProfits)) {
+                const sectorKey = sector as keyof IndustrialSectors;
+                industry.sectorWealth[sectorKey] = (industry.sectorWealth[sectorKey] ?? 0) + profit;
+                industry.sectorProfits[sectorKey] = profit;
+            }
+
             industry.goodsChange = result.goodsChange;
             for(const it in industry.goods) {
                 industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods];
@@ -67,6 +100,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     };
 
     private onDayPassed = () => {
+        this.processUpgradeCommands();
         this.ensureWorker();
 
         const industries: IndustryTickInput[] = [];

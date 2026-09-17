@@ -11,6 +11,8 @@ const PER_CAPITA_SECTOR_RATIOS = {
     waterTreatment: 0.000004,
     powerPlant: 0.000021,
     nuclearSector: 0.000005,
+    greenEnergy: 0.000015,
+    alternativeMedicine: 0.000004,
     metalFactory: 0.000063,
     lumberMill: 0.000032,
     machineryFactory: 0.000224,
@@ -34,17 +36,23 @@ const PER_CAPITA_SECTOR_RATIOS = {
     religion: 0.00008,
     lawEnforcement: 0.000015,
     chemical: 0.000007,
+    recycling: 0.000001,
 } as const satisfies Record<keyof IndustrialSectors, number>;
 
-const MIN_SECTOR_LEVEL = 2;
+// const MIN_SECTOR_LEVEL = 0;
 
 export function createStarterIndustry(population: number) {
     const sectors = {} as Record<keyof IndustrialSectors, number>;
 
-    for (const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
-        const scaled = population * PER_CAPITA_SECTOR_RATIOS[key];
-        sectors[key] = Math.max(MIN_SECTOR_LEVEL, Math.round(scaled));
+    for(const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
+        sectors[key] = 1
     }
 
     return sectors as IndustrialSectors;
+}
+
+export function createStarterSectorWealth(): Record<keyof IndustrialSectors, number> {
+    return Object.fromEntries(
+        Object.keys(PER_CAPITA_SECTOR_RATIOS).map(key => [key, 100_00_000])
+    ) as Record<keyof IndustrialSectors, number>;
 }

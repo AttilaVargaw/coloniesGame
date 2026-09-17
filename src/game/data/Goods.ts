@@ -36,23 +36,24 @@ export type Goods = {
     healthcare: number,
     chemicals: number;
     buildings: number;
+    waste: number;
 }
 
 export const basePrices = {
     basicFood: 1,
     food: 10,
-    luxuryFood: 100,
-    tourism: 1000,
-    consumerGoods: 500,
+    luxuryFood: 40,
+    tourism: 300,
+    consumerGoods: 100,
     water: 10,
     electricity: 10,
     furniture: 10,
-    luxuryFurniture: 100,
-    services: 20,
+    luxuryFurniture: 40,
+    services: 15,
     agriculturalGoods: 5,
-    dividents: 1,
+    dividents: 10,
 
-    tylium: 1000,
+    tylium: 150,
     metals: 10,
     uranium: 100,
     machinery: 10,
@@ -60,19 +61,20 @@ export const basePrices = {
     wood: 10,
     lumber: 20,
     oil: 50,
-    spaceTransport: 10_000,
+    spaceTransport: 2000,
 
-    ammunition: 10,
-    weapons: 10,
-    nuclearWeapons: 10,
-    ordnance: 10,
+    ammunition: 15,
+    weapons: 30,
+    nuclearWeapons: 300,
+    ordnance: 30,
 
-    environmentFactor: 1,
-    money: 1,
+    environmentFactor: 10,
+    money: 10,
     lawEnforcement: 10,
     healthcare: 10,
-    chemicals: 15,
-    buildings: 10,
+    chemicals: 10,
+    buildings: 12,
+    waste: 2,
 } as ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(
