@@ -10,6 +10,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     luxuryFood: 0.00006,
     waterTreatment: 0.000004,
     powerPlant: 0.000021,
+    nuclearSector: 0.000005,
     metalFactory: 0.000063,
     lumberMill: 0.000032,
     machineryFactory: 0.000224,

@@ -98,7 +98,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         }
 
         const goodsChange = Object.entries({ ...goodsProduction, ...goodsRequirements }).reduce(
-            (acc, [key, value]) => {
+            (acc, [key]) => {
                 acc[key as keyof Goods] = (goodsProduction[key as keyof Goods] ?? 0) - (goodsRequirements[key as keyof Goods] ?? 0);
                 return acc;
             },

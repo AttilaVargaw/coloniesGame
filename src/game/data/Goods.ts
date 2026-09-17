@@ -34,7 +34,8 @@ export type Goods = {
     faith: number,
     lawEnforcement: number,
     healthcare: number,
-    chemicals: number
+    chemicals: number;
+    buildings: number;
 }
 
 export const basePrices = {
@@ -71,6 +72,7 @@ export const basePrices = {
     lawEnforcement: 10,
     healthcare: 10,
     chemicals: 15,
+    buildings: 10,
 } as ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(
