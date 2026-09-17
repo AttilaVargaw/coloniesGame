@@ -8,14 +8,15 @@ const allButtons = new Set(["+", "=", "-", "_", ...wasdButtons])
 
 export class ViewportInputHandler {
     private _isDragging = false
+    private _isZooming = false
     private dragButton: number | null = null
     private lastPointer: { x: number, y: number } | null = null
     private dragMoved = false
     private pointer: { x: number, y: number } = { x: 0, y: 0 }
+    private wheelZoomAccum = 0
+    private lastWheelScreen = { x: 0, y: 0 }
 
     private readonly heldKeys = new Set<string>()
-    private accumulatedZoom = 0
-    private lastWheelScreen = { x: 0, y: 0 }
 
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem: CameraFollowSystem) { }
 
@@ -23,12 +24,16 @@ export class ViewportInputHandler {
     private static readonly ZOOM_SPEED = 1.0015
     private static readonly KEY_PAN_SPEED = 1000.0
     private static readonly MOUSE_ROTATE_SPEED = 0.005
-    private static readonly WHEEL_ZOOM_SPEED = 1.0015
+    private static readonly WHEEL_ZOOM_STEP = 50
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
 
     get isDragging() {
         return this._isDragging
+    }
+
+    get isZooming() {
+        return this._isZooming
     }
 
     consumeDragMoved() {
@@ -58,9 +63,10 @@ export class ViewportInputHandler {
         }
 
         if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
+            this._isZooming = true
             camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
-        }
-        if(this.heldKeys.has("+") || this.heldKeys.has("_")) {
+        } else if(this.heldKeys.has("+") || this.heldKeys.has("_")) {
+            this._isZooming = true
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
         }
     }
@@ -158,13 +164,16 @@ export class ViewportInputHandler {
             x: event.clientX - rect.left,
             y: event.clientY - rect.top
         }
-        this.accumulatedZoom += event.deltaY
+
+        this.wheelZoomAccum += event.deltaY
     }
 
     update(dt: number) {
         if(!this.viewportSystem.engineRef) {
             return
         }
+
+        this._isZooming = false
 
         const camera = this.viewportSystem.viewport.camera
         const mousedownArray = this.viewportSystem.engineRef.getEvents(MousedownEvent)!
@@ -225,13 +234,14 @@ export class ViewportInputHandler {
         this.applyKeyScroll(dt, camera)
         this.applyEdgePan(dt, camera)
 
-        if(this.accumulatedZoom !== 0) {
-            camera.zoomBy(
-                Math.pow(ViewportInputHandler.WHEEL_ZOOM_SPEED, this.accumulatedZoom),
-                this.lastWheelScreen.x,
-                this.lastWheelScreen.y
-            )
-            this.accumulatedZoom = 0
+        if (this.wheelZoomAccum >= ViewportInputHandler.WHEEL_ZOOM_STEP) {
+            this._isZooming = true
+            camera.zoomBy(1.05, this.lastWheelScreen.x, this.lastWheelScreen.y)
+            this.wheelZoomAccum -= ViewportInputHandler.WHEEL_ZOOM_STEP
+        } else if (this.wheelZoomAccum <= -ViewportInputHandler.WHEEL_ZOOM_STEP) {
+            this._isZooming = true
+            camera.zoomBy(0.95, this.lastWheelScreen.x, this.lastWheelScreen.y)
+            this.wheelZoomAccum += ViewportInputHandler.WHEEL_ZOOM_STEP
         }
     }
 }

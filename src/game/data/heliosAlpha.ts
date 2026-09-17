@@ -12,7 +12,7 @@ export const solarisAlpha = {
         bodies: [{
             marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
-            orbit: { radius: 1, angle: 2, eccentricity: 0.017 },
+            orbit: { radius: 2, angle: 4, eccentricity: 0.02, inclination: 0 },
             name: "Caprica",
             population: 4900000000,
             vessels: [
@@ -22,7 +22,7 @@ export const solarisAlpha = {
         {
             marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
-            orbit: { radius: 2, angle: 4, eccentricity: 0.02 },
+            orbit: { radius: 2, angle: 4, eccentricity: 0.02, inclination: 0 },
             name: "Gemenon",
             population: 2800000000,
         }]
@@ -46,8 +46,8 @@ export const solarisAlpha = {
             orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007 },
             name: "Zeus",
             children: [
-                { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 2.1, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
-                { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 4, angle: 0, eccentricity: 0.7 }, name: "Hebe", archetype: "mars" }
+                { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 4.8, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
+                { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 5.5, angle: 0, eccentricity: 0.5 }, name: "Hebe", archetype: "mars" }
             ]
         },
         {
@@ -70,6 +70,6 @@ export const solarisAlpha = {
         // { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
     ],
     asteroidBelts: [
-       // { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
+        // { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
     ]
 } as const satisfies BodyBlueprint;

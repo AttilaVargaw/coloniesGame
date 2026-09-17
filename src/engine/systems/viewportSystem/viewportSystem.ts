@@ -46,6 +46,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         return this.inputHandler.isDragging
     }
 
+    get isZooming() {
+        return this.inputHandler.isZooming
+    }
+
     get engineRef() {
         return this.engine
     }

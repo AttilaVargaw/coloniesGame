@@ -1,9 +1,9 @@
-import { SOLAR_UNIT } from "../constants";
+import { SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosDelta = {
     name: "Helios Delta",
-    marker: { color: "#f7a75c", radius: 10, label: "Helios Delta" },
+    marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta" },
     archetype: "sol",
     orbit: { radius: 10, angle: 0, eccentricity: 0 },
     children: [
@@ -35,8 +35,8 @@ export const heliosDelta = {
             orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007 },
             name: "Hestia",
             children: [
-                { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 2.1, angle: 0, eccentricity: 0.3 }, name: "Rhea", archetype: "mercury" },
-                { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 4, angle: 0, eccentricity: 0.7 }, name: "Kronos", archetype: "mercury" }
+                { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 4.1, angle: 0, eccentricity: 0.3 }, name: "Rhea", archetype: "mercury" },
+                { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 5.1, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "mercury" }
             ]
         },
     ],

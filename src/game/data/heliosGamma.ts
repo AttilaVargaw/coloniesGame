@@ -1,9 +1,9 @@
-import { SOLAR_UNIT } from "../constants";
+import { SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosGamma = {
     name: "Helios Gamma",
-    marker: { color: "#fbf988", radius: 10, label: "Helios Gamma" },
+    marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma" },
     orbit: { radius: 300, eccentricity: 0.01 },
     archetype: "sol",
     children: [
