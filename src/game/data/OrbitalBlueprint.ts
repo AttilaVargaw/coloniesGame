@@ -4,4 +4,5 @@ export type OrbitalBlueprint = {
     readonly eccentricity?: number;
     readonly angle?: number;
     readonly inclination?: number;
+    readonly periapsis?: number;
 };

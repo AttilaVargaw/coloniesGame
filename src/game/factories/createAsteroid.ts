@@ -11,7 +11,7 @@ import { OrbitalBlueprint } from "../data/OrbitalBlueprint"
 import { ShapeComponent } from "@/engine/systems/viewportSystem/renderers/shapeNode"
 
 export function createAsteroid({
-    radius, angle, eccentricity,
+    radius, angle, eccentricity, periapsis,
 }: OrbitalBlueprint, parent: Entity, engine: Engine) {
     const asteroid = engine.createEntity()
     const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
@@ -23,7 +23,8 @@ export function createAsteroid({
             angularSpeed(radius),
             angle,
             eccentricity ?? 0,
-            inclination
+            inclination,
+            periapsis ?? 0
         ),
         new ColorComponent("red", ""),
         new ThicknessComponent(1),

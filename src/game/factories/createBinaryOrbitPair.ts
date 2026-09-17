@@ -21,7 +21,7 @@ export function createBinaryOrbitPair(
     planetA: BodyBlueprint,
     planetB: BodyBlueprint,
     separation: number,
-    { radius, angle, eccentricity }: OrbitalBlueprint,
+    { radius, angle, eccentricity, periapsis }: OrbitalBlueprint,
     children?: BodyBlueprint[]
 ) {
     //const angleA = Math.random() * TWO_PI
@@ -35,7 +35,8 @@ export function createBinaryOrbitPair(
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
             eccentricity ?? 0,
-            inclination
+            inclination,
+            periapsis ?? 0
         ),
     )
 

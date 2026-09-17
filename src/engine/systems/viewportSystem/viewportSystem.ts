@@ -233,15 +233,20 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const sinI = Math.sin(inclinationAngle)
             const b = orbit.semiMinorAxis
             const focusOffset = orbit.radius * orbit.eccentricity
+            const arg = orbit.argumentOfPeriapsis || 0
+            const cosA = Math.cos(arg)
+            const sinA = Math.sin(arg)
 
             ctx.beginPath()
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const x = orbit.radius * Math.cos(angle) - focusOffset
                 const y = b * Math.sin(angle)
-                const worldX = cx + x
-                const worldY = cy + y * cosI
-                const worldZ = cz + y * sinI
+                const rx = x * cosA - y * sinA
+                const ry = x * sinA + y * cosA
+                const worldX = cx + rx
+                const worldY = cy + ry * cosI
+                const worldZ = cz + ry * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
                 if(!projected) {
                     continue

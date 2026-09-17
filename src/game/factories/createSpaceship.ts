@@ -67,7 +67,7 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 export function createVessel(
     engine: Engine,
     parent: Entity,
-    { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle, inclination } }: VesselBlueprint
+    { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle, inclination, periapsis } }: VesselBlueprint
 ) {
     const orbitAngle = angle ?? Math.random() * TWO_PI
     const orbitInclination = inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0]))
@@ -89,7 +89,7 @@ export function createVessel(
                 engine.dispatchEvent(new SelectionChangedEvent({ data: target, type: "ship" }))
             }
         }),
-        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle, 0, orbitInclination)
+        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius), orbitAngle, 0, orbitInclination, periapsis ?? 0)
     )
 
     engine.addEntity(ship)

@@ -53,10 +53,15 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         const inclination = orbit.inclination || 0
         const cosI = Math.cos(inclination)
         const sinI = Math.sin(inclination)
+        const arg = orbit.argumentOfPeriapsis || 0
+        const cosA = Math.cos(arg)
+        const sinA = Math.sin(arg)
 
-        position.x = r * Math.cos(theta)
-        position.y = r * Math.sin(theta) * cosI
-        position.z = r * Math.sin(theta) * sinI
+        const rx = r * Math.cos(theta)
+        const ry = r * Math.sin(theta)
+        position.x = rx * cosA - ry * sinA
+        position.y = (rx * sinA + ry * cosA) * cosI
+        position.z = (rx * sinA + ry * cosA) * sinI
     }
 
     protected registerNodes(engine: Engine): this {

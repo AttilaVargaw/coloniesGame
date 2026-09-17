@@ -35,7 +35,7 @@ export const heliosDelta = {
             orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007 },
             name: "Hestia",
             children: [
-                { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 4.1, angle: 0, eccentricity: 0.3 }, name: "Rhea", archetype: "mercury" },
+                { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 4.1, angle: 0, eccentricity: 0.3, periapsis: 0.1, inclination: 1 }, name: "Rhea", archetype: "mercury" },
                 { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 5.1, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "mercury" }
             ]
         },
