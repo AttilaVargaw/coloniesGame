@@ -1,7 +1,7 @@
 import { IndustryComponent } from "@game/components/industryComponent";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
-import { DayPassedEvent } from "@/engine/lib/events";
+import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
@@ -55,17 +55,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 pop.qol = update.qol;
                 pop.populationChange = update.populationChange;
                 pop.wealth = update.wealth;
-
-                for(const it in update.requirements) {
-                    industry.goodsRequirements[it as keyof Goods] =
-                        update.requirements[it] * pop.number + (industry.goodsRequirements[it as keyof Goods] ?? 0);
-                }
             }
 
             industry.goodsChange = result.goodsChange;
             for(const it in industry.goods) {
                 industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods];
             }
+
+            this.engine?.dispatchEvent(new IndustryUpdatedEvent(entity));
         }
     };
 

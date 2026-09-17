@@ -11,7 +11,7 @@ export type ReducerInput = {
     workerRatio: number,
     sumGoodsRequirements: Partial<Goods>,
     sumGoodsProduction: Partial<Goods>,
-    workingWorkers: Population
+    workingWorkers: Population,
 }
 
 export const generateIndustrialSector = ({ name, workerRequirement, goodsRequirements, goodsProduction }: {
@@ -23,13 +23,13 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
     return ({ workerRatio, remainingWorkers, remainingGoods, sumGoodsProduction, sumGoodsRequirements, workingWorkers
     }: ReducerInput,
         sectorLevels: IndustrialSectors) => {
+        const level = sectorLevels[name as keyof IndustrialSectors];
         const lowestRatio = Math.min(
-            getLowestPopulationRatio(workerRequirement, remainingWorkers, sectorLevels[name as keyof IndustrialSectors], workerRatio),
-            getLowestGoodsRatio(goodsRequirements, remainingGoods, sectorLevels[name as keyof IndustrialSectors], workerRatio)
+            getLowestPopulationRatio(workerRequirement, remainingWorkers, level, workerRatio),
+            getLowestGoodsRatio(goodsRequirements, remainingGoods, level, workerRatio)
         );
 
-        //itt valami még nem jó
-        const productionRatio = lowestRatio * sectorLevels[name as keyof IndustrialSectors];
+        const productionRatio = lowestRatio;
         const workerRequirementEntries = Object.entries(workerRequirement) as [keyof Population, number][];
         const goodsRequirementsEntries = Object.entries(goodsRequirements) as [keyof Goods, number][];
         const goodsProductionEntries = Object.entries(goodsProduction) as [keyof Goods, number][];
@@ -37,23 +37,23 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
         const ret = {
             workingWorkers: {
                 ...workerRequirementEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: workingWorkers[key].number + value * productionRatio }), workingWorkers)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: { ...workingWorkers[key], number: workingWorkers[key].number + value * level * productionRatio } }), workingWorkers)
             },
             remainingWorkers: {
                 ...workerRequirementEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingWorkers[key].number - value * productionRatio }), remainingWorkers)
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: { ...remainingWorkers[key], number: remainingWorkers[key].number - value * level * productionRatio } }), remainingWorkers)
             },
             remainingGoods: {
                 ...goodsRequirementsEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] - value * productionRatio }), remainingGoods),
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] - value * level * productionRatio }), remainingGoods),
                 ...goodsProductionEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] + value * productionRatio }), remainingGoods),
+                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] + value * level * productionRatio }), remainingGoods),
             },
             sumGoodsRequirements: {
-                ...goodsRequirementsEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * productionRatio }), sumGoodsRequirements)
+                ...goodsRequirementsEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * level * productionRatio }), sumGoodsRequirements)
             },
             sumGoodsProduction: {
-                ...goodsProductionEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * productionRatio }), sumGoodsProduction)
+                ...goodsProductionEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * level * productionRatio }), sumGoodsProduction)
             }
         };
 

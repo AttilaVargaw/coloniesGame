@@ -41,8 +41,6 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                     {Object.entries((industry.population)).map(([key, value]) => {
                         const { number, populationChange } = value
 
-                        console.log(colorBySign(populationChange))
-
                         return <tr key={key}>
                             <td>{key}</td>
                             <td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)} is working)</td>

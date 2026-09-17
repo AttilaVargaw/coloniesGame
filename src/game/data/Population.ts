@@ -81,7 +81,10 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
         }
     }
 
-    return Math.min(...Object.values(workerRatios), 1)
+    const entries = Object.entries(workerRatios)
+    if (entries.length === 0) return 1
+
+    return Math.min(...entries.map(([, v]) => v), 1)
 }
 
 // export function getQol(population: keyof Population, goodPrices: Goods) {

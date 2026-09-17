@@ -37,6 +37,21 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
     for (const input of event.data.industries) {
         const { entityId, sectors, goods, population } = input;
 
+        const populationConsumption = {} as Partial<Goods>;
+        for (const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+            const { requirements } = getGoodRequirementsAndQoL(
+                baseSalaries[key],
+                getPrices(),
+                pop
+            );
+
+            for (const it in requirements) {
+                populationConsumption[it as keyof Goods] =
+                    (requirements[it as keyof Goods] ?? 0) * pop.number +
+                    (populationConsumption[it as keyof Goods] ?? 0);
+            }
+        }
+
         const initial: IndustryReducerReturn = {
             remainingWorkers: population,
             remainingGoods: goods,
@@ -76,12 +91,6 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 wealth: pop.wealth + baseSalaries[key] * pop.number,
                 requirements: requirements as Record<string, number>,
             };
-
-            for (const it in requirements) {
-                goodsRequirements[it as keyof Goods] =
-                    (requirements[it as keyof Goods] ?? 0) * pop.number +
-                    (goodsRequirements[it as keyof Goods] ?? 0);
-            }
         }
 
         const goodsChange = Object.entries(goodsProduction).reduce(

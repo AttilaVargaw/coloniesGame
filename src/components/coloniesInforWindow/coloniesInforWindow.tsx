@@ -6,7 +6,7 @@ import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
 import { ReactNode, useRef, useState, useCallback } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
-import { DayPassedEvent, SelectionChangedEvent } from "@/engine/lib/events";
+import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
 import { ToggleGroup, ToggleGroupItem, } from "../ui/toggle-group";
 import { WarehouseBreakdown } from "./WarehouseBreakdown";
@@ -26,8 +26,13 @@ export function ColoniesInforWindow() {
         }
     }, []))
 
+    useGameEvent(IndustryUpdatedEvent, useCallback((entity) => {
+        if(currentColonyRef.current?.id === entity.id && entity.getComponent(IndustryComponent)) {
+            setIndustry({ ...entity.getComponent(IndustryComponent)! })
+        }
+    }, []))
+
     useGameEvent(SelectionChangedEvent, ({ type, data }) => {
-        console.log({ type })
         if(type === "colony") {
             if(data) {
                 setCurrentColony(data)

@@ -80,7 +80,10 @@ export function getLowestGoodsRatio(
         }
     }
 
-    return Math.min(...Object.values(workerRatios), 1)
+    const entries = Object.entries(workerRatios)
+    if (entries.length === 0) return 1
+
+    return Math.min(...entries.map(([, v]) => v), 1)
 }
 
 export function getPrices() {
