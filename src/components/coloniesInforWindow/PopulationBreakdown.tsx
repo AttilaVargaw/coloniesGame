@@ -16,6 +16,7 @@ function Sum(...args: number[]) {
 export function PopulationBreakdown({ industry }: { industry: IndustryComponent; }) {
     const populationSum = sumPopulation(industry.population);
     const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
+    const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
 
     return (
         <>
@@ -35,6 +36,10 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                         <td>
                             {convertToReadable(populationSum - industry.population.retired.number - industry.population.student.number)}
                         </td>
+                    </tr>
+                    <tr>
+                        <td>Unemployed</td>
+                        <td>{convertToReadable(unemployedSum)}</td>
                     </tr>
                 </tbody>
                 <tbody>

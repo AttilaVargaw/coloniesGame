@@ -82,7 +82,7 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
     }
 
     const entries = Object.entries(workerRatios)
-    if (entries.length === 0) return 1
+    if(entries.length === 0) return 1
 
     return Math.min(...entries.map(([, v]) => v), 1)
 }
@@ -103,29 +103,39 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     const packets = new CumulativeLinkedList<Goods>({
         0: {
             basicFood: 0.5,
-            water: 0.5
+            water: 0.5,
+            faith: 5,
+            lawEnforcement: 1,
+            healthcare: 5
         },
         10: {
             basicFood: 1,
-            water: 1
+            faith: 2,
+            water: 1,
+            healthcare: 3
         },
         20: {
             consumerGoods: 1,
-            furniture: 1
+            furniture: 1,
+            healthcare: 2
         },
         40: {
+            faith: 1.5,
             services: 1,
             electricity: 1,
             food: 1,
             luxuryFood: 0.2,
             basicFood: 0.5,
             furniture: 1.5,
+            healthcare: 1
         },
         50: {},
         80: {
+            faith: 1,
             tourism: 1,
             luxuryFood: 1,
-            luxuryFurniture: 1
+            luxuryFurniture: 1,
+            healthcare: 0.5
         }
     })
 

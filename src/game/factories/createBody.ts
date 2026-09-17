@@ -19,8 +19,6 @@ import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
 import { createAsteroid } from "./createAsteroid"
 import { PositionComponent } from "@/engine/components/position"
-import { RingComponent } from "@engine/components/ringComponent"
-import { Radius } from "lucide-react"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
@@ -101,7 +99,7 @@ export function createBody({
     }
 
     if(rings?.length) {
-        for(const { color, innerRadius, outerRadius } of rings) {
+        for(const { color, outerRadius } of rings) {
             const ringEntity = engine.createEntity()
                 .addComponent(new PositionComponent(0, 0))
                 .addComponent(new RadiusComponent(outerRadius))
