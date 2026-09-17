@@ -5,14 +5,14 @@ import { colorBySign } from "./colorBySign";
 
 export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRequirements } }: { industry: IndustryComponent; }) {
     return (
-        <table style={{ width: "100%" }}>
+        <table className="w-full text-sm">
             <thead>
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th>Net</th>
-                    <th>Production</th>
-                    <th>Requirements</th>
+                <tr className="border-b border-muted">
+                    <th className="text-left p-2 font-medium">Good</th>
+                    <th className="text-right p-2 font-medium">Stock</th>
+                    <th className="text-center p-2 font-medium">Net</th>
+                    <th className="text-center p-2 font-medium">Production</th>
+                    <th className="text-center p-2 font-medium">Requirements</th>
                 </tr>
             </thead>
             <tbody>
@@ -20,13 +20,13 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                     const addition = goodsProduction[key as keyof Goods] || 0;
                     const used = goodsRequirements[key as keyof Goods] || 0;
 
-                    return <tr key={key}>
-                        <td>{key}</td>
-                        <td>{convertToReadable(value || 0)}</td>
-                        <td style={{ textAlign: "center" }}>{colorBySign(addition - (used || 0))}</td>
-                        <td style={{ textAlign: "center" }}>{convertToReadable(addition)}</td>
-                        <td style={{ textAlign: "center" }}>{convertToReadable(used)}</td>
-                    </tr>
+                    return <tr key={key} className="border-b border-muted/50 last:border-0">
+                        <td className="p-2 capitalize">{key}</td>
+                        <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
+                        <td className="p-2 text-center">{colorBySign(addition - (used || 0))}</td>
+                        <td className="p-2 text-center">{convertToReadable(addition)}</td>
+                        <td className="p-2 text-center">{convertToReadable(used)}</td>
+                    </tr>;
                 })}
             </tbody>
         </table>

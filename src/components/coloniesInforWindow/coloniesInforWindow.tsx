@@ -56,6 +56,7 @@ export function ColoniesInforWindow() {
             </DialogHeader>
             <div style={{
                 height: "60vh",
+                overflowY: "auto"
             }}>
                 {info && <PatronGoodInfo info={info} />}
                 {

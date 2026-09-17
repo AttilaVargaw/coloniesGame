@@ -20,36 +20,53 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
 
     return (
         <>
-            <table style={{ width: "100%" }}>
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-b border-muted">
+                        <th className="text-left p-2 font-medium">Metric</th>
+                        <th className="text-right p-2 font-medium">Value</th>
+                    </tr>
+                </thead>
                 <tbody>
-                    <tr>
-                        <td>Population</td>
-                        <td>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Population</td>
+                        <td className="p-2 text-right">
                             {convertToReadable(populationSum)}
                         </td>
-                        <td>
+                        <td className="p-2 text-right">
                             {colorBySign(popGrowth)}
                         </td>
                     </tr>
-                    <tr>
-                        <td> Working Population</td>
-                        <td>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Working Population</td>
+                        <td className="p-2 text-right">
                             {convertToReadable(populationSum - industry.population.retired.number - industry.population.student.number)}
                         </td>
                     </tr>
-                    <tr>
-                        <td>Unemployed</td>
-                        <td>{convertToReadable(unemployedSum)}</td>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Unemployed</td>
+                        <td className="p-2 text-right">{convertToReadable(unemployedSum)}</td>
                     </tr>
                 </tbody>
+            </table>
+            <table className="w-full text-sm mt-4">
+                <thead>
+                    <tr className="border-b border-muted">
+                        <th className="text-left p-2 font-medium">Group</th>
+                        <th className="text-right p-2 font-medium">Count</th>
+                        <th className="text-right p-2 font-medium">Working</th>
+                        <th className="text-right p-2 font-medium">Growth</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {Object.entries((industry.population)).map(([key, value]) => {
                         const { number, populationChange } = value
 
-                        return <tr key={key}>
-                            <td>{key}</td>
-                            <td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)} is working)</td>
-                            <td>{colorBySign(populationChange)}</td>
+                        return <tr key={key} className="border-b border-muted/50 last:border-0">
+                            <td className="p-2 capitalize">{key}</td>
+                            <td className="p-2 text-right">{convertToReadable(number)}</td>
+                            <td className="p-2 text-right">{convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)}</td>
+                            <td className="p-2 text-right">{colorBySign(populationChange)}</td>
                         </tr>;
                     })}
                 </tbody>

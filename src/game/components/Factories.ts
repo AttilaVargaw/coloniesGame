@@ -26,6 +26,7 @@ export type IndustrialSectors = Readonly<{
     education: number;
     healthcare: number;
     environmentControl: number;
+    chemical: number;
     bank: number;
     religion: number;
     lawEnforcement: number;

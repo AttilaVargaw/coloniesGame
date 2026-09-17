@@ -47,7 +47,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
             for (const it in requirements) {
                 populationConsumption[it as keyof Goods] =
-                    (requirements[it as keyof Goods] ?? 0) * pop.number +
+                    (requirements[it as keyof Goods] ?? 0) +
                     (populationConsumption[it as keyof Goods] ?? 0);
             }
         }
@@ -75,6 +75,10 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const { sumGoodsProduction, sumGoodsRequirements, workingWorkers, remainingWorkers } = reducerResult;
 
         const goodsRequirements = { ...sumGoodsRequirements };
+        for (const key in populationConsumption) {
+            goodsRequirements[key as keyof Goods] =
+                (goodsRequirements[key as keyof Goods] ?? 0) + (populationConsumption[key as keyof Goods] ?? 0);
+        }
         const goodsProduction = { ...sumGoodsProduction };
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
 
@@ -93,9 +97,9 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             };
         }
 
-        const goodsChange = Object.entries(goodsProduction).reduce(
+        const goodsChange = Object.entries({ ...goodsProduction, ...goodsRequirements }).reduce(
             (acc, [key, value]) => {
-                acc[key as keyof Goods] = value - (goodsRequirements[key as keyof Goods] ?? 0);
+                acc[key as keyof Goods] = (goodsProduction[key as keyof Goods] ?? 0) - (goodsRequirements[key as keyof Goods] ?? 0);
                 return acc;
             },
             createStarterWarehouse(0)

@@ -32,7 +32,8 @@ export type Goods = {
     money: number,
     faith: number,
     lawEnforcement: number,
-    healthcare: number
+    healthcare: number,
+    chemicals: number
 }
 
 export const basePrices = {
@@ -67,6 +68,7 @@ export const basePrices = {
     money: 1,
     lawEnforcement: 10,
     healthcare: 10,
+    chemicals: 15,
 } as ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(
@@ -81,14 +83,14 @@ export function getLowestGoodsRatio(
         if(t > 0) {
             workerRatios[key] = 1
         } else {
-            workerRatios[key] = available[key] / (requirement * level * workerRatio)
+            workerRatios[key] = Math.max(0, available[key] / (requirement * level * workerRatio))
         }
     }
 
     const entries = Object.entries(workerRatios)
     if (entries.length === 0) return 1
 
-    return Math.min(...entries.map(([, v]) => v), 1)
+    return Math.max(0, Math.min(...entries.map(([, v]) => v), 1))
 }
 
 export function getPrices() {

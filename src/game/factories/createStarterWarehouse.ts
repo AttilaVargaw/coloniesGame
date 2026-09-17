@@ -28,8 +28,9 @@ export function createStarterWarehouse(population: number) {
         luxuryFood: population * 10,
         luxuryFurniture: population * 10,
         ordnance: 0,
-        healthcare: 0,
-        faith: 0,
-        lawEnforcement: 0,
+        healthcare: population * 10,
+        faith: population * 10,
+        lawEnforcement: population * 10,
+        chemicals: population * 10,
     } satisfies Goods;
 }
