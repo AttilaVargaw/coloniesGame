@@ -39,13 +39,14 @@ const PER_CAPITA_SECTOR_RATIOS = {
     recycling: 0.000001,
 } as const satisfies Record<keyof IndustrialSectors, number>;
 
-// const MIN_SECTOR_LEVEL = 0;
+const MIN_SECTOR_LEVEL = 1;
 
 export function createStarterIndustry(population: number) {
     const sectors = {} as Record<keyof IndustrialSectors, number>;
 
-    for(const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
-        sectors[key] = 1
+    for (const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
+        const scaled = population * PER_CAPITA_SECTOR_RATIOS[key];
+        sectors[key] = Math.max(MIN_SECTOR_LEVEL, Math.round(scaled));
     }
 
     return sectors as IndustrialSectors;

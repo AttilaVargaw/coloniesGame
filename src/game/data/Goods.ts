@@ -70,6 +70,7 @@ export const basePrices = {
 
     environmentFactor: 10,
     money: 10,
+    faith: 10,
     lawEnforcement: 10,
     healthcare: 10,
     chemicals: 10,

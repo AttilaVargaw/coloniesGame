@@ -18,7 +18,7 @@ export const MapCreationData = {
                 marker: { color: "#48a4ad", radius: 20, label: "Ragnar" },
                 name: "Ragnar",
                 orbit: {
-                    radius: 6 * SOLAR_UNIT,
+                    radius: 12 * SOLAR_UNIT,
                     angle: 0, eccentricity: 0
                 },
                 children: [

@@ -28,6 +28,7 @@ export interface IndustryTickResult {
     }>;
     goodsChange: Goods;
     sectorProfits: Record<string, number>;
+    populationProfits: Record<string, number>;
 }
 
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
@@ -97,6 +98,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         }
         const goodsProduction = { ...sumGoodsProduction };
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
+        const populationProfits: Record<string, number> = {};
 
         for (const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
             const { requirements, qol } = getGoodRequirementsAndQoL(
@@ -111,6 +113,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 wealth: pop.wealth + baseSalaries[key] * pop.number,
                 requirements: requirements as Record<string, number>,
             };
+
+            const income = baseSalaries[key] * pop.number;
+            const expenses = Object.entries(requirements).reduce((sum, [good, amount]) => {
+                if (!amount) return sum;
+                return sum + amount * getPrices()[good as keyof Goods];
+            }, 0);
+            populationProfits[key] = income - expenses;
         }
 
         const sectorProfits: Record<string, number> = {};
@@ -147,6 +156,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             populationUpdates,
             goodsChange,
             sectorProfits,
+            populationProfits,
         });
     }
 

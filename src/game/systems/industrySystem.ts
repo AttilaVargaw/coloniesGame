@@ -90,6 +90,11 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 industry.sectorProfits[sectorKey] = profit;
             }
 
+            for (const [group, profit] of Object.entries(result.populationProfits)) {
+                const groupKey = group as keyof Population;
+                industry.populationProfits[groupKey] = profit;
+            }
+
             industry.goodsChange = result.goodsChange;
             for(const it in industry.goods) {
                 industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods];

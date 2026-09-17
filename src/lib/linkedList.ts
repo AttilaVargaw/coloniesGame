@@ -51,7 +51,7 @@ export class CumulativeLinkedList<T> {
         this.head.next = new LinkedListNode("", nodes[0])
         this.size = nodes.length
 
-        let current = this.head
+        let current = this.head.next
 
         for(let i = 0; i < nodes.length - 1; i++) {
             current.next = new LinkedListNode("", nodes[i + 1])

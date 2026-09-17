@@ -30,6 +30,7 @@ export class IndustryComponent extends EntityComponent {
     public freeWorkers: Population
     public sectorWealth: Record<keyof IndustrialSectors, number>
     public sectorProfits: Record<keyof IndustrialSectors, number>
+    public populationProfits: Record<keyof Population, number>
 
     constructor(
         public sectors: IndustrialSectors,
@@ -46,5 +47,8 @@ export class IndustryComponent extends EntityComponent {
         this.freeWorkers = createStarterPopulation(0)
         this.sectorWealth = createStarterSectorWealth()
         this.sectorProfits = createStarterSectorWealth()
+        this.populationProfits = Object.fromEntries(
+            Object.keys(population).map(key => [key, 0])
+        ) as Record<keyof Population, number>;
     }
 }
