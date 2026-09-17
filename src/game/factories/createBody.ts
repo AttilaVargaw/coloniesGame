@@ -90,7 +90,7 @@ export function createBody({
             new SelectableComponent(clickSize, "red"),
             new HoverableComponent("pointer", clickSquare),
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
-            new IndustryComponent(createStarterIndustry(), createStarterWarehouse(population), createStarterPopulation(population))
+            new IndustryComponent(createStarterIndustry(population), createStarterWarehouse(population), createStarterPopulation(population))
         )
     } else {
         applyComponents(body,

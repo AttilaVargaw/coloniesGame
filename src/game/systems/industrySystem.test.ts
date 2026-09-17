@@ -21,7 +21,7 @@ describe("industrySystem", () => {
             system.addToEngine(world)
 
             const entity = world.createEntity("colony")
-            const industry = new IndustryComponent(createStarterIndustry(), createStarterWarehouse(1000), createStarterPopulation(1000))
+            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000))
             entity.addComponent(industry)
             world.addEntity(entity)
 
@@ -39,7 +39,7 @@ describe("industrySystem", () => {
             system.addToEngine(world)
 
             const entity = world.createEntity("colony")
-            entity.addComponent(new IndustryComponent(createStarterIndustry(), createStarterWarehouse(1000), createStarterPopulation(1000)))
+            entity.addComponent(new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000)))
             world.addEntity(entity)
 
             expect((system as any).nodes).toHaveLength(1)
