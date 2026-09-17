@@ -1,6 +1,10 @@
 import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
+import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
+
+const wasdButtons = new Set(["w", "a", "s", "d", "W", "A", "S", "D", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
+const allButtons = new Set(["+", "=", "-", "_", ...wasdButtons])
 
 export class ViewportInputHandler {
     private _isDragging = false
@@ -13,7 +17,7 @@ export class ViewportInputHandler {
     private accumulatedZoom = 0
     private lastWheelScreen = { x: 0, y: 0 }
 
-    constructor(private readonly viewportSystem: ViewportSystem) { }
+    constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem: CameraFollowSystem) { }
 
     private static readonly DRAG_THRESHOLD = 3
     private static readonly ZOOM_SPEED = 1.0015
@@ -129,7 +133,11 @@ export class ViewportInputHandler {
 
     private onKeyDown = (event: KeyboardEvent) => {
         const key = event.key
-        if(["+", "=", "-", "_", "w", "a", "s", "d"].includes(key)) {
+
+        if(allButtons.has(key)) {
+            if(wasdButtons.has(key)) {
+                this.cameraFollowSystem.stopFollowing()
+            }
             this.heldKeys.add(key)
             event.preventDefault()
         }
@@ -217,7 +225,7 @@ export class ViewportInputHandler {
         this.applyKeyScroll(dt, camera)
         this.applyEdgePan(dt, camera)
 
-        if (this.accumulatedZoom !== 0) {
+        if(this.accumulatedZoom !== 0) {
             camera.zoomBy(
                 Math.pow(ViewportInputHandler.WHEEL_ZOOM_SPEED, this.accumulatedZoom),
                 this.lastWheelScreen.x,

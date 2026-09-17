@@ -7,6 +7,19 @@ import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import type { IndustryTickInput, IndustryTickResult } from "../workers/industryTick.worker";
 
+const workerUrl = new URL("../workers/industryTick.worker.ts", import.meta.url);
+
+function createIndustryWorker(onMessage: MessageEventTarget<Worker>["onmessage"]) {
+    const worker = new Worker(workerUrl, { type: "module" })
+
+    worker.onmessage = onMessage
+    worker.onerror = (event) => {
+        console.error("Industry worker error:", event.message);
+    };
+
+    return worker;
+}
+
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     protected updateNode(_node: IndustryNode, _dT?: number): void {
     }
@@ -14,45 +27,43 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     private worker: Worker | null = null;
 
     private ensureWorker() {
-        if (!this.worker) {
-            this.worker = new Worker(new URL("../workers/industryTick.worker.ts", import.meta.url), { type: "module" });
-            this.worker.onmessage = this.handleWorkerMessage;
-            this.worker.onerror = (event) => {
-                console.error("Industry worker error:", event.message);
-            };
+        if(!this.worker) {
+            this.worker = createIndustryWorker(this.handleWorkerMessage);
         }
     }
 
     private handleWorkerMessage = (event: MessageEvent<{ type: string; results: IndustryTickResult[] }>) => {
-        if (event.data.type !== "result") return;
+        if(event.data.type !== "result") {
+            return
+        }
 
         const resultsMap = new Map(event.data.results.map((r) => [r.entityId, r]));
 
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             const result = resultsMap.get(entity.id);
-            if (!result) continue;
+            if(!result) continue;
 
             industry.goodsRequirements = result.goodsRequirements;
             industry.goodsProduction = result.goodsProduction;
             industry.workingWorkers = result.workingWorkers;
             industry.freeWorkers = result.freeWorkers;
 
-            for (const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
+            for(const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
                 const pop = industry.population[key];
-                if (!pop) continue;
+                if(!pop) continue;
 
                 pop.qol = update.qol;
                 pop.populationChange = update.populationChange;
                 pop.wealth = update.wealth;
 
-                for (const it in update.requirements) {
+                for(const it in update.requirements) {
                     industry.goodsRequirements[it as keyof Goods] =
                         update.requirements[it] * pop.number + (industry.goodsRequirements[it as keyof Goods] ?? 0);
                 }
             }
 
             industry.goodsChange = result.goodsChange;
-            for (const it in industry.goods) {
+            for(const it in industry.goods) {
                 industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods];
             }
         }
@@ -62,7 +73,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         this.ensureWorker();
 
         const industries: IndustryTickInput[] = [];
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             industries.push({
                 entityId: entity.id,
                 sectors: industry.sectors,
@@ -75,7 +86,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     };
 
     removeFromEngine(): this {
-        if (this.worker) {
+        if(this.worker) {
             this.worker.terminate();
             this.worker = null;
         }

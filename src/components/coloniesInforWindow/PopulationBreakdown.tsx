@@ -1,6 +1,7 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Population, sumPopulation } from "@/game/data/Population";
 import { convertToReadable } from "@/lib/utils";
+import { colorBySign, } from "./colorBySign";
 
 function Sum(...args: number[]) {
     let sum = 0
@@ -11,10 +12,6 @@ function Sum(...args: number[]) {
 
     return sum
 }
-
-const fmt = (v: number) => <span color="red">
-    {`(${v.toFixed(1)}/day)`}
-</span>;
 
 export function PopulationBreakdown({ industry }: { industry: IndustryComponent; }) {
     const populationSum = sumPopulation(industry.population);
@@ -27,7 +24,10 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                     <tr>
                         <td>Population</td>
                         <td>
-                            {convertToReadable(populationSum)} <span className="text-neutral-400">{fmt(popGrowth)}</span>
+                            {convertToReadable(populationSum)}
+                        </td>
+                        <td>
+                            {colorBySign(popGrowth)}
                         </td>
                     </tr>
                     <tr>
@@ -41,8 +41,12 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                     {Object.entries((industry.population)).map(([key, value]) => {
                         const { number, populationChange } = value
 
+                        console.log(colorBySign(populationChange))
+
                         return <tr key={key}>
-                            <td>{key}</td><td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)} is working) ({convertToReadable(populationChange || 0)})</td>
+                            <td>{key}</td>
+                            <td>{convertToReadable(number)} ({convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)} is working)</td>
+                            <td>{colorBySign(populationChange)}</td>
                         </tr>;
                     })}
                 </tbody>

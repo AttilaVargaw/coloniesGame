@@ -12,7 +12,8 @@ export function IndustryBreakdown({ industry: { sectors } }: { industry: Industr
             </thead>
             <tbody>
                 {Object.entries((sectors)).map(([key, value]) => <tr key={key}>
-                    <td>{key}</td><td style={{ textAlign: "center" }}>{convertToReadable(value)}</td>
+                    <td>{key}</td>
+                    <td style={{ textAlign: "center" }}>{convertToReadable(value)}</td>
                 </tr>
                 )}
             </tbody>

@@ -45,7 +45,7 @@ export function ColoniesInforWindow() {
     const [page, setPage] = useState<string>("population")
 
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1c] text-popover-foreground">
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>
             </DialogHeader>

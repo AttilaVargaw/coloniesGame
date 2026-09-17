@@ -8,6 +8,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
+import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 
 const mulberry32 = (seed: number) => {
     seed |= 0
@@ -73,14 +74,14 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const buckets = new Map<number, { x: number; y: number; r: number }[]>()
         for(const s of this.starfield) {
             const projected = camera.project(s.x, s.y, s.z)
-            if (!projected) {
+            if(!projected) {
                 continue
             }
             const alpha = s.opacity * Math.min(1, projected.scale * 80)
             const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200))
             const bucket = Math.round(alpha * 10) / 10
 
-            if (!buckets.has(bucket)) buckets.set(bucket, [])
+            if(!buckets.has(bucket)) buckets.set(bucket, [])
             buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius })
         }
 
@@ -110,7 +111,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.drawStarfield(ctx)
 
             if(DEBUG_VISUALIZE_PATHS) {
-            //     this.drawDebugPaths(ctx)
+                //     this.drawDebugPaths(ctx)
                 this.drawOrbits(ctx)
             }
         }
@@ -130,7 +131,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             const [sx, sy, sz] = getAbsolute(ship, this.engine)
             const startProjected = camera.project(sx, sy, sz)
-            if (!startProjected) {
+            if(!startProjected) {
                 continue
             }
 
@@ -140,7 +141,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             for(const waypoint of waypoints) {
                 const [wx, wy, wz] = getAbsolute(waypoint, this.engine)
                 const projected = camera.project(wx, wy, wz)
-                if (projected) {
+                if(projected) {
                     ctx.lineTo(projected.x, projected.y)
                 }
             }
@@ -158,7 +159,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
             const [sx, sy, sz] = getAbsolute(path[0], this.engine)
             const startProjected = camera.project(sx, sy, sz)
-            if (!startProjected) {
+            if(!startProjected) {
                 continue
             }
 
@@ -168,7 +169,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             for(let i = 1; i < path.length; i++) {
                 const [wx, wy, wz] = getAbsolute(path[i], this.engine)
                 const projected = camera.project(wx, wy, wz)
-                if (projected) {
+                if(projected) {
                     ctx.lineTo(projected.x, projected.y)
                 }
             }
@@ -182,7 +183,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {
-        if (!this.engine) {
+        if(!this.engine) {
             return
         }
 
@@ -191,15 +192,14 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
         ctx.lineWidth = 1
-        //ctx.setLineDash([2, 4])
 
         const cssWidth = camera.cssWidth
         const cssHeight = camera.cssHeight
 
-        for (const node of this.engine.getNodeList(OrbitNode)) {
+        for(const node of this.engine.getNodeList(OrbitNode)) {
             const sceneNode = this.engine.getSceneNode(node.entity)
             const parentEntity = sceneNode?.parent?.entity
-            if (!parentEntity) {
+            if(!parentEntity) {
                 continue
             }
 
@@ -207,14 +207,14 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const orbit = node.orbit
 
             const center = camera.project(cx, cy, cz)
-            if (!center) {
+            if(!center) {
                 continue
             }
 
             const boundingRadius = orbit.radius * (1 + orbit.eccentricity)
             const screenRadius = boundingRadius * center.scale
 
-            if (
+            if(
                 center.x + screenRadius < 0 ||
                 center.x - screenRadius > cssWidth ||
                 center.y + screenRadius < 0 ||
@@ -223,7 +223,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
-            const segments = Math.max(24, Math.min(72, Math.round(screenRadius / 2)))
+            const segments = Math.max(24, Math.round(screenRadius / 4))
             const inclinationAngle = orbit.inclination || 0
             const cosI = Math.cos(inclinationAngle)
             const sinI = Math.sin(inclinationAngle)
@@ -231,7 +231,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const focusOffset = orbit.radius * orbit.eccentricity
 
             ctx.beginPath()
-            for (let i = 0; i <= segments; i++) {
+            for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const x = orbit.radius * Math.cos(angle) - focusOffset
                 const y = b * Math.sin(angle)
@@ -239,10 +239,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const worldY = cy + y * cosI
                 const worldZ = cz + y * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
-                if (!projected) {
+                if(!projected) {
                     continue
                 }
-                if (i === 0) {
+                if(i === 0) {
                     ctx.moveTo(projected.x, projected.y)
                 } else {
                     ctx.lineTo(projected.x, projected.y)
@@ -270,12 +270,12 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     init() {
+        this.inputHandler = new ViewportInputHandler(this, this.engine!.getSystem(CameraFollowSystem)!)
         this.inputHandler.addToEngine()
     }
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
-        this.inputHandler = new ViewportInputHandler(this)
         this.nodes = engine.getNodeList(ViewportNode)
 
         return this

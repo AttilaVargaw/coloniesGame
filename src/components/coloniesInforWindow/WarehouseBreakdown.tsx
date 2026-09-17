@@ -1,6 +1,7 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Goods } from "@/game/data/Goods";
 import { convertToReadable } from "@/lib/utils";
+import { colorBySign } from "./colorBySign";
 
 export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRequirements } }: { industry: IndustryComponent; }) {
     return (
@@ -22,7 +23,7 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                     return <tr key={key}>
                         <td>{key}</td>
                         <td>{convertToReadable(value || 0)}</td>
-                        <td style={{ textAlign: "center" }}>{convertToReadable(addition - (used || 0))}</td>
+                        <td style={{ textAlign: "center" }}>{colorBySign(addition - (used || 0))}</td>
                         <td style={{ textAlign: "center" }}>{convertToReadable(addition)}</td>
                         <td style={{ textAlign: "center" }}>{convertToReadable(used)}</td>
                     </tr>

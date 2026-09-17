@@ -28,6 +28,10 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         super()
     }
 
+    stopFollowing() {
+        this.nodes.forEach(node => node.follow.target = null)
+    }
+
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
@@ -68,9 +72,9 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         const viewport = this.viewportSystem.viewport
         if(!viewport) return
 
-        // if(this.viewportSystem.isDragging) {
-        //     return
-        // }
+        if(this.viewportSystem.isDragging) {
+            return
+        }
 
         const camera = viewport.camera
         const { target, offset, smoothFactor } = node.follow

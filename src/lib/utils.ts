@@ -10,13 +10,15 @@ export function sumValues(o: { [key: string]: number }) {
 }
 
 export function convertToReadable(n: number) {
-    if(Math.abs(n) > 1000000000) {
-        return `${(n / 1000000000).toFixed(1)}B`;
-    } else if(n > 1000000) {
-        return `${(n / 1000000).toFixed(1)}M`;
-    } else if(n > 1000) {
-        return `${(n / 1000).toFixed(1)}K`;
+    const abs = Math.abs(n);
+
+    if(abs > 1000_000_000) {
+        return `${(n / 1_000_000_000).toFixed(1)}B`;
+    } else if(abs > 1_000_000) {
+        return `${(n / 1_000_000).toFixed(1)}M`;
+    } else if(abs > 1_000) {
+        return `${(n / 1_000).toFixed(1)}K`;
     } else {
-        return n.toFixed(0);
+        return abs.toFixed(0);
     }
 }

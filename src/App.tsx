@@ -9,7 +9,7 @@ import { AppInner } from "./AppInner";
 function App() {
   const mapRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   useEffect(() => {
     if(!mapRef.current) {
