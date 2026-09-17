@@ -5,4 +5,5 @@ export type OrbitalBlueprint = {
     readonly angle?: number;
     readonly inclination?: number;
     readonly periapsis?: number;
+    readonly ascendingNode?: number;
 };

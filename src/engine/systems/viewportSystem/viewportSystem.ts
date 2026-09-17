@@ -236,6 +236,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const arg = orbit.argumentOfPeriapsis || 0
             const cosA = Math.cos(arg)
             const sinA = Math.sin(arg)
+            const lan = orbit.longitudeOfAscendingNode || 0
+            const cosL = Math.cos(lan)
+            const sinL = Math.sin(lan)
 
             ctx.beginPath()
             for(let i = 0; i <= segments; i++) {
@@ -244,8 +247,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const y = b * Math.sin(angle)
                 const rx = x * cosA - y * sinA
                 const ry = x * sinA + y * cosA
-                const worldX = cx + rx
-                const worldY = cy + ry * cosI
+                const x1 = rx * cosL - ry * cosI * sinL
+                const y1 = rx * sinL + ry * cosI * cosL
+                const worldX = cx + x1
+                const worldY = cy + y1
                 const worldZ = cz + ry * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
                 if(!projected) {

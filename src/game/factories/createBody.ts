@@ -48,7 +48,8 @@ export function createBody({
             angle,
             orbit.eccentricity ?? 0,
             orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),
-            orbit.periapsis ?? 0
+            orbit.periapsis ?? 0,
+            orbit.ascendingNode ?? 0
         ),
         new SoiComponent(calculateSoi(marker.radius, archetype)),
         new PathComponent(),

@@ -56,12 +56,17 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         const arg = orbit.argumentOfPeriapsis || 0
         const cosA = Math.cos(arg)
         const sinA = Math.sin(arg)
+        const lan = orbit.longitudeOfAscendingNode || 0
+        const cosL = Math.cos(lan)
+        const sinL = Math.sin(lan)
 
         const rx = r * Math.cos(theta)
         const ry = r * Math.sin(theta)
-        position.x = rx * cosA - ry * sinA
-        position.y = (rx * sinA + ry * cosA) * cosI
-        position.z = (rx * sinA + ry * cosA) * sinI
+        const x1 = rx * cosA - ry * sinA
+        const y1 = rx * sinA + ry * cosA
+        position.x = x1 * cosL - y1 * cosI * sinL
+        position.y = x1 * sinL + y1 * cosI * cosL
+        position.z = y1 * sinI
     }
 
     protected registerNodes(engine: Engine): this {
