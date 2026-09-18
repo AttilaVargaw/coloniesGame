@@ -15,3 +15,5 @@ export const occupationStarterRatio = {
     clergy: 3.5,
     clerks: 19,
 } as const as Record<keyof Population, number>;
+
+console.log(Object.values(occupationStarterRatio).reduce((a, b) => a + b, 0))

@@ -17,7 +17,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     lumberMill: 0.000064,
     machineryFactory: 0.0000248,
     medicineFactory: 0.00000088,
-    consumerFactory: 0.0000196,
+    consumerFactory: 0.00003,
     furnitureFactory: 0.0000168,
     ammunitionFactory: 0.00004,
     weaponFactory: 0.000014,
@@ -37,8 +37,9 @@ const PER_CAPITA_SECTOR_RATIOS = {
     lawEnforcement: 0.00003,
     chemical: 0.000014,
     recycling: 0.00002,
-    government: 0.00004,
-    automotive: 0.00002,
+    government: 0.0001,
+    automotive: 0.0001,
+    electronics: 0.0001,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 1;
