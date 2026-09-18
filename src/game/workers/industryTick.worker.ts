@@ -122,13 +122,16 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const goodsRequirements = name !== 'government'
                 ? { ...rawGoodsRequirements, governance: 2 }
                 : rawGoodsRequirements;
+            const goodsRequirementsWithVehicles = name !== 'automotive'
+                ? { ...goodsRequirements, vehicles: 1 }
+                : goodsRequirements;
             const goodsProduction = config.goodsProduction || {};
 
             const maintenanceCost = Math.round((sectorUpgradeCosts[name as keyof IndustrialSectors] || 10) * level * 0.1);
             const wealth = (sectorWealth[name] ?? 0) - maintenanceCost;
             const clampedWealth = Math.max(0, wealth);
 
-            const inputCost = Object.entries(goodsRequirements).reduce((sum, [key, value]) => {
+            const inputCost = Object.entries(goodsRequirementsWithVehicles).reduce((sum, [key, value]) => {
                 return sum + (value as number) * prices[key as keyof Goods];
             }, 0);
 
@@ -149,7 +152,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                     Object.entries(workerRequirement).map(([k, v]) => [k, (v as number) * inputLevel])
                 ) as Partial<Record<keyof Population, number>>,
                 idealGoodsDemand: Object.fromEntries(
-                    Object.entries(goodsRequirements).map(([k, v]) => [k, (v as number) * inputLevel])
+                    Object.entries(goodsRequirementsWithVehicles).map(([k, v]) => [k, (v as number) * inputLevel])
                 ) as Partial<Record<keyof Goods, number>>,
                 idealGoodsProduction: Object.fromEntries(
                     Object.entries(goodsProduction).map(([k, v]) => [k, (v as number) * outputLevel])

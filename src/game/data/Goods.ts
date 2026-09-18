@@ -28,6 +28,7 @@ export type Goods = {
     weapons: number;
     nuclearWeapons: number;
     ordnance: number;
+    vehicles: number;
 
     environmentFactor: number
     money: number,
@@ -68,6 +69,7 @@ export const basePrices = {
     weapons: 30,
     nuclearWeapons: 300,
     ordnance: 30,
+    vehicles: 80,
 
     environmentFactor: 10,
     money: 10,

@@ -37,6 +37,7 @@ export type IndustrialSectors = Readonly<{
     alternativeMedicine: number;
     recycling: number;
     government: number;
+    automotive: number;
 }>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

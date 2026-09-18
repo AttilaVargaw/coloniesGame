@@ -1,7 +1,7 @@
 import { IndustrialSectors } from "../components/Factories";
 
 const PER_CAPITA_SECTOR_RATIOS = {
-    mine: 0.0001,
+    mine: 0.00001,
     oilRig: 0.00008,
     forestry: 0.0000026,
     farm: 0.0000088,
@@ -17,27 +17,28 @@ const PER_CAPITA_SECTOR_RATIOS = {
     lumberMill: 0.000064,
     machineryFactory: 0.0000248,
     medicineFactory: 0.00000088,
-    consumerFactory: 0.000056,
+    consumerFactory: 0.0000196,
     furnitureFactory: 0.0000168,
     ammunitionFactory: 0.00004,
     weaponFactory: 0.000014,
     nuclearWeaponFactory: 0,
-    ordnanceFactory: 0.00004,
+    ordnanceFactory: 0.000004,
     spaceport: 0,
     spaceShipyard: 0,
     orbitalFactory: 0,
     construction: 0.00004,
     services: 0.000062,
-    tourism: 0.000084,
+    tourism: 0.0000084,
     education: 0.00004,
     healthcare: 0.0000288,
     environmentControl: 0.00002,
     bank: 0.00001,
-    religion: 0.00016,
+    religion: 0.000016,
     lawEnforcement: 0.00003,
     chemical: 0.000014,
     recycling: 0.00002,
     government: 0.00004,
+    automotive: 0.00002,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 1;
