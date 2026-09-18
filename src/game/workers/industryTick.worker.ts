@@ -76,7 +76,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const expectedQolSmoothing = 0.3;
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
-            const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 7;
+            const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 7 * pop.birthRate;
             const maxDailyChange = pop.number * 0.001;
             const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, rawPopulationChange));
 
