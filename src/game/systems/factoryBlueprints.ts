@@ -158,7 +158,7 @@ export const industryReducers = Object.entries({
 });
 
 export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
-    const entry = Object.entries(industryReducers).find(([n]) => n === name) as [string, IndustryReducer] | undefined;
+    const entry = industryReducers.find(([n]) => n === name) as [string, IndustryReducer] | undefined;
     if (!entry) return level;
     const config = (entry[1] as IndustryReducer & { config?: { efficiencyBonus?: number; outputLevelModifier?: (level: number) => number } }).config;
     if (!config) return level;

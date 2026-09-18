@@ -32,13 +32,12 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
     efficiencyBonus?: number;
 }) => {
     const getOutputLevel = (level: number) => {
-        if (outputLevelModifier) return outputLevelModifier(level);
-        if (efficiencyBonus > 0) return level * (1 + efficiencyBonus * (level - 1));
+        if(outputLevelModifier) return outputLevelModifier(level);
+        if(efficiencyBonus > 0) return level * (1 + efficiencyBonus * (level - 1));
         return level;
     };
 
-    const reducer = ({ workerRatio, remainingWorkers, remainingGoods, sumGoodsProduction, sumGoodsRequirements, workingWorkers
-    }: ReducerInput,
+    const reducer = ({ workerRatio, remainingWorkers, remainingGoods, sumGoodsProduction, sumGoodsRequirements, workingWorkers }: ReducerInput,
         _sectorLevels: IndustrialSectors) => {
         const level = _sectorLevels[name as keyof IndustrialSectors];
         const inputLevel = levelModifier ? levelModifier(level) : level;
@@ -47,48 +46,72 @@ export const generateIndustrialSector = ({ name, workerRequirement, goodsRequire
             getLowestPopulationRatio(workerRequirement, remainingWorkers, inputLevel, workerRatio),
             getLowestGoodsRatio(goodsRequirements, remainingGoods, inputLevel, workerRatio)
         );
-
         const productionRatio = lowestRatio;
-        const workerRequirementEntries = Object.entries(workerRequirement) as [keyof Population, number][];
-        const goodsRequirementsEntries = Object.entries(goodsRequirements) as [keyof Goods, number][];
-        const goodsProductionEntries = Object.entries(goodsProduction) as [keyof Goods, number][];
 
-        const ret = {
-            workingWorkers: {
-                ...workerRequirementEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: { ...workingWorkers[key], number: workingWorkers[key].number + value * inputLevel * productionRatio } }), workingWorkers)
-            },
-            remainingWorkers: {
-                ...workerRequirementEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: { ...remainingWorkers[key], number: remainingWorkers[key].number - value * inputLevel * productionRatio } }), remainingWorkers)
-            },
-            remainingGoods: {
-                ...goodsRequirementsEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] - value * inputLevel * productionRatio }), remainingGoods),
-                ...goodsProductionEntries
-                    .reduce((acc, [key, value]) => ({ ...acc, [key]: remainingGoods[key] + value * outputLevel * productionRatio }), remainingGoods),
-            },
-            sumGoodsRequirements: {
-                ...goodsRequirementsEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * inputLevel * productionRatio }), sumGoodsRequirements)
-            },
-            sumGoodsProduction: {
-                ...goodsProductionEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: (acc[key] ?? 0) + value * outputLevel * productionRatio }), sumGoodsProduction)
-            },
+        const workerEntries = Object.entries(workerRequirement) as [keyof Population, number][];
+        const goodsReqEntries = Object.entries(goodsRequirements) as [keyof Goods, number][];
+        const goodsProdEntries = Object.entries(goodsProduction) as [keyof Goods, number][];
+
+        const workingWorkersResult = { ...workingWorkers };
+        const remainingWorkersResult = { ...remainingWorkers };
+        const remainingGoodsResult = { ...remainingGoods };
+        const sumGoodsRequirementsResult = { ...sumGoodsRequirements };
+        const sumGoodsProductionResult = { ...sumGoodsProduction };
+        const consumedGoods: Partial<Goods> = {};
+        const producedGoods: Partial<Goods> = {};
+        const workersEmployed: Partial<Record<keyof Population, number>> = {};
+
+        for (const [key, value] of workerEntries) {
+            const scaled = value * inputLevel * productionRatio;
+            workingWorkersResult[key] = { ...workingWorkersResult[key], number: workingWorkers[key].number + scaled };
+            remainingWorkersResult[key] = { ...remainingWorkersResult[key], number: remainingWorkers[key].number - scaled };
+            workersEmployed[key] = scaled;
+        }
+
+        for (const [key, value] of goodsReqEntries) {
+            const scaled = value * inputLevel * productionRatio;
+            remainingGoodsResult[key] -= scaled;
+            sumGoodsRequirementsResult[key] = (sumGoodsRequirementsResult[key] ?? 0) + scaled;
+            consumedGoods[key] = scaled;
+        }
+
+        for (const [key, value] of goodsProdEntries) {
+            const scaled = value * outputLevel * productionRatio;
+            remainingGoodsResult[key] += scaled;
+            sumGoodsProductionResult[key] = (sumGoodsProductionResult[key] ?? 0) + scaled;
+            producedGoods[key] = scaled;
+        }
+
+        return {
+            workingWorkers: workingWorkersResult,
+            remainingWorkers: remainingWorkersResult,
+            remainingGoods: remainingGoodsResult,
+            sumGoodsRequirements: sumGoodsRequirementsResult,
+            sumGoodsProduction: sumGoodsProductionResult,
             sectorResult: {
                 name: name as string,
-                consumedGoods: goodsRequirementsEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: value * inputLevel * productionRatio }), {}),
-                producedGoods: goodsProductionEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: value * outputLevel * productionRatio }), {}),
-                workersEmployed: workerRequirementEntries.reduce((acc, [key, value]) => ({ ...acc, [key]: value * inputLevel * productionRatio }), {}),
+                consumedGoods,
+                producedGoods,
+                workersEmployed,
                 productionRatio,
                 inputLevel,
                 outputLevel,
             } as SectorResult
         };
-
-        return ret;
     };
 
-    (reducer as IndustryReducer & { config: { name: keyof IndustrialSectors; efficiencyBonus: number; outputLevelModifier?: (level: number) => number; levelModifier?: (level: number) => number } }).config = { name, efficiencyBonus, outputLevelModifier, levelModifier };
+    (reducer as IndustryReducer & {
+        config: {
+            name: keyof IndustrialSectors;
+            efficiencyBonus: number;
+            outputLevelModifier?: (level: number) => number;
+            levelModifier?: (level: number) => number;
+            workerRequirement: Partial<Record<keyof Population, number>>;
+            goodsRequirements: Partial<Record<keyof Goods, number>>;
+            goodsProduction: Partial<Goods>
+        }
+    }).config =
+        { name, efficiencyBonus, outputLevelModifier, levelModifier, workerRequirement, goodsRequirements, goodsProduction };
     return reducer as IndustryReducer;
 };
 

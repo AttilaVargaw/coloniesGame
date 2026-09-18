@@ -46,15 +46,15 @@ export class CumulativeLinkedList<T> {
     }
 
     constructor(o: Record<string, any>) {
-        const nodes = Object.values(o)
+        const entries = Object.entries(o)
 
-        this.head.next = new LinkedListNode("", nodes[0])
-        this.size = nodes.length
+        this.head.next = new LinkedListNode(entries[0][0], entries[0][1])
+        this.size = entries.length
 
         let current = this.head.next
 
-        for(let i = 0; i < nodes.length - 1; i++) {
-            current.next = new LinkedListNode("", nodes[i + 1])
+        for(let i = 0; i < entries.length - 1; i++) {
+            current.next = new LinkedListNode(entries[i + 1][0], entries[i + 1][1])
             current.next._prev = current
             current = current.next
         }

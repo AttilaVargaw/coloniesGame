@@ -100,6 +100,30 @@ export function getLowestGoodsRatio(
     return Math.max(0, Math.min(...entries.map(([, v]) => v), 1))
 }
 
-export function getPrices() {
-    return basePrices
+const priceMemory: Partial<Record<keyof Goods, number>> = {};
+const priceDamping = 0.4;
+const priceMaxDeviation = 0.25;
+
+export function getPrices(goods: Goods): Record<keyof Goods, number> {
+    const prices: Record<keyof Goods, number> = {} as any;
+    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+        const stock = goods[key] || 0;
+        const base = basePrices[key];
+        const baseline = Math.max(base * 10, 1);
+        const stockRatio = stock / baseline;
+
+        let adjustment = 1.0;
+        if (stockRatio < 0.2) adjustment = 1.25;
+        else if (stockRatio < 0.5) adjustment = 1.1;
+        else if (stockRatio > 4) adjustment = 0.9;
+        else if (stockRatio > 2) adjustment = 0.95;
+
+        const currentPrice = priceMemory[key] ?? base;
+        const targetPrice = base * adjustment;
+        const dampedPrice = currentPrice + (targetPrice - currentPrice) * priceDamping;
+        const clampedPrice = Math.max(base * (1 - priceMaxDeviation), Math.min(base * (1 + priceMaxDeviation), dampedPrice));
+        priceMemory[key] = clampedPrice;
+        prices[key] = clampedPrice;
+    }
+    return prices;
 }

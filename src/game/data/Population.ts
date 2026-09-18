@@ -21,6 +21,7 @@ export type PopulationBreakdown = {
     wealth: number
     wealthLevel: number
     qol: number
+    expectedQol: number
     populationChange: number
     mortality: number
     salary: number
@@ -59,7 +60,7 @@ export const baseSalaries = {
     teacher: 200,
     serviceWorker: 200,
     clergy: 200,
-    retired: 0,
+    retired: 100,
     clerks: 500,
     investor: 0
 } as ReadonlyRecord<keyof Population, number>

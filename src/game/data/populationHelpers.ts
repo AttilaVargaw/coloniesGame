@@ -12,9 +12,8 @@ export function mortality(x: number) {
 }
 
 export function populationGrowth(x: number) {
-    if(x <= 5) return -0.8 + (0.0 - (-0.8)) * (x - 1) / 4;
-    if(x <= 10) return 0.0 + (1.7 - 0.0) * (x - 5) / 5;
-    if(x <= 15) return 1.7 + (2.1 - 1.7) * (x - 10) / 5;
-    if(x <= 25) return 2.1 + (0.15 - 2.1) * (x - 15) / 10;
-    return 0.15;
+    if(x <= 10) return -0.05 + (0.0 - (-0.05)) * (x - 1) / 9;
+    if(x <= 15) return 0.0 + (0.05 - 0.0) * (x - 10) / 5;
+    if(x <= 25) return 0.05 + (0.0 - 0.05) * (x - 15) / 10;
+    return 0.0;
 }

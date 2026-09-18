@@ -76,18 +76,34 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             industry.freeWorkers = result.freeWorkers;
 
             for(const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
-                const pop = industry.population[key];
-                if(!pop) continue;
+            const pop = industry.population[key];
+            if(!pop) continue;
 
-                pop.qol = update.qol;
-                pop.populationChange = update.populationChange;
-                pop.wealth = update.wealth;
+            pop.qol = update.qol;
+            pop.expectedQol = update.expectedQol;
+            pop.populationChange = update.populationChange;
+            pop.wealth = Math.max(0, update.wealth);
+            pop.number = Math.max(0, pop.number + update.populationChange);
             }
 
             for (const [sector, profit] of Object.entries(result.sectorProfits)) {
                 const sectorKey = sector as keyof IndustrialSectors;
-                industry.sectorWealth[sectorKey] = (industry.sectorWealth[sectorKey] ?? 0) + profit;
+                const maintenance = result.sectorMaintenance?.[sectorKey] ?? 0;
+                const currentWealth = industry.sectorWealth[sectorKey] ?? 0;
+                const targetWealth = Math.max(0, currentWealth + profit - maintenance);
+                const sectorWealthSmoothing = 0.5;
+                const smoothedWealth = currentWealth + (targetWealth - currentWealth) * sectorWealthSmoothing;
+                industry.sectorWealth[sectorKey] = smoothedWealth;
                 industry.sectorProfits[sectorKey] = profit;
+
+                const currentLevel = industry.sectors[sectorKey];
+                if (currentLevel > 1 && smoothedWealth < maintenance * 3) {
+                    industry.sectors = {
+                        ...industry.sectors,
+                        [sectorKey]: currentLevel - 1,
+                    };
+                    industry.sectorWealth[sectorKey] = Math.max(0, smoothedWealth - Math.round(maintenance * 0.5));
+                }
             }
 
             for (const [group, profit] of Object.entries(result.populationProfits)) {
@@ -97,7 +113,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
             industry.goodsChange = result.goodsChange;
             for(const it in industry.goods) {
-                industry.goods[it as keyof Goods] += industry.goodsChange[it as keyof Goods];
+                industry.goods[it as keyof Goods] = Math.max(0, industry.goods[it as keyof Goods] + industry.goodsChange[it as keyof Goods]);
             }
 
             this.engine?.dispatchEvent(new IndustryUpdatedEvent(entity));
@@ -115,6 +131,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 sectors: industry.sectors,
                 goods: { ...industry.goods },
                 population: structuredClone(industry.population),
+                sectorWealth: { ...industry.sectorWealth },
             });
         }
 
