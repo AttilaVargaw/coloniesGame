@@ -119,7 +119,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
             consumerGoods: 1,
             furniture: 1,
             healthcare: 2,
-            buildings: 0.5
+            buildings: 0.05
         },
         40: {
             faith: 1.5,
@@ -130,7 +130,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
             basicFood: 0.5,
             furniture: 1.5,
             healthcare: 1,
-            buildings: 1
+            Buildings: 0.01
         },
         50: {},
         80: {
@@ -138,7 +138,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
             tourism: 1,
             luxuryFood: 1,
             luxuryFurniture: 1,
-            buildings: 1.5
+            buildings: 0.015
         }
     })
 

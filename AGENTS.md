@@ -11,7 +11,7 @@ Space-themed strategy game built with React + Tauri. Custom 2D ECS engine render
 ## Tech Stack
 
 - React 19, TypeScript 6.0, Tailwind CSS 4
-- Vite 8, Vitest 4, ESLint 9
+- Vite 8, Vitest 4, ESLint 9 + Oxlint
 - Tauri 2 (desktop shell)
 - Workspace package manager: **pnpm**
 
@@ -24,8 +24,8 @@ pnpm dev          # Start Vite dev server
 pnpm build        # TypeScript check + Vite build
 pnpm test         # Run Vitest unit tests
 pnpm coverage     # Vitest with V8 coverage
-pnpm lint         # ESLint, strict
-pnpm lint:fix     # ESLint with auto-fix
+pnpm lint         # Oxlint + ESLint, strict
+pnpm lint:fix     # Oxlint + ESLint with auto-fix
 pnpm e2e          # Playwright tests
 ```
 
@@ -37,7 +37,8 @@ pnpm e2e          # Playwright tests
 
 ## Lint / Typecheck
 
-- ESLint 9 flat config; strict (`--max-warnings 0`)
+- ESLint 9 flat config + Oxlint; strict (`--max-warnings 0`)
+- Oxlint runs first for fast feedback; ESLint handles remaining rules
 - TypeScript strict mode; `tsc` runs as part of `build`
 - Fixable issues: `pnpm lint:fix`
 

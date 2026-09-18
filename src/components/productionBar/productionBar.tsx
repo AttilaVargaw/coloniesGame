@@ -174,8 +174,7 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
                 onOpenChange={setIsModalOpen}
                 title="Add Unit"
                 options={modalOptions}
-                onSelect={(id) => {
-                    console.log("Selected:", id, "for line:", activeLineIndex);
+                onSelect={(_id) => {
                     setIsModalOpen(false);
                 }}
             />

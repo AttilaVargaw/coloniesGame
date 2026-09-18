@@ -66,14 +66,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 return sum + amount * prices[good as keyof Goods];
             }, 0);
 
-            const qolSmoothing = 0.1;
+            const qolSmoothing = 0.3;
             const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
 
             const wealthSmoothing = 0.5;
             const targetWealth = pop.wealth + income - expenses;
             const smoothedWealth = pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing;
 
-            const expectedQolSmoothing = 0.1;
+            const expectedQolSmoothing = 0.3;
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
             const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 7;
@@ -131,15 +131,15 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 return sum + (value as number) * baseSalaries[key as keyof Population];
             }, 0);
 
-            const costPerUnit = inputCost + laborCost;
+            const costPerUnit = (inputCost + laborCost) * inputLevel;
             const budgetRatio = costPerUnit > 0 ? Math.min(1, Math.max(0, clampedWealth / costPerUnit)) : 1;
 
             sectorBids.push({
                 name,
                 level,
                 budgetRatio,
-                inputCost,
-                laborCost,
+                inputCost: inputCost * inputLevel,
+                laborCost: laborCost * inputLevel,
                 idealWorkerDemand: Object.fromEntries(
                     Object.entries(workerRequirement).map(([k, v]) => [k, (v as number) * inputLevel])
                 ) as Partial<Record<keyof Population, number>>,

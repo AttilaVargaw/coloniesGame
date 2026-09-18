@@ -18,6 +18,7 @@ function App() {
 
     const gameInstance = new Game(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
 
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     setGame(gameInstance)
 
     return () => {

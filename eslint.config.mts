@@ -1,34 +1,35 @@
 import eslintReact from "@eslint-react/eslint-plugin";
 import eslintJs from "@eslint/js";
 import { defineConfig } from "eslint/config";
+import oxlint from "eslint-plugin-oxlint";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
   {
     files: ["**/*.ts", "**/*.tsx"],
-    ignores: ["'src-tauri'"],
-    // Extend recommended rule sets from:
-    // 1. ESLint JS's recommended rules
-    // 2. TypeScript ESLint recommended rules
-    // 3. ESLint React's recommended-typescript rules
+    ignores: [
+      "src-tauri",
+      "coverage",
+      "dist",
+      "e2e",
+      ".kilo",
+      "playwright.config.ts",
+      "vitest.config.ts",
+    ],
     extends: [
       eslintJs.configs.recommended,
       tseslint.configs.recommended,
       eslintReact.configs["recommended-typescript"],
+      oxlint.configs["flat/recommended"],
     ],
-    // Configure language/parsing options
     languageOptions: {
-      // Use TypeScript ESLint parser for TypeScript files
       parser: tseslint.parser,
       parserOptions: {
-        // Enable project service for better TypeScript integration
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    // Custom rule overrides (modify rule levels or disable rules)
     rules: {
-      "@eslint-react/no-missing-key": "warn",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -39,6 +40,5 @@ export default defineConfig(
       "@typescript-eslint/no-explicit-any": "off",
       "@eslint-react/use-state": "off",
     },
-
   },
 );

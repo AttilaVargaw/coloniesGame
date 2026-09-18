@@ -49,7 +49,10 @@
   ],
   "exclude": [
     "**/coverage",
-    "'**/src-tauri'",
+    "**/dist",
+    "**/e2e",
+    "**/.kilo",
+    "**/src-tauri"
   ],
   "references": [
     {
