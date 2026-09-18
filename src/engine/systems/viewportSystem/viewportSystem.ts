@@ -9,6 +9,7 @@ import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/sys
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
+import Camera from "@/lib/camera";
 
 const mulberry32 = (seed: number) => {
     seed |= 0
@@ -37,9 +38,11 @@ const createStarfield = (count: number) => {
 }
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
-    private readonly starfield: { x: number; y: number; z: number; r: number; opacity: number }[] = createStarfield(512)
-    protected updateNode(_node: ViewportNode, _dT?: number) { };
+    private static readonly starfield: { x: number; y: number; z: number; r: number; opacity: number }[] = createStarfield(512)
+    private static readonly rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
     private readonly eventHandlers: Set<Entity> = new Set()
+
+    protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
 
     get isDragging() {
@@ -76,7 +79,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.fillStyle = "#ffffff"
 
         const buckets = new Map<number, { x: number; y: number; r: number }[]>()
-        for(const s of this.starfield) {
+        for(const s of ViewportSystem.starfield) {
             const projected = camera.project(s.x, s.y, s.z)
             if(!projected) {
                 continue
@@ -114,11 +117,30 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.clear(ctx)
             this.drawStarfield(ctx)
 
+            if(this.inputHandler.isRotatingWithoutTarget) {
+                this.drawRotationIndicator(ctx, camera);
+            }
+
             if(DEBUG_VISUALIZE_PATHS) {
-                //     this.drawDebugPaths(ctx)
                 this.drawOrbits(ctx)
             }
         }
+    }
+
+    private drawRotationIndicator(ctx: CanvasRenderingContext2D, camera: Camera) {
+        ctx.save();
+        ctx.strokeStyle = ViewportSystem.rotationIndicatorColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(camera.cssWidth / 2, camera.cssHeight / 2, 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(camera.cssWidth / 2 - 6, camera.cssHeight / 2);
+        ctx.lineTo(camera.cssWidth / 2 + 6, camera.cssHeight / 2);
+        ctx.moveTo(camera.cssWidth / 2, camera.cssHeight / 2 - 6);
+        ctx.lineTo(camera.cssWidth / 2, camera.cssHeight / 2 + 6);
+        ctx.stroke();
+        ctx.restore();
     }
 
     private drawDebugPaths(ctx: CanvasRenderingContext2D) {
@@ -265,7 +287,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             ctx.stroke()
         }
 
-        ctx.setLineDash([])
         ctx.restore()
     }
 

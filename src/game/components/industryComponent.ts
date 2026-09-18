@@ -47,7 +47,9 @@ export class IndustryComponent extends EntityComponent {
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)
         this.sectorWealth = createStarterSectorWealth()
-        this.sectorProfits = createStarterSectorWealth()
+        this.sectorProfits = Object.fromEntries(
+            Object.keys(sectors).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
         this.populationProfits = Object.fromEntries(
             Object.keys(population).map(key => [key, 0])
         ) as Record<keyof Population, number>;

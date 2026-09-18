@@ -102,13 +102,14 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     let qol = 0
 
     const packets = new CumulativeLinkedList<Goods>({
-        0: {
-            basicFood: 0.5,
-            water: 0.5,
-            faith: 4,
-            lawEnforcement: 1,
-            healthcare: 4
-        },
+         0: {
+             basicFood: 0.5,
+             water: 0.5,
+             faith: 4,
+             lawEnforcement: 1,
+             healthcare: 4,
+             governance: 0.5
+         },
         10: {
             basicFood: 1,
             faith: 2,

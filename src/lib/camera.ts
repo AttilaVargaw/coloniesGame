@@ -161,7 +161,7 @@ export default class Camera {
         this.context.translate(-this.viewport.left, -this.viewport.top)
     }
 
-    private updateViewport() {
+    public updateViewport() {
         this.aspectRatio = this.context.canvas.width / this.context.canvas.height
         this.viewport.width = this.distance * Math.tan(this.fieldOfView)
         this.viewport.height = this.viewport.width / this.aspectRatio

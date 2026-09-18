@@ -7,6 +7,8 @@ import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 
+const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"]);
+
 export interface IndustryTickInput {
     entityId: string;
     sectors: IndustrialSectors;
@@ -76,7 +78,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const expectedQolSmoothing = 0.3;
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
-            const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 7 * pop.birthRate;
+            const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
             const maxDailyChange = pop.number * 0.001;
             const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, rawPopulationChange));
 
@@ -116,7 +118,10 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const inputLevel = config.levelModifier ? config.levelModifier(level) : level;
 
             const workerRequirement = config.workerRequirement || {};
-            const goodsRequirements = config.goodsRequirements || {};
+            const rawGoodsRequirements = config.goodsRequirements || {};
+            const goodsRequirements = name !== 'government'
+                ? { ...rawGoodsRequirements, governance: 2 }
+                : rawGoodsRequirements;
             const goodsProduction = config.goodsProduction || {};
 
             const maintenanceCost = Math.round((sectorUpgradeCosts[name as keyof IndustrialSectors] || 10) * level * 0.1);
@@ -273,6 +278,20 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 outputLevel: bid.outputLevel,
             };
             sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
+        }
+
+
+        for(const key of alwaysWorking) {
+            const key2 = key as keyof Population;
+
+            workingWorkers[key2] = {
+                ...workingWorkers[key2],
+                number: population[key2].number
+            };
+            remainingWorkers[key as keyof Population] = {
+                ...remainingWorkers[key2],
+                number: 0
+            };
         }
 
         const goodsRequirements = { ...sumGoodsRequirements };

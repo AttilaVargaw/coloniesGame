@@ -62,6 +62,7 @@ describe("industrySystem", () => {
             const initialLevel = industry.sectors[sectorName]
             const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * initialLevel)
             industry.sectorWealth[sectorName] = upgradeCost + 1
+            industry.sectorProfits[sectorName] = 1
 
             ;(system as any).processAutoUpgrades()
 
@@ -82,6 +83,51 @@ describe("industrySystem", () => {
             const sectorName = "mine"
             const initialLevel = industry.sectors[sectorName]
             industry.sectorWealth[sectorName] = 0
+            industry.sectorProfits[sectorName] = 1
+
+            ;(system as any).processAutoUpgrades()
+
+            expect(industry.sectors[sectorName]).toBe(initialLevel)
+        })
+
+        it("does not auto-upgrade when sector had zero profit last tick", () => {
+            const world = new World()
+            const system = new IndustrySystem()
+            system.addToEngine(world)
+
+            const entity = world.createEntity("colony")
+            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000))
+            industry.autoUpgradeSectors = { mine: true }
+            entity.addComponent(industry)
+            world.addEntity(entity)
+
+            const sectorName = "mine"
+            const initialLevel = industry.sectors[sectorName]
+            const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * initialLevel)
+            industry.sectorWealth[sectorName] = upgradeCost + 1
+            industry.sectorProfits[sectorName] = 0
+
+            ;(system as any).processAutoUpgrades()
+
+            expect(industry.sectors[sectorName]).toBe(initialLevel)
+        })
+
+        it("does not auto-upgrade when sector had negative profit last tick", () => {
+            const world = new World()
+            const system = new IndustrySystem()
+            system.addToEngine(world)
+
+            const entity = world.createEntity("colony")
+            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000))
+            industry.autoUpgradeSectors = { mine: true }
+            entity.addComponent(industry)
+            world.addEntity(entity)
+
+            const sectorName = "mine"
+            const initialLevel = industry.sectors[sectorName]
+            const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * initialLevel)
+            industry.sectorWealth[sectorName] = upgradeCost + 1
+            industry.sectorProfits[sectorName] = -1
 
             ;(system as any).processAutoUpgrades()
 

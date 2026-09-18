@@ -35,5 +35,6 @@ export function createStarterWarehouse(population: number) {
         chemicals: population * 10,
         buildings: population * 10,
         waste: 0,
+        governance: 0,
     } satisfies Goods;
 }

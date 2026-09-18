@@ -53,15 +53,20 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         for (const { entity, industry } of this.nodes) {
             for (const sectorName of Object.keys(industry.autoUpgradeSectors) as (keyof IndustrialSectors)[]) {
                 if (industry.autoUpgradeSectors[sectorName]) {
-                    this.tryUpgradeSector(entity, industry, sectorName);
+                    this.tryUpgradeSector(entity, industry, sectorName, true);
                 }
             }
         }
     }
 
-    private tryUpgradeSector(entity: Entity, industry: IndustryComponent, sectorName: keyof IndustrialSectors) {
+    private tryUpgradeSector(entity: Entity, industry: IndustryComponent, sectorName: keyof IndustrialSectors, requireProfit = false) {
         const currentLevel = industry.sectors[sectorName];
         const cost = Math.round(sectorUpgradeCosts[sectorName] * currentLevel);
+
+        if (requireProfit) {
+            const lastProfit = industry.sectorProfits[sectorName] ?? 0;
+            if (lastProfit <= 0) return;
+        }
 
         if (industry.sectorWealth[sectorName] >= cost) {
             industry.sectorWealth[sectorName] -= cost;

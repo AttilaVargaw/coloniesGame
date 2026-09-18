@@ -32,6 +32,10 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         this.nodes.forEach(node => node.follow.target = null)
     }
 
+    isFollowing(): boolean {
+        return this.nodes.some(node => node.follow.target !== null)
+    }
+
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 

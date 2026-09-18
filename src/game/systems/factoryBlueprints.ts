@@ -155,6 +155,13 @@ export const industryReducers = Object.entries({
         goodsProduction: { metals: 6, lumber: 4, water: 30, chemicals: 2, oil: 4 },
         outputLevelModifier: (level) => level * (1 + 0.08 * (level - 1))
     }),
+    government: generateIndustrialSector({
+        name: "government",
+        goodsRequirements: { services: 5, buildings: 2 },
+        workerRequirement: { clerks: 10 },
+        goodsProduction: { governance: 100 },
+        efficiencyBonus: 0.02
+    }),
 });
 
 export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
@@ -204,4 +211,5 @@ export const sectorUpgradeCosts: Record<string, number> = {
     greenEnergy: 100,
     alternativeMedicine: 50,
     recycling: 40,
+    government: 80,
 };
