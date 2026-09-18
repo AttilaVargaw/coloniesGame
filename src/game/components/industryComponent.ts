@@ -5,6 +5,7 @@ import { Population } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { createStarterSectorWealth } from "../factories/createStarterIndustry";
+import type { SectorResult } from "../systems/generateIndustrialSector";
 
 export type BuildOrder = {
     id: number
@@ -32,6 +33,9 @@ export class IndustryComponent extends EntityComponent {
     public sectorProfits: Record<keyof IndustrialSectors, number>
     public populationProfits: Record<keyof Population, number>
     public autoUpgradeSectors: Partial<Record<keyof IndustrialSectors, boolean>>
+    public sectorUtilization: Record<keyof IndustrialSectors, number>
+    public sectorResults: Record<string, SectorResult>
+    public populationRequirements: Record<keyof Population, Partial<Record<keyof Goods, number>>>
 
     constructor(
         public sectors: IndustrialSectors,
@@ -54,5 +58,12 @@ export class IndustryComponent extends EntityComponent {
             Object.keys(population).map(key => [key, 0])
         ) as Record<keyof Population, number>;
         this.autoUpgradeSectors = {}
+        this.sectorUtilization = Object.fromEntries(
+            Object.keys(sectors).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.sectorResults = {};
+        this.populationRequirements = Object.fromEntries(
+            Object.keys(population).map(key => [key, {}])
+        ) as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
     }
 }

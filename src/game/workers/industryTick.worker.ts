@@ -47,6 +47,8 @@ export interface IndustryTickResult {
     sectorProfits: Record<string, number>;
     sectorMaintenance: Record<string, number>;
     populationProfits: Record<string, number>;
+    sectorUtilization: Record<string, number>;
+    sectorResults: Record<string, SectorResult>;
 }
 
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
@@ -206,6 +208,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const sectorResults: Record<string, SectorResult> = {};
         const sectorProfits: Record<string, number> = {};
         const sectorMaintenance: Record<string, number> = {};
+        const sectorUtilization: Record<string, number> = {};
 
         for(const bid of sectorBids) {
             const maintenanceCost = Math.round((sectorUpgradeCosts[bid.name as keyof IndustrialSectors] || 10) * bid.level * 0.1);
@@ -292,6 +295,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 outputLevel: bid.outputLevel,
             };
             sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
+            sectorUtilization[bid.name] = actualScale;
         }
 
 
@@ -339,6 +343,8 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectorProfits,
             sectorMaintenance,
             populationProfits,
+            sectorUtilization,
+            sectorResults,
         });
     }
 

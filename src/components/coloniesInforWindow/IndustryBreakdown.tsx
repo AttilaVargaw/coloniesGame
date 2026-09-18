@@ -3,9 +3,11 @@ import { Entity } from "@/engine/entities/entity";
 import { convertToReadable } from "@/lib/utils";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { UpgradeSectorCommand } from "@/game/commands/UpgradeSectorCommand";
-import { sectorUpgradeCosts, getSectorOutputLevel } from "@/game/systems/factoryBlueprints";
+import { sectorUpgradeCosts, getSectorOutputLevel, industryReducers } from "@/game/systems/factoryBlueprints";
 import { useCallback, useState } from "react";
 import type { IndustrialSectors } from "@/game/components/Factories";
+import type { Goods } from "@/game/data/Goods";
+import type { Population } from "@/game/data/Population";
 import { Toggle } from "@/components/ui/toggle";
 
 export function IndustryBreakdown({ industry, entity }: { industry: IndustryComponent; entity: Entity; }) {
@@ -28,58 +30,123 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
     const a = { ...industry }
 
     return (
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="border-b border-muted">
-                    <th className="text-left p-2 font-medium">Sector</th>
-                    <th className="text-center p-2 font-medium">Level</th>
-                    <th className="text-center p-2 font-medium">Efficiency</th>
-                    <th className="text-center p-2 font-medium">Profit</th>
-                    <th className="text-center p-2 font-medium">Wealth</th>
-                    <th className="text-center p-2 font-medium">Upgrade</th>
-                    <th className="text-center p-2 font-medium">Auto</th>
-                </tr>
-            </thead>
-            <tbody>
-                {Object.entries((a.sectors as IndustrialSectors)).map(([key, value]) => {
-                    const sectorKey = key as keyof IndustrialSectors;
-                    const profit = a.sectorProfits[sectorKey] ?? 0;
-                    const wealth = a.sectorWealth[sectorKey] ?? 0;
-                    const upgradeCost = Math.round(sectorUpgradeCosts[sectorKey] * value);
-                    const canUpgrade = wealth >= upgradeCost;
-                    const outputLevel = getSectorOutputLevel(sectorKey, value);
-                    const efficiency = value > 0 ? ((outputLevel / value) * 100) : 100;
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-b border-muted">
+                        <th className="text-left p-2 font-medium">Sector</th>
+                        <th className="text-center p-2 font-medium">Level</th>
+                        <th className="text-center p-2 font-medium">Utilization</th>
+                        <th className="text-center p-2 font-medium">Efficiency</th>
+                        <th className="text-center p-2 font-medium">Profit</th>
+                        <th className="text-center p-2 font-medium">Wealth</th>
+                        <th className="text-left p-2 font-medium">Requirements</th>
+                        <th className="text-center p-2 font-medium">Upgrade</th>
+                        <th className="text-center p-2 font-medium">Auto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.entries((a.sectors as IndustrialSectors)).map(([key, value]) => {
+                        const sectorKey = key as keyof IndustrialSectors;
+                        const profit = a.sectorProfits[sectorKey] ?? 0;
+                        const wealth = a.sectorWealth[sectorKey] ?? 0;
+                        const upgradeCost = Math.round(sectorUpgradeCosts[sectorKey] * value);
+                        const canUpgrade = wealth >= upgradeCost;
+                        const outputLevel = getSectorOutputLevel(sectorKey, value);
+                        const efficiency = value > 0 ? ((outputLevel / value) * 100) : 100;
+                        const utilization = a.sectorUtilization[sectorKey] ?? 0;
 
-                    return (
-                        <tr key={key} className="border-b border-muted/50 last:border-0">
-                            <td className="p-2 capitalize">{key}</td>
-                            <td className="p-2 text-center">{convertToReadable(value)}</td>
-                            <td className="p-2 text-center">{efficiency.toFixed(0)}%</td>
-                            <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {convertToReadable(Math.round(profit))}
-                            </td>
-                            <td className="p-2 text-center">{convertToReadable(Math.round(wealth))}</td>
-                            <td className="p-2 text-center">
-                                <button
-                                    onClick={() => handleUpgrade(sectorKey)}
-                                    disabled={!canUpgrade}
-                                    className={`px-2 py-1 rounded text-xs ${canUpgrade ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 cursor-not-allowed opacity-50'}`}
-                                >
-                                    {upgradeCost}
-                                </button>
-                            </td>
-                            <td className="p-2 text-center">
-                                <Toggle
-                                    pressed={!!autoUpgrade[sectorKey]}
-                                    onPressedChange={() => toggleAutoUpgrade(sectorKey)}
-                                    size="sm"
-                                    variant="outline"
-                                />
-                            </td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </table>
+                        const blueprintEntry = industryReducers.find(([n]) => n === sectorKey);
+                        const config = blueprintEntry?.[1] && (blueprintEntry[1] as any)?.config;
+                        const inputLevel = config?.levelModifier ? config.levelModifier(value) : value;
+
+                        const sectorResult = a.sectorResults?.[sectorKey];
+                        const hasData = !!sectorResult;
+
+                        let allFilled = !hasData;
+                        const reqs: React.ReactNode[] = [];
+
+                        const addReq = (name: string, scaledReq: number, actual: number) => {
+                            const isFilled = !hasData || actual >= scaledReq * 0.99;
+                            if (hasData && !isFilled) allFilled = false;
+                            const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
+                            reqs.push(
+                                <span key={name} className={colorClass}>
+                                    {name}: {convertToReadable(Math.round(scaledReq))}
+                                </span>
+                            );
+                        };
+
+                        if (config?.goodsRequirements) {
+                            for (const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
+                                const scaledReq = (req as number) * inputLevel;
+                                const consumed = sectorResult?.consumedGoods?.[good] ?? 0;
+                                addReq(good, scaledReq, consumed);
+                            }
+                        }
+
+                        if (sectorKey !== 'government') {
+                            const scaledReq = 2 * inputLevel;
+                            const consumed = sectorResult?.consumedGoods?.governance ?? 0;
+                            addReq('governance', scaledReq, consumed);
+                        }
+                        if (sectorKey !== 'automotive') {
+                            const scaledReq = 1 * inputLevel;
+                            const consumed = sectorResult?.consumedGoods?.vehicles ?? 0;
+                            addReq('vehicles', scaledReq, consumed);
+                        }
+
+                        if (config?.workerRequirement) {
+                            for (const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
+                                const scaledReq = (req as number) * inputLevel;
+                                const employed = sectorResult?.workersEmployed?.[worker] ?? 0;
+                                addReq(worker, scaledReq, employed);
+                            }
+                        }
+
+                        return (
+                            <tr key={key} className="border-b border-muted/50 last:border-0">
+                                <td className="p-2 capitalize">{key}</td>
+                                <td className="p-2 text-center">{convertToReadable(value)}</td>
+                                <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
+                                <td className="p-2 text-center">{efficiency.toFixed(0)}%</td>
+                                <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {convertToReadable(Math.round(profit))}
+                                </td>
+                                <td className="p-2 text-center">{convertToReadable(Math.round(wealth))}</td>
+                                <td className="p-2 text-left">
+                                    {hasData && allFilled ? (
+                                        <span className="text-green-400 text-xs">✓ All filled</span>
+                                    ) : (
+                                        <div className="text-xs space-y-0.5">
+                                            {reqs.map((req, i) => (
+                                                <div key={i}>{req}</div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="p-2 text-center">
+                                    <button
+                                        onClick={() => handleUpgrade(sectorKey)}
+                                        disabled={!canUpgrade}
+                                        className={`px-2 py-1 rounded text-xs ${canUpgrade ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 cursor-not-allowed opacity-50'}`}
+                                    >
+                                        {upgradeCost}
+                                    </button>
+                                </td>
+                                <td className="p-2 text-center">
+                                    <Toggle
+                                        pressed={!!autoUpgrade[sectorKey]}
+                                        onPressedChange={() => toggleAutoUpgrade(sectorKey)}
+                                        size="sm"
+                                        variant="outline"
+                                    />
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
     );
 }

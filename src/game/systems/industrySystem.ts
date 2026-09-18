@@ -130,6 +130,18 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 industry.populationProfits[groupKey] = profit;
             }
 
+            for (const [sector, utilization] of Object.entries(result.sectorUtilization)) {
+                const sectorKey = sector as keyof IndustrialSectors;
+                industry.sectorUtilization[sectorKey] = utilization;
+            }
+
+            industry.sectorResults = result.sectorResults;
+
+            industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
+            for(const [key, update] of Object.entries(result.populationUpdates)) {
+                industry.populationRequirements[key as keyof Population] = update.requirements as Partial<Record<keyof Goods, number>>;
+            }
+
             industry.goodsChange = result.goodsChange;
             for(const it in industry.goods) {
                 industry.goods[it as keyof Goods] = Math.max(0, industry.goods[it as keyof Goods] + industry.goodsChange[it as keyof Goods]);
