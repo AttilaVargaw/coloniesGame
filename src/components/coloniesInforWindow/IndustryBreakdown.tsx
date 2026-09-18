@@ -65,6 +65,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
 
                         const sectorResult = a.sectorResults?.[sectorKey];
                         const hasData = !!sectorResult;
+                        const isStopped = sectorResult?.productionRatio === 0;
 
                         const reqs: React.ReactNode[] = [];
 
@@ -97,15 +98,26 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         if(config?.goodsRequirements) {
                             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
                                 const scaledReq = (req as number) * inputLevel;
-                                const consumed = sectorResult?.consumedGoods?.[good] ?? 0;
+                                const consumed = isStopped ? (industry.goods[good] ?? 0) : (sectorResult?.consumedGoods?.[good] ?? 0);
                                 addReq(good, scaledReq, consumed);
                             }
+                        }
+
+                        if(sectorKey !== 'government') {
+                            const scaledReq = 2 * inputLevel;
+                            const consumed = industry.goods.governance ?? 0;
+                            addReq('governance', scaledReq, consumed);
+                        }
+                        if(sectorKey !== 'automotive') {
+                            const scaledReq = 1 * inputLevel;
+                            const consumed = industry.goods.vehicles ?? 0;
+                            addReq('vehicles', scaledReq, consumed);
                         }
 
                         if(config?.workerRequirement) {
                             for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
                                 const scaledReq = (req as number) * inputLevel;
-                                const employed = sectorResult?.workersEmployed?.[worker] ?? 0;
+                                const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
                                 addReq(worker, scaledReq, employed);
                             }
                         }

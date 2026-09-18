@@ -63,7 +63,7 @@ export const industryReducers = Object.entries({
         efficiencyBonus: 0.02
     }),
     consumerFactory: generateIndustrialSector({
-        name: "consumerFactory", goodsRequirements: { vehicles: 0.1, furniture: 10, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 11, clerks: 1 }, goodsProduction: { consumerGoods: 20 },
+        name: "consumerFactory", goodsRequirements: { vehicles: 0.1, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 11, clerks: 1 }, goodsProduction: { consumerGoods: 20 },
         efficiencyBonus: 0.02
     }),
     furnitureFactory: generateIndustrialSector({
