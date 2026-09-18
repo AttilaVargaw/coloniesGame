@@ -3,161 +3,163 @@ import type { IndustrialSectors } from "../components/Factories";
 
 export const industryReducers = Object.entries({
     mine: generateIndustrialSector({
-        name: "mine", goodsRequirements: { machinery: 8, electricity: 1, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { miner: 10, clerks: 1 }, goodsProduction: { metals: 70, uranium: 6, tylium: 2, waste: 2 },
+        name: "mine", goodsRequirements: {
+            machinery: 8, electricity: 1, buildings: 4, governance: 2, electronics: 1, vehicles: 0.1
+        }, workerRequirement: { miner: 10, clerks: 1 }, goodsProduction: { metals: 70, uranium: 10, tylium: 2, waste: 2 },
         efficiencyBonus: 0.02
     }),
     oilRig: generateIndustrialSector({
-        name: "oilRig", goodsRequirements: { machinery: 8, electricity: 1, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 5 }, goodsProduction: { oil: 80, waste: 2 },
+        name: "oilRig", goodsRequirements: { vehicles: 0.1, machinery: 8, electricity: 1, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 5 }, goodsProduction: { oil: 80, waste: 2 },
         efficiencyBonus: 0.02
     }),
     forestry: generateIndustrialSector({
-        name: "forestry", goodsRequirements: { ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 3, clergy: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, basicFood: 10 },
+        name: "forestry", goodsRequirements: { vehicles: 0.1, ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 3, clergy: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, basicFood: 10 },
         efficiencyBonus: 0.02
     }),
     farm: generateIndustrialSector({
-        name: "farm", goodsRequirements: { machinery: 5, water: 4, chemicals: 8, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { farmer: 5, clerks: 1 }, goodsProduction: { agriculturalGoods: 100, basicFood: 60 },
+        name: "farm", goodsRequirements: { vehicles: 0.1, machinery: 5, water: 4, chemicals: 8, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { farmer: 5, clerks: 1 }, goodsProduction: { agriculturalGoods: 100, basicFood: 60 },
         efficiencyBonus: 0.02
     }),
     fishery: generateIndustrialSector({
-        name: "fishery", goodsRequirements: { machinery: 3, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { basicFood: 80, agriculturalGoods: 30 },
+        name: "fishery", goodsRequirements: { vehicles: 0.1, machinery: 3, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { basicFood: 80, agriculturalGoods: 30 },
         efficiencyBonus: 0.02
     }),
     foodFactory: generateIndustrialSector({
         name: "foodFactory",
-        goodsRequirements: { agriculturalGoods: 20, machinery: 8, buildings: 3, governance: 2, electronics: 1 },
+        goodsRequirements: { vehicles: 0.1, agriculturalGoods: 20, machinery: 8, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: { worker: 5, clerks: 1 },
         goodsProduction: { food: 150, },
         efficiencyBonus: 0.02
     }),
     luxuryFood: generateIndustrialSector({
         name: "luxuryFood",
-        goodsRequirements: { machinery: 6, electricity: 18, buildings: 3, governance: 2, electronics: 1 },
+        goodsRequirements: { vehicles: 0.1, machinery: 6, electricity: 18, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: { worker: 5, clerks: 1 },
         goodsProduction: { luxuryFood: 22 },
         efficiencyBonus: 0.02
     }),
     waterTreatment: generateIndustrialSector({
-        name: "waterTreatment", goodsRequirements: { electricity: 20, machinery: 12, chemicals: 8, buildings: 6, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { water: 1500 },
+        name: "waterTreatment", goodsRequirements: { vehicles: 0.1, electricity: 20, machinery: 12, chemicals: 8, buildings: 6, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { water: 1500 },
         efficiencyBonus: 0.02
     }),
     powerPlant: generateIndustrialSector({
-        name: "powerPlant", goodsRequirements: { oil: 14, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { electricity: 220, waste: 1 },
+        name: "powerPlant", goodsRequirements: { vehicles: 0.1, oil: 14, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { electricity: 220, waste: 1 },
         efficiencyBonus: 0.02
     }),
     metalFactory: generateIndustrialSector({
-        name: "metalFactory", goodsRequirements: { metals: 10, machinery: 8, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { metals: 60, waste: 1 },
+        name: "metalFactory", goodsRequirements: { vehicles: 0.1, metals: 10, machinery: 8, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { metals: 60, waste: 1 },
         efficiencyBonus: 0.02
     }),
     lumberMill: generateIndustrialSector({
-        name: "lumberMill", goodsRequirements: { wood: 30, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { furniture: 40, lumber: 40 },
+        name: "lumberMill", goodsRequirements: { vehicles: 0.1, wood: 30, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { furniture: 40, lumber: 40 },
         efficiencyBonus: 0.02
     }),
     machineryFactory: generateIndustrialSector({
-        name: "machineryFactory", goodsRequirements: { metals: 8, electricity: 15, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { machinery: 40 },
+        name: "machineryFactory", goodsRequirements: { vehicles: 0.1, metals: 8, electricity: 15, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { machinery: 40 },
         efficiencyBonus: 0.02
     }),
     medicineFactory: generateIndustrialSector({
-        name: "medicineFactory", goodsRequirements: { chemicals: 5, machinery: 6, electricity: 14, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, scientist: 1, clerks: 1 }, goodsProduction: { medicine: 35 },
+        name: "medicineFactory", goodsRequirements: { vehicles: 0.1, chemicals: 5, machinery: 6, electricity: 14, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, scientist: 1, clerks: 1 }, goodsProduction: { medicine: 35 },
         efficiencyBonus: 0.02
     }),
     consumerFactory: generateIndustrialSector({
-        name: "consumerFactory", goodsRequirements: { furniture: 10, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 11, clerks: 1 }, goodsProduction: { consumerGoods: 20 },
+        name: "consumerFactory", goodsRequirements: { vehicles: 0.1, furniture: 10, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 11, clerks: 1 }, goodsProduction: { consumerGoods: 20 },
         efficiencyBonus: 0.02
     }),
     furnitureFactory: generateIndustrialSector({
-        name: "furnitureFactory", goodsRequirements: { lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { luxuryFurniture: 14 },
+        name: "furnitureFactory", goodsRequirements: { vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { luxuryFurniture: 14 },
         efficiencyBonus: 0.02
     }),
     ammunitionFactory: generateIndustrialSector({
-        name: "ammunitionFactory", goodsRequirements: { metals: 8, chemicals: 5, machinery: 8, electricity: 20, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { ammunition: 50 },
+        name: "ammunitionFactory", goodsRequirements: { vehicles: 0.1, metals: 8, chemicals: 5, machinery: 8, electricity: 20, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { ammunition: 50 },
         efficiencyBonus: 0.02
     }),
     weaponFactory: generateIndustrialSector({
-        name: "weaponFactory", goodsRequirements: { metals: 10, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5 }, goodsProduction: { weapons: 20 },
+        name: "weaponFactory", goodsRequirements: { vehicles: 0.1, metals: 10, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5 }, goodsProduction: { weapons: 20 },
         efficiencyBonus: 0.02
     }),
     nuclearWeaponFactory: generateIndustrialSector({
-        name: "nuclearWeaponFactory", goodsRequirements: { uranium: 5, machinery: 8, electricity: 28, buildings: 12, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { nuclearWeapons: 5 },
+        name: "nuclearWeaponFactory", goodsRequirements: { vehicles: 0.1, uranium: 5, machinery: 8, electricity: 28, buildings: 12, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { nuclearWeapons: 5 },
         efficiencyBonus: 0.02
     }),
     ordnanceFactory: generateIndustrialSector({
-        name: "ordnanceFactory", goodsRequirements: { metals: 12, chemicals: 6, machinery: 8, ammunition: 10, electricity: 24, buildings: 10, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { ordnance: 30 },
+        name: "ordnanceFactory", goodsRequirements: { vehicles: 0.1, metals: 12, chemicals: 6, machinery: 8, ammunition: 10, electricity: 24, buildings: 10, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { ordnance: 30 },
         efficiencyBonus: 0.02
     }),
     spaceport: generateIndustrialSector({
-        name: "spaceport", goodsRequirements: { machinery: 8, furniture: 10, electricity: 25, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { spaceTransport: 5 },
+        name: "spaceport", goodsRequirements: { vehicles: 0.1, machinery: 8, furniture: 10, electricity: 25, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { spaceTransport: 5 },
         efficiencyBonus: 0.02
     }),
     spaceShipyard: generateIndustrialSector({
-        name: "spaceShipyard", goodsRequirements: { metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { spaceTransport: 8 },
+        name: "spaceShipyard", goodsRequirements: { vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { spaceTransport: 8 },
         efficiencyBonus: 0.02
     }),
     orbitalFactory: generateIndustrialSector({
-        name: "orbitalFactory", goodsRequirements: { machinery: 12, electricity: 28, tylium: 5, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { tylium: 12 },
+        name: "orbitalFactory", goodsRequirements: { vehicles: 0.1, machinery: 12, electricity: 28, tylium: 5, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { tylium: 12 },
         efficiencyBonus: 0.02
     }),
     construction: generateIndustrialSector({
-        name: "construction", goodsRequirements: { lumber: 8, metals: 6, chemicals: 4, electricity: 4, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { worker: 20, clerks: 1 }, goodsProduction: { buildings: 80 },
+        name: "construction", goodsRequirements: { vehicles: 0.1, lumber: 8, metals: 6, chemicals: 4, electricity: 4, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { worker: 20, clerks: 1 }, goodsProduction: { buildings: 80 },
         efficiencyBonus: 0.02
     }),
     services: generateIndustrialSector({
-        name: "services", goodsRequirements: { electricity: 22, furniture: 8, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { serviceWorker: 1 }, goodsProduction: { services: 65 },
+        name: "services", goodsRequirements: { vehicles: 0.1, electricity: 22, furniture: 8, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { serviceWorker: 1 }, goodsProduction: { services: 65 },
         efficiencyBonus: 0.02
     }),
     tourism: generateIndustrialSector({
-        name: "tourism", goodsRequirements: { services: 12, luxuryFood: 6, luxuryFurniture: 8, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { tourism: 12 },
+        name: "tourism", goodsRequirements: { vehicles: 0.1, services: 12, luxuryFood: 6, luxuryFurniture: 8, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { tourism: 12 },
         efficiencyBonus: 0.02
     }),
-    education: generateIndustrialSector({ 
-        name: "education", goodsRequirements: { electricity: 10, services: 6, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { teacher: 5, clerks: 1, worker: 1 }, goodsProduction: { dividents: 35 },
+    education: generateIndustrialSector({
+        name: "education", goodsRequirements: { vehicles: 0.1, electricity: 10, services: 6, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { teacher: 5, clerks: 1, worker: 1 }, goodsProduction: { dividents: 35 },
         efficiencyBonus: 0.02
     }),
     healthcare: generateIndustrialSector({
-        name: "healthcare", goodsRequirements: { medicine: 3, electricity: 8, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { healtcarePersonal: 5, clerks: 1, worker: 1 }, goodsProduction: { healthcare: 200 },
+        name: "healthcare", goodsRequirements: { vehicles: 0.1, medicine: 3, electricity: 8, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { healtcarePersonal: 5, clerks: 1, worker: 1 }, goodsProduction: { healthcare: 200 },
         efficiencyBonus: 0.02
     }),
     environmentControl: generateIndustrialSector({
-        name: "environmentControl", goodsRequirements: { electricity: 14, medicine: 3, chemicals: 3, buildings: 6, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { environmentFactor: 30 },
+        name: "environmentControl", goodsRequirements: { vehicles: 0.1, electricity: 14, medicine: 3, chemicals: 3, buildings: 6, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { environmentFactor: 30 },
         efficiencyBonus: 0.02
     }),
     chemical: generateIndustrialSector({
-        name: "chemical", goodsRequirements: { oil: 8, electricity: 15, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { chemicals: 70, waste: 4 },
+        name: "chemical", goodsRequirements: { vehicles: 0.1, oil: 8, electricity: 15, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { chemicals: 70, waste: 4 },
         efficiencyBonus: 0.02
     }),
     bank: generateIndustrialSector({
-        name: "bank", goodsRequirements: { electricity: 14, services: 8, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { worker: 1, clerks: 3 }, goodsProduction: { money: 35 },
+        name: "bank", goodsRequirements: { vehicles: 0.1, electricity: 14, services: 8, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { worker: 1, clerks: 3 }, goodsProduction: { money: 35 },
         efficiencyBonus: 0.02
     }),
     religion: generateIndustrialSector({
-        name: "religion", goodsRequirements: { services: 12, money: 15, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { clergy: 4, clerks: 1, worker: 1 }, goodsProduction: { faith: 200 },
+        name: "religion", goodsRequirements: { vehicles: 0.1, services: 12, money: 15, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { clergy: 4, clerks: 1, worker: 1 }, goodsProduction: { faith: 200 },
         efficiencyBonus: 0.02
     }),
     lawEnforcement: generateIndustrialSector({
-        name: "lawEnforcement", goodsRequirements: { electricity: 12, weapons: 3, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { policeMen: 10, worker: 1, clerks: 1 }, goodsProduction: { lawEnforcement: 80 },
+        name: "lawEnforcement", goodsRequirements: { vehicles: 0.1, electricity: 12, weapons: 3, buildings: 2, governance: 2, electronics: 1 }, workerRequirement: { policeMen: 10, worker: 1, clerks: 1 }, goodsProduction: { lawEnforcement: 80 },
         efficiencyBonus: 0.02
     }),
     nuclearSector: generateIndustrialSector({
-        name: "nuclearSector", goodsRequirements: { uranium: 8, machinery: 8, electricity: 10, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { scientist: 2, worker: 8, clerks: 2 }, goodsProduction: { electricity: 320, waste: 3 },
+        name: "nuclearSector", goodsRequirements: { vehicles: 0.1, uranium: 8, machinery: 8, electricity: 10, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { scientist: 2, worker: 8, clerks: 2 }, goodsProduction: { electricity: 320, waste: 3 },
         efficiencyBonus: 0.02
     }),
     greenEnergy: generateIndustrialSector({
-        name: "greenEnergy", goodsRequirements: { machinery: 6, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { electricity: 160 },
+        name: "greenEnergy", goodsRequirements: { vehicles: 0.1, machinery: 6, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 10, clerks: 1 }, goodsProduction: { electricity: 160 },
         efficiencyBonus: 0.02
     }),
     alternativeMedicine: generateIndustrialSector({
-        name: "alternativeMedicine", goodsRequirements: { agriculturalGoods: 25, buildings: 1, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { healthcare: 120 },
+        name: "alternativeMedicine", goodsRequirements: { vehicles: 0.1, agriculturalGoods: 25, buildings: 1, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { healthcare: 120 },
         efficiencyBonus: 0.02
     }),
     recycling: generateIndustrialSector({
         name: "recycling",
         goodsRequirements: { waste: 20, electricity: 4, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: { worker: 5, clerks: 1 },
-        goodsProduction: { metals: 6, lumber: 4, water: 30, chemicals: 2, oil: 4 },
+        goodsProduction: { vehicles: 0.1, metals: 6, lumber: 4, water: 30, chemicals: 2, oil: 4 },
         outputLevelModifier: (level) => level * (1 + 0.08 * (level - 1))
     }),
     government: generateIndustrialSector({
         name: "government",
-        goodsRequirements: { services: 5, buildings: 2, electronics: 1 },
+        goodsRequirements: { vehicles: 0.1, services: 5, buildings: 2, electronics: 1 },
         workerRequirement: { clerks: 5 },
         goodsProduction: { governance: 100 },
         efficiencyBonus: 0.02
@@ -171,12 +173,12 @@ export const industryReducers = Object.entries({
     }),
     electronics: generateIndustrialSector({
         name: "electronics",
-        goodsRequirements: { machinery: 6, oil: 5, electricity: 18, buildings: 3, governance: 2 },
+        goodsRequirements: { vehicles: 0.1, machinery: 6, oil: 5, electricity: 18, buildings: 3, governance: 2 },
         workerRequirement: { worker: 8, scientist: 2, clerks: 1 },
         goodsProduction: { electronics: 20 },
         efficiencyBonus: 0.02
     }),
-});
+})
 
 export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
     const entry = industryReducers.find(([n]) => n === name) as [string, IndustryReducer] | undefined;

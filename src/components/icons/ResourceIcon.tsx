@@ -1,0 +1,86 @@
+import { type LucideProps } from "lucide-react"
+import {
+    Wheat,
+    Cookie,
+    Grape,
+    Plane,
+    Boxes,
+    Droplets,
+    Zap,
+    Bed,
+    Sofa,
+    Stethoscope,
+    TrendingUp,
+    Diamond,
+    BarChart3,
+    Siren,
+    Cog,
+    Pill,
+    TreePine,
+    Package,
+    FlaskConical,
+    Rocket,
+    Bomb,
+    Sword,
+    Biohazard,
+    Car,
+    Cpu,
+    Leaf,
+    CircleDollarSign,
+    Church,
+    Shield,
+    HeartPulse,
+    TestTubes,
+    Building2,
+    Recycle,
+    Landmark,
+} from "lucide-react"
+
+const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
+    basicFood: Wheat,
+    food: Cookie,
+    luxuryFood: Grape,
+    tourism: Plane,
+    consumerGoods: Boxes,
+    water: Droplets,
+    electricity: Zap,
+    furniture: Bed,
+    luxuryFurniture: Sofa,
+    services: Stethoscope,
+    agriculturalGoods: Wheat,
+    dividents: TrendingUp,
+    tylium: Diamond,
+    metals: BarChart3,
+    uranium: Siren,
+    machinery: Cog,
+    medicine: Pill,
+    wood: TreePine,
+    lumber: Package,
+    oil: FlaskConical,
+    spaceTransport: Rocket,
+    ammunition: Bomb,
+    weapons: Sword,
+    nuclearWeapons: Biohazard,
+    ordnance: Bomb,
+    vehicles: Car,
+    electronics: Cpu,
+    environmentFactor: Leaf,
+    money: CircleDollarSign,
+    faith: Church,
+    lawEnforcement: Shield,
+    healthcare: HeartPulse,
+    chemicals: TestTubes,
+    buildings: Building2,
+    waste: Recycle,
+    governance: Landmark,
+}
+
+export function ResourceIcon({ name, className }: { name: string; className?: string }) {
+    const IconComponent = ICON_MAP[name]
+    if (!IconComponent) return null
+    return <IconComponent className={className} strokeWidth={1.5} size={16} />
+}
+
+export const RESOURCE_NAMES: Record<string, string> = Object.fromEntries(
+    Object.keys(ICON_MAP).map(key => [key, key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')])
+) as Record<string, string>

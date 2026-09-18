@@ -9,6 +9,9 @@ import type { IndustrialSectors } from "@/game/components/Factories";
 import type { Goods } from "@/game/data/Goods";
 import type { Population } from "@/game/data/Population";
 import { Toggle } from "@/components/ui/toggle";
+import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
+import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationIcon";
+import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 
 export function IndustryBreakdown({ industry, entity }: { industry: IndustryComponent; entity: Entity; }) {
     const engine = useGameEngine();
@@ -63,41 +66,44 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         const sectorResult = a.sectorResults?.[sectorKey];
                         const hasData = !!sectorResult;
 
-                        let allFilled = !hasData;
                         const reqs: React.ReactNode[] = [];
 
                         const addReq = (name: string, scaledReq: number, actual: number) => {
                             const isFilled = !hasData || actual >= scaledReq * 0.99;
-                            if (hasData && !isFilled) allFilled = false;
                             const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
+                            const isPopulation = name in POPULATION_NAMES
+
                             reqs.push(
-                                <span key={name} className={colorClass}>
-                                    {name}: {convertToReadable(Math.round(scaledReq))}
+                                <span key={name} className={`inline-flex items-center gap-1 ${colorClass}`}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center">
+                                                {isPopulation ? (
+                                                    <PopulationIcon name={name} />
+                                                ) : (
+                                                    <ResourceIcon name={name} />
+                                                )}
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <span>{isPopulation ? POPULATION_NAMES[name] : RESOURCE_NAMES[name] || name}</span>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    {convertToReadable(Math.round(scaledReq))}
                                 </span>
                             );
                         };
 
-                        if (config?.goodsRequirements) {
-                            for (const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
+                        if(config?.goodsRequirements) {
+                            for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
                                 const scaledReq = (req as number) * inputLevel;
                                 const consumed = sectorResult?.consumedGoods?.[good] ?? 0;
                                 addReq(good, scaledReq, consumed);
                             }
                         }
 
-                        if (sectorKey !== 'government') {
-                            const scaledReq = 2 * inputLevel;
-                            const consumed = sectorResult?.consumedGoods?.governance ?? 0;
-                            addReq('governance', scaledReq, consumed);
-                        }
-                        if (sectorKey !== 'automotive') {
-                            const scaledReq = 1 * inputLevel;
-                            const consumed = sectorResult?.consumedGoods?.vehicles ?? 0;
-                            addReq('vehicles', scaledReq, consumed);
-                        }
-
-                        if (config?.workerRequirement) {
-                            for (const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
+                        if(config?.workerRequirement) {
+                            for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
                                 const scaledReq = (req as number) * inputLevel;
                                 const employed = sectorResult?.workersEmployed?.[worker] ?? 0;
                                 addReq(worker, scaledReq, employed);
@@ -115,15 +121,11 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                 </td>
                                 <td className="p-2 text-center">{convertToReadable(Math.round(wealth))}</td>
                                 <td className="p-2 text-left">
-                                    {hasData && allFilled ? (
-                                        <span className="text-green-400 text-xs">✓ All filled</span>
-                                    ) : (
-                                        <div className="text-xs space-y-0.5">
-                                            {reqs.map((req, i) => (
-                                                <div key={i}>{req}</div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <div className="text-xs space-y-0.5">
+                                        {reqs.map((req, i) => (
+                                            <div key={i}>{req} </div>
+                                        ))}
+                                    </div>
                                 </td>
                                 <td className="p-2 text-center">
                                     <button

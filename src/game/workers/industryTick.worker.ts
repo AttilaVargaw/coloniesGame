@@ -7,21 +7,6 @@ import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 
-const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"] as const);
-
-const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
-
-function getImplicitRequirements(name: keyof IndustrialSectors): Partial<Record<keyof Goods, number>> {
-    const implicit: Partial<Record<keyof Goods, number>> = {};
-    if (name !== 'government') {
-        implicit.governance = 2;
-    }
-    if (name !== 'automotive') {
-        implicit.vehicles = 1;
-    }
-    return implicit;
-}
-
 export interface IndustryTickInput {
     entityId: string;
     sectors: IndustrialSectors;
@@ -50,6 +35,15 @@ export interface IndustryTickResult {
     sectorUtilization: Record<string, number>;
     sectorResults: Record<string, SectorResult>;
 }
+
+const qolSmoothing = 0.3;
+const wealthSmoothing = 0.5;
+const expectedQolSmoothing = 0.3;
+const wasteDecayRate = 0.05;
+const wastePerPerson = 0.05;
+
+const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"] as const);
+const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
     if(event.data.type !== "tick") return;
@@ -85,14 +79,11 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 return sum + amount * prices[good as keyof Goods];
             }, 0);
 
-            const qolSmoothing = 0.3;
             const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
 
-            const wealthSmoothing = 0.5;
             const targetWealth = pop.wealth + income - expenses;
             const smoothedWealth = pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing;
 
-            const expectedQolSmoothing = 0.3;
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
             const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
@@ -110,7 +101,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             populationProfits[key] = income - expenses;
         }
 
-        const sectorBids: Array<{
+        const sectorBids: {
             name: string;
             level: number;
             budgetRatio: number;
@@ -121,7 +112,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             idealGoodsProduction: Partial<Record<keyof Goods, number>>;
             outputLevel: number;
             inputLevel: number;
-        }> = [];
+        }[] = [];
 
         for(const [name, level] of Object.entries(sectors) as [keyof IndustrialSectors, number][]) {
             const blueprintEntry = industryReducers.find(([n]) => n === name);
@@ -135,9 +126,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const inputLevel = config.levelModifier ? config.levelModifier(level) : level;
 
             const workerRequirement = config.workerRequirement || {};
-            const rawGoodsRequirements = config.goodsRequirements || {};
-            const implicitRequirements = getImplicitRequirements(name);
-            const goodsRequirements = { ...rawGoodsRequirements, ...implicitRequirements };
+            const goodsRequirements = config.goodsRequirements || {};
             const goodsProduction = config.goodsProduction || {};
 
             const maintenanceCost = Math.round((sectorUpgradeCosts[name as keyof IndustrialSectors] || 10) * level * 0.1);
@@ -298,7 +287,6 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectorUtilization[bid.name] = actualScale;
         }
 
-
         for(const key of alwaysWorking) {
             const key2 = key as keyof Population;
 
@@ -326,10 +314,8 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         );
 
         const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
-        const wastePerPerson = 0.05;
         const populationWaste = totalPopulation * wastePerPerson;
 
-        const wasteDecayRate = 0.05;
         goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (goods.waste || 0));
 
         results.push({

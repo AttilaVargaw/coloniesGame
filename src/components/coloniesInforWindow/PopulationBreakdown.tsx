@@ -2,6 +2,9 @@ import { IndustryComponent } from "@/game/components/industryComponent";
 import { Population, sumPopulation, baseSalaries } from "@/game/data/Population";
 import { convertToReadable } from "@/lib/utils";
 import { colorBySign, } from "./colorBySign";
+import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
+import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationIcon";
+import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 
 function Sum(...args: number[]) {
     let sum = 0
@@ -95,7 +98,18 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                             const reqEntries = Object.entries(requirements);
 
                             return <tr key={key} className="border-b border-muted/50 last:border-0">
-                                <td className="p-2 capitalize">{key}</td>
+                                <td className="p-2">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center">
+                                                <PopulationIcon name={key} />
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <span>{POPULATION_NAMES[key] || key}</span>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </td>
                                 <td className="p-2 text-right">{convertToReadable(number)}</td>
                                 <td className="p-2 text-right">{convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)}</td>
                                 <td className="p-2 text-right">{colorBySign(populationChange)}</td>
@@ -104,22 +118,32 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                 <td className="p-2 text-right">{colorBySign(net)}</td>
                                 <td className="p-2 text-right">{value.qol.toFixed(1)}</td>
                                 <td className="p-2 text-left">
-                                    {reqEntries.length === 0 ? (
-                                        <span className="text-muted-foreground text-xs">—</span>
-                                    ) : (
-                                        <div className="text-xs space-y-0.5">
-                                            {reqEntries.map(([good, req]) => {
-                                                const available = industry.goods[good as keyof typeof industry.goods] ?? 0;
-                                                const isFilled = available >= req;
-                                                const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
-                                                return (
-                                                    <div key={good} className={colorClass}>
-                                                        {good}: {convertToReadable(Math.round(req))}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                {reqEntries.length === 0 ? (
+                                    <span className="text-muted-foreground text-xs">—</span>
+                                ) : (
+                                    <div className="text-xs space-y-0.5">
+                                        {reqEntries.map(([good, req]) => {
+                                            const available = industry.goods[good as keyof typeof industry.goods] ?? 0;
+                                            const isFilled = available >= req;
+                                            const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
+                                            return (
+                                                <div key={good} className={`inline-flex items-center gap-1 ${colorClass}`}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <div className="inline-flex items-center">
+                                                                <ResourceIcon name={good} />
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <span>{RESOURCE_NAMES[good] || good}</span>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                    {convertToReadable(Math.round(req))}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                                 </td>
                             </tr>;
                         })}
