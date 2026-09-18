@@ -1,7 +1,7 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
 import { IndustrialSectors } from "./Factories";
 import { Goods } from "../data/Goods";
-import { Population, sumPopulation } from "../data/Population";
+import { Population } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { createStarterSectorWealth } from "../factories/createStarterIndustry";
@@ -40,13 +40,13 @@ export class IndustryComponent extends EntityComponent {
     ) {
         super()
 
-        this.goodsChange = createStarterWarehouse(sumPopulation(population))
+        this.goodsChange = createStarterWarehouse(0)
         this.populationChange = createStarterPopulation(0)
         this.goodsRequirements = createStarterWarehouse(0)
         this.goodsProduction = createStarterWarehouse(0)
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)
-        this.sectorWealth = createStarterSectorWealth()
+        this.sectorWealth = createStarterSectorWealth(sectors)
         this.sectorProfits = Object.fromEntries(
             Object.keys(sectors).map(key => [key, 0])
         ) as Record<keyof IndustrialSectors, number>;

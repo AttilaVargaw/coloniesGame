@@ -110,7 +110,7 @@ const priceMemory: Partial<Record<keyof Goods, number>> = {};
 const priceDamping = 0.4;
 const priceMaxDeviation = 0.25;
 
-export function getPrices(goods: Goods): Record<keyof Goods, number> {
+export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>> = priceMemory): Record<keyof Goods, number> {
     const prices: Record<keyof Goods, number> = {} as any;
     for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
         const stock = goods[key] || 0;
@@ -124,11 +124,11 @@ export function getPrices(goods: Goods): Record<keyof Goods, number> {
         else if (stockRatio > 4) adjustment = 0.9;
         else if (stockRatio > 2) adjustment = 0.95;
 
-        const currentPrice = priceMemory[key] ?? base;
+        const currentPrice = memory[key] ?? base;
         const targetPrice = base * adjustment;
         const dampedPrice = currentPrice + (targetPrice - currentPrice) * priceDamping;
         const clampedPrice = Math.max(base * (1 - priceMaxDeviation), Math.min(base * (1 + priceMaxDeviation), dampedPrice));
-        priceMemory[key] = clampedPrice;
+        memory[key] = clampedPrice;
         prices[key] = clampedPrice;
     }
     return prices;

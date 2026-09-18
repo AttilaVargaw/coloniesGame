@@ -5,7 +5,7 @@ import { ViewportNode } from "./ViewportNode";
 import { Entity } from "@engine/entities/entity";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { DEBUG_VISUALIZE_PATHS, getActivePaths, getTodaysJumps } from "@game/systems/moveSystem";
+import { DEBUG_VISUALIZE_PATHS } from "@game/systems/moveSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
@@ -68,7 +68,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private clear(ctx: CanvasRenderingContext2D) {
         ctx.save()
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-        ctx.fillStyle = "#002";
+        ctx.fillStyle = "#000008";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.restore()
     }
@@ -79,6 +79,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.fillStyle = "#ffffff"
 
         const buckets = new Map<number, { x: number; y: number; r: number }[]>()
+        const glowBuckets = new Map<number, { x: number; y: number; r: number }[]>()
         for(const s of ViewportSystem.starfield) {
             const projected = camera.project(s.x, s.y, s.z)
             if(!projected) {
@@ -90,6 +91,24 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             if(!buckets.has(bucket)) buckets.set(bucket, [])
             buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius })
+
+            if(alpha > 0.6 && radius > 1.5) {
+                const glowAlpha = (alpha - 0.6) * 0.4
+                const glowRadius = radius * 4
+                const glowBucket = Math.round(glowAlpha * 10) / 10
+                if(!glowBuckets.has(glowBucket)) glowBuckets.set(glowBucket, [])
+                glowBuckets.get(glowBucket)!.push({ x: projected.x, y: projected.y, r: glowRadius })
+            }
+        }
+
+        for(const [alpha, stars] of glowBuckets) {
+            ctx.globalAlpha = alpha
+            ctx.beginPath()
+            for(const star of stars) {
+                ctx.moveTo(star.x + star.r, star.y)
+                ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+            }
+            ctx.fill()
         }
 
         for(const [alpha, stars] of buckets) {
@@ -143,71 +162,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore();
     }
 
-    private drawDebugPaths(ctx: CanvasRenderingContext2D) {
-        if(!this.engine) {
-            return
-        }
-
-        const { camera } = this.viewport
-        ctx.save()
-        for(const { ship, waypoints } of getActivePaths()) {
-            if(waypoints.length === 0) {
-                continue
-            }
-
-            const [sx, sy, sz] = getAbsolute(ship, this.engine)
-            const startProjected = camera.project(sx, sy, sz)
-            if(!startProjected) {
-                continue
-            }
-
-            ctx.beginPath()
-            ctx.moveTo(startProjected.x, startProjected.y)
-
-            for(const waypoint of waypoints) {
-                const [wx, wy, wz] = getAbsolute(waypoint, this.engine)
-                const projected = camera.project(wx, wy, wz)
-                if(projected) {
-                    ctx.lineTo(projected.x, projected.y)
-                }
-            }
-
-            ctx.strokeStyle = "rgba(255, 215, 0, 0.25)"
-            ctx.lineWidth = 1
-            ctx.setLineDash([4, 4])
-            ctx.stroke()
-            ctx.setLineDash([])
-        }
-
-        for(const { path } of getTodaysJumps()) {
-            if(path.length < 2) {
-                continue
-            }
-            const [sx, sy, sz] = getAbsolute(path[0], this.engine)
-            const startProjected = camera.project(sx, sy, sz)
-            if(!startProjected) {
-                continue
-            }
-
-            ctx.beginPath()
-            ctx.moveTo(startProjected.x, startProjected.y)
-
-            for(let i = 1; i < path.length; i++) {
-                const [wx, wy, wz] = getAbsolute(path[i], this.engine)
-                const projected = camera.project(wx, wy, wz)
-                if(projected) {
-                    ctx.lineTo(projected.x, projected.y)
-                }
-            }
-
-            ctx.strokeStyle = "rgba(255, 215, 0, 0.85)"
-            ctx.lineWidth = 2
-            ctx.setLineDash([])
-            ctx.stroke()
-        }
-        ctx.restore()
-    }
-
     private drawOrbits(ctx: CanvasRenderingContext2D) {
         if(!this.engine) {
             return
@@ -216,7 +170,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const { camera } = this.viewport
         ctx.save()
 
-        ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
+        ctx.strokeStyle = "rgba(100, 149, 237, 0.35)"
         ctx.lineWidth = 1
 
         const cssWidth = camera.cssWidth

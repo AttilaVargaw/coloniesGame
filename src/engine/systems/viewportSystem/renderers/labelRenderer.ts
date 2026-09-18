@@ -28,6 +28,10 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         const offsetY = (node.label.offset.y || 0) * projected.scale
 
         ctx.font = `${screenSize}px Roboto`;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
+        ctx.shadowBlur = screenSize * 0.25
+        ctx.shadowOffsetX = 0
+        ctx.shadowOffsetY = 0
         ctx.fillText(node.label.text, projected.x + offsetX, projected.y + offsetY);
         ctx.restore()
     }

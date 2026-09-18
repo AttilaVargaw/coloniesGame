@@ -49,7 +49,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     updateNode = (circle: CircleNode, _dt?: number) => {
-        if (!this.engine) {
+        if(!this.engine) {
             return
         }
 
@@ -61,13 +61,13 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const thickness = circle.thickness.thickness
 
         const center = camera.project(cx, cy, cz)
-        if (!center) {
+        if(!center) {
             return
         }
 
         const screenRadius = radius * center.scale
 
-        if (
+        if(
             center.x + screenRadius < 0 ||
             center.x - screenRadius > camera.cssWidth ||
             center.y + screenRadius < 0 ||
@@ -77,20 +77,20 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         }
 
         ctx.beginPath()
-        if (circle.color.shade) {
+        if(circle.color.shade) {
             ctx.arc(center.x, center.y, screenRadius, 0, TWO_PI)
         } else {
             const segments = Math.max(32, Math.min(128, Math.round(screenRadius / 2)))
-            for (let i = 0; i <= segments; i++) {
+            for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const worldX = cx + radius * Math.cos(angle)
                 const worldY = cy + radius * Math.sin(angle)
                 const worldZ = cz
                 const projected = camera.project(worldX, worldY, worldZ)
-                if (!projected) {
+                if(!projected) {
                     continue
                 }
-                if (i === 0) {
+                if(i === 0) {
                     ctx.moveTo(projected.x, projected.y)
                 } else {
                     ctx.lineTo(projected.x, projected.y)
@@ -100,14 +100,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         ctx.closePath()
         circle.setColor(ctx)
         ctx.lineWidth = thickness * center.scale
-        if (circle.color.fill) {
+        if(circle.color.fill) {
             ctx.fill()
         }
-        if (circle.color.stroke) {
+        if(circle.color.stroke) {
             ctx.stroke()
         }
 
-        if (circle.color.shade) {
+        if(circle.color.shade) {
             shadeCircle(ctx, center.x, center.y, screenRadius)
         }
     }

@@ -61,7 +61,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
     private tryUpgradeSector(entity: Entity, industry: IndustryComponent, sectorName: keyof IndustrialSectors, requireProfit = false) {
         const currentLevel = industry.sectors[sectorName];
-        const cost = Math.round(sectorUpgradeCosts[sectorName] * currentLevel);
+        const cost = Math.round(sectorUpgradeCosts[sectorName] * Math.max(1, currentLevel));
 
         if (requireProfit) {
             const lastProfit = industry.sectorProfits[sectorName] ?? 0;
@@ -178,6 +178,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 entity
             )
         ).subscribe(DayPassedEvent, this.onDayPassed);
+        engine.registerCommandQueue(UpgradeSectorCommand);
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }

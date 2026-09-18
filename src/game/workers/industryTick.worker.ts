@@ -7,7 +7,20 @@ import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 
-const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"]);
+const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"] as const);
+
+const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
+
+function getImplicitRequirements(name: keyof IndustrialSectors): Partial<Record<keyof Goods, number>> {
+    const implicit: Partial<Record<keyof Goods, number>> = {};
+    if (name !== 'government') {
+        implicit.governance = 2;
+    }
+    if (name !== 'automotive') {
+        implicit.vehicles = 1;
+    }
+    return implicit;
+}
 
 export interface IndustryTickInput {
     entityId: string;
@@ -43,7 +56,9 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     for(const input of event.data.industries) {
         const { entityId, sectors, goods, population, sectorWealth } = input;
-        const prices = getPrices(goods);
+        const memory = colonyPriceMemory.get(entityId) || {};
+        const prices = getPrices(goods, memory);
+        colonyPriceMemory.set(entityId, memory);
 
         const populationConsumption = {} as Partial<Goods>;
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
@@ -119,19 +134,15 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
             const workerRequirement = config.workerRequirement || {};
             const rawGoodsRequirements = config.goodsRequirements || {};
-            const goodsRequirements = name !== 'government'
-                ? { ...rawGoodsRequirements, governance: 2 }
-                : rawGoodsRequirements;
-            const goodsRequirementsWithVehicles = name !== 'automotive'
-                ? { ...goodsRequirements, vehicles: 1 }
-                : goodsRequirements;
+            const implicitRequirements = getImplicitRequirements(name);
+            const goodsRequirements = { ...rawGoodsRequirements, ...implicitRequirements };
             const goodsProduction = config.goodsProduction || {};
 
             const maintenanceCost = Math.round((sectorUpgradeCosts[name as keyof IndustrialSectors] || 10) * level * 0.1);
             const wealth = (sectorWealth[name] ?? 0) - maintenanceCost;
             const clampedWealth = Math.max(0, wealth);
 
-            const inputCost = Object.entries(goodsRequirementsWithVehicles).reduce((sum, [key, value]) => {
+            const inputCost = Object.entries(goodsRequirements).reduce((sum, [key, value]) => {
                 return sum + (value as number) * prices[key as keyof Goods];
             }, 0);
 
@@ -152,7 +163,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                     Object.entries(workerRequirement).map(([k, v]) => [k, (v as number) * inputLevel])
                 ) as Partial<Record<keyof Population, number>>,
                 idealGoodsDemand: Object.fromEntries(
-                    Object.entries(goodsRequirementsWithVehicles).map(([k, v]) => [k, (v as number) * inputLevel])
+                    Object.entries(goodsRequirements).map(([k, v]) => [k, (v as number) * inputLevel])
                 ) as Partial<Record<keyof Goods, number>>,
                 idealGoodsProduction: Object.fromEntries(
                     Object.entries(goodsProduction).map(([k, v]) => [k, (v as number) * outputLevel])
