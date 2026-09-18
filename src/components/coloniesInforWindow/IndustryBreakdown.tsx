@@ -4,16 +4,26 @@ import { convertToReadable } from "@/lib/utils";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { UpgradeSectorCommand } from "@/game/commands/UpgradeSectorCommand";
 import { sectorUpgradeCosts, getSectorOutputLevel } from "@/game/systems/factoryBlueprints";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { IndustrialSectors } from "@/game/components/Factories";
+import { Toggle } from "@/components/ui/toggle";
 
 export function IndustryBreakdown({ industry, entity }: { industry: IndustryComponent; entity: Entity; }) {
     const engine = useGameEngine();
+    const [autoUpgrade, setAutoUpgrade] = useState<Partial<Record<keyof IndustrialSectors, boolean>>>(industry.autoUpgradeSectors)
 
     const handleUpgrade = useCallback((sectorName: keyof IndustrialSectors) => {
         if(!engine) return;
         engine.addCommand(new UpgradeSectorCommand(entity.id, sectorName));
     }, [engine, entity]);
+
+    const toggleAutoUpgrade = useCallback((sectorName: keyof IndustrialSectors) => {
+        setAutoUpgrade(prev => {
+            const next = { ...prev, [sectorName]: !prev[sectorName] }
+            industry.autoUpgradeSectors = next
+            return next
+        })
+    }, [industry])
 
     const a = { ...industry }
 
@@ -27,6 +37,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                     <th className="text-center p-2 font-medium">Profit</th>
                     <th className="text-center p-2 font-medium">Wealth</th>
                     <th className="text-center p-2 font-medium">Upgrade</th>
+                    <th className="text-center p-2 font-medium">Auto</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,6 +67,14 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                 >
                                     {upgradeCost}
                                 </button>
+                            </td>
+                            <td className="p-2 text-center">
+                                <Toggle
+                                    pressed={!!autoUpgrade[sectorKey]}
+                                    onPressedChange={() => toggleAutoUpgrade(sectorKey)}
+                                    size="sm"
+                                    variant="outline"
+                                />
                             </td>
                         </tr>
                     );

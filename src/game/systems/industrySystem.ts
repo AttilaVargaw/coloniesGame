@@ -1,3 +1,4 @@
+import { Entity } from "@/engine/entities/entity";
 import { IndustryComponent } from "@game/components/industryComponent";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
@@ -44,18 +45,31 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             const node = this.nodes.find(n => n.entity.id === upgradeCmd.entityId);
             if (!node) continue;
 
-            const industry = node.industry;
-            const sectorName = upgradeCmd.sectorName;
-            const currentLevel = industry.sectors[sectorName];
-            const cost = Math.round(sectorUpgradeCosts[sectorName] * currentLevel);
+            this.tryUpgradeSector(node.entity, node.industry, upgradeCmd.sectorName);
+        }
+    }
 
-            if (industry.sectorWealth[sectorName] >= cost) {
-                industry.sectorWealth[sectorName] -= cost;
-                industry.sectors = {
-                    ...industry.sectors,
-                    [sectorName]: currentLevel + 1,
-                };
+    private processAutoUpgrades() {
+        for (const { entity, industry } of this.nodes) {
+            for (const sectorName of Object.keys(industry.autoUpgradeSectors) as (keyof IndustrialSectors)[]) {
+                if (industry.autoUpgradeSectors[sectorName]) {
+                    this.tryUpgradeSector(entity, industry, sectorName);
+                }
             }
+        }
+    }
+
+    private tryUpgradeSector(entity: Entity, industry: IndustryComponent, sectorName: keyof IndustrialSectors) {
+        const currentLevel = industry.sectors[sectorName];
+        const cost = Math.round(sectorUpgradeCosts[sectorName] * currentLevel);
+
+        if (industry.sectorWealth[sectorName] >= cost) {
+            industry.sectorWealth[sectorName] -= cost;
+            industry.sectors = {
+                ...industry.sectors,
+                [sectorName]: currentLevel + 1,
+            };
+            this.engine?.reindexEntity(entity);
         }
     }
 
@@ -122,6 +136,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
     private onDayPassed = () => {
         this.processUpgradeCommands();
+        this.processAutoUpgrades();
         this.ensureWorker();
 
         const industries: IndustryTickInput[] = [];

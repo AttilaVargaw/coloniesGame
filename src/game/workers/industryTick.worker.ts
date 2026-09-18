@@ -280,7 +280,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             goodsRequirements[key as keyof Goods] = (goodsRequirements[key as keyof Goods] ?? 0) + (populationConsumption[key as keyof Goods] ?? 0);
         }
         const goodsProduction = { ...sumGoodsProduction };
-        const goodsChange = Object.entries({ ...goodsProduction, ...goodsRequirements }).reduce(
+        const goodsChange = Object.entries({ ...sumGoodsProduction, ...goodsRequirements }).reduce(
             (acc, [key]) => {
                 acc[key as keyof Goods] = (goodsProduction[key as keyof Goods] ?? 0) - (goodsRequirements[key as keyof Goods] ?? 0);
                 return acc;
@@ -288,8 +288,12 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             createStarterWarehouse(0)
         );
 
+        const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
+        const wastePerPerson = 0.05;
+        const populationWaste = totalPopulation * wastePerPerson;
+
         const wasteDecayRate = 0.05;
-        goodsChange.waste = Math.max(0, goodsChange.waste - wasteDecayRate * (goods.waste || 0));
+        goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (goods.waste || 0));
 
         results.push({
             entityId,

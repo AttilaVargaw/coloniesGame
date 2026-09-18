@@ -31,6 +31,7 @@ export class IndustryComponent extends EntityComponent {
     public sectorWealth: Record<keyof IndustrialSectors, number>
     public sectorProfits: Record<keyof IndustrialSectors, number>
     public populationProfits: Record<keyof Population, number>
+    public autoUpgradeSectors: Partial<Record<keyof IndustrialSectors, boolean>>
 
     constructor(
         public sectors: IndustrialSectors,
@@ -50,5 +51,6 @@ export class IndustryComponent extends EntityComponent {
         this.populationProfits = Object.fromEntries(
             Object.keys(population).map(key => [key, 0])
         ) as Record<keyof Population, number>;
+        this.autoUpgradeSectors = {}
     }
 }

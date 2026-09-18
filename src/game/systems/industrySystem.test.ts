@@ -6,6 +6,7 @@ import { World } from "@/engine/core/world"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "../factories/createStarterIndustry"
 import { createStarterWarehouse } from "../factories/createStarterWarehouse"
+import { sectorUpgradeCosts } from "../systems/factoryBlueprints"
 
 describe("industrySystem", () => {
     describe("addToEngine", () => {
@@ -42,6 +43,49 @@ describe("industrySystem", () => {
 
             expect((system as any).nodes).toHaveLength(0)
             expect((system as any).engine).toBeUndefined()
+        })
+    })
+
+    describe("auto-upgrade", () => {
+        it("upgrades an auto-enabled sector when wealth is sufficient", () => {
+            const world = new World()
+            const system = new IndustrySystem()
+            system.addToEngine(world)
+
+            const entity = world.createEntity("colony")
+            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000))
+            industry.autoUpgradeSectors = { mine: true }
+            entity.addComponent(industry)
+            world.addEntity(entity)
+
+            const sectorName = "mine"
+            const initialLevel = industry.sectors[sectorName]
+            const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * initialLevel)
+            industry.sectorWealth[sectorName] = upgradeCost + 1
+
+            ;(system as any).processAutoUpgrades()
+
+            expect(industry.sectors[sectorName]).toBe(initialLevel + 1)
+        })
+
+        it("does not upgrade when wealth is insufficient", () => {
+            const world = new World()
+            const system = new IndustrySystem()
+            system.addToEngine(world)
+
+            const entity = world.createEntity("colony")
+            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000))
+            industry.autoUpgradeSectors = { mine: true }
+            entity.addComponent(industry)
+            world.addEntity(entity)
+
+            const sectorName = "mine"
+            const initialLevel = industry.sectors[sectorName]
+            industry.sectorWealth[sectorName] = 0
+
+            ;(system as any).processAutoUpgrades()
+
+            expect(industry.sectors[sectorName]).toBe(initialLevel)
         })
     })
 })
