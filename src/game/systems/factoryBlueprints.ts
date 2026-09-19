@@ -194,7 +194,7 @@ export function getSectorOutputLevel(name: keyof IndustrialSectors, level: numbe
     return level;
 }
 
-export const sectorUpgradeCosts: Record<string, number> = {
+export const sectorUpgradeCosts = {
     mine: 50,
     oilRig: 50,
     forestry: 30,
@@ -234,4 +234,5 @@ export const sectorUpgradeCosts: Record<string, number> = {
     government: 80,
     automotive: 100,
     electronics: 120,
-};
+    luxuryFurnitureFactory: 120
+} as Readonly<Record<keyof IndustrialSectors, number>>;

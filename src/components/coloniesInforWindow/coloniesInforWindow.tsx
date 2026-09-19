@@ -50,13 +50,13 @@ export function ColoniesInforWindow() {
     const [page, setPage] = useState<string>("population")
 
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
-        <DialogContent className="bg-[#1c1c1c] text-popover-foreground min-w-3xl">
+        <DialogContent className="bg-[#1c1c1c] text-popover-foreground min-w-4xl">
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>
             </DialogHeader>
             <div style={{
-                height: "60vh",
-                overflowY: "auto"
+                height: "75vh",
+                overflowY: "auto",
             }}>
                 {info && <PatronGoodInfo info={info} />}
                 {
