@@ -14,7 +14,7 @@
 
 import { ReadonlyRecord } from "@/lib/readonlyRecord";
 import { Goods } from "./Goods";
-import { CumulativeLinkedList } from "@/lib/linkedList";
+import { populationPackets } from "./populationPackets";
 
 export type PopulationBreakdown = {
     number: number
@@ -93,68 +93,18 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
 // }
 
 function affordability(salary: number, goodsPrices: Goods, requirements: Record<keyof Goods, number>) {
-    const ret = salary - Object.entries(requirements).reduce((acc, [key, value]) => acc + value * goodsPrices[key as keyof Goods], 0)
-
-    return ret
+    return salary - Object.entries(requirements).reduce((acc, [key, value]) => acc + value * goodsPrices[key as keyof Goods], 0)
 }
 
 export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number, wealth }: PopulationBreakdown) {
     let qol = 0
 
-    const packets = new CumulativeLinkedList<Goods>({
-         0: {
-             basicFood: 0.5,
-             water: 0.5,
-             faith: 4,
-             lawEnforcement: 1,
-             healthcare: 4,
-             governance: 0.5
-         },
-         10: {
-             basicFood: 1,
-             faith: 2,
-             water: 1,
-             healthcare: 3,
-             electronics: 0.3
-         },
-         20: {
-             consumerGoods: 1,
-             furniture: 1,
-             healthcare: 2,
-             buildings: 0.05,
-             vehicles: 0.2
-         },
-         40: {
-             faith: 1.5,
-             services: 1,
-             electricity: 1,
-             food: 1,
-             luxuryFood: 0.2,
-             basicFood: 0.5,
-             furniture: 1.5,
-             healthcare: 1,
-             vehicles: 0.5,
-             Buildings: 0.01,
-             electronics: 1.0
-         },
-         50: {},
-         80: {
-             faith: 1,
-             tourism: 1,
-             luxuryFood: 1,
-             luxuryFurniture: 1,
-             vehicles: 1,
-             buildings: 0.015,
-             electronics: 2.0
-          }
-    })
-
-    const requirements = (Object.entries(packets.head.next!.data) as [keyof Goods, number][]).reduce((prev, [key, value]) => {
+    const requirements = (Object.entries(populationPackets.head.next!.data) as [keyof Goods, number][]).reduce((prev, [key, value]) => {
         prev[key] = value * number
         return prev
     }, {} as Record<keyof Goods, number>)
 
-    for(const { data, id } of packets.cumulative) {
+    for(const { data, id } of populationPackets.cumulative) {
         if(affordability(salary + wealth, goodsPrices, data) >= 0) {
             qol = Number(id)
 

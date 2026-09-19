@@ -5,6 +5,7 @@ import { colorBySign, } from "./colorBySign";
 import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
 import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationIcon";
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
+import { Goods } from "@/game/data/Goods";
 
 function Sum(...args: number[]) {
     let sum = 0
@@ -20,6 +21,8 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
     const populationSum = sumPopulation(industry.population);
     const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
     const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
+
+    const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;
 
     const totalIncome = Object.entries(industry.population).reduce((sum, [key, value]) => {
         return sum + (baseSalaries[key as keyof Population] || 0) * value.number;
@@ -59,6 +62,10 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                             <td className="p-2 text-right">{convertToReadable(unemployedSum)}</td>
                         </tr>
                         <tr className="border-b border-muted/50">
+                            <td className="p-2">Employed</td>
+                            <td className="p-2 text-right">{convertToReadable(employedSum)}</td>
+                        </tr>
+                        <tr className="border-b border-muted/50">
                             <td className="p-2">Total Income</td>
                             <td className="p-2 text-right">{convertToReadable(Math.round(totalIncome))}</td>
                         </tr>
@@ -95,7 +102,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                             const net = industry.populationProfits[key as keyof Population] ?? 0;
                             const expenses = income - net;
                             const requirements = industry.populationRequirements?.[key as keyof Population] || {};
-                            const reqEntries = Object.entries(requirements);
+                            const reqEntries = Object.entries(requirements) as [keyof Goods, number][];
 
                             return <tr key={key} className="border-b border-muted/50 last:border-0">
                                 <td className="p-2">
@@ -118,32 +125,32 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                 <td className="p-2 text-right">{colorBySign(net)}</td>
                                 <td className="p-2 text-right">{value.qol.toFixed(1)}</td>
                                 <td className="p-2 text-left">
-                                {reqEntries.length === 0 ? (
-                                    <span className="text-muted-foreground text-xs">—</span>
-                                ) : (
-                                    <div className="text-xs space-y-0.5">
-                                        {reqEntries.map(([good, req]) => {
-                                            const available = industry.goods[good as keyof typeof industry.goods] ?? 0;
-                                            const isFilled = available >= req;
-                                            const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
-                                            return (
-                                                <div key={good} className={`inline-flex items-center gap-1 ${colorClass}`}>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <div className="inline-flex items-center">
-                                                                <ResourceIcon name={good} />
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <span>{RESOURCE_NAMES[good] || good}</span>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                    {convertToReadable(Math.round(req))}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                    {reqEntries.length === 0 ? (
+                                        <span className="text-muted-foreground text-xs">—</span>
+                                    ) : (
+                                        <div className="text-xs space-y-0.5">
+                                            {reqEntries.map(([good, req]) => {
+                                                const available = industry.goods[good as keyof typeof industry.goods] ?? 0;
+                                                const isFilled = available >= req;
+                                                const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
+                                                return (
+                                                    <div key={good} className={`inline-flex items-center gap-1 ${colorClass}`}>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <div className="inline-flex items-center">
+                                                                    <ResourceIcon name={good} />
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <span>{RESOURCE_NAMES[good] || good}</span>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                        {convertToReadable(Math.round(req))}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>;
                         })}

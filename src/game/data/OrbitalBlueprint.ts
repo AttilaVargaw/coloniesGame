@@ -1,9 +1,9 @@
 
-export type OrbitalBlueprint = {
-    readonly radius: number;
-    readonly eccentricity?: number;
-    readonly angle?: number;
-    readonly inclination?: number;
-    readonly periapsis?: number;
-    readonly ascendingNode?: number;
-};
+export type OrbitalBlueprint = Readonly<{
+    radius: number;
+    eccentricity?: number;
+    angle?: number;
+    inclination?: number;
+    periapsis?: number;
+    ascendingNode?: number;
+}>

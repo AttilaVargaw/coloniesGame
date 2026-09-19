@@ -1,9 +1,9 @@
 import { Goods } from "./Goods";
 import { Population } from "./Population";
 
-export type Factory = {
-    readonly name: string;
-    readonly workerRequirement: Partial<Population>;
-    readonly goodsRequirements: Partial<Goods>;
-    readonly goodsProduction: Partial<Goods>
-};
+export type Factory = Readonly<{
+    name: string;
+    workerRequirement: Partial<Population>;
+    goodsRequirements: Partial<Goods>;
+    goodsProduction: Partial<Goods>
+}>

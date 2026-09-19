@@ -40,18 +40,28 @@ export type Goods = {
     buildings: number;
     waste: number;
     governance: number;
+
+    railroadVehicles: number;
+    ships: number;
+    luxuryShips: number;
+    aircraft: number;
+    clothing: number;
+    constructionMaterials: number;
+
+    post: number;
+    paper: number;
 }
 
 export const basePrices = {
     basicFood: 1,
     food: 10,
-    luxuryFood: 40,
+    luxuryFood: 60,
     tourism: 300,
     consumerGoods: 100,
     water: 10,
     electricity: 10,
     furniture: 10,
-    luxuryFurniture: 40,
+    luxuryFurniture: 120,
     services: 15,
     agriculturalGoods: 5,
     dividents: 10,
@@ -82,6 +92,14 @@ export const basePrices = {
     buildings: 12,
     waste: 2,
     governance: 10,
+
+    aircraft: 1000,
+    clothing: 100,
+    constructionMaterials: 100,
+    luxuryShips: 1000,
+    ships: 100,
+    railroadVehicles: 100,
+    paper: 15,
 } as ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(
@@ -101,7 +119,7 @@ export function getLowestGoodsRatio(
     }
 
     const entries = Object.entries(workerRatios)
-    if (entries.length === 0) return 1
+    if(entries.length === 0) return 1
 
     return Math.max(0, Math.min(...entries.map(([, v]) => v), 1))
 }
@@ -119,10 +137,10 @@ export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, numb
         const stockRatio = stock / baseline;
 
         let adjustment = 1.0;
-        if (stockRatio < 0.2) adjustment = 1.25;
-        else if (stockRatio < 0.5) adjustment = 1.1;
-        else if (stockRatio > 4) adjustment = 0.9;
-        else if (stockRatio > 2) adjustment = 0.95;
+        if(stockRatio < 0.2) adjustment = 1.25;
+        else if(stockRatio < 0.5) adjustment = 1.1;
+        else if(stockRatio > 4) adjustment = 0.9;
+        else if(stockRatio > 2) adjustment = 0.95;
 
         const currentPrice = memory[key] ?? base;
         const targetPrice = base * adjustment;

@@ -40,7 +40,15 @@ const PER_CAPITA_SECTOR_RATIOS = {
     government: 0.0001,
     automotive: 0.0001,
     electronics: 0.00005,
-    luxuryFurnitureFactory: 0.0000001, 
+    luxuryFurnitureFactory: 0.000001,
+    railroadVehicles: 0.000001,
+    aircraft: 0.000001,
+    clothing: 0.0001,
+    constructionMaterials: 0.000001,
+    luxuryShips: 0.000001,
+    ships: 0.000001,
+    post: 0.00001,
+    paperFactory: 0.000001,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 0;
@@ -59,6 +67,7 @@ export function createStarterIndustry(population: number) {
 export function createStarterSectorWealth(sectors: IndustrialSectors): Record<keyof IndustrialSectors, number> {
     const baseWealth = 100_00_000;
     const wealthPerLevel = 5000;
+
     return Object.fromEntries(
         Object.keys(sectors).map(key => [key, baseWealth + wealthPerLevel * sectors[key as keyof IndustrialSectors]])
     ) as Record<keyof IndustrialSectors, number>;

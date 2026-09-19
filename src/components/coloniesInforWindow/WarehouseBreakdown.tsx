@@ -18,9 +18,9 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                 </tr>
             </thead>
             <tbody>
-                {Object.entries(goods).map(([key, value]) => {
-                    const addition = goodsProduction[key as keyof Goods] || 0;
-                    const used = goodsRequirements[key as keyof Goods] || 0;
+                {(Object.entries(goods) as [keyof Goods, number][]).map(([key, value]) => {
+                    const addition = goodsProduction[key] || 0;
+                    const used = goodsRequirements[key] || 0;
 
                     return <tr key={key} className="border-b border-muted/50 last:border-0">
                         <td className="p-2">

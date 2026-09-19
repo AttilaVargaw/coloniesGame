@@ -14,6 +14,4 @@ export const occupationStarterRatio = {
     serviceWorker: 21,
     clergy: 3.5,
     clerks: 19,
-} as const as Record<keyof Population, number>;
-
-console.log(Object.values(occupationStarterRatio).reduce((a, b) => a + b, 0))
+} as Readonly<Record<keyof Population, number>>

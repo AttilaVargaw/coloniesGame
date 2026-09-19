@@ -72,15 +72,15 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         let bottleneck: string | null = null;
                         let bottleneckRatio = Infinity;
 
-                        const isPopulationReq = (name: string) => name in POPULATION_NAMES;
+                        const isPopulationReq = (name: keyof Population | keyof Goods) => name in POPULATION_NAMES;
 
-                        const addReq = (name: string, scaledReq: number, actual: number) => {
+                        const addReq = (name: keyof Population | keyof Goods, scaledReq: number, actual: number) => {
                             const isFilled = !hasData || actual >= scaledReq * 0.99;
                             const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
 
-                            if (hasData && scaledReq > 0) {
+                            if(hasData && scaledReq > 0) {
                                 const ratio = actual / scaledReq;
-                                if (ratio < 0.99 && ratio < bottleneckRatio) {
+                                if(ratio < 0.99 && ratio < bottleneckRatio) {
                                     bottleneckRatio = ratio;
                                     bottleneck = name;
                                 }
@@ -92,9 +92,9 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex items-center">
                                                 {isPopulationReq(name) ? (
-                                                    <PopulationIcon name={name} />
+                                                    <PopulationIcon name={name as keyof Population} />
                                                 ) : (
-                                                    <ResourceIcon name={name} />
+                                                    <ResourceIcon name={name as keyof Goods} />
                                                 )}
                                             </span>
                                         </TooltipTrigger>
@@ -114,7 +114,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
 
                         if(config?.goodsRequirements) {
                             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
-                                const scaledReq = (req as number) * inputLevel;
+                                const scaledReq = req * inputLevel;
                                 const consumed = industry.goods[good] ?? 0;
                                 addReq(good, scaledReq, consumed);
                             }
@@ -122,7 +122,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
 
                         if(config?.workerRequirement) {
                             for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
-                                const scaledReq = (req as number) * inputLevel;
+                                const scaledReq = req * inputLevel;
                                 const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
                                 addReq(worker, scaledReq, employed);
                             }

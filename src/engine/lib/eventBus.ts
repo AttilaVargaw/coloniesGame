@@ -18,7 +18,7 @@ import {
 } from "./events"
 
 export class EventBus {
-     
+
     readonly events: Map<new (...args: any[]) => EventBase, Queue<EventBase>> = new Map([
         [UpdateBeginEvent, new Queue()],
         [UpdateDoneEvent, new Queue()],
@@ -36,10 +36,9 @@ export class EventBus {
         [MousemoveEvent, new Queue()],
     ])
 
-     
     private readonly eventHandlers = new Map<new (...args: any[]) => EventBase, Set<(data: unknown) => void>>()
 
-     
+
     processEventHandler(event: new (...args: any[]) => EventBase) {
         const handlers = this.eventHandlers.get(event)
         const events = this.events.get(event)
@@ -57,7 +56,7 @@ export class EventBus {
         events.clear()
     }
 
-     
+
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void) {
         if(event === MousemoveEvent) {
             console.log("subscribing to mousemove")
@@ -71,7 +70,7 @@ export class EventBus {
         return this
     }
 
-     
+
     unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: unknown) => void) {
         this.eventHandlers.get(event)?.delete(callback)
 
@@ -79,20 +78,20 @@ export class EventBus {
     }
 
     dispatchEvent(event: EventBase) {
-         
+
         this.events.get(event.constructor as new (...args: any[]) => EventBase)?.enqueue(event)
 
         return this
     }
 
-     
+
     registerEventQueue(event: new (...args: any[]) => EventBase) {
         this.events.set(event, new Queue())
 
         return this
     }
 
-     
+
     removeEventQueue(event: new (...args: any[]) => EventBase) {
         this.events.delete(event)
 

@@ -45,7 +45,7 @@ export class CumulativeLinkedList<T> {
         return { [Symbol.iterator]: () => new CumulativeLinkedListIterator(this.head) }
     }
 
-    constructor(o: Record<string, any>) {
+    constructor(o: Record<string, Partial<T>>) {
         const entries = Object.entries(o)
 
         this.head.next = new LinkedListNode(entries[0][0], entries[0][1])

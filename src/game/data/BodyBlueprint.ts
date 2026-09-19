@@ -3,17 +3,17 @@ import { VesselBlueprint } from "./VesselBlueprint";
 import { OrbitalBlueprint } from "./OrbitalBlueprint";
 import { MapMarker } from "./MapMarker";
 
-export type BodyBlueprint = {
-    readonly population?: number;
-    readonly name: string;
-    readonly radius?: number;
-    readonly archetype: PlanetArchetype;
-    readonly color?: string;
-    readonly marker: MapMarker;
-    readonly orbit: OrbitalBlueprint;
-    readonly children?: BodyBlueprint[];
-    readonly vessels?: VesselBlueprint[];
-    readonly binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[] }[];
-    readonly rings?: { innerRadius: number; outerRadius: number; color: string }[];
-    readonly asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, }[];
-};
+export type BodyBlueprint = Readonly<{
+    population?: number;
+    name: string;
+    radius?: number;
+    archetype: PlanetArchetype;
+    color?: string;
+    marker: MapMarker;
+    orbit: OrbitalBlueprint;
+    children?: BodyBlueprint[];
+    vessels?: VesselBlueprint[];
+    binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[] }[];
+    rings?: { innerRadius: number; outerRadius: number; color: string }[];
+    asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, }[];
+}>

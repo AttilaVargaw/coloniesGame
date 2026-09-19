@@ -1,11 +1,11 @@
 import { WorldPosition } from "@/engine/components/position";
 
-export type MapMarker = {
-    readonly radius: number;
-    readonly color: string;
-    readonly label?: string;
-    readonly labelColor?: string;
-    readonly textSize?: number;
-    readonly shade?: boolean;
-    readonly offset?: WorldPosition;
-};
+export type MapMarker = Readonly<{
+    radius: number;
+    color: string;
+    label?: string;
+    labelColor?: string;
+    textSize?: number;
+    shade?: boolean;
+    offset?: WorldPosition;
+}>

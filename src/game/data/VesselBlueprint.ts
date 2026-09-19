@@ -1,7 +1,7 @@
 import { MapMarker } from "./MapMarker";
 import { OrbitalBlueprint } from "./OrbitalBlueprint";
 
-export type VesselBlueprint = {
-    readonly marker: MapMarker;
-    readonly orbit: OrbitalBlueprint;
-};
+export type VesselBlueprint = Readonly<{
+    marker: MapMarker;
+    orbit: OrbitalBlueprint;
+}>;

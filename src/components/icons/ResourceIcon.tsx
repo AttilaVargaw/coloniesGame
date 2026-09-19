@@ -1,4 +1,5 @@
-import { type LucideProps } from "lucide-react"
+import { Goods } from "@/game/data/Goods";
+import { BrickWall, Mail, Newspaper, ShipIcon, ShipWheel, Shirt, TrainIcon, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
@@ -34,9 +35,10 @@ import {
     Building2,
     Recycle,
     Landmark,
+
 } from "lucide-react"
 
-const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
+const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     basicFood: Wheat,
     food: Cookie,
     luxuryFood: Grape,
@@ -73,11 +75,23 @@ const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
     buildings: Building2,
     waste: Recycle,
     governance: Landmark,
+    aircraft: Plane,
+    clothing: Shirt,
+    constructionMaterials: BrickWall,
+    luxuryShips: ShipWheel,
+    paper: Newspaper,
+    post: Mail,
+    railroadVehicles: TrainIcon,
+    ships: ShipIcon
 }
 
-export function ResourceIcon({ name, className }: { name: string; className?: string }) {
+export function ResourceIcon({ name, className }: { name: keyof Goods; className?: string }) {
     const IconComponent = ICON_MAP[name]
-    if (!IconComponent) return null
+
+    if(!IconComponent) {
+        return name
+
+    }
     return <IconComponent className={className} strokeWidth={1.5} size={16} />
 }
 
