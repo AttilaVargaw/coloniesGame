@@ -43,6 +43,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         <th className="text-center p-2 font-medium">Efficiency</th>
                         <th className="text-center p-2 font-medium">Profit</th>
                         <th className="text-center p-2 font-medium">Wealth</th>
+                        <th className="text-center p-2 font-medium">Bottleneck</th>
                         <th className="text-left p-2 font-medium">Requirements</th>
                         <th className="text-center p-2 font-medium">Upgrade</th>
                         <th className="text-center p-2 font-medium">Auto</th>
@@ -68,18 +69,29 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         const isStopped = sectorResult?.productionRatio === 0;
 
                         const reqs: React.ReactNode[] = [];
+                        let bottleneck: string | null = null;
+                        let bottleneckRatio = Infinity;
+
+                        const isPopulationReq = (name: string) => name in POPULATION_NAMES;
 
                         const addReq = (name: string, scaledReq: number, actual: number) => {
                             const isFilled = !hasData || actual >= scaledReq * 0.99;
                             const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
-                            const isPopulation = name in POPULATION_NAMES
+
+                            if (hasData && scaledReq > 0) {
+                                const ratio = actual / scaledReq;
+                                if (ratio < 0.99 && ratio < bottleneckRatio) {
+                                    bottleneckRatio = ratio;
+                                    bottleneck = name;
+                                }
+                            }
 
                             reqs.push(
                                 <span key={name} className={`inline-flex items-center gap-1 ${colorClass}`}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex items-center">
-                                                {isPopulation ? (
+                                                {isPopulationReq(name) ? (
                                                     <PopulationIcon name={name} />
                                                 ) : (
                                                     <ResourceIcon name={name} />
@@ -87,10 +99,15 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                             </span>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <span>{isPopulation ? POPULATION_NAMES[name] : RESOURCE_NAMES[name] || name}</span>
+                                            <span>{isPopulationReq(name) ? POPULATION_NAMES[name] : RESOURCE_NAMES[name] || name}</span>
                                         </TooltipContent>
                                     </Tooltip>
                                     {convertToReadable(Math.round(scaledReq))}
+                                    {hasData && (
+                                        <span className="text-muted-foreground">
+                                            ({convertToReadable(Math.round(actual))})
+                                        </span>
+                                    )}
                                 </span>
                             );
                         };
@@ -98,20 +115,9 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         if(config?.goodsRequirements) {
                             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
                                 const scaledReq = (req as number) * inputLevel;
-                                const consumed = isStopped ? (industry.goods[good] ?? 0) : (sectorResult?.consumedGoods?.[good] ?? 0);
+                                const consumed = industry.goods[good] ?? 0;
                                 addReq(good, scaledReq, consumed);
                             }
-                        }
-
-                        if(sectorKey !== 'government') {
-                            const scaledReq = 2 * inputLevel;
-                            const consumed = industry.goods.governance ?? 0;
-                            addReq('governance', scaledReq, consumed);
-                        }
-                        if(sectorKey !== 'automotive') {
-                            const scaledReq = 1 * inputLevel;
-                            const consumed = industry.goods.vehicles ?? 0;
-                            addReq('vehicles', scaledReq, consumed);
                         }
 
                         if(config?.workerRequirement) {
@@ -132,6 +138,25 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                     {convertToReadable(Math.round(profit))}
                                 </td>
                                 <td className="p-2 text-center">{convertToReadable(Math.round(wealth))}</td>
+                                <td className="p-2 text-center">
+                                    {bottleneck ? (
+                                        <div className="flex flex-col items-center gap-1">
+                                            <span className="text-red-400 text-xs capitalize inline-flex items-center gap-1">
+                                                {isPopulationReq(bottleneck) ? (
+                                                    <PopulationIcon name={bottleneck} />
+                                                ) : (
+                                                    <ResourceIcon name={bottleneck} />
+                                                )}
+                                                {bottleneck}
+                                            </span>
+                                            <span className="text-red-400/70 text-[10px]">
+                                                {convertToReadable(Math.round(bottleneckRatio * 100))}%
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-green-400 text-xs">—</span>
+                                    )}
+                                </td>
                                 <td className="p-2 text-left">
                                     <div className="text-xs space-y-0.5">
                                         {reqs.map((req, i) => (

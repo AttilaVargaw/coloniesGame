@@ -16,6 +16,7 @@ export type IndustrialSectors = Readonly<{
     medicineFactory: number;
     consumerFactory: number;
     furnitureFactory: number;
+    luxuryFurnitureFactory: number;
     ammunitionFactory: number;
     weaponFactory: number;
     nuclearWeaponFactory: number;

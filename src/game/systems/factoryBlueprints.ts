@@ -28,7 +28,7 @@ export const industryReducers = Object.entries({
         name: "foodFactory",
         goodsRequirements: { vehicles: 0.1, agriculturalGoods: 20, machinery: 8, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: { worker: 5, clerks: 1 },
-        goodsProduction: { food: 150, },
+        goodsProduction: { food: 150, basicFood: 200 },
         efficiencyBonus: 0.02
     }),
     luxuryFood: generateIndustrialSector({
@@ -51,7 +51,7 @@ export const industryReducers = Object.entries({
         efficiencyBonus: 0.02
     }),
     lumberMill: generateIndustrialSector({
-        name: "lumberMill", goodsRequirements: { vehicles: 0.1, wood: 30, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { furniture: 40, lumber: 40 },
+        name: "lumberMill", goodsRequirements: { vehicles: 0.1, wood: 30, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { lumber: 40 },
         efficiencyBonus: 0.02
     }),
     machineryFactory: generateIndustrialSector({
@@ -66,8 +66,12 @@ export const industryReducers = Object.entries({
         name: "consumerFactory", goodsRequirements: { vehicles: 0.1, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 11, clerks: 1 }, goodsProduction: { consumerGoods: 20 },
         efficiencyBonus: 0.02
     }),
-    furnitureFactory: generateIndustrialSector({
+    luxuryFurnitureFactory: generateIndustrialSector({
         name: "furnitureFactory", goodsRequirements: { vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { luxuryFurniture: 14 },
+        efficiencyBonus: 0.02
+    }),
+    furnitureFactory: generateIndustrialSector({
+        name: "furnitureFactory", goodsRequirements: { vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 5, clerks: 1 }, goodsProduction: { furniture: 50 },
         efficiencyBonus: 0.02
     }),
     ammunitionFactory: generateIndustrialSector({
