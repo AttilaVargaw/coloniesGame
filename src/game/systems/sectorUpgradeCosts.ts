@@ -51,4 +51,7 @@ export const sectorUpgradeCosts = {
     paperFactory: 100,
     entertainmentIndustry: 100,
     informationTechnology: 100,
+    alcoholicDrinkIndustry: 100,
+    stimulantDrinkIndustry: 100,
+    retail: 100,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;

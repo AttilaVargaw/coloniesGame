@@ -3,7 +3,7 @@ import { Goods } from "./Goods";
 
 export const populationPackets = new CumulativeLinkedList<Goods>({
     0: {
-        basicFood: 0.5,
+        food: 0.5,
         water: 0.5,
         faith: 4,
         lawEnforcement: 1,
@@ -12,7 +12,7 @@ export const populationPackets = new CumulativeLinkedList<Goods>({
         clothing: 0.1
     },
     10: {
-        basicFood: 1,
+        food: 1,
         faith: 2,
         water: 1,
         healthcare: 3,
@@ -35,7 +35,6 @@ export const populationPackets = new CumulativeLinkedList<Goods>({
         electricity: 1,
         food: 1,
         luxuryFood: 0.2,
-        basicFood: 0.5,
         furniture: 1.5,
         healthcare: 1,
         vehicles: 0.5,

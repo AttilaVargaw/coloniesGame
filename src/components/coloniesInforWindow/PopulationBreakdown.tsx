@@ -33,6 +33,8 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
     const totalNet = Object.values(industry.populationProfits).reduce((sum, val) => sum + val, 0);
     const totalExpenses = totalIncome - totalNet;
 
+    const workingAgePopulation = populationSum - industry.population.retired.number - industry.population.student.number
+
     return (
         <>
             <div className="overflow-x-auto">
@@ -54,9 +56,9 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                             </td>
                         </tr>
                         <tr className="border-b border-muted/50">
-                            <td className="p-2">Working Population</td>
+                            <td className="p-2">Working Age Population</td>
                             <td className="p-2 text-right">
-                                {convertToReadable(populationSum - industry.population.retired.number - industry.population.student.number)}
+                                {convertToReadable(workingAgePopulation)}
                             </td>
                         </tr>
                         <tr className="border-b border-muted/50">
@@ -65,7 +67,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                         </tr>
                         <tr className="border-b border-muted/50">
                             <td className="p-2">Employed</td>
-                            <td className="p-2 text-right">{convertToReadable(employedSum)}</td>
+                            <td className="p-2 text-right">{convertToReadable(employedSum)} ({(employedSum / workingAgePopulation * 100).toFixed(2)}%)</td>
                         </tr>
                         <tr className="border-b border-muted/50">
                             <td className="p-2">Total Income</td>

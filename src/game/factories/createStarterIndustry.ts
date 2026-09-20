@@ -6,7 +6,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     forestry: 0.000026,
     farm: 0.0000088,
     fishery: 0.000006,
-    foodFactory: 0.00001,
+    foodFactory: 0.00006,
     luxuryFood: 0.00005,
     waterTreatment: 0.000008,
     powerPlant: 0.000004,
@@ -16,7 +16,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     metalFactory: 0.00000126,
     lumberMill: 0.0000064,
     machineryFactory: 0.000004,
-    medicineFactory: 0.00000008,
+    medicineFactory: 0.000008,
     consumerFactory: 0.00008,
     furnitureFactory: 0.00008,
     ammunitionFactory: 0.000004,
@@ -29,7 +29,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     construction: 0.000006,
     services: 0.000062,
     tourism: 0.000084,
-    education: 0.000004,
+    education: 0.000009,
     healthcare: 0.00004,
     environmentControl: 0.000002,
     bank: 0.000001,
@@ -51,6 +51,9 @@ const PER_CAPITA_SECTOR_RATIOS = {
     paperFactory: 0.000001,
     entertainmentIndustry: 0.00005,
     informationTechnology: 0.00005,
+    alcoholicDrinkIndustry: 0.00005,
+    stimulantDrinkIndustry: 0.00005,
+    retail: 0.00005,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 0;

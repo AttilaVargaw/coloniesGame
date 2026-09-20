@@ -1,5 +1,5 @@
 import { Goods } from "@/game/data/Goods";
-import { BrickWall, Mail, Newspaper, ShipIcon, ShipWheel, Shirt, TrainIcon, type LucideProps } from "lucide-react"
+import { Beer, BrickWall, Clapperboard, Mail, Martini, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
@@ -39,8 +39,13 @@ import {
 } from "lucide-react"
 
 const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
-    basicFood: Wheat,
     food: Cookie,
+    alcoholDrinks: Beer,
+    stimulantDrinks: Martini,
+    entertainment: Clapperboard,
+    itServices: MonitorSmartphone,
+    education: School,
+    retail: ShoppingCart,
     luxuryFood: Grape,
     tourism: Plane,
     consumerGoods: Boxes,

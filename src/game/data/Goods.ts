@@ -1,7 +1,6 @@
 import { ReadonlyRecord } from "@/lib/readonlyRecord";
 
 export type Goods = {
-    basicFood: number;
     food: number;
     luxuryFood: number;
     tourism: number;
@@ -54,11 +53,15 @@ export type Goods = {
     entertainment: number;
     itServices: number;
 
-    education: number
+    education: number;
+
+    alcoholDrinks: number;
+    stimulantDrinks: number;
+
+    retail: number;
 }
 
 export const basePrices = {
-    basicFood: 1,
     food: 10,
     luxuryFood: 60,
     tourism: 300,
@@ -108,7 +111,10 @@ export const basePrices = {
     post: 10,
     entertainment: 20,
     itServices: 10,
-    education: 50
+    education: 50,
+    alcoholDrinks: 50,
+    stimulantDrinks: 50,
+    retail: 100,
 } satisfies ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(

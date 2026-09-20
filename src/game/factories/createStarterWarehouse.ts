@@ -3,7 +3,6 @@ import { Goods } from "../data/Goods";
 export function createStarterWarehouse(population: number) {
     return {
         water: population * 50,
-        basicFood: population * 50,
         agriculturalGoods: population * 1,
         ammunition: population * 1,
         consumerGoods: population * 50,
@@ -48,6 +47,9 @@ export function createStarterWarehouse(population: number) {
         paper: population * 10,
         entertainment: population * 10,
         itServices: population * 10,
-        education: population * 50
+        education: population * 50,
+        alcoholDrinks: population * 10,
+        stimulantDrinks: population * 10,
+        retail: population * 50,
     } satisfies Goods;
 }
