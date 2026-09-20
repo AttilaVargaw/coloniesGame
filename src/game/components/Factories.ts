@@ -46,8 +46,10 @@ export type IndustrialSectors = Readonly<{
     constructionMaterials: number;
     luxuryShips: number;
     ships: number;
-    post: number;
+    postalServices: number;
     paperFactory: number;
+    entertainmentIndustry: number;
+    informationTechnology: number;
 }>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

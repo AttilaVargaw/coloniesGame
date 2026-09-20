@@ -18,19 +18,17 @@ export class LinkedListNode<T> {
     }
 }
 
-export class CumulativeLinkedListIterator<T> implements Iterator<LinkedListNode<T>> {
-    next(): IteratorResult<LinkedListNode<T>, any> {
-        if(this.node?.next) {
-            const data = { ...this.node.data, ...this.node.next.data }
-            this.node = this.node.next
-            this.node.data = data
-
-            // console.log(this.node.data)
-
-            return { value: this.node, done: false }
-        } else {
+export class CumulativeLinkedListIterator<T> implements Iterator<{ data: T; id: string }> {
+    next(): IteratorResult<{ data: T; id: string }> {
+        if (!this.node?.next) {
             return { value: null, done: true }
         }
+
+        const nextNode = this.node.next
+        const mergedData = { ...this.node.data, ...nextNode.data }
+        this.node = nextNode
+
+        return { value: { data: mergedData, id: nextNode.id }, done: false }
     }
 
     constructor(private node: LinkedListNode<T> | null) { }

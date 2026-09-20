@@ -9,7 +9,7 @@ import { Population } from "../data/Population";
 import type { IndustrialSectors } from "../components/Factories";
 import type { IndustryTickInput, IndustryTickResult } from "../workers/industryTick.worker";
 import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
-import { sectorUpgradeCosts } from "../systems/factoryBlueprints";
+import { sectorUpgradeCosts } from "./sectorUpgradeCosts";
 
 const workerUrl = new URL("../workers/industryTick.worker.ts", import.meta.url);
 
@@ -102,7 +102,8 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             pop.expectedQol = update.expectedQol;
             pop.populationChange = update.populationChange;
             pop.wealth = Math.max(0, update.wealth);
-            pop.number = Math.max(0, pop.number + update.populationChange);
+            const populationChange = Number.isFinite(update.populationChange) ? update.populationChange : 0;
+            pop.number = Math.max(0, pop.number + populationChange);
             }
 
             for (const [sector, profit] of Object.entries(result.sectorProfits)) {

@@ -97,6 +97,10 @@ function affordability(salary: number, goodsPrices: Goods, requirements: Record<
 }
 
 export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number, wealth }: PopulationBreakdown) {
+    if (!Number.isFinite(number) || !Number.isFinite(wealth)) {
+        return { requirements: {} as Record<keyof Goods, number>, qol: 0 }
+    }
+
     let qol = 0
 
     const requirements = (Object.entries(populationPackets.head.next!.data) as [keyof Goods, number][]).reduce((prev, [key, value]) => {

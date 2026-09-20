@@ -103,7 +103,16 @@ export const industryReducers = Object.entries({
         efficiencyBonus: 0.02
     }),
     construction: generateIndustrialSector({
-        name: "construction", goodsRequirements: { vehicles: 0.1, lumber: 8, metals: 6, chemicals: 4, electricity: 4, buildings: 4, governance: 2, electronics: 1 }, workerRequirement: { worker: 50, clerks: 2 }, goodsProduction: { buildings: 80 },
+        name: "construction", goodsRequirements: {
+            vehicles: 0.1,
+            lumber: 8,
+            metals: 6,
+            chemicals: 4,
+            electricity: 4,
+            governance: 2,
+            electronics: 1,
+            constructionMaterials: 10
+        }, workerRequirement: { worker: 50, clerks: 2 }, goodsProduction: { buildings: 80 },
         efficiencyBonus: 0.02
     }),
     services: generateIndustrialSector({
@@ -170,63 +179,56 @@ export const industryReducers = Object.entries({
     }),
     automotive: generateIndustrialSector({
         name: "automotive",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { vehicles: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     electronics: generateIndustrialSector({
         name: "electronics",
-        goodsRequirements: { vehicles: 0.1, machinery: 6, oil: 5, electricity: 18, buildings: 3, governance: 2 },
+        goodsRequirements: { vehicles: 0.1, machinery: 6, chemicals: 5, electricity: 18, buildings: 3, governance: 2 },
         workerRequirement: { worker: 50, scientist: 2, clerks: 1 },
         goodsProduction: { electronics: 20 },
         efficiencyBonus: 0.02
     }),
     railroadVehicles: generateIndustrialSector({
         name: "railroadVehicles",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { railroadVehicles: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     ships: generateIndustrialSector({
         name: "ships",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { ships: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     luxuryShips: generateIndustrialSector({
         name: "luxuryShips",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { luxuryShips: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     aircraft: generateIndustrialSector({
         name: "aircraft",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { aircraft: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     clothing: generateIndustrialSector({
         name: "clothing",
-        goodsRequirements: { machinery: 8, chemicals: 2, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, chemicals: 2, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, agriculturalGoods: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { clothing: 15, waste: 1 },
         efficiencyBonus: 0.02
     }),
     constructionMaterials: generateIndustrialSector({
         name: "constructionMaterials",
-        goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
-        workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
-        goodsProduction: { constructionMaterials: 15, waste: 1 },
-        efficiencyBonus: 0.02
-    }),
-    post: generateIndustrialSector({
-        name: "post",
-        goodsRequirements: { electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 },
+        goodsRequirements: { machinery: 8, oil: 2, electricity: 15, buildings: 3, water: 20, governance: 2, electronics: 1, lumber: 10, metals: 10 },
         workerRequirement: { worker: 50, scientist: 1, clerks: 1 },
         goodsProduction: { constructionMaterials: 15, waste: 1 },
         efficiencyBonus: 0.02
@@ -235,10 +237,31 @@ export const industryReducers = Object.entries({
         name: "paperFactory",
         goodsRequirements: { vehicles: 0.1, wood: 20, chemicals: 8, machinery: 6, electricity: 16, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: { worker: 50, clerks: 1 },
-        goodsProduction: { paper: 80 },
+        goodsProduction: { paper: 180 },
         efficiencyBonus: 0.02
     }),
-})
+    postalServices: generateIndustrialSector({
+        name: "postalServices",
+        goodsRequirements: { electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        workerRequirement: { worker: 50, clerks: 1 },
+        goodsProduction: { post: 15, waste: 1 },
+        efficiencyBonus: 0.02
+    }),
+    entertainmentIndustry: generateIndustrialSector({
+        name: "entertainmentIndustry",
+        goodsRequirements: { electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        workerRequirement: { worker: 50, clerks: 1 },
+        goodsProduction: { entertainment: 15, waste: 1 },
+        efficiencyBonus: 0.02,
+    }),
+    informationTechnology: generateIndustrialSector({
+        name: "informationTechnology",
+        goodsRequirements: { electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        workerRequirement: { worker: 50, clerks: 1 },
+        goodsProduction: { itServices: 15, waste: 1 },
+        efficiencyBonus: 0.02,
+    }),
+} satisfies Record<keyof IndustrialSectors, IndustryReducer>)
 
 export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
     const entry = industryReducers.find(([n]) => n === name) as [string, IndustryReducer] | undefined;
@@ -249,54 +272,3 @@ export function getSectorOutputLevel(name: keyof IndustrialSectors, level: numbe
     if(config.efficiencyBonus && config.efficiencyBonus > 0) return level * (1 + config.efficiencyBonus * (level - 1));
     return level;
 }
-
-export const sectorUpgradeCosts = {
-    mine: 50,
-    oilRig: 50,
-    forestry: 30,
-    farm: 30,
-    fishery: 30,
-    foodFactory: 80,
-    luxuryFood: 60,
-    waterTreatment: 100,
-    powerPlant: 120,
-    metalFactory: 80,
-    lumberMill: 60,
-    machineryFactory: 100,
-    medicineFactory: 100,
-    consumerFactory: 80,
-    furnitureFactory: 60,
-    ammunitionFactory: 100,
-    weaponFactory: 120,
-    nuclearWeaponFactory: 200,
-    ordnanceFactory: 120,
-    spaceport: 200,
-    spaceShipyard: 200,
-    orbitalFactory: 150,
-    construction: 80,
-    services: 50,
-    tourism: 60,
-    education: 80,
-    healthcare: 100,
-    environmentControl: 60,
-    chemical: 80,
-    bank: 100,
-    religion: 40,
-    lawEnforcement: 80,
-    nuclearSector: 150,
-    greenEnergy: 100,
-    alternativeMedicine: 50,
-    recycling: 40,
-    government: 80,
-    automotive: 100,
-    electronics: 120,
-    luxuryFurnitureFactory: 120,
-    aircraft: 150,
-    clothing: 100,
-    luxuryShips: 200,
-    ships: 150,
-    railroadVehicles: 120,
-    constructionMaterials: 100,
-    post: 100,
-    paperFactory: 100,
-} satisfies Readonly<Record<keyof IndustrialSectors, number>>;

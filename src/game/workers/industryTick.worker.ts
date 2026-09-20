@@ -1,4 +1,5 @@
-import { industryReducers, getSectorOutputLevel, sectorUpgradeCosts } from "../systems/factoryBlueprints";
+import { industryReducers, getSectorOutputLevel } from "../systems/factoryBlueprints";
+import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
 import { baseSalaries, getGoodRequirementsAndQoL, Population, PopulationBreakdown } from "../data/Population";
 import { getPrices, Goods } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
@@ -82,13 +83,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
 
             const targetWealth = pop.wealth + income - expenses;
-            const smoothedWealth = pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing;
+            const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;
 
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
             const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
             const maxDailyChange = pop.number * 0.001;
-            const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, rawPopulationChange));
+            const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, Number.isFinite(rawPopulationChange) ? rawPopulationChange : 0));
 
             populationUpdates[key] = {
                 qol: smoothedQol,

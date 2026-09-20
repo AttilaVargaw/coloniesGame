@@ -50,6 +50,9 @@ export type Goods = {
 
     post: number;
     paper: number;
+
+    entertainment: number;
+    itServices: number;
 }
 
 export const basePrices = {
@@ -100,7 +103,10 @@ export const basePrices = {
     ships: 100,
     railroadVehicles: 100,
     paper: 15,
-} as ReadonlyRecord<keyof Goods, number>
+    post: 10,
+    entertainment: 20,
+    itServices: 10
+} satisfies ReadonlyRecord<keyof Goods, number>
 
 export function getLowestGoodsRatio(
     requirements: Partial<Record<keyof Goods, number>>,
@@ -137,10 +143,19 @@ export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, numb
         const stockRatio = stock / baseline;
 
         let adjustment = 1.0;
-        if(stockRatio < 0.2) adjustment = 1.25;
-        else if(stockRatio < 0.5) adjustment = 1.1;
-        else if(stockRatio > 4) adjustment = 0.9;
-        else if(stockRatio > 2) adjustment = 0.95;
+
+        if(stockRatio < 0.2) {
+            adjustment = 1.25;
+        }
+        else if(stockRatio < 0.5) {
+            adjustment = 1.1;
+        }
+        else if(stockRatio > 4) {
+            adjustment = 0.9;
+        }
+        else if(stockRatio > 2) {
+            adjustment = 0.95;
+        }
 
         const currentPrice = memory[key] ?? base;
         const targetPrice = base * adjustment;

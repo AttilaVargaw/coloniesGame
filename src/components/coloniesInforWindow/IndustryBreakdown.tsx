@@ -3,7 +3,8 @@ import { Entity } from "@/engine/entities/entity";
 import { convertToReadable } from "@/lib/utils";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { UpgradeSectorCommand } from "@/game/commands/UpgradeSectorCommand";
-import { sectorUpgradeCosts, getSectorOutputLevel, industryReducers } from "@/game/systems/factoryBlueprints";
+import { getSectorOutputLevel, industryReducers } from "@/game/systems/factoryBlueprints";
+import { sectorUpgradeCosts } from "@/game/systems/sectorUpgradeCosts";
 import { useCallback, useState } from "react";
 import type { IndustrialSectors } from "@/game/components/Factories";
 import type { Goods } from "@/game/data/Goods";
@@ -182,7 +183,7 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                                     />
                                 </td>
                             </tr>
-                        );
+                        )
                     })}
                 </tbody>
             </table>

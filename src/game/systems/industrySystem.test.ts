@@ -6,7 +6,7 @@ import { World } from "@/engine/core/world"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "../factories/createStarterIndustry"
 import { createStarterWarehouse } from "../factories/createStarterWarehouse"
-import { sectorUpgradeCosts } from "../systems/factoryBlueprints"
+import { sectorUpgradeCosts } from "./sectorUpgradeCosts"
 
 describe("industrySystem", () => {
     describe("addToEngine", () => {

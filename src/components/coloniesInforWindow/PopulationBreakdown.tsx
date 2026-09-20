@@ -22,7 +22,9 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
     const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
     const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
 
+
     const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;
+    console.log({ unemployedSum, employedSum })
 
     const totalIncome = Object.entries(industry.population).reduce((sum, [key, value]) => {
         return sum + (baseSalaries[key as keyof Population] || 0) * value.number;
@@ -134,7 +136,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                                 const isFilled = available >= req;
                                                 const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
                                                 return (
-                                                    <div key={good} className={`inline-flex items-center gap-1 ${colorClass}`}>
+                                                    <div key={good} className={`items-center gap-1 ${colorClass}`}>
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
                                                                 <div className="inline-flex items-center">
