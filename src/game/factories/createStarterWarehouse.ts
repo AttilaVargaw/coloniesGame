@@ -48,5 +48,6 @@ export function createStarterWarehouse(population: number) {
         paper: population * 10,
         entertainment: population * 10,
         itServices: population * 10,
+        education: population * 50
     } satisfies Goods;
 }

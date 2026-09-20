@@ -46,6 +46,15 @@ const wastePerPerson = 0.05;
 const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"] as const);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
+const extraRequirements = {
+    student: {
+        education: 1
+    },
+    retired: {
+        healthcare: 2
+    }
+} as Readonly<Record<keyof Population, Partial<Goods>>>
+
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
     if(event.data.type !== "tick") return;
 
@@ -67,6 +76,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 prices,
                 pop
             );
+
+            const extra = extraRequirements[key];
+            if(extra) {
+                for(const [good, amount] of Object.entries(extra)) {
+                    requirements[good as keyof Goods] = (requirements[good as keyof Goods] ?? 0) + amount * pop.number;
+                }
+            }
 
             for(const it in requirements) {
                 populationConsumption[it as keyof Goods] =
