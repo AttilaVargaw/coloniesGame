@@ -41,8 +41,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         }
 
         const E = solveKepler(orbit.meanAnomaly, orbit.eccentricity)
-        const a = orbit.radius
-        const r = a * (1 - orbit.eccentricity * Math.cos(E))
+        const r = orbit.radius * (1 - orbit.eccentricity * Math.cos(E))
 
         const theta = 2 * Math.atan2(
             Math.sqrt(1 + orbit.eccentricity) * Math.sin(E / 2),

@@ -62,7 +62,6 @@ export const baseSalaries = {
     clergy: 200,
     retired: 100,
     clerks: 500,
-    investor: 0
 } as ReadonlyRecord<keyof Population, number>
 
 export function sumPopulation(population: Population) {
@@ -97,7 +96,7 @@ function affordability(salary: number, goodsPrices: Goods, requirements: Record<
 }
 
 export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number, wealth }: PopulationBreakdown) {
-    if (!Number.isFinite(number) || !Number.isFinite(wealth)) {
+    if(!Number.isFinite(number) || !Number.isFinite(wealth)) {
         return { requirements: {} as Record<keyof Goods, number>, qol: 0 }
     }
 

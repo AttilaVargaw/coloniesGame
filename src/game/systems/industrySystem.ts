@@ -38,21 +38,21 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
     private processUpgradeCommands() {
         const commands = this.engine?.getCommands(UpgradeSectorCommand);
-        if (!commands) return;
+        if(!commands) return;
 
-        for (const cmd of [...commands]) {
+        for(const cmd of [...commands]) {
             const upgradeCmd = cmd as UpgradeSectorCommand;
             const node = this.nodes.find(n => n.entity.id === upgradeCmd.entityId);
-            if (!node) continue;
+            if(!node) continue;
 
             this.tryUpgradeSector(node.entity, node.industry, upgradeCmd.sectorName);
         }
     }
 
     private processAutoUpgrades() {
-        for (const { entity, industry } of this.nodes) {
-            for (const sectorName of Object.keys(industry.autoUpgradeSectors) as (keyof IndustrialSectors)[]) {
-                if (industry.autoUpgradeSectors[sectorName]) {
+        for(const { entity, industry } of this.nodes) {
+            for(const sectorName of Object.keys(industry.autoUpgradeSectors) as (keyof IndustrialSectors)[]) {
+                if(industry.autoUpgradeSectors[sectorName]) {
                     this.tryUpgradeSector(entity, industry, sectorName, true);
                 }
             }
@@ -63,12 +63,12 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         const currentLevel = industry.sectors[sectorName];
         const cost = Math.round(sectorUpgradeCosts[sectorName] * Math.max(1, currentLevel));
 
-        if (requireProfit) {
+        if(requireProfit) {
             const lastProfit = industry.sectorProfits[sectorName] ?? 0;
-            if (lastProfit <= 0) return;
+            if(lastProfit <= 0) return;
         }
 
-        if (industry.sectorWealth[sectorName] >= cost) {
+        if(industry.sectorWealth[sectorName] >= cost) {
             industry.sectorWealth[sectorName] -= cost;
             industry.sectors = {
                 ...industry.sectors,
@@ -95,18 +95,18 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             industry.freeWorkers = result.freeWorkers;
 
             for(const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
-            const pop = industry.population[key];
-            if(!pop) continue;
+                const pop = industry.population[key];
+                if(!pop) continue;
 
-            pop.qol = update.qol;
-            pop.expectedQol = update.expectedQol;
-            pop.populationChange = update.populationChange;
-            pop.wealth = Math.max(0, update.wealth);
-            const populationChange = Number.isFinite(update.populationChange) ? update.populationChange : 0;
-            pop.number = Math.max(0, pop.number + populationChange);
+                pop.qol = update.qol;
+                pop.expectedQol = update.expectedQol;
+                pop.populationChange = update.populationChange;
+                pop.wealth = Math.max(0, update.wealth);
+                const populationChange = Number.isFinite(update.populationChange) ? update.populationChange : 0;
+                pop.number = Math.max(0, pop.number + populationChange);
             }
 
-            for (const [sector, profit] of Object.entries(result.sectorProfits)) {
+            for(const [sector, profit] of Object.entries(result.sectorProfits)) {
                 const sectorKey = sector as keyof IndustrialSectors;
                 const maintenance = result.sectorMaintenance?.[sectorKey] ?? 0;
                 const currentWealth = industry.sectorWealth[sectorKey] ?? 0;
@@ -117,7 +117,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 industry.sectorProfits[sectorKey] = profit;
 
                 const currentLevel = industry.sectors[sectorKey];
-                if (currentLevel > 1 && smoothedWealth < maintenance * 3) {
+                if(currentLevel > 1 && smoothedWealth < maintenance * 3) {
                     industry.sectors = {
                         ...industry.sectors,
                         [sectorKey]: currentLevel - 1,
@@ -126,12 +126,12 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 }
             }
 
-            for (const [group, profit] of Object.entries(result.populationProfits)) {
+            for(const [group, profit] of Object.entries(result.populationProfits)) {
                 const groupKey = group as keyof Population;
                 industry.populationProfits[groupKey] = profit;
             }
 
-            for (const [sector, utilization] of Object.entries(result.sectorUtilization)) {
+            for(const [sector, utilization] of Object.entries(result.sectorUtilization)) {
                 const sectorKey = sector as keyof IndustrialSectors;
                 industry.sectorUtilization[sectorKey] = utilization;
             }
@@ -162,9 +162,9 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             industries.push({
                 entityId: entity.id,
                 sectors: industry.sectors,
-                goods: { ...industry.goods },
-                population: structuredClone(industry.population),
-                sectorWealth: { ...industry.sectorWealth },
+                goods: industry.goods,
+                population: industry.population,
+                sectorWealth: industry.sectorWealth,
             });
         }
 
@@ -176,6 +176,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             this.worker.terminate();
             this.worker = null;
         }
+        //problematic, the key should be the this.constructor
         this.engine?.unregisterNodeType(IndustryNode);
         this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
         super.removeFromEngine();

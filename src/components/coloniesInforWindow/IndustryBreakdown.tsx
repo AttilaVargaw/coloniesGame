@@ -3,7 +3,7 @@ import { Entity } from "@/engine/entities/entity";
 import { convertToReadable } from "@/lib/utils";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { UpgradeSectorCommand } from "@/game/commands/UpgradeSectorCommand";
-import { getSectorOutputLevel, industryReducers } from "@/game/systems/factoryBlueprints";
+import { getSectorOutputLevel, industrySectorBlueprints } from "@/game/systems/factoryBlueprints";
 import { sectorUpgradeCosts } from "@/game/systems/sectorUpgradeCosts";
 import { useCallback, useState } from "react";
 import type { IndustrialSectors } from "@/game/components/Factories";
@@ -31,8 +31,6 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
         })
     }, [industry])
 
-    const a = { ...industry }
-
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -51,21 +49,20 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.entries((a.sectors as IndustrialSectors)).map(([key, value]) => {
+                    {Object.entries((industry.sectors as IndustrialSectors)).map(([key, value]) => {
                         const sectorKey = key as keyof IndustrialSectors;
-                        const profit = a.sectorProfits[sectorKey] ?? 0;
-                        const wealth = a.sectorWealth[sectorKey] ?? 0;
+                        const profit = industry.sectorProfits[sectorKey] ?? 0;
+                        const wealth = industry.sectorWealth[sectorKey] ?? 0;
                         const upgradeCost = Math.round(sectorUpgradeCosts[sectorKey] * value);
                         const canUpgrade = wealth >= upgradeCost;
                         const outputLevel = getSectorOutputLevel(sectorKey, value);
                         const efficiency = value > 0 ? ((outputLevel / value) * 100) : 100;
-                        const utilization = a.sectorUtilization[sectorKey] ?? 0;
+                        const utilization = industry.sectorUtilization[sectorKey] ?? 0;
 
-                        const blueprintEntry = industryReducers.find(([n]) => n === sectorKey);
-                        const config = blueprintEntry?.[1] && (blueprintEntry[1] as any)?.config;
-                        const inputLevel = config?.levelModifier ? config.levelModifier(value) : value;
+                        const config = industrySectorBlueprints.get(sectorKey);
+                        const inputLevel = value;
 
-                        const sectorResult = a.sectorResults?.[sectorKey];
+                        const sectorResult = industry.sectorResults?.[sectorKey];
                         const hasData = !!sectorResult;
                         const isStopped = sectorResult?.productionRatio === 0;
 

@@ -1,4 +1,4 @@
-import { industryReducers, getSectorOutputLevel } from "../systems/factoryBlueprints";
+import { getSectorOutputLevel, industrySectorBlueprints, } from "../systems/factoryBlueprints";
 import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
 import { baseSalaries, getGoodRequirementsAndQoL, Population, PopulationBreakdown } from "../data/Population";
 import { getPrices, Goods } from "../data/Goods";
@@ -7,6 +7,16 @@ import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
+
+// function Sum(o: Record<string | number | symbol, number>) {
+//     let sum = 0;
+
+//     for(const it in o) {
+//         sum += o[it];
+//     }
+
+//     return sum;
+// }
 
 export interface IndustryTickInput {
     entityId: string;
@@ -42,8 +52,9 @@ const wealthSmoothing = 0.5;
 const expectedQolSmoothing = 0.3;
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
+const maxDailyChangeSmoothing = 0.001
 
-const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines', "retired", "student"] as const);
+const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines'] as const);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 const extraRequirements = {
@@ -55,13 +66,27 @@ const extraRequirements = {
     }
 } as Readonly<Record<keyof Population, Partial<Goods>>>
 
+type SectorBid = {
+    name: string;
+    level: number;
+    budgetRatio: number;
+    inputCost: number;
+    laborCost: number;
+    idealWorkerDemand: Partial<Record<keyof Population, number>>;
+    idealGoodsDemand: Partial<Record<keyof Goods, number>>;
+    idealGoodsProduction: Partial<Record<keyof Goods, number>>;
+    outputLevel: number;
+    inputLevel: number;
+}
+
 self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickInput[] }>) => {
-    if(event.data.type !== "tick") return;
+    if(event.data.type !== "tick") {
+        return
+    }
 
     const results: IndustryTickResult[] = [];
 
-    for(const input of event.data.industries) {
-        const { entityId, sectors, goods, population, sectorWealth } = input;
+    for(const { entityId, goods, population, sectorWealth, sectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
         const prices = getPrices(goods, memory);
         colonyPriceMemory.set(entityId, memory);
@@ -78,6 +103,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             );
 
             const extra = extraRequirements[key];
+
             if(extra) {
                 for(const [good, amount] of Object.entries(extra)) {
                     requirements[good as keyof Goods] = (requirements[good as keyof Goods] ?? 0) + amount * pop.number;
@@ -104,7 +130,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
             const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
-            const maxDailyChange = pop.number * 0.001;
+            const maxDailyChange = pop.number * maxDailyChangeSmoothing;
             const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, Number.isFinite(rawPopulationChange) ? rawPopulationChange : 0));
 
             populationUpdates[key] = {
@@ -118,37 +144,24 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             populationProfits[key] = income - expenses;
         }
 
-        const sectorBids: {
-            name: string;
-            level: number;
-            budgetRatio: number;
-            inputCost: number;
-            laborCost: number;
-            idealWorkerDemand: Partial<Record<keyof Population, number>>;
-            idealGoodsDemand: Partial<Record<keyof Goods, number>>;
-            idealGoodsProduction: Partial<Record<keyof Goods, number>>;
-            outputLevel: number;
-            inputLevel: number;
-        }[] = [];
+        const sectorBids: SectorBid[] = [];
 
         for(const [name, level] of Object.entries(sectors) as [keyof IndustrialSectors, number][]) {
-            const blueprintEntry = industryReducers.find(([n]) => n === name);
-            if(!blueprintEntry) continue;
+            const config = industrySectorBlueprints.get(name);
 
-            const [, reducer] = blueprintEntry;
-            const config = (reducer as any).config;
-            if(!config) continue;
+            if(!config) {
+                continue
+            }
 
             const outputLevel = getSectorOutputLevel(name, level);
-            const inputLevel = config.levelModifier ? config.levelModifier(level) : level;
+            const inputLevel = level;
 
             const workerRequirement = config.workerRequirement || {};
             const goodsRequirements = config.goodsRequirements || {};
             const goodsProduction = config.goodsProduction || {};
 
             const maintenanceCost = Math.round((sectorUpgradeCosts[name as keyof IndustrialSectors] || 10) * level * 0.1);
-            const wealth = (sectorWealth[name] ?? 0) - maintenanceCost;
-            const clampedWealth = Math.max(0, wealth);
+            const clampedWealth = Math.max(0, (sectorWealth[name] ?? 0) - maintenanceCost);
 
             const inputCost = Object.entries(goodsRequirements).reduce((sum, [key, value]) => {
                 return sum + (value as number) * prices[key as keyof Goods];
@@ -181,8 +194,8 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             });
         }
 
-        const totalIdealWorkerDemand: Record<keyof Population, number> = {} as any;
-        const totalIdealGoodsDemand: Record<keyof Goods, number> = {} as any;
+        const totalIdealWorkerDemand = {} as Record<keyof Population, number>;
+        const totalIdealGoodsDemand = {} as Record<keyof Goods, number>;
 
         for(const bid of sectorBids) {
             for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
@@ -193,13 +206,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             }
         }
 
-        const workerMarketRatios: Record<keyof Population, number> = {} as any;
+        const workerMarketRatios = {} as Record<keyof Population, number>;
         for(const [key, totalDemand] of Object.entries(totalIdealWorkerDemand)) {
             const available = population[key as keyof Population].number;
             workerMarketRatios[key as keyof Population] = totalDemand > 0 ? Math.min(1, available / totalDemand) : 1;
         }
 
-        const goodsMarketRatios: Record<keyof Goods, number> = {} as any;
+        const goodsMarketRatios = {} as Record<keyof Goods, number>;
         for(const [key, totalDemand] of Object.entries(totalIdealGoodsDemand)) {
             const available = Math.max(0, goods[key as keyof Goods]);
             goodsMarketRatios[key as keyof Goods] = totalDemand > 0 ? Math.min(1, available / totalDemand) : 1;
@@ -208,8 +221,9 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const sumGoodsRequirements = createStarterWarehouse(0);
         const sumGoodsProduction = createStarterWarehouse(0);
         const workingWorkers = createStarterPopulation(0);
-        const remainingWorkers: Population = structuredClone(population);
-        const remainingGoods: Goods = structuredClone(goods);
+
+        const remainingWorkers = structuredClone(population);
+        const remainingGoods = { ...goods };
 
         const sectorResults: Record<string, SectorResult> = {};
         const sectorProfits: Record<string, number> = {};
@@ -282,13 +296,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             }
 
             const revenue = Object.entries(producedGoods).reduce((sum, [key, amount]) => {
-                return sum + (amount ?? 0) * prices[key as keyof Goods];
+                return sum + (amount) * prices[key as keyof Goods];
             }, 0);
             const inputCosts = Object.entries(consumedGoods).reduce((sum, [key, amount]) => {
-                return sum + (amount ?? 0) * prices[key as keyof Goods];
+                return sum + (amount) * prices[key as keyof Goods];
             }, 0);
             const laborCosts = Object.entries(workersEmployed).reduce((sum, [key, amount]) => {
-                return sum + (amount ?? 0) * baseSalaries[key as keyof Population];
+                return sum + (amount) * baseSalaries[key as keyof Population];
             }, 0);
 
             sectorResults[bid.name] = {
@@ -318,9 +332,11 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         }
 
         const goodsRequirements = { ...sumGoodsRequirements };
+
         for(const key in populationConsumption) {
             goodsRequirements[key as keyof Goods] = (goodsRequirements[key as keyof Goods] ?? 0) + (populationConsumption[key as keyof Goods] ?? 0);
         }
+
         const goodsProduction = { ...sumGoodsProduction };
         const goodsChange = Object.entries({ ...sumGoodsProduction, ...goodsRequirements }).reduce(
             (acc, [key]) => {

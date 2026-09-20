@@ -2,7 +2,7 @@ import { IndustrialSectors } from "../components/Factories";
 
 const PER_CAPITA_SECTOR_RATIOS = {
     mine: 0.0000001,
-    oilRig: 0.00000008,
+    oilRig: 0.0000008,
     forestry: 0.000026,
     farm: 0.0000088,
     fishery: 0.000006,
@@ -13,7 +13,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     nuclearSector: 0.000001,
     greenEnergy: 0.00003,
     alternativeMedicine: 0.000008,
-    metalFactory: 0.00000126,
+    metalFactory: 0.00000526,
     lumberMill: 0.0000064,
     machineryFactory: 0.000004,
     medicineFactory: 0.000008,

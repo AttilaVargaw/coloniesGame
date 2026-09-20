@@ -11,7 +11,7 @@ export type Goods = {
     luxuryFurniture: number;
     services: number
     agriculturalGoods: number;
-    dividents: number
+    // dividents: number
 
     tylium: number;
     metals: number;
@@ -72,7 +72,7 @@ export const basePrices = {
     luxuryFurniture: 120,
     services: 15,
     agriculturalGoods: 5,
-    dividents: 10,
+    // dividents: 10,
 
     tylium: 150,
     metals: 10,
@@ -81,7 +81,7 @@ export const basePrices = {
     medicine: 10,
     wood: 10,
     lumber: 20,
-    oil: 50,
+    oil: 100,
     spaceTransport: 2000,
 
     ammunition: 15,
@@ -144,7 +144,8 @@ const priceDamping = 0.4;
 const priceMaxDeviation = 0.25;
 
 export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>> = priceMemory): Record<keyof Goods, number> {
-    const prices: Record<keyof Goods, number> = {} as any;
+    const prices = {} as Record<keyof Goods, number>;
+
     for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
         const stock = goods[key] || 0;
         const base = basePrices[key];

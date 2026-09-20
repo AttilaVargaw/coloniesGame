@@ -7,7 +7,7 @@ import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationI
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 import { Goods } from "@/game/data/Goods";
 
-function Sum(...args: number[]) {
+export function Sum(...args: number[]) {
     let sum = 0
 
     for(const it of args) {
@@ -24,7 +24,6 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
 
 
     const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;
-    console.log({ unemployedSum, employedSum })
 
     const totalIncome = Object.entries(industry.population).reduce((sum, [key, value]) => {
         return sum + (baseSalaries[key as keyof Population] || 0) * value.number;
