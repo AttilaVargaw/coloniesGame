@@ -30,7 +30,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     education: 0.000009,
     healthcare: 0.00004,
     environmentControl: 0.000005,
-    bank: 0.000001,
+    bank: 0.0001,
     religion: 0.00003,
     lawEnforcement: 0.00005,
     chemical: 0.000004,
@@ -60,7 +60,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     spaceInfrastructure: 0.00004,
     spaceShips: 0.00005,
     nuclearEnergy: 0.0005,
-    defense: 0.000015
+    defense: 0.000015,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 0;

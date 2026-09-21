@@ -31,13 +31,10 @@ export type PopulationBreakdown = {
 export type Population = {
     farmer: PopulationBreakdown;
     scientist: PopulationBreakdown;
-    armyMen: PopulationBreakdown;
-    navalReservist: PopulationBreakdown;
     worker: PopulationBreakdown;
     student: PopulationBreakdown;
     healtcarePersonal: PopulationBreakdown;
     policeMen: PopulationBreakdown;
-    marines: PopulationBreakdown;
     teacher: PopulationBreakdown;
     serviceWorker: PopulationBreakdown;
     clergy: PopulationBreakdown;

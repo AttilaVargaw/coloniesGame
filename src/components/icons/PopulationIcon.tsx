@@ -2,7 +2,7 @@ import { Population } from "@/game/data/Population";
 import { cn } from "@/lib/utils"
 import { Beaker, BookOpen, Church, Cog, HardHat, HeartPulse, House, Pencil, Siren, Tractor, CoffeeIcon } from "lucide-react";
 
-const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> = {
+const ICONS: Record<keyof Population, (props: { className?: string }) => React.ReactNode> = {
     farmer: ({ className }) => (
         <Tractor className={cn("size-4", className)} />
     ),
@@ -40,10 +40,12 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
         </svg>
     ),
     clerks: ({ className }) => <Pencil className={cn("size-4", className)} />,
-    engineers: ({ className }) => <Cog className={cn("size-4", className)} />,
     stayAtHome: ({ className }) => (
         <House className={cn("size-4", className)} />
-    )
+    ),
+    engineer: ({ className }) => (
+        <Cog className={cn("size-4", className)} />
+    ),
 }
 
 export function PopulationIcon({ name, className }: { name: keyof Population; className?: string }) {

@@ -15,7 +15,6 @@ export function createStarterWarehouse(population: number) {
         environmentFactor: population * 0.8,
         furniture: population * 50,
         metals: population * 10,
-        money: population * 10,
         nuclearWeapons: population * 0,
         services: population * 50,
         spaceTransport: population * 1,
@@ -57,5 +56,6 @@ export function createStarterWarehouse(population: number) {
         shipMobility: population * 100,
         ore: population * 10,
         defense: population,
+        monetaryServices: population * 10
     } satisfies Goods;
 }

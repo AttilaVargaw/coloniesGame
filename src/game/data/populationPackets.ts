@@ -24,7 +24,8 @@ export const populationPackets = new CumulativeLinkedList<Goods>({
         wood: 0.1,
         electricity: 0.1,
         alcoholDrinks: 0.1,
-        entertainment: 0.5
+        entertainment: 0.5,
+        monetaryServices: 0.1
     },
     20: {
         consumerGoods: 1,
@@ -57,7 +58,8 @@ export const populationPackets = new CumulativeLinkedList<Goods>({
         stimulantDrinks: 0.1,
         entertainment: 1,
         tourism: 1,
-        itServices: 1
+        itServices: 1,
+        monetaryServices: 1
     },
     50: {
         alcoholDrinks: 0.5,
@@ -81,6 +83,7 @@ export const populationPackets = new CumulativeLinkedList<Goods>({
         alcoholDrinks: 1,
         stimulantDrinks: 1,
         entertainment: 2,
-        itServices: 2
+        itServices: 2,
+        monetaryServices: 2
     }
 } as const);
