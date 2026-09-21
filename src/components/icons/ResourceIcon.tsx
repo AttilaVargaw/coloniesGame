@@ -87,7 +87,11 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     paper: Newspaper,
     post: Mail,
     railroadVehicles: TrainIcon,
-    ships: ShipIcon
+    ships: ShipIcon,
+    airMobility: Plane,
+    automotiveMobility: Car,
+    railroadMobility: TrainIcon,
+    shipMobility: ShipIcon,
 }
 
 export function ResourceIcon({ name, className }: { name: keyof Goods; className?: string }) {

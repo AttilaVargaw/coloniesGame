@@ -20,8 +20,6 @@ export const sectorUpgradeCosts = {
     weaponFactory: 120,
     nuclearWeaponFactory: 200,
     ordnanceFactory: 120,
-    spaceport: 200,
-    spaceShipyard: 200,
     orbitalFactory: 150,
     construction: 80,
     services: 50,
@@ -54,4 +52,11 @@ export const sectorUpgradeCosts = {
     alcoholicDrinkIndustry: 100,
     stimulantDrinkIndustry: 100,
     retail: 100,
+    aircraftInfrastructure: 100,
+    automotiveInfrastructure: 100,
+    railroadInfrastructure: 100,
+    shipInfrastructure: 100,
+    luxurySpaceShips: 100,
+    spaceInfrastructure: 100,
+    spaceShips: 100
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;

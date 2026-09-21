@@ -35,7 +35,7 @@ export const heliosGamma = {
             population: 2100000,
             children: [
                 { archetype: "mercury", marker: { color: "#909ec0", radius: 4, label: "Herse" }, orbit: { radius: 3.1 }, name: "Herse" },
-                { archetype: "mercury", marker: { color: "#7e816b", radius: 4, label: "Herse" }, orbit: { radius: 2.5 }, name: "Pandrossos" }
+                { archetype: "mercury", marker: { color: "#7e816b", radius: 4, label: "Pandrossos" }, orbit: { radius: 2.5 }, name: "Pandrossos" }
             ]
         },
         {

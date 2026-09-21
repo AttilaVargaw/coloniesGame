@@ -21,8 +21,9 @@ export type IndustrialSectors = Readonly<{
     weaponFactory: number;
     nuclearWeaponFactory: number;
     ordnanceFactory: number;
-    spaceport: number;
-    spaceShipyard: number;
+    spaceShips: number;
+    luxurySpaceShips: number;
+    spaceInfrastructure: number;
     orbitalFactory: number;
     construction: number;
     services: number;
@@ -53,6 +54,11 @@ export type IndustrialSectors = Readonly<{
     alcoholicDrinkIndustry: number;
     stimulantDrinkIndustry: number;
     retail: number;
+    railroadInfrastructure: number;
+    shipInfrastructure: number;
+    aircraftInfrastructure: number;
+    automotiveInfrastructure: number;
+
 }>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

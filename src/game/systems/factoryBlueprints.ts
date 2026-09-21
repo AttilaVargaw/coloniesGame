@@ -13,7 +13,7 @@ type FactoryBlueprint = {
     outputLevelModifier?: (lvl: number) => number
 }
 
-export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
+export const industrySectorBlueprints = new Map<keyof IndustrialSectors, FactoryBlueprint>([
     ["mine", {
         name: "mine",
         goodsRequirements: {
@@ -36,7 +36,14 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         efficiencyBonus: 0.01
     })],
     ["fishery", {
-        name: "fishery", goodsRequirements: { vehicles: 0.1, machinery: 3, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { agriculturalGoods: 30 },
+        name: "fishery", goodsRequirements: {
+            vehicles: 0.05,
+            machinery: 3,
+            buildings: 3,
+            governance: 2,
+            electronics: 1,
+            ships: 0.5
+        }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { agriculturalGoods: 30 },
         efficiencyBonus: 0.01
     }],
     ["foodFactory", ({
@@ -58,15 +65,36 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         efficiencyBonus: 0.01
     })],
     ["powerPlant", ({
-        name: "powerPlant", goodsRequirements: { vehicles: 0.1, oil: 14, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { electricity: 220, waste: 1 },
+        name: "powerPlant", goodsRequirements: {
+            vehicles: 0.1,
+            oil: 14, machinery: 6,
+            buildings: 3,
+            governance: 2,
+            electronics: 1
+        }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { electricity: 220, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["metalFactory", ({
-        name: "metalFactory", goodsRequirements: { vehicles: 0.1, metals: 10, machinery: 8, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { metals: 60, waste: 1 },
+        name: "metalFactory", goodsRequirements: {
+            vehicles: 0.1,
+            metals: 10,
+            machinery: 8,
+            electricity: 20,
+            buildings: 3,
+            governance: 2,
+            electronics: 1
+        }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { metals: 60, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["lumberMill", ({
-        name: "lumberMill", goodsRequirements: { vehicles: 0.1, wood: 30, machinery: 6, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { lumber: 40 },
+        name: "lumberMill", goodsRequirements: {
+            vehicles: 0.1,
+            wood: 30,
+            machinery: 6,
+            buildings: 3,
+            governance: 2,
+            electronics: 1
+        }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { lumber: 40 },
         efficiencyBonus: 0.01
     })],
     ["machineryFactory", ({
@@ -105,11 +133,23 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         name: "ordnanceFactory", goodsRequirements: { vehicles: 0.1, metals: 12, chemicals: 6, machinery: 8, ammunition: 10, electricity: 24, buildings: 10, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { ordnance: 30 },
         efficiencyBonus: 0.01
     })],
-    ["spaceport", ({
-        name: "spaceport", goodsRequirements: { vehicles: 0.1, machinery: 8, furniture: 10, electricity: 25, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { spaceTransport: 5 },
+    ["spaceInfrastructure", ({
+        name: "spaceport", goodsRequirements: {
+            vehicles: 0.1,
+            machinery: 8,
+            furniture: 10,
+            electricity: 25,
+            buildings: 8,
+            governance: 2,
+            electronics: 1
+        }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { spaceTransport: 5 },
         efficiencyBonus: 0.01
     })],
-    ["spaceShipyard", ({
+    ["spaceShips", ({
+        name: "spaceShipyard", goodsRequirements: { vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { spaceTransport: 8 },
+        efficiencyBonus: 0.01
+    })],
+    ["luxurySpaceShips", ({
         name: "spaceShipyard", goodsRequirements: { vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 100, clerks: 1 }, goodsProduction: { spaceTransport: 8 },
         efficiencyBonus: 0.01
     })],
@@ -202,6 +242,13 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         goodsProduction: { vehicles: 15, waste: 1 },
         efficiencyBonus: 0.01
     })],
+    ["automotiveInfrastructure", ({
+        name: "automotiveInfrastructure",
+        goodsRequirements: { machinery: 1, oil: 10, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1 },
+        workerRequirement: { worker: 100, clerks: 2 },
+        goodsProduction: { automotiveMobility: 15, waste: 1 },
+        efficiencyBonus: 0.01
+    })],
     ["electronics", ({
         name: "electronics",
         goodsRequirements: { retail: 20, vehicles: 0.1, machinery: 6, chemicals: 5, electricity: 18, buildings: 3, governance: 2 },
@@ -216,11 +263,25 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         goodsProduction: { railroadVehicles: 15, waste: 1 },
         efficiencyBonus: 0.01
     })],
+    ["railroadInfrastructure", ({
+        name: "railroadInfrastructure",
+        goodsRequirements: { machinery: 1, oil: 10, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1 },
+        workerRequirement: { worker: 100, clerks: 2 },
+        goodsProduction: { railroadMobility: 15, waste: 1 },
+        efficiencyBonus: 0.01
+    })],
     ["ships", ({
         name: "ships",
         goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 100, scientist: 1, clerks: 1 },
         goodsProduction: { ships: 15, waste: 1 },
+        efficiencyBonus: 0.01
+    })],
+    ["shipInfrastructure", ({
+        name: "shipInfrastructure",
+        goodsRequirements: { machinery: 1, oil: 10, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1 },
+        workerRequirement: { worker: 100, clerks: 2 },
+        goodsProduction: { shipMobility: 15, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["luxuryShips", ({
@@ -235,6 +296,13 @@ export const industrySectorBlueprints = new Map<string, FactoryBlueprint>([
         goodsRequirements: { machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 },
         workerRequirement: { worker: 100, scientist: 1, clerks: 1 },
         goodsProduction: { aircraft: 15, waste: 1 },
+        efficiencyBonus: 0.01
+    })],
+    ["aircraftInfrastructure", ({
+        name: "aircraftInfrastructure",
+        goodsRequirements: { machinery: 1, oil: 10, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1 },
+        workerRequirement: { worker: 100, clerks: 2 },
+        goodsProduction: { airMobility: 15, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["clothing", ({
