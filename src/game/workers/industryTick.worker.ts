@@ -1,6 +1,6 @@
 import { getSectorOutputLevel, industrySectorBlueprints, } from "../systems/factoryBlueprints";
 import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
-import { baseSalaries, getGoodRequirementsAndQoL, Population, PopulationBreakdown } from "../data/Population";
+import { baseSalaries, getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
 import { getPrices, Goods } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
@@ -47,14 +47,14 @@ export interface IndustryTickResult {
     sectorResults: Record<string, SectorResult>;
 }
 
-const qolSmoothing = 0.3;
+const qolSmoothing = 0.03;
 const wealthSmoothing = 0.5;
-const expectedQolSmoothing = 0.3;
+const expectedQolSmoothing = 0.03;
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
 const maxDailyChangeSmoothing = 0.001
 
-const alwaysWorking = new Set<keyof Population>(['armyMen', 'navalReservist', 'marines'] as const);
+const alwaysWorking = new Set<keyof Population>(["stayAtHome"] as const);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 const extraRequirements = {
@@ -96,11 +96,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const populationProfits: Record<string, number> = {};
 
         for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
-            const { requirements, qol: targetQol } = getGoodRequirementsAndQoL(
+            const { qol: targetQol } = getGoodRequirementsAndQoL(
                 baseSalaries[key],
                 prices,
                 pop
             );
+
+            const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
+            const requirements = getRequirementsForQol(smoothedQol, pop.number);
 
             const extra = extraRequirements[key];
 
@@ -121,8 +124,6 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                 if(!amount) return sum;
                 return sum + amount * prices[good as keyof Goods];
             }, 0);
-
-            const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
 
             const targetWealth = pop.wealth + income - expenses;
             const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;

@@ -112,7 +112,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex items-center">
-                                                <PopulationIcon name={key} />
+                                                <PopulationIcon name={key as keyof Population} />
                                             </span>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -122,10 +122,10 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                 </td>
                                 <td className="p-2 text-right">{convertToReadable(number)}</td>
                                 <td className="p-2 text-right">{convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)}</td>
-                                <td className="p-2 text-right">{colorBySign(populationChange)}</td>
+                                <td className="p-2 text-right">{convertToReadable(populationChange)}</td>
                                 <td className="p-2 text-right">{convertToReadable(Math.round(income))}</td>
                                 <td className="p-2 text-right">{convertToReadable(Math.round(expenses))}</td>
-                                <td className="p-2 text-right">{colorBySign(net)}</td>
+                                <td className="p-2 text-right">{convertToReadable(net)}</td>
                                 <td className="p-2 text-right">{value.qol.toFixed(1)}</td>
                                 <td className="p-2 text-left">
                                     {reqEntries.length === 0 ? (

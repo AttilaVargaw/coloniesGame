@@ -55,5 +55,7 @@ export function createStarterWarehouse(population: number) {
         automotiveMobility: population * 100,
         railroadMobility: population * 100,
         shipMobility: population * 100,
+        ore: population * 10,
+        defense: population,
     } satisfies Goods;
 }

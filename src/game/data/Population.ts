@@ -30,7 +30,6 @@ export type PopulationBreakdown = {
 
 export type Population = {
     farmer: PopulationBreakdown;
-    miner: PopulationBreakdown;
     scientist: PopulationBreakdown;
     armyMen: PopulationBreakdown;
     navalReservist: PopulationBreakdown;
@@ -44,24 +43,27 @@ export type Population = {
     clergy: PopulationBreakdown;
     retired: PopulationBreakdown;
     clerks: PopulationBreakdown
+    engineer: PopulationBreakdown
+    stayAtHome: PopulationBreakdown
 };
 
 export const baseSalaries = {
     farmer: 200,
-    miner: 200,
     scientist: 1000,
     armyMen: 200,
     navalReservist: 200,
     worker: 200,
-    student: 150,
+    student: 180,
     healtcarePersonal: 500,
     policeMen: 200,
     marines: 200,
     teacher: 200,
     serviceWorker: 200,
     clergy: 200,
-    retired: 100,
+    retired: 180,
     clerks: 500,
+    engineer: 500,
+    stayAtHome: 180
 } as ReadonlyRecord<keyof Population, number>
 
 export function sumPopulation(population: Population) {
@@ -91,8 +93,23 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
 //     const salary = baseSalaries[population]
 // }
 
-function affordability(salary: number, goodsPrices: Goods, requirements: Record<keyof Goods, number>) {
-    return salary - Object.entries(requirements).reduce((acc, [key, value]) => acc + value * goodsPrices[key as keyof Goods], 0)
+export function getRequirementsForQol(qol: number, number: number): Record<keyof Goods, number> {
+    let lastData: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
+
+    for(const { data, id } of populationPackets.cumulative) {
+        if(Number(id) <= qol) {
+            lastData = data as Record<keyof Goods, number>;
+        } else {
+            break;
+        }
+    }
+
+    const requirements = {} as Record<keyof Goods, number>;
+    for(const [key, value] of Object.entries(lastData)) {
+        requirements[key as keyof Goods] = value * number;
+    }
+
+    return requirements;
 }
 
 export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { number, wealth }: PopulationBreakdown) {
@@ -101,22 +118,35 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     }
 
     let qol = 0
-
-    const requirements = (Object.entries(populationPackets.head.next!.data) as [keyof Goods, number][]).reduce((prev, [key, value]) => {
-        prev[key] = value * number
-        return prev
-    }, {} as Record<keyof Goods, number>)
+    let lastAffordableCumulativeCost = 0
+    let lastAffordableId = 0
+    let lastAffordableData: Partial<Record<keyof Goods, number>> = {}
 
     for(const { data, id } of populationPackets.cumulative) {
-        if(affordability(salary + wealth, goodsPrices, data) >= 0) {
-            qol = Number(id)
+        const cumulativeCost = Object.entries(data).reduce((acc, [key, value]) => {
+            return acc + (value as number) * goodsPrices[key as keyof Goods]
+        }, 0)
+        const budget = salary + wealth
 
-            for(const [key, value] of Object.entries(data)) {
-                requirements[key as keyof Goods] = value * number
-            }
+        if(budget >= cumulativeCost) {
+            qol = Number(id)
+            lastAffordableCumulativeCost = cumulativeCost
+            lastAffordableId = Number(id)
+            lastAffordableData = data as Record<keyof Goods, number>
         } else {
+            const margin = budget - lastAffordableCumulativeCost
+            const gap = cumulativeCost - lastAffordableCumulativeCost
+
+            if(gap > 0 && margin >= 0) {
+                qol = lastAffordableId + (margin / gap) * (Number(id) - lastAffordableId)
+            }
             break
         }
+    }
+
+    const requirements = {} as Record<keyof Goods, number>
+    for(const [key, value] of Object.entries(lastAffordableData)) {
+        requirements[key as keyof Goods] = value * number
     }
 
     return { requirements, qol }

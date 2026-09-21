@@ -1,24 +1,13 @@
+import { Population } from "@/game/data/Population";
 import { cn } from "@/lib/utils"
-import { Beaker, BookOpen, BrickWallShield, Church, HardHat, HeartPulse, Pencil, Pickaxe, Siren, Tractor } from "lucide-react";
+import { Beaker, BookOpen, Church, Cog, HardHat, HeartPulse, House, Pencil, Siren, Tractor, CoffeeIcon } from "lucide-react";
 
 const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> = {
     farmer: ({ className }) => (
         <Tractor className={cn("size-4", className)} />
     ),
-    miner: ({ className }) => (
-        <Pickaxe className={cn("size-4", className)} />
-    ),
     scientist: ({ className }) => (
         <Beaker className={cn("size-4", className)} />
-    ),
-    armyMen: ({ className }) => (
-        <BrickWallShield className={cn("size-4", className)} />
-    ),
-    navalReservist: ({ className }) => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cn("size-4", className)}>
-            <path d="M2 21l10-9 10 9M4 17h16" />
-            <circle cx="12" cy="7" r="3" />
-        </svg>
     ),
     worker: ({ className }) => (
         <HardHat className={cn("size-4", className)} />
@@ -32,9 +21,6 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
     policeMen: ({ className }) => (
         <Siren className={cn("size-4", className)} />
     ),
-    marines: ({ className }) => (
-        <BrickWallShield className={cn("size-4", className)} />
-    ),
     teacher: ({ className }) => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cn("size-4", className)}>
             <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
@@ -42,7 +28,7 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
         </svg>
     ),
     serviceWorker: ({ className }) => (
-        <Church className={cn("size-4", className)} />
+        <CoffeeIcon className={cn("size-4", className)} />
     ),
     clergy: ({ className }) => (
         <Church className={cn("size-4", className)} />
@@ -53,12 +39,18 @@ const ICONS: Record<string, (props: { className?: string }) => React.ReactNode> 
             <path d="M12 8V6M9 6h6" />
         </svg>
     ),
-    clerks: ({ className }) => <Pencil className={cn("size-4", className)} />
+    clerks: ({ className }) => <Pencil className={cn("size-4", className)} />,
+    engineers: ({ className }) => <Cog className={cn("size-4", className)} />,
+    stayAtHome: ({ className }) => (
+        <House className={cn("size-4", className)} />
+    )
 }
 
-export function PopulationIcon({ name, className }: { name: string; className?: string }) {
+export function PopulationIcon({ name, className }: { name: keyof Population; className?: string }) {
     const Icon = ICONS[name]
-    if(!Icon) return null
+    if(!Icon) {
+        return null
+    }
     return <Icon className={className} />
 }
 

@@ -19,7 +19,7 @@ export const renderingContextSettings: RenderingContextSettings = {
     alpha: false,
     desynchronized: true,
     colorSpace: "srgb",
-}
+} as const
 
 export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, ref }: ComponentPropsWithRef<"canvas"> & {
     onClick: (event: MouseEventData) => void,
@@ -70,7 +70,6 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, ref }: Co
             observer.disconnect()
         }
     }, [ref])
-
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {
         if(typeof ref === "function" || !ref?.current) {

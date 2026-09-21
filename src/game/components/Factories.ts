@@ -58,7 +58,8 @@ export type IndustrialSectors = Readonly<{
     shipInfrastructure: number;
     aircraftInfrastructure: number;
     automotiveInfrastructure: number;
-
+    nuclearEnergy: number
+    defense: number
 }>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

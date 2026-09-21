@@ -12,6 +12,7 @@ import {
     Sofa,
     Stethoscope,
     // TrendingUp,
+    Stone,
     Diamond,
     BarChart3,
     Siren,
@@ -92,6 +93,8 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     automotiveMobility: Car,
     railroadMobility: TrainIcon,
     shipMobility: ShipIcon,
+    defense: Shield,
+    ore: Stone
 }
 
 export function ResourceIcon({ name, className }: { name: keyof Goods; className?: string }) {
