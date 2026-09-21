@@ -1,7 +1,7 @@
 import { Engine } from "@/engine/core/engine"
 import { Entity } from "@engine/entities/entity"
 import { createBody } from "./createBody"
-import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
+import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { OrbitComponent } from "@/engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
@@ -13,7 +13,8 @@ const makeOrbitArgs = (angle: number, barycentreOrbitRadius: number) => ({
     radius: barycentreOrbitRadius * UNIVERSE_SCALE,
     angle,
     eccentricity: 0,
-} as const)
+    inclination: 0,
+} as OrbitalBlueprint)
 
 export function createBinaryOrbitPair(
     engine: Engine,
@@ -27,7 +28,7 @@ export function createBinaryOrbitPair(
 ) {
     //const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = radius * UNIVERSE_SCALE
-    const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
+    //const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
     const barycentre = applyComponents(engine.createEntity(),
         new PositionComponent(0, 0),
         new OrbitComponent(
@@ -36,7 +37,7 @@ export function createBinaryOrbitPair(
             angularSpeed(barycentreOrbitRadius),
             angle ?? Math.random() * TWO_PI,
             eccentricity ?? 0,
-            inclination,
+            0,
             periapsis ?? 0,
             ascendingNode ?? 0
         ),

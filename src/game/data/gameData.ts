@@ -6,12 +6,12 @@ import { BodyBlueprint } from "./BodyBlueprint";
 import { SOLAR_UNIT } from "../constants";
 
 export const MapCreationData = {
-    marker: { color: "#fff0", radius: 20, label: "Baricentre" },
+    marker: { color: "#0000", radius: 20, label: "root" },
     archetype: "mars",
-    name: "Baricentre",
-    radius: 100,
+    name: "root",
+    radius: 0,
     orbit: { radius: 0, angle: 0, eccentricity: 0 },
-    color: "grey",
+    color: "alpha",
     vessels: [],
     children: [
         {
@@ -22,7 +22,8 @@ export const MapCreationData = {
             radius: 20,
             orbit: {
                 radius: 15 * SOLAR_UNIT,
-                angle: Math.PI / 2
+                angle: Math.PI / 2,
+                inclination: 0
             },
         },
         {
@@ -33,7 +34,8 @@ export const MapCreationData = {
             radius: 20,
             orbit: {
                 radius: 15 * SOLAR_UNIT,
-                angle: - Math.PI / 2
+                angle: - Math.PI / 2,
+                inclination: 0
             },
         },
     ],
@@ -46,7 +48,8 @@ export const MapCreationData = {
                 name: "Ragnar",
                 orbit: {
                     radius: 12 * SOLAR_UNIT,
-                    angle: 0, eccentricity: 0
+                    eccentricity: 0,
+                    inclination: 0.1
                 },
                 children: [
                     {
@@ -65,6 +68,7 @@ export const MapCreationData = {
                 orbit: {
                     radius: 10 * SOLAR_UNIT,
                     angle: 0,
+                    inclination: 0
                 },
             },
             {
@@ -76,13 +80,15 @@ export const MapCreationData = {
                 orbit: {
                     radius: 10 * SOLAR_UNIT,
                     angle: Math.PI,
+                    inclination: 0
                 },
             }
         ],
         separation: .5 * SOLAR_UNIT,
         orbit: {
             radius: 15 * 20,
-            angle: 0
+            angle: 0,
+            inclination: 0
         },
         bodies: [
             solarisAlpha,
@@ -94,6 +100,7 @@ export const MapCreationData = {
         orbit: {
             angle: Math.PI,
             radius: 300,
+            inclination: 0
         },
         bodies: [
             heliosGamma,
@@ -108,7 +115,8 @@ export const MapCreationData = {
                 radius: 20,
                 orbit: {
                     radius: 10 * SOLAR_UNIT,
-                    angle: 0
+                    angle: 0,
+                    inclination: 0
                 },
             },
             {
@@ -119,7 +127,8 @@ export const MapCreationData = {
                 radius: 20,
                 orbit: {
                     radius: 10 * SOLAR_UNIT,
-                    angle: Math.PI
+                    angle: Math.PI,
+                    inclination: 0
                 },
             },
         ]

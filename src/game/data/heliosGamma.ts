@@ -4,18 +4,18 @@ import { BodyBlueprint } from "./BodyBlueprint";
 export const heliosGamma = {
     name: "Helios Gamma",
     marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma" },
-    orbit: { radius: 300, eccentricity: 0.01 },
+    orbit: { radius: 300, eccentricity: 0.01, inclination: 0 },
     archetype: "sol",
     children: [
         {
             name: "Thanatos",
             archetype: "mercury",
             marker: { color: "#caa17f", radius: 8, label: "Thanatos" },
-            orbit: { radius: 0.35 * SOLAR_UNIT, angle: 2, eccentricity: 0.017 },
+            orbit: { radius: 0.35 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 },
         },
         {
             marker: { color: "#909ec0", radius: 8, label: "Scorpia" },
-            orbit: { radius: SOLAR_UNIT * 1, eccentricity: 0.01 },
+            orbit: { radius: SOLAR_UNIT * 1, eccentricity: 0.01, inclination: 0 },
             name: "Scorpia",
             archetype: "kobol",
             population: 450000000,
@@ -24,14 +24,14 @@ export const heliosGamma = {
             marker: { color: "#837a79", radius: 8, label: "Sagitarron" },
             name: "Sagitarron",
             archetype: "kobol",
-            orbit: { radius: SOLAR_UNIT * 1.1, eccentricity: 0.1 },
+            orbit: { radius: SOLAR_UNIT * 1.1, eccentricity: 0.1, inclination: 0 },
             population: 1700000000,
         },
         {
             marker: { color: "#759477", radius: 8, label: "Libran" },
             name: "Libran",
             archetype: "kobol",
-            orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1 },
+            orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1, inclination: 0.3 },
             population: 2100000,
             children: [
                 { archetype: "mercury", marker: { color: "#909ec0", radius: 4, label: "Herse" }, orbit: { radius: 3.1 }, name: "Herse" },
@@ -42,7 +42,7 @@ export const heliosGamma = {
             name: "Ophion",
             archetype: "saturn",
             marker: { color: "#e9d46f", radius: 20, label: "Ophion" },
-            orbit: { radius: 7 * SOLAR_UNIT },
+            orbit: { radius: 7 * SOLAR_UNIT, inclination: 0.45 },
             rings: [
                 { color: "#222a", innerRadius: 30, outerRadius: 50 }
             ]

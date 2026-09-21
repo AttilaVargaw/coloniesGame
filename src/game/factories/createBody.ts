@@ -32,30 +32,33 @@ export function createBody({
     marker,
     population,
     rings,
-    asteroidBelts
+    asteroidBelts,
+    name
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
     const angle = orbit.angle ?? Math.random() * TWO_PI
     const clickSize = marker.radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
 
-    const body = createMarker(engine, { shade: true, ...marker })
+    const body = createMarker(engine, { shade: name === "root" ? false : true, ...marker })
 
-    applyComponents(body,
-        new OrbitComponent(
-            parent.id,
-            orbit.radius * UNIVERSE_SCALE,
-            angularSpeed(orbit.radius),
-            angle,
-            orbit.eccentricity ?? 0,
-            orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),
-            orbit.periapsis ?? 0,
-            orbit.ascendingNode ?? 0
-        ),
-        new SoiComponent(calculateSoi(marker.radius, archetype)),
-        new PathComponent(),
-        new TargetableComponent(),
-        new HoverableComponent("pointer", clickSquare),
-    )
+    if(name !== "root") {
+        applyComponents(body,
+            new OrbitComponent(
+                parent.id,
+                orbit.radius * UNIVERSE_SCALE,
+                angularSpeed(orbit.radius),
+                angle,
+                orbit.eccentricity ?? 0,
+                orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),
+                orbit.periapsis ?? 0,
+                orbit.ascendingNode ?? 0
+            ),
+            new SoiComponent(calculateSoi(marker.radius, archetype)),
+            new PathComponent(),
+            new TargetableComponent(),
+            new HoverableComponent("pointer", clickSquare),
+        )
+    }
 
     // applyComponents(body,
     //     new HoverableComponent("not-allowed", clickSquare))

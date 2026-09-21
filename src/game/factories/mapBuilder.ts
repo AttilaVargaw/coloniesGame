@@ -23,11 +23,11 @@ export function init(engine: Engine) {
     const root = engine.createEntity("root")
     applyComponents(root,
         new PositionComponent(0, 0, 0),
-        new RadiusComponent(10),
-        new SoiComponent(0),
-        new PathComponent(),
-        new ColorComponent("red"),
-        new ThicknessComponent(1)
+        // new RadiusComponent(10),
+        // new SoiComponent(0),
+        // new PathComponent(),
+        // new ColorComponent("red"),
+        // new ThicknessComponent(1)
     )
 
     const map = createBody(MapCreationData, root, engine)
