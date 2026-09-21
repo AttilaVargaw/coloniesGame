@@ -6,6 +6,7 @@ import { EntityComponent } from "@engine/entities/entityComponent";
 import { Entity } from "@/engine/entities/entity";
 import { MousemoveEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export class HoverableComponent extends EntityComponent {
     constructor(
@@ -67,8 +68,9 @@ export class CursorSystem extends SystemWithNodes<HoverableNode> {
             const { camera } = this.viewportSystem.viewport
 
             for(const hoverableNode of this.nodes) {
+                const [wx, wy, wz] = getAbsolute(hoverableNode.entity, this.engine!)
                 const { hoverable: { size, cursor } } = hoverableNode
-                const projected = camera.project(hoverableNode.position.x, hoverableNode.position.y, hoverableNode.position.z)
+                const projected = camera.project(wx, wy, wz)
                 if (!projected) {
                     continue
                 }

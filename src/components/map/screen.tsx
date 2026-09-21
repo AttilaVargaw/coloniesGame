@@ -3,8 +3,8 @@ import { MouseEvent, ComponentPropsWithRef, useLayoutEffect } from 'react';
 
 function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanvasElement>) {
     const rect = canvas.getBoundingClientRect()
-    const x = event.pageX - rect.left
-    const y = event.pageY - rect.top
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
 
     return { x, y, ...event }
 }

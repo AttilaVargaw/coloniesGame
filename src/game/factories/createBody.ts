@@ -34,8 +34,11 @@ export function createBody({
     rings,
     asteroidBelts
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
-    const body = createMarker(engine, { shade: true, ...marker })
     const angle = orbit.angle ?? Math.random() * TWO_PI
+    const clickSize = marker.radius * 2
+    const clickSquare = { width: clickSize, height: clickSize }
+
+    const body = createMarker(engine, { shade: true, ...marker })
 
     applyComponents(body,
         new OrbitComponent(
@@ -51,13 +54,11 @@ export function createBody({
         new SoiComponent(calculateSoi(marker.radius, archetype)),
         new PathComponent(),
         new TargetableComponent(),
+        new HoverableComponent("pointer", clickSquare),
     )
 
-    const clickSize = marker.radius * 2
-    const clickSquare = { width: clickSize, height: clickSize }
-
-    applyComponents(body,
-        new HoverableComponent("not-allowed", clickSquare))
+    // applyComponents(body,
+    //     new HoverableComponent("not-allowed", clickSquare))
 
     engine.addEntity(body, parent)
     // .addEntity(createSoiCircle(body, archetype, engine), body)
@@ -85,14 +86,12 @@ export function createBody({
     if(population !== undefined) {
         applyComponents(body,
             new SelectableComponent(clickSize, "red"),
-            new HoverableComponent("pointer", clickSquare),
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
             new IndustryComponent(createStarterIndustry(population), createStarterWarehouse(population), createStarterPopulation(population))
         )
     } else {
         applyComponents(body,
             new SelectableComponent(clickSize, "red"),
-            new HoverableComponent("pointer", clickSquare),
             new ClickableComponent(true, clickSquare, createAttractorClickHandler(engine, body))
         )
     }
