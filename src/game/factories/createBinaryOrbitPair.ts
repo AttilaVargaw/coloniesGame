@@ -22,7 +22,8 @@ export function createBinaryOrbitPair(
     planetB: BodyBlueprint,
     separation: number,
     { radius, angle, eccentricity, periapsis, ascendingNode }: OrbitalBlueprint,
-    children?: BodyBlueprint[]
+    children?: BodyBlueprint[],
+    dAngle = 0
 ) {
     //const angleA = Math.random() * TWO_PI
     const barycentreOrbitRadius = radius * UNIVERSE_SCALE
@@ -42,13 +43,13 @@ export function createBinaryOrbitPair(
     )
 
     const bodyA = createBody(
-        { ...planetA, orbit: makeOrbitArgs(0, separation) },
+        { ...planetA, orbit: makeOrbitArgs(dAngle, separation) },
         barycentre,
         engine,
     )
 
     const bodyB = createBody(
-        { ...planetB, orbit: makeOrbitArgs(Math.PI, separation) },
+        { ...planetB, orbit: makeOrbitArgs(Math.PI + dAngle, separation) },
         barycentre,
         engine,
     )

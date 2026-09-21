@@ -5,7 +5,7 @@ export const solarisBeta = {
     name: "Helios Beta",
     marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta" },
     archetype: "sol",
-    orbit: { radius: 300, angle: 0, eccentricity: 0 },
+    orbit: { radius: 300, eccentricity: 0 },
     children: [
         { archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017 }, name: "Pallas" },
         { archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017 }, name: "Troy" },

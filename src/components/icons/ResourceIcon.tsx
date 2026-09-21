@@ -38,6 +38,7 @@ import {
     Landmark,
 
 } from "lucide-react"
+import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 
 const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     food: Cookie,
@@ -73,7 +74,6 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     vehicles: Car,
     electronics: Cpu,
     environmentFactor: Leaf,
-    money: CircleDollarSign,
     faith: Church,
     lawEnforcement: Shield,
     healthcare: HeartPulse,
@@ -94,7 +94,9 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     railroadMobility: TrainIcon,
     shipMobility: ShipIcon,
     defense: Shield,
-    ore: Stone
+    ore: Stone,
+    monetaryServices: CircleDollarSign,
+    militaryVehicles: InfantryFightingVehicle,
 }
 
 export function ResourceIcon({ name, className }: { name: keyof Goods; className?: string }) {

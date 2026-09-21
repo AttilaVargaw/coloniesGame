@@ -60,6 +60,8 @@ export type IndustrialSectors = Readonly<{
     automotiveInfrastructure: number;
     nuclearEnergy: number
     defense: number
+    militaryVehicles: number
+    spaceGoodsTransport: number
 }>;
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

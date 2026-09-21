@@ -35,7 +35,6 @@ export function createBody({
     asteroidBelts
 }: BodyBlueprint, parent: Entity, engine: Engine): Entity {
     const body = createMarker(engine, { shade: true, ...marker })
-
     const angle = orbit.angle ?? Math.random() * TWO_PI
 
     applyComponents(body,
@@ -78,8 +77,8 @@ export function createBody({
     }
 
     if(binaryPairs) {
-        for(const { bodies: [first, second], separation, orbit, children } of binaryPairs) {
-            createBinaryOrbitPair(engine, body, first, second, separation, orbit, children)
+        for(const { bodies: [first, second], separation, orbit, children, angle: angle2 } of binaryPairs) {
+            createBinaryOrbitPair(engine, body, first, second, separation, orbit, children, angle2)
         }
     }
 

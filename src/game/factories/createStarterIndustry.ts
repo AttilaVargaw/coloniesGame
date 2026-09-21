@@ -61,6 +61,8 @@ const PER_CAPITA_SECTOR_RATIOS = {
     spaceShips: 0.00005,
     nuclearEnergy: 0.0005,
     defense: 0.000015,
+    militaryVehicles: 0.000002,
+    spaceGoodsTransport: 0.000002,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 const MIN_SECTOR_LEVEL = 0;

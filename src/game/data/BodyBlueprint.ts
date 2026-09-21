@@ -13,7 +13,7 @@ export type BodyBlueprint = Readonly<{
     orbit: OrbitalBlueprint;
     children?: BodyBlueprint[];
     vessels?: VesselBlueprint[];
-    binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[] }[];
+    binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[], angle?: number }[];
     rings?: { innerRadius: number; outerRadius: number; color: string }[];
     asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, }[];
 }>

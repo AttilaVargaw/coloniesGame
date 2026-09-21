@@ -20,7 +20,7 @@ export function init(engine: Engine) {
     const viewportSystem = engine.getSystem(ViewportSystem)
     viewportSystem.sortOnEveryEntityAddition = false
 
-    const root = engine.createEntity(MapCreationData.name)
+    const root = engine.createEntity("root")
     applyComponents(root,
         new PositionComponent(0, 0, 0),
         new RadiusComponent(10),
@@ -29,6 +29,7 @@ export function init(engine: Engine) {
         new ColorComponent("red"),
         new ThicknessComponent(1)
     )
+
     const map = createBody(MapCreationData, root, engine)
 
     // for(const body of MapCreationData.children!) {

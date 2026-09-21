@@ -84,7 +84,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             buildings: 3,
             governance: 2,
             electronics: 1
-        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { electricity: 220, waste: 1 },
+        },
+        workerRequirement: {
+            worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1
+        }, goodsProduction: { electricity: 220, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["metalFactory", ({
@@ -175,7 +178,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01
     })],
     ["spaceShips", ({
-        name: "spaceShipyard", goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: {
+        name: "spaceShipyard", goodsRequirements: {
+            paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1
+        }, workerRequirement: {
             worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1
         }, goodsProduction: { spaceTransport: 8 },
         efficiencyBonus: 0.01
@@ -222,13 +227,13 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["education", ({
         name: "education", goodsRequirements: {
-            vehicles: 0.1, electricity: 10, services: 6, buildings: 2, governance: 2, electronics: 1, paper: 2,
+            vehicles: 0.1, electricity: 10, services: 6, buildings: 2, governance: 2, electronics: 1, paper: 2, itServices: 1
         }, workerRequirement: { teacher: 89, clerks: 10, worker: 5, healtcarePersonal: 1 }, goodsProduction: { education: 300 },
         efficiencyBonus: 0.01
     })],
     ["healthcare", ({
         name: "healthcare", goodsRequirements: {
-            paper: 1, retail: 20, vehicles: 0.1, medicine: 3, electricity: 8, buildings: 2, governance: 2, electronics: 1
+            paper: 1, retail: 20, vehicles: 0.1, medicine: 3, electricity: 8, buildings: 2, governance: 2, electronics: 1, itServices: 1
         }, workerRequirement: { healtcarePersonal: 90, clerks: 5, worker: 5 }, goodsProduction: { healthcare: 200 },
         efficiencyBonus: 0.01
     })],
@@ -247,7 +252,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
-            paper: 1, vehicles: 0.1, electricity: 14, services: 8, buildings: 2, governance: 2, electronics: 1
+            paper: 1, vehicles: 0.1, electricity: 14, services: 8, buildings: 2, governance: 2, electronics: 1, itServices: 1
         }, workerRequirement: { worker: 19, clerks: 80, healtcarePersonal: 1 }, goodsProduction: { monetaryServices: 100 },
         efficiencyBonus: 0.01
     })],
@@ -259,7 +264,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01
     })],
     ["lawEnforcement", ({
-        name: "lawEnforcement", goodsRequirements: { paper: 1, vehicles: 0.1, electricity: 12, weapons: 3, buildings: 2, governance: 2, electronics: 1 },
+        name: "lawEnforcement",
+        goodsRequirements: { paper: 1, vehicles: 0.1, electricity: 12, weapons: 3, buildings: 2, governance: 2, electronics: 1, itServices: 1 },
         workerRequirement: { policeMen: 89, worker: 5, clerks: 5, healtcarePersonal: 1 }, goodsProduction: { lawEnforcement: 80 },
         efficiencyBonus: 0.01
     })],
@@ -302,7 +308,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["government", ({
         name: "government",
-        goodsRequirements: { vehicles: 0.1, paper: 1, services: 5, buildings: 2, electronics: 1, environmentFactor: 1 },
+        goodsRequirements: { vehicles: 0.1, paper: 1, services: 5, buildings: 2, electronics: 1, environmentFactor: 1, itServices: 1 },
         workerRequirement: { clerks: 79, worker: 20, healtcarePersonal: 1 },
         goodsProduction: { governance: 100 },
         efficiencyBonus: 0.01
@@ -356,6 +362,16 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         },
         workerRequirement: { worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 },
         goodsProduction: { railroadVehicles: 15, waste: 1 },
+        efficiencyBonus: 0.01
+    })],
+    ["militaryVehicles", ({
+        name: "militaryVehicles",
+        goodsRequirements: {
+            environmentFactor: 2,
+            paper: 1, machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10
+        },
+        workerRequirement: { worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 },
+        goodsProduction: { militaryVehicles: 15, waste: 1 },
         efficiencyBonus: 0.01
     })],
     ["railroadInfrastructure", ({
@@ -474,11 +490,39 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["defense", ({
         name: "retail",
-        goodsRequirements: { electricity: 15, buildings: 3, governance: 2, electronics: 10, paper: 10, ammunition: 100, weapons: 100, ordnance: 50 },
+        goodsRequirements: {
+            militaryVehicles: 10,
+            electricity: 15,
+            buildings: 3,
+            governance: 2,
+            electronics: 10,
+            paper: 10,
+            ammunition: 100,
+            weapons: 100,
+            ordnance: 50
+        },
         workerRequirement: { worker: 85, clerks: 5, healtcarePersonal: 5, engineer: 5 },
         goodsProduction: { defense: 150, waste: 1 },
         efficiencyBonus: 0.01,
-    })]
+    }),],
+    ["spaceGoodsTransport", {
+        name: "spaceGoodsTransport",
+        goodsRequirements: {
+            environmentFactor: 2,
+            electricity: 15,
+            buildings: 3,
+            governance: 2,
+            electronics: 1,
+            paper: 10
+        },
+        workerRequirement: {
+            worker: 34,
+            clerks: 5,
+            serviceWorker: 60,
+            healtcarePersonal: 1
+        },
+        goodsProduction: { waste: 1, retail: 100 },
+    }]
 ])
 
 export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
