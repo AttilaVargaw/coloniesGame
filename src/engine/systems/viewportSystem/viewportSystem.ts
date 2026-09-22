@@ -37,12 +37,78 @@ const createStarfield = (count: number) => {
     })
 }
 
-export class ViewportSystem extends SystemWithNodes<ViewportNode> {
-    private static readonly starfield: { x: number; y: number; z: number; r: number; opacity: number }[] = createStarfield(512)
-    private static readonly rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
-    private readonly eventHandlers: Set<Entity> = new Set()
-    private _orbitLogged = false
+const starfield = createStarfield(512)
 
+const rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
+
+function drawRotationIndicator(ctx: CanvasRenderingContext2D, camera: Camera) {
+    ctx.save();
+    ctx.strokeStyle = rotationIndicatorColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(camera.cssWidth / 2, camera.cssHeight / 2, 12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(camera.cssWidth / 2 - 6, camera.cssHeight / 2);
+    ctx.lineTo(camera.cssWidth / 2 + 6, camera.cssHeight / 2);
+    ctx.moveTo(camera.cssWidth / 2, camera.cssHeight / 2 - 6);
+    ctx.lineTo(camera.cssWidth / 2, camera.cssHeight / 2 + 6);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
+    ctx.save()
+    ctx.fillStyle = "#ffffff"
+
+    const buckets = new Map<number, { x: number; y: number; r: number }[]>()
+    const glowBuckets = new Map<number, { x: number; y: number; r: number }[]>()
+    for(const s of starfield) {
+        const projected = camera.project(s.x, s.y, s.z)
+        if(!projected) {
+            continue
+        }
+        const alpha = s.opacity * Math.min(1, projected.scale * 80)
+        const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200))
+        const bucket = Math.round(alpha * 10) / 10
+
+        if(!buckets.has(bucket)) buckets.set(bucket, [])
+        buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius })
+
+        if(alpha > 0.6 && radius > 1.5) {
+            const glowAlpha = (alpha - 0.6) * 0.4
+            const glowRadius = radius * 4
+            const glowBucket = Math.round(glowAlpha * 10) / 10
+            if(!glowBuckets.has(glowBucket)) glowBuckets.set(glowBucket, [])
+            glowBuckets.get(glowBucket)!.push({ x: projected.x, y: projected.y, r: glowRadius })
+        }
+    }
+
+    for(const [alpha, stars] of glowBuckets) {
+        ctx.globalAlpha = alpha
+        ctx.beginPath()
+        for(const star of stars) {
+            ctx.moveTo(star.x + star.r, star.y)
+            ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+        }
+        ctx.fill()
+    }
+
+    for(const [alpha, stars] of buckets) {
+        ctx.globalAlpha = alpha
+        ctx.beginPath()
+        for(const star of stars) {
+            ctx.moveTo(star.x + star.r, star.y)
+            ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+        }
+        ctx.fill()
+    }
+
+    ctx.restore()
+}
+
+export class ViewportSystem extends SystemWithNodes<ViewportNode> {
+    private readonly eventHandlers: Set<Entity> = new Set()
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
 
@@ -74,57 +140,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
-    private drawStarfield(ctx: CanvasRenderingContext2D) {
-        const { camera } = this.viewport
-        ctx.save()
-        ctx.fillStyle = "#ffffff"
-
-        const buckets = new Map<number, { x: number; y: number; r: number }[]>()
-        const glowBuckets = new Map<number, { x: number; y: number; r: number }[]>()
-        for(const s of ViewportSystem.starfield) {
-            const projected = camera.project(s.x, s.y, s.z)
-            if(!projected) {
-                continue
-            }
-            const alpha = s.opacity * Math.min(1, projected.scale * 80)
-            const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200))
-            const bucket = Math.round(alpha * 10) / 10
-
-            if(!buckets.has(bucket)) buckets.set(bucket, [])
-            buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius })
-
-            if(alpha > 0.6 && radius > 1.5) {
-                const glowAlpha = (alpha - 0.6) * 0.4
-                const glowRadius = radius * 4
-                const glowBucket = Math.round(glowAlpha * 10) / 10
-                if(!glowBuckets.has(glowBucket)) glowBuckets.set(glowBucket, [])
-                glowBuckets.get(glowBucket)!.push({ x: projected.x, y: projected.y, r: glowRadius })
-            }
-        }
-
-        for(const [alpha, stars] of glowBuckets) {
-            ctx.globalAlpha = alpha
-            ctx.beginPath()
-            for(const star of stars) {
-                ctx.moveTo(star.x + star.r, star.y)
-                ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
-            }
-            ctx.fill()
-        }
-
-        for(const [alpha, stars] of buckets) {
-            ctx.globalAlpha = alpha
-            ctx.beginPath()
-            for(const star of stars) {
-                ctx.moveTo(star.x + star.r, star.y)
-                ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
-            }
-            ctx.fill()
-        }
-
-        ctx.restore()
-    }
-
     update(dt: number) {
         if(!this.engine) {
             return
@@ -135,32 +150,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
             this.clear(ctx)
-            this.drawStarfield(ctx)
+            drawStarfield(ctx, camera)
 
             if(this.inputHandler.isRotatingWithoutTarget) {
-                this.drawRotationIndicator(ctx, camera);
+                drawRotationIndicator(ctx, camera,);
             }
 
             if(DEBUG_VISUALIZE_PATHS) {
                 this.drawOrbits(ctx)
             }
         }
-    }
-
-    private drawRotationIndicator(ctx: CanvasRenderingContext2D, camera: Camera) {
-        ctx.save();
-        ctx.strokeStyle = ViewportSystem.rotationIndicatorColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(camera.cssWidth / 2, camera.cssHeight / 2, 12, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(camera.cssWidth / 2 - 6, camera.cssHeight / 2);
-        ctx.lineTo(camera.cssWidth / 2 + 6, camera.cssHeight / 2);
-        ctx.moveTo(camera.cssWidth / 2, camera.cssHeight / 2 - 6);
-        ctx.lineTo(camera.cssWidth / 2, camera.cssHeight / 2 + 6);
-        ctx.stroke();
-        ctx.restore();
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {
@@ -230,6 +229,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const worldY = cy + y1
                 const worldZ = cz + ry * sinI
                 const projected = camera.project(worldX, worldY, worldZ)
+
                 if(!projected) {
                     continue
                 }
