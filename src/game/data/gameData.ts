@@ -17,6 +17,7 @@ export const MapCreationData = {
     vessels: [],
     systems: [{
         bodies: [{
+            navigatinalPoint: true,
             archetype: "mars",
             marker: { color: "#888", radius: navigationalBodySize, label: "Helicon" },
             name: "Helicon",
@@ -30,6 +31,7 @@ export const MapCreationData = {
         }],
     }, {
         bodies: [{
+            navigatinalPoint: true,
             archetype: "mars",
             marker: { color: "#888", radius: navigationalBodySize, label: "Cocalus" },
             name: "Cocalus",
@@ -44,6 +46,7 @@ export const MapCreationData = {
     }, {
         angle: -Math.PI / 2,
         bodies: [solarisAlpha, solarisBeta, {
+            navigatinalPoint: true,
             archetype: "mars",
             marker: { color: "#888", radius: navigationalBodySize, label: "Delium" },
             name: "Delium",
@@ -55,6 +58,7 @@ export const MapCreationData = {
                 inclination: 0
             },
         }, {
+            navigatinalPoint: true,
                 archetype: "mars",
                 marker: { color: "#888", radius: navigationalBodySize, label: "Knossos" },
                 name: "Knossos",
@@ -93,6 +97,7 @@ export const MapCreationData = {
         bodies: [heliosGamma,
             heliosDelta, {
                 archetype: "mars",
+                navigatinalPoint: true,
                 marker: { color: "#888", radius: navigationalBodySize, label: "Gortyn" },
                 name: "Gortyn",
                 color: "#888",
@@ -104,6 +109,7 @@ export const MapCreationData = {
                 },
             }, {
                 archetype: "mars",
+                navigatinalPoint: true,
                 marker: { color: "#888", radius: navigationalBodySize, label: "Naucratis" },
                 name: "Naucratis",
                 color: "#888",

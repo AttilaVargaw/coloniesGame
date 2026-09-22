@@ -2,6 +2,7 @@ import { LUNAR_UNIT, SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const solarisBeta = {
+    navigatinalPoint: true,
     name: "Helios Beta",
     marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta" },
     archetype: "sol",

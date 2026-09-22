@@ -20,24 +20,12 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
     const sectorWealth = { ...input.sectorWealth };
 
     for (const sectorName of input.upgradeSectors) {
-        const currentLevel = sectors[sectorName as keyof IndustrialSectors];
-        const cost = Math.round((sectorUpgradeCosts[sectorName as keyof IndustrialSectors] || 10) * Math.max(1, currentLevel));
-        if ((sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) >= cost) {
-            sectors[sectorName as keyof IndustrialSectors] = currentLevel + 1;
-            sectorWealth[sectorName as keyof IndustrialSectors] = Math.max(0, (sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) - cost);
-        }
+        tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, false);
     }
 
     for (const [sectorName, shouldAutoUpgrade] of Object.entries(input.autoUpgradeSectors)) {
         if (!shouldAutoUpgrade) continue;
-        const currentLevel = sectors[sectorName as keyof IndustrialSectors];
-        const lastProfit = input.sectorProfits[sectorName] ?? 0;
-        if (lastProfit <= 0) continue;
-        const cost = Math.round((sectorUpgradeCosts[sectorName as keyof IndustrialSectors] || 10) * Math.max(1, currentLevel));
-        if ((sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) >= cost) {
-            sectors[sectorName as keyof IndustrialSectors] = currentLevel + 1;
-            sectorWealth[sectorName as keyof IndustrialSectors] = Math.max(0, (sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) - cost);
-        }
+        tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, true);
     }
 
     for (const [sector, profit] of Object.entries(input.sectorProfits)) {
@@ -60,4 +48,25 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
     }
 
     return { sectors, sectorWealth };
+}
+
+function tryUpgradeSector(
+    sectorName: string,
+    sectors: Record<keyof IndustrialSectors, number>,
+    sectorWealth: Record<keyof IndustrialSectors, number>,
+    sectorProfits: Record<string, number>,
+    requireProfit: boolean
+) {
+    const currentLevel = sectors[sectorName as keyof IndustrialSectors];
+    const cost = Math.round((sectorUpgradeCosts[sectorName as keyof IndustrialSectors] || 10) * Math.max(1, currentLevel));
+
+    if (requireProfit) {
+        const lastProfit = sectorProfits[sectorName] ?? 0;
+        if (lastProfit <= 0) return;
+    }
+
+    if ((sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) >= cost) {
+        sectors[sectorName as keyof IndustrialSectors] = currentLevel + 1;
+        sectorWealth[sectorName as keyof IndustrialSectors] = Math.max(0, (sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) - cost);
+    }
 }

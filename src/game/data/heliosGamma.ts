@@ -2,6 +2,7 @@ import { LUNAR_UNIT, SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosGamma = {
+    navigatinalPoint: true,
     name: "Helios Gamma",
     marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma" },
     orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
