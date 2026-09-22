@@ -4,7 +4,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 export const heliosGamma = {
     name: "Helios Gamma",
     marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma" },
-    orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI /2 },
+    orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
     archetype: "sol",
     systems: [{
         bodies: [{
@@ -37,9 +37,13 @@ export const heliosGamma = {
             orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1, inclination: 0.3 },
             population: 2100000,
             systems: [{
-                orbit: { radius: .01, angle: 0 },
+                orbit: { radius: 0.01, angle: 0 },
                 bodies: [
-                    { archetype: "luna", marker: { color: "#909ec0", radius: 4, label: "Herse" }, orbit: { radius: LUNAR_UNIT * 3.1 }, name: "Herse" },
+                    {
+                        archetype: "luna",
+                        marker: { color: "#909ec0", radius: 4, label: "Herse" },
+                        orbit: { radius: LUNAR_UNIT * 3.1 }, name: "Herse"
+                    },
                     { archetype: "luna", marker: { color: "#7e816b", radius: 4, label: "Pandrossos" }, orbit: { radius: LUNAR_UNIT * 1.5 }, name: "Pandrossos" }
                 ]
             }]

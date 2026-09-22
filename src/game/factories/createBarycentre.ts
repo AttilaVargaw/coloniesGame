@@ -37,7 +37,7 @@ export function createBarycentre(
     const masses = bodies.map(resolveMass)
     const totalMass = masses.reduce((sum, m) => sum + m, 0)
     const totalSeparation = bodies.reduce((sum, body) => sum + (body.orbit?.radius ?? 0), 0)
-    const commonAngularSpeed = totalSeparation > 0 ? angularSpeed(totalSeparation, totalMass) : 0
+    const commonAngularSpeed = totalSeparation > 0 ? angularSpeed(totalSeparation * UNIVERSE_SCALE, totalMass) : 0
 
     const barycentre = engine.createEntity()
     engine.addEntity(barycentre, parent)
@@ -46,7 +46,7 @@ export function createBarycentre(
     barycentre.addComponent(new OrbitComponent(
         parent.id,
         radius * UNIVERSE_SCALE,
-        angularSpeed(radius, parentMass),
+        angularSpeed(radius * UNIVERSE_SCALE, parentMass),
         angle ?? Math.random() * TWO_PI,
         eccentricity ?? 0,
         0,
