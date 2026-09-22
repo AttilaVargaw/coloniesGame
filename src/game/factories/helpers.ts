@@ -82,10 +82,10 @@ export function createEntityClickHandler(
     return ({ event: { shiftKey }, worldX, worldY }: { event: { shiftKey: boolean }, worldX: number, worldY: number }) => {
         if(!engine) return
 
-        const ship = getShip()
-        if(!ship) return
-
         if(shiftKey) {
+            const ship = getShip()
+            if(!ship) return
+
             const targetSystem = engine.getSystem(TargetSystem)
             if(orbitSelection) {
                 targetSystem?.setTargetForOrbitSelection(ship, targetEntity, worldX, worldY)
