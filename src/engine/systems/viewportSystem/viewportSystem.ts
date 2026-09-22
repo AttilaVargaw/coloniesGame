@@ -84,25 +84,18 @@ function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         }
     }
 
-    for(const [alpha, stars] of glowBuckets) {
+    const drawBucket = (stars: { x: number; y: number; r: number }[], alpha: number) => {
         ctx.globalAlpha = alpha
         ctx.beginPath()
-        for(const star of stars) {
+        for (const star of stars) {
             ctx.moveTo(star.x + star.r, star.y)
             ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
         }
         ctx.fill()
     }
 
-    for(const [alpha, stars] of buckets) {
-        ctx.globalAlpha = alpha
-        ctx.beginPath()
-        for(const star of stars) {
-            ctx.moveTo(star.x + star.r, star.y)
-            ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
-        }
-        ctx.fill()
-    }
+    for (const [alpha, stars] of glowBuckets) drawBucket(stars, alpha)
+    for (const [alpha, stars] of buckets)     drawBucket(stars, alpha)
 
     ctx.restore()
 }
@@ -216,7 +209,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const cosL = Math.cos(lan)
             const sinL = Math.sin(lan)
 
-            ctx.beginPath()
+            const points: { x: number; y: number }[] = []
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const x = orbit.radius * Math.cos(angle) - focusOffset
@@ -225,19 +218,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const ry = x * sinA + y * cosA
                 const x1 = rx * cosL - ry * cosI * sinL
                 const y1 = rx * sinL + ry * cosI * cosL
-                const worldX = cx + x1
-                const worldY = cy + y1
-                const worldZ = cz + ry * sinI
-                const projected = camera.project(worldX, worldY, worldZ)
+                const projected = camera.project(cx + x1, cy + y1, cz + ry * sinI)
+                if(projected) points.push({ x: projected.x, y: projected.y })
+            }
 
-                if(!projected) {
-                    continue
-                }
-                if(i === 0) {
-                    ctx.moveTo(projected.x, projected.y)
-                } else {
-                    ctx.lineTo(projected.x, projected.y)
-                }
+            if(points.length < 2) continue
+
+            ctx.beginPath()
+            ctx.moveTo(points[0].x, points[0].y)
+            for(let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y)
             }
             ctx.stroke()
         }
