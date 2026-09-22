@@ -19,23 +19,23 @@ export const solarisBeta = {
         ]
     },
     {
-        bodies: [{
-            population: 4300000000,
-            marker: { color: "#4d5c6d", radius: 10, label: "Virgon" },
-            archetype: "kobol",
-            orbit: { radius: 1.35 * SOLAR_UNIT, inclination: 0 },
-            name: "Virgon",
-            systems: [{
-                orbit: { radius: 0.01, angle: 0, inclination: 0 },
-                bodies: [{
-                    population: 100_000,
-                    marker: { color: "#a0948d", radius: 4, label: "Hibernia" },
-                    archetype: "luna",
-                    orbit: { radius: 2.1 * LUNAR_UNIT },
-                    name: "Hibernia"
-                }]
-            }]
-        }],
+        bodies: [
+            {
+                population: 4300000000,
+                marker: { color: "#4d5c6d", radius: 10, label: "Virgon" },
+                archetype: "kobol",
+                orbit: { radius: 0 },
+                name: "Virgon"
+            },
+            {
+                population: 100_000,
+                marker: { color: "#a0948d", radius: 4, label: "Hibernia" },
+                archetype: "luna",
+                orbit: { radius: 2.1 * LUNAR_UNIT },
+                name: "Hibernia"
+            }
+        ],
+        orbit: { radius: 1.35 * SOLAR_UNIT, inclination: 0 }
     },
     {
         bodies: [{

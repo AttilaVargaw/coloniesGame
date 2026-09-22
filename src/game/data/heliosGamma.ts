@@ -30,24 +30,20 @@ export const heliosGamma = {
             population: 1700000000,
         }],
     }, {
+        orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1, inclination: 0.3 },
         bodies: [{
+            orbit: { radius: 0, eccentricity: 0.1, inclination: 0.1 },
             marker: { color: "#759477", radius: 8, label: "Libran" },
             name: "Libran",
             archetype: "kobol",
-            orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1, inclination: 0.3 },
             population: 2100000,
-            systems: [{
-                orbit: { radius: 0.01, angle: 0 },
-                bodies: [
-                    {
-                        archetype: "luna",
-                        marker: { color: "#909ec0", radius: 4, label: "Herse" },
-                        orbit: { radius: LUNAR_UNIT * 3.1 }, name: "Herse"
-                    },
-                    { archetype: "luna", marker: { color: "#7e816b", radius: 4, label: "Pandrossos" }, orbit: { radius: LUNAR_UNIT * 1.5 }, name: "Pandrossos" }
-                ]
-            }]
-        }],
+        },
+        {
+            archetype: "luna",
+            marker: { color: "#909ec0", radius: 4, label: "Herse" },
+            orbit: { radius: LUNAR_UNIT * 3.1 }, name: "Herse"
+        },
+        { archetype: "luna", marker: { color: "#7e816b", radius: 4, label: "Pandrossos" }, orbit: { radius: LUNAR_UNIT * 1.5 }, name: "Pandrossos" }],
     }, {
         bodies: [{
             name: "Ophion",

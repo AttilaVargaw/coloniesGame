@@ -51,6 +51,7 @@ export const solarisAlpha = {
             population: 1_200_000_000,
         }],
     }, {
+        orbit: { radius: 1.1 * SOLAR_UNIT, angle: 0, eccentricity: 0 },
         bodies: [{
             marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
@@ -61,13 +62,13 @@ export const solarisAlpha = {
                 { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
             ],
         }, {
+            mass: 0.9,
             marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
             orbit: { radius: 2, angle: Math.PI, eccentricity: 0.02, inclination: 0 },
             name: "Gemenon",
             population: 2800000000,
         }],
-        orbit: { radius: 1.1 * SOLAR_UNIT, angle: 0, eccentricity: 0 },
     }],
     rings: [
         // { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }

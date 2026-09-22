@@ -34,18 +34,22 @@ export const heliosDelta = {
             archetype: "mercury", orbit: { radius: SOLAR_UNIT * 0.6, angle: 0, inclination: 0 }, name: "Phoebe"
         }],
     }, {
-        bodies: [{
-            marker: { color: "#ae4937", radius: 10, label: "Hestia" },
-            archetype: "saturn",
-            orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
-            name: "Hestia",
-            systems: [{
+        orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
+        bodies: [
+            {
                 orbit: { radius: 0.01, inclination: 0 },
-                bodies: [
-                    { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 1.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.3, periapsis: 0.1, inclination: 1 }, name: "Rhea", archetype: "luna" },
-                    { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 2.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "luna" }
+                marker: { color: "#ae4937", radius: 10, label: "Hestia" },
+                archetype: "saturn",
+                name: "Hestia",
+                systems: [{
+                    orbit: { radius: 0.01, inclination: 0 },
+                    bodies: [
+                    ]
+                },
                 ]
-            }]
-        }],
+            },
+            { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 2.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.3, periapsis: 0.1, inclination: 1 }, name: "Rhea", archetype: "luna" },
+            { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 3.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "luna" }
+        ],
     }],
 } as const satisfies BodyBlueprint;

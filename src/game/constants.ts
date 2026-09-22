@@ -16,7 +16,6 @@ export const KEPLER_MAX_ITERATIONS = 20
 
 export const SHIP_ORBIT_BUFFER_RATIO = 0.5
 export const G = 0.0004
-export const TIME_ACCELERATION = 50000
 
 export const workingRatio = 0.6
 export const pensionerRatio = 0.2
