@@ -53,7 +53,7 @@ export function createBody({
             new OrbitComponent(
                 parent.id,
                 orbit.radius * UNIVERSE_SCALE,
-                angularSpeed(orbit.radius, parentMass),
+                angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
                 angle,
                 orbit.eccentricity ?? 0,
                 orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),

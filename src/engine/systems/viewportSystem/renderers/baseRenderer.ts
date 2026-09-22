@@ -30,7 +30,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(this.constructor as any)
         engine.subscribe(EntityAddedEvent, this.onEntityAdded)
-        console.log('[BaseRenderer]', this.constructor.name, 'registered, initial nodes:', this.nodes.length)
         return this
     }
 
@@ -104,7 +103,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         }
 
         if(entries.length > 0 && !this._renderLogged) {
-            console.log('[BaseRenderer]', this.constructor.name, 'rendering', entries.length, 'nodes')
             this._renderLogged = true
         }
 

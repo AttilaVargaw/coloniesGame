@@ -8,6 +8,8 @@ import { TimeScaleNode } from "./timeScaleNode";
 import { Entity } from "../entities/entity";
 import { DayPassedEvent, MonthPassedEvent } from "../lib/events";
 
+const lastDay = 60 * 60 * 24 * 1000
+
 export class DateSystem extends System {
     private entity?: Entity
     private node?: DateNode
@@ -53,12 +55,15 @@ export class DateSystem extends System {
         const multiplier = timeScaleNode?.timeScale.multiplier ?? 1
 
         const node = this.node
-        node.date.ms += dt * multiplier
 
-        this.timeSinceLastDay += dt * multiplier
-        this.timeSinceLasMonth += dt * multiplier
+        const timeIncrease = dt * multiplier * 1000
 
-        if(this.timeSinceLastDay > 1000 * 60 * 60 * 24) {
+        node.date.ms += timeIncrease
+
+        this.timeSinceLastDay += timeIncrease
+        this.timeSinceLasMonth += timeIncrease
+
+        if(this.timeSinceLastDay > lastDay) {
             this.timeSinceLastDay = 0
             this.engine.dispatchEvent(new DayPassedEvent(null))
         }

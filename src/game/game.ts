@@ -46,9 +46,6 @@ export class Game {
             pitch: Math.PI / 4,
         })
 
-        console.log('[Game] Canvas size:', renderingContext.canvas.width, 'x', renderingContext.canvas.height)
-        console.log('[Game] Camera size:', camera.cssWidth, 'x', camera.cssHeight)
-
         this.engine
             .addSystem(IndustrySystem)
             .addSystem(DateSystem)

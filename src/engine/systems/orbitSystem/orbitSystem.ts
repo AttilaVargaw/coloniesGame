@@ -97,12 +97,6 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         super.addToEngine(engine)
 
         this.nodes = this.engine!.getNodeList(OrbitNode)
-        console.log('[OrbitSystem] Registered', this.nodes.length, 'orbit nodes')
-        for (const node of this.nodes) {
-            const sceneNode = this.engine!.getSceneNode(node.entity)
-            const parent = sceneNode?.parent?.entity
-            console.log('[OrbitSystem] Entity', node.entity.id, 'parent', parent?.id || 'none', 'radius', node.orbit.radius, 'angularSpeed', node.orbit.angularSpeed)
-        }
 
         return this
     }

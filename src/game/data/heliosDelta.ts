@@ -9,7 +9,7 @@ export const heliosDelta = {
     systems: [{
         bodies: [{
             marker: { color: "#6a7a82", radius: 10, label: "Canceron" },
-            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 3 * 2, eccentricity: 0.007, inclination: 0 },
+            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
             name: "Canceron",
             population: 6_700_000_000,
         }],
@@ -21,7 +21,12 @@ export const heliosDelta = {
     }, {
         bodies: [{
             marker: { color: "#ced0dd", radius: 10, label: "Aerilon" },
-            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: 0, eccentricity: 0.007, inclination: 0 }, name: "Aerilon", population: 1_200_000_000
+            archetype: "kobol", orbit: {
+                radius: SOLAR_UNIT * 1.1,
+                angle: 0,
+                eccentricity: 0.007,
+                inclination: 0
+            }, name: "Aerilon", population: 1_200_000_000
         }],
     }, {
         bodies: [{
@@ -34,7 +39,7 @@ export const heliosDelta = {
             archetype: "mercury", orbit: { radius: SOLAR_UNIT * 0.6, angle: 0, inclination: 0 }, name: "Phoebe"
         }],
     }, {
-        orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
+        orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 6, eccentricity: 0.007, inclination: 0 },
         bodies: [
             {
                 orbit: { radius: 0.01, inclination: 0 },
