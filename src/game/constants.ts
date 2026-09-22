@@ -25,6 +25,7 @@ export const studentRatio = 0.2
 export const MAX_SOLAR_SYSTEM_DISTNACE = 100 * UNIVERSE_SCALE
 export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
+export const LUNAR_UNIT = 1 / 389 * SOLAR_UNIT * 10
 
 export const STAR_SIZE = 30
 export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const

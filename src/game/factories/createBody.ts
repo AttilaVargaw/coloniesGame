@@ -25,7 +25,7 @@ import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
-    if (blueprint.mass !== undefined) return blueprint.mass
+    if(blueprint.mass !== undefined) return blueprint.mass
     return massByArchetype[blueprint.archetype]
 }
 
@@ -66,30 +66,37 @@ export function createBody({
             new HoverableComponent("pointer", clickSquare),
             new MassComponent(mass),
         )
+
     } else {
         applyComponents(body,
             new MassComponent(mass),
         )
     }
 
-    // applyComponents(body,
-    //     new HoverableComponent("not-allowed", clickSquare))
-
     engine.addEntity(body, parent)
-    // .addEntity(createSoiCircle(body, archetype, engine), body)
 
     if(systems) {
         for(const entry of systems) {
-            if(!entry) continue
+            if(!entry) {
+                continue
+            }
             const { bodies, satellites, orbit, angle: angle2 } = entry
-            if(!bodies) continue
+
+            if(!bodies) {
+                continue
+            }
+
             if(bodies.length === 1) {
                 const createdBody = createBody(bodies[0], body, engine, mass)
+
                 satellites?.forEach(sat => {
                     createBody(sat, createdBody, engine, resolveMass(bodies[0]))
                 })
             } else {
-                if(!orbit) throw new Error("orbit required for multi-body system")
+                if(!orbit) {
+                    throw new Error("orbit required for multi-body system")
+                }
+
                 createBarycentre(engine, body, bodies, orbit, satellites, angle2, mass)
             }
         }

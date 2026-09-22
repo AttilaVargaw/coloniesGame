@@ -237,7 +237,7 @@ describe("move system waypoint queue", () => {
         const orbit = ship.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
-        expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20) * UNIVERSE_SCALE)
+        expect(orbit!.radius).toBeCloseTo(Math.hypot(100 - 200, 20))
         expect(orbit!.meanAnomaly).toBeCloseTo(Math.atan2(20, 100 - 200))
     })
 })

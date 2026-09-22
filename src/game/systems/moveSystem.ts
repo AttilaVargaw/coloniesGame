@@ -273,7 +273,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             orbit.angularSpeed = angularSpeed(newRadius, attractorMass)
         } else {
             const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius * UNIVERSE_SCALE, angularSpeed(newRadius, attractorMass), meanAnomaly, 0, inclination, 0, 0))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, angularSpeed(newRadius, attractorMass), meanAnomaly, 0, inclination, 0, 0))
         }
     }
 

@@ -55,7 +55,7 @@ export function createBarycentre(
     ))
     barycentre.addComponent(new MassComponent(totalMass))
 
-    for (let i = 0; i < bodies.length; i += 1) {
+    for(let i = 0; i < bodies.length; i += 1) {
         const bodyAngle = dAngle + (TWO_PI / bodies.length) * i
         createBody(
             { ...bodies[i], orbit: makeMoonOrbit(bodies[i], bodyAngle, commonAngularSpeed) },

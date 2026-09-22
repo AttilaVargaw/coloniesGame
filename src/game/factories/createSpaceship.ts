@@ -90,7 +90,7 @@ export function createVessel(
                 engine.dispatchEvent(new SelectionChangedEvent({ data: target, type: "ship" }))
             }
         }),
-        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
+        new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius * UNIVERSE_SCALE, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
     )
 
     engine.addEntity(ship)

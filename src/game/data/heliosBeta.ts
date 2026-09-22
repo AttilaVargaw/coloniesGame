@@ -1,20 +1,24 @@
-import { SOLAR_UNIT, STAR_SIZE } from "../constants";
+import { LUNAR_UNIT, SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const solarisBeta = {
     name: "Helios Beta",
     marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta" },
     archetype: "sol",
-    orbit: { radius: 300, eccentricity: 0, inclination: 0, angle: Math.PI },
+    orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: -Math.PI / 2 },
     systems: [{
         bodies: [{
-            archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas" },
-        ]},
-    , {
+            archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas"
+        },
+        ]
+    },
+        , {
         bodies: [{
-            archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 }, name: "Troy" },
-        ]},
-    , {
+            archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 }, name: "Troy"
+        },
+        ]
+    },
+        , {
         bodies: [{
             population: 4300000000,
             marker: { color: "#4d5c6d", radius: 10, label: "Virgon" }, archetype: "kobol", orbit: { radius: 1.3 * SOLAR_UNIT, inclination: 0 }, name: "Virgon",
@@ -22,7 +26,7 @@ export const solarisBeta = {
                 orbit: { radius: 2, angle: 0 },
                 bodies: [{
                     population: 100_000,
-                    marker: { color: "#a0948d", radius: 4, label: "Hibernia" }, archetype: "mercury", orbit: { radius: 2.1 }, name: "Hibernia"
+                    marker: { color: "#a0948d", radius: 4, label: "Hibernia" }, archetype: "luna", orbit: { radius: 2.1 * LUNAR_UNIT }, name: "Hibernia"
                 }]
             }]
         }],
@@ -43,12 +47,12 @@ export const solarisBeta = {
                     name: "Euboea",
                     archetype: "luna",
                     marker: { color: "#888374", radius: 4, label: "Euboea" },
-                    orbit: { radius: 15 },
+                    orbit: { radius: 1.5 * LUNAR_UNIT },
                 }, {
                     name: "Iris",
                     archetype: "luna",
                     marker: { color: "#71877d", radius: 4, label: "Iris" },
-                    orbit: { radius: 1.8, eccentricity: 0.02 },
+                    orbit: { radius: 1.8 * LUNAR_UNIT, eccentricity: 0.02 },
                 }]
             }]
         }],

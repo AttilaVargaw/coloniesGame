@@ -3,7 +3,9 @@ import { solarisBeta } from "./heliosBeta";
 import { heliosGamma } from "./heliosGamma";
 import { heliosDelta } from "./heliosDelta";
 import { BodyBlueprint } from "./BodyBlueprint";
-import { SOLAR_UNIT } from "../constants";
+import { LUNAR_UNIT, SOLAR_UNIT } from "../constants";
+
+const navigationalBodySize = 60
 
 export const MapCreationData = {
     marker: { color: "#0000", radius: 20, label: "root" },
@@ -16,12 +18,12 @@ export const MapCreationData = {
     systems: [{
         bodies: [{
             archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Helicon" },
-            name: "Naucratis",
+            marker: { color: "#888", radius: navigationalBodySize, label: "Helicon" },
+            name: "Helicon",
             color: "#888",
             radius: 20,
             orbit: {
-                radius: 15 * SOLAR_UNIT,
+                radius: 300,
                 angle: Math.PI / 2,
                 inclination: 0
             },
@@ -29,21 +31,43 @@ export const MapCreationData = {
     }, {
         bodies: [{
             archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Cocalus" },
-            name: "Naucratis",
+            marker: { color: "#888", radius: navigationalBodySize, label: "Cocalus" },
+            name: "Cocalus",
             color: "#888",
             radius: 20,
             orbit: {
-                radius: 15 * SOLAR_UNIT,
-                angle: - Math.PI / 2,
+                radius: 300,
+                angle: -Math.PI / 2,
                 inclination: 0
             },
         }],
     }, {
-        angle: Math.PI / 2,
-        bodies: [ solarisAlpha, solarisBeta ],
+        angle: -Math.PI / 2,
+        bodies: [solarisAlpha, solarisBeta, {
+            archetype: "mars",
+            marker: { color: "#888", radius: navigationalBodySize, label: "Delium" },
+            name: "Delium",
+            color: "#888",
+            radius: 20,
+            orbit: {
+                radius: 10 * SOLAR_UNIT,
+                angle: Math.PI,
+                inclination: 0
+            },
+        }, {
+                archetype: "mars",
+                marker: { color: "#888", radius: navigationalBodySize, label: "Knossos" },
+                name: "Knossos",
+                color: "#888",
+                radius: 20,
+                orbit: {
+                    radius: 10 * SOLAR_UNIT,
+                    angle: 0,
+                    inclination: 0
+                },
+            }],
         satellites: [{
-            archetype: "jupiter",
+            archetype: "uranus",
             marker: { color: "#48a4ad", radius: 20, label: "Ragnar" },
             name: "Ragnar",
             orbit: {
@@ -53,67 +77,45 @@ export const MapCreationData = {
             },
             systems: [{
                 bodies: [{
-                    archetype: "venus", marker: { color: "blue", radius: 2, label: "Sigurd" }, name: "Sigurd", orbit: {
-                        radius: 3,
+                    archetype: "luna", marker: { color: "blue", radius: 2, label: "Sigurd" }, name: "Sigurd", orbit: {
+                        radius: 3 * LUNAR_UNIT,
                     }
                 }],
             }]
-        }, {
-            archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Delium" },
-            name: "Delium",
-            color: "#888",
-            radius: 20,
-            orbit: {
-                radius: 10 * SOLAR_UNIT,
-                angle: 0,
-                inclination: 0
-            },
-        }, {
-            archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Knossos" },
-            name: "Knossos",
-            color: "#888",
-            radius: 20,
-            orbit: {
-                radius: 10 * SOLAR_UNIT,
-                angle: Math.PI,
-                inclination: 0
-            },
         }],
         orbit: {
             radius: 300,
-            angle: 0,
+            angle: Math.PI,
             inclination: 0
         },
     }, {
-        angle: Math.PI / 2,
-        bodies: [ heliosGamma, heliosDelta ],
-        satellites: [{
-            archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Gortyn" },
-            name: "Gortyn",
-            color: "#888",
-            radius: 20,
-            orbit: {
-                radius: 10 * SOLAR_UNIT,
-                angle: 0,
-                inclination: 0
-            },
-        }, {
-            archetype: "mars",
-            marker: { color: "#888", radius: 20, label: "Naucratis" },
-            name: "Naucratis",
-            color: "#888",
-            radius: 20,
-            orbit: {
-                radius: 10 * SOLAR_UNIT,
-                angle: Math.PI,
-                inclination: 0
-            },
-        }],
+        angle: -Math.PI / 2,
+        bodies: [heliosGamma,
+            heliosDelta, {
+                archetype: "mars",
+                marker: { color: "#888", radius: navigationalBodySize, label: "Gortyn" },
+                name: "Gortyn",
+                color: "#888",
+                radius: 20,
+                orbit: {
+                    radius: 10 * SOLAR_UNIT,
+                    angle: Math.PI,
+                    inclination: 0
+                },
+            }, {
+                archetype: "mars",
+                marker: { color: "#888", radius: navigationalBodySize, label: "Naucratis" },
+                name: "Naucratis",
+                color: "#888",
+                radius: 20,
+                orbit: {
+                    radius: 10 * SOLAR_UNIT,
+                    angle: 0,
+                    inclination: 0
+                },
+            }],
         orbit: {
-            angle: Math.PI,
+            angle: 0,
             radius: 300,
             inclination: 0
         },

@@ -5,7 +5,7 @@ export const solarisAlpha = {
     name: "Helios Alpha",
     marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha" },
     archetype: "sol",
-    orbit: { radius: 300, angle: 0, eccentricity: 0 },
+    orbit: { radius: 200, angle: Math.PI / 2, eccentricity: 0, inclination: 0 },
     systems: [{
         bodies: [{
             marker: { color: "#f99838", radius: 4, label: "Icarus" },
@@ -29,8 +29,8 @@ export const solarisAlpha = {
             systems: [{
                 orbit: { radius: 0.1, angle: 0 },
                 bodies: [
-                    { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 4.8, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
-                    { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 5.5, angle: 0, eccentricity: 0.5 }, name: "Hebe", archetype: "mars" }
+                    { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 4.8, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "luna" },
+                    { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 5.5, angle: 0, eccentricity: 0.5 }, name: "Hebe", archetype: "luna" }
                 ]
             }]
         }],
@@ -54,7 +54,7 @@ export const solarisAlpha = {
         bodies: [{
             marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
-            orbit: { radius: 2, angle: 4, eccentricity: 0.02, inclination: 0 },
+            orbit: { radius: 2, angle: 0, eccentricity: 0.02, inclination: 0 },
             name: "Caprica",
             population: 4900000000,
             vessels: [
@@ -63,7 +63,7 @@ export const solarisAlpha = {
         }, {
             marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
-            orbit: { radius: 2, angle: 4, eccentricity: 0.02, inclination: 0 },
+            orbit: { radius: 2, angle: Math.PI, eccentricity: 0.02, inclination: 0 },
             name: "Gemenon",
             population: 2800000000,
         }],

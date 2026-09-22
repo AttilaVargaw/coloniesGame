@@ -20,7 +20,7 @@ export function createAsteroid({
         new OrbitComponent(
             parent.id,
             radius * UNIVERSE_SCALE,
-            angularSpeed(radius, parentMass),
+            angularSpeed(radius * UNIVERSE_SCALE, parentMass),
             angle,
             eccentricity ?? 0,
             inclination,

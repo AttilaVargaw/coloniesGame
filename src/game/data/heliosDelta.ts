@@ -1,11 +1,11 @@
-import { SOLAR_UNIT, STAR_SIZE } from "../constants";
+import { LUNAR_UNIT, SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosDelta = {
     name: "Helios Delta",
     marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta" },
     archetype: "sol",
-    orbit: { radius: 10, angle: 0, eccentricity: 0, inclination: 0 },
+    orbit: { radius: 200, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
     systems: [{
         bodies: [{
             marker: { color: "#6a7a82", radius: 10, label: "Canceron" },
@@ -36,14 +36,14 @@ export const heliosDelta = {
     }, {
         bodies: [{
             marker: { color: "#ae4937", radius: 10, label: "Hestia" },
-            archetype: "venus",
+            archetype: "saturn",
             orbit: { radius: 1.1 * SOLAR_UNIT, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
             name: "Hestia",
             systems: [{
-                orbit: { radius: 1, inclination: 0 },
+                orbit: { radius: 0.01, inclination: 0 },
                 bodies: [
-                    { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 4.1, angle: 0, eccentricity: 0.3, periapsis: 0.1, inclination: 1 }, name: "Rhea", archetype: "luna" },
-                    { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 5.1, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "luna" }
+                    { marker: { color: "#695a55", radius: 5, label: "Rhea" }, orbit: { radius: 1.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.3, periapsis: 0.1, inclination: 1 }, name: "Rhea", archetype: "luna" },
+                    { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 2.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "luna" }
                 ]
             }]
         }],
