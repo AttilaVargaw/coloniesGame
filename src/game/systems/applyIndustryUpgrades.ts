@@ -40,6 +40,16 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
         }
     }
 
+    for (const [sector, profit] of Object.entries(input.sectorProfits)) {
+        const sectorKey = sector as keyof IndustrialSectors;
+        const maintenance = input.sectorMaintenance[sectorKey] ?? 0;
+        const currentWealth = sectorWealth[sectorKey] ?? 0;
+        const targetWealth = Math.max(0, currentWealth + profit - maintenance);
+        const sectorWealthSmoothing = 0.5;
+        const smoothedWealth = currentWealth + (targetWealth - currentWealth) * sectorWealthSmoothing;
+        sectorWealth[sectorKey] = smoothedWealth;
+    }
+
     for (const [sectorName, level] of Object.entries(sectors)) {
         const maintenance = input.sectorMaintenance[sectorName] ?? 0;
         const wealth = sectorWealth[sectorName as keyof IndustrialSectors] ?? 0;
