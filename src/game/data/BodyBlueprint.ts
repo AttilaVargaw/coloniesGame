@@ -4,7 +4,7 @@ import { OrbitalBlueprint } from "./OrbitalBlueprint";
 import { MapMarker } from "./MapMarker";
 
 export type BodyBlueprint = Readonly<{
-    navigatinalPoint?: boolean
+    navigationalPoint?: boolean
     population?: number;
     name: string;
     radius?: number;

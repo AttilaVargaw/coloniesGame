@@ -2,7 +2,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 import { SOLAR_UNIT, STAR_SIZE } from "@game/constants"
 
 export const solarisAlpha = {
-    navigatinalPoint: true,
+    navigationalPoint: true,
     name: "Helios Alpha",
     marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha" },
     archetype: "sol",
