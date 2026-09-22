@@ -5,6 +5,7 @@ import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
 import { TWO_PI } from "@/game/constants";
 import { TimeScaleNode } from "../timeScaleNode";
+import { precomputeOrbitalTrig } from "./orbitalTrig";
 
 function solveKepler(meanAnomaly: number, e: number): number {
     if(e < 1e-6) {
@@ -54,15 +55,7 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         )
 
         const position = entity.getComponent(PositionComponent)!
-        const inclination = orbit.inclination || 0
-        const cosI = Math.cos(inclination)
-        const sinI = Math.sin(inclination)
-        const arg = orbit.argumentOfPeriapsis || 0
-        const cosA = Math.cos(arg)
-        const sinA = Math.sin(arg)
-        const lan = orbit.longitudeOfAscendingNode || 0
-        const cosL = Math.cos(lan)
-        const sinL = Math.sin(lan)
+        const { cosI, sinI, cosA, sinA, cosL, sinL } = precomputeOrbitalTrig(orbit)
 
         const rx = r * Math.cos(theta)
         const ry = r * Math.sin(theta)

@@ -2,50 +2,34 @@ import { Population } from "@/game/data/Population";
 import { cn } from "@/lib/utils"
 import { Beaker, BookOpen, Church, Cog, HardHat, HeartPulse, House, Pencil, Siren, Tractor, CoffeeIcon } from "lucide-react";
 
+function createIcon(Icon: (props: { className?: string }) => React.ReactNode) {
+    return ({ className }: { className?: string }) => <Icon className={cn("size-4", className)} />
+}
+
 const ICONS: Record<keyof Population, (props: { className?: string }) => React.ReactNode> = {
-    farmer: ({ className }) => (
-        <Tractor className={cn("size-4", className)} />
-    ),
-    scientist: ({ className }) => (
-        <Beaker className={cn("size-4", className)} />
-    ),
-    worker: ({ className }) => (
-        <HardHat className={cn("size-4", className)} />
-    ),
-    student: ({ className }) => (
-        <BookOpen className={cn("size-4", className)} />
-    ),
-    healtcarePersonal: ({ className }) => (
-        <HeartPulse className={cn("size-4", className)} />
-    ),
-    policeMen: ({ className }) => (
-        <Siren className={cn("size-4", className)} />
-    ),
-    teacher: ({ className }) => (
+    farmer: createIcon(({ className }) => <Tractor className={cn("size-4", className)} />),
+    scientist: createIcon(({ className }) => <Beaker className={cn("size-4", className)} />),
+    worker: createIcon(({ className }) => <HardHat className={cn("size-4", className)} />),
+    student: createIcon(({ className }) => <BookOpen className={cn("size-4", className)} />),
+    healtcarePersonal: createIcon(({ className }) => <HeartPulse className={cn("size-4", className)} />),
+    policeMen: createIcon(({ className }) => <Siren className={cn("size-4", className)} />),
+    teacher: createIcon(({ className }) => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cn("size-4", className)}>
             <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
             <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
         </svg>
-    ),
-    serviceWorker: ({ className }) => (
-        <CoffeeIcon className={cn("size-4", className)} />
-    ),
-    clergy: ({ className }) => (
-        <Church className={cn("size-4", className)} />
-    ),
-    retired: ({ className }) => (
+    )),
+    serviceWorker: createIcon(({ className }) => <CoffeeIcon className={cn("size-4", className)} />),
+    clergy: createIcon(({ className }) => <Church className={cn("size-4", className)} />),
+    retired: createIcon(({ className }) => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cn("size-4", className)}>
             <path d="M4 18h16M8 18v-6a4 4 0 014-4h0a4 4 0 014 4v6" />
             <path d="M12 8V6M9 6h6" />
         </svg>
-    ),
-    clerks: ({ className }) => <Pencil className={cn("size-4", className)} />,
-    stayAtHome: ({ className }) => (
-        <House className={cn("size-4", className)} />
-    ),
-    engineer: ({ className }) => (
-        <Cog className={cn("size-4", className)} />
-    ),
+    )),
+    clerks: createIcon(({ className }) => <Pencil className={cn("size-4", className)} />),
+    stayAtHome: createIcon(({ className }) => <House className={cn("size-4", className)} />),
+    engineer: createIcon(({ className }) => <Cog className={cn("size-4", className)} />),
 }
 
 export function PopulationIcon({ name, className }: { name: keyof Population; className?: string }) {

@@ -15,6 +15,7 @@
 import { ReadonlyRecord } from "@/lib/readonlyRecord";
 import { Goods } from "./Goods";
 import { populationPackets } from "./populationPackets";
+import { getLowestRatio } from "../utils/getLowestRatio";
 
 export type PopulationBreakdown = {
     number: number
@@ -68,22 +69,12 @@ export function sumPopulation(population: Population) {
 }
 
 export function getLowestPopulationRatio(requirements: Partial<Record<keyof Population, number>>, available: Record<string, PopulationBreakdown>, level: number, workerRatio: number) {
-    const workerRatios = {} as Record<string, number>
-
-    for(const [key, requirement] of Object.entries(requirements)) {
-        const t = available[key].number - requirement * level * workerRatio
-
-        if(t > 0) {
-            workerRatios[key] = 1
-        } else {
-            workerRatios[key] = Math.max(0, available[key].number / (requirement * level * workerRatio))
-        }
-    }
-
-    const entries = Object.entries(workerRatios)
-    if(entries.length === 0) return 1
-
-    return Math.max(0, Math.min(...entries.map(([, v]) => v), 1))
+    return getLowestRatio(
+        requirements as Record<string, number>,
+        (key) => available[key]?.number ?? 0,
+        level,
+        workerRatio
+    )
 }
 
 // export function getQol(population: keyof Population, goodPrices: Goods) {

@@ -1,4 +1,5 @@
 import { ReadonlyRecord } from "@/lib/readonlyRecord";
+import { getLowestRatio } from "../utils/getLowestRatio";
 
 export type Goods = {
     food: number;
@@ -137,22 +138,12 @@ export function getLowestGoodsRatio(
     requirements: Partial<Record<keyof Goods, number>>,
     available: Record<keyof Goods, number>, level: number, workerRatio: number
 ) {
-    const workerRatios = {} as Record<string, number>
-
-    for(const [key, requirement] of Object.entries(requirements) as [keyof Goods, number][]) {
-        const t = available[key] - requirement * level * workerRatio
-
-        if(t > 0) {
-            workerRatios[key] = 1
-        } else {
-            workerRatios[key] = Math.max(0, available[key] / (requirement * level * workerRatio))
-        }
-    }
-
-    const entries = Object.entries(workerRatios)
-    if(entries.length === 0) return 1
-
-    return Math.max(0, Math.min(...entries.map(([, v]) => v), 1))
+    return getLowestRatio(
+        requirements as Record<string, number>,
+        (key) => available[key as keyof Goods] ?? 0,
+        level,
+        workerRatio
+    )
 }
 
 const priceMemory: Partial<Record<keyof Goods, number>> = {};

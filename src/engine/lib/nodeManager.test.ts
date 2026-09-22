@@ -138,13 +138,7 @@ describe("NodeManager", () => {
     })
 
     it("removes an entity from matching node lists", () => {
-        const manager = makeNodeManager()
-        const entity = new Entity("e1")
-        entity.addComponent(new TagComponent())
-
-        manager.addEntityToNodes(entity)
-        expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
-
+        const { manager, entity } = setupTagEntity()
         manager.removeEntityFromNodes(entity)
 
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(0)
@@ -177,13 +171,7 @@ describe("NodeManager", () => {
     })
 
     it("reindexes an entity by removing and re-adding it to matching nodes", () => {
-        const manager = makeNodeManager()
-        const entity = new Entity("e1")
-        entity.addComponent(new TagComponent())
-
-        manager.addEntityToNodes(entity)
-        expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
-
+        const { manager, entity } = setupTagEntity()
         manager.reindexEntity(entity)
 
         expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
@@ -204,13 +192,7 @@ describe("NodeManager", () => {
     })
 
     it("unregisters a node type and clears its entries", () => {
-        const manager = makeNodeManager()
-        const entity = new Entity("e1")
-        entity.addComponent(new TagComponent())
-
-        manager.addEntityToNodes(entity)
-        expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
-
+        const { manager } = setupTagEntity()
         manager.unregisterNodeType(tagNodeCtor)
 
         expect(manager.nodes(tagNodeCtor)).toBeUndefined()
@@ -218,16 +200,21 @@ describe("NodeManager", () => {
     })
 
     it("clears all registered node types and node lists", () => {
-        const manager = makeNodeManager()
-        const entity = new Entity("e1")
-        entity.addComponent(new TagComponent())
-
-        manager.addEntityToNodes(entity)
-        expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
-
+        const { manager } = setupTagEntity()
         manager.clear()
 
         expect(manager.nodes(tagNodeCtor)).toBeUndefined()
         expect(manager.nodes(otherNodeCtor)).toBeUndefined()
     })
 })
+
+function setupTagEntity() {
+    const manager = makeNodeManager()
+    const entity = new Entity("e1")
+    entity.addComponent(new TagComponent())
+
+    manager.addEntityToNodes(entity)
+    expect(manager.getNodeList(tagNodeCtor)).toHaveLength(1)
+
+    return { manager, entity }
+}

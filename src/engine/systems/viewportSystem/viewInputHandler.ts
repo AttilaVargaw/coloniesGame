@@ -102,15 +102,7 @@ export class ViewportInputHandler {
         if(this.heldKeys.has("w")) panUp += 1
         if(this.heldKeys.has("s")) panUp -= 1
 
-        if(panRight || panUp) {
-            const { right, up } = camera.getBasisVectors()
-            const speed = ViewportInputHandler.KEY_PAN_SPEED * step
-            camera.moveTo(
-                camera.lookAt[0] + (panRight * right[0] + panUp * up[0]) * speed,
-                camera.lookAt[1] + (panRight * right[1] + panUp * up[1]) * speed,
-                camera.lookAt[2] + (panRight * right[2] + panUp * up[2]) * speed,
-            )
-        }
+        this.panCamera(camera, panRight, panUp, step)
 
         if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
             this._isZooming = true
@@ -119,6 +111,18 @@ export class ViewportInputHandler {
             this._isZooming = true
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
         }
+    }
+
+    private panCamera(camera: Camera, panRight: number, panUp: number, step: number) {
+        if(!panRight && !panUp) return
+
+        const { right, up } = camera.getBasisVectors()
+        const speed = ViewportInputHandler.KEY_PAN_SPEED * step
+        camera.moveTo(
+            camera.lookAt[0] + (panRight * right[0] + panUp * up[0]) * speed,
+            camera.lookAt[1] + (panRight * right[1] + panUp * up[1]) * speed,
+            camera.lookAt[2] + (panRight * right[2] + panUp * up[2]) * speed,
+        )
     }
 
     private applyEdgePan(dt: number, camera: Camera) {
@@ -137,15 +141,7 @@ export class ViewportInputHandler {
         if(y < threshold) panUp -= (1 - y / threshold) * step
         if(y > bounds.bottom - threshold) panUp += (1 - (bounds.bottom - y) / threshold) * step
 
-        if(panRight || panUp) {
-            const { right, up } = camera.getBasisVectors()
-            const speed = ViewportInputHandler.KEY_PAN_SPEED * step
-            camera.moveTo(
-                camera.lookAt[0] + (panRight * right[0] + panUp * up[0]) * speed,
-                camera.lookAt[1] + (panRight * right[1] + panUp * up[1]) * speed,
-                camera.lookAt[2] + (panRight * right[2] + panUp * up[2]) * speed,
-            )
-        }
+        this.panCamera(camera, panRight, panUp, step)
     }
 
     private onContextMenu = (event: MouseEvent) => {

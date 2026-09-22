@@ -75,10 +75,7 @@ describe("SceneNode", () => {
     })
 
     it("addChild attaches the child to this node", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
+        const { parentNode, childNode } = createParentChildNodes()
 
         parentNode.addChild(childNode)
 
@@ -87,10 +84,7 @@ describe("SceneNode", () => {
     })
 
     it("removeChild detaches the child and clears its parent", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
+        const { parentNode, childNode } = createParentChildNodes()
 
         parentNode.addChild(childNode)
         parentNode.removeChild(childNode)
@@ -100,10 +94,7 @@ describe("SceneNode", () => {
     })
 
     it("removeChild is a no-op when the node is not a child", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
+        const { parentNode, childNode } = createParentChildNodes()
 
         parentNode.removeChild(childNode)
 
@@ -210,3 +201,12 @@ describe("SceneNode", () => {
         expect(node.childrenRef).toBeInstanceOf(Set)
     })
 })
+
+function createParentChildNodes() {
+    const parent = new Entity("parent")
+    const child = new Entity("child")
+    const parentNode = new SceneNode(parent.id, parent)
+    const childNode = new SceneNode(child.id, child)
+
+    return { parent, child, parentNode, childNode }
+}

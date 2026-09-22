@@ -11,6 +11,7 @@ import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
+import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private readonly eventHandlers: Set<Entity> = new Set()
@@ -109,17 +110,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
             const segments = Math.max(24, Math.round(screenRadius / 4))
-            const inclinationAngle = orbit.inclination || 0
-            const cosI = Math.cos(inclinationAngle)
-            const sinI = Math.sin(inclinationAngle)
+            const { cosI, sinI, cosA, sinA, cosL, sinL } = precomputeOrbitalTrig(orbit)
             const b = orbit.semiMinorAxis
             const focusOffset = orbit.radius * orbit.eccentricity
-            const arg = orbit.argumentOfPeriapsis || 0
-            const cosA = Math.cos(arg)
-            const sinA = Math.sin(arg)
-            const lan = orbit.longitudeOfAscendingNode || 0
-            const cosL = Math.cos(lan)
-            const sinL = Math.sin(lan)
 
             const points: { x: number; y: number }[] = []
             for(let i = 0; i <= segments; i++) {

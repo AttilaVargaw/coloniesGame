@@ -34,26 +34,11 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         if(!this.engine) return
         if(!target.getComponent(TargetableComponent)) return
 
-        const mapSystem = this.engine.getSystem(MapSystem)
-        const selectionSceneNode = this.engine.getSceneNode(ship)!
-        const selectionsParent = selectionSceneNode.parent!.entity
-        const path = mapSystem?.findPath(selectionsParent, target)
+        const drive = this.applyTarget(ship, target)
 
-        if(path && path.length > 1) {
-            setShipPath(ship, path)
-        } else {
-            const drive = ship.getComponent(JumpDriveComponent)
-            if(drive) {
-                drive.target = target
-            }
-        }
-
-        if(clickX !== undefined && clickY !== undefined) {
-            const drive = ship.getComponent(JumpDriveComponent)
-            if(drive) {
-                drive.clickX = clickX
-                drive.clickY = clickY
-            }
+        if(clickX !== undefined && clickY !== undefined && drive) {
+            drive.clickX = clickX
+            drive.clickY = clickY
         }
 
         this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
@@ -63,10 +48,24 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         if(!this.engine) return
         if(!target.getComponent(TargetableComponent)) return
 
+        const drive = this.applyTarget(ship, target)
+        if(drive) {
+            drive.isOrbitSelecting = true
+        }
+
+        this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
+    }
+
+    private applyTarget(ship: Entity, target: Entity): JumpDriveComponent | undefined {
+        if (!this.engine) return undefined
+
         const mapSystem = this.engine.getSystem(MapSystem)
-        const selectionSceneNode = this.engine.getSceneNode(ship)!
-        const selectionsParent = selectionSceneNode.parent!.entity
-        const path = mapSystem?.findPath(selectionsParent, target)
+        if (!mapSystem) return undefined
+
+        const selectionSceneNode = this.engine.getSceneNode(ship)
+        if (!selectionSceneNode?.parent?.entity) return undefined
+
+        const path = mapSystem.findPath(selectionSceneNode.parent.entity, target)
 
         if(path && path.length > 1) {
             setShipPath(ship, path)
@@ -74,11 +73,9 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
             const drive = ship.getComponent(JumpDriveComponent)
             if(drive) {
                 drive.target = target
-                drive.isOrbitSelecting = true
             }
+            return ship.getComponent(JumpDriveComponent)
         }
-
-        this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))
     }
 
     clearTarget(ship: Entity) {

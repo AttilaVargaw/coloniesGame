@@ -15,7 +15,6 @@ function buildUpgradeInput(overrides: Partial<{
     const sectorWealth = createStarterSectorWealth(sectors);
     const sectorName = overrides.sectorName ?? "mine";
     const initialLevel = sectors[sectorName as keyof typeof sectors];
-    const upgradeCost = Math.round(sectorUpgradeCosts[sectorName as keyof typeof sectorUpgradeCosts] * Math.max(1, initialLevel));
 
     if (overrides.wealth !== undefined) {
         sectorWealth[sectorName as keyof typeof sectorWealth] = overrides.wealth;

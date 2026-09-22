@@ -71,14 +71,7 @@ describe("SystemWithNodes", () => {
     })
 
     it("calls updateNode for each registered node", () => {
-        const world = makeWorld() as unknown as Engine
-        const node = world.getNodeList(testEntityNodeCtor)[0]
-
-        const ctor = CounterSystem as unknown as new () => CounterSystem
-        const system = world.addSystem(ctor).getSystem(ctor)!
-
-        system.addToEngine(world)
-        system.nodes.push(node)
+        const { system, node } = setupCounterSystem()
 
         const spy = vi.spyOn(system, "updateNode")
 
@@ -88,14 +81,7 @@ describe("SystemWithNodes", () => {
     })
 
     it("skips nodes that do not pass the filter", () => {
-        const world = makeWorld() as unknown as Engine
-        const node = world.getNodeList(testEntityNodeCtor)[0]
-
-        const ctor = CounterSystem as unknown as new () => CounterSystem
-        const system = world.addSystem(ctor).getSystem(ctor)!
-
-        system.addToEngine(world)
-        system.nodes.push(node)
+        const { system } = setupCounterSystem()
         system.filterNodes = () => false
 
         const spy = vi.spyOn(system, "updateNode")
@@ -105,3 +91,16 @@ describe("SystemWithNodes", () => {
         expect(spy).not.toHaveBeenCalled()
     })
 })
+
+function setupCounterSystem() {
+    const world = makeWorld() as unknown as Engine
+    const node = world.getNodeList(testEntityNodeCtor)[0]
+
+    const ctor = CounterSystem as unknown as new () => CounterSystem
+    const system = world.addSystem(ctor).getSystem(ctor)!
+
+    system.addToEngine(world)
+    system.nodes.push(node)
+
+    return { world, system, node }
+}

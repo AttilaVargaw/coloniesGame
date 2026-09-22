@@ -280,12 +280,17 @@ export default class Camera {
         }
     }
 
+    private computeCameraPosition(): { camX: number; camY: number; camZ: number } {
+        return {
+            camX: this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
+            camY: this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
+            camZ: this.lookAt[2] + this.distance * Math.sin(this.pitch),
+        }
+    }
+
     public project(wx: number, wy: number, wz: number): ProjectedPoint | null {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-
-        const camX = this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw)
-        const camY = this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw)
-        const camZ = this.lookAt[2] + this.distance * Math.sin(this.pitch)
+        const { camX, camY, camZ } = this.computeCameraPosition()
 
         const vx = wx - camX
         const vy = wy - camY
@@ -309,10 +314,7 @@ export default class Camera {
 
     public screenToWorldRay(screenX: number, screenY: number): { origin: [number, number, number]; direction: [number, number, number] } {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-
-        const camX = this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw)
-        const camY = this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw)
-        const camZ = this.lookAt[2] + this.distance * Math.sin(this.pitch)
+        const { camX, camY, camZ } = this.computeCameraPosition()
 
         const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
 

@@ -68,36 +68,50 @@ export function applyComponents(entity: Entity, ...components: EntityComponent[]
     return entity
 }
 
-export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
+export function createEntityClickHandler(
+    engine: Engine,
+    getShip: () => Entity | undefined,
+    targetEntity: Entity,
+    options: {
+        type: "colony" | "attractor" | "ship"
+        orbitSelection?: boolean
+    }
+) {
+    const { type, orbitSelection = false } = options
+
     return ({ event: { shiftKey }, worldX, worldY }: { event: { shiftKey: boolean }, worldX: number, worldY: number }) => {
         if(!engine) return
 
+        const ship = getShip()
+        if(!ship) return
+
         if(shiftKey) {
             const targetSystem = engine.getSystem(TargetSystem)
-            const selectionSystem = engine.getSystem(SelectionManager)
-            const selection = selectionSystem?.currentSelection
-            if(selection) {
-                targetSystem?.setTargetForOrbitSelection(selection, targetEntity, worldX, worldY)
+            if(orbitSelection) {
+                targetSystem?.setTargetForOrbitSelection(ship, targetEntity, worldX, worldY)
+            } else {
+                targetSystem?.setTarget(ship, targetEntity, worldX, worldY)
             }
         } else {
-            engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type: "colony" }))
+            engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type }))
         }
     }
 }
 
-export function createAttractorClickHandler(engine: Engine, targetEntity: Entity) {
-    return ({ event: { shiftKey }, worldX, worldY }: { event: { shiftKey: boolean }, worldX: number, worldY: number }) => {
-        if(!engine) return
+export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
+    return createEntityClickHandler(
+        engine,
+        () => engine.getSystem(SelectionManager)?.currentSelection,
+        targetEntity,
+        { type: "colony" }
+    )
+}
 
-        if(shiftKey) {
-            const targetSystem = engine.getSystem(TargetSystem)
-            const selectionSystem = engine.getSystem(SelectionManager)
-            const selection = selectionSystem?.currentSelection
-            if(selection) {
-                targetSystem?.setTargetForOrbitSelection(selection, targetEntity, worldX, worldY)
-            }
-        } else {
-            engine.dispatchEvent(new SelectionChangedEvent({ data: targetEntity, type: "attractor" }))
-        }
-    }
+export function createAttractorClickHandler(engine: Engine, targetEntity: Entity) {
+    return createEntityClickHandler(
+        engine,
+        () => engine.getSystem(SelectionManager)?.currentSelection,
+        targetEntity,
+        { type: "attractor" }
+    )
 }
