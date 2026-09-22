@@ -12,7 +12,7 @@ import { SoiComponent } from "@engine/components/soiComponent";
 import { MassComponent } from "@engine/components/massComponent";
 import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "../data/StartState";
-import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
+import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
 import { Engine } from "@/engine/core/engine";
 
 export const DEBUG_VISUALIZE_PATHS = true;

@@ -1,5 +1,6 @@
 import { getSectorOutputLevel, industrySectorBlueprints, } from "../systems/factoryBlueprints";
 import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
+import { applyIndustryUpgrades } from "../systems/applyIndustryUpgrades";
 import { baseSalaries, getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
 import { getPrices, Goods } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
@@ -24,6 +25,8 @@ export interface IndustryTickInput {
     goods: Goods;
     population: Population;
     sectorWealth: Record<keyof IndustrialSectors, number>;
+    upgradeSectors: string[];
+    autoUpgradeSectors: Record<string, boolean>;
 }
 
 export interface IndustryTickResult {
@@ -37,14 +40,17 @@ export interface IndustryTickResult {
         expectedQol: number;
         populationChange: number;
         wealth: number;
+        number: number;
         requirements: Record<string, number>;
     }>;
-    goodsChange: Goods;
+    goods: Goods;
     sectorProfits: Record<string, number>;
     sectorMaintenance: Record<string, number>;
     populationProfits: Record<string, number>;
     sectorUtilization: Record<string, number>;
     sectorResults: Record<string, SectorResult>;
+    sectors: IndustrialSectors;
+    sectorWealth: Record<keyof IndustrialSectors, number>;
 }
 
 const qolSmoothing = 0.03;
@@ -86,10 +92,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     const results: IndustryTickResult[] = [];
 
-    for(const { entityId, goods, population, sectorWealth, sectors } of event.data.industries) {
+    for(const { entityId, goods, population, sectorWealth, sectors, upgradeSectors, autoUpgradeSectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
         const prices = getPrices(goods, memory);
         colonyPriceMemory.set(entityId, memory);
+
+        const currentGoods: Goods = { ...goods };
+        const currentSectorWealth: Record<keyof IndustrialSectors, number> = { ...sectorWealth };
+        const currentSectors = { ...sectors } as Record<keyof IndustrialSectors, number>;
 
         const populationConsumption = {} as Partial<Goods>;
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
@@ -133,12 +143,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
             const maxDailyChange = pop.number * maxDailyChangeSmoothing;
             const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, Number.isFinite(rawPopulationChange) ? rawPopulationChange : 0));
+            const clampedPopulationNumber = Math.max(0, pop.number + clampedPopulationChange);
 
             populationUpdates[key] = {
                 qol: smoothedQol,
                 expectedQol,
                 populationChange: clampedPopulationChange,
                 wealth: Math.max(0, smoothedWealth),
+                number: clampedPopulationNumber,
                 requirements: requirements as Record<string, number>,
             };
 
@@ -350,7 +362,21 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
         const populationWaste = totalPopulation * wastePerPerson;
 
-        goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (goods.waste || 0));
+        goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (currentGoods.waste || 0));
+
+        const finalGoods = { ...currentGoods } as Goods;
+        for(const key in goodsChange) {
+            finalGoods[key as keyof Goods] = Math.max(0, (finalGoods[key as keyof Goods] ?? 0) + goodsChange[key as keyof Goods]);
+        }
+
+        const { sectors: finalSectors, sectorWealth: finalSectorWealth } = applyIndustryUpgrades({
+            sectors: currentSectors,
+            sectorWealth: currentSectorWealth,
+            sectorProfits,
+            sectorMaintenance,
+            upgradeSectors,
+            autoUpgradeSectors,
+        });
 
         results.push({
             entityId,
@@ -359,12 +385,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             workingWorkers,
             freeWorkers: remainingWorkers,
             populationUpdates,
-            goodsChange,
+            goods: finalGoods,
             sectorProfits,
             sectorMaintenance,
             populationProfits,
             sectorUtilization,
             sectorResults,
+            sectors: finalSectors,
+            sectorWealth: finalSectorWealth,
         });
     }
 

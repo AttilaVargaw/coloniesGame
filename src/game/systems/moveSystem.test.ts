@@ -10,7 +10,6 @@ import { SoiComponent } from "@/engine/components/soiComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { PathComponent } from "@/game/components/pathComponent"
 import { StartState } from "../data/StartState"
-import { UNIVERSE_SCALE } from "../constants"
 
 function makeMoveNode(entity: Entity, range: number): MoveNode {
     const pos = entity.getComponent(PositionComponent)!
