@@ -9,6 +9,7 @@ import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitComponent } from "@engine/components/orbitComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
+import { MassComponent } from "@engine/components/massComponent";
 import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "../data/StartState";
 import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
@@ -263,14 +264,16 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             position.y = y
         }
 
+        const attractorMass = bestSoiEntity.getComponent(MassComponent)?.mass ?? 0
+
         if(orbit) {
             orbit.centerEntityId = bestSoiEntity.id
             orbit.radius = newRadius
             orbit.meanAnomaly = meanAnomaly
-            orbit.angularSpeed = angularSpeed(newRadius)
+            orbit.angularSpeed = angularSpeed(newRadius, attractorMass)
         } else {
             const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
-            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius * UNIVERSE_SCALE, angularSpeed(newRadius), meanAnomaly, 0, inclination, 0, 0))
+            entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius * UNIVERSE_SCALE, angularSpeed(newRadius, attractorMass), meanAnomaly, 0, inclination, 0, 0))
         }
     }
 

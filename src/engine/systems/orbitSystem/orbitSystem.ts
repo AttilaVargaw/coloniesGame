@@ -4,6 +4,7 @@ import { OrbitNode } from "./orbitNode";
 import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
 import { TWO_PI } from "@/game/constants";
+import { TimeScaleNode } from "../timeScaleNode";
 
 function solveKepler(meanAnomaly: number, e: number): number {
     if(e < 1e-6) {
@@ -32,10 +33,14 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         const parentEntity = sceneNode?.parent?.entity
 
         if(!parentEntity) {
+            console.warn('[OrbitSystem] No parent for entity', entity.id, 'orbit radius', orbit.radius, 'angularSpeed', orbit.angularSpeed)
             return
         }
 
-        orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * dt / 1000) % TWO_PI
+        const timeScaleNode = this.engine.getNodeList(TimeScaleNode)[0]
+        const multiplier = timeScaleNode?.timeScale.multiplier ?? 1
+
+        orbit.meanAnomaly = (orbit.meanAnomaly + orbit.angularSpeed * multiplier * dt / 1000) % TWO_PI
         if(orbit.meanAnomaly < 0) {
             orbit.meanAnomaly += TWO_PI
         }
@@ -92,6 +97,12 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         super.addToEngine(engine)
 
         this.nodes = this.engine!.getNodeList(OrbitNode)
+        console.log('[OrbitSystem] Registered', this.nodes.length, 'orbit nodes')
+        for (const node of this.nodes) {
+            const sceneNode = this.engine!.getSceneNode(node.entity)
+            const parent = sceneNode?.parent?.entity
+            console.log('[OrbitSystem] Entity', node.entity.id, 'parent', parent?.id || 'none', 'radius', node.orbit.radius, 'angularSpeed', node.orbit.angularSpeed)
+        }
 
         return this
     }

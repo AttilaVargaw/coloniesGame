@@ -10,10 +10,10 @@ export type BodyBlueprint = Readonly<{
     archetype: PlanetArchetype;
     color?: string;
     marker: MapMarker;
+    mass?: number;
     orbit: OrbitalBlueprint;
-    children?: BodyBlueprint[];
     vessels?: VesselBlueprint[];
-    binaryPairs?: { bodies: [BodyBlueprint, BodyBlueprint]; separation: number; orbit: OrbitalBlueprint; children?: BodyBlueprint[], angle?: number }[];
+    systems?: { bodies: BodyBlueprint[]; satellites?: BodyBlueprint[]; orbit?: OrbitalBlueprint; angle?: number }[];
     rings?: { innerRadius: number; outerRadius: number; color: string }[];
     asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, }[];
 }>

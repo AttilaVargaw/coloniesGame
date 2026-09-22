@@ -60,7 +60,7 @@ describe("industrySystem", () => {
 
             const sectorName = "mine"
             const initialLevel = industry.sectors[sectorName]
-            const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * initialLevel)
+            const upgradeCost = Math.round(sectorUpgradeCosts[sectorName] * Math.max(1, initialLevel))
             industry.sectorWealth[sectorName] = upgradeCost + 1
             industry.sectorProfits[sectorName] = 1
 

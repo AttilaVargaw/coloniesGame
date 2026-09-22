@@ -10,6 +10,7 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { IndustryComponent } from "@/game/components/industryComponent"
+import { MassComponent } from "@engine/components/massComponent"
 import { createBody, } from "./createBody"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { UNIVERSE_SCALE } from "../constants"
@@ -33,7 +34,7 @@ describe("createBody", () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
-        const body = createBody(bodyBlueprint(), parent, engine)
+        const body = createBody(bodyBlueprint(), parent, engine, 0)
 
         expect(body).toBeDefined()
         expect(body.getComponent(PositionComponent)).toBeDefined()
@@ -42,6 +43,7 @@ describe("createBody", () => {
         expect(body.getComponent(PathComponent)).toBeDefined()
         expect(body.getComponent(OrbitComponent)).toBeDefined()
         expect(body.getComponent(TargetableComponent)).toBeDefined()
+        expect(body.getComponent(MassComponent)?.mass).toBe(10)
     })
 
     it("adds orbit component and sets initial position", () => {
@@ -50,7 +52,7 @@ describe("createBody", () => {
 
         const body = createBody(bodyBlueprint({
             orbit: { radius: 100, angle: 0, eccentricity: 0.1 },
-        }), parent, engine)
+        }), parent, engine, 0)
 
         const orbit = body.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
@@ -63,7 +65,7 @@ describe("createBody", () => {
         expect(pos.y).toBeCloseTo(0)
     })
 
-    it("recursively creates children inside the body", () => {
+    it("recursively creates systems inside the body", () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
@@ -73,9 +75,9 @@ describe("createBody", () => {
         })
 
         const body = createBody(bodyBlueprint({
-            children: [child],
+            systems: [{ bodies: [child] }],
             orbit: { radius: 100, angle: 0 },
-        }), parent, engine)
+        }), parent, engine, 0)
 
         const bodyNode = engine.getSceneNode(body)
         expect(bodyNode).toBeDefined()
@@ -92,7 +94,7 @@ describe("createBody", () => {
         const body = createBody(bodyBlueprint({
             vessels: [{ marker: { color: "red", radius: 4, label: "Ship1" }, orbit: { radius: 50, angle: 0 } }],
             orbit: { radius: 100, angle: 0 },
-        }), planet, engine)
+        }), planet, engine, 0)
 
         const bodyNode = engine.getSceneNode(body)
         expect(bodyNode).toBeDefined()
@@ -108,7 +110,7 @@ describe("createHomeworld", () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
-        const colony = createBody(homeworldBlueprint(), parent, engine)
+        const colony = createBody(homeworldBlueprint(), parent, engine, 0)
 
         expect(colony.getComponent(SelectableComponent)).toBeDefined()
         expect(colony.getComponent(ClickableComponent)).toBeDefined()
@@ -122,7 +124,7 @@ describe("createHomeworld", () => {
         const population = 5000
         const colony = createBody(homeworldBlueprint({
             population,
-        }), parent, engine)
+        }), parent, engine, 0)
 
         const industry = colony.getComponent(IndustryComponent)
         expect(industry).toBeDefined()

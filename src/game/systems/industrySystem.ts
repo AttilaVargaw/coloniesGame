@@ -179,6 +179,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         //problematic, the key should be the this.constructor
         this.engine?.unregisterNodeType(IndustryNode);
         this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
+        this.engine?.removeCommandQueue(UpgradeSectorCommand);
         super.removeFromEngine();
         return this;
     }

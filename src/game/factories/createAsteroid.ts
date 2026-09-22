@@ -12,7 +12,7 @@ import { ShapeComponent } from "@/engine/systems/viewportSystem/renderers/shapeN
 
 export function createAsteroid({
     radius, angle, eccentricity, periapsis, ascendingNode,
-}: OrbitalBlueprint, parent: Entity, engine: Engine) {
+}: OrbitalBlueprint, parent: Entity, engine: Engine, parentMass: number) {
     const asteroid = engine.createEntity()
     const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
 
@@ -20,7 +20,7 @@ export function createAsteroid({
         new OrbitComponent(
             parent.id,
             radius * UNIVERSE_SCALE,
-            angularSpeed(radius),
+            angularSpeed(radius, parentMass),
             angle,
             eccentricity ?? 0,
             inclination,

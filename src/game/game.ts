@@ -1,12 +1,14 @@
 
 
 import { DateComponent } from "@engine/components/dateComponent"
+import { TimeScaleComponent } from "@engine/components/timeScaleComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
 import { World } from "@engine/core/world"
 import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
 import { ClickableSystem } from "@engine/systems/clickable"
 import { CursorSystem } from "@game/systems/cursorSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
+import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
@@ -44,9 +46,13 @@ export class Game {
             pitch: Math.PI / 4,
         })
 
+        console.log('[Game] Canvas size:', renderingContext.canvas.width, 'x', renderingContext.canvas.height)
+        console.log('[Game] Camera size:', camera.cssWidth, 'x', camera.cssHeight)
+
         this.engine
             .addSystem(IndustrySystem)
             .addSystem(DateSystem)
+            .addSystem(TimeScaleSystem)
             .addSystem(OrbitSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
@@ -58,6 +64,10 @@ export class Game {
         const dateEntity = this.engine.createEntity()
             .addComponent(new DateComponent(0))
         this.engine.addEntity(dateEntity)
+
+        const timeScaleEntity = this.engine.createEntity()
+            .addComponent(new TimeScaleComponent(1))
+        this.engine.addEntity(timeScaleEntity)
 
         this.engine
             .addSystem(MoveSystem)

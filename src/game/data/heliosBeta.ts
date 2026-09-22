@@ -5,44 +5,52 @@ export const solarisBeta = {
     name: "Helios Beta",
     marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta" },
     archetype: "sol",
-    orbit: { radius: 300, eccentricity: 0, inclination: 0 },
-    children: [
-        { archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas" },
-        { archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 }, name: "Troy" },
-        {
+    orbit: { radius: 300, eccentricity: 0, inclination: 0, angle: Math.PI },
+    systems: [{
+        bodies: [{
+            archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas" },
+        ]},
+    , {
+        bodies: [{
+            archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 }, name: "Troy" },
+        ]},
+    , {
+        bodies: [{
             population: 4300000000,
             marker: { color: "#4d5c6d", radius: 10, label: "Virgon" }, archetype: "kobol", orbit: { radius: 1.3 * SOLAR_UNIT, inclination: 0 }, name: "Virgon",
-            children: [
-                {
+            systems: [{
+                orbit: { radius: 2, angle: 0 },
+                bodies: [{
                     population: 100_000,
-                    marker: { color: "#a0948d", radius: 4, label: "Hibernia" }, archetype: "kobol", orbit: { radius: 2.1 }, name: "Leonis"
-                }
-            ]
-        },
-        {
+                    marker: { color: "#a0948d", radius: 4, label: "Hibernia" }, archetype: "mercury", orbit: { radius: 2.1 }, name: "Hibernia"
+                }]
+            }]
+        }],
+    }, {
+        bodies: [{
             population: 260000000,
             marker: { color: "#829873", radius: 10, label: "Leonis" }, archetype: "kobol", orbit: { radius: 0.95 * SOLAR_UNIT, inclination: 0 }, name: "Leonis"
-        },
-        {
+        }],
+    }, {
+        bodies: [{
             name: "Hera",
             archetype: "saturn",
-            //name: "Hera",
             marker: { color: "#c67242", radius: 20, label: "Hera" },
             orbit: { radius: 7 * SOLAR_UNIT },
-            children: [
-                {
+            systems: [{
+                orbit: { radius: 0.1, angle: 0 },
+                bodies: [{
                     name: "Euboea",
-                    archetype: "mercury",
+                    archetype: "luna",
                     marker: { color: "#888374", radius: 4, label: "Euboea" },
-                    orbit: { radius: 2.4 },
-                },
-                {
+                    orbit: { radius: 15 },
+                }, {
                     name: "Iris",
-                    archetype: "mercury",
+                    archetype: "luna",
                     marker: { color: "#71877d", radius: 4, label: "Iris" },
                     orbit: { radius: 1.8, eccentricity: 0.02 },
-                }
-            ]
-        }
-    ],
-} as const satisfies BodyBlueprint;
+                }]
+            }]
+        }],
+    }],
+} as BodyBlueprint;

@@ -1,5 +1,6 @@
-import { TWO_PI, ORBITAL_SPEED, UNIVERSE_SCALE } from "../constants"
+import { G } from "../constants"
 
-export function angularSpeed(radius: number): number {
-    return TWO_PI / Math.pow(radius, 1.5) * ORBITAL_SPEED / UNIVERSE_SCALE
+export function angularSpeed(radius: number, mass: number): number {
+    const r = Math.max(radius, 1)
+    return Math.sqrt(G * mass / r ** 3)
 }

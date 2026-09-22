@@ -41,6 +41,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private static readonly starfield: { x: number; y: number; z: number; r: number; opacity: number }[] = createStarfield(512)
     private static readonly rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
     private readonly eventHandlers: Set<Entity> = new Set()
+    private _orbitLogged = false
 
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
@@ -130,6 +131,17 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         this.inputHandler.update(dt)
+
+        const orbitNodes = this.engine.getNodeList(OrbitNode)
+        if(orbitNodes.length > 0 && !this._orbitLogged) {
+            console.log('[ViewportSystem] Orbit nodes count:', orbitNodes.length)
+            for(const node of orbitNodes) {
+                const sceneNode = this.engine.getSceneNode(node.entity)
+                const parent = sceneNode?.parent?.entity
+                console.log('[ViewportSystem] Orbit entity:', node.entity.id, 'parent:', parent?.id || 'none', 'radius:', node.orbit.radius, 'speed:', node.orbit.angularSpeed)
+            }
+            this._orbitLogged = true
+        }
 
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context

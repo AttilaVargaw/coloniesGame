@@ -6,4 +6,5 @@ export type OrbitalBlueprint = Readonly<{
     inclination?: number;
     periapsis?: number;
     ascendingNode?: number;
+    angularSpeed?: number;
 }>

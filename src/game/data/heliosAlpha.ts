@@ -6,9 +6,51 @@ export const solarisAlpha = {
     marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha" },
     archetype: "sol",
     orbit: { radius: 300, angle: 0, eccentricity: 0 },
-    binaryPairs: [{
-        orbit: { radius: 1.1 * SOLAR_UNIT, angle: 0, eccentricity: 0 },
-        separation: 0.1,
+    systems: [{
+        bodies: [{
+            marker: { color: "#f99838", radius: 4, label: "Icarus" },
+            archetype: "mercury",
+            orbit: { radius: 0.4 * SOLAR_UNIT, angle: 2, inclination: 0 },
+            name: "Icarus",
+        }],
+    }, {
+        bodies: [{
+            marker: { color: "#b1b3ba", radius: 4, label: "Persephone" },
+            archetype: "mercury",
+            orbit: { radius: 44, angle: 4, eccentricity: 0.4, inclination: 0 },
+            name: "Persephone",
+        }],
+    }, {
+        bodies: [{
+            marker: { color: "#928262", radius: 40, label: "Zeus" },
+            name: "Zeus",
+            archetype: "venus",
+            orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007, inclination: 0.05 },
+            systems: [{
+                orbit: { radius: 0.1, angle: 0 },
+                bodies: [
+                    { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 4.8, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
+                    { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 5.5, angle: 0, eccentricity: 0.5 }, name: "Hebe", archetype: "mars" }
+                ]
+            }]
+        }],
+    }, {
+        bodies: [{
+            marker: { color: "#56738c", radius: 8, label: "Picon" },
+            archetype: "kobol",
+            orbit: { radius: 0.95 * SOLAR_UNIT, angle: 4.2, eccentricity: 0.015, inclination: 0.2 },
+            name: "Picon",
+            population: 1_400_000_000,
+        }],
+    }, {
+        bodies: [{
+            marker: { color: "#887266", radius: 8, label: "Tauron" },
+            archetype: "kobol",
+            orbit: { radius: 1.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.025, inclination: 0 },
+            name: "Tauron",
+            population: 1_200_000_000,
+        }],
+    }, {
         bodies: [{
             marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
@@ -18,54 +60,15 @@ export const solarisAlpha = {
             vessels: [
                 { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
             ],
-        },
-        {
+        }, {
             marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
             orbit: { radius: 2, angle: 4, eccentricity: 0.02, inclination: 0 },
             name: "Gemenon",
             population: 2800000000,
-        }]
+        }],
+        orbit: { radius: 1.1 * SOLAR_UNIT, angle: 0, eccentricity: 0 },
     }],
-    children: [
-        {
-            marker: { color: "#f99838", radius: 4, label: "Icarus" },
-            archetype: "mercury",
-            orbit: { radius: 0.4 * SOLAR_UNIT, angle: 2, inclination: 0 },
-            name: "Icarus",
-        },
-        {
-            marker: { color: "#b1b3ba", radius: 4, label: "Persephone" },
-            archetype: "mercury",
-            orbit: { radius: 44, angle: 4, eccentricity: 0.4, inclination: 0 },
-            name: "Persephone",
-        },
-        {
-            marker: { color: "#928262", radius: 40, label: "Zeus" },
-            archetype: "venus",
-            orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007, inclination: 0.05 },
-            name: "Zeus",
-            children: [
-                { marker: { color: "#c7d9d7", radius: 5, label: "Nike" }, orbit: { radius: 4.8, angle: 0, eccentricity: 0.3 }, name: "Nike", archetype: "mars" },
-                { marker: { color: "#777678", radius: 5, label: "Hebe" }, orbit: { radius: 5.5, angle: 0, eccentricity: 0.5 }, name: "Hebe", archetype: "mars" }
-            ]
-        },
-        {
-            marker: { color: "#56738c", radius: 8, label: "Picon" },
-            archetype: "kobol",
-            orbit: { radius: 0.95 * SOLAR_UNIT, angle: 4.2, eccentricity: 0.015, inclination: 0.2 },
-            name: "Picon",
-            population: 1_400_000_000,
-        },
-        {
-            marker: { color: "#887266", radius: 8, label: "Tauron" },
-            archetype: "kobol",
-            orbit: { radius: 1.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.025, inclination: 0 },
-            name: "Tauron",
-            population: 1_200_000_000,
-        },
-
-    ],
     rings: [
         // { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
     ],

@@ -13,6 +13,7 @@ import { ColorComponent } from "@/engine/components/colorComponent";
 import { TWO_PI } from "../constants";
 import { WaypointGrid, DEFAULT_RINGS } from "./waypointGrid";
 import { createBody } from "./createBody";
+import { massByArchetype } from "./helpers";
 import { ThicknessComponent } from "@/engine/components/thicknessComponent";
 import { createAsteroid } from "./createAsteroid";
 
@@ -30,7 +31,7 @@ export function init(engine: Engine) {
         // new ThicknessComponent(1)
     )
 
-    const map = createBody(MapCreationData, root, engine)
+    const map = createBody(MapCreationData, root, engine, massByArchetype["sol"])
 
     // for(const body of MapCreationData.children!) {
     //     const cx = starData.x * UNIVERSE_SCALE

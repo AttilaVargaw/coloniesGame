@@ -15,7 +15,7 @@ export const KEPLER_EPSILON_TIGHT = 1e-10
 export const KEPLER_MAX_ITERATIONS = 20
 
 export const SHIP_ORBIT_BUFFER_RATIO = 0.5
-export const ORBITAL_SPEED = 1
+export const G = 0.0004
 export const TIME_ACCELERATION = 50000
 
 export const workingRatio = 0.6
@@ -28,3 +28,13 @@ export const SOLAR_UNIT = UNIVERSE_SCALE
 
 export const STAR_SIZE = 30
 export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const
+
+export const MASS = {
+    star: 100000,
+    gasGiant: 500,
+    iceGiant: 100,
+    terrestrial: 10,
+    moon: 1,
+    dwarfPlanet: 0.5,
+    asteroid: 0.1,
+}

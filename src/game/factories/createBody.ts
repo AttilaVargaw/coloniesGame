@@ -5,7 +5,7 @@ import { PathComponent } from "../components/pathComponent"
 import { IndustryComponent } from "../components/industryComponent"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { Engine } from "@/engine/core/engine"
-import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler } from "./helpers"
+import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype } from "./helpers"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
@@ -13,7 +13,7 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createMarker, createVessel } from "./createSpaceship"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
-import { createBinaryOrbitPair } from "./createBinaryOrbitPair"
+import { createBarycentre } from "./createBarycentre"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
@@ -22,22 +22,29 @@ import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
+import { MassComponent } from "@engine/components/massComponent"
+
+export function resolveMass(blueprint: BodyBlueprint): number {
+    if (blueprint.mass !== undefined) return blueprint.mass
+    return massByArchetype[blueprint.archetype]
+}
 
 export function createBody({
     archetype,
     orbit,
     vessels,
-    children,
-    binaryPairs,
+    systems,
     marker,
     population,
     rings,
     asteroidBelts,
-    name
-}: BodyBlueprint, parent: Entity, engine: Engine): Entity {
+    name,
+    mass: explicitMass,
+}: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Entity {
     const angle = orbit.angle ?? Math.random() * TWO_PI
     const clickSize = marker.radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
+    const mass = explicitMass ?? massByArchetype[archetype]
 
     const body = createMarker(engine, { shade: name === "root" ? false : true, ...marker })
 
@@ -46,7 +53,7 @@ export function createBody({
             new OrbitComponent(
                 parent.id,
                 orbit.radius * UNIVERSE_SCALE,
-                angularSpeed(orbit.radius),
+                orbit.angularSpeed ?? angularSpeed(orbit.radius, parentMass),
                 angle,
                 orbit.eccentricity ?? 0,
                 orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),
@@ -57,6 +64,11 @@ export function createBody({
             new PathComponent(),
             new TargetableComponent(),
             new HoverableComponent("pointer", clickSquare),
+            new MassComponent(mass),
+        )
+    } else {
+        applyComponents(body,
+            new MassComponent(mass),
         )
     }
 
@@ -66,23 +78,26 @@ export function createBody({
     engine.addEntity(body, parent)
     // .addEntity(createSoiCircle(body, archetype, engine), body)
 
-    if(children) {
-        for(const blueprint of children) {
-            createBody(blueprint,
-                body,
-                engine)
+    if(systems) {
+        for(const entry of systems) {
+            if(!entry) continue
+            const { bodies, satellites, orbit, angle: angle2 } = entry
+            if(!bodies) continue
+            if(bodies.length === 1) {
+                const createdBody = createBody(bodies[0], body, engine, mass)
+                satellites?.forEach(sat => {
+                    createBody(sat, createdBody, engine, resolveMass(bodies[0]))
+                })
+            } else {
+                if(!orbit) throw new Error("orbit required for multi-body system")
+                createBarycentre(engine, body, bodies, orbit, satellites, angle2, mass)
+            }
         }
     }
 
     if(vessels) {
         for(const vessel of vessels) {
-            createVessel(engine, body, vessel)
-        }
-    }
-
-    if(binaryPairs) {
-        for(const { bodies: [first, second], separation, orbit, children, angle: angle2 } of binaryPairs) {
-            createBinaryOrbitPair(engine, body, first, second, separation, orbit, children, angle2)
+            createVessel(engine, body, vessel, mass)
         }
     }
 
@@ -116,7 +131,7 @@ export function createBody({
                 radius: innerRadius,
                 angle: 0,
                 eccentricity: 0,
-            }, body, engine)
+            }, body, engine, mass)
             ringsEntity.addComponent(new SoiComponent(calculateSoi(20, "uranus")))
 
             engine.addEntity(ringsEntity, body)
