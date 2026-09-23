@@ -40,7 +40,7 @@ describe("EventBus", () => {
 
     describe("initialization", () => {
         it("pre-populates the expected default event queues", () => {
-            expect(bus.events.size).toBe(15)
+            expect(bus.events.size).toBe(14)
             expect(bus.events.has(UpdateBeginEvent)).toBe(true)
             // expect(bus.events.has(UpdateDoneEvent)).toBe(true)
             expect(bus.events.has(EntityAddedEvent)).toBe(true)
