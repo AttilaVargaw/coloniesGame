@@ -40,5 +40,6 @@ export const MASS = {
 }
 
 export const JUMP_GRAPH_MAX_DISTANCE = 7000
+export const JUMP_GRAPH_MIN_DISTANCE = 1000
 export const DEBUG_VISUALIZE_JUMP_GRAPH = true
 export const DEBUG_VISUALIZE_PATHS = true

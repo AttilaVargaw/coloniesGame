@@ -42,7 +42,7 @@ export function createBody({
     asteroidBelts,
     name,
     mass: explicitMass,
-    navigationalPoint,
+    //navigationalPoint,
 }: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Entity {
     const angle = orbit.angle ?? Math.random() * TWO_PI
     const clickSize = marker.radius * 2
@@ -70,9 +70,9 @@ export function createBody({
             new MassComponent(mass),
         ]
 
-        if (navigationalPoint) {
+        // if (navigationalPoint) {
             components.push(new JumpNodeComponent())
-        }
+        // }
 
         applyComponents(body, ...components)
 

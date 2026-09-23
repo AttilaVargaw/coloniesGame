@@ -54,4 +54,18 @@ describe("jumpPathfinder", () => {
 
         expect(jumpAStar(a, c, graph)).toEqual([])
     })
+
+    it("prefers fewer hops over shorter total distance", () => {
+        const a = createJumpNode("a", 0, 0)
+        const b = createJumpNode("b", 100, 0)
+        const c = createJumpNode("c", 200, 0)
+
+        const graph = new JumpGraphComponent()
+        graph.addEdge(a, c)
+        graph.addEdge(a, b)
+        graph.addEdge(b, c)
+
+        const path = jumpAStar(a, c, graph)
+        expect(path).toEqual([a, c])
+    })
 })

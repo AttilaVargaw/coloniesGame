@@ -2,6 +2,8 @@ import type { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@engine/components/position"
 import { JumpGraphComponent } from "@game/components/jumpGraph"
 
+const JUMP_HOP_PENALTY = 5000
+
 export function jumpAStar(
     start: Entity,
     end: Entity,
@@ -53,7 +55,7 @@ export function jumpAStar(
                 currentPos.x - neighbourPos.x,
                 currentPos.y - neighbourPos.y
             )
-            const tentativeG = currentG + dist
+            const tentativeG = currentG + dist + JUMP_HOP_PENALTY
 
             const neighbourG = gScore.get(neighbour) ?? Infinity
             if (tentativeG < neighbourG) {

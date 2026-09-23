@@ -30,7 +30,7 @@ export class JumpGraphSystem extends System {
     }
 
     private createGraphEntity() {
-        if (!this.engine) return
+        if(!this.engine) return
         this.graphEntity = this.engine.createEntity("jumpGraph")
             .addComponent(new JumpGraphComponent())
         this.engine.addEntity(this.graphEntity)
@@ -38,31 +38,31 @@ export class JumpGraphSystem extends System {
     }
 
     private getWorldPosition(entity: Entity): { x: number, y: number } | undefined {
-        if (!this.engine) return undefined
+        if(!this.engine) return undefined
         const position = entity.getComponent(PositionComponent)
-        if (!position) return undefined
+        if(!position) return undefined
         const [x, y] = getAbsolute(entity, this.engine)
         return { x, y }
     }
 
     rebuildGraph = () => {
-        if (!this.engine || !this.graph) return
+        if(!this.engine || !this.graph) return
 
         this.graph.clear()
 
         const allEntities = this.engine.getAllEntities()
         const jumpNodes: { entity: Entity; x: number, y: number }[] = []
 
-        for (const entity of allEntities) {
+        for(const entity of allEntities) {
             const jumpNode = entity.getComponent(JumpNodeComponent)
             const pos = this.getWorldPosition(entity)
-            if (jumpNode && pos) {
+            if(jumpNode && pos) {
                 jumpNodes.push({ entity, ...pos })
             }
         }
 
-        for (let i = 0; i < jumpNodes.length; i++) {
-            for (let j = i + 1; j < jumpNodes.length; j++) {
+        for(let i = 0; i < jumpNodes.length; i++) {
+            for(let j = i + 1; j < jumpNodes.length; j++) {
                 const a = jumpNodes[i]
                 const b = jumpNodes[j]
 
@@ -70,7 +70,7 @@ export class JumpGraphSystem extends System {
                 const dy = a.y - b.y
                 const dist = Math.hypot(dx, dy)
 
-                if (dist < JUMP_GRAPH_MAX_DISTANCE) {
+                if(dist < JUMP_GRAPH_MAX_DISTANCE) {
                     this.graph.addEdge(a.entity, b.entity)
                     this.graph.addEdge(b.entity, a.entity)
                 }
@@ -79,43 +79,43 @@ export class JumpGraphSystem extends System {
     }
 
     findJumpPath(start: Entity, end: Entity): Entity[] {
-        if (!this.graph || !this.engine) return []
+        if(!this.graph || !this.engine) return []
 
         const startPos = this.getWorldPosition(start)
         const endPos = this.getWorldPosition(end)
-        if (!startPos || !endPos) return []
+        if(!startPos || !endPos) return []
 
         const allEntities = this.engine.getAllEntities()
         const jumpNodes: { entity: Entity; x: number, y: number }[] = []
 
-        for (const entity of allEntities) {
+        for(const entity of allEntities) {
             const jumpNode = entity.getComponent(JumpNodeComponent)
             const pos = this.getWorldPosition(entity)
-            if (jumpNode && pos) {
+            if(jumpNode && pos) {
                 jumpNodes.push({ entity, ...pos })
             }
         }
 
-        if (jumpNodes.length === 0) return []
+        if(jumpNodes.length === 0) return []
 
         let nearestStart: { node: Entity; dist: number } | undefined
         let nearestEnd: { node: Entity; dist: number } | undefined
 
-        for (const { entity, x, y } of jumpNodes) {
+        for(const { entity, x, y } of jumpNodes) {
             const distToStart = Math.hypot(x - startPos.x, y - startPos.y)
             const distToEnd = Math.hypot(x - endPos.x, y - endPos.y)
 
-            if (!nearestStart || distToStart < nearestStart.dist) {
+            if(!nearestStart || distToStart < nearestStart.dist) {
                 nearestStart = { node: entity, dist: distToStart }
             }
-            if (!nearestEnd || distToEnd < nearestEnd.dist) {
+            if(!nearestEnd || distToEnd < nearestEnd.dist) {
                 nearestEnd = { node: entity, dist: distToEnd }
             }
         }
 
-        if (!nearestStart || !nearestEnd) return []
+        if(!nearestStart || !nearestEnd) return []
 
-        if (nearestStart.node === nearestEnd.node) {
+        if(nearestStart.node === nearestEnd.node) {
             return [start, nearestStart.node, end]
         }
 
@@ -125,7 +125,7 @@ export class JumpGraphSystem extends System {
             this.graph,
             (entity) => this.getWorldPosition(entity)
         )
-        if (path.length === 0) return []
+        if(path.length === 0) return []
 
         return [start, ...path, end]
     }

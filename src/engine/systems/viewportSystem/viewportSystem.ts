@@ -86,7 +86,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.save()
         ctx.strokeStyle = "rgba(0, 255, 255, 0.4)"
         ctx.lineWidth = 1
-        ctx.setLineDash([4, 4])
+        //ctx.setLineDash([4, 4])
 
         const drawn = new Set<string>()
 

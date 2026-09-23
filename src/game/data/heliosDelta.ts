@@ -2,7 +2,6 @@ import { LUNAR_UNIT, SOLAR_UNIT, STAR_SIZE } from "../constants";
 import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosDelta = {
-    navigationalPoint: true,
     name: "Helios Delta",
     marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta" },
     archetype: "sol",
