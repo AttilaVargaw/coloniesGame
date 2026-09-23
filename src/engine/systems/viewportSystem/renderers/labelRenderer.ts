@@ -27,12 +27,21 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         const offsetX = (node.label.offset.x || 0) * projected.scale
         const offsetY = (node.label.offset.y || 0) * projected.scale
 
-        ctx.font = `${screenSize}px Roboto`;
+        ctx.font = `${screenSize}px Chronosfer`;
         ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
         ctx.shadowBlur = screenSize * 0.25
         ctx.shadowOffsetX = 0
         ctx.shadowOffsetY = 0
-        ctx.fillText(node.label.text, projected.x + offsetX, projected.y + offsetY);
+
+        const lines = node.label.text.split("\n")
+        const lineHeight = screenSize * 1.2
+        const totalHeight = lines.length * lineHeight
+
+        let y = projected.y + offsetY - totalHeight / 2 + lineHeight / 2
+        for(const line of lines) {
+            ctx.fillText(line, projected.x + offsetX, y);
+            y += lineHeight
+        }
         ctx.restore()
     }
 }
