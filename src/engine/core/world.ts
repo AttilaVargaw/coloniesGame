@@ -11,7 +11,7 @@ import { SystemRegistry } from "../lib/systemRegistry"
 import type { Engine } from "./engine"
 import { CommandBase } from "../lib/CommandBase"
 import { EventBase } from "../lib/events"
-import { UpdateBeginEvent, UpdateDoneEvent } from "../lib/events"
+import { UpdateBeginEvent, } from "../lib/events"
 import { Queue } from "../lib/commandQueue"
 
 export class World implements Engine {
@@ -29,12 +29,12 @@ export class World implements Engine {
         this.systemRegistry = new SystemRegistry()
     }
 
-     
+
     getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
         return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
     }
 
-     
+
     getCommands<T extends new (...args: any) => CommandBase>(name: T) {
         return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T>>
     }
@@ -84,7 +84,7 @@ export class World implements Engine {
 
     // eslint-disable-next-line
     //@ts-ignore
-     
+
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void): this {
         this.eventBus.subscribe(event, callback)
 
@@ -93,7 +93,7 @@ export class World implements Engine {
 
     // eslint-disable-next-line
     //@ts-ignore 
-     
+
     unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: any) => void): this {
         this.eventBus.unsubscribe(event, callback)
 
@@ -126,14 +126,14 @@ export class World implements Engine {
         return this
     }
 
-     
+
     addSystem(system: new (...args: any[]) => System, ...args: any[]) {
         this.systemRegistry.addSystem(system, this, ...args.map(cn => this.getSystem(cn)))
 
         return this
     }
 
-     
+
     removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
 
@@ -147,9 +147,10 @@ export class World implements Engine {
 
         this.systemRegistry.update(dt)
 
-        this.eventBus.dispatchEvent(new UpdateDoneEvent(dt))
-        this.eventBus.processEventHandler(UpdateDoneEvent)
-        //this.commandBus.clearAll()
+        this.eventBus.processEventHandlers()
+
+        // this.eventBus.dispatchEvent(new UpdateDoneEvent(dt))
+        // this.eventBus.processEventHandler(UpdateDoneEvent)
     }
 
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
@@ -176,14 +177,14 @@ export class World implements Engine {
     }
     // eslint-disable-next-line
     registerEventQueue(event: Function) {
-         
+
         this.eventBus.registerEventQueue(event as new (...args: any[]) => EventBase)
 
         return this
     }
     // eslint-disable-next-line
     removeEventQueue(event: Function) {
-         
+
         this.eventBus.removeEventQueue(event as new (...args: any[]) => EventBase)
 
         return this

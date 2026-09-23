@@ -7,7 +7,7 @@ import { System } from "../systems/system"
 import { SelectEntityCommand } from "../lib/SelectEntityCommand"
 import { EventBase, SelectionChangedEvent } from "../lib/events"
 import {
-    UpdateDoneEvent,
+    // UpdateDoneEvent,
     EntityRemovedEvent,
     ClickEventData,
 } from "../lib/events"
@@ -142,14 +142,14 @@ describe("World", () => {
         expect(world.destruct()).toBeUndefined()
     })
 
-    it("queues the updateDone event after systems run", () => {
-        const world = makeWorld()
+    // it("queues the updateDone event after systems run", () => {
+    //     const world = makeWorld()
 
-        world.update(16)
+    //     world.update(16)
 
-        expect(world.getEvents(UpdateDoneEvent)!.length).toBe(1)
-        expect(world.getEvents(UpdateDoneEvent)!.peek()).toEqual({ data: 16 })
-    })
+    //     expect(world.getEvents(UpdateDoneEvent)!.length).toBe(1)
+    //     expect(world.getEvents(UpdateDoneEvent)!.peek()).toEqual({ data: 16 })
+    // })
 
     it("queues the entityRemoved event when an entity is removed", () => {
         const world = makeWorld()

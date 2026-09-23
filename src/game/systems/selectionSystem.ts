@@ -62,14 +62,16 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
     }
 
     onSelectionChanged = ({ type, data }: { type: "colony" | "ship" | "attractor", data?: Entity }) => {
+        console.log("Selection changed", type, data)
+
         if(!this.engine || !data) return
         if(!data.getComponent(SelectableComponent)) return
-
-        this.unselect()
 
         if(this.selectorSceneNode?.parent?.entity === data) {
             return this
         }
+
+        this.unselect()
 
         switch(type) {
             case "attractor":

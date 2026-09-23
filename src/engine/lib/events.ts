@@ -14,7 +14,7 @@ export abstract class EventBase<T = any> {
 }
 
 export class UpdateBeginEvent extends EventBase<number> { }
-export class UpdateDoneEvent extends EventBase<number> { }
+// export class UpdateDoneEvent extends EventBase<number> { }
 export class EntityAddedEvent extends EventBase<Entity> { }
 export class EntityRemovedEvent extends EventBase<Entity> { }
 export class DayPassedEvent extends EventBase<null> { }

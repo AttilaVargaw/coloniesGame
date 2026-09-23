@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { useGameEvent } from "./useGameEvent"
-import { UpdateDoneEvent } from "@/engine/lib/events"
+// import { useGameEvent } from "./useGameEvent"
+// import { UpdateDoneEvent } from "@/engine/lib/events"
 
 export function useGameRerender() {
   const [, setValue] = useState(true)
@@ -8,7 +8,7 @@ export function useGameRerender() {
     setValue(p => !p)
   }
 
-  useGameEvent(UpdateDoneEvent, rerender)
+  //useGameEvent(UpdateDoneEvent, rerender)
 
   return rerender
 }

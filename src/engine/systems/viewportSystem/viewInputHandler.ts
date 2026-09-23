@@ -283,6 +283,7 @@ export class ViewportInputHandler {
             this._isDragging = false
             this.dragButton = null
             this.lastPointer = null
+            this.dragMoved = false
             document.body.style.cursor = "default"
         }
         mouseupArray.clear()

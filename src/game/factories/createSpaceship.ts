@@ -69,7 +69,7 @@ export function createVessel(
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),
         new FuelComponent(100, 1),
-        new SelectableComponent(SHIP_RADIUS, "red"),
+        new SelectableComponent(SHIP_RADIUS * 2, "red"),
         new TargetableComponent(),
         new RadiusComponent(SHIP_RADIUS),
         new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
