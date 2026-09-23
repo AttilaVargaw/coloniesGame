@@ -1,10 +1,8 @@
-export type DebugFlag = 'showJumpGraph' | 'logIndustryTick' | 'showEntityIds' | "drawOrbits"
+export type DebugFlag = 'showJumpGraph' | "drawOrbits"
 
 export class DebugManager {
     private readonly flags: Record<DebugFlag, boolean> = {
         showJumpGraph: false,
-        logIndustryTick: false,
-        showEntityIds: false,
         drawOrbits: false
     }
 

@@ -1,14 +1,11 @@
 import { System } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
 import { DebugToggleCommand } from "../commands/DebugToggleCommand";
-import { DebugFlag, DebugManager } from "@engine/lib/debugManager";
+import { DebugManager } from "@engine/lib/debugManager";
 import { Queue } from "@/engine/lib/commandQueue";
 
 export class DebugSystem extends System {
     private debugManager?: DebugManager
-    private readonly toggleHandler = ({ flag }: { flag: DebugFlag }) => {
-        this.debugManager?.toggle(flag)
-    }
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
@@ -16,13 +13,10 @@ export class DebugSystem extends System {
 
         engine.registerCommandQueue(DebugToggleCommand)
 
-        // engine.subscribe(DebugToggleEvent, this.toggleHandler)
-
         return this
     }
 
     removeFromEngine(): this {
-        // this.engine?.unsubscribe(DebugToggleEvent, this.toggleHandler)
         this.engine?.removeCommandQueue(DebugToggleCommand)
         this.debugManager = undefined
         super.removeFromEngine()

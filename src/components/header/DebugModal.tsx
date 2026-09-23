@@ -4,7 +4,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -17,16 +16,13 @@ import type { DebugFlag } from "@engine/lib/debugManager";
 
 const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
-    { flag: "logIndustryTick", label: "Log Industry Tick" },
-    { flag: "showEntityIds", label: "Show Entity IDs" },
+    { flag: "drawOrbits", label: "Log Industry Tick" },
 ]
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)
     const [flags, setFlags] = useState<Record<DebugFlag, boolean>>({
         showJumpGraph: false,
-        logIndustryTick: false,
-        showEntityIds: false,
         drawOrbits: false
     })
     const engine = useGameEngine()
@@ -51,7 +47,6 @@ export function DebugModal() {
                 <DialogHeader>
                     <DialogTitle>Debug</DialogTitle>
                     <DialogDescription>
-                        Toggle debug flags.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-2">
@@ -71,11 +66,6 @@ export function DebugModal() {
                         </div>
                     ))}
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)}>
-                        Close
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     )
