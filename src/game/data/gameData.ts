@@ -4,6 +4,12 @@ import { heliosGamma } from "./heliosGamma";
 import { heliosDelta } from "./heliosDelta";
 import { BodyBlueprint } from "./BodyBlueprint";
 import { LUNAR_UNIT, SOLAR_UNIT } from "../constants";
+import asteroid1 from "../../components/icons/asteroid1.png"
+import asteroid2 from "../../components/icons/asteroid2.png"
+import asteroid3 from "../../components/icons/asteroid3.png"
+import asteroid4 from "../../components/icons/asteroid4.png"
+import asteroid5 from "../../components/icons/asteroid5.png"
+import asteroid6 from "../../components/icons/asteroid6.png"
 
 const navigationalBodySize = 60
 
@@ -19,24 +25,22 @@ export const MapCreationData = {
         bodies: [{
             navigationalPoint: true,
             archetype: "mars",
-            marker: { color: "#888", radius: navigationalBodySize, label: "Helicon" },
+            marker: { color: "#888", radius: navigationalBodySize, label: "Helicon", texture: asteroid1 },
             name: "Helicon",
-            color: "#888",
-            radius: 20,
             orbit: {
                 radius: 300,
                 angle: Math.PI / 2,
                 inclination: 0
             },
+
         }],
     }, {
         bodies: [{
             navigationalPoint: true,
             archetype: "mars",
-            marker: { color: "#888", radius: navigationalBodySize, label: "Cocalus" },
+            marker: { color: "#888", radius: navigationalBodySize, label: "Cocalus", texture: asteroid2 },
             name: "Cocalus",
             color: "#888",
-            radius: 20,
             orbit: {
                 radius: 300,
                 angle: -Math.PI / 2,
@@ -48,19 +52,18 @@ export const MapCreationData = {
         bodies: [solarisAlpha, solarisBeta, {
             navigationalPoint: true,
             archetype: "mars",
-            marker: { color: "#888", radius: navigationalBodySize, label: "Delium" },
+            marker: { color: "#888", radius: navigationalBodySize, label: "Delium", texture: asteroid3 },
             name: "Delium",
             color: "#888",
-            radius: 20,
             orbit: {
                 radius: 10 * SOLAR_UNIT,
                 angle: Math.PI,
                 inclination: 0
             },
         }, {
-            navigationalPoint: true,
+                navigationalPoint: true,
                 archetype: "mars",
-                marker: { color: "#888", radius: navigationalBodySize, label: "Knossos" },
+                marker: { color: "#888", radius: navigationalBodySize, label: "Knossos", texture: asteroid4 },
                 name: "Knossos",
                 color: "#888",
                 radius: 20,
@@ -99,9 +102,8 @@ export const MapCreationData = {
             heliosDelta, {
                 archetype: "mars",
                 navigationalPoint: true,
-                marker: { color: "#888", radius: navigationalBodySize, label: "Gortyn" },
+                marker: { color: "#888", radius: navigationalBodySize, label: "Gortyn", texture: asteroid5 },
                 name: "Gortyn",
-                color: "#888",
                 radius: 20,
                 orbit: {
                     radius: 10 * SOLAR_UNIT,
@@ -111,9 +113,8 @@ export const MapCreationData = {
             }, {
                 archetype: "mars",
                 navigationalPoint: true,
-                marker: { color: "#888", radius: navigationalBodySize, label: "Naucratis" },
+                marker: { color: "#888", radius: navigationalBodySize, label: "Naucratis", texture: asteroid6 },
                 name: "Naucratis",
-                color: "#888",
                 radius: 20,
                 orbit: {
                     radius: 10 * SOLAR_UNIT,

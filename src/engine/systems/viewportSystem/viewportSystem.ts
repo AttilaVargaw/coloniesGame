@@ -145,7 +145,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const cssHeight = camera.cssHeight
 
         for(const node of this.engine.getNodeList(OrbitNode)) {
-            console.log(node.orbit.hideOrbitInDebugDrawing)
             if(node.orbit.hideOrbitInDebugDrawing) {
                 continue
             }
