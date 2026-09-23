@@ -51,6 +51,7 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         const drive = this.applyTarget(ship, target)
         if(drive) {
             drive.isOrbitSelecting = true
+            drive.target = target
         }
 
         this.engine.dispatchEvent(new TargetChangedEvent({ ship, target }))

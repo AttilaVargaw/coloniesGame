@@ -41,8 +41,10 @@ export class OrbitSelectionSystem extends System {
     }
 
     private onMouseMove = (data: { clientX: number, clientY: number }) => {
-        this.mouseX = data.clientX
-        this.mouseY = data.clientY
+        if (!this.viewport) return
+        const rect = this.viewport.viewport.camera.context.canvas.getBoundingClientRect()
+        this.mouseX = data.clientX - rect.left
+        this.mouseY = data.clientY - rect.top
     }
 
     private onKeydown = (event: KeyboardEvent) => {

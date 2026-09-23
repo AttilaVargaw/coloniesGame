@@ -103,7 +103,7 @@ export function createColonyClickHandler(engine: Engine, targetEntity: Entity) {
         engine,
         () => engine.getSystem(SelectionManager)?.currentSelection,
         targetEntity,
-        { type: "colony" }
+        { type: "colony", orbitSelection: true }
     )
 }
 
@@ -112,7 +112,7 @@ export function createAttractorClickHandler(engine: Engine, targetEntity: Entity
         engine,
         () => engine.getSystem(SelectionManager)?.currentSelection,
         targetEntity,
-        { type: "attractor" }
+        { type: "attractor", orbitSelection: true }
     )
 }
 

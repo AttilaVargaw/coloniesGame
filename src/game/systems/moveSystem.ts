@@ -113,7 +113,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         todaysJumps.clear();
         const alreadyMoved = new Set<Entity>();
 
-        for(const { entity, jumpDrive, sensorSuite: { range } } of this.nodes) {
+        for(const { entity, jumpDrive } of this.nodes) {
             if(!jumpDrive.target || entity === jumpDrive.target || alreadyMoved.has(entity)) continue
             if(jumpDrive.isOrbitSelecting) continue
 
@@ -159,8 +159,6 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     if(drive) {
                         drive.target = undefined;
                     }
-                    const targetSystem = this.engine!.getSystem(TargetSystem)
-                    targetSystem?.clearTarget(entity)
                 }
             } else {
                 const targetNode = this.engine.getSceneNode(jumpDrive.target)!

@@ -74,12 +74,12 @@ export class Game {
             .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
             .addSystem(JumpGraphSystem)
+            .addSystem(OrbitSelectionSystem, ViewportSystem)
             .addSystem(ClickableSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(CircleRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
-            .addSystem(OrbitSelectionSystem, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
 
         viewportEntity.addComponent(new CameraFollowComponent())
