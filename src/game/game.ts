@@ -25,6 +25,7 @@ import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRe
 import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
+import { RenderScheduler } from "@/engine/systems/viewportSystem/renderScheduler"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
@@ -82,6 +83,7 @@ export class Game {
             .addSystem(CircleRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
+            .addSystem(RenderScheduler)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
 

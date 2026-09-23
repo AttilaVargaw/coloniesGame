@@ -6,7 +6,6 @@ import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
 import { TWO_PI } from "@/game/constants";
-import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 const SHADE_SIZE = 128
 
@@ -56,14 +55,10 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const { camera } = this.viewportSystem.viewport
         const ctx = camera.context
 
-        const [cx, cy, cz] = getAbsolute(circle.entity, this.engine)
+        const { projected: center, worldPos } = this.getProjected(circle)
+        const [cx, cy, cz] = worldPos
         const radius = circle.radius.radius
         const thickness = circle.thickness.thickness
-
-        const center = camera.project(cx, cy, cz)
-        if(!center) {
-            return
-        }
 
         const screenRadius = radius * center.scale
 

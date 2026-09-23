@@ -69,7 +69,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         }
     }
 
-    update(dt: number): void {
+    projectNodes(): void {
         const { camera } = this.viewportSystem.viewport
         if (!camera) {
             console.warn('[BaseRenderer]', this.constructor.name, 'no camera')
@@ -111,10 +111,26 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             const bProj = this.projectedCache.get(b)!.projected
             return bProj.depth - aProj.depth
         })
+    }
 
-        for (const node of entries) {
-            this.updateNode(node, dt)
+    update(_dt: number): void {
+        this.projectNodes()
+    }
+
+    getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
+        const entries: Array<{ node: N; projected: ProjectedPoint }> = []
+        for (const [node, { projected }] of this.projectedCache) {
+            entries.push({ node, projected })
         }
+        return entries
+    }
+
+    drawNode(node: N, dt: number): void {
+        this.updateNode(node, dt)
+    }
+
+    getViewportSystem(): ViewportSystem {
+        return this.viewportSystem
     }
 
     protected getCullMargin(_node: N): number {
