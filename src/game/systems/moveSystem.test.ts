@@ -117,7 +117,7 @@ describe("move system waypoint queue", () => {
         expect(ship.getComponent(JumpDriveComponent)!.target).toBeUndefined()
     })
 
-    it("moveNodes consumes waypoints up to the sensor range", () => {
+    it("moveNodes consumes one waypoint at a time", () => {
         const w1 = new Entity("w1")
         const w2 = new Entity("w2")
         const w3 = new Entity("w3")
@@ -146,9 +146,9 @@ describe("move system waypoint queue", () => {
 
         moveSystem.moveNodes()
 
-        expect(ship.getComponent(JumpDriveComponent)!.target).toBe(w3)
+        expect(ship.getComponent(JumpDriveComponent)!.target).toBe(w2)
         expect(getActivePaths()).toHaveLength(1)
-        expect(getTodaysJumps()[0].path).toEqual([parentTarget, w1, w2])
+        expect(getTodaysJumps()[0].path).toEqual([parentTarget, w1])
     })
 
     it("moveNodes clears the path and unTarget when the final waypoint is reached", () => {
@@ -190,7 +190,7 @@ describe("move system waypoint queue", () => {
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
     })
 
-    it("moveNodes resolves orbit to the closest attractor within SOI when no waypoints remain", () => {
+    it("moveNodes moves one waypoint at a time and leaves remaining waypoints queued", () => {
         const planet = new Entity("planet")
         planet.addComponent(new PositionComponent(50, 0))
         planet.addComponent(new SoiComponent(200))
@@ -212,9 +212,9 @@ describe("move system waypoint queue", () => {
         moveSystem.moveNodes()
 
         expect(shipNode.parent?.entity).toBe(targetAttractor)
-        const orbit = ship.getComponent(OrbitComponent)
-        expect(orbit).toBeDefined()
-        expect(orbit!.centerEntityId).toBe(targetAttractor.id)
+        expect(ship.getComponent(JumpDriveComponent)!.target).toBe(planet)
+        expect(getActivePaths()).toHaveLength(1)
+        expect(getTodaysJumps()[0].path).toEqual([parentTarget, targetAttractor])
     })
 
     it("moveNodes uses click coordinates for orbit radius when the final waypoint is reached", () => {

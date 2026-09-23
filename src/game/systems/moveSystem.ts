@@ -133,8 +133,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             const shipNode = this.engine.getSceneNode(entity)!
 
             if(waypoints && waypoints.length > 0) {
-                const maxJumps = Math.max(1, range);
-                const jumpedCount = Math.min(maxJumps, waypoints.length);
+                const jumpedCount = 1;
                 const jumped = waypoints.slice(0, jumpedCount);
                 const remaining = waypoints.slice(jumpedCount);
 
