@@ -72,12 +72,16 @@ export class OrbitSelectionSystem extends System {
 
         drive.isOrbitSelecting = false
 
-        const [cx, cy] = getAbsolute(target, this.engine)
+        const [cx, cy, cz] = getAbsolute(target, this.engine)
         const camera = this.viewport.viewport.camera
-        const { x: mx, y: my } = camera.screenToWorld(this.mouseX, this.mouseY)
-        const theta = Math.atan2(my - cy, mx - cx)
-        const dist = Math.hypot(mx - cx, my - cy)
+        const projected = camera.project(cx, cy, cz)
+        if (!projected) return
+
+        const screenDist = Math.hypot(this.mouseX - projected.x, this.mouseY - projected.y)
+        const dist = screenDist / projected.scale
         const r = Math.max(this.selection.minRadius, Math.min(this.selection.maxRadius, dist))
+
+        const theta = Math.atan2(this.mouseY - projected.y, this.mouseX - projected.x)
 
         drive.clickX = cx + r * Math.cos(theta)
         drive.clickY = cy + r * Math.sin(theta)
@@ -100,10 +104,15 @@ export class OrbitSelectionSystem extends System {
                 return
             }
 
-            const [updatedCx, updatedCy] = [this.selection.cx, this.selection.cy]
             const camera = this.viewport.viewport.camera
-            const { x: mx, y: my } = camera.screenToWorld(this.mouseX, this.mouseY)
-            const dist = Math.hypot(mx - updatedCx, my - updatedCy)
+            const [cx, cy, cz] = getAbsolute(target, this.engine)
+            const projected = camera.project(cx, cy, cz)
+            if (!projected) {
+                return
+            }
+
+            const screenDist = Math.hypot(this.mouseX - projected.x, this.mouseY - projected.y)
+            const dist = screenDist / projected.scale
             const r = Math.max(minRadius, Math.min(maxRadius, dist))
 
             this.drawPreview(camera, target, r)
