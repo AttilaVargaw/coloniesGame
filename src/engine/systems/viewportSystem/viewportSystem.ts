@@ -5,7 +5,8 @@ import { ViewportNode } from "./ViewportNode";
 import { Entity } from "@engine/entities/entity";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { DEBUG_VISUALIZE_PATHS } from "@game/systems/moveSystem";
+import { DEBUG_VISUALIZE_PATHS, DEBUG_VISUALIZE_JUMP_GRAPH } from "@game/constants"
+import { JumpGraphSystem } from "@game/systems/jumpGraphSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
@@ -65,7 +66,69 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if(DEBUG_VISUALIZE_PATHS) {
                 this.drawOrbits(ctx)
             }
+
+            if(DEBUG_VISUALIZE_JUMP_GRAPH) {
+                this.drawJumpGraph(ctx)
+            }
         }
+    }
+
+    private drawJumpGraph(ctx: CanvasRenderingContext2D) {
+        if(!this.engine) return
+
+        const jumpGraphSystem = this.engine.getSystem(JumpGraphSystem)
+        if(!jumpGraphSystem) return
+
+        const graph = jumpGraphSystem['graph']
+        if(!graph) return
+
+        const { camera } = this.viewport
+        ctx.save()
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.4)"
+        ctx.lineWidth = 1
+        ctx.setLineDash([4, 4])
+
+        const drawn = new Set<string>()
+
+        for(const [source, targets] of graph.adjacency) {
+            for(const target of targets) {
+                const key = [source.id, target.id].sort().join("->")
+                if(drawn.has(key)) continue
+                drawn.add(key)
+
+                const [sx, sy, sz] = getAbsolute(source, this.engine)
+                const [tx, ty, tz] = getAbsolute(target, this.engine)
+
+                const sourceProjected = camera.project(sx, sy, sz)
+                const targetProjected = camera.project(tx, ty, tz)
+
+                if(!sourceProjected || !targetProjected) continue
+
+                const cssWidth = camera.cssWidth
+                const cssHeight = camera.cssHeight
+
+                const minX = Math.min(sourceProjected.x, targetProjected.x)
+                const maxX = Math.max(sourceProjected.x, targetProjected.x)
+                const minY = Math.min(sourceProjected.y, targetProjected.y)
+                const maxY = Math.max(sourceProjected.y, targetProjected.y)
+
+                if(
+                    maxX < 0 ||
+                    minX > cssWidth ||
+                    maxY < 0 ||
+                    minY > cssHeight
+                ) {
+                    continue
+                }
+
+                ctx.beginPath()
+                ctx.moveTo(sourceProjected.x, sourceProjected.y)
+                ctx.lineTo(targetProjected.x, targetProjected.y)
+                ctx.stroke()
+            }
+        }
+
+        ctx.restore()
     }
 
     private drawOrbits(ctx: CanvasRenderingContext2D) {

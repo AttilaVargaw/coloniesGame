@@ -1,7 +1,9 @@
+import { EntityComponent } from "@engine/entities/entityComponent"
 import { Entity } from "@engine/entities/entity"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
+import { JumpNodeComponent } from "../components/jumpGraph"
 import { IndustryComponent } from "../components/industryComponent"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { Engine } from "@/engine/core/engine"
@@ -40,6 +42,7 @@ export function createBody({
     asteroidBelts,
     name,
     mass: explicitMass,
+    navigationalPoint,
 }: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Entity {
     const angle = orbit.angle ?? Math.random() * TWO_PI
     const clickSize = marker.radius * 2
@@ -49,7 +52,7 @@ export function createBody({
     const body = createMarker(engine, { shade: name === "root" ? false : true, ...marker })
 
     if(name !== "root") {
-        applyComponents(body,
+        const components: EntityComponent[] = [
             new OrbitComponent(
                 parent.id,
                 orbit.radius * UNIVERSE_SCALE,
@@ -65,7 +68,13 @@ export function createBody({
             new TargetableComponent(),
             new HoverableComponent("pointer", clickSquare),
             new MassComponent(mass),
-        )
+        ]
+
+        if (navigationalPoint) {
+            components.push(new JumpNodeComponent())
+        }
+
+        applyComponents(body, ...components)
 
     } else {
         applyComponents(body,

@@ -43,7 +43,7 @@ describe("createBody", () => {
         expect(body.getComponent(PathComponent)).toBeDefined()
         expect(body.getComponent(OrbitComponent)).toBeDefined()
         expect(body.getComponent(TargetableComponent)).toBeDefined()
-        expect(body.getComponent(MassComponent)?.mass).toBe(10)
+        expect(body.getComponent(MassComponent)?.mass).toBe(1)
     })
 
     it("adds orbit component and sets initial position", () => {

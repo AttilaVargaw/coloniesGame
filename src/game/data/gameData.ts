@@ -72,6 +72,7 @@ export const MapCreationData = {
             }],
         satellites: [{
             archetype: "uranus",
+            navigationalPoint: true,
             marker: { color: "#48a4ad", radius: 20, label: "Ragnar" },
             name: "Ragnar",
             orbit: {

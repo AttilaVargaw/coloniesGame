@@ -5,6 +5,7 @@ import { StartState } from "../data/StartState";
 import type { Entity } from "@engine/entities/entity";
 import { aStar } from "@game/utils/pathfinder";
 import { Engine } from "@/engine/core/engine";
+import { JumpGraphSystem } from "./jumpGraphSystem";
 
 export class MapSystem extends SystemWithNodes<PathNode> {
     protected updateNode(_node: PathNode, _dT?: number): void {
@@ -32,6 +33,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     findPath(start: Entity, end: Entity): Entity[] {
         return aStar(start, end)
+    }
+
+    findJumpPath(start: Entity, end: Entity): Entity[] {
+        const jumpGraphSystem = this.engine?.getSystem(JumpGraphSystem)
+        if (!jumpGraphSystem) return []
+        return jumpGraphSystem.findJumpPath(start, end)
     }
 
     init() {

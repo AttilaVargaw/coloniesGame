@@ -146,10 +146,8 @@ describe("move system waypoint queue", () => {
 
         moveSystem.moveNodes()
 
-        // range 2 => jump to w2 on day 1, then resolveOrbit re-parents to targetAttractor
-        // remaining waypoints are cleared because ship is now orbiting an attractor
-        expect(ship.getComponent(JumpDriveComponent)!.target).toBeUndefined()
-        expect(getActivePaths()).toHaveLength(0)
+        expect(ship.getComponent(JumpDriveComponent)!.target).toBe(w3)
+        expect(getActivePaths()).toHaveLength(1)
         expect(getTodaysJumps()[0].path).toEqual([parentTarget, w1, w2])
     })
 
@@ -192,7 +190,7 @@ describe("move system waypoint queue", () => {
         expect(orbit!.centerEntityId).toBe(targetAttractor.id)
     })
 
-    it("moveNodes resolves orbit to the closest attractor within SOI", () => {
+    it("moveNodes resolves orbit to the closest attractor within SOI when no waypoints remain", () => {
         const planet = new Entity("planet")
         planet.addComponent(new PositionComponent(50, 0))
         planet.addComponent(new SoiComponent(200))
@@ -204,16 +202,15 @@ describe("move system waypoint queue", () => {
 
         targetAttractor.getComponent(SoiComponent)!.radius = 50
 
-        ship.addComponent(new SensorSuiteComponent(1))
+        ship.addComponent(new SensorSuiteComponent(2))
         setShipPath(ship, [ship, targetAttractor, planet])
 
         const moveSystem = new MoveSystem()
             ; (moveSystem as any).engine = mockEngine
-            ; (moveSystem as any).nodes = [makeMoveNode(ship, 1)]
+            ; (moveSystem as any).nodes = [makeMoveNode(ship, 2)]
 
         moveSystem.moveNodes()
 
-        // ship jumped to targetAttractor (range 1)
         expect(shipNode.parent?.entity).toBe(targetAttractor)
         const orbit = ship.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()

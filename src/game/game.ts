@@ -11,6 +11,7 @@ import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { MapSystem } from "@game/systems/mapSystem"
+import { JumpGraphSystem } from "@game/systems/jumpGraphSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
@@ -72,6 +73,7 @@ export class Game {
             .addSystem(TargetSystem)
             .addSystem(CursorSystem, ViewportSystem)
             .addSystem(MapSystem)
+            .addSystem(JumpGraphSystem)
             .addSystem(ClickableSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(CircleRenderer, ViewportSystem)
@@ -86,6 +88,7 @@ export class Game {
         this.engine.getSystem(ViewportSystem).init()
 
         let previousTime = 0.0
+        let firstUpdate = true
 
         const update = (time: number) => {
             this.gameLoopId = requestAnimationFrame(update)
@@ -99,6 +102,11 @@ export class Game {
             previousTime = time
 
             this.engine.update(Math.min(500, dt))
+
+            if(firstUpdate) {
+                firstUpdate = false
+                this.engine.getSystem(JumpGraphSystem).rebuildGraph()
+            }
         }
 
         update(previousTime)

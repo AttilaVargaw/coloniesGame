@@ -115,3 +115,12 @@ export function createAttractorClickHandler(engine: Engine, targetEntity: Entity
         { type: "attractor" }
     )
 }
+
+export function createShipClickHandler(engine: Engine, targetEntity: Entity) {
+    return createEntityClickHandler(
+        engine,
+        () => engine.getSystem(SelectionManager)?.currentSelection,
+        targetEntity,
+        { type: "ship" }
+    )
+}

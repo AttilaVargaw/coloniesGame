@@ -62,6 +62,14 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
         const mapSystem = this.engine.getSystem(MapSystem)
         if (!mapSystem) return undefined
 
+        const jumpPath = mapSystem.findJumpPath(ship, target)
+
+        if (jumpPath && jumpPath.length > 1) {
+            setShipPath(ship, jumpPath)
+            const drive = ship.getComponent(JumpDriveComponent)
+            return drive
+        }
+
         const selectionSceneNode = this.engine.getSceneNode(ship)
         if (!selectionSceneNode?.parent?.entity) return undefined
 
@@ -76,6 +84,9 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
             }
             return ship.getComponent(JumpDriveComponent)
         }
+
+        const drive = ship.getComponent(JumpDriveComponent)
+        return drive
     }
 
     clearTarget(ship: Entity) {

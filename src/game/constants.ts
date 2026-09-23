@@ -38,3 +38,7 @@ export const MASS = {
     dwarfPlanet: 0.5,
     asteroid: 0.1,
 }
+
+export const JUMP_GRAPH_MAX_DISTANCE = 7000
+export const DEBUG_VISUALIZE_JUMP_GRAPH = true
+export const DEBUG_VISUALIZE_PATHS = true

@@ -15,8 +15,6 @@ import { StartState } from "../data/StartState";
 import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
 import { Engine } from "@/engine/core/engine";
 
-export const DEBUG_VISUALIZE_PATHS = true;
-
 function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
     if(e < KEPLER_EPSILON) return trueAnomaly
 
@@ -127,7 +125,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                     const dist = Math.hypot(targetPos.x - pos.x, targetPos.y - pos.y)
                     const cost = dist * fuel.consumptionRate * 0.01
                     if(fuel.tylium < cost) continue
-                    fuel.tylium -= cost
+                    //fuel.tylium -= cost
                 }
             }
 
@@ -155,6 +153,8 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
                         drive.target = remaining[0];
                     }
                     todaysJumps.set(entity, [currentParent, ...jumped]);
+                    alreadyMoved.add(entity)
+                    continue
                 } else {
                     shipWaypoints.delete(entity);
                     if(drive) {
