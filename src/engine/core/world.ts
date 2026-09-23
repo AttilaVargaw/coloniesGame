@@ -13,6 +13,7 @@ import { CommandBase } from "../lib/CommandBase"
 import { EventBase } from "../lib/events"
 import { UpdateBeginEvent, } from "../lib/events"
 import { Queue } from "../lib/commandQueue"
+import { DebugManager } from "../lib/debugManager"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -20,6 +21,7 @@ export class World implements Engine {
     private readonly eventBus: EventBus
     private readonly commandBus: CommandBus
     private readonly systemRegistry: SystemRegistry
+    private readonly debugManager: DebugManager
 
     constructor() {
         this.nodeManager = new NodeManager()
@@ -27,6 +29,7 @@ export class World implements Engine {
         this.commandBus = new CommandBus()
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus)
         this.systemRegistry = new SystemRegistry()
+        this.debugManager = new DebugManager()
     }
 
 
@@ -188,5 +191,9 @@ export class World implements Engine {
         this.eventBus.removeEventQueue(event as new (...args: any[]) => EventBase)
 
         return this
+    }
+
+    getDebugManager() {
+        return this.debugManager
     }
 }

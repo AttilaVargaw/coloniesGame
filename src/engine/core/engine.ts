@@ -7,6 +7,7 @@ import { System } from "../systems/system";
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode";
 import { EventBase } from "../lib/events";
 import { CommandBase } from "../lib/CommandBase";
+import { DebugManager } from "../lib/debugManager";
 
 export interface Engine {
     getSystem<T extends System>(system: new (...args: any[]) => T): T;
@@ -31,4 +32,6 @@ export interface Engine {
     getEvents<T extends EventBase>(name: new (...args: any[]) => T): any;
     update(dt: number): void;
     destruct(): void;
+    getDebugManager(): DebugManager;
+    registerEventQueue(event: Function): this;
 }

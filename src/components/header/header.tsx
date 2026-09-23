@@ -2,6 +2,7 @@ import { ColonialDate } from "@/lib/colonialCalendar"
 import { useGameDate } from "@/hooks/useGameDate"
 import { useGameEngine } from "@/hooks/useGameContext"
 import { SetTimeScaleCommand } from "@/engine/lib/SetTimeScaleCommand"
+import { DebugModal } from "@/components/header/DebugModal"
 
 const SPEEDS = [1, 5, 10, 100, 500] as const
 
@@ -19,6 +20,9 @@ export function Header() {
             <nav>
                 <ul className="flex space-x-4">
                     <li>1000 ♉︎</li>
+                    <li>
+                        <DebugModal />
+                    </li>
                 </ul>
             </nav>
             <h1 className="text-2xl font-bold"></h1>

@@ -5,7 +5,6 @@ import { ViewportNode } from "./ViewportNode";
 import { Entity } from "@engine/entities/entity";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { DEBUG_VISUALIZE_PATHS, DEBUG_VISUALIZE_JUMP_GRAPH } from "@game/constants"
 import { JumpGraphSystem } from "@game/systems/jumpGraphSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
@@ -63,11 +62,12 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 drawRotationIndicator(ctx, camera)
             }
 
-            if(DEBUG_VISUALIZE_PATHS) {
+            if(this.engine.getDebugManager().get("drawOrbits")) {
                 this.drawOrbits(ctx)
             }
 
-            if(DEBUG_VISUALIZE_JUMP_GRAPH) {
+            // console.log({ s: this.engine.getDebugManager().get("showJumpGraph") })
+            if(this.engine.getDebugManager().get("showJumpGraph")) {
                 this.drawJumpGraph(ctx)
             }
         }
