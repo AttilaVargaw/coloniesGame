@@ -45,11 +45,8 @@ export class JumpGraphSystem extends System {
         return { x, y }
     }
 
-    rebuildGraph = () => {
-        if(!this.engine || !this.graph) return
-
-        this.graph.clear()
-
+    private collectJumpNodes(): { entity: Entity; x: number, y: number }[] {
+        if(!this.engine) return []
         const allEntities = this.engine.getAllEntities()
         const jumpNodes: { entity: Entity; x: number, y: number }[] = []
 
@@ -60,6 +57,16 @@ export class JumpGraphSystem extends System {
                 jumpNodes.push({ entity, ...pos })
             }
         }
+
+        return jumpNodes
+    }
+
+    rebuildGraph = () => {
+        if(!this.engine || !this.graph) return
+
+        this.graph.clear()
+
+        const jumpNodes = this.collectJumpNodes()
 
         for(let i = 0; i < jumpNodes.length; i++) {
             for(let j = i + 1; j < jumpNodes.length; j++) {
@@ -85,16 +92,7 @@ export class JumpGraphSystem extends System {
         const endPos = this.getWorldPosition(end)
         if(!startPos || !endPos) return []
 
-        const allEntities = this.engine.getAllEntities()
-        const jumpNodes: { entity: Entity; x: number, y: number }[] = []
-
-        for(const entity of allEntities) {
-            const jumpNode = entity.getComponent(JumpNodeComponent)
-            const pos = this.getWorldPosition(entity)
-            if(jumpNode && pos) {
-                jumpNodes.push({ entity, ...pos })
-            }
-        }
+        const jumpNodes = this.collectJumpNodes()
 
         if(jumpNodes.length === 0) return []
 

@@ -12,6 +12,15 @@ function createJumpNode(id: string, x: number, y: number) {
     return entity
 }
 
+function createLinearPathGraph(nodes: Array<[string, number, number]>, edges: Array<[number, number]>) {
+    const graph = new JumpGraphComponent()
+    const entities = nodes.map(([id, x, y]) => createJumpNode(id, x, y))
+    for (const [from, to] of edges) {
+        graph.addEdge(entities[from], entities[to])
+    }
+    return { graph, entities }
+}
+
 describe("jumpPathfinder", () => {
     it("returns empty when there is no path", () => {
         const a = createJumpNode("a", 0, 0)
@@ -31,41 +40,31 @@ describe("jumpPathfinder", () => {
     })
 
     it("finds a path through connected jump nodes", () => {
-        const a = createJumpNode("a", 0, 0)
-        const b = createJumpNode("b", 100, 0)
-        const c = createJumpNode("c", 200, 0)
+        const { graph, entities } = createLinearPathGraph(
+            [["a", 0, 0], ["b", 100, 0], ["c", 200, 0]],
+            [[0, 1], [1, 2]]
+        )
 
-        const graph = new JumpGraphComponent()
-        graph.addEdge(a, b)
-        graph.addEdge(b, c)
-
-        const path = jumpAStar(a, c, graph)
-        expect(path).toEqual([a, b, c])
+        const path = jumpAStar(entities[0], entities[2], graph)
+        expect(path).toEqual(entities)
     })
 
     it("returns empty for disconnected nodes", () => {
-        const a = createJumpNode("a", 0, 0)
-        const b = createJumpNode("b", 100, 0)
-        const c = createJumpNode("c", 200, 0)
+        const { graph, entities } = createLinearPathGraph(
+            [["a", 0, 0], ["b", 100, 0], ["c", 200, 0]],
+            [[0, 1]]
+        )
 
-        const graph = new JumpGraphComponent()
-        graph.addEdge(a, b)
-        // c is not connected
-
-        expect(jumpAStar(a, c, graph)).toEqual([])
+        expect(jumpAStar(entities[0], entities[2], graph)).toEqual([])
     })
 
     it("prefers fewer hops over shorter total distance", () => {
-        const a = createJumpNode("a", 0, 0)
-        const b = createJumpNode("b", 100, 0)
-        const c = createJumpNode("c", 200, 0)
+        const { graph, entities } = createLinearPathGraph(
+            [["a", 0, 0], ["b", 100, 0], ["c", 200, 0]],
+            [[0, 2], [0, 1], [1, 2]]
+        )
 
-        const graph = new JumpGraphComponent()
-        graph.addEdge(a, c)
-        graph.addEdge(a, b)
-        graph.addEdge(b, c)
-
-        const path = jumpAStar(a, c, graph)
-        expect(path).toEqual([a, c])
+        const path = jumpAStar(entities[0], entities[2], graph)
+        expect(path).toEqual([entities[0], entities[2]])
     })
 })

@@ -35,10 +35,7 @@ describe("SceneNode", () => {
     })
 
     it("setParent updates both sides of the relationship", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
+        const { parentNode, childNode } = createParentChildNodes()
 
         childNode.parent = parentNode
 
@@ -47,10 +44,7 @@ describe("SceneNode", () => {
     })
 
     it("setParent is idempotent when the parent is unchanged", () => {
-        const parent = new Entity("parent")
-        const child = new Entity("child")
-        const parentNode = new SceneNode(parent.id, parent)
-        const childNode = new SceneNode(child.id, child)
+        const { parentNode, childNode } = createParentChildNodes()
 
         childNode.parent = parentNode
         childNode.parent = parentNode
