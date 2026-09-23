@@ -6,14 +6,16 @@ import { System } from "./system"
 import { DateNode } from "./DateNode";
 import { TimeScaleNode } from "./timeScaleNode";
 import { Entity } from "../entities/entity";
-import { DayPassedEvent, MonthPassedEvent } from "../lib/events";
+import { DayPassedEvent, HourPassedEvent, MonthPassedEvent } from "../lib/events";
 
-const lastDay = 60 * 60 * 24 * 1000
+const lastDay = 60 * 60 * 24 * 1000
+const lastHour = 60 * 60 * 1000
 
 export class DateSystem extends System {
     private entity?: Entity
     private node?: DateNode
     private timeSinceLastDay = 0
+    private timeSinceLastHour = 0
     private timeSinceLasMonth = 0
     private lastMonth = 0
     private startTime = 0
@@ -61,7 +63,13 @@ export class DateSystem extends System {
         node.date.ms += timeIncrease
 
         this.timeSinceLastDay += timeIncrease
+        this.timeSinceLastHour += timeIncrease
         this.timeSinceLasMonth += timeIncrease
+
+        if(this.timeSinceLastHour > lastHour) {
+            this.timeSinceLastHour = 0
+            this.engine.dispatchEvent(new HourPassedEvent(null))
+        }
 
         if(this.timeSinceLastDay > lastDay) {
             this.timeSinceLastDay = 0

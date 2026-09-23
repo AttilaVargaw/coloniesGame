@@ -6,6 +6,7 @@ import {
     EntityAddedEvent,
     EntityRemovedEvent,
     DayPassedEvent,
+    HourPassedEvent,
     MonthPassedEvent,
     SelectionChangedEvent,
     ComponentRemovedEvent,
@@ -39,12 +40,13 @@ describe("EventBus", () => {
 
     describe("initialization", () => {
         it("pre-populates the expected default event queues", () => {
-            expect(bus.events.size).toBe(14)
+            expect(bus.events.size).toBe(15)
             expect(bus.events.has(UpdateBeginEvent)).toBe(true)
             expect(bus.events.has(UpdateDoneEvent)).toBe(true)
             expect(bus.events.has(EntityAddedEvent)).toBe(true)
             expect(bus.events.has(EntityRemovedEvent)).toBe(true)
             expect(bus.events.has(DayPassedEvent)).toBe(true)
+            expect(bus.events.has(HourPassedEvent)).toBe(true)
             expect(bus.events.has(MonthPassedEvent)).toBe(true)
             expect(bus.events.has(SelectionChangedEvent)).toBe(true)
             expect(bus.events.has(ComponentRemovedEvent)).toBe(true)

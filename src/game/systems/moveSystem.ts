@@ -5,7 +5,7 @@ import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "@game/components/vessel";
 import { TargetSystem } from "./targetSystem";
-import { DayPassedEvent } from "@/engine/lib/events";
+import { HourPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitComponent } from "@engine/components/orbitComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
@@ -285,7 +285,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         super.addToEngine(engine)
 
         this.engine =
-            engine.subscribe(DayPassedEvent, this.moveNodes)
+            engine.subscribe(HourPassedEvent, this.moveNodes)
         engine.registerNodeType(MoveNode,
             new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
             (entity) => {
@@ -309,7 +309,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         this.engine.unregisterNodeType(MoveNode)
 
-        this.engine.unsubscribe(DayPassedEvent, this.moveNodes)
+        this.engine.unsubscribe(HourPassedEvent, this.moveNodes)
         super.removeFromEngine()
 
         return this

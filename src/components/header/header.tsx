@@ -34,7 +34,7 @@ export function Header() {
                             </button>
                         </li>
                     ))}
-                    <li>{date.year} {date.monthString} {date.day}</li>
+                    <li>{date.year} {date.monthString} {date.day} {date.hour.toString().padStart(2, '0')}:{date.minute.toString().padStart(2, '0')}</li>
                 </ul>
             </nav>
         </div>

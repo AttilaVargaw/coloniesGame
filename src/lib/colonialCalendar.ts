@@ -34,6 +34,8 @@ function getYear(ms: number) {
     return ms / yearLength
 }
 
+export const hourLength = 1000 * 60 * 60
+
 function getMonthIndex(ms: number) {
     const correctedMs = ms % yearLength
 
@@ -48,7 +50,17 @@ function getMonthDay(ms: number) {
     return (correctedMs - months.get(getMonthIndex(correctedMs))!.ms) * rDayMs
 }
 
-export function ColonialDate(ms: number) {
+export interface ColonialDate {
+    readonly ms: number
+    readonly day: number
+    readonly month: number
+    readonly year: number
+    readonly monthString: string
+    readonly hour: number
+    readonly minute: number
+}
+
+export function ColonialDate(ms: number): ColonialDate {
     const date = ms
 
     return {
@@ -56,6 +68,8 @@ export function ColonialDate(ms: number) {
         get day() { return Math.floor(getMonthDay(date) + 1) },
         get month() { return getMonthIndex(date) + 1 },
         get year() { return Math.floor(getYear(date)) + 1 },
-        get monthString() { return months.get(getMonthIndex(date))!.name }
+        get monthString() { return months.get(getMonthIndex(date))!.name },
+        get hour() { return Math.floor((date % dayMs) / (1000 * 60 * 60)) },
+        get minute() { return Math.floor((date % (1000 * 60 * 60)) / (1000 * 60)) },
     }
 }

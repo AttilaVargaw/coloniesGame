@@ -1,7 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useGameEngine } from "./useGameContext"
-import { useGameEvent } from "./useGameEvent"
-import { DayPassedEvent } from "@/engine/lib/events"
 import { DateNode } from "@/engine/systems/DateNode"
 
 export function useGameDate() {
@@ -14,7 +12,14 @@ export function useGameDate() {
     setDate(dateNode.date.ms)
   }
 
-  useGameEvent(DayPassedEvent, updateDate)
+  // useGameEvent(DayPassedEvent, updateDate)
+  // useGameEvent(HourPassedEvent, updateDate)
+
+  useEffect(() => {
+    const interval = setInterval(updateDate, 50)
+
+    return () => clearInterval(interval)
+  })
 
   return date
 }

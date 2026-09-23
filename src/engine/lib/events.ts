@@ -18,6 +18,7 @@ export class UpdateDoneEvent extends EventBase<number> { }
 export class EntityAddedEvent extends EventBase<Entity> { }
 export class EntityRemovedEvent extends EventBase<Entity> { }
 export class DayPassedEvent extends EventBase<null> { }
+export class HourPassedEvent extends EventBase<null> { }
 export class MonthPassedEvent extends EventBase<null> { }
 export class SelectionChangedEvent extends EventBase<{ data: Entity, type: string }> { }
 export class IndustryUpdatedEvent extends EventBase<Entity> { }
