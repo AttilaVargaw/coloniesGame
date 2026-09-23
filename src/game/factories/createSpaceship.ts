@@ -20,12 +20,17 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 
-export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false }: MapMarker) {
-    const marker = applyComponents(engine.createEntity(),
+export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false, name, texture }: MapMarker) {
+    const marker = applyComponents(engine.createEntity(name),
         new PositionComponent(0, 0),
         new ColorComponent(color, "", shade),
         new RadiusComponent(radius),
         new ThicknessComponent(1))
+
+    if(texture) {
+        marker.addComponent(new SizeComponent(radius * 2, radius * 2))
+        marker.addComponent(new TextureComponent(texture))
+    }
 
     if(label) {
         marker.addComponent(new LabelComponent(label, textSize, offset ?? { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor))

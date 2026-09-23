@@ -70,10 +70,7 @@ export const solarisAlpha = {
             population: 2800000000,
         }],
     }],
-    rings: [
-        // { color: "#22222aaa", innerRadius: 4 * SOLAR_UNIT, outerRadius: 5 * SOLAR_UNIT }
-    ],
     asteroidBelts: [
-        // { color: "#22222aaa", innerRadius: 2.5 * SOLAR_UNIT, outerRadius: 3.5 * SOLAR_UNIT }
+        { innerRadius: 1.4 * SOLAR_UNIT, outerRadius: 2.0 * SOLAR_UNIT, color: "#22222aaa" },
     ]
 } as const satisfies BodyBlueprint;

@@ -6,6 +6,9 @@ export const heliosDelta = {
     marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta" },
     archetype: "sol",
     orbit: { radius: 200, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
+    asteroidBelts: [
+        { innerRadius: 0.7 * SOLAR_UNIT, outerRadius: 1.0 * SOLAR_UNIT, color: "#22222aaa" },
+    ],
     systems: [{
         bodies: [{
             marker: { color: "#6a7a82", radius: 10, label: "Canceron" },

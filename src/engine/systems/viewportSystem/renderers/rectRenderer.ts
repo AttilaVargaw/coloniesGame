@@ -12,7 +12,12 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
             [PositionComponent, SizeComponent],
-            (e) => new RectNode(e, e.getComponent(PositionComponent)!, e.getComponent(SizeComponent)!, e.getComponent(ColorComponent)!, e.getComponent(TextureComponent)),
+            (e) => new RectNode(e, e.getComponent(PositionComponent)!,
+                e.getComponent(SizeComponent)!,
+                e.getComponent(ColorComponent)!,
+                e.getComponent(TextureComponent),
+                e.getComponent(TextureComponent)?.rotation ?? 0
+            ),
         )
     }
 
@@ -21,38 +26,38 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     }
 
     private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | undefined {
-        if (!texture) {
+        if(!texture) {
             return undefined;
         }
 
-        if (texture.texture) {
+        if(texture.texture) {
             return texture.texture;
         }
 
         let sourceKey: string | undefined;
         let sourceUri: string | undefined;
 
-        if (texture.svg) {
+        if(texture.svg) {
             sourceKey = `svg:${texture.svg}`;
             sourceUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture.svg)}`;
-        } else if (texture.src) {
+        } else if(texture.src) {
             sourceKey = `src:${texture.src}`;
             sourceUri = texture.src;
         }
 
-        if (!sourceKey || !sourceUri) {
+        if(!sourceKey || !sourceUri) {
             return undefined;
         }
 
         const cached = this.textureCache.get(sourceKey);
-        if (cached) {
+        if(cached) {
             return cached;
         }
 
         const image = new Image();
         image.src = sourceUri;
 
-        if (image.complete) {
+        if(image.complete) {
             this.textureCache.set(sourceKey, image);
             return image;
         }
@@ -80,16 +85,19 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
         const texture = this.resolveTexture(rect.texture)
 
-        if (texture) {
-            ctx.drawImage(texture, x, y, screenWidth, screenHeight)
+        if(texture) {
+            ctx.save()
+            ctx.translate(projected.x, projected.y)
+            ctx.rotate(rect.rotation)
+            ctx.drawImage(texture, -screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight)
 
-            if (rect.texture?.tint) {
-                ctx.save();
+            if(rect.texture?.tint) {
                 ctx.globalCompositeOperation = 'source-atop';
                 ctx.fillStyle = rect.texture.tint;
-                ctx.fillRect(x, y, screenWidth, screenHeight);
-                ctx.restore();
+                ctx.fillRect(-screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight);
             }
+
+            ctx.restore()
         } else {
             rect.setColor(ctx);
             ctx.fillRect(

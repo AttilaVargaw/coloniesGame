@@ -28,6 +28,7 @@ import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRend
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
+import { DayPassedEvent, } from "@/engine/lib/events"
 
 export class Game {
     readonly engine: World = new World
@@ -88,6 +89,11 @@ export class Game {
 
         this.engine.getSystem(MapSystem).init()
         this.engine.getSystem(ViewportSystem).init()
+
+        this.engine.dispatchEvent(new DayPassedEvent(null))
+        // this.engine.dispatchEvent(new SelectionChangedEvent({ data: this.engine.getAllEntities().find(a => a.id === "Helios Alpha")!, type: 'star' }))
+
+        // console.log(this.engine.getAllEntities().find(a => a.id === "Helios Alpha"))
 
         let previousTime = 0.0
         let firstUpdate = true

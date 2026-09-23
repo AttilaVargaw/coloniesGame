@@ -9,7 +9,8 @@ export class OrbitComponent extends EntityComponent {
         public eccentricity: number = 0,
         public inclination: number = 0,
         public argumentOfPeriapsis: number = 0,
-        public longitudeOfAscendingNode: number = 0
+        public longitudeOfAscendingNode: number = 0,
+        public hideOrbitInDebugDrawing: boolean = false
     ) {
         super();
     }

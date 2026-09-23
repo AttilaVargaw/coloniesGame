@@ -6,7 +6,7 @@ import { TextureComponent } from "../../../components/textureComponent";
 import { RenderableNode } from "./renderableNode";
 
 export class RectNode extends RenderableNode {
-    constructor(entity: Entity, public position: PositionComponent, public size: SizeComponent, public color: ColorComponent = new ColorComponent("red"), public texture: TextureComponent | undefined = undefined) {
+    constructor(entity: Entity, public position: PositionComponent, public size: SizeComponent, public color: ColorComponent = new ColorComponent("red"), public texture: TextureComponent | undefined = undefined, public rotation: number = 0) {
         super(color, entity);
     }
 }

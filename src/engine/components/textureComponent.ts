@@ -6,6 +6,7 @@ export class TextureComponent extends EntityComponent {
         public svg?: string,
         public texture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap,
         public tint?: string,
+        public rotation?: number,
     ) {
         super();
     }

@@ -7,7 +7,7 @@ export class OrbitNode extends EntityNode {
     constructor(
         entity: Entity,
         public position: PositionComponent,
-        public orbit: OrbitComponent
+        public orbit: OrbitComponent,
     ) {
         super(entity);
     }

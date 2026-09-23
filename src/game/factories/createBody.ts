@@ -14,12 +14,12 @@ import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { createMarker, createVessel } from "./createSpaceship"
+import { createAsteroidBelt } from "./createAsteroidBelt"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import { createBarycentre } from "./createBarycentre"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
-import { createAsteroid } from "./createAsteroid"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
@@ -71,7 +71,7 @@ export function createBody({
         ]
 
         // if (navigationalPoint) {
-            components.push(new JumpNodeComponent())
+        components.push(new JumpNodeComponent())
         // }
 
         applyComponents(body, ...components)
@@ -142,17 +142,15 @@ export function createBody({
     }
 
     if(asteroidBelts?.length) {
-        for(const { innerRadius, } of asteroidBelts) {
-            const ringsEntity = createAsteroid({
-                radius: innerRadius,
-                angle: 0,
-                eccentricity: 0,
-            }, body, engine, mass)
-            ringsEntity.addComponent(new SoiComponent(calculateSoi(20, "uranus")))
-
-            engine.addEntity(ringsEntity, body)
+        for(const { innerRadius, outerRadius } of asteroidBelts) {
+            createAsteroidBelt({
+                innerRadius,
+                outerRadius,
+                parent: body,
+                engine,
+                parentMass: mass,
+            })
         }
-
     }
 
     return body

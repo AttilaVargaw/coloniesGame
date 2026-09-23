@@ -10,6 +10,7 @@ import { JumpGraphSystem } from "./jumpGraphSystem";
 export class MapSystem extends SystemWithNodes<PathNode> {
     protected updateNode(_node: PathNode, _dT?: number): void {
     }
+
     removeFromEngine() {
         if(!this.engine) {
             return this
@@ -37,7 +38,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     findJumpPath(start: Entity, end: Entity): Entity[] {
         const jumpGraphSystem = this.engine?.getSystem(JumpGraphSystem)
-        if (!jumpGraphSystem) return []
+        if(!jumpGraphSystem) return []
         return jumpGraphSystem.findJumpPath(start, end)
     }
 

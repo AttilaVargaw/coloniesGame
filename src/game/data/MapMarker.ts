@@ -8,4 +8,6 @@ export type MapMarker = Readonly<{
     textSize?: number;
     shade?: boolean;
     offset?: WorldPosition;
+    name?: string;
+    texture?: string;
 }>
