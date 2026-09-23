@@ -59,7 +59,7 @@ export const solarisAlpha = {
             name: "Caprica",
             population: 4900000000,
             vessels: [
-                { marker: { color: "red", radius: 4, label: "Minerva" }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
+                { marker: { color: "white", radius: 4, label: "Battlestar Minerva" }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
             ],
         }, {
             mass: 0.9,

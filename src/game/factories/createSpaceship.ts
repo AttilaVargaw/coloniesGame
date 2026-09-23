@@ -16,6 +16,9 @@ import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { LabelComponent } from "@/engine/components/label"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
+import { TextureComponent } from "@/engine/components/textureComponent"
+import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
+import { SizeComponent } from "@/engine/components/sizeComponent"
 
 export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false }: MapMarker) {
     const marker = applyComponents(engine.createEntity(),
@@ -64,17 +67,26 @@ export function createVessel(
     const orbitAngle = angle ?? Math.random() * TWO_PI
     const orbitInclination = inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0]))
 
-    const ship = applyComponents(createMarker(engine, { color, radius, label, labelColor, textSize }),
+    const ship = applyComponents(engine.createEntity(),
+        new ColorComponent(color, "", false),
+        new RadiusComponent(radius),
         new PositionComponent(...descartesToPolar(orbitAngle, orbitRadius)),
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),
         new FuelComponent(100, 1),
-        new SelectableComponent(SHIP_RADIUS * 2, "red"),
+        new SelectableComponent(80, "red"),
         new TargetableComponent(),
-        new RadiusComponent(SHIP_RADIUS),
-        new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }),
+        new SizeComponent(20, 20),
+        new TextureComponent(battlestarDradisUrl),
+        new HoverableComponent("pointer", { width: 80, height: 80 }),
         new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius * UNIVERSE_SCALE, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
     )
+
+    if(label) {
+        ship.addComponent(new LabelComponent(label, textSize ?? 18, { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor ?? "yellow"))
+    }
+
+    ship.addComponent(new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }))
 
     ship.addComponent(new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, createShipClickHandler(engine, ship)))
 

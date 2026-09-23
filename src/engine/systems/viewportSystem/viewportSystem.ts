@@ -139,7 +139,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const { camera } = this.viewport
         ctx.save()
 
-        ctx.strokeStyle = "rgba(100, 149, 237, 0.35)"
+        ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
         ctx.lineWidth = 1
 
         const cssWidth = camera.cssWidth
