@@ -76,7 +76,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const color = entity.getComponent(ColorComponent)
             const radius = entity.getComponent(RadiusComponent)
 
-            if(!color?.shade || !radius || radius.radius < 10) continue
+            if(!color?.emitLight || !radius || radius.radius < 10) continue
 
             const [sx, sy, sz] = getAbsolute(entity, this.engine)
             const projected = camera.project(sx, sy, sz)
@@ -102,35 +102,31 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             const starColor = color.fill || "#ffffff"
 
-            ctx.strokeStyle = `${starColor}14`
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.moveTo(screenX, screenY)
-            ctx.lineTo(centerX, centerY)
-            ctx.stroke()
-
-            const steps = Math.min(6, Math.max(1, Math.floor(dist / 80)))
-            for(let i = 1; i <= steps; i++) {
-                const t = i / (steps + 1)
+            const maxT = 0.35
+            const totalSteps = Math.min(5, Math.max(2, Math.floor(dist / 60)))
+            for(let i = 1; i <= totalSteps; i++) {
+                const t = (i / (totalSteps + 1)) * maxT
                 const fx = screenX + dx * t
                 const fy = screenY + dy * t
-                const flareAlpha = 0.25 * (1 - t) * Math.max(0, 1 - Math.abs(t - 0.3) * 2)
-                const flareRadius = 2 + 2 * Math.sin(t * Math.PI)
+                const flareAlpha = 0.45 * (1 - t / maxT)
+                const flareRadius = 1.5 + 1.5 * Math.sin((t / maxT) * Math.PI)
 
-                ctx.fillStyle = `${starColor}${Math.round(flareAlpha * 255).toString(16).padStart(2, "0")}`
+                ctx.globalAlpha = Math.max(0.05, flareAlpha)
+                ctx.fillStyle = starColor
                 ctx.beginPath()
                 ctx.arc(fx, fy, flareRadius, 0, TWO_PI)
                 ctx.fill()
             }
 
             if(dist < 300) {
-                const centralAlpha = 0.15 * (1 - dist / 300)
-                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 20)
-                gradient.addColorStop(0, `${starColor}${Math.round(centralAlpha * 255).toString(16).padStart(2, "0")}`)
+                const centralAlpha = 0.18 * (1 - dist / 300)
+                ctx.globalAlpha = centralAlpha
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 18)
+                gradient.addColorStop(0, starColor)
                 gradient.addColorStop(1, "rgba(0,0,0,0)")
                 ctx.fillStyle = gradient
                 ctx.beginPath()
-                ctx.arc(centerX, centerY, 20, 0, TWO_PI)
+                ctx.arc(centerX, centerY, 18, 0, TWO_PI)
                 ctx.fill()
             }
         }
