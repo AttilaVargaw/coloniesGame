@@ -3,7 +3,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosGamma = {
     name: "Helios Gamma",
-    marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma" },
+    marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma", emitLight: true },
     orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
     archetype: "sol",
     asteroidBelts: [

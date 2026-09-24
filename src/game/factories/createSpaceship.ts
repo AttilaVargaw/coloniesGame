@@ -16,17 +16,28 @@ import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { LabelComponent } from "@/engine/components/label"
-import { ThicknessComponent } from "@/engine/components/thicknessComponent"
+import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
-// import raptorDradisUrl from "@/components/icons/raptorDradis.svg"
-import { SizeComponent } from "@/engine/components/sizeComponent"
+import { SizeComponent } from "@engine/components/sizeComponent"
 
-export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false, name, texture }: MapMarker) {
+export function createMarker(engine: Engine, {
+    offset,
+    color,
+    radius,
+    label,
+    labelColor = "red",
+    textSize = 18,
+    shade = false,
+    name,
+    texture,
+    emitLight
+}: MapMarker) {
     const marker = applyComponents(engine.createEntity(name),
         new PositionComponent(0, 0),
         new ThicknessComponent(1),
-        (new ColorComponent(color, "", shade)))
+        new ColorComponent(color, "", shade, emitLight)
+    )
 
     if(texture) {
         marker.addComponent(new SizeComponent(radius * 2, radius * 2))

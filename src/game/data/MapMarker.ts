@@ -10,4 +10,5 @@ export type MapMarker = Readonly<{
     offset?: WorldPosition;
     name?: string;
     texture?: string;
+    emitLight?: boolean;
 }>

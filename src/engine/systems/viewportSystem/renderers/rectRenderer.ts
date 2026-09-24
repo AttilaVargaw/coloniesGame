@@ -7,6 +7,14 @@ import { RectNode } from "./rectNode";
 import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
+import { TWO_PI } from "@/game/constants";
+
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r},${g},${b},${alpha})`
+}
 
 export class RectRenderer extends BaseRenderer<RectNode> {
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();
@@ -18,7 +26,8 @@ export class RectRenderer extends BaseRenderer<RectNode> {
                 e.getComponent(SizeComponent)!,
                 e.getComponent(ColorComponent)!,
                 e.getComponent(TextureComponent),
-                e.getComponent(TextureComponent)?.rotation ?? 0
+                e.getComponent(TextureComponent)?.rotation ?? 0,
+                // e.getComponent(ColorComponent)!.emitLight,
             ),
         )
     }
@@ -29,16 +38,16 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
     protected shouldSkipProjection(node: RectNode, cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if (belt?.cullingScaleThreshold !== undefined && cameraScale < belt.cullingScaleThreshold) {
+        if(belt?.cullingScaleThreshold !== undefined && cameraScale < belt.cullingScaleThreshold) {
             return true
         }
         return false
     }
 
     protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: [number, number, number]): boolean {
-        if (node.texture?.minimumScreenSize !== undefined && node.size) {
+        if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
-            if (worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {
+            if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {
                 return true
             }
         }
@@ -104,6 +113,22 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         const y = projected.y - screenHeight / 2
 
         const texture = this.resolveTexture(rect.texture)
+
+        if(rect.emitLight) {
+            ctx.save()
+            const bloomRadius = Math.max(screenWidth, screenHeight) * 1.5
+            const gradient = ctx.createRadialGradient(projected.x, projected.y, Math.max(screenWidth, screenHeight) * 0.25, projected.x, projected.y, bloomRadius)
+            const fill = rect.color.fill || "#ffffff"
+            gradient.addColorStop(0, hexToRgba(fill, 0.35))
+            gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.globalCompositeOperation = "screen"
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(projected.x, projected.y, bloomRadius, 0, TWO_PI)
+            ctx.fill()
+            ctx.restore()
+        }
 
         if(texture) {
             ctx.save()

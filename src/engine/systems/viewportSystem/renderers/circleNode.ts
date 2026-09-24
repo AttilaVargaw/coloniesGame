@@ -12,6 +12,7 @@ export class CircleNode extends RenderableNode {
         public radius: RadiusComponent,
         public color: ColorComponent = new ColorComponent("red"),
         public thickness: ThicknessComponent = new ThicknessComponent(1),
+        public emitLight: boolean = false
     ) {
         super(color, entity);
     }

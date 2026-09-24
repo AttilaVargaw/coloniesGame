@@ -20,6 +20,14 @@ const STAR_COLORS = [
     "#a1c2ff",
     "#ffb4a2",
 ]
+
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r},${g},${b},${alpha})`
+}
+
 const createStarfield = (count: number) => {
     return Array.from({ length: count }, () => {
         const theta = rng() * Math.PI * 2
@@ -61,8 +69,23 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         cores.push({ x: projected.x, y: projected.y, r: radius, color: s.color, alpha })
     }
 
+    const drawGlow = (stars: { x: number; y: number; r: number; color: string; alpha: number }[]) => {
+        ctx.globalCompositeOperation = "screen"
+        for(const star of stars) {
+            const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.r)
+            gradient.addColorStop(0, hexToRgba(star.color, star.alpha * 0.6))
+            gradient.addColorStop(0.4, hexToRgba(star.color, star.alpha * 0.2))
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+            ctx.fill()
+        }
+    }
+
     const drawStar = (stars: { x: number; y: number; r: number; color: string; alpha: number }[]) => {
         ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = "source-over"
         for(const star of stars) {
             ctx.globalAlpha = star.alpha
             ctx.fillStyle = star.color
@@ -72,7 +95,7 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         }
     }
 
-    drawStar(glow)
+    drawGlow(glow)
     drawStar(cores)
 
     ctx.restore();

@@ -1,10 +1,9 @@
 import { BodyBlueprint } from "./BodyBlueprint";
 import { SOLAR_UNIT, STAR_SIZE } from "@game/constants"
-import solaris from "../../components/icons/solaris-alpha.png"
 
 export const solarisAlpha = {
     name: "Helios Alpha",
-    marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha", texture: solaris, shade: true },
+    marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha", shade: true, emitLight: true },
     archetype: "sol",
     orbit: { radius: 200, angle: Math.PI / 2, eccentricity: 0, inclination: 0 },
     systems: [{
@@ -60,7 +59,7 @@ export const solarisAlpha = {
             name: "Caprica",
             population: 4900000000,
             vessels: [
-                { marker: { color: "white", radius: 4, label: "Battlestar\nMinerva" }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
+                { marker: { color: "white", radius: 4, label: "Battlestar\nMinerva", }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
             ],
         }, {
             mass: 0.9,

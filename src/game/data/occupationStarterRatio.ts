@@ -14,4 +14,4 @@ export const occupationStarterRatio = {
     stayAtHome: 20
 } as Readonly<Record<keyof Population, number>>
 
-console.log({ ratio: Object.values(occupationStarterRatio).reduce((a, b) => a + b, 0) })
+// console.log({ ratio: Object.values(occupationStarterRatio).reduce((a, b) => a + b, 0) })

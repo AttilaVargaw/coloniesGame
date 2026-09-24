@@ -10,11 +10,14 @@ import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { MapSystem } from "@game/systems/mapSystem";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
+import Camera from "@/lib/camera";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawCameraGizmo } from "./drawCameraGizmo";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
+import { ColorComponent } from "../../components/colorComponent";
+import { RadiusComponent } from "../../components/radiusComponent";
 
 interface RenderEntry {
     renderer: BaseRenderer<any>
@@ -55,6 +58,83 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         ctx.fillStyle = "#000008";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.restore()
+    }
+
+    private drawLensFlares(ctx: CanvasRenderingContext2D, camera: Camera) {
+        if(!this.engine) return
+
+        const centerX = camera.cssWidth / 2
+        const centerY = camera.cssHeight / 2
+
+        const allEntities = this.engine.getAllEntities()
+
+        ctx.save()
+        ctx.globalCompositeOperation = "screen"
+
+        for(const entity of allEntities) {
+            const color = entity.getComponent(ColorComponent)
+            const radius = entity.getComponent(RadiusComponent)
+
+            if(!color?.shade || !radius || radius.radius < 10) continue
+
+            const [sx, sy, sz] = getAbsolute(entity, this.engine)
+            const projected = camera.project(sx, sy, sz)
+            if(!projected) continue
+
+            const screenX = projected.x
+            const screenY = projected.y
+
+            if(
+                screenX < -100 ||
+                screenX > camera.cssWidth + 100 ||
+                screenY < -100 ||
+                screenY > camera.cssHeight + 100
+            ) {
+                continue
+            }
+
+            const dx = centerX - screenX
+            const dy = centerY - screenY
+            const dist = Math.hypot(dx, dy)
+
+            if(dist < 5) continue
+
+            const starColor = color.fill || "#ffffff"
+
+            ctx.strokeStyle = `${starColor}14`
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(screenX, screenY)
+            ctx.lineTo(centerX, centerY)
+            ctx.stroke()
+
+            const steps = Math.min(6, Math.max(1, Math.floor(dist / 80)))
+            for(let i = 1; i <= steps; i++) {
+                const t = i / (steps + 1)
+                const fx = screenX + dx * t
+                const fy = screenY + dy * t
+                const flareAlpha = 0.25 * (1 - t) * Math.max(0, 1 - Math.abs(t - 0.3) * 2)
+                const flareRadius = 2 + 2 * Math.sin(t * Math.PI)
+
+                ctx.fillStyle = `${starColor}${Math.round(flareAlpha * 255).toString(16).padStart(2, "0")}`
+                ctx.beginPath()
+                ctx.arc(fx, fy, flareRadius, 0, TWO_PI)
+                ctx.fill()
+            }
+
+            if(dist < 300) {
+                const centralAlpha = 0.15 * (1 - dist / 300)
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 20)
+                gradient.addColorStop(0, `${starColor}${Math.round(centralAlpha * 255).toString(16).padStart(2, "0")}`)
+                gradient.addColorStop(1, "rgba(0,0,0,0)")
+                ctx.fillStyle = gradient
+                ctx.beginPath()
+                ctx.arc(centerX, centerY, 20, 0, TWO_PI)
+                ctx.fill()
+            }
+        }
+
         ctx.restore()
     }
 
@@ -132,6 +212,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             }
 
             this.scheduleRender(dt)
+            this.drawLensFlares(ctx, camera)
         }
     }
 

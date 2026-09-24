@@ -9,6 +9,13 @@ import { TWO_PI } from "@/game/constants";
 
 const SHADE_SIZE = 128
 
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r},${g},${b},${alpha})`
+}
+
 const shadeSprite = (() => {
     const canvas = document.createElement("canvas")
     canvas.width = SHADE_SIZE
@@ -39,7 +46,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
             [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent],
-            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent)),
+            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)!.emitLight)
         )
     }
 
@@ -72,6 +79,22 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         }
 
         ctx.save()
+
+        if(circle.emitLight) {
+            const bloomRadius = screenRadius * 3
+            const gradient = ctx.createRadialGradient(center.x, center.y, screenRadius * 0.5, center.x, center.y, bloomRadius)
+            const fill = circle.color.fill || "#ffffff"
+            gradient.addColorStop(0, hexToRgba(fill, 0.35))
+            gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.globalCompositeOperation = "screen"
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(center.x, center.y, bloomRadius, 0, TWO_PI)
+            ctx.fill()
+            ctx.globalCompositeOperation = "source-over"
+        }
+
         ctx.beginPath()
         if(circle.color.shade) {
             ctx.arc(center.x, center.y, screenRadius, 0, TWO_PI)

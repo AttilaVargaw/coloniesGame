@@ -3,7 +3,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 
 export const heliosDelta = {
     name: "Helios Delta",
-    marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta" },
+    marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta", emitLight: true },
     archetype: "sol",
     orbit: { radius: 200, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
     asteroidBelts: [

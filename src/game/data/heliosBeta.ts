@@ -7,7 +7,7 @@ export const solarisBeta = {
     ],
     navigationalPoint: true,
     name: "Helios Beta",
-    marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta" },
+    marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta", emitLight: true },
     archetype: "sol",
     orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: -Math.PI / 2 },
     systems: [{
