@@ -11,7 +11,7 @@ import asteroid4 from "../../components/icons/asteroid4.png"
 import asteroid5 from "../../components/icons/asteroid5.png"
 import asteroid6 from "../../components/icons/asteroid6.png"
 
-const navigationalBodySize = 60
+const navigationalBodySize = 40
 
 export const MapCreationData = {
     marker: { color: "#0000", radius: 20, label: "root" },

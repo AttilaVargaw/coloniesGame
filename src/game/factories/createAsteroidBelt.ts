@@ -16,6 +16,7 @@ import asteroids6 from "../../components/icons/asteroid6.png"
 import dust1 from "../../components/icons/dust1.png"
 import { applyComponents } from "./helpers"
 import { RotationComponent } from "../components/rotationComponent"
+import { AsteroidBeltComponent } from "../components/asteroidBeltComponent"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -75,6 +76,7 @@ export function createAsteroidBelt({
 
         applyComponents(
             asteroid,
+            new AsteroidBeltComponent(),
             new RotationComponent(textureComponent.rotation, spinSpeed),
             new OrbitComponent(
                 parent.id,
@@ -101,9 +103,11 @@ export function createAsteroidBelt({
         const size = 20 + Math.random() * 20
 
         const dust = engine.createEntity()
+        const textureComponent = new TextureComponent(dust1)
 
         applyComponents(
             dust,
+            new AsteroidBeltComponent(),
             new OrbitComponent(
                 parent.id,
                 radius * UNIVERSE_SCALE,
@@ -114,7 +118,8 @@ export function createAsteroidBelt({
             ),
             new PositionComponent(0, 0),
             new SizeComponent(size, size),
-            new TextureComponent(dust1)
+            textureComponent,
+            new RotationComponent(textureComponent.rotation),
         )
 
         engine.addEntity(dust, parent)

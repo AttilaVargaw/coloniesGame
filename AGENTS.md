@@ -123,3 +123,4 @@ Update loop: `requestAnimationFrame` → `World.update(dt)` → EventBus dispatc
 - Use `engine.registerNodeType` to register node types
 - Use `engine.reindexEntity` to reindex an entity
 - Use `engine.addCommand` to queue a command
+- About 5439 entities in the game
