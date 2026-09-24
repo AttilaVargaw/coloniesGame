@@ -27,6 +27,8 @@ const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
 const DUST_COUNT = 600
+const ASTEROID_CULLING_SCALE_THRESHOLD = 1
+const DUST_CULLING_SCALE_THRESHOLD = 0.1
 
 const ASTEROID_TINTS = [
     "#8a7e72",
@@ -137,6 +139,7 @@ export async function createAsteroidBelt({
 
         const asteroid = engine.createEntity()
         const asteroidBeltComponent = new AsteroidBeltComponent()
+        asteroidBeltComponent.cullingScaleThreshold = ASTEROID_CULLING_SCALE_THRESHOLD
 
         applyComponents(
             asteroid,
@@ -169,6 +172,7 @@ export async function createAsteroidBelt({
         const dust = engine.createEntity()
         const textureComponent = new TextureComponent(dust1)
         const dustBeltComponent = new AsteroidBeltComponent()
+        dustBeltComponent.cullingScaleThreshold = DUST_CULLING_SCALE_THRESHOLD
 
         applyComponents(
             dust,
