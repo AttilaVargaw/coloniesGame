@@ -20,6 +20,7 @@ import { createBarycentre } from "./createBarycentre"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
+import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
@@ -43,7 +44,7 @@ export async function createBody({
     name,
     mass: explicitMass,
 }: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
-    const angle = orbit.angle ?? Math.random() * TWO_PI
+    const angle = orbit.angle ?? generateRandomNumber(0, TWO_PI)
     const clickSize = marker.radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
     const mass = explicitMass ?? massByArchetype[archetype]
@@ -58,7 +59,7 @@ export async function createBody({
                 angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
                 angle,
                 orbit.eccentricity ?? 0,
-                orbit.inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])),
+                orbit.inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE),
                 orbit.periapsis ?? 0,
                 orbit.ascendingNode ?? 0
             ),

@@ -14,6 +14,7 @@ import { angularSpeed } from "../utils/orbital"
 import { VesselBlueprint } from "../data/VesselBlueprint"
 import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
+import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { LabelComponent } from "@/engine/components/label"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
@@ -70,8 +71,8 @@ export function createVessel(
     { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle, inclination, periapsis, ascendingNode } }: VesselBlueprint,
     parentMass: number
 ) {
-    const orbitAngle = angle ?? Math.random() * TWO_PI
-    const orbitInclination = inclination ?? (DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0]))
+    const orbitAngle = angle ?? generateRandomNumber(0, TWO_PI)
+    const orbitInclination = inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE)
 
     const ship = applyComponents(engine.createEntity(),
         new ColorComponent(color, "", false),

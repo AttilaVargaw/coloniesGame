@@ -17,6 +17,7 @@ import dust1 from "../../components/icons/dust1.png"
 import { applyComponents } from "./helpers"
 import { RotationComponent } from "../components/rotationComponent"
 import { AsteroidBeltComponent } from "../components/asteroidBeltComponent"
+import { generateRandomNumber } from "../../lib/generateRandomNumber"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -29,6 +30,8 @@ const MAX_INCLINATION = 0.1
 const DUST_COUNT = 600
 const ASTEROID_CULLING_SCALE_THRESHOLD = 1
 const DUST_CULLING_SCALE_THRESHOLD = 0.1
+const DUST_SIZE_MIN = 30
+const DUST_SIZE_MAX = 80
 
 const ASTEROID_TINTS = [
     "#8a7e72",
@@ -43,13 +46,17 @@ const ASTEROID_TINTS = [
     "#9a8c7a",
 ] as const
 
-const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
-let tintedTexturesReady = false
+const SMOKE_TINTS = [
+    "#ffffff",
+    "#f0f0f0",
+    "#e0e0e0",
+    "#d0d0d0",
+    "#c0c0c0"
+] as const
 
-function generateRandomNumber(from: number, to: number, integer: boolean) {
-    const value = Math.random() * (to - from) + from
-    return integer ? Math.floor(value) : value
-}
+const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
+const tintedDustTextures = [] as (OffscreenCanvas | HTMLImageElement)[]
+let tintedTexturesReady = false
 
 function Colorize(image: HTMLImageElement, color: `#${string}`) {
     const imageSize = image.width
@@ -62,7 +69,7 @@ function Colorize(image: HTMLImageElement, color: `#${string}`) {
     const offscreen = new OffscreenCanvas(imageSize, imageSize)
     const ctx = offscreen.getContext("2d")
 
-    if (!ctx) {
+    if(!ctx) {
         throw "Something went wrong with the offset canvas"
     }
 
@@ -70,7 +77,7 @@ function Colorize(image: HTMLImageElement, color: `#${string}`) {
 
     const imageData = ctx.getImageData(0, 0, imageSize, imageSize)
 
-    for (let i = 0; i < imageData.data.length; i += 4) {
+    for(let i = 0; i < imageData.data.length; i += 4) {
         imageData.data[i + 0] *= r
         imageData.data[i + 1] *= g
         imageData.data[i + 2] *= b
@@ -82,19 +89,27 @@ function Colorize(image: HTMLImageElement, color: `#${string}`) {
 }
 
 async function buildTintedTextures() {
-    for (const tint of ASTEROID_TINTS) {
-        for (let i = 0; i < ASTEROID_TEXTURES.length; ++i) {
+    for(const tint of ASTEROID_TINTS) {
+        for(let i = 0; i < ASTEROID_TEXTURES.length; ++i) {
             const image = new Image()
             image.src = ASTEROID_TEXTURES[i]
             await image.decode()
             tintedTextures.set(`${tint}-${i}`, Colorize(image, tint))
         }
     }
+
+    for(let i = 0; i < SMOKE_TINTS.length; ++i) {
+        const image = new Image()
+        image.src = dust1
+        await image.decode()
+        tintedDustTextures[i] = Colorize(image, SMOKE_TINTS[i])
+    }
+
     tintedTexturesReady = true
 }
 
 async function ensureTintedTextures() {
-    if (!tintedTexturesReady) {
+    if(!tintedTexturesReady) {
         await buildTintedTextures()
     }
 }
@@ -119,23 +134,23 @@ export async function createAsteroidBelt({
     const mid = (innerRadius + outerRadius) / 2
     const half = (outerRadius - innerRadius) * RADIUS_SPREAD / 2
 
-    for (let i = 0; i < count; ++i) {
-        const radius = mid + (Math.random() + Math.random() - 1) * half
-        const angle = Math.random() * TWO_PI
+    for(let i = 0; i < count; ++i) {
+        const radius = mid + (generateRandomNumber(0, 1) + generateRandomNumber(0, 1) - 1) * half
+        const angle = generateRandomNumber(0, TWO_PI)
         const sizeRatio = ASTEROID_SIZE_MAX / ASTEROID_SIZE_MIN
-        const size = ASTEROID_SIZE_MIN * Math.pow(sizeRatio, Math.random() * 0.65)
+        const size = ASTEROID_SIZE_MIN * Math.pow(sizeRatio, generateRandomNumber(0, 0.65))
 
         const textureComponent = new TextureComponent(undefined, undefined,
             tintedTextures.get(
                 `${ASTEROID_TINTS[generateRandomNumber(0, ASTEROID_TINTS.length, true)]}-${generateRandomNumber(0, ASTEROID_TEXTURES.length, true)}`
             )
         )
-        textureComponent.rotation = Math.random() * TWO_PI
+        textureComponent.rotation = generateRandomNumber(0, TWO_PI)
 
-        const eccentricity = Math.random() * MAX_ECCENTRICITY
-        const inclination = (Math.random() - 0.5) * 2 * MAX_INCLINATION
-        const argumentOfPeriapsis = Math.random() * TWO_PI
-        const spinSpeed = Math.random() * Math.PI / 2
+        const eccentricity = generateRandomNumber(0, MAX_ECCENTRICITY)
+        const inclination = (generateRandomNumber(0, 1) - 0.5) * 2 * MAX_INCLINATION
+        const argumentOfPeriapsis = generateRandomNumber(0, TWO_PI)
+        const spinSpeed = generateRandomNumber(0, Math.PI / 2)
 
         const asteroid = engine.createEntity()
         const asteroidBeltComponent = new AsteroidBeltComponent()
@@ -156,23 +171,25 @@ export async function createAsteroidBelt({
                 0,
                 true
             ),
-            (new PositionComponent(0, 0)),
-            (new SizeComponent(size, size)),
-            (textureComponent),
-            (new ThicknessComponent(1)))
+            new PositionComponent(0, 0),
+            new SizeComponent(size, size),
+            textureComponent,
+            new ThicknessComponent(1)
+        )
 
         engine.addEntity(asteroid, parent)
     }
 
-    for (let i = 0; i < DUST_COUNT; ++i) {
-        const radius = mid + (Math.random() + Math.random() - 1) * half
-        const angle = Math.random() * TWO_PI
-        const size = 20 + Math.random() * 40
+    for(let i = 0; i < DUST_COUNT; ++i) {
+        const radius = mid + (generateRandomNumber(0, 1) + generateRandomNumber(0, 1) - 1) * half
+        const angle = generateRandomNumber(0, TWO_PI)
+        const size = generateRandomNumber(DUST_SIZE_MIN, DUST_SIZE_MAX)
 
         const dust = engine.createEntity()
-        const textureComponent = new TextureComponent(dust1)
         const dustBeltComponent = new AsteroidBeltComponent()
         dustBeltComponent.cullingScaleThreshold = DUST_CULLING_SCALE_THRESHOLD
+
+        const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[generateRandomNumber(0, tintedDustTextures.length, true)])
 
         applyComponents(
             dust,

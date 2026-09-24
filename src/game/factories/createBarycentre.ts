@@ -8,6 +8,7 @@ import { angularSpeed } from "../utils/orbital"
 import { OrbitalBlueprint } from "../data/OrbitalBlueprint"
 import { PositionComponent } from "@/engine/components/position"
 import { MassComponent } from "@engine/components/massComponent"
+import { generateRandomNumber } from "@/lib/generateRandomNumber"
 
 function makeMoonOrbit(
     body: BodyBlueprint,
@@ -47,7 +48,7 @@ export async function createBarycentre(
         parent.id,
         radius * UNIVERSE_SCALE,
         angularSpeed(radius * UNIVERSE_SCALE, parentMass),
-        angle ?? Math.random() * TWO_PI,
+        angle ?? generateRandomNumber(0, TWO_PI),
         eccentricity ?? 0,
         0,
         periapsis ?? 0,

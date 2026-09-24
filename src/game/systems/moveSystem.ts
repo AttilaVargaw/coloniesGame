@@ -14,6 +14,7 @@ import { angularSpeed } from "@/game/utils/orbital";
 import { StartState } from "../data/StartState";
 import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
 import { Engine } from "@/engine/core/engine";
+import { generateRandomNumber } from "@/lib/generateRandomNumber";
 
 function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
     if(e < KEPLER_EPSILON) return trueAnomaly
@@ -269,7 +270,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
             orbit.meanAnomaly = meanAnomaly
             orbit.angularSpeed = angularSpeed(newRadius, attractorMass)
         } else {
-            const inclination = DEFAULT_ORBIT_INCLINATION_RANGE[0] + Math.random() * (DEFAULT_ORBIT_INCLINATION_RANGE[1] - DEFAULT_ORBIT_INCLINATION_RANGE[0])
+            const inclination = generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE)
             entity.addComponent(new OrbitComponent(bestSoiEntity.id, newRadius, angularSpeed(newRadius, attractorMass), meanAnomaly, 0, inclination, 0, 0))
         }
     }

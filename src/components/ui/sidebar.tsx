@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { generateRandomNumber } from "@/lib/generateRandomNumber"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
@@ -587,7 +588,7 @@ function SidebarMenuSkeleton({
 }) {
   // Random width between 50 to 90%.
   const [width] = React.useState(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
+    return `${generateRandomNumber(50, 90, true)}%`
   })
 
   return (
