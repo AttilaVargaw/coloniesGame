@@ -2,7 +2,6 @@ import type { Engine } from "@/engine/core/engine";
 import { SystemWithNodes, } from "../system";
 import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
-import { Entity } from "@engine/entities/entity";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { JumpGraphSystem } from "@game/systems/jumpGraphSystem";
@@ -16,7 +15,6 @@ import { drawCameraGizmo } from "./drawCameraGizmo";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
-    private readonly eventHandlers: Set<Entity> = new Set()
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
     private fpsFrameCount = 0
@@ -273,11 +271,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         this.inputHandler.removeFromEngine()
-
-        for(const eventHandler of this.eventHandlers) {
-            this.engine.removeEntity(eventHandler)
-        }
-        this.eventHandlers.clear()
 
         this.nodes.length = 0
 

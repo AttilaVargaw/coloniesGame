@@ -177,6 +177,7 @@ export class ViewportInputHandler {
 
         window.removeEventListener("keydown", this.onKeyDown)
         window.removeEventListener("keyup", this.onKeyUp)
+        window.removeEventListener("wheel", this.onWheel)
         canvas.removeEventListener("mouseenter", this.onMouseEnter)
         canvas.removeEventListener("mouseleave", this.onMouseLeave)
         canvas.removeEventListener("contextmenu", this.onContextMenu)

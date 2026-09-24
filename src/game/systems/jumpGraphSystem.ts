@@ -25,6 +25,10 @@ export class JumpGraphSystem extends System {
 
     removeFromEngine(): this {
         this.engine?.unsubscribe(DayPassedEvent, this.rebuildGraph)
+        if(this.graphEntity && this.engine) {
+            this.engine.removeEntity(this.graphEntity)
+            this.graphEntity = undefined
+        }
         super.removeFromEngine()
         return this
     }

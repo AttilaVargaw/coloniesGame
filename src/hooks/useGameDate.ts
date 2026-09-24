@@ -19,7 +19,7 @@ export function useGameDate() {
     const interval = setInterval(updateDate, 50)
 
     return () => clearInterval(interval)
-  })
+  }, [engine])
 
   return date
 }
