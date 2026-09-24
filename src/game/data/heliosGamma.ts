@@ -54,7 +54,7 @@ export const heliosGamma = {
             marker: { color: "#e9d46f", radius: 20, label: "Ophion" },
             orbit: { radius: 7 * SOLAR_UNIT, inclination: 0.45 },
             rings: [
-                { color: "#222a", innerRadius: 30, outerRadius: 50 }
+                { color: "#e9d46f", innerRadius: 30, outerRadius: 50 }
             ]
         }],
     }],
