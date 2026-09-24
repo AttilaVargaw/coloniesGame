@@ -4,15 +4,23 @@ import { ViewportComponent } from "../../components/viewportComponent";
 import { ViewportNode } from "./ViewportNode";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
-import { JumpGraphSystem } from "@game/systems/jumpGraphSystem";
 import { OrbitNode } from "../orbitSystem/orbitNode";
 import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
+import { MapSystem } from "@game/systems/mapSystem";
+import { BaseRenderer } from "./renderers/baseRenderer";
+import { ProjectedPoint } from "@/lib/camera";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawCameraGizmo } from "./drawCameraGizmo";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
+
+interface RenderEntry {
+    renderer: BaseRenderer<any>
+    node: any
+    projected: ProjectedPoint
+}
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     protected updateNode(_node: ViewportNode, _dT?: number) { };
@@ -20,6 +28,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private fpsFrameCount = 0
     private fpsLastTime = performance.now()
     private currentFps = 0
+    private rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
 
     get isDragging() {
         return this.inputHandler.isDragging
@@ -47,6 +56,37 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.fillStyle = "#000008";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.restore()
+    }
+
+    private scheduleRender(_dt: number) {
+        if (!this.engine) {
+            return
+        }
+
+        const allEntries: RenderEntry[] = []
+
+        for (const rendererClass of this.rendererClasses) {
+            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
+            if (!renderer) {
+                continue
+            }
+
+            renderer.projectNodes()
+
+            for (const { node, projected } of renderer.getProjectedCacheEntries()) {
+                allEntries.push({ renderer, node, projected })
+            }
+        }
+
+        allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
+
+        for (const entry of allEntries) {
+            entry.renderer.drawNode(entry.node, _dt)
+        }
+    }
+
+    setRendererClasses(classes: Array<new (...args: any[]) => BaseRenderer<any>>) {
+        this.rendererClasses = classes
     }
 
     update(dt: number) {
@@ -90,6 +130,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if(this.engine.getDebugManager().get("showFpsCounter")) {
                 this.drawFpsCounter(ctx)
             }
+
+            this.scheduleRender(dt)
         }
     }
 
@@ -108,10 +150,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private drawJumpGraph(ctx: CanvasRenderingContext2D) {
         if(!this.engine) return
 
-        const jumpGraphSystem = this.engine.getSystem(JumpGraphSystem)
-        if(!jumpGraphSystem) return
+        const mapSystem = this.engine.getSystem(MapSystem)
+        if(!mapSystem) return
 
-        const graph = jumpGraphSystem['graph']
+        const graph = mapSystem.getJumpGraph()
         if(!graph) return
 
         const { camera } = this.viewport

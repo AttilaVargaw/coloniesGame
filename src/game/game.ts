@@ -3,13 +3,10 @@ import { TimeScaleComponent } from "@engine/components/timeScaleComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
 import { World } from "@engine/core/world"
 import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
-import { ClickableSystem } from "@engine/systems/clickable"
-import { CursorSystem } from "@game/systems/cursorSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { MapSystem } from "@game/systems/mapSystem"
-import { JumpGraphSystem } from "@game/systems/jumpGraphSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
 import { TargetSystem } from "@game/systems/targetSystem"
@@ -23,7 +20,7 @@ import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRe
 import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
-import { RenderScheduler } from "@/engine/systems/viewportSystem/renderScheduler"
+import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
@@ -75,22 +72,22 @@ export class Game {
             .addSystem(MoveSystem)
             .addSystem(SelectionManager)
             .addSystem(TargetSystem)
-            .addSystem(CursorSystem, ViewportSystem)
+            .addSystem(PointerInteractionSystem, ViewportSystem)
             .addSystem(MapSystem)
-            .addSystem(JumpGraphSystem)
             .addSystem(OrbitSelectionSystem, ViewportSystem)
-            .addSystem(ClickableSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(CircleRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
-            .addSystem(RenderScheduler)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
             .addSystem(AsteroidSpinSystem)
 
         viewportEntity.addComponent(new CameraFollowComponent())
 
+        this.engine.getSystem(ViewportSystem).setRendererClasses([
+            ShapeRenderer, CircleRenderer, LabelRenderer, RectRenderer
+        ])
         this.engine.getSystem(ViewportSystem).init()
 
         this.engine.dispatchEvent(new DayPassedEvent(null))
@@ -113,7 +110,7 @@ export class Game {
 
             if(firstUpdate) {
                 firstUpdate = false
-                this.engine.getSystem(JumpGraphSystem).rebuildGraph()
+                this.engine.getSystem(MapSystem).rebuildGraph()
             }
         }
 
