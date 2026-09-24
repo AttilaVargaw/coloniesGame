@@ -29,6 +29,7 @@ import { RenderScheduler } from "@/engine/systems/viewportSystem/renderScheduler
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
+import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 
 export class Game {
@@ -86,6 +87,7 @@ export class Game {
             .addSystem(RenderScheduler)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
+            .addSystem(AsteroidSpinSystem)
 
         viewportEntity.addComponent(new CameraFollowComponent())
 

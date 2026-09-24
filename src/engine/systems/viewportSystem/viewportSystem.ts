@@ -11,6 +11,7 @@ import { TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
+import { drawCameraGizmo } from "./drawCameraGizmo";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
@@ -60,6 +61,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             if(this.inputHandler.isRotatingWithoutTarget) {
                 drawRotationIndicator(ctx, camera)
+            }
+
+            if(this.engine.getDebugManager().get("showCameraGizmo")) {
+                drawCameraGizmo(ctx, camera)
             }
 
             if(this.engine.getDebugManager().get("drawOrbits")) {

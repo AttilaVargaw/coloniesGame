@@ -37,7 +37,7 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
         }
 
         ctx.closePath();
-        node.draw(ctx)
+        //node.draw(ctx)
         ctx.restore()
     }
 }

@@ -15,6 +15,7 @@ import asteroids5 from "../../components/icons/asteroid5.png"
 import asteroids6 from "../../components/icons/asteroid6.png"
 import dust1 from "../../components/icons/dust1.png"
 import { applyComponents } from "./helpers"
+import { RotationComponent } from "../components/rotationComponent"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -25,18 +26,18 @@ const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
 const DUST_COUNT = 800
-const ASTEROID_TINTS = [
-    "#8a7e72",
-    "#a09888",
-    "#78695e",
-    "#9e9488",
-    "#6e6258",
-    "#b0a498",
-    "#847868",
-    "#a89880",
-    "#706458",
-    "#9a8c7a",
-]
+// const ASTEROID_TINTS = [
+//     "#8a7e72",
+//     "#a09888",
+//     "#78695e",
+//     "#9e9488",
+//     "#6e6258",
+//     "#b0a498",
+//     "#847868",
+//     "#a89880",
+//     "#706458",
+//     "#9a8c7a",
+// ]
 
 export function createAsteroidBelt({
     innerRadius,
@@ -59,22 +60,22 @@ export function createAsteroidBelt({
     for(let i = 0; i < count; ++i) {
         const radius = mid + (Math.random() + Math.random() - 1) * half
         const angle = Math.random() * TWO_PI
-        const normalizedRadius = (radius - innerRadius) / (outerRadius - innerRadius)
         const sizeRatio = ASTEROID_SIZE_MAX / ASTEROID_SIZE_MIN
         const size = ASTEROID_SIZE_MIN * Math.pow(sizeRatio, Math.random() * 0.65)
 
         const textureComponent = new TextureComponent(ASTEROID_TEXTURES[Math.floor(Math.random() * ASTEROID_TEXTURES.length)])
         textureComponent.rotation = Math.random() * TWO_PI
-        //textureComponent.tint = ASTEROID_TINTS[Math.floor(Math.random() * ASTEROID_TINTS.length)]
 
         const eccentricity = Math.random() * MAX_ECCENTRICITY
         const inclination = (Math.random() - 0.5) * 2 * MAX_INCLINATION
         const argumentOfPeriapsis = Math.random() * TWO_PI
+        const spinSpeed = Math.random() * Math.PI / 2
 
         const asteroid = engine.createEntity()
 
         applyComponents(
             asteroid,
+            new RotationComponent(textureComponent.rotation, spinSpeed),
             new OrbitComponent(
                 parent.id,
                 radius * UNIVERSE_SCALE,

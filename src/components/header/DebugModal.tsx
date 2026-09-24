@@ -17,13 +17,15 @@ import type { DebugFlag } from "@engine/lib/debugManager";
 const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
     { flag: "drawOrbits", label: "Draw Orbits" },
+    { flag: "showCameraGizmo", label: "Show Camera Gizmo" },
 ]
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)
     const [flags, setFlags] = useState<Record<DebugFlag, boolean>>({
         showJumpGraph: false,
-        drawOrbits: true
+        drawOrbits: true,
+        showCameraGizmo: true
     })
     const engine = useGameEngine()
 

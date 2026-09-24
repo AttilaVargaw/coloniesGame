@@ -89,7 +89,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
             ctx.save()
 
             ctx.translate(projected.x, projected.y)
-            ctx.rotate(rect.rotation)
+            ctx.rotate(rect.texture?.rotation ?? 0)
             ctx.drawImage(texture, -screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight)
 
             if(rect.texture?.tint) {

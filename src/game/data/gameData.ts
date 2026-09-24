@@ -30,7 +30,7 @@ export const MapCreationData = {
             orbit: {
                 radius: 300,
                 angle: Math.PI / 2,
-                inclination: 0
+                inclination: 0,
             },
 
         }],
