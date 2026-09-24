@@ -17,11 +17,11 @@ import asteroids6 from "../../components/icons/asteroid6.png"
 import { applyComponents } from "./helpers"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
-const ASTEROID_SIZE_MIN = 5
-const ASTEROID_SIZE_MAX = 15
+const ASTEROID_SIZE_MIN = 2
+const ASTEROID_SIZE_MAX = 10
 const RADIUS_SPREAD = 0.7
 const ASTEROID_AREA_DENSITY = 0.4
-const ASTEROID_COUNT_MIN = 80
+const ASTEROID_COUNT_MIN = 120
 
 export function createAsteroidBelt({
     innerRadius,
