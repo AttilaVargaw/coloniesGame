@@ -27,11 +27,13 @@ const ASTEROID_AREA_DENSITY = 0.5
 const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
-const DUST_COUNT = 600
+const DUST_AREA_DENSITY = 0.3
 const ASTEROID_CULLING_SCALE_THRESHOLD = 1
 const DUST_CULLING_SCALE_THRESHOLD = 0.1
 const DUST_SIZE_MIN = 30
 const DUST_SIZE_MAX = 80
+
+const asteroidImageSize = 32
 
 const ASTEROID_TINTS = [
     "#8a7e72",
@@ -58,7 +60,7 @@ const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
 const tintedDustTextures = [] as (OffscreenCanvas | HTMLImageElement)[]
 let tintedTexturesReady = false
 
-function Colorize(image: HTMLImageElement, color: `#${string}`) {
+function Colorize(image: HTMLImageElement | OffscreenCanvas | ImageBitmap, color: `#${string}`) {
     const imageSize = image.width
 
     const color2 = color.replace("#", "")
@@ -94,7 +96,9 @@ async function buildTintedTextures() {
             const image = new Image()
             image.src = ASTEROID_TEXTURES[i]
             await image.decode()
-            tintedTextures.set(`${tint}-${i}`, Colorize(image, tint))
+            tintedTextures.set(`${tint}-${i}`, Colorize(await createImageBitmap(image, {
+                resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "pixelated"
+            }), tint))
         }
     }
 
@@ -131,6 +135,7 @@ export async function createAsteroidBelt({
 
     const beltArea = Math.PI * (outerRadius * outerRadius - innerRadius * innerRadius)
     const count = Math.max(ASTEROID_COUNT_MIN, Math.floor(beltArea * ASTEROID_AREA_DENSITY))
+    const dustCount = Math.max(50, Math.floor(beltArea * DUST_AREA_DENSITY))
     const mid = (innerRadius + outerRadius) / 2
     const half = (outerRadius - innerRadius) * RADIUS_SPREAD / 2
 
@@ -180,7 +185,7 @@ export async function createAsteroidBelt({
         engine.addEntity(asteroid, parent)
     }
 
-    for(let i = 0; i < DUST_COUNT; ++i) {
+    for(let i = 0; i < dustCount; ++i) {
         const radius = mid + (generateRandomNumber(0, 1) + generateRandomNumber(0, 1) - 1) * half
         const angle = generateRandomNumber(0, TWO_PI)
         const size = generateRandomNumber(DUST_SIZE_MIN, DUST_SIZE_MAX)

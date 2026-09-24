@@ -19,6 +19,7 @@ import { LabelComponent } from "@/engine/components/label"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
+// import raptorDradisUrl from "@/components/icons/raptorDradis.svg"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 
 export function createMarker(engine: Engine, { offset, color, radius, label, labelColor = "red", textSize = 18, shade = false, name, texture }: MapMarker) {
