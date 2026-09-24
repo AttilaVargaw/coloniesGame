@@ -29,7 +29,7 @@ const NEBULA_PALETTE = [
     "rgba(80, 60, 160, 0.06)",
     "rgba(40, 160, 160, 0.05)",
     "rgba(180, 40, 100, 0.05)",
-]
+] as const
 
 const nebulas: NebulaCloud[] = Array.from({ length: 10 }, () => ({
     x: (rng() - 0.5) * 240000,
@@ -43,12 +43,12 @@ export function drawNebulas(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.save()
     ctx.globalCompositeOperation = "screen"
 
-    for (const n of nebulas) {
+    for(const n of nebulas) {
         const projected = camera.project(n.x, n.y, n.z)
-        if (!projected) continue
+        if(!projected) continue
 
         const screenRadius = n.radius * projected.scale
-        if (screenRadius < 8) continue
+        if(screenRadius < 8) continue
 
         const gradient = ctx.createRadialGradient(
             projected.x, projected.y, 0,
