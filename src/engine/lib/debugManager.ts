@@ -5,7 +5,7 @@ export class DebugManager {
         showJumpGraph: false,
         drawOrbits: true,
         showCameraGizmo: true,
-        showFpsCounter: false
+        showFpsCounter: true
     }
 
     get(flag: DebugFlag): boolean {

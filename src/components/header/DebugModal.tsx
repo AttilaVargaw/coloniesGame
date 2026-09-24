@@ -27,7 +27,7 @@ export function DebugModal() {
         showJumpGraph: false,
         drawOrbits: true,
         showCameraGizmo: true,
-        showFpsCounter: false
+        showFpsCounter: true
     })
     const engine = useGameEngine()
 

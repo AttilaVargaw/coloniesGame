@@ -12,6 +12,14 @@ const mulberry32 = (seed: number) => {
 }
 
 const rng = mulberry32(42)
+const STAR_COLORS = [
+    "#ffffff",
+    "#fff8e7",
+    "#e7f0ff",
+    "#ffd2a1",
+    "#a1c2ff",
+    "#ffb4a2",
+]
 const createStarfield = (count: number) => {
     return Array.from({ length: count }, () => {
         const theta = rng() * Math.PI * 2
@@ -23,6 +31,7 @@ const createStarfield = (count: number) => {
             z: r * Math.cos(phi),
             r: 0.5 + rng() * 1.0,
             opacity: 0.3 + rng() * 0.6,
+            color: STAR_COLORS[Math.floor(rng() * STAR_COLORS.length)],
         }
     })
 }
@@ -31,10 +40,10 @@ const starfield = createStarfield(512)
 
 export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.save();
-    ctx.fillStyle = "#ffffff";
 
-    const buckets = new Map<number, { x: number; y: number; r: number; }[]>();
-    const glowBuckets = new Map<number, { x: number; y: number; r: number; }[]>();
+    const cores: { x: number; y: number; r: number; color: string; alpha: number }[] = []
+    const glow: { x: number; y: number; r: number; color: string; alpha: number }[] = []
+
     for(const s of starfield) {
         const projected = camera.project(s.x, s.y, s.z);
         if(!projected) {
@@ -42,32 +51,29 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         }
         const alpha = s.opacity * Math.min(1, projected.scale * 80);
         const radius = Math.max(0.5, Math.min(3, s.r * projected.scale * 200));
-        const bucket = Math.round(alpha * 10) / 10;
-
-        if(!buckets.has(bucket)) buckets.set(bucket, []);
-        buckets.get(bucket)!.push({ x: projected.x, y: projected.y, r: radius });
 
         if(alpha > 0.6 && radius > 1.5) {
             const glowAlpha = (alpha - 0.6) * 0.4;
             const glowRadius = radius * 4;
-            const glowBucket = Math.round(glowAlpha * 10) / 10;
-            if(!glowBuckets.has(glowBucket)) glowBuckets.set(glowBucket, []);
-            glowBuckets.get(glowBucket)!.push({ x: projected.x, y: projected.y, r: glowRadius });
+            glow.push({ x: projected.x, y: projected.y, r: glowRadius, color: s.color, alpha: glowAlpha });
+        }
+
+        cores.push({ x: projected.x, y: projected.y, r: radius, color: s.color, alpha })
+    }
+
+    const drawStar = (stars: { x: number; y: number; r: number; color: string; alpha: number }[]) => {
+        ctx.globalAlpha = 1
+        for(const star of stars) {
+            ctx.globalAlpha = star.alpha
+            ctx.fillStyle = star.color
+            ctx.beginPath()
+            ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
+            ctx.fill()
         }
     }
 
-    const drawBucket = (stars: { x: number; y: number; r: number; }[], alpha: number) => {
-        ctx.globalAlpha = alpha;
-        ctx.beginPath();
-        for(const star of stars) {
-            ctx.moveTo(star.x + star.r, star.y);
-            ctx.arc(star.x, star.y, star.r, 0, TWO_PI);
-        }
-        ctx.fill();
-    };
-
-    for(const [alpha, stars] of glowBuckets) drawBucket(stars, alpha);
-    for(const [alpha, stars] of buckets) drawBucket(stars, alpha);
+    drawStar(glow)
+    drawStar(cores)
 
     ctx.restore();
 }
