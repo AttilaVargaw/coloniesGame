@@ -87,26 +87,33 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
         if(texture) {
             ctx.save()
+
             ctx.translate(projected.x, projected.y)
             ctx.rotate(rect.rotation)
             ctx.drawImage(texture, -screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight)
 
             if(rect.texture?.tint) {
                 ctx.globalCompositeOperation = 'source-atop';
+                ctx.globalAlpha = 0.35;
                 ctx.fillStyle = rect.texture.tint;
                 ctx.fillRect(-screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight);
+                ctx.globalAlpha = 1.0;
             }
 
             ctx.restore()
         } else {
+            ctx.save()
+
             rect.setColor(ctx);
+
             ctx.fillRect(
                 x,
                 y,
                 screenWidth,
                 screenHeight
             )
-            rect.draw(ctx)
+
+            ctx.restore()
         }
     }
 }

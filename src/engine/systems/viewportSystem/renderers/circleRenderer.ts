@@ -71,6 +71,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
+        ctx.save()
         ctx.beginPath()
         if(circle.color.shade) {
             ctx.arc(center.x, center.y, screenRadius, 0, TWO_PI)
@@ -105,5 +106,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         if(circle.color.shade) {
             shadeCircle(ctx, center.x, center.y, screenRadius)
         }
+        ctx.restore()
     }
 }

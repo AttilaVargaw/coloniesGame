@@ -12,13 +12,4 @@ export class RenderableNode extends EntityNode {
         ctx.fillStyle = this.color.fill || "";
         ctx.strokeStyle = this.color.stroke || "";
     }
-
-    draw(ctx: CanvasRenderingContext2D) {
-        if(this.color.stroke) {
-            ctx.stroke();
-        }
-        if(this.color.fill) {
-            ctx.fill();
-        }
-    }
 }

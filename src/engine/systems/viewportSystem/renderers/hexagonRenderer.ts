@@ -42,7 +42,7 @@ export class HexagonRenderer extends BaseRenderer<HexagoneNode> {
             }
         }
         ctx.closePath();
-        shape.draw(ctx);
+        // shape.draw(ctx);
         ctx.restore();
     }
 }
