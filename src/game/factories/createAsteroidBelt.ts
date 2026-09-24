@@ -26,21 +26,78 @@ const ASTEROID_AREA_DENSITY = 0.5
 const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
-const DUST_COUNT = 800
-// const ASTEROID_TINTS = [
-//     "#8a7e72",
-//     "#a09888",
-//     "#78695e",
-//     "#9e9488",
-//     "#6e6258",
-//     "#b0a498",
-//     "#847868",
-//     "#a89880",
-//     "#706458",
-//     "#9a8c7a",
-// ]
+const DUST_COUNT = 600
 
-export function createAsteroidBelt({
+const ASTEROID_TINTS = [
+    "#8a7e72",
+    "#a09888",
+    "#78695e",
+    "#9e9488",
+    "#6e6258",
+    "#b0a498",
+    "#847868",
+    "#a89880",
+    "#706458",
+    "#9a8c7a",
+] as const
+
+const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
+let tintedTexturesReady = false
+
+function generateRandomNumber(from: number, to: number, integer: boolean) {
+    const value = Math.random() * (to - from) + from
+    return integer ? Math.floor(value) : value
+}
+
+function Colorize(image: HTMLImageElement, color: `#${string}`) {
+    const imageSize = image.width
+
+    const color2 = color.replace("#", "")
+    const r = parseInt(color2.substring(0, 2), 16) / 255
+    const g = parseInt(color2.substring(2, 4), 16) / 255
+    const b = parseInt(color2.substring(4, 6), 16) / 255
+
+    const offscreen = new OffscreenCanvas(imageSize, imageSize)
+    const ctx = offscreen.getContext("2d")
+
+    if (!ctx) {
+        throw "Something went wrong with the offset canvas"
+    }
+
+    ctx.drawImage(image, 0, 0)
+
+    const imageData = ctx.getImageData(0, 0, imageSize, imageSize)
+
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        imageData.data[i + 0] *= r
+        imageData.data[i + 1] *= g
+        imageData.data[i + 2] *= b
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    return offscreen
+}
+
+async function buildTintedTextures() {
+    for (const tint of ASTEROID_TINTS) {
+        for (let i = 0; i < ASTEROID_TEXTURES.length; ++i) {
+            const image = new Image()
+            image.src = ASTEROID_TEXTURES[i]
+            await image.decode()
+            tintedTextures.set(`${tint}-${i}`, Colorize(image, tint))
+        }
+    }
+    tintedTexturesReady = true
+}
+
+async function ensureTintedTextures() {
+    if (!tintedTexturesReady) {
+        await buildTintedTextures()
+    }
+}
+
+export async function createAsteroidBelt({
     innerRadius,
     outerRadius,
     parent,
@@ -52,21 +109,26 @@ export function createAsteroidBelt({
     parent: Entity
     engine: Engine
     parentMass: number
-}): void {
+}): Promise<void> {
+    await ensureTintedTextures()
+
     const beltArea = Math.PI * (outerRadius * outerRadius - innerRadius * innerRadius)
     const count = Math.max(ASTEROID_COUNT_MIN, Math.floor(beltArea * ASTEROID_AREA_DENSITY))
     const mid = (innerRadius + outerRadius) / 2
     const half = (outerRadius - innerRadius) * RADIUS_SPREAD / 2
 
-    for(let i = 0; i < count; ++i) {
+    for (let i = 0; i < count; ++i) {
         const radius = mid + (Math.random() + Math.random() - 1) * half
         const angle = Math.random() * TWO_PI
         const sizeRatio = ASTEROID_SIZE_MAX / ASTEROID_SIZE_MIN
         const size = ASTEROID_SIZE_MIN * Math.pow(sizeRatio, Math.random() * 0.65)
 
-        const textureComponent = new TextureComponent(ASTEROID_TEXTURES[Math.floor(Math.random() * ASTEROID_TEXTURES.length)])
+        const textureComponent = new TextureComponent(undefined, undefined,
+            tintedTextures.get(
+                `${ASTEROID_TINTS[generateRandomNumber(0, ASTEROID_TINTS.length, true)]}-${generateRandomNumber(0, ASTEROID_TEXTURES.length, true)}`
+            )
+        )
         textureComponent.rotation = Math.random() * TWO_PI
-        //textureComponent.minimumScreenSize = 20
 
         const eccentricity = Math.random() * MAX_ECCENTRICITY
         const inclination = (Math.random() - 0.5) * 2 * MAX_INCLINATION
@@ -75,7 +137,6 @@ export function createAsteroidBelt({
 
         const asteroid = engine.createEntity()
         const asteroidBeltComponent = new AsteroidBeltComponent()
-        //asteroidBeltComponent.cullingScaleThreshold = 20
 
         applyComponents(
             asteroid,
@@ -100,16 +161,14 @@ export function createAsteroidBelt({
         engine.addEntity(asteroid, parent)
     }
 
-    for(let i = 0; i < DUST_COUNT; ++i) {
+    for (let i = 0; i < DUST_COUNT; ++i) {
         const radius = mid + (Math.random() + Math.random() - 1) * half
         const angle = Math.random() * TWO_PI
-        const size = 20 + Math.random() * 20
+        const size = 20 + Math.random() * 40
 
         const dust = engine.createEntity()
         const textureComponent = new TextureComponent(dust1)
-        //textureComponent.minimumScreenSize = 2
         const dustBeltComponent = new AsteroidBeltComponent()
-        //dustBeltComponent.cullingScaleThreshold = 2
 
         applyComponents(
             dust,

@@ -42,10 +42,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         return jumpGraphSystem.findJumpPath(start, end)
     }
 
-    init() {
+    async init() {
         if(!this.engine) return this
 
-        return init(this.engine)
+        await init(this.engine)
+
+        return this
     }
 
     clear() {

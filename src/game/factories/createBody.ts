@@ -31,7 +31,7 @@ export function resolveMass(blueprint: BodyBlueprint): number {
     return massByArchetype[blueprint.archetype]
 }
 
-export function createBody({
+export async function createBody({
     archetype,
     orbit,
     vessels,
@@ -42,8 +42,7 @@ export function createBody({
     asteroidBelts,
     name,
     mass: explicitMass,
-    //navigationalPoint,
-}: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Entity {
+}: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
     const angle = orbit.angle ?? Math.random() * TWO_PI
     const clickSize = marker.radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
@@ -96,7 +95,7 @@ export function createBody({
             }
 
             if(bodies.length === 1) {
-                const createdBody = createBody(bodies[0], body, engine, mass)
+                const createdBody = await createBody(bodies[0], body, engine, mass)
 
                 satellites?.forEach(sat => {
                     createBody(sat, createdBody, engine, resolveMass(bodies[0]))
@@ -106,7 +105,7 @@ export function createBody({
                     throw new Error("orbit required for multi-body system")
                 }
 
-                createBarycentre(engine, body, bodies, orbit, satellites, angle2, mass)
+                await createBarycentre(engine, body, bodies, orbit, satellites, angle2, mass)
             }
         }
     }
@@ -143,7 +142,7 @@ export function createBody({
 
     if(asteroidBelts?.length) {
         for(const { innerRadius, outerRadius } of asteroidBelts) {
-            createAsteroidBelt({
+            await createAsteroidBelt({
                 innerRadius,
                 outerRadius,
                 parent: body,

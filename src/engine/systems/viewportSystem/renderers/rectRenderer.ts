@@ -45,7 +45,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return false
     }
 
-    private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | undefined {
+    private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas | undefined {
         if(!texture) {
             return undefined;
         }

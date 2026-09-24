@@ -16,13 +16,17 @@ function App() {
       return
     }
 
-    const gameInstance = new Game(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
+    let gameInstance: Game | null = null
 
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setGame(gameInstance)
+    Game.create(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
+      .then(game => {
+        gameInstance = game
+        setGame(game)
+      })
+      .catch(console.error)
 
     return () => {
-      gameInstance.destruct()
+      gameInstance?.destruct()
       setGame(null)
     }
   }, [])

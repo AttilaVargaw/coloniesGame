@@ -25,7 +25,7 @@ function makeMoonOrbit(
     }
 }
 
-export function createBarycentre(
+export async function createBarycentre(
     engine: Engine,
     parent: Entity,
     bodies: BodyBlueprint[],
@@ -33,7 +33,7 @@ export function createBarycentre(
     satellites?: BodyBlueprint[],
     dAngle = 0,
     parentMass = 0
-): Entity {
+): Promise<Entity> {
     const masses = bodies.map(resolveMass)
     const totalMass = masses.reduce((sum, m) => sum + m, 0)
     const totalSeparation = bodies.reduce((sum, body) => sum + (body.orbit?.radius ?? 0), 0)
@@ -57,7 +57,7 @@ export function createBarycentre(
 
     for(let i = 0; i < bodies.length; i += 1) {
         const bodyAngle = dAngle + (TWO_PI / bodies.length) * i
-        createBody(
+        await createBody(
             { ...bodies[i], orbit: makeMoonOrbit(bodies[i], bodyAngle, commonAngularSpeed) },
             barycentre,
             engine,
@@ -65,9 +65,9 @@ export function createBarycentre(
         )
     }
 
-    satellites?.forEach((satellite) => {
-        createBody(satellite, barycentre, engine, totalMass)
-    })
+    for(const satellite of satellites ?? []) {
+        await createBody(satellite, barycentre, engine, totalMass)
+    }
 
     return barycentre
 }

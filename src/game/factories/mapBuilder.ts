@@ -6,7 +6,7 @@ import { applyComponents } from "./helpers";
 import { createBody } from "./createBody";
 import { massByArchetype } from "./helpers";
 
-export function init(engine: Engine) {
+export async function init(engine: Engine) {
     const viewportSystem = engine.getSystem(ViewportSystem)
 
     viewportSystem.sortOnEveryEntityAddition = false
@@ -17,7 +17,7 @@ export function init(engine: Engine) {
         new PositionComponent(0, 0, 0),
     )
 
-    createBody(MapCreationData, root, engine, massByArchetype["sol"])
+    await createBody(MapCreationData, root, engine, massByArchetype["sol"])
 
     viewportSystem.sortOnEveryEntityAddition = true
 

@@ -30,11 +30,11 @@ const homeworldBlueprint = (overrides: Partial<BodyBlueprint> = {}): BodyBluepri
 })
 
 describe("createBody", () => {
-    it("creates a body entity with base components", () => {
+    it("creates a body entity with base components", async () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
-        const body = createBody(bodyBlueprint(), parent, engine, 0)
+        const body = await createBody(bodyBlueprint(), parent, engine, 0)
 
         expect(body).toBeDefined()
         expect(body.getComponent(PositionComponent)).toBeDefined()
@@ -46,11 +46,11 @@ describe("createBody", () => {
         expect(body.getComponent(MassComponent)?.mass).toBe(1)
     })
 
-    it("adds orbit component and sets initial position", () => {
+    it("adds orbit component and sets initial position", async () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("planet")
 
-        const body = createBody(bodyBlueprint({
+        const body = await createBody(bodyBlueprint({
             orbit: { radius: 100, angle: 0, eccentricity: 0.1 },
         }), parent, engine, 0)
 
@@ -65,7 +65,7 @@ describe("createBody", () => {
         expect(pos.y).toBeCloseTo(0)
     })
 
-    it("recursively creates systems inside the body", () => {
+    it("recursively creates systems inside the body", async () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
@@ -74,7 +74,7 @@ describe("createBody", () => {
             orbit: { radius: 2, angle: 0 },
         })
 
-        const body = createBody(bodyBlueprint({
+        const body = await createBody(bodyBlueprint({
             systems: [{ bodies: [child] }],
             orbit: { radius: 100, angle: 0 },
         }), parent, engine, 0)
@@ -87,11 +87,11 @@ describe("createBody", () => {
         expect(moon).toBeDefined()
     })
 
-    it("creates vessels attached to the body", () => {
+    it("creates vessels attached to the body", async () => {
         const engine = new World() as unknown as Engine
         const planet = engine.createEntity("planet")
 
-        const body = createBody(bodyBlueprint({
+        const body = await createBody(bodyBlueprint({
             vessels: [{ marker: { color: "red", radius: 4, label: "Ship1" }, orbit: { radius: 50, angle: 0 } }],
             orbit: { radius: 100, angle: 0 },
         }), planet, engine, 0)
@@ -106,44 +106,27 @@ describe("createBody", () => {
 })
 
 describe("createHomeworld", () => {
-    it("adds interactive components when tribe is present", () => {
+    it("adds interactive components when tribe is present", async () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
-        const colony = createBody(homeworldBlueprint(), parent, engine, 0)
+        const colony = await createBody(homeworldBlueprint(), parent, engine, 0)
 
         expect(colony.getComponent(SelectableComponent)).toBeDefined()
         expect(colony.getComponent(ClickableComponent)).toBeDefined()
         expect(colony.getComponent(IndustryComponent)).toBeDefined()
     })
 
-    it("uses population from tribe to build IndustryComponent", () => {
+    it("uses population from tribe to build IndustryComponent", async () => {
         const engine = new World() as unknown as Engine
         const parent = engine.createEntity("parent")
 
         const population = 5000
-        const colony = createBody(homeworldBlueprint({
+        const colony = await createBody(homeworldBlueprint({
             population,
         }), parent, engine, 0)
 
         const industry = colony.getComponent(IndustryComponent)
         expect(industry).toBeDefined()
-        // expect(industry!.population).toStrictEqual({
-        //     "armyMen": 15,
-        //     "clergy": 30,
-        //     "clerks": 600,
-        //     "farmer": 30,
-        //     "healtcarePersonal": 240,
-        //     "marines": 15,
-        //     "miner": 60,
-        //     "navalReservist": 15,
-        //     "policeMen": 30,
-        //     "retired": 1000,
-        //     "scientist": 180,
-        //     "serviceWorker": 630,
-        //     "student": 1000,
-        //     "teacher": 255,
-        //     "worker": 900,
-        // })
     })
 })

@@ -1,5 +1,3 @@
-
-
 import { DateComponent } from "@engine/components/dateComponent"
 import { TimeScaleComponent } from "@engine/components/timeScaleComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
@@ -33,10 +31,12 @@ import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 
 export class Game {
-    readonly engine: World = new World
+    readonly engine: World
     private gameLoopId?: number
 
-    constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
+    private constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
+        this.engine = new World()
+
         const firstStar = { x: 0, y: 0, z: 0 }
 
         const camera = new Camera(renderingContext, {
@@ -91,13 +91,9 @@ export class Game {
 
         viewportEntity.addComponent(new CameraFollowComponent())
 
-        this.engine.getSystem(MapSystem).init()
         this.engine.getSystem(ViewportSystem).init()
 
         this.engine.dispatchEvent(new DayPassedEvent(null))
-        // this.engine.dispatchEvent(new SelectionChangedEvent({ data: this.engine.getAllEntities().find(a => a.id === "Helios Alpha")!, type: 'star' }))
-
-        // console.log(this.engine.getAllEntities().find(a => a.id === "Helios Alpha"))
 
         let previousTime = 0.0
         let firstUpdate = true
@@ -122,6 +118,12 @@ export class Game {
         }
 
         update(previousTime)
+    }
+
+    static async create(renderingContext: CanvasRenderingContext2D, map: BodyBlueprint) {
+        const game = new Game(renderingContext, map)
+        await game.engine.getSystem(MapSystem).init()
+        return game
     }
 
     destruct(): void {
