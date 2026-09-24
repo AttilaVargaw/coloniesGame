@@ -119,7 +119,7 @@ export class Game {
 
     static async create(renderingContext: CanvasRenderingContext2D, map: BodyBlueprint) {
         const game = new Game(renderingContext, map)
-        await game.engine.getSystem(MapSystem).init()
+        game.engine.getSystem(MapSystem).init().catch(console.error)
         return game
     }
 
