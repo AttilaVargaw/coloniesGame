@@ -18,6 +18,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private readonly eventHandlers: Set<Entity> = new Set()
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
+    private fpsFrameCount = 0
+    private fpsLastTime = performance.now()
+    private currentFps = 0
 
     get isDragging() {
         return this.inputHandler.isDragging
@@ -54,6 +57,15 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         this.inputHandler.update(dt)
 
+        this.fpsFrameCount++
+        const now = performance.now()
+        const elapsed = now - this.fpsLastTime
+        if (elapsed >= 500) {
+            this.currentFps = Math.round((this.fpsFrameCount * 1000) / elapsed)
+            this.fpsFrameCount = 0
+            this.fpsLastTime = now
+        }
+
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
             this.clear(ctx)
@@ -74,7 +86,23 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if(this.engine.getDebugManager().get("showJumpGraph")) {
                 this.drawJumpGraph(ctx)
             }
+
+            if(this.engine.getDebugManager().get("showFpsCounter")) {
+                this.drawFpsCounter(ctx)
+            }
         }
+    }
+
+    private drawFpsCounter(ctx: CanvasRenderingContext2D) {
+        ctx.save()
+        ctx.font = "16px monospace"
+        ctx.fillStyle = "#0f0"
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
+        ctx.shadowBlur = 4
+        ctx.textAlign = "left"
+        ctx.textBaseline = "top"
+        ctx.fillText(`FPS: ${this.currentFps}`, 10, 10)
+        ctx.restore()
     }
 
     private drawJumpGraph(ctx: CanvasRenderingContext2D) {

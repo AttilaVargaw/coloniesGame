@@ -18,6 +18,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
     { flag: "drawOrbits", label: "Draw Orbits" },
     { flag: "showCameraGizmo", label: "Show Camera Gizmo" },
+    { flag: "showFpsCounter", label: "Show FPS Counter" },
 ]
 
 export function DebugModal() {
@@ -25,7 +26,8 @@ export function DebugModal() {
     const [flags, setFlags] = useState<Record<DebugFlag, boolean>>({
         showJumpGraph: false,
         drawOrbits: true,
-        showCameraGizmo: true
+        showCameraGizmo: true,
+        showFpsCounter: false
     })
     const engine = useGameEngine()
 
