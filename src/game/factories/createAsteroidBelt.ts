@@ -66,6 +66,7 @@ export function createAsteroidBelt({
 
         const textureComponent = new TextureComponent(ASTEROID_TEXTURES[Math.floor(Math.random() * ASTEROID_TEXTURES.length)])
         textureComponent.rotation = Math.random() * TWO_PI
+        //textureComponent.minimumScreenSize = 20
 
         const eccentricity = Math.random() * MAX_ECCENTRICITY
         const inclination = (Math.random() - 0.5) * 2 * MAX_INCLINATION
@@ -73,10 +74,12 @@ export function createAsteroidBelt({
         const spinSpeed = Math.random() * Math.PI / 2
 
         const asteroid = engine.createEntity()
+        const asteroidBeltComponent = new AsteroidBeltComponent()
+        //asteroidBeltComponent.cullingScaleThreshold = 20
 
         applyComponents(
             asteroid,
-            new AsteroidBeltComponent(),
+            asteroidBeltComponent,
             new RotationComponent(textureComponent.rotation, spinSpeed),
             new OrbitComponent(
                 parent.id,
@@ -104,10 +107,13 @@ export function createAsteroidBelt({
 
         const dust = engine.createEntity()
         const textureComponent = new TextureComponent(dust1)
+        //textureComponent.minimumScreenSize = 2
+        const dustBeltComponent = new AsteroidBeltComponent()
+        //dustBeltComponent.cullingScaleThreshold = 2
 
         applyComponents(
             dust,
-            new AsteroidBeltComponent(),
+            dustBeltComponent,
             new OrbitComponent(
                 parent.id,
                 radius * UNIVERSE_SCALE,

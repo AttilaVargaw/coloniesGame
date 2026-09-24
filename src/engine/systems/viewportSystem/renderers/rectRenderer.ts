@@ -5,6 +5,8 @@ import { TextureComponent } from "../../../components/textureComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { RectNode } from "./rectNode";
 import { BaseRenderer } from "./baseRenderer";
+import { ProjectedPoint } from "@/lib/camera";
+import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();
@@ -23,6 +25,24 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
     protected getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
+    }
+
+    protected shouldSkipProjection(node: RectNode, cameraScale: number): boolean {
+        const belt = node.entity.getComponent(AsteroidBeltComponent)
+        if (belt?.cullingScaleThreshold !== undefined && cameraScale < belt.cullingScaleThreshold) {
+            return true
+        }
+        return false
+    }
+
+    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: [number, number, number]): boolean {
+        if (node.texture?.minimumScreenSize !== undefined && node.size) {
+            const worldSize = Math.max(node.size.width, node.size.height)
+            if (worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {
+                return true
+            }
+        }
+        return false
     }
 
     private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | undefined {

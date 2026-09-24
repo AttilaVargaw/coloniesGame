@@ -79,7 +79,14 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         this.projectedCache.clear()
         const entries: N[] = []
 
+        const f = camera.cssHeight / (2 * Math.tan(camera.fieldOfView / 2))
+        const cameraScale = f / camera.distance
+
         for (const node of this.nodes) {
+            if (this.shouldSkipProjection(node, cameraScale)) {
+                continue
+            }
+
             const worldPos = this.getWorldPosition(node)
             const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
             if (!projected) {
@@ -95,6 +102,10 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
                 projected.y + scaledMargin < bounds.top ||
                 projected.y - scaledMargin > bounds.bottom
             ) {
+                continue
+            }
+
+            if (this.shouldCullNode(node, projected, worldPos)) {
                 continue
             }
 
@@ -135,6 +146,14 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     protected getCullMargin(_node: N): number {
         return 0
+    }
+
+    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: [number, number, number]): boolean {
+        return false
+    }
+
+    protected shouldSkipProjection(_node: N, _cameraScale: number): boolean {
+        return false
     }
 
     protected getProjected(node: N): { worldPos: [number, number, number]; projected: ProjectedPoint } {

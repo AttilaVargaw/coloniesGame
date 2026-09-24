@@ -7,6 +7,7 @@ export class TextureComponent extends EntityComponent {
         public texture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap,
         public tint?: string,
         public rotation?: number,
+        public minimumScreenSize?: number,
     ) {
         super();
     }
