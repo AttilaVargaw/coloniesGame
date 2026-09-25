@@ -55,3 +55,16 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
 
     ctx.restore();
 }
+
+export function drawCameraTarget(ctx: CanvasRenderingContext2D, camera: Camera) {
+    const projected = camera.project(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2])
+    if(!projected) return
+
+    ctx.save()
+    ctx.strokeStyle = "rgba(255, 255, 0, 0.9)"
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(projected.x, projected.y, 6, 0, TWO_PI)
+    ctx.stroke()
+    ctx.restore()
+}

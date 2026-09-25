@@ -1,11 +1,12 @@
-export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter"
+export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget"
 
 export class DebugManager {
     private readonly flags: Record<DebugFlag, boolean> = {
         showJumpGraph: false,
         drawOrbits: true,
         showCameraGizmo: true,
-        showFpsCounter: true
+        showFpsCounter: true,
+        showCameraTarget: false,
     }
 
     get(flag: DebugFlag): boolean {

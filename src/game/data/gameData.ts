@@ -18,7 +18,7 @@ export const MapCreationData = {
     archetype: "sol",
     name: "root",
     radius: 0,
-    orbit: { radius: 0, angle: 0, eccentricity: 0 },
+    orbit: { radius: 0, angle: 0, eccentricity: 0, inclination: 0 },
     color: "alpha",
     vessels: [],
     systems: [{

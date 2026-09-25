@@ -19,6 +19,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "drawOrbits", label: "Draw Orbits" },
     { flag: "showCameraGizmo", label: "Show Camera Gizmo" },
     { flag: "showFpsCounter", label: "Show FPS Counter" },
+    { flag: "showCameraTarget", label: "Show Camera Target" },
 ]
 
 export function DebugModal() {
@@ -27,7 +28,8 @@ export function DebugModal() {
         showJumpGraph: false,
         drawOrbits: true,
         showCameraGizmo: true,
-        showFpsCounter: true
+        showFpsCounter: true,
+        showCameraTarget: false,
     })
     const engine = useGameEngine()
 

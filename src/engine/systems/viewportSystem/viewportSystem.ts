@@ -14,7 +14,7 @@ import Camera from "@/lib/camera";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
-import { drawCameraGizmo } from "./drawCameraGizmo";
+import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
@@ -193,6 +193,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             if(this.engine.getDebugManager().get("showCameraGizmo")) {
                 drawCameraGizmo(ctx, camera)
+            }
+
+            if(this.engine.getDebugManager().get("showCameraTarget")) {
+                drawCameraTarget(ctx, camera)
             }
 
             if(this.engine.getDebugManager().get("drawOrbits")) {
