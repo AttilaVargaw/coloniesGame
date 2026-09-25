@@ -49,7 +49,7 @@ export async function createBody({
     const clickSquare = { width: clickSize, height: clickSize }
     const mass = explicitMass ?? massByArchetype[archetype]
 
-    const body = createMarker(engine, { shade: name === "root" ? false : true, ...marker })
+    const body = createMarker(engine, { shade: name !== "root", ...marker })
 
     if(name !== "root") {
         const components: EntityComponent[] = [
@@ -121,7 +121,7 @@ export async function createBody({
         applyComponents(body,
             new SelectableComponent(clickSize, "red"),
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
-            new IndustryComponent(createStarterIndustry(population), createStarterWarehouse(population), createStarterPopulation(population))
+            new IndustryComponent(createStarterIndustry(population), createStarterWarehouse(population), createStarterPopulation(population), "standard")
         )
     } else {
         applyComponents(body,

@@ -11,6 +11,34 @@ import { PositionComponent } from "@engine/components/position";
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph";
 import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
 
+export function findPath(start: Entity, end: Entity): Entity[] {
+    const startPath = start.getComponent(PathComponent)
+    const endPath = end.getComponent(PathComponent)
+
+    if(!startPath || !endPath) {
+        return []
+    }
+
+    const endPos = end.getComponent(PositionComponent)
+    const h = (node: Entity): number => {
+        const pos = node.getComponent(PositionComponent)
+        if(!pos || !endPos) return Infinity
+        return Math.hypot(pos.x - endPos.x, pos.y - endPos.y) / 100
+    }
+
+    return astar({
+        start,
+        end,
+        getNeighbors: (node) => {
+            const path = node.getComponent(PathComponent)
+            if(!path) return []
+            return path.connections.map((c) => c.entity).filter((e): e is Entity => e != null)
+        },
+        getCost: () => 1,
+        heuristic: h,
+    })
+}
+
 export class MapSystem extends SystemWithNodes<PathNode> {
     private graphEntity?: Entity
     private graph?: JumpGraphComponent
@@ -47,33 +75,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         return this
     }
 
-    findPath(start: Entity, end: Entity): Entity[] {
-        const startPath = start.getComponent(PathComponent)
-        const endPath = end.getComponent(PathComponent)
 
-        if(!startPath || !endPath) {
-            return []
-        }
-
-        const endPos = end.getComponent(PositionComponent)
-        const h = (node: Entity): number => {
-            const pos = node.getComponent(PositionComponent)
-            if(!pos || !endPos) return Infinity
-            return Math.hypot(pos.x - endPos.x, pos.y - endPos.y) / 100
-        }
-
-        return astar({
-            start,
-            end,
-            getNeighbors: (node) => {
-                const path = node.getComponent(PathComponent)
-                if(!path) return []
-                return path.connections.map((c) => c.entity).filter((e): e is Entity => e != null)
-            },
-            getCost: () => 1,
-            heuristic: h,
-        })
-    }
 
     getJumpGraph(): JumpGraphComponent | undefined {
         return this.graph

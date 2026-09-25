@@ -1,6 +1,5 @@
 export const UNIVERSE_SCALE = 20
 
-export const STAR_RADIUS = 20
 export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30
 
@@ -24,7 +23,7 @@ export const studentRatio = 0.2
 export const MAX_SOLAR_SYSTEM_DISTNACE = 100 * UNIVERSE_SCALE
 export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
-export const LUNAR_UNIT = 1 / 389 * SOLAR_UNIT * 10
+export const LUNAR_UNIT = 1 / 389 * SOLAR_UNIT * 10
 
 export const STAR_SIZE = 30
 export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const
@@ -44,3 +43,12 @@ export const JUMP_GRAPH_MAX_DISTANCE = 7000
 export const JUMP_GRAPH_MIN_DISTANCE = 1000
 export const DEBUG_VISUALIZE_JUMP_GRAPH = true
 export const DEBUG_VISUALIZE_PATHS = true
+
+export const ColonyType = {
+    standard: "standard",
+    asteroid: "asteroid",
+    moon: "moon",
+    orbital: "orbital",
+} as const
+
+export type ColonyType = typeof ColonyType[keyof typeof ColonyType]

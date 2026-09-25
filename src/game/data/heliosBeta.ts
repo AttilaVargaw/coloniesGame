@@ -13,13 +13,13 @@ export const solarisBeta = {
     systems: [{
         bodies: [{
             archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas"
-        },
+        }
         ]
     },
-        , {
+    {
         bodies: [{
             archetype: "mercury", marker: { color: "#8f742d", radius: 8, label: "Troy" }, orbit: { radius: 0.3 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0 }, name: "Troy"
-        },
+        }
         ]
     },
     {

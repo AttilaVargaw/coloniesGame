@@ -1,34 +1,38 @@
-let ms = 0
 
 export const dayMs = 1000 * 60 * 60 * 24
 export const rDayMs = 1 / dayMs
 
-const monthsList: { name: string; days: number; ms: number }[] = []
-monthsList.push({ name: "Martius", days: 31, ms })
-ms += dayMs * 31
-monthsList.push({ name: "Aprilis", days: 30, ms })
-ms += dayMs * 30
-monthsList.push({ name: "Maius", days: 31, ms })
-ms += dayMs * 31
-monthsList.push({ name: "Iunius", days: 30, ms })
-ms += dayMs * 30
-monthsList.push({ name: "Quntilis", days: 31, ms })
-ms += dayMs * 31
-monthsList.push({ name: "Sextilis", days: 30, ms })
-ms += dayMs * 30
-monthsList.push({ name: "September", days: 30, ms })
-ms += dayMs * 30
-monthsList.push({ name: "October", days: 31, ms })
-ms += dayMs * 31
-monthsList.push({ name: "November", days: 30, ms })
-ms += dayMs * 30
-monthsList.push({ name: "December", days: 30, ms })
+let months: ReadonlyMap<number, { name: string; days: number; ms: number }>
+let monthsArr: { name: string; days: number; ms: number }[]
+let yearLength: number
 
-export const months = new Map(monthsList.map((m, i) => [i, m])) as ReadonlyMap<number, { name: string; days: number; ms: number }>
+(function () {
+    let ms = 0
+    const monthsList: { name: string; days: number; ms: number }[] = []
+    monthsList.push({ name: "Martius", days: 31, ms })
+    ms += dayMs * 31
+    monthsList.push({ name: "Aprilis", days: 30, ms })
+    ms += dayMs * 30
+    monthsList.push({ name: "Maius", days: 31, ms })
+    ms += dayMs * 31
+    monthsList.push({ name: "Iunius", days: 30, ms })
+    ms += dayMs * 30
+    monthsList.push({ name: "Quntilis", days: 31, ms })
+    ms += dayMs * 31
+    monthsList.push({ name: "Sextilis", days: 30, ms })
+    ms += dayMs * 30
+    monthsList.push({ name: "September", days: 30, ms })
+    ms += dayMs * 30
+    monthsList.push({ name: "October", days: 31, ms })
+    ms += dayMs * 31
+    monthsList.push({ name: "November", days: 30, ms })
+    ms += dayMs * 30
+    monthsList.push({ name: "December", days: 30, ms })
 
-const monthsArr = [...months.values()]
-
-export const yearLength = monthsArr.reduce((a, b) => a + b.days, 0) * dayMs
+    months = new Map(monthsList.map((m, i) => [i, m])) as ReadonlyMap<number, { name: string; days: number; ms: number }>
+    monthsArr = [...months.values()]
+    yearLength = monthsArr.reduce((a, b) => a + b.days, 0) * dayMs
+})()
 
 function getYear(ms: number) {
     return ms / yearLength

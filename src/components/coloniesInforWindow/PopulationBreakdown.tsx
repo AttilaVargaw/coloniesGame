@@ -22,7 +22,6 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
     const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
     const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
 
-
     const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;
 
     const totalIncome = Object.entries(industry.population).reduce((sum, [key, value]) => {

@@ -145,13 +145,13 @@ function Calendar({
           )
         },
         Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === "left") {
+          if(orientation === "left") {
             return (
               <ChevronLeftIcon className={cn("size-4", className)} {...props} />
             )
           }
 
-          if (orientation === "right") {
+          if(orientation === "right") {
             return (
               <ChevronRightIcon className={cn("size-4", className)} {...props} />
             )
@@ -191,7 +191,7 @@ function CalendarDayButton({
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {
-    if (modifiers.focused) ref.current?.focus()
+    if(modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
   return (

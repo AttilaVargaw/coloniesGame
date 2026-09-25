@@ -1,9 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": ["src/game/systems/system.ts"],
+  "entry": ["src/main.tsx", "src/game/game.ts", "src/engine/core/world.ts"],
   "project": ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.test.ts", "!src/**/*.spec.ts"],
   "ignoreDependencies": [
-    "camera",
     "@fontsource-variable/geist",
     "tw-animate-css"
   ]

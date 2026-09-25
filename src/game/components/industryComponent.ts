@@ -6,6 +6,7 @@ import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { createStarterSectorWealth, createStarterSectorCapital } from "../factories/createStarterIndustry";
 import type { SectorResult } from "../systems/generateIndustrialSector";
+import { ColonyType } from "../constants";
 
 export type BuildOrder = {
     id: number
@@ -42,6 +43,7 @@ export class IndustryComponent extends EntityComponent {
         public sectors: IndustrialSectors,
         public readonly goods: Goods,
         public readonly population: Population,
+        public colonyType: ColonyType,
     ) {
         super()
 

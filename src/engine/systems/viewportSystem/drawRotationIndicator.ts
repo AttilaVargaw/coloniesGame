@@ -1,6 +1,6 @@
 import Camera from "@/lib/camera";
 
-export const rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
+const rotationIndicatorColor = "rgba(255, 255, 255, 0.2)";
 
 export function drawRotationIndicator(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.save();

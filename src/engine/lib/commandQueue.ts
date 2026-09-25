@@ -1,12 +1,10 @@
 
-export type CommandHandler = (data: unknown) => void
-
 export type QueueOptions<Data> = {
     capacity?: number
     onOverflow?: (dropped: Data) => void
 }
 
- 
+
 export class Queue<Data = any> {
     private readonly queue: Data[] = []
     private readonly capacity: number

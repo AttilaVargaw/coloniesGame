@@ -4,14 +4,12 @@ import { DialogContent, DialogTitle, Dialog, DialogHeader, DialogFooter } from "
 import { IndustryComponent } from "@game/components/industryComponent";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
-import { ReactNode, useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
 import { ToggleGroup, ToggleGroupItem, } from "../ui/toggle-group";
-import { WarehouseBreakdown } from "./WarehouseBreakdown";
-import { PopulationBreakdown } from "./PopulationBreakdown";
-import { IndustryBreakdown } from "./IndustryBreakdown";
+import { DialogInner } from "./DialogInner";
 
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
@@ -76,18 +74,5 @@ export function ColoniesInforWindow() {
             </DialogFooter>
         </DialogContent>
     </Dialog >
-}
-
-function DialogInner(industry: IndustryComponent | null, page: string, entity?: Entity): ReactNode {
-    if(!industry) return <></>;
-
-    switch(page) {
-        case "population":
-            return <PopulationBreakdown industry={industry} />;
-        case "warehouse":
-            return <WarehouseBreakdown industry={industry} />;
-        case "industry":
-            return <IndustryBreakdown industry={industry} entity={entity!} />;
-    }
 }
 

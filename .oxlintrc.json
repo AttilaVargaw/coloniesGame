@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript"],
+  "plugins": [
+    "react",
+    "typescript"
+  ],
   "categories": {
     "correctness": "warn",
     "suspicious": "warn",
@@ -20,10 +23,23 @@
   },
   "overrides": [
     {
-      "files": ["**/*.ts", "**/*.tsx"],
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
       "rules": {
+        "typescript/no-non-null-assertion": "allow",
+        "no-underscore-dangle": "allow",
+        "react/jsx-filename-extension": "off",
+        "react/jsx-no-literals": "off",
+        "react/forbid-component-props": "allow",
+        "react/button-has-type": "allow",
+        "typescript/explicit-function-return-type": "allow",
+        "typescript/explicit-member-accessibility": "allow",
+        "no-plusplus": "allow",
         "react/react-in-jsx-scope": "off",
-        
+        "typescript/explicit-module-boundary-types": "off",
+        "no-bitwise": "allow",
         "no-unused-vars": [
           "error",
           {
@@ -31,6 +47,33 @@
             "caughtErrorsIgnorePattern": "^_"
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "src/components/ui/**/*.tsx"
+      ],
+      "rules": {
+        "react/jsx-filename-extension": "off",
+        "react/no-multi-comp": "off",
+        "react/forbid-component-props": "off",
+        "react/jsx-no-literals": "off",
+        "react/button-has-type": "off",
+        "react/only-export-components": "off",
+        "react/no-unstable-nested-components": "off",
+        "react/set-state-in-effect": "off",
+        "react/no-danger": "off",
+        "typescript/explicit-function-return-type": "off",
+        "typescript/explicit-module-boundary-types": "off",
+        "typescript/no-non-null-assertion": "off",
+        "no-unused-vars": "off",
+        "no-use-before-define": "off",
+        "no-undefined": "off",
+        "no-shadow": "off",
+        "no-underscore-dangle": "off",
+        "no-param-reassign": "off",
+        "complexity": "off",
+        "no-eq-null": "off"
       }
     }
   ]

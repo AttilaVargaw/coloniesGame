@@ -2,7 +2,7 @@ import { Entity } from "@engine/entities/entity"
 import { SystemWithNodes } from "@game/systems/system"
 import { TargetableNode } from "../../engine/systems/targetNode"
 import { TargetableComponent } from "@/engine/components/targetableComponent"
-import { MapSystem } from "./mapSystem"
+import { findPath, MapSystem } from "./mapSystem"
 import { JumpDriveComponent } from "@/game/components/vessel"
 import { setShipPath, clearShipPath } from "@/game/systems/moveSystem"
 import { TargetChangedEvent } from "@/engine/lib/events"
@@ -58,23 +58,23 @@ export class TargetSystem extends SystemWithNodes<TargetableNode> {
     }
 
     private applyTarget(ship: Entity, target: Entity): JumpDriveComponent | undefined {
-        if (!this.engine) return undefined
+        if(!this.engine) return undefined
 
         const mapSystem = this.engine.getSystem(MapSystem)
-        if (!mapSystem) return undefined
+        if(!mapSystem) return undefined
 
         const jumpPath = mapSystem.findJumpPath(ship, target)
 
-        if (jumpPath && jumpPath.length > 1) {
+        if(jumpPath && jumpPath.length > 1) {
             setShipPath(ship, jumpPath)
             const drive = ship.getComponent(JumpDriveComponent)
             return drive
         }
 
         const selectionSceneNode = this.engine.getSceneNode(ship)
-        if (!selectionSceneNode?.parent?.entity) return undefined
+        if(!selectionSceneNode?.parent?.entity) return undefined
 
-        const path = mapSystem.findPath(selectionSceneNode.parent.entity, target)
+        const path = findPath(selectionSceneNode.parent.entity, target)
 
         if(path && path.length > 1) {
             setShipPath(ship, path)

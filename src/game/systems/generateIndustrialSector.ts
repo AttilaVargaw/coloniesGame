@@ -1,4 +1,3 @@
-import { IndustrialSectors } from "../components/Factories";
 import { Goods, } from "../data/Goods";
 import { Population, } from "../data/Population";
 
@@ -21,14 +20,3 @@ export type ReducerInput = {
     workingWorkers: Population,
     sectorResult?: SectorResult
 }
-
-export type IndustryReducer = (input: ReducerInput, sectorLevels: IndustrialSectors) => {
-    workingWorkers: Population;
-    remainingWorkers: Population;
-    remainingGoods: Goods;
-    sumGoodsRequirements: Partial<Goods>;
-    sumGoodsProduction: Partial<Goods>;
-    sectorResult: SectorResult;
-};
-
-export type IndustryReducerReturn = ReturnType<IndustryReducer>;

@@ -1,11 +1,5 @@
 import { OrbitComponent } from "../../components/orbitComponent";
 
-export interface OrbitalElements {
-    inclination: number
-    argumentOfPeriapsis: number
-    longitudeOfAscendingNode: number
-}
-
 export function precomputeOrbitalTrig(orbit: OrbitComponent) {
     const inclination = orbit.inclination || 0
     const cosI = Math.cos(inclination)

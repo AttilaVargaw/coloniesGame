@@ -2,9 +2,6 @@ import { EntityComponent } from "@engine/entities/entityComponent"
 import type { Entity } from "@/engine/entities/entity"
 
 export class JumpNodeComponent extends EntityComponent {
-    constructor(entity?: Entity) {
-        super(entity)
-    }
 }
 
 export class JumpGraphComponent extends EntityComponent {
@@ -16,7 +13,7 @@ export class JumpGraphComponent extends EntityComponent {
     }
 
     addEdge(source: Entity, target: Entity): void {
-        if (!this.adjacency.has(source)) {
+        if(!this.adjacency.has(source)) {
             this.adjacency.set(source, new Set())
         }
         this.adjacency.get(source)!.add(target)
