@@ -2,6 +2,7 @@ import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
+import { CAMERA_INITIAL_DISTANCE } from "@/game/constants";
 
 const wasdButtons = new Set(["w", "a", "s", "d", "W", "A", "S", "D", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
 const allButtons = new Set(["+", "=", "-", "_", ...wasdButtons])
@@ -25,10 +26,10 @@ export class ViewportInputHandler {
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem: CameraFollowSystem) { }
 
     private static readonly DRAG_THRESHOLD = 3
-    private static readonly ZOOM_SPEED = 0.5
+    private static readonly ZOOM_SPEED = 1
     private static readonly KEY_PAN_SPEED = 1.2
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 5
+    private static readonly WHEEL_ZOOM_STEP = 80
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0
@@ -168,6 +169,7 @@ export class ViewportInputHandler {
         if(allButtons.has(key)) {
             if(wasdButtons.has(key)) {
                 this.cameraFollowSystem.stopFollowing()
+                //this.viewportSystem.viewport!.camera.distance = CAMERA_INITIAL_DISTANCE
             }
             this.heldKeys.add(key)
             event.preventDefault()
@@ -190,7 +192,7 @@ export class ViewportInputHandler {
             y: event.clientY - rect.top
         }
 
-        this.wheelZoomAccum += event.deltaY * 0.5
+        this.wheelZoomAccum += event.deltaY
     }
 
     update(dt: number) {

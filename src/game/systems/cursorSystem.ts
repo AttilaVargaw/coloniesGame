@@ -1,5 +1,3 @@
-import { SystemWithNodes } from "@game/systems/system";
-import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem";
 import { PositionComponent } from "@engine/components/position";
 import { PositionNode } from "@engine/systems/viewportSystem/positionNode";
 import { EntityComponent } from "@engine/entities/entityComponent";

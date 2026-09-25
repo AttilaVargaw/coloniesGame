@@ -9,7 +9,6 @@ import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, MousemoveEvent } from "../lib/events";
 import { SelectionManager } from "@game/systems/selectionSystem";
 import { TargetSystem } from "@game/systems/targetSystem";
-import { Entity } from "@/engine/entities/entity";
 import { MouseEvent as ReactMouseEvent } from "react"
 
 export class PointerInteractionSystem extends System {

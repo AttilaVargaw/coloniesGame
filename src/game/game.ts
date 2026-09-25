@@ -92,7 +92,10 @@ export class Game {
         ])
         this.engine.getSystem(ViewportSystem).init()
 
-        this.engine.dispatchEvent(new DayPassedEvent(null))
+        setTimeout(() => {
+
+            this.engine.dispatchEvent(new DayPassedEvent(null))
+        }, 100);
 
         let previousTime = 0.0
         let firstUpdate = true
