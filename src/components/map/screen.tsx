@@ -45,9 +45,9 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, ref }: Co
             const height = window.innerHeight;
 
             ref.current.width = width * dpr;
-            ref.current.height = (height - 56) * dpr;
+            ref.current.height = (height - 76) * dpr;
             ref.current.style.width = `${width}px`;
-            ref.current.style.height = `${height - 56}px`;
+            ref.current.style.height = `${height - 76}px`;
             const ctx = ref.current.getContext('2d')
             ctx?.resetTransform()
             ctx?.scale(dpr, dpr);

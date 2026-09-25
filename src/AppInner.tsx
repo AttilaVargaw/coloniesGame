@@ -38,7 +38,7 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((prev: boolean) => !prev)} />
       </div>
-      <div className="screenContainer flex-1 overflow-auto ">
+      <div className="screenContainer flex-1 overflow-auto">
         <Screen
           className="screenContainer"
           onMouseMove={(data) => {
