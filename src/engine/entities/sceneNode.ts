@@ -1,5 +1,6 @@
 import { Entity } from "./entity"
 import { PositionComponent } from "../components/position"
+import { Vector3 } from "@/lib/Vector3"
 
 export class SceneNode {
     readonly entityId: string
@@ -58,7 +59,7 @@ export class SceneNode {
         node.parent = null
     }
 
-    getWorldPosition(): [number, number, number] {
+    getWorldPosition(): Vector3 {
         const position = this.entity.getComponent(PositionComponent)
 
         if(!position) {

@@ -7,12 +7,13 @@ import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
 import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
+import { Vector3 } from "@/lib/Vector3";
 
 export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithNodes<N> {
     protected readonly components: (new (...args: any[]) => EntityComponent)[];
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
-    private projectedCache = new Map<N, { worldPos: [number, number, number]; projected: ProjectedPoint }>()
+    private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
     private _renderLogged = false
 
     constructor(
@@ -39,7 +40,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         }
 
         this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-          
+
         this.engine.unregisterNodeType(this.constructor as any)
         this.nodes.length = 0
         super.removeFromEngine()
@@ -71,7 +72,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     projectNodes(): void {
         const { camera } = this.viewportSystem.viewport
-        if (!camera) {
+        if(!camera) {
             console.warn('[BaseRenderer]', this.constructor.name, 'no camera')
             return
         }
@@ -82,21 +83,21 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         const f = camera.cssHeight / (2 * Math.tan(camera.fieldOfView / 2))
         const cameraScale = f / camera.distance
 
-        for (const node of this.nodes) {
-            if (this.shouldSkipProjection(node, cameraScale)) {
+        for(const node of this.nodes) {
+            if(this.shouldSkipProjection(node, cameraScale)) {
                 continue
             }
 
             const worldPos = this.getWorldPosition(node)
             const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
-            if (!projected) {
+            if(!projected) {
                 continue
             }
 
             const margin = this.getCullMargin(node)
             const scaledMargin = margin * projected.scale
             const bounds = camera.visibleBounds
-            if (
+            if(
                 projected.x + scaledMargin < bounds.left ||
                 projected.x - scaledMargin > bounds.right ||
                 projected.y + scaledMargin < bounds.top ||
@@ -105,7 +106,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
                 continue
             }
 
-            if (this.shouldCullNode(node, projected, worldPos)) {
+            if(this.shouldCullNode(node, projected, worldPos)) {
                 continue
             }
 
@@ -130,7 +131,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
         const entries: Array<{ node: N; projected: ProjectedPoint }> = []
-        for (const [node, { projected }] of this.projectedCache) {
+        for(const [node, { projected }] of this.projectedCache) {
             entries.push({ node, projected })
         }
         return entries
@@ -148,7 +149,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return 0
     }
 
-    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: [number, number, number]): boolean {
+    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
 
@@ -156,17 +157,17 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return false
     }
 
-    protected getProjected(node: N): { worldPos: [number, number, number]; projected: ProjectedPoint } {
+    protected getProjected(node: N): { worldPos: Vector3; projected: ProjectedPoint } {
         const entry = this.projectedCache.get(node)
-        if (!entry) {
+        if(!entry) {
             throw new Error(`Node ${node.entity.id} not found in projection cache`)
         }
         return entry
     }
 
-    private getWorldPosition(node: N): [number, number, number] {
+    private getWorldPosition(node: N): Vector3 {
         const sceneNode = this.engine?.getSceneNode(node.entity)
-        if (!sceneNode) {
+        if(!sceneNode) {
             const pos = node.entity.getComponent(PositionComponent)
             return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
         }

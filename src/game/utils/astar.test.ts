@@ -3,6 +3,7 @@ import { astar } from "./pathfinder"
 import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@engine/components/position"
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph"
+import { Vector2 } from "@/lib/Vector2"
 
 function createJumpNode(id: string, x: number, y: number) {
     const entity = new Entity(id)
@@ -11,10 +12,10 @@ function createJumpNode(id: string, x: number, y: number) {
     return entity
 }
 
-function createLinearPathGraph(nodes: Array<[string, number, number]>, edges: Array<[number, number]>) {
+function createLinearPathGraph(nodes: Array<[string, number, number]>, edges: Vector2[]) {
     const graph = new JumpGraphComponent()
     const entities = nodes.map(([id, x, y]) => createJumpNode(id, x, y))
-    for (const [from, to] of edges) {
+    for(const [from, to] of edges) {
         graph.addEdge(entities[from], entities[to])
     }
     return { graph, entities }
@@ -34,14 +35,14 @@ describe("astar", () => {
             getCost: (from, to) => {
                 const fromPos = from.getComponent(PositionComponent)
                 const toPos = to.getComponent(PositionComponent)
-                if (!fromPos || !toPos) return Infinity
+                if(!fromPos || !toPos) return Infinity
                 return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + 5000
             },
             heuristic: (entity) => {
                 const pos = entity.getComponent(PositionComponent)
-                if (!pos) return Infinity
+                if(!pos) return Infinity
                 const endPos = c.getComponent(PositionComponent)
-                if (!endPos) return Infinity
+                if(!endPos) return Infinity
                 return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
             },
         })).toEqual([])
@@ -74,14 +75,14 @@ describe("astar", () => {
             getCost: (from, to) => {
                 const fromPos = from.getComponent(PositionComponent)
                 const toPos = to.getComponent(PositionComponent)
-                if (!fromPos || !toPos) return Infinity
+                if(!fromPos || !toPos) return Infinity
                 return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + 5000
             },
             heuristic: (entity) => {
                 const pos = entity.getComponent(PositionComponent)
-                if (!pos) return Infinity
+                if(!pos) return Infinity
                 const endPos = entities[2].getComponent(PositionComponent)
-                if (!endPos) return Infinity
+                if(!endPos) return Infinity
                 return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
             },
         })
@@ -101,14 +102,14 @@ describe("astar", () => {
             getCost: (from, to) => {
                 const fromPos = from.getComponent(PositionComponent)
                 const toPos = to.getComponent(PositionComponent)
-                if (!fromPos || !toPos) return Infinity
+                if(!fromPos || !toPos) return Infinity
                 return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + 5000
             },
             heuristic: (entity) => {
                 const pos = entity.getComponent(PositionComponent)
-                if (!pos) return Infinity
+                if(!pos) return Infinity
                 const endPos = entities[2].getComponent(PositionComponent)
-                if (!endPos) return Infinity
+                if(!endPos) return Infinity
                 return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
             },
         })).toEqual([])
@@ -127,14 +128,14 @@ describe("astar", () => {
             getCost: (from, to) => {
                 const fromPos = from.getComponent(PositionComponent)
                 const toPos = to.getComponent(PositionComponent)
-                if (!fromPos || !toPos) return Infinity
+                if(!fromPos || !toPos) return Infinity
                 return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + 5000
             },
             heuristic: (entity) => {
                 const pos = entity.getComponent(PositionComponent)
-                if (!pos) return Infinity
+                if(!pos) return Infinity
                 const endPos = entities[2].getComponent(PositionComponent)
-                if (!endPos) return Infinity
+                if(!endPos) return Infinity
                 return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
             },
         })

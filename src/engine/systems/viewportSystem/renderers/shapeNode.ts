@@ -4,9 +4,10 @@ import { PositionComponent } from "../../../components/position";
 import { Entity } from "../../../entities/entity";
 import { RenderableNode } from "./renderableNode";
 import { EntityComponent } from "@/engine/entities/entityComponent";
+import { Vector2 } from "@/lib/Vector2";
 
 export class ShapeComponent extends EntityComponent {
-    constructor(entity: Entity, public path: [number, number][]) {
+    constructor(entity: Entity, public path: Vector2[]) {
         super(entity)
     }
 }

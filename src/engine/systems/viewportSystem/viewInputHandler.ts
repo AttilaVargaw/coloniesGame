@@ -25,10 +25,10 @@ export class ViewportInputHandler {
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem: CameraFollowSystem) { }
 
     private static readonly DRAG_THRESHOLD = 3
-    private static readonly ZOOM_SPEED = 2.0
+    private static readonly ZOOM_SPEED = 0.5
     private static readonly KEY_PAN_SPEED = 1.2
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 50
+    private static readonly WHEEL_ZOOM_STEP = 5
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0
@@ -57,37 +57,8 @@ export class ViewportInputHandler {
     }
 
     private applyOrbitRotation(camera: Camera, dx: number, dy: number) {
-        const centerX = camera.cssWidth / 2
-        const centerY = camera.cssHeight / 2
-
-        const ray = camera.screenToWorldRay(centerX, centerY)
-        const dz = ray.direction[2]
-        let centerWorldX: number
-        let centerWorldY: number
-
-        if(Math.abs(dz) > 1e-6) {
-            const t = (camera.lookAt[2] - ray.origin[2]) / dz
-            centerWorldX = ray.origin[0] + ray.direction[0] * t
-            centerWorldY = ray.origin[1] + ray.direction[1] * t
-        } else {
-            centerWorldX = camera.lookAt[0]
-            centerWorldY = camera.lookAt[1]
-        }
-
-        const camPos = camera.cameraPosition
-        const distToCenter = Math.sqrt(
-            (camPos[0] - centerWorldX) ** 2 +
-            (camPos[1] - centerWorldY) ** 2 +
-            (camPos[2] - camera.lookAt[2]) ** 2
-        )
-
         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
-
-        camera.lookAt[0] = centerWorldX
-        camera.lookAt[1] = centerWorldY
-        camera.distance = distToCenter
-        camera.updateViewport()
         camera.invalidateViewBasis()
     }
 
@@ -120,15 +91,15 @@ export class ViewportInputHandler {
         }
     }
 
-    private panCamera(camera: Camera, panRight: number, panUp: number, step: number) {
-        if(!panRight && !panUp) return
+    private panCamera(camera: Camera, panRight: number, panForward: number, step: number) {
+        if(!panRight && !panForward) return
 
-        const { right, up } = camera.getBasisVectors()
+        const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
         const speed = ViewportInputHandler.KEY_PAN_SPEED * step
         camera.moveTo(
-            camera.lookAt[0] + (panRight * right[0] + panUp * up[0]) * speed,
-            camera.lookAt[1] + (panRight * right[1] + panUp * up[1]) * speed,
-            camera.lookAt[2] + (panRight * right[2] + panUp * up[2]) * speed,
+            camera.lookAt[0] + (panRight * rx + panForward * fx) * speed,
+            camera.lookAt[1] + (panRight * ry + panForward * fy) * speed,
+            camera.lookAt[2] + (panRight * rz + panForward * fz) * speed,
         )
     }
 
@@ -141,14 +112,14 @@ export class ViewportInputHandler {
         const step = (dt / 1000) * ViewportInputHandler.EDGE_PAN_SPEED
 
         let panRight = 0
-        let panUp = 0
+        let panForward = 0
 
         if(x < threshold) panRight -= (1 - x / threshold) * step
         if(x > bounds.right - threshold) panRight += (1 - (bounds.right - x) / threshold) * step
-        if(y < threshold) panUp -= (1 - y / threshold) * step
-        if(y > bounds.bottom - threshold) panUp += (1 - (bounds.bottom - y) / threshold) * step
+        if(y < threshold) panForward -= (1 - y / threshold) * step
+        if(y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
 
-        this.panCamera(camera, panRight, panUp, step)
+        this.panCamera(camera, panRight, panForward, step)
     }
 
     private onContextMenu = (event: MouseEvent) => {
@@ -219,7 +190,7 @@ export class ViewportInputHandler {
             y: event.clientY - rect.top
         }
 
-        this.wheelZoomAccum += event.deltaY
+        this.wheelZoomAccum += event.deltaY * 0.5
     }
 
     update(dt: number) {
@@ -297,38 +268,49 @@ export class ViewportInputHandler {
         mouseupArray.clear()
 
         if(!this._isDragging && this.wasRotatingWithoutTarget) {
-            if(Math.abs(this.rotationVelocityX) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD ||
-                Math.abs(this.rotationVelocityY) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD) {
-                this.applyOrbitRotation(camera, this.rotationVelocityX, this.rotationVelocityY)
-                this.rotationVelocityX *= ViewportInputHandler.ROTATION_INERTIA_DECAY
-                this.rotationVelocityY *= ViewportInputHandler.ROTATION_INERTIA_DECAY
-            } else {
-                this.wasRotatingWithoutTarget = false
-                this.rotationVelocityX = 0
-                this.rotationVelocityY = 0
-            }
+            this.applyRotationInertia(camera)
         }
 
         this.applyKeyScroll(dt, camera)
         this.applyEdgePan(dt, camera)
+        this.applyWheelZoom(camera)
+    }
 
-        if(this.wheelZoomAccum >= ViewportInputHandler.WHEEL_ZOOM_STEP) {
-            this._isZooming = true
-            if(this.hasFollowTarget) {
-                camera.zoomBy(1.05, this.lastWheelScreen.x, this.lastWheelScreen.y)
-            } else {
-                this.viewportSystem.viewport.camera.moveTo(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2] += this.wheelZoomAccum)
-            }
-            this.wheelZoomAccum -= ViewportInputHandler.WHEEL_ZOOM_STEP
-        } else if(this.wheelZoomAccum <= -ViewportInputHandler.WHEEL_ZOOM_STEP) {
-            this._isZooming = true
+    private zoomWheel(camera: Camera, factor: number) {
+        this._isZooming = true
+        if(this.hasFollowTarget) {
+            camera.zoomBy(factor, this.lastWheelScreen.x, this.lastWheelScreen.y)
+        } else {
+            this.viewportSystem.viewport.camera.moveTo(
+                camera.lookAt[0],
+                camera.lookAt[1],
+                camera.lookAt[2] += this.wheelZoomAccum
+            )
+        }
+    }
 
-            if(this.hasFollowTarget) {
-                camera.zoomBy(0.95, this.lastWheelScreen.x, this.lastWheelScreen.y)
-            } else {
-                this.viewportSystem.viewport.camera.moveTo(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2] += this.wheelZoomAccum)
-            }
-            this.wheelZoomAccum += ViewportInputHandler.WHEEL_ZOOM_STEP
+    private applyWheelZoom(camera: Camera) {
+        const step = ViewportInputHandler.WHEEL_ZOOM_STEP
+
+        if(this.wheelZoomAccum >= step) {
+            this.zoomWheel(camera, 1.05)
+            this.wheelZoomAccum -= step
+        } else if(this.wheelZoomAccum <= -step) {
+            this.zoomWheel(camera, 0.95)
+            this.wheelZoomAccum += step
+        }
+    }
+
+    private applyRotationInertia(camera: Camera) {
+        if(Math.abs(this.rotationVelocityX) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD ||
+            Math.abs(this.rotationVelocityY) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD) {
+            this.applyOrbitRotation(camera, this.rotationVelocityX, this.rotationVelocityY)
+            this.rotationVelocityX *= ViewportInputHandler.ROTATION_INERTIA_DECAY
+            this.rotationVelocityY *= ViewportInputHandler.ROTATION_INERTIA_DECAY
+        } else {
+            this.wasRotatingWithoutTarget = false
+            this.rotationVelocityX = 0
+            this.rotationVelocityY = 0
         }
     }
 }

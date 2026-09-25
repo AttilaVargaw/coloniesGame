@@ -1,3 +1,6 @@
+import { Vector2 } from "./Vector2"
+import { Vector3 } from "./Vector3"
+
 export interface ProjectedPoint {
     x: number
     y: number
@@ -7,7 +10,7 @@ export interface ProjectedPoint {
 
 interface CameraSettings {
     distance?: number
-    initialPosition?: [number, number, number]
+    initialPosition?: Vector3
     yaw?: number
     pitch?: number
     fieldOfView?: number
@@ -18,8 +21,23 @@ interface CameraSettings {
     minHeightAboveTarget?: number
 }
 
+type ViewBase = {
+    fx: number
+    fy: number
+    fz: number
+    rx: number
+    ry: number
+    rz: number
+    ux: number
+    uy: number
+    uz: number
+    camX: number
+    camY: number
+    camZ: number
+}
+
 export default class Camera {
-    lookAt: [number, number, number]
+    lookAt: Vector3
     yaw: number
     pitch: number
     distance: number
@@ -37,7 +55,7 @@ export default class Camera {
         bottom: number
         width: number
         height: number
-        scale: [number, number]
+        scale: Vector2
         cssWidth: number
         cssHeight: number
     }
@@ -72,20 +90,7 @@ export default class Camera {
         this.updateViewport()
     }
 
-    private viewBasisCache: {
-        fx: number
-        fy: number
-        fz: number
-        rx: number
-        ry: number
-        rz: number
-        ux: number
-        uy: number
-        uz: number
-        camX: number
-        camY: number
-        camZ: number
-    } | null = null
+    private viewBasisCache: ViewBase | null = null
 
     private viewBasisDirty = true
 
@@ -145,9 +150,8 @@ export default class Camera {
         return this.viewBasisCache
     }
 
-    private computeViewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number; camX: number; camY: number; camZ: number } {
-        const basis = this.ensureViewBasis()
-        return { ...basis }
+    private computeViewBasis() {
+        return this.ensureViewBasis()
     }
 
     begin() {
@@ -190,7 +194,7 @@ export default class Camera {
         return this.viewport.cssHeight
     }
 
-    public get cameraPosition(): [number, number, number] {
+    public get cameraPosition(): Vector3 {
         return [
             this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
             this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
@@ -198,9 +202,8 @@ export default class Camera {
         ]
     }
 
-    public get viewBasis(): { fx: number; fy: number; fz: number; rx: number; ry: number; rz: number; ux: number; uy: number; uz: number } {
-        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-        return { fx, fy, fz, rx, ry, rz, ux, uy, uz }
+    public get viewBasis() {
+        return this.computeViewBasis()
     }
 
     public zoomTo(z: number) {
@@ -228,14 +231,14 @@ export default class Camera {
     public panByPixels(dxPixels: number, dyPixels: number) {
         const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
         const worldDeltaRight = (dxPixels / f) * this.distance
-        const worldDeltaUp = (-dyPixels / f) * this.distance
+        const worldDeltaForward = (-dyPixels / f) * this.distance
 
-        const { right, up } = this.getBasisVectors()
+        const { fx, fy, fz, rx, ry, rz } = this.viewBasis
 
         this.moveTo(
-            this.lookAt[0] + worldDeltaRight * right[0] + worldDeltaUp * up[0],
-            this.lookAt[1] + worldDeltaRight * right[1] + worldDeltaUp * up[1],
-            this.lookAt[2] + worldDeltaRight * right[2] + worldDeltaUp * up[2],
+            this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
+            this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
+            this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
         )
     }
 
@@ -279,7 +282,7 @@ export default class Camera {
         return obj
     }
 
-    public getBasisVectors(): { right: [number, number, number]; up: [number, number, number] } {
+    public getBasisVectors(): { right: Vector3; up: Vector3 } {
         const { rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
 
         return {
@@ -320,7 +323,7 @@ export default class Camera {
         return { x: screenX, y: screenY, scale, depth: z }
     }
 
-    public screenToWorldRay(screenX: number, screenY: number): { origin: [number, number, number]; direction: [number, number, number] } {
+    public screenToWorldRay(screenX: number, screenY: number): { origin: Vector3; direction: Vector3 } {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
         const { camX, camY, camZ } = this.computeCameraPosition()
 

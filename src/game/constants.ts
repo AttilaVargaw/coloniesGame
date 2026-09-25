@@ -5,7 +5,7 @@ export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30
 
 export const FIELD_OF_VIEW = Math.PI / 3
-export const CAMERA_INITIAL_DISTANCE = 3000
+export const CAMERA_INITIAL_DISTANCE = 100
 export const CAMERA_MIN_DISTANCE = 50
 export const CAMERA_MAX_DISTANCE = 10000
 

@@ -6,11 +6,12 @@ import { Entity } from "@/engine/entities/entity";
 import type { Engine } from "@/engine/core/engine";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { SelectionChangedEvent } from "@/engine/lib/events";
+import { Vector3 } from "@/lib/Vector3";
 
 export class CameraFollowComponent extends EntityComponent {
     constructor(
         public target: Entity | null = null,
-        public offset: [number, number, number] = [0, 0, 0],
+        public offset: Vector3 = [0, 0, 0],
         public smoothFactor: number = 1,
     ) {
         super()
@@ -76,7 +77,7 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         const viewport = this.viewportSystem.viewport
         if(!viewport) return
 
-        if(this.viewportSystem.isDragging ) {
+        if(this.viewportSystem.isDragging) {
             return
         }
 

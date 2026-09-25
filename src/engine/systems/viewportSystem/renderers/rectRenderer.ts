@@ -8,6 +8,7 @@ import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
 import { TWO_PI } from "@/game/constants";
+import { Vector3 } from "@/lib/Vector3";
 
 function hexToRgba(hex: string, alpha: number): string {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -44,7 +45,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return false
     }
 
-    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: [number, number, number]): boolean {
+    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
             if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {
