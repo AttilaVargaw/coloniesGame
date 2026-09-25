@@ -1,70 +1,121 @@
-import { PathComponent } from "@game/components/pathComponent";
-import type { Entity } from "@engine/entities/entity";
-import { PositionComponent } from "@engine/components/position";
+import type { Entity } from "@/engine/entities/entity"
+import { PositionComponent } from "@engine/components/position"
+import { PathComponent } from "@game/components/pathComponent"
 
-export function aStar(
-    start: Entity,
+interface AstarOptions {
+    start: Entity
     end: Entity
-): Entity[] {
-    const startPath = start.getComponent(PathComponent);
-    const endPath = end.getComponent(PathComponent);
+    getNeighbors: (node: Entity) => Entity[]
+    getCost: (from: Entity, to: Entity) => number
+    heuristic: (node: Entity) => number
+}
 
-    if (!startPath || !endPath) {
-        return [];
+class OpenSet {
+    private heap: Array<{ entity: Entity; f: number }> = []
+    private inOpen = new Set<Entity>()
+
+    push(entity: Entity, f: number): void {
+        if (this.inOpen.has(entity)) return
+        this.inOpen.add(entity)
+        this.heap.push({ entity, f })
+        this.siftUp(this.heap.length - 1)
     }
 
+    pop(): Entity | undefined {
+        if (this.heap.length === 0) return undefined
+        const top = this.heap[0]
+        const last = this.heap.pop()!
+        this.inOpen.delete(top.entity)
+        if (this.heap.length > 0) {
+            this.heap[0] = last
+            this.siftDown(0)
+        }
+        return top.entity
+    }
+
+    remove(entity: Entity): void {
+        if (!this.inOpen.has(entity)) return
+        this.inOpen.delete(entity)
+    }
+
+    get size(): number {
+        return this.heap.length
+    }
+
+    private siftUp(i: number): void {
+        while (i > 0) {
+            const parent = (i - 1) >> 1
+            if (this.heap[i].f < this.heap[parent].f) {
+                ;[this.heap[i], this.heap[parent]] = [this.heap[parent], this.heap[i]]
+                i = parent
+            } else {
+                break
+            }
+        }
+    }
+
+    private siftDown(i: number): void {
+        const n = this.heap.length
+        while (true) {
+            let smallest = i
+            const left = (i << 1) + 1
+            const right = (i << 1) + 2
+            if (left < n && this.heap[left].f < this.heap[smallest].f) smallest = left
+            if (right < n && this.heap[right].f < this.heap[smallest].f) smallest = right
+            if (smallest !== i) {
+                ;[this.heap[i], this.heap[smallest]] = [this.heap[smallest], this.heap[i]]
+                i = smallest
+            } else {
+                break
+            }
+        }
+    }
+}
+
+export function astar({
+    start,
+    end,
+    getNeighbors,
+    getCost,
+    heuristic,
+}: AstarOptions): Entity[] {
     if (start === end) {
-        return [start];
+        return [start]
     }
 
-    const endPos = end.getComponent(PositionComponent);
-    const h = (a: Entity): number => {
-        const pos = a.getComponent(PositionComponent);
-        if (!pos || !endPos) return Infinity;
-        return Math.hypot(pos.x - endPos.x, pos.y - endPos.y) / 100;
-    };
-
-    const openSet = new Set<Entity>([start]);
-    const cameFrom = new Map<Entity, Entity>();
-    const gScore = new Map<Entity, number>([[start, 0]]);
-    const fScore = new Map<Entity, number>([[start, h(start)]]);
+    const openSet = new OpenSet()
+    openSet.push(start, heuristic(start))
+    const cameFrom = new Map<Entity, Entity>()
+    const gScore = new Map<Entity, number>([[start, 0]])
+    const fScore = new Map<Entity, number>([[start, heuristic(start)]])
 
     while (openSet.size > 0) {
-        const current = [...openSet].reduce((best, e) => {
-            const f = fScore.get(e) ?? Infinity;
-            const bestF = fScore.get(best) ?? Infinity;
-            return f < bestF ? e : best;
-        });
+        const current = openSet.pop()!
 
         if (current === end) {
-            const path: Entity[] = [end];
-            let node: Entity | undefined = end;
+            const path: Entity[] = [end]
+            let node: Entity | undefined = end
             while ((node = cameFrom.get(node!))) {
-                path.unshift(node);
+                path.unshift(node)
             }
-            return path;
+            return path
         }
 
-        openSet.delete(current);
-        const currentPath = current.getComponent(PathComponent);
-        if (!currentPath) continue;
-        const currentG = gScore.get(current) ?? Infinity;
+        const currentG = gScore.get(current) ?? Infinity
 
-        for (const neighbourPath of currentPath.connections) {
-            const neighbour = neighbourPath.entity;
-            if (!neighbour) continue;
+        for (const neighbor of getNeighbors(current)) {
+            const tentativeG = currentG + getCost(current, neighbor)
 
-            const tentativeG = currentG + 1;
-            const neighbourG = gScore.get(neighbour) ?? Infinity;
-
-            if (tentativeG < neighbourG) {
-                cameFrom.set(neighbour, current);
-                gScore.set(neighbour, tentativeG);
-                fScore.set(neighbour, tentativeG + h(neighbour));
-                openSet.add(neighbour);
+            const neighborG = gScore.get(neighbor) ?? Infinity
+            if (tentativeG < neighborG) {
+                cameFrom.set(neighbor, current)
+                gScore.set(neighbor, tentativeG)
+                const f = tentativeG + heuristic(neighbor)
+                fScore.set(neighbor, f)
+                openSet.push(neighbor, f)
             }
         }
     }
 
-    return [];
+    return []
 }

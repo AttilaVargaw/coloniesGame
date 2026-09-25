@@ -3,14 +3,13 @@ import { PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
 import { StartState } from "../data/StartState";
 import type { Entity } from "@engine/entities/entity";
-import { aStar } from "@game/utils/pathfinder";
+import { astar } from "@game/utils/pathfinder";
 import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { PositionComponent } from "@engine/components/position";
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph";
-import { JUMP_GRAPH_MAX_DISTANCE } from "../constants";
-import { jumpAStar } from "../utils/jumpPathfinder";
+import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
 
 export class MapSystem extends SystemWithNodes<PathNode> {
     private graphEntity?: Entity
@@ -49,7 +48,31 @@ export class MapSystem extends SystemWithNodes<PathNode> {
     }
 
     findPath(start: Entity, end: Entity): Entity[] {
-        return aStar(start, end)
+        const startPath = start.getComponent(PathComponent)
+        const endPath = end.getComponent(PathComponent)
+
+        if (!startPath || !endPath) {
+            return []
+        }
+
+        const endPos = end.getComponent(PositionComponent)
+        const h = (node: Entity): number => {
+            const pos = node.getComponent(PositionComponent)
+            if (!pos || !endPos) return Infinity
+            return Math.hypot(pos.x - endPos.x, pos.y - endPos.y) / 100
+        }
+
+        return astar({
+            start,
+            end,
+            getNeighbors: (node) => {
+                const path = node.getComponent(PathComponent)
+                if (!path) return []
+                return path.connections.map((c) => c.entity).filter((e): e is Entity => e != null)
+            },
+            getCost: () => 1,
+            heuristic: h,
+        })
     }
 
     getJumpGraph(): JumpGraphComponent | undefined {
@@ -88,12 +111,22 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             return [start, nearestStart.node, end]
         }
 
-        const path = jumpAStar(
-            nearestStart.node,
-            nearestEnd.node,
-            this.graph,
-            (entity) => this.getWorldPosition(entity)
-        )
+        const path = astar({
+            start: nearestStart.node,
+            end: nearestEnd.node,
+            getNeighbors: (entity) => this.graph!.getNeighbours(entity),
+            getCost: (from, to) => {
+                const fromPos = this.getWorldPosition(from)
+                const toPos = this.getWorldPosition(to)
+                if (!fromPos || !toPos) return Infinity
+                return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + JUMP_HOP_PENALTY
+            },
+            heuristic: (entity) => {
+                const pos = this.getWorldPosition(entity)
+                if (!pos) return Infinity
+                return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
+            },
+        })
         if(path.length === 0) return []
 
         return [start, ...path, end]
