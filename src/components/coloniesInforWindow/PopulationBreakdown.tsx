@@ -7,7 +7,7 @@ import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationI
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 import { Goods } from "@/game/data/Goods";
 
-export function Sum(...args: number[]) {
+function Sum(...args: number[]) {
     let sum = 0
 
     for(const it of args) {

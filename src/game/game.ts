@@ -6,6 +6,7 @@ import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
+import { TradeSystem } from "@game/systems/tradeSystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
@@ -51,6 +52,7 @@ export class Game {
         })
 
         this.engine
+            .addSystem(TradeSystem)
             .addSystem(IndustrySystem)
             .addSystem(DateSystem)
             .addSystem(TimeScaleSystem)
@@ -93,7 +95,6 @@ export class Game {
         this.engine.getSystem(ViewportSystem).init()
 
         setTimeout(() => {
-
             this.engine.dispatchEvent(new DayPassedEvent(null))
         }, 100);
 

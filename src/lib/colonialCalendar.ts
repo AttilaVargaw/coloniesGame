@@ -1,6 +1,6 @@
 
-export const dayMs = 1000 * 60 * 60 * 24
-export const rDayMs = 1 / dayMs
+const dayMs = 1000 * 60 * 60 * 24
+const rDayMs = 1 / dayMs
 
 let months: ReadonlyMap<number, { name: string; days: number; ms: number }>
 let monthsArr: { name: string; days: number; ms: number }[]

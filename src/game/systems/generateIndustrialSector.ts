@@ -10,13 +10,3 @@ export type SectorResult = {
     inputLevel: number
     outputLevel: number
 }
-
-export type ReducerInput = {
-    remainingGoods: Goods,
-    remainingWorkers: Population,
-    workerRatio: number,
-    sumGoodsRequirements: Partial<Goods>,
-    sumGoodsProduction: Partial<Goods>,
-    workingWorkers: Population,
-    sectorResult?: SectorResult
-}
