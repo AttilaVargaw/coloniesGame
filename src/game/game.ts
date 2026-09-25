@@ -13,7 +13,7 @@ import { TargetSystem } from "@game/systems/targetSystem"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import Camera from "@lib/camera"
-import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, UNIVERSE_SCALE } from "./constants"
+import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE } from "./constants"
 import { CommandBase } from "@/engine/lib/CommandBase"
 import { BodyBlueprint } from "./data/BodyBlueprint"
 import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRenderer"
@@ -26,6 +26,8 @@ import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollo
 import { DebugSystem } from "./systems/debugSystem"
 import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
+import { ColorComponent } from "@/engine/components/colorComponent"
+import { PositionComponent } from "@/engine/components/position"
 
 export class Game {
     readonly engine: World
@@ -34,18 +36,18 @@ export class Game {
     private constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
         this.engine = new World()
 
-        const firstStar = { x: 0, y: 0, z: 0 }
-
         const camera = new Camera(renderingContext, {
-            initialPosition: [firstStar.x * UNIVERSE_SCALE, firstStar.y * UNIVERSE_SCALE, firstStar.z * UNIVERSE_SCALE],
+            initialPosition: [
+                0, 0, 0
+            ],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,
             scaleX: 1.0,
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: Math.PI / 4,
-            pitch: Math.PI / 4,
+            yaw: 0,
+            pitch: 0,
         })
 
         this.engine
@@ -119,7 +121,16 @@ export class Game {
 
     static async create(renderingContext: CanvasRenderingContext2D, map: BodyBlueprint) {
         const game = new Game(renderingContext, map)
-        game.engine.getSystem(MapSystem).init().catch(console.error)
+        game.engine.getSystem(MapSystem).init().catch(console.error).then(() => {
+            const { x, y, z, } = game.engine.getAllEntities().find(e => e.getComponent(ColorComponent)?.emitLight)!.getComponent(PositionComponent)!
+
+            const camera = game.engine.getSystem(ViewportSystem).viewport.camera
+
+            camera.moveTo(x, y, z)
+
+            game.engine.getSystem(MapSystem).rebuildGraph()
+        })
+
         return game
     }
 

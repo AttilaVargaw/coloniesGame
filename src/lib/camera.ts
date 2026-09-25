@@ -5,6 +5,19 @@ export interface ProjectedPoint {
     depth: number
 }
 
+interface CameraSettings {
+    distance?: number
+    initialPosition?: [number, number, number]
+    yaw?: number
+    pitch?: number
+    fieldOfView?: number
+    scaleX?: number
+    scaleY?: number
+    minDistance?: number
+    maxDistance?: number
+    minHeightAboveTarget?: number
+}
+
 export default class Camera {
     lookAt: [number, number, number]
     yaw: number
@@ -13,6 +26,7 @@ export default class Camera {
     fieldOfView: number
     minDistance: number
     maxDistance: number
+    minHeightAboveTarget: number
     private aspectRatio: number = 1.0
     public context: CanvasRenderingContext2D
 
@@ -28,25 +42,18 @@ export default class Camera {
         cssHeight: number
     }
 
-    constructor(public renderingContext: CanvasRenderingContext2D, settings = {
-        distance: 1000.0,
-        initialPosition: [0, 0, 0] as [number, number, number],
-        yaw: 0,
-        pitch: Math.PI / 2,
-        fieldOfView: Math.PI / 4.0,
-        scaleX: 1.0,
-        scaleY: 1.0,
-        minDistance: 100.0,
-        maxDistance: 12000.0,
-    }) {
+    constructor(public renderingContext: CanvasRenderingContext2D, settings: CameraSettings = {}) {
         this.context = renderingContext
-        this.distance = settings.distance
-        this.minDistance = settings.minDistance
-        this.maxDistance = settings.maxDistance
-        this.lookAt = settings.initialPosition
-        this.yaw = settings.yaw
-        this.pitch = settings.pitch
-        this.fieldOfView = settings.fieldOfView
+        this.distance = settings.distance ?? 1000.0
+        this.minDistance = settings.minDistance ?? 100.0
+        this.maxDistance = settings.maxDistance ?? 12000.0
+        this.minHeightAboveTarget = settings.minHeightAboveTarget ?? 20.0
+        this.lookAt = settings.initialPosition ?? [0, 0, 0]
+
+        this.yaw = settings.yaw ?? 0
+        this.pitch = settings.pitch ?? Math.PI / 2
+
+        this.fieldOfView = settings.fieldOfView ?? Math.PI / 4.0
         this.viewport = {
             left: 0,
             right: 0,
@@ -197,7 +204,8 @@ export default class Camera {
     }
 
     public zoomTo(z: number) {
-        this.distance = Math.min(this.maxDistance, Math.max(this.minDistance, z))
+        const effectiveMin = this.minHeightAboveTarget / Math.sin(this.pitch)
+        this.distance = Math.min(this.maxDistance, Math.max(effectiveMin, z))
         this.updateViewport()
         this.markViewDirty()
     }

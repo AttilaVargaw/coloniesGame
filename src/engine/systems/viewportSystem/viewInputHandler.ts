@@ -25,9 +25,9 @@ export class ViewportInputHandler {
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem: CameraFollowSystem) { }
 
     private static readonly DRAG_THRESHOLD = 3
-    private static readonly ZOOM_SPEED = 1.0015
-    private static readonly KEY_PAN_SPEED = 1000.0
-    private static readonly MOUSE_ROTATE_SPEED = 0.005
+    private static readonly ZOOM_SPEED = 2.0
+    private static readonly KEY_PAN_SPEED = 1.2
+    private static readonly MOUSE_ROTATE_SPEED = 0.008
     private static readonly WHEEL_ZOOM_STEP = 50
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
@@ -52,7 +52,7 @@ export class ViewportInputHandler {
         return this.wasRotatingWithoutTarget
     }
 
-    private hasFollowTarget(): boolean {
+    private get hasFollowTarget(): boolean {
         return this.cameraFollowSystem.isFollowing()
     }
 
@@ -92,16 +92,24 @@ export class ViewportInputHandler {
     }
 
     private applyKeyScroll(dt: number, camera: Camera) {
-        const step = (dt / 1000)
-
+        let panForward = 0
         let panRight = 0
-        let panUp = 0
+        if(this.heldKeys.has("w")) panForward += 1
+        if(this.heldKeys.has("s")) panForward -= 1
         if(this.heldKeys.has("d")) panRight += 1
         if(this.heldKeys.has("a")) panRight -= 1
-        if(this.heldKeys.has("w")) panUp += 1
-        if(this.heldKeys.has("s")) panUp -= 1
 
-        this.panCamera(camera, panRight, panUp, step)
+        if(panForward || panRight) {
+            const { rx, ry, fx, fy, } = camera.viewBasis
+            const speed = ViewportInputHandler.KEY_PAN_SPEED * dt
+
+
+            camera.moveTo(
+                camera.lookAt[0] + (panForward * fx + panRight * rx) * speed,
+                camera.lookAt[1] + (panForward * fy + panRight * ry) * speed,
+                camera.lookAt[2]
+            )
+        }
 
         if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
             this._isZooming = true
@@ -253,7 +261,7 @@ export class ViewportInputHandler {
                     if(this.dragButton === 2) {
                         camera.panByPixels(dx, dy)
                     } else if(this.dragButton === 1) {
-                        if(this.hasFollowTarget()) {
+                        if(this.hasFollowTarget) {
                             camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
                             camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
                             camera.invalidateViewBasis()
@@ -306,11 +314,20 @@ export class ViewportInputHandler {
 
         if(this.wheelZoomAccum >= ViewportInputHandler.WHEEL_ZOOM_STEP) {
             this._isZooming = true
-            camera.zoomBy(1.05, this.lastWheelScreen.x, this.lastWheelScreen.y)
+            if(this.hasFollowTarget) {
+                camera.zoomBy(1.05, this.lastWheelScreen.x, this.lastWheelScreen.y)
+            } else {
+                this.viewportSystem.viewport.camera.moveTo(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2] += this.wheelZoomAccum)
+            }
             this.wheelZoomAccum -= ViewportInputHandler.WHEEL_ZOOM_STEP
         } else if(this.wheelZoomAccum <= -ViewportInputHandler.WHEEL_ZOOM_STEP) {
             this._isZooming = true
-            camera.zoomBy(0.95, this.lastWheelScreen.x, this.lastWheelScreen.y)
+
+            if(this.hasFollowTarget) {
+                camera.zoomBy(0.95, this.lastWheelScreen.x, this.lastWheelScreen.y)
+            } else {
+                this.viewportSystem.viewport.camera.moveTo(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2] += this.wheelZoomAccum)
+            }
             this.wheelZoomAccum += ViewportInputHandler.WHEEL_ZOOM_STEP
         }
     }

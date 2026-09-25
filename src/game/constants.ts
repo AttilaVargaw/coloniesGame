@@ -6,8 +6,8 @@ export const SENSOR_SUITE_DEFAULT_RANGE = 30
 
 export const FIELD_OF_VIEW = Math.PI / 3
 export const CAMERA_INITIAL_DISTANCE = 3000
-export const CAMERA_MIN_DISTANCE = 100
-export const CAMERA_MAX_DISTANCE = 120000
+export const CAMERA_MIN_DISTANCE = 50
+export const CAMERA_MAX_DISTANCE = 10000
 
 export const TWO_PI = 2 * Math.PI
 export const KEPLER_EPSILON = 1e-6
@@ -39,6 +39,7 @@ export const MASS = {
     asteroid: 0.1,
 }
 
+export const JUMP_HOP_PENALTY = 5000
 export const JUMP_GRAPH_MAX_DISTANCE = 7000
 export const JUMP_GRAPH_MIN_DISTANCE = 1000
 export const DEBUG_VISUALIZE_JUMP_GRAPH = true

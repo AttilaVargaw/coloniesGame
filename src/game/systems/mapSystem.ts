@@ -1,5 +1,5 @@
 import { SystemWithNodes } from "./system";
-import { PathNode } from "@game/components/pathComponent";
+import { PathComponent, PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
 import { StartState } from "../data/StartState";
 import type { Entity } from "@engine/entities/entity";
@@ -51,14 +51,14 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         const startPath = start.getComponent(PathComponent)
         const endPath = end.getComponent(PathComponent)
 
-        if (!startPath || !endPath) {
+        if(!startPath || !endPath) {
             return []
         }
 
         const endPos = end.getComponent(PositionComponent)
         const h = (node: Entity): number => {
             const pos = node.getComponent(PositionComponent)
-            if (!pos || !endPos) return Infinity
+            if(!pos || !endPos) return Infinity
             return Math.hypot(pos.x - endPos.x, pos.y - endPos.y) / 100
         }
 
@@ -67,7 +67,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             end,
             getNeighbors: (node) => {
                 const path = node.getComponent(PathComponent)
-                if (!path) return []
+                if(!path) return []
                 return path.connections.map((c) => c.entity).filter((e): e is Entity => e != null)
             },
             getCost: () => 1,
@@ -118,12 +118,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
             getCost: (from, to) => {
                 const fromPos = this.getWorldPosition(from)
                 const toPos = this.getWorldPosition(to)
-                if (!fromPos || !toPos) return Infinity
+                if(!fromPos || !toPos) return Infinity
                 return Math.hypot(fromPos.x - toPos.x, fromPos.y - toPos.y) + JUMP_HOP_PENALTY
             },
             heuristic: (entity) => {
                 const pos = this.getWorldPosition(entity)
-                if (!pos) return Infinity
+                if(!pos) return Infinity
                 return Math.hypot(pos.x - endPos.x, pos.y - endPos.y)
             },
         })
