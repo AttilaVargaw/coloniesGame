@@ -68,6 +68,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 goods: industry.goods,
                 population: industry.population,
                 sectorWealth: industry.sectorWealth,
+                sectorCapital: industry.sectorCapital,
                 upgradeSectors: upgradeSectors[entity.id],
                 autoUpgradeSectors: autoUpgradeSectors[entity.id],
             });
@@ -135,6 +136,7 @@ function applyResult(industry: IndustryComponent, result: IndustryTickResult) {
 
     industry.sectorResults = result.sectorResults;
     industry.sectorWealth = result.sectorWealth;
+    industry.sectorCapital = result.sectorCapital;
     industry.sectors = result.sectors;
 
     industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;

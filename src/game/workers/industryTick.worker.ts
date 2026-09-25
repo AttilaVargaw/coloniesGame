@@ -25,6 +25,7 @@ export interface IndustryTickInput {
     goods: Goods;
     population: Population;
     sectorWealth: Record<keyof IndustrialSectors, number>;
+    sectorCapital: Record<keyof IndustrialSectors, number>;
     upgradeSectors: string[];
     autoUpgradeSectors: Record<string, boolean>;
 }
@@ -51,6 +52,7 @@ export interface IndustryTickResult {
     sectorResults: Record<string, SectorResult>;
     sectors: IndustrialSectors;
     sectorWealth: Record<keyof IndustrialSectors, number>;
+    sectorCapital: Record<keyof IndustrialSectors, number>;
 }
 
 const qolSmoothing = 0.03;
@@ -92,7 +94,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     const results: IndustryTickResult[] = [];
 
-    for(const { entityId, goods, population, sectorWealth, sectors, upgradeSectors, autoUpgradeSectors } of event.data.industries) {
+    for(const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
         const prices = getPrices(goods, memory);
         colonyPriceMemory.set(entityId, memory);
@@ -100,6 +102,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const currentGoods: Goods = { ...goods };
         const currentSectorWealth: Record<keyof IndustrialSectors, number> = { ...sectorWealth };
         const currentSectors = { ...sectors } as Record<keyof IndustrialSectors, number>;
+        const currentSectorCapital: Record<keyof IndustrialSectors, number> = { ...sectorCapital };
 
         const populationConsumption = {} as Partial<Goods>;
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
@@ -264,7 +267,19 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             const budgetRatio = bid.inputCost + bid.laborCost > 0 ? Math.min(1, Math.max(0, clampedWealth / (bid.inputCost + bid.laborCost))) : 1;
             const actualScale = Math.min(budgetRatio, marketConstraint);
 
+            const config = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
+            const capitalGoods = config?.capitalGoods || {};
+            const capitalEfficiency = config?.capitalEfficiency || 0;
+            const capitalEfficiencyDecay = config?.capitalEfficiencyDecay || 0;
+            const startCapital = currentSectorCapital[bid.name as keyof IndustrialSectors] || 0;
+            const effectiveCapitalEfficiency = capitalEfficiency / (1 + (bid.level - 1) * capitalEfficiencyDecay);
+            const rawMultiplier = startCapital * effectiveCapitalEfficiency;
+            const capitalMultiplier = 1 + rawMultiplier / (1 + rawMultiplier * 0.1);
+
             if(actualScale <= 0) {
+                const capitalFormed = 0;
+                const depreciation = startCapital * 0.001;
+                currentSectorCapital[bid.name as keyof IndustrialSectors] = Math.max(0, startCapital + capitalFormed - depreciation);
                 sectorResults[bid.name] = {
                     name: bid.name,
                     consumedGoods: {},
@@ -302,7 +317,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
             const producedGoods: Partial<Goods> = {};
             for(const [key, value] of Object.entries(bid.idealGoodsProduction)) {
-                const produced = value * actualScale;
+                const produced = value * actualScale * capitalMultiplier;
                 producedGoods[key as keyof Goods] = produced;
                 remainingGoods[key as keyof Goods] += produced;
                 sumGoodsProduction[key as keyof Goods] = (sumGoodsProduction[key as keyof Goods] ?? 0) + produced;
@@ -329,6 +344,13 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             };
             sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
             sectorUtilization[bid.name] = actualScale;
+
+            const capitalFormed = Object.entries(capitalGoods).reduce((sum, [good, ratio]) => {
+                const consumed = (bid.idealGoodsDemand[good as keyof Goods] || 0) * actualScale;
+                return sum + consumed * (ratio as number);
+            }, 0);
+            const depreciation = startCapital * 0.001;
+            currentSectorCapital[bid.name as keyof IndustrialSectors] = Math.max(0, startCapital + capitalFormed - depreciation);
         }
 
         for(const key of alwaysWorking) {
@@ -393,6 +415,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectorResults,
             sectors: finalSectors,
             sectorWealth: finalSectorWealth,
+            sectorCapital: currentSectorCapital,
         });
     }
 

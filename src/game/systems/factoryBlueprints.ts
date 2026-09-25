@@ -11,6 +11,9 @@ type FactoryBlueprint = {
     goodsProduction: Partial<Goods>,
     efficiencyBonus?: number
     outputLevelModifier?: (lvl: number) => number
+    capitalGoods?: Partial<Record<keyof Goods, number>>
+    capitalEfficiency?: number
+    capitalEfficiencyDecay?: number
 }
 
 const workerReqStandard = { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }
@@ -28,7 +31,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         },
         workerRequirement: workerReqStandard,
         goodsProduction: { ore: 100, waste: 2 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.08
     }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
@@ -108,7 +114,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             governance: 2,
             electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { metals: 60, waste: 1 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["lumberMill", ({
         name: "lumberMill", goodsRequirements: {
@@ -121,7 +130,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             governance: 2,
             electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { lumber: 40 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.04 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08
     })],
     ["machineryFactory", ({
         name: "machineryFactory", goodsRequirements: {
@@ -129,7 +141,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             paper: 1,
             vehicles: 0.1, metals: 8, electricity: 15, buildings: 3, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { machinery: 40 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.1, metals: 0.05 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["medicineFactory", ({
         name: "medicineFactory", goodsRequirements: {
@@ -143,15 +158,24 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             environmentFactor: 2,
             vehicles: 0.1, paper: 1, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { consumerGoods: 20 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08
     })],
     ["luxuryFurnitureFactory", ({
         name: "luxuryFurnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 50, vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { luxuryFurniture: 14 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08
     })],
     ["furnitureFactory", ({
         name: "furnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 20, vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { furniture: 50 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08
     })],
     ["ammunitionFactory", ({
         name: "ammunitionFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, vehicles: 0.1, metals: 8, chemicals: 5, machinery: 8, electricity: 20, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ammunition: 100 },
@@ -215,7 +239,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             retail: 20,
             environmentFactor: 3,
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { buildings: 80 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06, constructionMaterials: 0.03 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08
     })],
     ["services", ({
         name: "services", goodsRequirements: {
@@ -334,7 +361,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         },
         workerRequirement: { worker: 89, scientist: 5, clerks: 5, healtcarePersonal: 1 },
         goodsProduction: { vehicles: 15, waste: 1 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["automotiveInfrastructure", ({
         name: "automotiveInfrastructure",
@@ -356,7 +386,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1
         },
         goodsProduction: { electronics: 20 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, electronics: 0.05 },
+        capitalEfficiency: 0.0012,
+        capitalEfficiencyDecay: 0.1
     })],
     ["railroadVehicles", ({
         name: "railroadVehicles",

@@ -78,6 +78,12 @@ export function createStarterIndustry(population: number) {
     return sectors as IndustrialSectors;
 }
 
+export function createStarterSectorCapital(sectors: IndustrialSectors): Record<keyof IndustrialSectors, number> {
+    return Object.fromEntries(
+        Object.keys(sectors).map(key => [key, 0])
+    ) as Record<keyof IndustrialSectors, number>;
+}
+
 export function createStarterSectorWealth(sectors: IndustrialSectors): Record<keyof IndustrialSectors, number> {
     const baseWealth = 100_00_000;
     const wealthPerLevel = 5000;
