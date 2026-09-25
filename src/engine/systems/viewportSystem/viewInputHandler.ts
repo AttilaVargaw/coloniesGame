@@ -66,7 +66,7 @@ export class ViewportInputHandler {
         let centerWorldY: number
 
         if(Math.abs(dz) > 1e-6) {
-            const t = -ray.origin[2] / dz
+            const t = (camera.lookAt[2] - ray.origin[2]) / dz
             centerWorldX = ray.origin[0] + ray.direction[0] * t
             centerWorldY = ray.origin[1] + ray.direction[1] * t
         } else {
@@ -78,7 +78,7 @@ export class ViewportInputHandler {
         const distToCenter = Math.sqrt(
             (camPos[0] - centerWorldX) ** 2 +
             (camPos[1] - centerWorldY) ** 2 +
-            camPos[2] ** 2
+            (camPos[2] - camera.lookAt[2]) ** 2
         )
 
         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
@@ -86,7 +86,6 @@ export class ViewportInputHandler {
 
         camera.lookAt[0] = centerWorldX
         camera.lookAt[1] = centerWorldY
-        camera.lookAt[2] = 0
         camera.distance = distToCenter
         camera.updateViewport()
         camera.invalidateViewBasis()
