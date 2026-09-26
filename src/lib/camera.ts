@@ -228,18 +228,18 @@ export default class Camera {
         this.zoomToAnchored(this.distance * factor, screenX, screenY)
     }
 
-    public panByPixels(dxPixels: number, dyPixels: number) {
-        const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
-        const worldDeltaRight = (dxPixels / f) * this.distance
-        const worldDeltaForward = (-dyPixels / f) * this.distance
+    public panByPixels(_dxPixels: number, _dyPixels: number) {
+        // const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
+        // const worldDeltaRight = (dxPixels / f) * this.distance
+        // const worldDeltaForward = (-dyPixels / f) * this.distance
 
-        const { fx, fy, fz, rx, ry, rz } = this.viewBasis
+        // const { fx, fy, fz, rx, ry, rz } = this.viewBasis
 
-        this.moveTo(
-            this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
-            this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
-            this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
-        )
+        // this.moveTo(
+        //     this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
+        //     this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
+        //     this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
+        // )
     }
 
     moveTo(x: number, y: number, z: number) {

@@ -9,7 +9,7 @@ import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
 import { ToggleGroup, ToggleGroupItem, } from "../ui/toggle-group";
-import { DialogInner } from "./DialogInner";
+import { DialogInner, DialogPage } from "./DialogInner";
 
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
@@ -45,7 +45,7 @@ export function ColoniesInforWindow() {
     const name = currentColony?.getComponent(LabelComponent)
     const info = currentColony?.getComponent(InfoComponent)
 
-    const [page, setPage] = useState<string>("population")
+    const [page, setPage] = useState<DialogPage>("population")
 
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
         <DialogContent className="bg-[#1c1c1c] text-popover-foreground min-w-4xl">
@@ -66,7 +66,8 @@ export function ColoniesInforWindow() {
                     height: "2em",
                     justifyContent: "space-between",
                     width: "100%"
-                }} value={page} onValueChange={(value) => setPage((prev) => value || prev)} type="single">
+                }} value={page} onValueChange={(value: DialogPage) => setPage((prev) => value || prev)} type="single">
+                    <ToggleGroupItem value="summary">Summary</ToggleGroupItem>
                     <ToggleGroupItem value="population">Population</ToggleGroupItem>
                     <ToggleGroupItem value="warehouse">Warehouse</ToggleGroupItem>
                     <ToggleGroupItem value="industry">Industry</ToggleGroupItem>
@@ -75,4 +76,3 @@ export function ColoniesInforWindow() {
         </DialogContent>
     </Dialog >
 }
-

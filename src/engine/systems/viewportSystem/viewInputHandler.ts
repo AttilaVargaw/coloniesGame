@@ -2,7 +2,7 @@ import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
-import { CAMERA_INITIAL_DISTANCE } from "@/game/constants";
+// import { CAMERA_INITIAL_DISTANCE } from "@/game/constants";
 
 const wasdButtons = new Set(["w", "a", "s", "d", "W", "A", "S", "D", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
 const allButtons = new Set(["+", "=", "-", "_", ...wasdButtons])
@@ -34,6 +34,8 @@ export class ViewportInputHandler {
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0
     private static readonly ROTATION_INERTIA_THRESHOLD = 0
+    private static readonly MAX_ZOOM = 5_000
+    private static readonly MIN_ZOOM = 0
 
     get isDragging() {
         return this._isDragging
@@ -280,13 +282,21 @@ export class ViewportInputHandler {
 
     private zoomWheel(camera: Camera, factor: number) {
         this._isZooming = true
+
+        if(this.wheelZoomAccum > 0 && camera.lookAt[2] >= ViewportInputHandler.MAX_ZOOM) {
+            return
+        }
+        if(this.wheelZoomAccum < 0 && camera.lookAt[2] <= ViewportInputHandler.MIN_ZOOM) {
+            return
+        }
+
         if(this.hasFollowTarget) {
             camera.zoomBy(factor, this.lastWheelScreen.x, this.lastWheelScreen.y)
         } else {
             this.viewportSystem.viewport.camera.moveTo(
                 camera.lookAt[0],
                 camera.lookAt[1],
-                camera.lookAt[2] += this.wheelZoomAccum
+                Math.max(ViewportInputHandler.MIN_ZOOM, Math.min(camera.lookAt[2] += this.wheelZoomAccum, ViewportInputHandler.MAX_ZOOM))
             )
         }
     }

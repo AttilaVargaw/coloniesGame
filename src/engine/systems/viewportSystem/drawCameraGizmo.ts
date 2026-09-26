@@ -53,6 +53,12 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.fillText("Y", cx + ux * labelOffset, cy - uy * labelOffset);
     ctx.fillText("Z", cx + fx * labelOffset, cy - fy * labelOffset);
 
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    const coordX = cx - size - 12;
+    const lookAt = camera.lookAt;
+    ctx.fillText(`(${lookAt[0].toFixed(1)}, ${lookAt[1].toFixed(1)}, ${lookAt[2].toFixed(1)})`, coordX, cy);
+
     ctx.restore();
 }
 
