@@ -7,6 +7,7 @@ import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { TradeSystem } from "@game/systems/tradeSystem"
+import { AutoTradeSystem } from "@game/systems/autoTradeSystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
@@ -52,8 +53,9 @@ export class Game {
         })
 
         this.engine
-            .addSystem(TradeSystem)
             .addSystem(IndustrySystem)
+            .addSystem(TradeSystem)
+            .addSystem(AutoTradeSystem)
             .addSystem(DateSystem)
             .addSystem(TimeScaleSystem)
             .addSystem(OrbitSystem)

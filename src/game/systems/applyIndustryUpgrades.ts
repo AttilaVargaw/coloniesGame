@@ -8,6 +8,8 @@ export interface ApplyUpgradesInput {
     sectorMaintenance: Record<string, number>;
     upgradeSectors: string[];
     autoUpgradeSectors: Record<string, boolean>;
+    settlementType: "colony" | "outpost";
+    allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
 export interface ApplyUpgradesResult {
@@ -18,13 +20,16 @@ export interface ApplyUpgradesResult {
 export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesResult {
     const sectors = { ...input.sectors };
     const sectorWealth = { ...input.sectorWealth };
+    const allowedSectors = new Set(input.allowedSectors ?? Object.keys(sectors) as (keyof IndustrialSectors)[]);
 
     for (const sectorName of input.upgradeSectors) {
+        if (!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
         tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, false);
     }
 
     for (const [sectorName, shouldAutoUpgrade] of Object.entries(input.autoUpgradeSectors)) {
         if (!shouldAutoUpgrade) continue;
+        if (!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
         tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, true);
     }
 
@@ -48,6 +53,15 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
     }
 
     return { sectors, sectorWealth };
+}
+
+function isSectorAllowed(
+    sectorName: string,
+    settlementType: "colony" | "outpost",
+    allowedSectors: Set<keyof IndustrialSectors>
+): boolean {
+    if (settlementType === "colony") return true;
+    return allowedSectors.has(sectorName as keyof IndustrialSectors);
 }
 
 function tryUpgradeSector(

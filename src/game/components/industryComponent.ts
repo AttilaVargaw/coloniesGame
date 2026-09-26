@@ -8,22 +8,9 @@ import { createStarterSectorWealth, createStarterSectorCapital } from "../factor
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { ColonyType } from "../constants";
 
-export type BuildOrder = {
-    id: number
-    name: string
-    imageUrl: string
-    totalDays: number
-    remainingDays: number
-    oreCost: number
-    tyliumCost: number
-    creditCost: number
-    orePaid: number
-    tyliumPaid: number
-    creditsPaid: number
-}
+export type SettlementType = "colony" | "outpost";
 
 export class IndustryComponent extends EntityComponent {
-    //public sectorChange = createStarterIndustry()
     public goodsChange: Goods
     public populationChange: Population
     public goodsRequirements: Partial<Goods>
@@ -44,6 +31,8 @@ export class IndustryComponent extends EntityComponent {
         public readonly goods: Goods,
         public readonly population: Population,
         public colonyType: ColonyType,
+        public settlementType: SettlementType = "colony",
+        public allowedSectors: (keyof IndustrialSectors)[] | undefined = undefined,
     ) {
         super()
 

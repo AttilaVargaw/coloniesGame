@@ -40,6 +40,8 @@ function buildUpgradeInput(overrides: Partial<{
             sectorMaintenance,
             upgradeSectors: overrides.manualUpgrade ? [sectorName] : [],
             autoUpgradeSectors: overrides.autoUpgrade ? { [sectorName]: true } : {},
+            settlementType: "colony" as const,
+            allowedSectors: undefined,
         },
     };
 }
@@ -91,5 +93,37 @@ describe("applyIndustryUpgrades", () => {
         const result = applyIndustryUpgrades(input);
 
         expect(result.sectors[sectorName as keyof typeof result.sectors]).toBe(initialLevel);
+    })
+
+    it("does not upgrade outpost sector when not in allowed list", () => {
+        const { initialLevel, sectorName, input } = buildUpgradeInput({
+            wealth: 1000,
+            profit: 1,
+            manualUpgrade: true,
+        });
+
+        const result = applyIndustryUpgrades({
+            ...input,
+            settlementType: "outpost",
+            allowedSectors: ["metalFactory"],
+        });
+
+        expect(result.sectors[sectorName as keyof typeof result.sectors]).toBe(initialLevel);
+    })
+
+    it("upgrades outpost sector when in allowed list", () => {
+        const { initialLevel, input } = buildUpgradeInput({
+            wealth: 1000,
+            profit: 1,
+            manualUpgrade: true,
+        });
+
+        const result = applyIndustryUpgrades({
+            ...input,
+            settlementType: "outpost",
+            allowedSectors: ["mine"],
+        });
+
+        expect(result.sectors.mine).toBe(initialLevel + 1);
     })
 })

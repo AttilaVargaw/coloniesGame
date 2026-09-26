@@ -54,9 +54,17 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         if (commands) {
             for (const cmd of [...commands]) {
                 const list = upgradeSectors[cmd.entityId];
-                if (list) {
-                    list.push(cmd.sectorName);
+                if (!list) continue;
+
+                const entity = this.nodes.find(n => n.entity.id === cmd.entityId);
+                if (!entity) continue;
+
+                const { settlementType, allowedSectors } = entity.industry;
+                if (settlementType === "outpost" && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
+                    continue;
                 }
+
+                list.push(cmd.sectorName);
             }
         }
 
@@ -71,6 +79,8 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 sectorCapital: industry.sectorCapital,
                 upgradeSectors: upgradeSectors[entity.id],
                 autoUpgradeSectors: autoUpgradeSectors[entity.id],
+                settlementType: industry.settlementType,
+                allowedSectors: industry.allowedSectors,
             });
         }
 

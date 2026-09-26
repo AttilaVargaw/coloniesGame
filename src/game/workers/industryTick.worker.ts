@@ -28,6 +28,8 @@ export interface IndustryTickInput {
     sectorCapital: Record<keyof IndustrialSectors, number>;
     upgradeSectors: string[];
     autoUpgradeSectors: Record<string, boolean>;
+    settlementType: "colony" | "outpost";
+    allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
 export interface IndustryTickResult {
@@ -53,6 +55,8 @@ export interface IndustryTickResult {
     sectors: IndustrialSectors;
     sectorWealth: Record<keyof IndustrialSectors, number>;
     sectorCapital: Record<keyof IndustrialSectors, number>;
+    settlementType: "colony" | "outpost";
+    allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
 const qolSmoothing = 0.03;
@@ -94,7 +98,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     const results: IndustryTickResult[] = [];
 
-    for(const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors } of event.data.industries) {
+    for(const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors, settlementType, allowedSectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
         const prices = getPrices(goods, memory);
         colonyPriceMemory.set(entityId, memory);
@@ -103,6 +107,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const currentSectorWealth: Record<keyof IndustrialSectors, number> = { ...sectorWealth };
         const currentSectors = { ...sectors } as Record<keyof IndustrialSectors, number>;
         const currentSectorCapital: Record<keyof IndustrialSectors, number> = { ...sectorCapital };
+        const allowedSectorsSet = new Set(allowedSectors ?? Object.keys(sectors) as (keyof IndustrialSectors)[]);
 
         const populationConsumption = {} as Partial<Goods>;
         const populationUpdates: IndustryTickResult["populationUpdates"] = {};
@@ -162,7 +167,11 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
         const sectorBids: SectorBid[] = [];
 
-        for(const [name, level] of Object.entries(sectors) as [keyof IndustrialSectors, number][]) {
+        for(const [name, level] of Object.entries(currentSectors) as [keyof IndustrialSectors, number][]) {
+            if (settlementType === "outpost" && !allowedSectorsSet.has(name)) {
+                continue;
+            }
+
             const config = industrySectorBlueprints.get(name);
 
             if(!config) {
@@ -398,6 +407,8 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectorMaintenance,
             upgradeSectors,
             autoUpgradeSectors,
+            settlementType,
+            allowedSectors: allowedSectorsSet ? Array.from(allowedSectorsSet) : undefined,
         });
 
         results.push({
@@ -416,6 +427,8 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectors: finalSectors,
             sectorWealth: finalSectorWealth,
             sectorCapital: currentSectorCapital,
+            settlementType,
+            allowedSectors,
         });
     }
 
