@@ -15,10 +15,24 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
-import { applyBloom, applyColorGrading, applyVignette } from "./postProcess";
+import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
+import { LabelRenderer } from "./renderers/labelRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
+
+let bloomSourceCanvas: HTMLCanvasElement | null = null
+let bloomSourceCtx: CanvasRenderingContext2D | null = null
+
+function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
+    if(!canvas || canvas.width !== width || canvas.height !== height) {
+        const c = document.createElement("canvas")
+        c.width = width
+        c.height = height
+        return c
+    }
+    return canvas
+}
 
 interface RenderEntry {
     renderer: BaseRenderer<any>
@@ -135,31 +149,61 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
-    private scheduleRender(dt: number) {
-        if (!this.engine) {
+    private scheduleRender(dt: number, bloomTargetCtx?: CanvasRenderingContext2D) {
+        if(!this.engine) {
             return
         }
 
         const allEntries: RenderEntry[] = []
+        const labelEntries: RenderEntry[] = []
+        const bloomEntries: RenderEntry[] = []
 
-        for (const rendererClass of this.rendererClasses) {
+        for(const rendererClass of this.rendererClasses) {
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
-            if (!renderer) {
+            if(!renderer) {
                 continue
             }
 
             renderer.projectNodes()
 
-            for (const { node, projected } of renderer.getProjectedCacheEntries()) {
-                allEntries.push({ renderer, node, projected })
+            for(const { node, projected } of renderer.getProjectedCacheEntries()) {
+                if(renderer instanceof LabelRenderer) {
+                    labelEntries.push({ renderer, node, projected })
+                } else if('emitLight' in node && (node as any).emitLight) {
+                    allEntries.push({ renderer, node, projected })
+                    if(bloomTargetCtx) {
+                        bloomEntries.push({ renderer, node, projected })
+                    }
+                } else {
+                    allEntries.push({ renderer, node, projected })
+                }
             }
         }
 
         allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
+        bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
-        for (const entry of allEntries) {
+        for(const entry of allEntries) {
             entry.renderer.drawNode(entry.node, dt)
         }
+
+        if(bloomTargetCtx) {
+            bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
+            for(const entry of bloomEntries) {
+                entry.renderer.drawNode(entry.node, dt, bloomTargetCtx)
+            }
+        }
+
+        this.pendingLabelEntries = labelEntries
+    }
+
+    private pendingLabelEntries: RenderEntry[] = []
+
+    private renderLabels() {
+        for(const entry of this.pendingLabelEntries) {
+            entry.renderer.drawNode(entry.node, 0)
+        }
+        this.pendingLabelEntries = []
     }
 
     setRendererClasses(classes: Array<new (...args: any[]) => BaseRenderer<any>>) {
@@ -176,55 +220,72 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.fpsFrameCount++
         const now = performance.now()
         const elapsed = now - this.fpsLastTime
-        if (elapsed >= 500) {
+        if(elapsed >= 500) {
             this.currentFps = Math.round((this.fpsFrameCount * 1000) / elapsed)
             this.fpsFrameCount = 0
             this.fpsLastTime = now
         }
 
+        const { bloomSettings, debugflags: {
+            showBloom,
+            showColorGrading,
+            showVignette,
+            drawOrbits,
+            showCameraGizmo,
+            showCameraTarget,
+            showFpsCounter,
+            showJumpGraph } } = this.engine.getDebugManager()
+
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
+
+            bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, ctx.canvas.width, ctx.canvas.height)
+            bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
+
             this.clear(ctx)
             drawStarfield(ctx, camera)
             drawNebulas(ctx, camera)
+
+
+            this.scheduleRender(dt, bloomSourceCtx)
+            this.drawLensFlares(ctx, camera)
+
+            if(showBloom) {
+                applyBloomLayer(ctx, bloomSourceCanvas, bloomSettings)
+            }
+
+            if(showColorGrading) {
+                applyColorGrading(ctx, ctx.canvas.width, ctx.canvas.height)
+            }
+
+            if(showVignette) {
+                applyVignette(ctx, ctx.canvas.width, ctx.canvas.height)
+            }
 
             if(this.inputHandler.isRotatingWithoutTarget) {
                 drawRotationIndicator(ctx, camera)
             }
 
-            if(this.engine.getDebugManager().get("showCameraGizmo")) {
+            if(showCameraGizmo) {
                 drawCameraGizmo(ctx, camera)
             }
 
-            if(this.engine.getDebugManager().get("showCameraTarget")) {
+            if(showCameraTarget) {
                 drawCameraTarget(ctx, camera)
             }
 
-            if(this.engine.getDebugManager().get("drawOrbits")) {
+            if(drawOrbits) {
                 this.drawOrbits(ctx)
             }
 
-            if(this.engine.getDebugManager().get("showJumpGraph")) {
+            if(showJumpGraph) {
                 this.drawJumpGraph(ctx)
             }
 
-            if(this.engine.getDebugManager().get("showFpsCounter")) {
+            this.renderLabels()
+
+            if(showFpsCounter) {
                 this.drawFpsCounter(ctx)
-            }
-
-            this.scheduleRender(dt)
-            this.drawLensFlares(ctx, camera)
-
-            if(this.engine.getDebugManager().get("showBloom")) {
-                applyBloom(ctx, ctx.canvas.width, ctx.canvas.height)
-            }
-
-            if(this.engine.getDebugManager().get("showColorGrading")) {
-                applyColorGrading(ctx, ctx.canvas.width, ctx.canvas.height)
-            }
-
-            if(this.engine.getDebugManager().get("showVignette")) {
-                applyVignette(ctx, ctx.canvas.width, ctx.canvas.height)
             }
         }
     }

@@ -1,3 +1,5 @@
+import type { BloomSettings } from "@/engine/lib/debugManager"
+
 let offscreen: HTMLCanvasElement | null = null
 let offCtx: CanvasRenderingContext2D | null = null
 let bloomCanvas: HTMLCanvasElement | null = null
@@ -40,21 +42,35 @@ function blurCanvas(source: HTMLCanvasElement, target: HTMLCanvasElement, iterat
     targetCtx.globalAlpha = 1
 }
 
-export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height: number) {
+export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height: number, settings: BloomSettings) {
     offscreen = ensureCanvas(offscreen, width, height)
     bloomCanvas = ensureCanvas(bloomCanvas, width, height)
     offCtx = offscreen.getContext("2d")!
 
     offCtx.clearRect(0, 0, width, height)
-    offCtx.filter = "brightness(1.2) contrast(2)"
+    offCtx.filter = `brightness(${settings.brightness}) contrast(${settings.contrast})`
     offCtx.drawImage(ctx.canvas, 0, 0)
     offCtx.filter = "none"
 
-    blurCanvas(offscreen, bloomCanvas, 3)
+    blurCanvas(offscreen, bloomCanvas, settings.iterations)
 
     ctx.save()
     ctx.globalCompositeOperation = "screen"
-    ctx.globalAlpha = 0.9
+    ctx.globalAlpha = settings.alpha
+    ctx.drawImage(bloomCanvas, 0, 0)
+    ctx.restore()
+}
+
+export function applyBloomLayer(ctx: CanvasRenderingContext2D, source: HTMLCanvasElement, settings: BloomSettings) {
+    const width = source.width
+    const height = source.height
+    bloomCanvas = ensureCanvas(bloomCanvas, width, height)
+
+    blurCanvas(source, bloomCanvas, settings.iterations)
+
+    ctx.save()
+    ctx.globalCompositeOperation = "screen"
+    ctx.globalAlpha = settings.alpha
     ctx.drawImage(bloomCanvas, 0, 0)
     ctx.restore()
 }

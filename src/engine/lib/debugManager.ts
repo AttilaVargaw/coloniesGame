@@ -1,7 +1,14 @@
+export interface BloomSettings {
+    brightness: number
+    contrast: number
+    iterations: number
+    alpha: number
+}
+
 export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette"
 
 export class DebugManager {
-    private readonly flags: Record<DebugFlag, boolean> = {
+    private readonly _flags: Record<DebugFlag, boolean> = {
         showJumpGraph: false,
         drawOrbits: true,
         showCameraGizmo: true,
@@ -12,19 +19,34 @@ export class DebugManager {
         showVignette: false,
     }
 
-    get(flag: DebugFlag): boolean {
-        return this.flags[flag]
+    private _bloomSettings: BloomSettings = {
+        brightness: 1.2,
+        contrast: 2,
+        iterations: 3,
+        alpha: 0.9,
+    }
+
+    get debugflags() {
+        return this._flags
     }
 
     set(flag: DebugFlag, value: boolean): void {
-        this.flags[flag] = value
+        this._flags[flag] = value
     }
 
     toggle(flag: DebugFlag): void {
-        this.flags[flag] = !this.flags[flag]
+        this._flags[flag] = !this._flags[flag]
+    }
+
+    get bloomSettings(): BloomSettings {
+        return this._bloomSettings
+    }
+
+    set bloomSettings(settings: Partial<BloomSettings>) {
+        this._bloomSettings = { ...this.bloomSettings, ...settings }
     }
 
     all(): Record<DebugFlag, boolean> {
-        return { ...this.flags }
+        return { ...this._flags }
     }
 }

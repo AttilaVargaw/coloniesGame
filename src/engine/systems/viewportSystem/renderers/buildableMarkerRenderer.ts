@@ -33,17 +33,17 @@ export class BuildableMarkerRenderer extends BaseRenderer<BuildableMarkerNode> {
         return node.radius.radius * 1.5;
     }
 
-    protected updateNode(node: BuildableMarkerNode, dt?: number): void {
+    protected updateNode(node: BuildableMarkerNode, dt?: number, ctx?: CanvasRenderingContext2D): void {
         if (dt) {
             this.time += dt;
         }
 
         const { projected } = this.getProjected(node)
-        const ctx = this.viewportSystem.viewport.camera.context;
+        const context = ctx ?? this.viewportSystem.viewport.camera.context;
         const screenRadius = node.radius.radius * projected.scale;
 
-        ctx.save()
-        ctx.translate(projected.x, projected.y)
+        context.save()
+        context.translate(projected.x, projected.y)
 
         const orbitRadius = screenRadius * 1.6;
         const dotRadius = screenRadius * 0.18;
@@ -55,12 +55,12 @@ export class BuildableMarkerRenderer extends BaseRenderer<BuildableMarkerNode> {
             const x = Math.cos(angle) * orbitRadius;
             const y = Math.sin(angle) * orbitRadius;
 
-            ctx.beginPath();
-            ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-            ctx.fillStyle = "#facc15";
-            ctx.fill();
+            context.beginPath();
+            context.arc(x, y, dotRadius, 0, Math.PI * 2);
+            context.fillStyle = "#facc15";
+            context.fill();
         }
 
-        ctx.restore()
+        context.restore()
     }
 }

@@ -19,21 +19,21 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         return node.label.size
     }
 
-    protected updateNode(node: LabelNode, _dt?: number): void {
+    protected updateNode(node: LabelNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
         const { projected } = this.getProjected(node)
-        const ctx = this.viewportSystem.viewport.camera.context;
+        const context = ctx ?? this.viewportSystem.viewport.camera.context;
 
-        ctx.save()
-        node.setColor(ctx);
+        context.save()
+        node.setColor(context);
         const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
         const offsetX = (node.label.offset.x || 0) * projected.scale
         const offsetY = (node.label.offset.y || 0) * projected.scale
 
-        ctx.font = `${screenSize}px Chronosfer`;
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
-        ctx.shadowBlur = screenSize * 0.25
-        ctx.shadowOffsetX = 0
-        ctx.shadowOffsetY = 0
+        context.font = `${screenSize}px Chronosfer`;
+        context.shadowColor = "rgba(0, 0, 0, 0.8)"
+        context.shadowBlur = screenSize * 0.25
+        context.shadowOffsetX = 0
+        context.shadowOffsetY = 0
 
         const lines = node.label.text.split("\n")
         const lineHeight = screenSize * 1.2
@@ -41,9 +41,9 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
 
         let y = projected.y + offsetY - totalHeight / 2 + lineHeight / 2
         for(const line of lines) {
-            ctx.fillText(line, projected.x + offsetX, y);
+            context.fillText(line, projected.x + offsetX, y);
             y += lineHeight
         }
-        ctx.restore()
+        context.restore()
     }
 }

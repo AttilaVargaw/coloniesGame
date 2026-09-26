@@ -134,9 +134,11 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return entries
     }
 
-    drawNode(node: N, dt: number): void {
-        this.updateNode(node, dt)
+    drawNode(node: N, dt: number, ctx?: CanvasRenderingContext2D): void {
+        this.updateNode(node, dt, ctx)
     }
+
+    protected abstract updateNode(_node: N, _dT?: number, _ctx?: CanvasRenderingContext2D): void
 
     getViewportSystem(): ViewportSystem {
         return this.viewportSystem

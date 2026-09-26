@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { BugOff, Check } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { DebugToggleCommand } from "@/game/commands/DebugToggleCommand";
-import type { DebugFlag } from "@engine/lib/debugManager";
+import type { DebugFlag, BloomSettings } from "@engine/lib/debugManager";
 
 const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
@@ -24,6 +26,13 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showColorGrading", label: "Show Color Grading" },
     { flag: "showVignette", label: "Show Vignette" },
 ]
+
+const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
+    brightness: 1.2,
+    contrast: 2,
+    iterations: 3,
+    alpha: 0.9,
+}
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)
@@ -37,6 +46,7 @@ export function DebugModal() {
         showColorGrading: false,
         showVignette: false,
     })
+    const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()
 
     const handleToggle = (flag: DebugFlag) => {
@@ -45,6 +55,14 @@ export function DebugModal() {
             return next
         })
         engine?.addCommand(new DebugToggleCommand({ flag }))
+    }
+
+    const handleBloomSettingChange = (key: keyof BloomSettings, value: number) => {
+        setBloomSettings(prev => {
+            const next = { ...prev, [key]: value }
+            engine!.getDebugManager().bloomSettings = next
+            return next
+        })
     }
 
     return (
@@ -77,6 +95,63 @@ export function DebugModal() {
                             </Toggle>
                         </div>
                     ))}
+                    {flags.showBloom && (
+                        <div className="mt-4 flex flex-col gap-3 border-t border-muted pt-3">
+                            <span className="text-sm font-medium">Bloom Settings</span>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Brightness</Label>
+                                    <span className="text-xs text-muted-foreground">{bloomSettings.brightness.toFixed(1)}</span>
+                                </div>
+                                <Slider
+                                    value={[bloomSettings.brightness]}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    onValueChange={([value]) => handleBloomSettingChange("brightness", value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Contrast</Label>
+                                    <span className="text-xs text-muted-foreground">{bloomSettings.contrast.toFixed(1)}</span>
+                                </div>
+                                <Slider
+                                    value={[bloomSettings.contrast]}
+                                    min={1}
+                                    max={5}
+                                    step={0.1}
+                                    onValueChange={([value]) => handleBloomSettingChange("contrast", value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Blur Passes</Label>
+                                    <span className="text-xs text-muted-foreground">{bloomSettings.iterations}</span>
+                                </div>
+                                <Slider
+                                    value={[bloomSettings.iterations]}
+                                    min={1}
+                                    max={5}
+                                    step={1}
+                                    onValueChange={([value]) => handleBloomSettingChange("iterations", value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Intensity</Label>
+                                    <span className="text-xs text-muted-foreground">{bloomSettings.alpha.toFixed(1)}</span>
+                                </div>
+                                <Slider
+                                    value={[bloomSettings.alpha]}
+                                    min={0.1}
+                                    max={1}
+                                    step={0.1}
+                                    onValueChange={([value]) => handleBloomSettingChange("alpha", value)}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
