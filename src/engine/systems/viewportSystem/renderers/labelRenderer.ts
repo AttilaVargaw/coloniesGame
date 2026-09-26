@@ -5,6 +5,8 @@ import { ViewportSystem } from "../viewportSystem";
 import { LabelNode } from "./labelNode";
 import { BaseRenderer } from "./baseRenderer";
 
+const MAX_LABEL_SCREEN_SIZE = 48;
+
 export class LabelRenderer extends BaseRenderer<LabelNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
@@ -23,7 +25,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
 
         ctx.save()
         node.setColor(ctx);
-        const screenSize = node.label.size * projected.scale
+        const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
         const offsetX = (node.label.offset.x || 0) * projected.scale
         const offsetY = (node.label.offset.y || 0) * projected.scale
 

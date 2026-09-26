@@ -38,16 +38,7 @@ export abstract class System {
 }
 
 export abstract class SystemWithNodes<N extends EntityNode> extends System {
-    protected _sortOnEveryEntityAddition = false
     protected nodes: N[] = []
-
-    get sortOnEveryEntityAddition(): boolean {
-        return this._sortOnEveryEntityAddition
-    }
-
-    set sortOnEveryEntityAddition(value: boolean) {
-        this._sortOnEveryEntityAddition = value
-    }
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)

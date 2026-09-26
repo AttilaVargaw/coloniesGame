@@ -8,16 +8,7 @@ import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
-
-// function Sum(o: Record<string | number | symbol, number>) {
-//     let sum = 0;
-
-//     for(const it in o) {
-//         sum += o[it];
-//     }
-
-//     return sum;
-// }
+import { SettlementType } from "../components/industryComponent";
 
 export interface IndustryTickInput {
     entityId: string;
@@ -28,7 +19,7 @@ export interface IndustryTickInput {
     sectorCapital: Record<keyof IndustrialSectors, number>;
     upgradeSectors: string[];
     autoUpgradeSectors: Record<string, boolean>;
-    settlementType: "colony" | "outpost";
+    settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
@@ -55,7 +46,7 @@ export interface IndustryTickResult {
     sectors: IndustrialSectors;
     sectorWealth: Record<keyof IndustrialSectors, number>;
     sectorCapital: Record<keyof IndustrialSectors, number>;
-    settlementType: "colony" | "outpost";
+    settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
@@ -168,7 +159,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         const sectorBids: SectorBid[] = [];
 
         for(const [name, level] of Object.entries(currentSectors) as [keyof IndustrialSectors, number][]) {
-            if (settlementType === "outpost" && !allowedSectorsSet.has(name)) {
+            if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
                 continue;
             }
 

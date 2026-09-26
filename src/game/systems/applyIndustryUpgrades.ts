@@ -1,4 +1,5 @@
 import type { IndustrialSectors } from "../components/Factories";
+import { SettlementType } from "../components/industryComponent";
 import { sectorUpgradeCosts } from "./sectorUpgradeCosts";
 
 export interface ApplyUpgradesInput {
@@ -8,7 +9,7 @@ export interface ApplyUpgradesInput {
     sectorMaintenance: Record<string, number>;
     upgradeSectors: string[];
     autoUpgradeSectors: Record<string, boolean>;
-    settlementType: "colony" | "outpost";
+    settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
@@ -22,18 +23,18 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
     const sectorWealth = { ...input.sectorWealth };
     const allowedSectors = new Set(input.allowedSectors ?? Object.keys(sectors) as (keyof IndustrialSectors)[]);
 
-    for (const sectorName of input.upgradeSectors) {
-        if (!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
+    for(const sectorName of input.upgradeSectors) {
+        if(!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
         tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, false);
     }
 
-    for (const [sectorName, shouldAutoUpgrade] of Object.entries(input.autoUpgradeSectors)) {
-        if (!shouldAutoUpgrade) continue;
-        if (!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
+    for(const [sectorName, shouldAutoUpgrade] of Object.entries(input.autoUpgradeSectors)) {
+        if(!shouldAutoUpgrade) continue;
+        if(!isSectorAllowed(sectorName, input.settlementType, allowedSectors)) continue;
         tryUpgradeSector(sectorName, sectors, sectorWealth, input.sectorProfits, true);
     }
 
-    for (const [sector, profit] of Object.entries(input.sectorProfits)) {
+    for(const [sector, profit] of Object.entries(input.sectorProfits)) {
         const sectorKey = sector as keyof IndustrialSectors;
         const maintenance = input.sectorMaintenance[sectorKey] ?? 0;
         const currentWealth = sectorWealth[sectorKey] ?? 0;
@@ -43,10 +44,10 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
         sectorWealth[sectorKey] = smoothedWealth;
     }
 
-    for (const [sectorName, level] of Object.entries(sectors)) {
+    for(const [sectorName, level] of Object.entries(sectors)) {
         const maintenance = input.sectorMaintenance[sectorName] ?? 0;
         const wealth = sectorWealth[sectorName as keyof IndustrialSectors] ?? 0;
-        if (level > 1 && wealth < maintenance * 3) {
+        if(level > 1 && wealth < maintenance * 3) {
             sectors[sectorName as keyof IndustrialSectors] = level - 1;
             sectorWealth[sectorName as keyof IndustrialSectors] = Math.max(0, wealth - Math.round(maintenance * 0.5));
         }
@@ -57,10 +58,10 @@ export function applyIndustryUpgrades(input: ApplyUpgradesInput): ApplyUpgradesR
 
 function isSectorAllowed(
     sectorName: string,
-    settlementType: "colony" | "outpost",
+    settlementType: SettlementType,
     allowedSectors: Set<keyof IndustrialSectors>
 ): boolean {
-    if (settlementType === "colony") return true;
+    if(settlementType === "colony") return true;
     return allowedSectors.has(sectorName as keyof IndustrialSectors);
 }
 
@@ -74,12 +75,12 @@ function tryUpgradeSector(
     const currentLevel = sectors[sectorName as keyof IndustrialSectors];
     const cost = Math.round((sectorUpgradeCosts[sectorName as keyof IndustrialSectors] || 10) * Math.max(1, currentLevel));
 
-    if (requireProfit) {
+    if(requireProfit) {
         const lastProfit = sectorProfits[sectorName] ?? 0;
-        if (lastProfit <= 0) return;
+        if(lastProfit <= 0) return;
     }
 
-    if ((sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) >= cost) {
+    if((sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) >= cost) {
         sectors[sectorName as keyof IndustrialSectors] = currentLevel + 1;
         sectorWealth[sectorName as keyof IndustrialSectors] = Math.max(0, (sectorWealth[sectorName as keyof IndustrialSectors] ?? 0) - cost);
     }

@@ -60,7 +60,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 if (!entity) continue;
 
                 const { settlementType, allowedSectors } = entity.industry;
-                if (settlementType === "outpost" && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
+                if ((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
                     continue;
                 }
 

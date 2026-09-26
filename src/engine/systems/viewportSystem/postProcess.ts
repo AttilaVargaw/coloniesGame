@@ -1,27 +1,28 @@
 let offscreen: HTMLCanvasElement | null = null
 let offCtx: CanvasRenderingContext2D | null = null
+let bloomCanvas: HTMLCanvasElement | null = null
+let tempCanvas: HTMLCanvasElement | null = null
+let tempCtx: CanvasRenderingContext2D | null = null
 
-function ensureOffscreen(width: number, height: number) {
-    if(!offscreen || offscreen.width !== width || offscreen.height !== height) {
-        offscreen = document.createElement("canvas")
-        offscreen.width = width
-        offscreen.height = height
-        offCtx = offscreen.getContext("2d")
+function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
+    if(!canvas || canvas.width !== width || canvas.height !== height) {
+        const c = document.createElement("canvas")
+        c.width = width
+        c.height = height
+        return c
     }
+    return canvas
 }
 
 function blurCanvas(source: HTMLCanvasElement, target: HTMLCanvasElement, iterations: number) {
     const w = source.width
     const h = source.height
-    const targetCtx = target.getContext("2d")
-    if(!targetCtx) return
-
+    const targetCtx = target.getContext("2d")!
     targetCtx.clearRect(0, 0, w, h)
 
-    const temp = document.createElement("canvas")
-    temp.width = w
-    temp.height = h
-    const tempCtx = temp.getContext("2d")!
+    tempCanvas = ensureCanvas(tempCanvas, w, h)
+    tempCtx = tempCanvas.getContext("2d")!
+    tempCtx.clearRect(0, 0, w, h)
     tempCtx.drawImage(source, 0, 0)
 
     for(let i = 0; i < iterations; i++) {
@@ -29,7 +30,7 @@ function blurCanvas(source: HTMLCanvasElement, target: HTMLCanvasElement, iterat
         targetCtx.filter = `blur(${8 + i * 4}px)`
         targetCtx.globalCompositeOperation = "screen"
         targetCtx.globalAlpha = 0.7
-        targetCtx.drawImage(temp, 0, 0)
+        targetCtx.drawImage(tempCanvas, 0, 0)
         tempCtx.clearRect(0, 0, w, h)
         tempCtx.drawImage(target, 0, 0)
     }
@@ -40,8 +41,9 @@ function blurCanvas(source: HTMLCanvasElement, target: HTMLCanvasElement, iterat
 }
 
 export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    ensureOffscreen(width, height)
-    if(!offscreen || !offCtx) return
+    offscreen = ensureCanvas(offscreen, width, height)
+    bloomCanvas = ensureCanvas(bloomCanvas, width, height)
+    offCtx = offscreen.getContext("2d")!
 
     offCtx.clearRect(0, 0, width, height)
     offCtx.globalCompositeOperation = "source-over"
@@ -67,9 +69,6 @@ export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height:
 
     offCtx.putImageData(imageData, 0, 0)
 
-    const bloomCanvas = document.createElement("canvas")
-    bloomCanvas.width = width
-    bloomCanvas.height = height
     blurCanvas(offscreen, bloomCanvas, 3)
 
     ctx.save()
@@ -79,15 +78,30 @@ export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height:
     ctx.restore()
 }
 
+let gradient: CanvasGradient | null = null
+let gradientWidth = 0
+let gradientHeight = 0
+
+function ensureGradient(ctx: CanvasRenderingContext2D, width: number, height: number) {
+    if(!gradient || gradientWidth !== width || gradientHeight !== height) {
+        gradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.7)
+        gradient.addColorStop(0, "rgba(0, 0, 0, 0)")
+        gradient.addColorStop(0.5, "rgba(60, 40, 100, 0.4)")
+        gradient.addColorStop(1, "rgba(10, 15, 40, 0.7)")
+
+        gradientWidth = width
+        gradientHeight = height
+    }
+
+    return gradient
+}
+
 export function applyColorGrading(ctx: CanvasRenderingContext2D, width: number, height: number) {
     ctx.save()
     ctx.globalCompositeOperation = "overlay"
     ctx.globalAlpha = 0.18
 
-    const gradient = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.7)
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0)")
-    gradient.addColorStop(0.5, "rgba(60, 40, 100, 0.4)")
-    gradient.addColorStop(1, "rgba(10, 15, 40, 0.7)")
+    const gradient = ensureGradient(ctx, width, height)
 
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)

@@ -65,9 +65,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
     }
 
     private onEntityAdded = () => {
-        if(this.sortOnEveryEntityAddition) {
-            this.nodes.sort((a, b) => a.zIndex - b.zIndex)
-        }
     }
 
     projectNodes(): void {

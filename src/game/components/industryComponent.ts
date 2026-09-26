@@ -8,7 +8,7 @@ import { createStarterSectorWealth, createStarterSectorCapital } from "../factor
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { ColonyType } from "../constants";
 
-export type SettlementType = "colony" | "outpost";
+export type SettlementType = "colony" | "outpost" | "hydrocarbonRefinery";
 
 export class IndustryComponent extends EntityComponent {
     public goodsChange: Goods

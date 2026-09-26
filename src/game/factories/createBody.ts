@@ -5,6 +5,7 @@ import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { JumpNodeComponent } from "../components/jumpGraph"
 import { IndustryComponent } from "../components/industryComponent"
+import { BuildableComponent } from "../components/buildableComponent"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { Engine } from "@/engine/core/engine"
 import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype } from "./helpers"
@@ -43,6 +44,8 @@ export async function createBody({
     asteroidBelts,
     name,
     mass: explicitMass,
+    buildable,
+    allowedSettlementTypes,
 }: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
     const angle = orbit.angle ?? generateRandomNumber(0, TWO_PI)
     const clickSize = marker.radius * 2
@@ -52,29 +55,31 @@ export async function createBody({
     const body = createMarker(engine, { shade: name !== "root", ...marker })
 
     if(name !== "root") {
-        const components: EntityComponent[] = [
-            new OrbitComponent(
-                parent.id,
-                orbit.radius * UNIVERSE_SCALE,
-                angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
-                angle,
-                orbit.eccentricity ?? 0,
-                orbit.inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE),
-                orbit.periapsis ?? 0,
-                orbit.ascendingNode ?? 0
-            ),
-            new SoiComponent(calculateSoi(marker.radius, archetype)),
-            new PathComponent(),
-            new TargetableComponent(),
-            new HoverableComponent("pointer", clickSquare),
-            new MassComponent(mass),
-        ]
+    const components: EntityComponent[] = [
+        new OrbitComponent(
+            parent.id,
+            orbit.radius * UNIVERSE_SCALE,
+            angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
+            angle,
+            orbit.eccentricity ?? 0,
+            orbit.inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE),
+            orbit.periapsis ?? 0,
+            orbit.ascendingNode ?? 0
+        ),
+        new SoiComponent(calculateSoi(marker.radius, archetype)),
+        new PathComponent(),
+        new TargetableComponent(),
+        new HoverableComponent("pointer", clickSquare),
+        new MassComponent(mass),
+    ]
 
-        // if (navigationalPoint) {
-        components.push(new JumpNodeComponent())
-        // }
+    components.push(new JumpNodeComponent())
 
-        applyComponents(body, ...components)
+    if (buildable && allowedSettlementTypes) {
+        components.push(new BuildableComponent(allowedSettlementTypes))
+    }
+
+    applyComponents(body, ...components)
 
     } else {
         applyComponents(body,

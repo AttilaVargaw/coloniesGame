@@ -84,12 +84,30 @@ export const MapCreationData = {
                 inclination: 0.1
             },
             systems: [{
-                bodies: [{
-                    archetype: "luna", marker: { color: "blue", radius: 2, label: "Sigurd" }, name: "Sigurd", orbit: {
-                        radius: 3 * LUNAR_UNIT,
+                orbit: {
+                    radius: 0,
+                    inclination: 0.4
+                },
+                bodies: [
+                    {
+                        archetype: "luna", marker: { color: "blue", radius: 2, label: "Sigurd" }, name: "Sigurd", orbit: {
+                            radius: 3 * LUNAR_UNIT,
+                        }
+                    }, {
+                        archetype: "luna",
+                        marker: { color: "yellow", radius: 5, label: "Ragnar Hydrocarbon Site" },
+                        name: "ragnarHydrocarbonRefinery",
+                        orbit: {
+                            radius: 3 * LUNAR_UNIT,
+                            eccentricity: 0,
+                            inclination: 0.1,
+                        },
+                        buildable: true,
+                        allowedSettlementTypes: ["hydrocarbonRefinery"]
                     }
-                }],
-            }]
+                ],
+
+            }],
         }],
         orbit: {
             radius: 300,

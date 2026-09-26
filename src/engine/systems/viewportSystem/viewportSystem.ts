@@ -135,7 +135,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
-    private scheduleRender(_dt: number) {
+    private scheduleRender(dt: number) {
         if (!this.engine) {
             return
         }
@@ -158,7 +158,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
         for (const entry of allEntries) {
-            entry.renderer.drawNode(entry.node, _dt)
+            entry.renderer.drawNode(entry.node, dt)
         }
     }
 
