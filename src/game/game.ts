@@ -102,6 +102,8 @@ export class Game {
 
         let previousTime = 0.0
         let firstUpdate = true
+        let lastRenderTime = 0
+        const frameDuration = 1000 / 60
 
         const update = (time: number) => {
             this.gameLoopId = requestAnimationFrame(update)
@@ -109,6 +111,12 @@ export class Game {
             if(!this.engine) {
                 return
             }
+
+            if(time - lastRenderTime < frameDuration) {
+                return
+            }
+
+            lastRenderTime = time
 
             const dt = time - previousTime;
 
