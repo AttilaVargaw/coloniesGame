@@ -27,6 +27,8 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { ThicknessComponent } from "@/engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
+// import hydrocarbonSite from "../../components/icons/hydrocarbonSiteDradis.svg"
+import buildableSite from "../../components/icons/buildable.svg"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
     if(blueprint.mass !== undefined) return blueprint.mass
@@ -52,34 +54,41 @@ export async function createBody({
     const clickSquare = { width: clickSize, height: clickSize }
     const mass = explicitMass ?? massByArchetype[archetype]
 
+    if(buildable) {
+        marker = {
+            ...marker,
+            texture: buildableSite
+        }
+    }
+
     const body = createMarker(engine, { shade: name !== "root", ...marker })
 
     if(name !== "root") {
-    const components: EntityComponent[] = [
-        new OrbitComponent(
-            parent.id,
-            orbit.radius * UNIVERSE_SCALE,
-            angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
-            angle,
-            orbit.eccentricity ?? 0,
-            orbit.inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE),
-            orbit.periapsis ?? 0,
-            orbit.ascendingNode ?? 0
-        ),
-        new SoiComponent(calculateSoi(marker.radius, archetype)),
-        new PathComponent(),
-        new TargetableComponent(),
-        new HoverableComponent("pointer", clickSquare),
-        new MassComponent(mass),
-    ]
+        const components: EntityComponent[] = [
+            new OrbitComponent(
+                parent.id,
+                orbit.radius * UNIVERSE_SCALE,
+                angularSpeed(orbit.radius * UNIVERSE_SCALE, parentMass),
+                angle,
+                orbit.eccentricity ?? 0,
+                orbit.inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE),
+                orbit.periapsis ?? 0,
+                orbit.ascendingNode ?? 0
+            ),
+            new SoiComponent(calculateSoi(marker.radius, archetype)),
+            new PathComponent(),
+            new TargetableComponent(),
+            new HoverableComponent("pointer", clickSquare),
+            new MassComponent(mass),
+        ]
 
-    components.push(new JumpNodeComponent())
+        components.push(new JumpNodeComponent())
 
-    if (buildable && allowedSettlementTypes) {
-        components.push(new BuildableComponent(allowedSettlementTypes))
-    }
+        if(buildable && allowedSettlementTypes) {
+            components.push(new BuildableComponent(allowedSettlementTypes))
+        }
 
-    applyComponents(body, ...components)
+        applyComponents(body, ...components)
 
     } else {
         applyComponents(body,

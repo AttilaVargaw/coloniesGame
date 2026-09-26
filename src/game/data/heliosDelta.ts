@@ -7,7 +7,7 @@ export const heliosDelta = {
     archetype: "sol",
     orbit: { radius: 200, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
     asteroidBelts: [
-        { innerRadius: 0.7 * SOLAR_UNIT, outerRadius: 1.0 * SOLAR_UNIT, color: "#22222aaa" },
+        { innerRadius: 0.7 * SOLAR_UNIT, outerRadius: 1.0 * SOLAR_UNIT, color: "#22222aaa", name: "Aelous" },
     ],
     systems: [{
         bodies: [{

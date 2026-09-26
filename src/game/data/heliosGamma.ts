@@ -7,7 +7,7 @@ export const heliosGamma = {
     orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
     archetype: "sol",
     asteroidBelts: [
-        { innerRadius: 0.4 * SOLAR_UNIT, outerRadius: 0.8 * SOLAR_UNIT, color: "#22222aaa" },
+        { innerRadius: 0.4 * SOLAR_UNIT, outerRadius: 0.8 * SOLAR_UNIT, color: "#22222aaa", name: "Acheron" },
     ],
     systems: [{
         bodies: [{

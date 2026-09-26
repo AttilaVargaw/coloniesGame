@@ -3,7 +3,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 
 export const solarisBeta = {
     asteroidBelts: [
-        { innerRadius: 1 * SOLAR_UNIT, outerRadius: 1.2 * SOLAR_UNIT, color: "#22222aaa" },
+        { innerRadius: 1 * SOLAR_UNIT, outerRadius: 1.2 * SOLAR_UNIT, color: "#22222aaa", name: "Ouranos" },
     ],
     navigationalPoint: true,
     name: "Helios Beta",

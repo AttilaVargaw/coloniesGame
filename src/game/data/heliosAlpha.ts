@@ -71,6 +71,6 @@ export const solarisAlpha = {
         }],
     }],
     asteroidBelts: [
-        { innerRadius: 1.4 * SOLAR_UNIT, outerRadius: 2.0 * SOLAR_UNIT, color: "#22222aaa" },
+        { innerRadius: 1.4 * SOLAR_UNIT, outerRadius: 2.0 * SOLAR_UNIT, color: "#22222aaa", name: "Erebos" },
     ]
 } as const satisfies BodyBlueprint;

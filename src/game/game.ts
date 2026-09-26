@@ -22,7 +22,6 @@ import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRe
 import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
-import { BuildableMarkerRenderer } from "@/engine/systems/viewportSystem/renderers/buildableMarkerRenderer"
 import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
@@ -86,7 +85,6 @@ export class Game {
             .addSystem(CircleRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
-            .addSystem(BuildableMarkerRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
             .addSystem(AsteroidSpinSystem)
@@ -94,7 +92,7 @@ export class Game {
         viewportEntity.addComponent(new CameraFollowComponent())
 
         this.engine.getSystem(ViewportSystem).setRendererClasses([
-            ShapeRenderer, CircleRenderer, LabelRenderer, RectRenderer, BuildableMarkerRenderer
+            ShapeRenderer, CircleRenderer, LabelRenderer, RectRenderer
         ])
         this.engine.getSystem(ViewportSystem).init()
 
