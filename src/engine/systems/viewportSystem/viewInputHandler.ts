@@ -27,7 +27,7 @@ export class ViewportInputHandler {
 
     private static readonly DRAG_THRESHOLD = 3
     private static readonly ZOOM_SPEED = 1
-    private static readonly KEY_PAN_SPEED = 1.2
+    private static readonly KEY_PAN_SPEED = 0.02
     private static readonly MOUSE_ROTATE_SPEED = 0.008
     private static readonly WHEEL_ZOOM_STEP = 40
     private static readonly EDGE_PAN_THRESHOLD = 30
@@ -76,8 +76,7 @@ export class ViewportInputHandler {
 
         if(panForward || panRight) {
             const { rx, ry, fx, fy, } = camera.viewBasis
-            const speed = ViewportInputHandler.KEY_PAN_SPEED * dt
-
+            const speed = ViewportInputHandler.KEY_PAN_SPEED * dt * camera.distance
 
             camera.moveTo(
                 camera.lookAt[0] + (panForward * fx + panRight * rx) * speed,
@@ -99,7 +98,7 @@ export class ViewportInputHandler {
         if(!panRight && !panForward) return
 
         const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
-        const speed = ViewportInputHandler.KEY_PAN_SPEED * step
+        const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
         camera.moveTo(
             camera.lookAt[0] + (panRight * rx + panForward * fx) * speed,
             camera.lookAt[1] + (panRight * ry + panForward * fy) * speed,

@@ -28,7 +28,7 @@ const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
 const DUST_AREA_DENSITY = 0.3
-const ASTEROID_CULLING_SCALE_THRESHOLD = 1
+const ASTEROID_CULLING_SCALE_THRESHOLD = 2
 const DUST_CULLING_SCALE_THRESHOLD = 0.1
 const DUST_SIZE_MIN = 30
 const DUST_SIZE_MAX = 80
@@ -91,24 +91,35 @@ function Colorize(image: HTMLImageElement | OffscreenCanvas | ImageBitmap, color
 }
 
 async function buildTintedTextures() {
+    const asteroidPromises: Promise<void>[] = []
     for(const tint of ASTEROID_TINTS) {
         for(let i = 0; i < ASTEROID_TEXTURES.length; ++i) {
-            const image = new Image()
-            image.src = ASTEROID_TEXTURES[i]
-            await image.decode()
-            tintedTextures.set(`${tint}-${i}`, Colorize(await createImageBitmap(image, {
-                resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "pixelated"
-            }), tint))
+            const key = `${tint}-${i}`
+            asteroidPromises.push(
+                new Promise<void>((resolve) => {
+                    const image = new Image()
+                    image.src = ASTEROID_TEXTURES[i]
+                    image.decode().then(() => createImageBitmap(image, {
+                        resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "pixelated"
+                    })).then((bitmap) => {
+                        tintedTextures.set(key, Colorize(bitmap, tint))
+                        resolve()
+                    })
+                })
+            )
         }
     }
 
-    for(let i = 0; i < SMOKE_TINTS.length; ++i) {
+    const dustPromises = SMOKE_TINTS.map((tint, i) => new Promise<void>((resolve) => {
         const image = new Image()
         image.src = dust1
-        await image.decode()
-        tintedDustTextures[i] = Colorize(image, SMOKE_TINTS[i])
-    }
+        image.decode().then(() => {
+            tintedDustTextures[i] = Colorize(image, tint)
+            resolve()
+        })
+    }))
 
+    await Promise.all([...asteroidPromises, ...dustPromises])
     tintedTexturesReady = true
 }
 
@@ -139,17 +150,21 @@ export async function createAsteroidBelt({
     const mid = (innerRadius + outerRadius) / 2
     const half = (outerRadius - innerRadius) * RADIUS_SPREAD / 2
 
+    const asteroidTintKeys = ASTEROID_TINTS.map(t => t as string)
+    const asteroidTextureCount = ASTEROID_TEXTURES.length
+
     for(let i = 0; i < count; ++i) {
         const radius = mid + (generateRandomNumber(0, 1) + generateRandomNumber(0, 1) - 1) * half
         const angle = generateRandomNumber(0, TWO_PI)
         const sizeRatio = ASTEROID_SIZE_MAX / ASTEROID_SIZE_MIN
         const size = ASTEROID_SIZE_MIN * Math.pow(sizeRatio, generateRandomNumber(0, 0.65))
 
-        const textureComponent = new TextureComponent(undefined, undefined,
-            tintedTextures.get(
-                `${ASTEROID_TINTS[generateRandomNumber(0, ASTEROID_TINTS.length, true)]}-${generateRandomNumber(0, ASTEROID_TEXTURES.length, true)}`
-            )
-        )
+        const tintIndex = Math.floor(generateRandomNumber(0, ASTEROID_TINTS.length, true))
+        const textureIndex = Math.floor(generateRandomNumber(0, asteroidTextureCount, true))
+        const textureKey = `${asteroidTintKeys[tintIndex]}-${textureIndex}`
+        const texture = tintedTextures.get(textureKey)
+
+        const textureComponent = new TextureComponent(undefined, undefined, texture)
         textureComponent.rotation = generateRandomNumber(0, TWO_PI)
 
         const eccentricity = generateRandomNumber(0, MAX_ECCENTRICITY)
@@ -194,7 +209,7 @@ export async function createAsteroidBelt({
         const dustBeltComponent = new AsteroidBeltComponent()
         dustBeltComponent.cullingScaleThreshold = DUST_CULLING_SCALE_THRESHOLD
 
-        const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[generateRandomNumber(0, tintedDustTextures.length, true)])
+        const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[Math.floor(generateRandomNumber(0, tintedDustTextures.length, true))])
 
         applyComponents(
             dust,

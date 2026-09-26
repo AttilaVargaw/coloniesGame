@@ -15,6 +15,7 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
+import { applyBloom, applyColorGrading, applyVignette } from "./postProcess";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
@@ -213,6 +214,18 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             this.scheduleRender(dt)
             this.drawLensFlares(ctx, camera)
+
+            if(this.engine.getDebugManager().get("showBloom")) {
+                applyBloom(ctx, ctx.canvas.width, ctx.canvas.height)
+            }
+
+            if(this.engine.getDebugManager().get("showColorGrading")) {
+                applyColorGrading(ctx, ctx.canvas.width, ctx.canvas.height)
+            }
+
+            if(this.engine.getDebugManager().get("showVignette")) {
+                applyVignette(ctx, ctx.canvas.width, ctx.canvas.height)
+            }
         }
     }
 

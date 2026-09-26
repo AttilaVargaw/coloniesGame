@@ -2,6 +2,7 @@ import { IndustryComponent } from "@/game/components/industryComponent";
 import { Population, sumPopulation, baseSalaries } from "@/game/data/Population";
 import { convertToReadable } from "@/lib/utils";
 import { colorBySign, } from "./colorBySign";
+import { InfoComponent } from "@/engine/components/infoComponent";
 
 function Sum(...args: number[]) {
     let sum = 0
@@ -13,7 +14,7 @@ function Sum(...args: number[]) {
     return sum
 }
 
-export function ColonySummary({ industry }: { industry: IndustryComponent; }) {
+export function ColonySummary({ industry, info }: { industry: IndustryComponent; info?: InfoComponent }) {
     const populationSum = sumPopulation(industry.population);
     const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
     const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
@@ -75,6 +76,10 @@ export function ColonySummary({ industry }: { industry: IndustryComponent; }) {
                             <td className="p-2">Total Net</td>
                             <td className="p-2 text-right">{colorBySign(totalNet)}</td>
                         </tr>
+                        {info && <tr className="border-b border-muted/50">
+                            <td className="p-2">Patron God: { }</td>
+                            <td className="p-2 text-right">{colorBySign(totalNet)}</td>
+                        </tr>}
                     </tbody>
                 </table>
             </div>
