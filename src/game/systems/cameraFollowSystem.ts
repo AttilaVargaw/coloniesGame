@@ -86,20 +86,21 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
 
         if(!target) return
 
-        const [tx, ty] = getAbsolute(target, this.engine)
-        const [ox, oy] = offset
+        const [tx, ty, tz] = getAbsolute(target, this.engine)
+        const [ox, oy, oz] = offset
         const targetX = tx + ox
         const targetY = ty + oy
+        const targetZ = tz + oz
 
         if(smoothFactor < 1) {
             const [cx, cy, cz] = camera.lookAt
             camera.moveTo(
                 cx + (targetX - cx) * smoothFactor,
                 cy + (targetY - cy) * smoothFactor,
-                cz,
+                cz + (targetZ - cz) * smoothFactor,
             )
         } else {
-            camera.moveTo(targetX, targetY, camera.lookAt[2])
+            camera.moveTo(targetX, targetY, targetZ)
         }
     }
 }

@@ -60,13 +60,8 @@ export class ViewportInputHandler {
     }
 
     private applyOrbitRotation(camera: Camera, dx: number, dy: number) {
-        const oldPitch = camera.pitch
-        const oldLookAtZ = camera.lookAt[2]
-
         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
-
-        camera.lookAt[2] = oldLookAtZ + camera.distance * (Math.sin(oldPitch) - Math.sin(camera.pitch))
 
         camera.invalidateViewBasis()
     }
@@ -243,13 +238,8 @@ export class ViewportInputHandler {
                         camera.panByPixels(dx, dy)
                     } else if(this.dragButton === 1) {
                         if(this.hasFollowTarget) {
-                            const oldPitch = camera.pitch
-                            const oldLookAtZ = camera.lookAt[2]
-
                             camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
                             camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
-
-                            camera.lookAt[2] = oldLookAtZ + camera.distance * (Math.sin(oldPitch) - Math.sin(camera.pitch))
 
                             camera.invalidateViewBasis()
                         } else {
