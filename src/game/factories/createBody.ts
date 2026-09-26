@@ -156,13 +156,14 @@ export async function createBody({
     }
 
     if(asteroidBelts?.length) {
-        for(const { innerRadius, outerRadius } of asteroidBelts) {
+        for(const { innerRadius, outerRadius, name } of asteroidBelts) {
             await createAsteroidBelt({
                 innerRadius,
                 outerRadius,
                 parent: body,
                 engine,
                 parentMass: mass,
+                name,
             })
         }
     }

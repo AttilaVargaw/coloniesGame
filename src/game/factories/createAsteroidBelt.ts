@@ -14,10 +14,21 @@ import asteroids4 from "../../components/icons/asteroid4.png"
 import asteroids5 from "../../components/icons/asteroid5.png"
 import asteroids6 from "../../components/icons/asteroid6.png"
 import dust1 from "../../components/icons/dust1.png"
-import { applyComponents } from "./helpers"
+import { applyComponents, calculateSoi, createAttractorClickHandler } from "./helpers"
+import { createMarker } from "./createSpaceship"
 import { RotationComponent } from "../components/rotationComponent"
 import { AsteroidBeltComponent } from "../components/asteroidBeltComponent"
 import { generateRandomNumber } from "../../lib/generateRandomNumber"
+import buildableSite from "../../components/icons/buildable.svg"
+import { BuildableComponent } from "../components/buildableComponent"
+import { SoiComponent } from "@engine/components/soiComponent"
+import { PathComponent } from "../components/pathComponent"
+import { JumpNodeComponent } from "../components/jumpGraph"
+import { TargetableComponent } from "@engine/components/targetableComponent"
+import { HoverableComponent } from "@game/systems/cursorSystem"
+import { MassComponent } from "@engine/components/massComponent"
+import { SelectableComponent } from "@engine/components/SelectableComponent"
+import { ClickableComponent } from "@/engine/components/clickableComponent"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -32,6 +43,8 @@ const ASTEROID_CULLING_SCALE_THRESHOLD = 2
 const DUST_CULLING_SCALE_THRESHOLD = 0.1
 const DUST_SIZE_MIN = 30
 const DUST_SIZE_MAX = 80
+const MINING_SITE_RADIUS = 4
+const MINING_SITE_AREA_DENSITY = 0.005
 
 const asteroidImageSize = 32
 
@@ -122,12 +135,14 @@ export async function createAsteroidBelt({
     parent,
     engine,
     parentMass,
+    name,
 }: {
     innerRadius: number
     outerRadius: number
     parent: Entity
     engine: Engine
     parentMass: number
+    name: string
 }): Promise<void> {
     await ensureTintedTextures()
 
@@ -216,5 +231,50 @@ export async function createAsteroidBelt({
         )
 
         engine.addEntity(dust, parent)
+    }
+
+    const siteCount = Math.max(6, Math.floor(beltArea * MINING_SITE_AREA_DENSITY))
+    const clickSize = MINING_SITE_RADIUS * 2
+    const clickSquare = { width: clickSize, height: clickSize }
+    const radius = innerRadius + generateRandomNumber(0, 1) * (outerRadius - innerRadius)
+
+    for(let i = 0; i < siteCount; i++) {
+        const angle = i * TWO_PI / siteCount //generateRandomNumber(0, TWO_PI)
+        const eccentricity = 0
+        const inclination = 0
+        const argumentOfPeriapsis = 0
+
+        const site = createMarker(engine, {
+            color: "yellow",
+            shade: true,
+            texture: buildableSite,
+            radius: MINING_SITE_RADIUS,
+            label: `${name} Mining Site ${i + 1}`,
+        })
+
+        applyComponents(site,
+            new OrbitComponent(
+                parent.id,
+                radius * UNIVERSE_SCALE,
+                angularSpeed(radius * UNIVERSE_SCALE, parentMass),
+                angle,
+                eccentricity,
+                inclination,
+                argumentOfPeriapsis,
+                0,
+                true
+            ),
+            new SoiComponent(calculateSoi(MINING_SITE_RADIUS, "luna")),
+            new PathComponent(),
+            new TargetableComponent(),
+            new HoverableComponent("pointer", clickSquare),
+            new MassComponent(1),
+            new JumpNodeComponent(),
+            new BuildableComponent(["hydrocarbonRefinery"]),
+            new SelectableComponent(clickSize, "red"),
+            new ClickableComponent(true, clickSquare, createAttractorClickHandler(engine, site))
+        )
+
+        engine.addEntity(site, parent)
     }
 }
