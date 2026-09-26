@@ -25,6 +25,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showBloom", label: "Show Bloom" },
     { flag: "showColorGrading", label: "Show Color Grading" },
     { flag: "showVignette", label: "Show Vignette" },
+    { flag: "showCullingOverlay", label: "Show Culling Overlay" },
 ]
 
 const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
@@ -45,6 +46,7 @@ export function DebugModal() {
         showBloom: false,
         showColorGrading: false,
         showVignette: false,
+        showCullingOverlay: false,
     })
     const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()

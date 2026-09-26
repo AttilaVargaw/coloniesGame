@@ -15,6 +15,16 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
     protected readonly viewportSystem: ViewportSystem;
     private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
     private _renderLogged = false
+    protected debugCulledCount = 0
+    protected debugProjectedCount = 0
+
+    get projectedCount() {
+        return this.debugProjectedCount
+    }
+
+    get culledCount() {
+        return this.debugCulledCount
+    }
 
     constructor(
         viewportSystem: ViewportSystem,
@@ -76,18 +86,22 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
         this.projectedCache.clear()
         const entries: N[] = []
+        this.debugCulledCount = 0
+        this.debugProjectedCount = 0
 
         const f = camera.cssHeight / (2 * Math.tan(camera.fieldOfView / 2))
         const cameraScale = f / camera.distance
 
         for(const node of this.nodes) {
             if(this.shouldSkipProjection(node, cameraScale)) {
+                this.debugCulledCount++
                 continue
             }
 
             const worldPos = this.getWorldPosition(node)
             const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
             if(!projected) {
+                this.debugCulledCount++
                 continue
             }
 
@@ -100,15 +114,18 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
                 projected.y + scaledMargin < bounds.top ||
                 projected.y - scaledMargin > bounds.bottom
             ) {
+                this.debugCulledCount++
                 continue
             }
 
             if(this.shouldCullNode(node, projected, worldPos)) {
+                this.debugCulledCount++
                 continue
             }
 
             this.projectedCache.set(node, { worldPos, projected })
             entries.push(node)
+            this.debugProjectedCount++
         }
 
         if(entries.length > 0 && !this._renderLogged) {

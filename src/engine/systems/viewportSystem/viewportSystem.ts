@@ -17,6 +17,7 @@ import { drawNebulas } from "./drawNebulas";
 import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
 import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
 import { LabelRenderer } from "./renderers/labelRenderer";
+import { RectRenderer } from "./renderers/rectRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
@@ -234,7 +235,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             showCameraGizmo,
             showCameraTarget,
             showFpsCounter,
-            showJumpGraph } } = this.engine.getDebugManager()
+            showJumpGraph,
+            showCullingOverlay } } = this.engine.getDebugManager()
 
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
@@ -287,6 +289,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             if(showFpsCounter) {
                 this.drawFpsCounter(ctx)
             }
+
+            if(showCullingOverlay) {
+                this.drawCullingOverlay(ctx)
+            }
         }
     }
 
@@ -299,6 +305,36 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.textAlign = "left"
         ctx.textBaseline = "top"
         ctx.fillText(`FPS: ${this.currentFps}`, 10, 10)
+        ctx.restore()
+    }
+
+    private drawCullingOverlay(ctx: CanvasRenderingContext2D) {
+        if(!this.engine) return
+
+        const rectRenderer = this.engine.getSystem(RectRenderer)
+        const viewport = this.viewport
+        if(!rectRenderer || !viewport) return
+
+        ctx.save()
+        ctx.font = "14px monospace"
+        ctx.fillStyle = "#0f0"
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
+        ctx.shadowBlur = 4
+        ctx.textAlign = "left"
+        ctx.textBaseline = "top"
+
+        const lines = [
+            `Distance: ${viewport.camera.distance.toFixed(0)}`,
+            `Rect projected: ${rectRenderer.projectedCount}`,
+            `Rect culled: ${rectRenderer.culledCount}`,
+        ]
+
+        let y = 30
+        for(const line of lines) {
+            ctx.fillText(line, 10, y)
+            y += 18
+        }
+
         ctx.restore()
     }
 

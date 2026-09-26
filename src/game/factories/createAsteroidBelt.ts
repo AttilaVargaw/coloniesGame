@@ -39,8 +39,8 @@ const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
 const DUST_AREA_DENSITY = 0.3
-const ASTEROID_CULLING_SCALE_THRESHOLD = 2
-const DUST_CULLING_SCALE_THRESHOLD = 0.1
+const ASTEROID_CULLING_DISTANCE_THRESHOLD = 200
+const DUST_CULLING_DISTANCE_THRESHOLD = 4000
 const DUST_SIZE_MIN = 30
 const DUST_SIZE_MAX = 80
 const MINING_SITE_RADIUS = 4
@@ -176,7 +176,7 @@ export async function createAsteroidBelt({
 
         const asteroid = engine.createEntity()
         const asteroidBeltComponent = new AsteroidBeltComponent()
-        asteroidBeltComponent.cullingScaleThreshold = ASTEROID_CULLING_SCALE_THRESHOLD
+        asteroidBeltComponent.cullingDistanceThreshold = ASTEROID_CULLING_DISTANCE_THRESHOLD
 
         applyComponents(
             asteroid,
@@ -209,7 +209,7 @@ export async function createAsteroidBelt({
 
         const dust = engine.createEntity()
         const dustBeltComponent = new AsteroidBeltComponent()
-        dustBeltComponent.cullingScaleThreshold = DUST_CULLING_SCALE_THRESHOLD
+        dustBeltComponent.cullingDistanceThreshold = DUST_CULLING_DISTANCE_THRESHOLD
 
         const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[Math.floor(generateRandomNumber(0, tintedDustTextures.length, true))])
 

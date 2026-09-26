@@ -40,10 +40,13 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return Math.max(node.size.width, node.size.height) / 2
     }
 
-    protected shouldSkipProjection(node: RectNode, cameraScale: number): boolean {
+    protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if(belt?.cullingScaleThreshold !== undefined && cameraScale < belt.cullingScaleThreshold) {
-            return true
+        if(belt?.cullingDistanceThreshold !== undefined) {
+            const distance = this.viewportSystem.viewport.camera.distance
+            if(distance > belt.cullingDistanceThreshold) {
+                return true
+            }
         }
         return false
     }
