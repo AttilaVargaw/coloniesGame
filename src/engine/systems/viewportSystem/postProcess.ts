@@ -46,28 +46,9 @@ export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height:
     offCtx = offscreen.getContext("2d")!
 
     offCtx.clearRect(0, 0, width, height)
-    offCtx.globalCompositeOperation = "source-over"
-    offCtx.globalAlpha = 1
+    offCtx.filter = "brightness(1.2) contrast(2)"
     offCtx.drawImage(ctx.canvas, 0, 0)
-
-    const imageData = offCtx.getImageData(0, 0, width, height)
-    const data = imageData.data
-    const threshold = 120
-
-    for(let i = 0; i < data.length; i += 4) {
-        const r = data[i]
-        const g = data[i + 1]
-        const b = data[i + 2]
-        const brightness = r * 0.299 + g * 0.587 + b * 0.114
-
-        if(brightness < threshold) {
-            data[i] = 0
-            data[i + 1] = 0
-            data[i + 2] = 0
-        }
-    }
-
-    offCtx.putImageData(imageData, 0, 0)
+    offCtx.filter = "none"
 
     blurCanvas(offscreen, bloomCanvas, 3)
 

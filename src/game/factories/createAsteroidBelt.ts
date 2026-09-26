@@ -49,11 +49,11 @@ const ASTEROID_TINTS = [
 ] as const
 
 const SMOKE_TINTS = [
-    "#ffffff",
-    "#f0f0f0",
-    "#e0e0e0",
-    "#d0d0d0",
-    "#c0c0c0"
+    "#8a7e72",
+    "#847868",
+    "#706458",
+    "#a09888",
+    "#6e6258"
 ] as const
 
 const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
@@ -63,29 +63,16 @@ let tintedTexturesReady = false
 function Colorize(image: HTMLImageElement | OffscreenCanvas | ImageBitmap, color: `#${string}`) {
     const imageSize = image.width
 
-    const color2 = color.replace("#", "")
-    const r = parseInt(color2.substring(0, 2), 16) / 255
-    const g = parseInt(color2.substring(2, 4), 16) / 255
-    const b = parseInt(color2.substring(4, 6), 16) / 255
-
     const offscreen = new OffscreenCanvas(imageSize, imageSize)
-    const ctx = offscreen.getContext("2d")
-
-    if(!ctx) {
-        throw "Something went wrong with the offset canvas"
-    }
+    const ctx = offscreen.getContext("2d")!
 
     ctx.drawImage(image, 0, 0)
+    ctx.globalCompositeOperation = "multiply"
+    ctx.fillStyle = color
+    ctx.fillRect(0, 0, imageSize, imageSize)
 
-    const imageData = ctx.getImageData(0, 0, imageSize, imageSize)
-
-    for(let i = 0; i < imageData.data.length; i += 4) {
-        imageData.data[i + 0] *= r
-        imageData.data[i + 1] *= g
-        imageData.data[i + 2] *= b
-    }
-
-    ctx.putImageData(imageData, 0, 0)
+    ctx.globalCompositeOperation = "destination-in"
+    ctx.drawImage(image, 0, 0)
 
     return offscreen
 }
