@@ -65,9 +65,9 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
         return this
     }
 
-    private onSelectionChanged = (eventData: { data: Entity, type: string }) => {
+    private onSelectionChanged = (eventData: { data: Entity | undefined, type: string }) => {
         for(const node of this.nodes) {
-            node.follow.target = eventData.data
+            node.follow.target = eventData.data ?? null
         }
     }
 
@@ -86,21 +86,20 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
 
         if(!target) return
 
-        const [tx, ty, tz] = getAbsolute(target, this.engine)
-        const [ox, oy, oz] = offset
+        const [tx, ty] = getAbsolute(target, this.engine)
+        const [ox, oy] = offset
         const targetX = tx + ox
         const targetY = ty + oy
-        const targetZ = tz + oz
 
         if(smoothFactor < 1) {
             const [cx, cy, cz] = camera.lookAt
             camera.moveTo(
                 cx + (targetX - cx) * smoothFactor,
                 cy + (targetY - cy) * smoothFactor,
-                cz + (targetZ - cz) * smoothFactor,
+                cz,
             )
         } else {
-            camera.moveTo(targetX, targetY, targetZ)
+            camera.moveTo(targetX, targetY, camera.lookAt[2])
         }
     }
 }
