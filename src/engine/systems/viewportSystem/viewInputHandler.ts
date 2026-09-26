@@ -29,7 +29,7 @@ export class ViewportInputHandler {
     private static readonly ZOOM_SPEED = 1
     private static readonly KEY_PAN_SPEED = 1.2
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 80
+    private static readonly WHEEL_ZOOM_STEP = 40
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0
@@ -317,10 +317,10 @@ export class ViewportInputHandler {
         const step = ViewportInputHandler.WHEEL_ZOOM_STEP
 
         if(this.wheelZoomAccum >= step) {
-            this.zoomWheel(camera, 1.05)
+            this.zoomWheel(camera, 1.02)
             this.wheelZoomAccum -= step
         } else if(this.wheelZoomAccum <= -step) {
-            this.zoomWheel(camera, 0.95)
+            this.zoomWheel(camera, 0.98)
             this.wheelZoomAccum += step
         }
     }
