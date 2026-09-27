@@ -10,6 +10,8 @@ import { Entity } from "@/engine/entities/entity";
 import { TWO_PI } from "@/game/constants";
 import { hexToRgba } from "./hexToRgba";
 import { Vector3 } from "@/lib/Vector3";
+import type { ProjectedPoint } from "@/lib/camera";
+import Camera from "@/lib/camera";
 
 const SHADE_SIZE = 96
 
@@ -78,7 +80,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const [cx, cy, cz] = worldPos
         const radius = circle.radius.radius
         const thickness = circle.thickness.thickness
-
         const screenRadius = radius * center.scale
 
         if(
@@ -93,20 +94,38 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         context.save()
 
         if(circle.emitLight) {
-            const bloomRadius = screenRadius * 3
-            const gradient = context.createRadialGradient(center.x, center.y, screenRadius * 0.5, center.x, center.y, bloomRadius)
-            const fill = circle.color.fill || "#ffffff"
-            gradient.addColorStop(0, hexToRgba(fill, 0.35))
-            gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
-            gradient.addColorStop(1, "rgba(0,0,0,0)")
-            context.globalCompositeOperation = "screen"
-            context.fillStyle = gradient
-            context.beginPath()
-            context.arc(center.x, center.y, bloomRadius, 0, TWO_PI)
-            context.fill()
-            context.globalCompositeOperation = "source-over"
+            CircleRenderer.drawBloom(context, circle, center, screenRadius)
         }
 
+        CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
+
+        CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
+
+        if(circle.texture?.nightTexture && !circle.emitLight) {
+            this.drawNightTexture(context, circle, center, screenRadius, cx, cy, cz, camera)
+        }
+
+        CircleRenderer.drawStrokeAndShade(context, circle, center, screenRadius, thickness)
+
+        context.restore()
+    }
+
+    private static drawBloom(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
+        const bloomRadius = screenRadius * 3
+        const gradient = context.createRadialGradient(center.x, center.y, screenRadius * 0.5, center.x, center.y, bloomRadius)
+        const fill = circle.color.fill || "#ffffff"
+        gradient.addColorStop(0, hexToRgba(fill, 0.35))
+        gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+        gradient.addColorStop(1, "rgba(0,0,0,0)")
+        context.globalCompositeOperation = "screen"
+        context.fillStyle = gradient
+        context.beginPath()
+        context.arc(center.x, center.y, bloomRadius, 0, TWO_PI)
+        context.fill()
+        context.globalCompositeOperation = "source-over"
+    }
+
+    private static buildCirclePath(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
         context.beginPath()
         if(circle.color.shade) {
             context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
@@ -114,8 +133,8 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             const segments = Math.max(32, Math.min(98, Math.round(screenRadius / 2)))
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
-                const worldX = cx + radius * Math.cos(angle)
-                const worldY = cy + radius * Math.sin(angle)
+                const worldX = cx + circle.radius.radius * Math.cos(angle)
+                const worldY = cy + circle.radius.radius * Math.sin(angle)
                 const worldZ = cz
                 const projected = camera.project(worldX, worldY, worldZ)
                 if(!projected) {
@@ -129,7 +148,9 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             }
         }
         context.closePath()
+    }
 
+    private static drawTextureFill(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
         if(circle.texture?.texture) {
             if(circle.color.fill) {
                 circle.setColor(context)
@@ -143,88 +164,104 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             circle.setColor(context)
             context.fill()
         }
+    }
 
-        if(circle.texture?.nightTexture && !circle.emitLight) {
-            const starEntity = this.findStarEntity()
-            if(starEntity) {
-                const starSceneNode = this.engine?.getSceneNode(starEntity)
-                const starWorldPos = starSceneNode?.getWorldPosition() ?? (() => {
-                    const pos = starEntity.getComponent(PositionComponent)
-                    return pos ? [pos.x, pos.y, pos.z] : undefined
-                })()
-
-                if(starWorldPos) {
-                    const lightWorld: Vector3 = [
-                        starWorldPos[0] - cx,
-                        starWorldPos[1] - cy,
-                        starWorldPos[2] - cz
-                    ]
-                    const lightLen = Math.sqrt(lightWorld[0] * lightWorld[0] + lightWorld[1] * lightWorld[1] + lightWorld[2] * lightWorld[2])
-
-                    if(lightLen > 0) {
-                        const lightDir: Vector3 = [lightWorld[0] / lightLen, lightWorld[1] / lightLen, lightWorld[2] / lightLen]
-
-                        const basis = camera.getBasisVectors()
-                        const right = basis.right
-                        const up = basis.up
-
-                        const viewX = lightDir[0] * right[0] + lightDir[1] * right[1] + lightDir[2] * right[2]
-                        const viewY = lightDir[0] * up[0] + lightDir[1] * up[1] + lightDir[2] * up[2]
-
-                        const gradDirX = -viewX
-                        const gradDirY = viewY
-                        const gradLen = Math.sqrt(gradDirX * gradDirX + gradDirY * gradDirY)
-
-                        if(gradLen <= 0.01) {
-                            const texSize = circle.texture.nightTexture.width
-                            context.save()
-                            context.beginPath()
-                            context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
-                            context.clip()
-                            context.drawImage(circle.texture.nightTexture, 0, 0, texSize, texSize, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
-                            context.restore()
-                        } else if(gradLen > 0.01) {
-                            const normGradX = gradDirX / gradLen
-                            const normGradY = gradDirY / gradLen
-
-                            const size = Math.ceil(screenRadius * 2)
-                            if(!this._nightCanvas || this._nightCanvas.width !== size || this._nightCanvas.height !== size) {
-                                this._nightCanvas = document.createElement("canvas")
-                                this._nightCanvas.width = size
-                                this._nightCanvas.height = size
-                            }
-                            const nightCtx = this._nightCanvas.getContext("2d")!
-
-                            nightCtx.clearRect(0, 0, size, size)
-                            const texSize = circle.texture.nightTexture.width
-                            nightCtx.drawImage(circle.texture.nightTexture, 0, 0, texSize, texSize, 0, 0, size, size)
-
-                            nightCtx.globalCompositeOperation = "destination-in"
-                            const gradStartX = size / 2 + normGradX * size / 2
-                            const gradStartY = size / 2 + normGradY * size / 2
-                            const gradEndX = size / 2 - normGradX * size / 2
-                            const gradEndY = size / 2 - normGradY * size / 2
-
-                            const gradient = nightCtx.createLinearGradient(gradEndX, gradEndY, gradStartX, gradStartY)
-                            gradient.addColorStop(0, "rgba(0,0,0,0)")
-                            gradient.addColorStop(0.35, "rgba(0,0,0,0.2)")
-                            gradient.addColorStop(0.65, "rgba(0,0,0,1)")
-                            gradient.addColorStop(1, "rgba(0,0,0,1)")
-                            nightCtx.fillStyle = gradient
-                            nightCtx.fillRect(0, 0, size, size)
-
-                            context.save()
-                            context.beginPath()
-                            context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
-                            context.clip()
-                            context.drawImage(this._nightCanvas, center.x - screenRadius, center.y - screenRadius)
-                            context.restore()
-                        }
-                    }
-                }
-            }
+    private drawNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
+        const starEntity = this.findStarEntity()
+        if(!starEntity) {
+            return
         }
 
+        const starSceneNode = this.engine?.getSceneNode(starEntity)
+        const starWorldPos = starSceneNode?.getWorldPosition() ?? (() => {
+            const pos = starEntity.getComponent(PositionComponent)
+            return pos ? [pos.x, pos.y, pos.z] : undefined
+        })()
+
+        if(!starWorldPos) {
+            return
+        }
+
+        const lightWorld: Vector3 = [
+            starWorldPos[0] - cx,
+            starWorldPos[1] - cy,
+            starWorldPos[2] - cz
+        ]
+        const lightLen = Math.sqrt(lightWorld[0] * lightWorld[0] + lightWorld[1] * lightWorld[1] + lightWorld[2] * lightWorld[2])
+
+        if(lightLen <= 0) {
+            return
+        }
+
+        const lightDir: Vector3 = [lightWorld[0] / lightLen, lightWorld[1] / lightLen, lightWorld[2] / lightLen]
+
+        const basis = camera.getBasisVectors()
+        const right = basis.right
+        const up = basis.up
+
+        const viewX = lightDir[0] * right[0] + lightDir[1] * right[1] + lightDir[2] * right[2]
+        const viewY = lightDir[0] * up[0] + lightDir[1] * up[1] + lightDir[2] * up[2]
+
+        const gradDirX = -viewX
+        const gradDirY = viewY
+        const gradLen = Math.sqrt(gradDirX * gradDirX + gradDirY * gradDirY)
+
+        if(gradLen <= 0.01) {
+            CircleRenderer.drawSimpleNightTexture(context, circle, center, screenRadius)
+        } else if(gradLen > 0.01) {
+            this.drawGradientNightTexture(context, circle, center, screenRadius, gradDirX, gradDirY, gradLen)
+        }
+    }
+
+    private static drawSimpleNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
+        const texSize = circle.texture!.nightTexture!.width
+        context.save()
+        context.beginPath()
+        context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
+        context.clip()
+        context.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+        context.restore()
+    }
+
+    private drawGradientNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, gradDirX: number, gradDirY: number, gradLen: number) {
+        const normGradX = gradDirX / gradLen
+        const normGradY = gradDirY / gradLen
+
+        const size = Math.ceil(screenRadius * 2)
+        if(!this._nightCanvas || this._nightCanvas.width !== size || this._nightCanvas.height !== size) {
+            this._nightCanvas = document.createElement("canvas")
+            this._nightCanvas.width = size
+            this._nightCanvas.height = size
+        }
+        const nightCtx = this._nightCanvas.getContext("2d")!
+
+        nightCtx.clearRect(0, 0, size, size)
+        const texSize = circle.texture!.nightTexture!.width
+        nightCtx.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, 0, 0, size, size)
+
+        nightCtx.globalCompositeOperation = "destination-in"
+        const gradStartX = size / 2 + normGradX * size / 2
+        const gradStartY = size / 2 + normGradY * size / 2
+        const gradEndX = size / 2 - normGradX * size / 2
+        const gradEndY = size / 2 - normGradY * size / 2
+
+        const gradient = nightCtx.createLinearGradient(gradEndX, gradEndY, gradStartX, gradStartY)
+        gradient.addColorStop(0, "rgba(0,0,0,0)")
+        gradient.addColorStop(0.35, "rgba(0,0,0,0.2)")
+        gradient.addColorStop(0.65, "rgba(0,0,0,1)")
+        gradient.addColorStop(1, "rgba(0,0,0,1)")
+        nightCtx.fillStyle = gradient
+        nightCtx.fillRect(0, 0, size, size)
+
+        context.save()
+        context.beginPath()
+        context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
+        context.clip()
+        context.drawImage(this._nightCanvas, center.x - screenRadius, center.y - screenRadius)
+        context.restore()
+    }
+
+    private static drawStrokeAndShade(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, thickness: number) {
         if(circle.color.stroke) {
             circle.setColor(context)
             context.lineWidth = thickness * center.scale
@@ -234,6 +271,5 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         if(circle.color.shade && !circle.texture?.texture) {
             shadeCircle(context, center.x, center.y, screenRadius)
         }
-        context.restore()
     }
 }
