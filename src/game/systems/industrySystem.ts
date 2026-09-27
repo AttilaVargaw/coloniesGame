@@ -17,21 +17,21 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     private worker: Worker | null = null;
 
     private ensureWorker() {
-        if (!this.worker) {
+        if(!this.worker) {
             this.worker = createIndustryWorker(this.handleWorkerMessage);
         }
     }
 
     private handleWorkerMessage = (event: MessageEvent<{ type: string; results: IndustryTickResult[] }>) => {
-        if (event.data.type !== "result") {
+        if(event.data.type !== "result") {
             return
         }
 
         const resultsMap = new Map(event.data.results.map((r) => [r.entityId, r]));
 
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             const result = resultsMap.get(entity.id);
-            if (!result) continue;
+            if(!result) continue;
 
             applyResult(industry, result);
             this.engine?.reindexEntity(entity);
@@ -45,22 +45,23 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         const upgradeSectors: Record<string, string[]> = {};
         const autoUpgradeSectors: Record<string, Record<string, boolean>> = {};
 
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             upgradeSectors[entity.id] = [];
             autoUpgradeSectors[entity.id] = { ...industry.autoUpgradeSectors };
         }
 
         const commands = this.engine?.getCommands(UpgradeSectorCommand);
-        if (commands) {
-            for (const cmd of [...commands]) {
+
+        if(commands) {
+            for(const cmd of [...commands]) {
                 const list = upgradeSectors[cmd.entityId];
-                if (!list) continue;
+                if(!list) continue;
 
                 const entity = this.nodes.find(n => n.entity.id === cmd.entityId);
-                if (!entity) continue;
+                if(!entity) continue;
 
                 const { settlementType, allowedSectors } = entity.industry;
-                if ((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
+                if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
                     continue;
                 }
 
@@ -68,8 +69,10 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             }
         }
 
+        commands.clear();
+
         const industries: IndustryTickInput[] = [];
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             industries.push({
                 entityId: entity.id,
                 sectors: industry.sectors,
@@ -88,7 +91,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     };
 
     removeFromEngine(): this {
-        if (this.worker) {
+        if(this.worker) {
             this.worker.terminate();
             this.worker = null;
         }
@@ -118,9 +121,9 @@ function applyResult(industry: IndustryComponent, result: IndustryTickResult) {
     industry.workingWorkers = result.workingWorkers;
     industry.freeWorkers = result.freeWorkers;
 
-    for (const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
+    for(const [key, update] of Object.entries(result.populationUpdates) as [keyof Population, IndustryTickResult["populationUpdates"][keyof Population]][]) {
         const pop = industry.population[key];
-        if (!pop) continue;
+        if(!pop) continue;
 
         pop.qol = update.qol;
         pop.expectedQol = update.expectedQol;
@@ -129,17 +132,17 @@ function applyResult(industry: IndustryComponent, result: IndustryTickResult) {
         pop.number = update.number;
     }
 
-    for (const [sector, profit] of Object.entries(result.sectorProfits)) {
+    for(const [sector, profit] of Object.entries(result.sectorProfits)) {
         const sectorKey = sector as keyof IndustrialSectors;
         industry.sectorProfits[sectorKey] = profit;
     }
 
-    for (const [group, profit] of Object.entries(result.populationProfits)) {
+    for(const [group, profit] of Object.entries(result.populationProfits)) {
         const groupKey = group as keyof Population;
         industry.populationProfits[groupKey] = profit;
     }
 
-    for (const [sector, utilization] of Object.entries(result.sectorUtilization)) {
+    for(const [sector, utilization] of Object.entries(result.sectorUtilization)) {
         const sectorKey = sector as keyof IndustrialSectors;
         industry.sectorUtilization[sectorKey] = utilization;
     }
@@ -150,11 +153,11 @@ function applyResult(industry: IndustryComponent, result: IndustryTickResult) {
     industry.sectors = result.sectors;
 
     industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
-    for (const [key, update] of Object.entries(result.populationUpdates)) {
+    for(const [key, update] of Object.entries(result.populationUpdates)) {
         industry.populationRequirements[key as keyof Population] = update.requirements as Partial<Record<keyof Goods, number>>;
     }
 
-    for (const key in result.goods) {
+    for(const key in result.goods) {
         industry.goods[key as keyof Goods] = result.goods[key as keyof Goods];
     }
 }

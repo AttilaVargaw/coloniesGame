@@ -1,4 +1,3 @@
-import { IndustryComponent } from "@game/components/industryComponent";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";

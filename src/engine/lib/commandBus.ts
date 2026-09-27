@@ -17,14 +17,12 @@ export class CommandBus {
 
     // eslint-disable-next-line 
     removeCommandQueue(command: Function) {
-         
         this.commands.delete(command as new (...args: any) => CommandBase)
 
         return this
     }
 
     addCommand(command: CommandBase) {
-         
         this.commands.get(command.constructor as new (...args: any) => CommandBase)?.enqueue(command)
 
         return this

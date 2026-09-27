@@ -19,10 +19,16 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
     private tradeRouteCompletedEvents: Queue<TradeRouteCompletedEvent> | null = null
     private tradeRouteCancelledEvents: Queue<TradeRouteCancelledEvent> | null = null
 
+    private createTradeRouteCommands: Queue<CreateTradeRouteCommand> | null = null
+    private cancelTradeRouteCommands: Queue<CancelTradeRouteCommand> | null = null
+
     update(_dt: number): void {
         this.tradeRouteCancelledEvents?.clear()
         this.tradeRouteCompletedEvents?.clear()
         this.tradeRouteCreatedEvents?.clear()
+
+        this.createTradeRouteCommands?.clear()
+        this.cancelTradeRouteCommands?.clear()
     }
 
     protected updateNode(_node: TradeRouteNode, _dT?: number): void {
@@ -56,13 +62,18 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
         engine.registerEventQueue(TradeRouteCreatedEvent);
         engine.registerEventQueue(TradeRouteCompletedEvent);
         engine.registerEventQueue(TradeRouteCancelledEvent);
+
         engine.subscribe(DayPassedEvent, this.onDayPassed);
+
         engine.registerCommandQueue(CreateTradeRouteCommand);
         engine.registerCommandQueue(CancelTradeRouteCommand);
 
         this.tradeRouteCreatedEvents = engine.getEvents(TradeRouteCreatedEvent);
         this.tradeRouteCompletedEvents = engine.getEvents(TradeRouteCompletedEvent);
         this.tradeRouteCancelledEvents = engine.getEvents(TradeRouteCancelledEvent);
+
+        this.createTradeRouteCommands = engine.getCommands(CreateTradeRouteCommand);
+        this.cancelTradeRouteCommands = engine.getCommands(CancelTradeRouteCommand);
 
         this.nodes = engine.getNodeList(TradeRouteNode);
 
