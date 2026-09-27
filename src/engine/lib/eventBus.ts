@@ -1,8 +1,6 @@
 import { Queue } from "./commandQueue"
 import type { EventBase } from "./events"
 import {
-    UpdateBeginEvent,
-    // UpdateDoneEvent,
     EntityAddedEvent,
     EntityRemovedEvent,
     DayPassedEvent,
@@ -25,9 +23,6 @@ import {
 export class EventBus {
 
     readonly events: Map<new (...args: any[]) => EventBase, Queue<EventBase>> = new Map([
-
-        [UpdateBeginEvent, new Queue()],
-        // [UpdateDoneEvent, new Queue()],
         [EntityAddedEvent, new Queue()],
         [EntityRemovedEvent, new Queue()],
         [DayPassedEvent, new Queue()],

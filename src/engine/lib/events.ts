@@ -13,8 +13,6 @@ export abstract class EventBase<T = any> {
     constructor(public data: T) { }
 }
 
-export class UpdateBeginEvent extends EventBase<number> { }
-// export class UpdateDoneEvent extends EventBase<number> { }
 export class EntityAddedEvent extends EventBase<Entity> { }
 export class EntityRemovedEvent extends EventBase<Entity> { }
 export class DayPassedEvent extends EventBase<null> { }
@@ -25,7 +23,6 @@ export class IndustryUpdatedEvent extends EventBase<Entity> { }
 export class TargetChangedEvent extends EventBase<{ ship: Entity, target?: Entity }> { }
 export class ComponentRemovedEvent extends EventBase<unknown> { }
 
-// export type ClickEventData = { event: MouseEvent; x: number; y: number }
 export class ClickEventData extends EventBase<MouseEventData> { }
 
 export class KeydownEvent extends EventBase<KeyboardEvent> { }
