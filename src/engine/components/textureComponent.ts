@@ -9,6 +9,7 @@ export class TextureComponent extends EntityComponent {
         public rotation?: number,
         public minimumScreenSize?: number,
         public animationSpeed?: number,
+        public nightTexture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas,
     ) {
         super();
     }

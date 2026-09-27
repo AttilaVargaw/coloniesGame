@@ -31,7 +31,7 @@ import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { createPlanetTexture, createStarTexture } from "./createCircleTextures"
+import { createPlanetTexture, createStarTexture, createNightTexture } from "./createCircleTextures"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
     if(blueprint.mass !== undefined) return blueprint.mass
@@ -216,7 +216,9 @@ export async function createBody({
         if(archetype === "sol") {
             body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5))
         } else if(archetype !== "baricenter") {
-            body.addComponent(new TextureComponent(undefined, undefined, createPlanetTexture(marker.color, archetype), undefined, undefined, undefined, 0.2))
+            const dayTexture = createPlanetTexture(marker.color, archetype)
+            const nightTexture = createNightTexture(marker.color, archetype)
+            body.addComponent(new TextureComponent(undefined, undefined, dayTexture, undefined, undefined, undefined, 0.2, nightTexture))
         }
     }
 

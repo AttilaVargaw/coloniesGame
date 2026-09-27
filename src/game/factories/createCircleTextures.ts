@@ -233,3 +233,101 @@ export function createStarTexture(_baseColor: string): HTMLCanvasElement {
 
     return canvas
 }
+
+export function createNightTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext("2d")!
+
+    ctx.clearRect(0, 0, size, size)
+
+    const palette = PALETTES[archetype] || { land: baseColor, ocean: baseColor, clouds: "#ffffff", poles: "#e0e0e0" }
+    const base = hexToRgb(baseColor)
+
+    const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
+    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.35)
+    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
+    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
+
+    const seed = seedFrom(baseColor, archetype)
+    const perm = buildPerm(seed)
+
+    const imageData = ctx.createImageData(size, size)
+    const data = imageData.data
+
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
+            const nx = x / size * 4
+            const ny = y / size * 4
+
+            const landMask = sampleFbm(nx, ny, perm, 0.4, 5)
+            const normalizedLand = (landMask + 1) / 2
+            const cloudNoise = sampleFbm(nx * 1.5 + 10, ny * 1.5 + 10, perm, 0.3, 4)
+            const normalizedCloud = (cloudNoise + 1) / 2
+
+            let r: number, g: number, b: number
+            if(normalizedLand > 0.48) {
+                r = landRgb.r * 0.2
+                g = landRgb.g * 0.2
+                b = landRgb.b * 0.2
+            } else {
+                r = oceanRgb.r * 0.12
+                g = oceanRgb.g * 0.12
+                b = oceanRgb.b * 0.12
+            }
+
+            if(normalizedCloud > 0.55) {
+                const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
+                r = lerp(r, Math.round(cloudsRgb.r * 0.15), cloudAlpha * 0.7)
+                g = lerp(g, Math.round(cloudsRgb.g * 0.15), cloudAlpha * 0.7)
+                b = lerp(b, Math.round(cloudsRgb.b * 0.15), cloudAlpha * 0.7)
+            }
+
+            if(normalizedLand > 0.48) {
+                const cityNoise = sampleFbm(nx * 3 + 50, ny * 3 + 50, perm, 0.35, 3)
+                const normalizedCity = (cityNoise + 1) / 2
+                if(normalizedCity > 0.62) {
+                    const intensity = (normalizedCity - 0.62) / 0.38
+                    const warmth = Math.random()
+                    if(warmth > 0.5) {
+                        r = lerp(r, 255, intensity * 0.9)
+                        g = lerp(g, 200, intensity * 0.9)
+                        b = lerp(b, 120, intensity * 0.9)
+                    } else {
+                        r = lerp(r, 255, intensity * 0.9)
+                        g = lerp(r, 255, intensity * 0.9)
+                        b = lerp(b, 220, intensity * 0.9)
+                    }
+                }
+            }
+
+            const latitude = Math.abs(y / size - 0.5) * 2
+            if(latitude > 0.78) {
+                const polarAlpha = (latitude - 0.78) / 0.22
+                r = lerp(r, Math.round(polesRgb.r * 0.2), polarAlpha * 0.85)
+                g = lerp(g, Math.round(polesRgb.g * 0.2), polarAlpha * 0.85)
+                b = lerp(b, Math.round(polesRgb.b * 0.2), polarAlpha * 0.85)
+            }
+
+            const idx = (y * size + x) * 4
+            data[idx] = clamp(Math.round(r), 0, 255)
+            data[idx + 1] = clamp(Math.round(g), 0, 255)
+            data[idx + 2] = clamp(Math.round(b), 0, 255)
+            data[idx + 3] = 255
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    const atmosphereColor = palette.atmosphere || palette.clouds
+    const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
+    const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
+    atmGradient.addColorStop(0, "rgba(0,0,0,0)")
+    atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
+    atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.1)`)
+    ctx.fillStyle = atmGradient
+    ctx.fillRect(0, 0, size, size)
+
+    return canvas
+}
