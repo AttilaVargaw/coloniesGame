@@ -41,11 +41,12 @@ class OpenSet {
     }
 
     private siftUp(i: number): void {
-        while(i > 0) {
-            const parent = (i - 1) >> 1
-            if(this.heap[i].f < this.heap[parent].f) {
-                ;[this.heap[i], this.heap[parent]] = [this.heap[parent], this.heap[i]]
-                i = parent
+        let index = i
+        while(index > 0) {
+            const parent = (index - 1) >> 1
+            if(this.heap[index].f < this.heap[parent].f) {
+                ;[this.heap[index], this.heap[parent]] = [this.heap[parent], this.heap[index]]
+                index = parent
             } else {
                 break
             }
@@ -53,16 +54,17 @@ class OpenSet {
     }
 
     private siftDown(i: number): void {
+        let index = i
         const n = this.heap.length
         while(true) {
-            let smallest = i
-            const left = (i << 1) + 1
-            const right = (i << 1) + 2
+            let smallest = index
+            const left = (index << 1) + 1
+            const right = (index << 1) + 2
             if(left < n && this.heap[left].f < this.heap[smallest].f) smallest = left
             if(right < n && this.heap[right].f < this.heap[smallest].f) smallest = right
-            if(smallest !== i) {
-                ;[this.heap[i], this.heap[smallest]] = [this.heap[smallest], this.heap[i]]
-                i = smallest
+            if(smallest !== index) {
+                ;[this.heap[index], this.heap[smallest]] = [this.heap[smallest], this.heap[index]]
+                index = smallest
             } else {
                 break
             }

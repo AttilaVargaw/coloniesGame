@@ -74,8 +74,8 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return this
     }
 
-    private onEntityAdded = () => {
-    }
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
+    private onEntityAdded = () => { return }
 
     projectNodes(): void {
         const { camera } = this.viewportSystem.viewport
@@ -161,14 +161,17 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return this.viewportSystem
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected getCullMargin(_node: N): number {
         return 0
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected shouldSkipProjection(_node: N, _cameraScale: number): boolean {
         return false
     }

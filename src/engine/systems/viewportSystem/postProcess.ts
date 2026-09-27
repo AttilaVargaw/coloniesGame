@@ -116,11 +116,11 @@ export function applyVignette(ctx: CanvasRenderingContext2D, width: number, heig
     ctx.globalCompositeOperation = "source-over"
     ctx.globalAlpha = 1
 
-    const gradient = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.2, width / 2, height / 2, Math.max(width, height) * 0.75)
-    gradient.addColorStop(0, "rgba(0,0,0,0)")
-    gradient.addColorStop(1, "rgba(0,0,0,0.65)")
+    const vignetteGradient = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.2, width / 2, height / 2, Math.max(width, height) * 0.75)
+    vignetteGradient.addColorStop(0, "rgba(0,0,0,0)")
+    vignetteGradient.addColorStop(1, "rgba(0,0,0,0.65)")
 
-    ctx.fillStyle = gradient
+    ctx.fillStyle = vignetteGradient
     ctx.fillRect(0, 0, width, height)
 
     ctx.restore()

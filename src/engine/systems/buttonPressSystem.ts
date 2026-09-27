@@ -5,6 +5,7 @@ import { KeydownEvent } from "@/engine/lib/events";
 import { Engine } from "../core/engine";
 
 export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: ButtonPressNode, _dt: number): void {
     }
 

@@ -11,6 +11,7 @@ import { createSpaceshipSelector } from "./createSpaceshipSelector"
 import { createCircle } from "./createCircle"
 
 export class SelectionManager extends SystemWithNodes<SelectionNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: SelectionNode, _dT?: number): void {
     }
 

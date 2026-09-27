@@ -159,7 +159,6 @@ export class PointerInteractionSystem extends System {
                 const selection = selectionSystem?.currentSelection
 
                 if(selection) {
-                    const { camera } = this.viewportSystem.viewport
                     const { x: worldX, y: worldY } = camera.screenToWorld(data.x, data.y)
                     const bestEntity = targetSystem?.findNearestTarget(selection, worldX, worldY)
 

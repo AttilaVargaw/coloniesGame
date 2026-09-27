@@ -21,9 +21,6 @@ class ChildTagComponent extends EntityComponent {
 }
 
 class ChildTagNode extends TestEntityNode {
-    constructor(entity?: Entity) {
-        super(entity)
-    }
 }
 
 const childTagNodeCtor = ChildTagNode as unknown as EntityNodeConstructor<ChildTagNode>
@@ -114,6 +111,7 @@ describe("World (Engine refactor regression)", () => {
         let updates = 0
 
         class CounterSystem extends System {
+            // eslint-disable-next-line class-methods-use-this
             update() {
                 updates++
             }
@@ -154,6 +152,7 @@ describe("World (Engine refactor regression)", () => {
         let updates = 0
 
         class CounterSystem extends System {
+            // eslint-disable-next-line class-methods-use-this
             update() {
                 updates++
             }
@@ -196,7 +195,8 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
 
         class CounterSystem extends System {
-            update() { }
+            // eslint-disable-next-line class-methods-use-this,no-empty-function
+            update() { return }
         }
 
         const ctor = CounterSystem as unknown as new () => System
@@ -209,6 +209,7 @@ describe("World (Engine refactor regression)", () => {
         let updates = 0
 
         class CounterSystem extends System {
+            // eslint-disable-next-line class-methods-use-this
             update() {
                 updates++
             }

@@ -42,6 +42,7 @@ interface RenderEntry {
 }
 
 export class ViewportSystem extends SystemWithNodes<ViewportNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
     private fpsFrameCount = 0

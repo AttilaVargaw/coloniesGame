@@ -228,7 +228,7 @@ export default class Camera {
         this.zoomToAnchored(this.distance * factor, screenX, screenY)
     }
 
-    public panByPixels(_dxPixels: number, _dyPixels: number) {
+    public static panByPixels(_dxPixels: number, _dyPixels: number) {
         // const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
         // const worldDeltaRight = (dxPixels / f) * this.distance
         // const worldDeltaForward = (-dyPixels / f) * this.distance

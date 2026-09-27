@@ -51,6 +51,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         )
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected getCullMargin(node: CircleNode): number {
         return node.radius.radius
     }

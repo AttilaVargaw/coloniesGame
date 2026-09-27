@@ -30,6 +30,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         )
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
     }
@@ -45,6 +46,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return false
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)

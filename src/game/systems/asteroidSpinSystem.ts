@@ -38,6 +38,7 @@ export class AsteroidSpinSystem extends SystemWithNodes<AsteroidSpinNode> {
         return this
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected updateNode(node: AsteroidSpinNode, dt?: number): void {
         const entity = node.entity
         const rotation = node.rotation

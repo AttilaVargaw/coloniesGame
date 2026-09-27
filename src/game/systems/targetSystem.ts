@@ -10,6 +10,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { Engine } from "@/engine/core/engine"
 
 export class TargetSystem extends SystemWithNodes<TargetableNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: TargetableNode, _dt?: number): void {
     }
 

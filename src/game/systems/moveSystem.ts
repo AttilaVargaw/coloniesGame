@@ -103,8 +103,10 @@ export class MoveNode extends EntityNode {
 }
 
 export class MoveSystem extends SystemWithNodes<MoveNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: MoveNode, _dT?: number): void {
     }
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     update(_dt: number): void {
     }
 
@@ -115,9 +117,9 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const alreadyMoved = new Set<Entity>();
 
         for(const { entity, jumpDrive } of this.nodes) {
-            if(!this.canMove(entity, jumpDrive, alreadyMoved)) continue
+            if(!MoveSystem.canMove(entity, jumpDrive, alreadyMoved)) continue
 
-            if(!this.consumeFuel(entity, jumpDrive.target)) continue
+            if(!MoveSystem.consumeFuel(entity, jumpDrive.target)) continue
 
             const waypoints = shipWaypoints.get(entity)
             if(waypoints && waypoints.length > 0) {
@@ -137,13 +139,13 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
     }
 
-    private canMove(entity: Entity, jumpDrive: JumpDriveComponent, alreadyMoved: Set<Entity>): boolean {
+    private static canMove(entity: Entity, jumpDrive: JumpDriveComponent, alreadyMoved: Set<Entity>): boolean {
         if(!jumpDrive.target || entity === jumpDrive.target || alreadyMoved.has(entity)) return false
         if(jumpDrive.isOrbitSelecting) return false
         return true
     }
 
-    private consumeFuel(entity: Entity, target: Entity | undefined): boolean {
+    private static consumeFuel(entity: Entity, target: Entity | undefined): boolean {
         if(!target) return true
 
         const fuel = entity.getComponent(FuelComponent)
@@ -177,7 +179,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         shipNode.parent?.removeChild(shipNode)
         targetNode.addChild(shipNode)
 
-        this.positionShipAtTarget(entity, finalSector)
+            MoveSystem.positionShipAtTarget(entity, finalSector)
 
         if(remaining.length > 0) {
             shipWaypoints.set(entity, remaining)
@@ -210,7 +212,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         shipNode.parent?.removeChild(shipNode)
         targetNode.addChild(shipNode)
 
-        this.positionShipAtTarget(entity, target)
+        MoveSystem.positionShipAtTarget(entity, target)
     }
 
     private arrivedAtSoi(entity: Entity): boolean {
@@ -240,7 +242,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         targetSystem?.clearTarget(entity)
     }
 
-    positionShipAtTarget(entity: Entity, targetEntity: Entity): void {
+    static positionShipAtTarget(entity: Entity, targetEntity: Entity): void {
         const position = entity.getComponent(PositionComponent)
         if(!position) return
 

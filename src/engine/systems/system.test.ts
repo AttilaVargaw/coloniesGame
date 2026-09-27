@@ -7,7 +7,8 @@ import { TestEntityNode, testEntityNodeCtor, makeWorld } from "@engine/test-util
 import type { Engine } from "@/engine/core/engine"
 
 class CounterSystem extends SystemWithNodes<TestEntityNode> {
-    updateNode(_node: TestEntityNode, _dt?: number): void { }
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
+    updateNode(_node: TestEntityNode, _dt?: number): void { return }
 }
 
 function setupCounterSystem() {

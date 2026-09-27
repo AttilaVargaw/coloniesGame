@@ -6,6 +6,7 @@ import { Engine } from "@/engine/core/engine";
 import { Queue } from "../lib/commandQueue";
 
 export class TimeScaleSystem extends SystemWithNodes<TimeScaleNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: TimeScaleNode, _dT?: number): void {
     }
 

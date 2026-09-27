@@ -453,14 +453,14 @@ function finalizeGoods(
 
 function processIndustry(
     industry: IndustryTickInput,
-    colonyPriceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
-    lastResults: Map<string, IndustryTickResult>
+    priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
+    results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
     const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors, settlementType, allowedSectors } = industry;
 
-    const memory = colonyPriceMemory.get(entityId) || {};
+    const memory = priceMemory.get(entityId) || {};
     const prices = getPrices(goods, memory);
-    colonyPriceMemory.set(entityId, memory);
+    priceMemory.set(entityId, memory);
 
     const currentGoods: Goods = { ...goods };
     const currentSectorWealth: Record<keyof IndustrialSectors, number> = { ...sectorWealth };
@@ -606,13 +606,13 @@ function processIndustry(
         allowedSectors,
     };
 
-    const last = lastResults.get(entityId);
+    const last = results.get(entityId);
     const patch = buildPatch(last, result);
     if(patch) {
         return patch;
     }
 
-    lastResults.set(entityId, result);
+    results.set(entityId, result);
     return null;
 }
 

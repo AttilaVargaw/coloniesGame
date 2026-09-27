@@ -60,7 +60,7 @@ export class ViewportInputHandler {
         return this.cameraFollowSystem.isFollowing()
     }
 
-    private applyOrbitRotation(camera: Camera, dx: number, dy: number) {
+    private static applyOrbitRotation(camera: Camera, dx: number, dy: number) {
         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
 
@@ -261,7 +261,7 @@ export class ViewportInputHandler {
             const dy = data.y - this.lastPointer.y
             if(dx || dy) {
                 if(this.dragButton === 2) {
-                    camera.panByPixels(dx, dy)
+                    Camera.panByPixels(dx, dy)
                 } else if(this.dragButton === 1) {
                     if(this.hasFollowTarget) {
                         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
@@ -269,7 +269,7 @@ export class ViewportInputHandler {
 
                         camera.invalidateViewBasis()
                     } else {
-                        this.applyOrbitRotation(camera, dx, dy)
+                        ViewportInputHandler.applyOrbitRotation(camera, dx, dy)
                         this.wasRotatingWithoutTarget = true
                     }
                     this.rotationVelocityX = dx
@@ -337,7 +337,7 @@ export class ViewportInputHandler {
     private applyRotationInertia(camera: Camera) {
         if(Math.abs(this.rotationVelocityX) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD ||
             Math.abs(this.rotationVelocityY) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD) {
-            this.applyOrbitRotation(camera, this.rotationVelocityX, this.rotationVelocityY)
+            ViewportInputHandler.applyOrbitRotation(camera, this.rotationVelocityX, this.rotationVelocityY)
             this.rotationVelocityX *= ViewportInputHandler.ROTATION_INERTIA_DECAY
             this.rotationVelocityY *= ViewportInputHandler.ROTATION_INERTIA_DECAY
         } else {

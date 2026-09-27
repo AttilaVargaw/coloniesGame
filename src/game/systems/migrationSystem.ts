@@ -29,6 +29,7 @@ export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
         this.cancelMigrationRouteCommands?.clear()
     }
 
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: MigrationRouteNode, _dT?: number): void {
     }
 

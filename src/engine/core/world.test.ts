@@ -20,9 +20,6 @@ class TagComponent extends EntityComponent {
 }
 
 class TagNode extends EntityNode {
-    constructor(entity: Entity) {
-        super(entity)
-    }
 }
 
 const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>
@@ -91,7 +88,8 @@ describe("World", () => {
         const world = makeWorld()
 
         class DummySystem extends System {
-            update() { }
+            // eslint-disable-next-line class-methods-use-this,no-empty-function
+            update() { return }
         }
 
         const ctor = DummySystem as unknown as new () => System
@@ -102,8 +100,8 @@ describe("World", () => {
     it("returns itself from subscribe and unsubscribe for chaining", () => {
         const world = new World()
 
-        expect(world.subscribe(ClickEventData, () => { })).toBe(world)
-        expect(world.unsubscribe(ClickEventData, () => { })).toBe(world)
+        expect(world.subscribe(ClickEventData, () => undefined)).toBe(world)
+        expect(world.unsubscribe(ClickEventData, () => undefined)).toBe(world)
     })
 
     it("returns itself from addCommand and dispatchEvent for chaining", () => {

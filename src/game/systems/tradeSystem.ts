@@ -32,6 +32,7 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
         this.cancelTradeRouteCommands?.clear()
     }
 
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: TradeRouteNode, _dT?: number): void {
     }
 

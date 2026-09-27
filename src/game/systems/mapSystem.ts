@@ -33,7 +33,7 @@ export function findPath(start: Entity, end: Entity): Entity[] {
         getNeighbors: (node) => {
             const path = node.getComponent(PathComponent)
             if(!path) return []
-            return path.connections.map((c) => c.entity).filter((e): e is Entity => e != null)
+            return path.connections.map((c) => c.entity).filter((e): e is Entity => e !== null && e !== undefined)
         },
         getCost: () => 1,
         heuristic: h,
@@ -44,6 +44,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
     private graphEntity?: Entity
     private graph?: JumpGraphComponent
 
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: PathNode, _dT?: number): void {
     }
 
@@ -63,6 +64,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         return this
     }
 
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     update(_dt: number): void {
 
     }

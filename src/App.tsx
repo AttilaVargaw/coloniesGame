@@ -19,9 +19,9 @@ function App() {
     let gameInstance: Game | null = null
 
     Game.create(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
-      .then(game => {
-        gameInstance = game
-        setGame(game)
+      .then(newGame => {
+        gameInstance = newGame
+        setGame(newGame)
       })
       .catch(console.error)
 

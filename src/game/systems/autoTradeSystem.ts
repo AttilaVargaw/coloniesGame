@@ -19,6 +19,7 @@ const MIGRATION_SURPLUS_FACTOR = 1.5;
 const MIGRATION_DEFICIT_FACTOR = 0.75;
 
 export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: IndustryNode, _dT?: number): void {
     }
 

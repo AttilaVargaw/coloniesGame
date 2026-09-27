@@ -18,15 +18,9 @@ class OtherComponent extends EntityComponent {
 }
 
 class TagNode extends EntityNode {
-    constructor(entity: Entity) {
-        super(entity)
-    }
 }
 
 class OtherNode extends EntityNode {
-    constructor(entity: Entity) {
-        super(entity)
-    }
 }
 
 const tagNodeCtor = TagNode as unknown as EntityNodeConstructor<TagNode>

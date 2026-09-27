@@ -17,6 +17,7 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
             ))
     }
 
+    // eslint-disable-next-line class-methods-use-this
     protected getCullMargin(node: ShapeNode): number {
         return Math.max(node.width, node.height) / 2
     }

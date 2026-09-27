@@ -12,6 +12,7 @@ import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
 import { IndustryWorkerPool } from "./industryWorkerPool";
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: IndustryNode, _dT?: number): void {
     }
 

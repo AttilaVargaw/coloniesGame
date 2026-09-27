@@ -4,6 +4,7 @@ import type { Engine } from "../core/engine"
 export abstract class System {
     protected engine?: Engine
 
+    // eslint-disable-next-line class-methods-use-this,no-empty-function
     update(_dt: number): void {
 
     }
