@@ -158,7 +158,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
         const bloomEntries: RenderEntry[] = []
-        const ellipses: RenderEntry[] = []
 
         for(const rendererClass of this.rendererClasses) {
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
@@ -184,7 +183,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
-        ellipses.sort((a, b) => b.projected.depth - a.projected.depth)
 
         for(const entry of allEntries) {
             entry.renderer.drawNode(entry.node, dt)

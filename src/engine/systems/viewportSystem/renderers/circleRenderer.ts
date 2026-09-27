@@ -9,12 +9,13 @@ import { BaseRenderer } from "./baseRenderer";
 import { TWO_PI } from "@/game/constants";
 import { hexToRgba } from "./hexToRgba";
 
-const SHADE_SIZE = 128
+const SHADE_SIZE = 96
 
 const shadeSprite = (() => {
     const canvas = document.createElement("canvas")
     canvas.width = SHADE_SIZE
     canvas.height = SHADE_SIZE
+
     const octx = canvas.getContext("2d")!
     octx.beginPath()
     octx.arc(SHADE_SIZE / 2, SHADE_SIZE / 2, SHADE_SIZE / 2, 0, TWO_PI)
@@ -24,9 +25,9 @@ const shadeSprite = (() => {
         SHADE_SIZE * 0.35, SHADE_SIZE * 0.35, SHADE_SIZE * 0.05,
         SHADE_SIZE * 0.5, SHADE_SIZE * 0.5, SHADE_SIZE * 0.5
     )
-    gradient.addColorStop(0, "rgba(255,255,255,0.45)")
+    gradient.addColorStop(0, "rgba(255,255,255,0.25)")
     gradient.addColorStop(0.5, "rgba(255,255,255,0.05)")
-    gradient.addColorStop(1, "rgba(0,0,0,0.75)")
+    gradient.addColorStop(1, "rgba(0,0,0,0.35)")
     octx.fillStyle = gradient
     octx.fillRect(0, 0, SHADE_SIZE, SHADE_SIZE)
     return canvas
@@ -94,7 +95,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         if(circle.color.shade) {
             context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
         } else {
-            const segments = Math.max(32, Math.min(128, Math.round(screenRadius / 2)))
+            const segments = Math.max(32, Math.min(98, Math.round(screenRadius / 2)))
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const worldX = cx + radius * Math.cos(angle)
@@ -120,7 +121,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             }
             context.save()
             context.clip()
-            context.drawImage(circle.texture.texture, 0, 0, circle.texture.texture.width || 128, circle.texture.texture.height || 128, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+            context.drawImage(circle.texture.texture, 0, 0, circle.texture.texture.width || 96, circle.texture.texture.height || 96, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
             context.restore()
         } else if(circle.color.fill) {
             circle.setColor(context)

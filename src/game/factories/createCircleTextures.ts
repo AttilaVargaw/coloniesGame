@@ -37,6 +37,8 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 }
 
+const size = 96
+
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
 }
@@ -69,10 +71,10 @@ function perlin(x: number, y: number, perm: number[]): number {
 function buildPerm(seed: number): number[] {
     const p = Array.from({ length: 256 }, (_, i) => i)
     let s = seed
-    for (let i = 255; i > 0; i--) {
+    for(let i = 255; i > 0; i--) {
         s = (s * 16807 + 0) % 2147483647
         const j = s % (i + 1)
-        ;[p[i], p[j]] = [p[j], p[i]]
+            ;[p[i], p[j]] = [p[j], p[i]]
     }
     return [...p, ...p]
 }
@@ -82,7 +84,7 @@ function fbm(x: number, y: number, perm: number[], octaves = 6): number {
     let amplitude = 1
     let frequency = 1
     let maxValue = 0
-    for (let i = 0; i < octaves; i++) {
+    for(let i = 0; i < octaves; i++) {
         value += perlin(x * frequency, y * frequency, perm) * amplitude
         maxValue += amplitude
         amplitude *= 0.5
@@ -99,13 +101,12 @@ function sampleFbm(x: number, y: number, perm: number[], warp = 0.35, octaves = 
 
 function seedFrom(base: string, archetype: string): number {
     let h = 0
-    for (let i = 0; i < base.length; i++) h = ((h << 5) - h + base.charCodeAt(i)) | 0
-    for (let i = 0; i < archetype.length; i++) h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
+    for(let i = 0; i < base.length; i++) h = ((h << 5) - h + base.charCodeAt(i)) | 0
+    for(let i = 0; i < archetype.length; i++) h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
     return Math.abs(h) || 1
 }
 
 export function createPlanetTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
-    const size = 128
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -127,8 +128,8 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     const imageData = ctx.createImageData(size, size)
     const data = imageData.data
 
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
             const nx = x / size * 4
             const ny = y / size * 4
 
@@ -138,7 +139,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             const normalizedCloud = (cloudNoise + 1) / 2
 
             let r: number, g: number, b: number
-            if (normalizedLand > 0.48) {
+            if(normalizedLand > 0.48) {
                 r = lerp(landRgb.r * 0.7, landRgb.r * 1.3, normalizedLand)
                 g = lerp(landRgb.g * 0.7, landRgb.g * 1.3, normalizedLand)
                 b = lerp(landRgb.b * 0.7, landRgb.b * 1.3, normalizedLand)
@@ -148,7 +149,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
                 b = lerp(oceanRgb.b * 0.8, oceanRgb.b * 1.2, normalizedLand)
             }
 
-            if (normalizedCloud > 0.55) {
+            if(normalizedCloud > 0.55) {
                 const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
                 r = lerp(r, cloudsRgb.r, cloudAlpha * 0.7)
                 g = lerp(g, cloudsRgb.g, cloudAlpha * 0.7)
@@ -156,7 +157,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             }
 
             const latitude = Math.abs(y / size - 0.5) * 2
-            if (latitude > 0.78) {
+            if(latitude > 0.78) {
                 const polarAlpha = (latitude - 0.78) / 0.22
                 r = lerp(r, polesRgb.r, polarAlpha * 0.85)
                 g = lerp(g, polesRgb.g, polarAlpha * 0.85)
@@ -186,7 +187,6 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
 }
 
 export function createStarTexture(_baseColor: string): HTMLCanvasElement {
-    const size = 128
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -200,8 +200,8 @@ export function createStarTexture(_baseColor: string): HTMLCanvasElement {
     const imageData = ctx.createImageData(size, size)
     const data = imageData.data
 
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
             const nx = x / size * 3
             const ny = y / size * 3
             const n = (sampleFbm(nx, ny, perm, 0.35, 5) + 1) / 2
@@ -217,7 +217,7 @@ export function createStarTexture(_baseColor: string): HTMLCanvasElement {
 
     ctx.putImageData(imageData, 0, 0)
 
-    for (let i = 0; i < 80; i++) {
+    for(let i = 0; i < 80; i++) {
         const x = Math.random() * size
         const y = Math.random() * size
         const r = Math.random() * 12 + 3
