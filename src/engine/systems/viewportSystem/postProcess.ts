@@ -98,9 +98,9 @@ export function applyColorGrading(ctx: CanvasRenderingContext2D, width: number, 
     ctx.globalCompositeOperation = "overlay"
     ctx.globalAlpha = 0.18
 
-    const gradient = ensureGradient(ctx, width, height)
+    const gradient2 = ensureGradient(ctx, width, height)
 
-    ctx.fillStyle = gradient
+    ctx.fillStyle = gradient2
     ctx.fillRect(0, 0, width, height)
 
     ctx.globalCompositeOperation = "soft-light"

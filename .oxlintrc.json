@@ -28,6 +28,8 @@
         "**/*.tsx"
       ],
       "rules": {
+        "no-console": "allow",
+        "no-undefined": "allow",
         "typescript/no-non-null-assertion": "allow",
         "no-underscore-dangle": "allow",
         "react/jsx-filename-extension": "off",

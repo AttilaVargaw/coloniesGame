@@ -5,7 +5,7 @@ import { MapMarker } from "./MapMarker";
 
 export type BodyBlueprint = Readonly<{
     buildable?: boolean;
-    allowedSettlementTypes?: ("colony" | "outpost" | "hydrocarbonRefinery")[];
+    allowedSettlementTypes?: ("colony" | "outpost" | "hydrocarbonRefinery")[];
     navigationalPoint?: boolean
     population?: number;
     name: string;

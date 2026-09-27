@@ -10,6 +10,19 @@ class CounterSystem extends SystemWithNodes<TestEntityNode> {
     updateNode(_node: TestEntityNode, _dt?: number): void { }
 }
 
+function setupCounterSystem() {
+    const world = makeWorld() as unknown as Engine
+    const node = world.getNodeList(testEntityNodeCtor)[0]
+
+    const ctor = CounterSystem as unknown as new () => CounterSystem
+    const system = world.addSystem(ctor).getSystem(ctor)!
+
+    system.addToEngine(world)
+    system.nodes.push(node)
+
+    return { world, system, node }
+}
+
 describe("System", () => {
     it("attaches to engine via addToEngine and detaches via removeFromEngine", () => {
         const world = makeWorld() as unknown as Engine
@@ -92,15 +105,3 @@ describe("SystemWithNodes", () => {
     })
 })
 
-function setupCounterSystem() {
-    const world = makeWorld() as unknown as Engine
-    const node = world.getNodeList(testEntityNodeCtor)[0]
-
-    const ctor = CounterSystem as unknown as new () => CounterSystem
-    const system = world.addSystem(ctor).getSystem(ctor)!
-
-    system.addToEngine(world)
-    system.nodes.push(node)
-
-    return { world, system, node }
-}

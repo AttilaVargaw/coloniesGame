@@ -23,7 +23,34 @@ export interface IndustryTickInput {
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
 
-export interface IndustryTickResult {
+export interface IndustryTickPatch {
+    entityId: string;
+    goods?: Partial<Goods>;
+    goodsRequirements?: Partial<Goods>;
+    goodsProduction?: Partial<Goods>;
+    workingWorkers?: Partial<Population>;
+    freeWorkers?: Partial<Population>;
+    populationUpdates?: Partial<Record<keyof Population, {
+        qol?: number;
+        expectedQol?: number;
+        populationChange?: number;
+        wealth?: number;
+        number?: number;
+        requirements?: Partial<Goods>;
+    }>>;
+    sectorProfits?: Partial<Record<keyof IndustrialSectors, number>>;
+    populationProfits?: Partial<Record<keyof Population, number>>;
+    sectorUtilization?: Partial<Record<keyof IndustrialSectors, number>>;
+    sectorResults?: {
+        changed: Record<string, SectorResult>;
+        removed: string[];
+    };
+    sectors?: Partial<Record<keyof IndustrialSectors, number>>;
+    sectorWealth?: Partial<Record<keyof IndustrialSectors, number>>;
+    sectorCapital?: Partial<Record<keyof IndustrialSectors, number>>;
+}
+
+interface IndustryTickResult {
     entityId: string;
     goodsRequirements: Partial<Goods>;
     goodsProduction: Partial<Goods>;
@@ -48,6 +75,166 @@ export interface IndustryTickResult {
     sectorCapital: Record<keyof IndustrialSectors, number>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
+}
+
+const lastResults = new Map<string, IndustryTickResult>();
+
+function shallowDiff<T extends Record<string, number>>(oldObj: T | undefined, newObj: T): Partial<T> | null {
+    if(!oldObj) return newObj;
+    const changed: Partial<T> = {};
+    let hasChanged = false;
+    for(const key in newObj) {
+        if(oldObj[key as keyof T] !== newObj[key as keyof T]) {
+            changed[key as keyof T] = newObj[key as keyof T];
+            hasChanged = true;
+        }
+    }
+    return hasChanged ? changed : null;
+}
+
+function populationGroupDiff(old: PopulationBreakdown | undefined, newGroup: PopulationBreakdown): Partial<PopulationBreakdown> | null {
+    if(!old) return newGroup as Partial<PopulationBreakdown>;
+    const changed: Partial<PopulationBreakdown> = {};
+    let hasChanged = false;
+    for(const key in newGroup) {
+        if(old[key as keyof PopulationBreakdown] !== newGroup[key as keyof PopulationBreakdown]) {
+            changed[key as keyof PopulationBreakdown] = newGroup[key as keyof PopulationBreakdown];
+            hasChanged = true;
+        }
+    }
+    return hasChanged ? changed : null;
+}
+
+function populationDiff(old: Population | undefined, newPop: Population): Partial<Population> | null {
+    if(!old) return newPop as Partial<Population>;
+    const changed: Partial<Population> = {};
+    let hasChanged = false;
+    for(const key in newPop) {
+        const oldGroup = old[key as keyof Population];
+        const newGroup = newPop[key as keyof Population];
+        const groupDiff = populationGroupDiff(oldGroup, newGroup);
+        if(groupDiff) {
+            changed[key as keyof Population] = groupDiff as PopulationBreakdown;
+            hasChanged = true;
+        }
+    }
+    return hasChanged ? changed : null;
+}
+
+function shallowObjectsEqual(a: Record<string, number>, b: Record<string, number>): boolean {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if(keysA.length !== keysB.length) return false;
+    for(const key of keysA) {
+        if(a[key] !== b[key]) return false;
+    }
+    return true;
+}
+
+function sectorResultChanged(old: SectorResult, newSector: SectorResult): boolean {
+    if(old.productionRatio !== newSector.productionRatio) return true;
+    if(old.inputLevel !== newSector.inputLevel) return true;
+    if(old.outputLevel !== newSector.outputLevel) return true;
+    if(!shallowObjectsEqual(old.consumedGoods, newSector.consumedGoods)) return true;
+    if(!shallowObjectsEqual(old.producedGoods, newSector.producedGoods)) return true;
+    if(!shallowObjectsEqual(old.workersEmployed, newSector.workersEmployed)) return true;
+    return false;
+}
+
+function buildSectorResultsPatch(old: Record<string, SectorResult> | undefined, newResults: Record<string, SectorResult>): { changed: Record<string, SectorResult>; removed: string[] } | null {
+    const changed: Record<string, SectorResult> = {};
+    const removed: string[] = [];
+    let hasChanged = false;
+    
+    for(const key in newResults) {
+        const oldSector = old?.[key];
+        const newSector = newResults[key];
+        if(!oldSector || sectorResultChanged(oldSector, newSector)) {
+            changed[key] = newSector;
+            hasChanged = true;
+        }
+    }
+    
+    if(old) {
+        for(const key in old) {
+            if(!(key in newResults)) {
+                removed.push(key);
+                hasChanged = true;
+            }
+        }
+    }
+    
+    return hasChanged ? { changed, removed } : null;
+}
+
+function populationUpdateDiff(old: IndustryTickResult["populationUpdates"][keyof Population], newUpdate: IndustryTickResult["populationUpdates"][keyof Population]): boolean {
+    if(old.qol !== newUpdate.qol) return true;
+    if(old.expectedQol !== newUpdate.expectedQol) return true;
+    if(old.populationChange !== newUpdate.populationChange) return true;
+    if(old.wealth !== newUpdate.wealth) return true;
+    if(old.number !== newUpdate.number) return true;
+    if(!shallowObjectsEqual(old.requirements, newUpdate.requirements)) return true;
+    return false;
+}
+
+function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickResult): IndustryTickPatch | null {
+    const patch: IndustryTickPatch = { entityId: result.entityId };
+    let hasChanged = false;
+    
+    const goodsDiff = shallowDiff(last?.goods, result.goods);
+    if(goodsDiff) { patch.goods = goodsDiff; hasChanged = true; }
+    
+    const goodsReqDiff = shallowDiff(last?.goodsRequirements, result.goodsRequirements);
+    if(goodsReqDiff) { patch.goodsRequirements = goodsReqDiff; hasChanged = true; }
+    
+    const goodsProdDiff = shallowDiff(last?.goodsProduction, result.goodsProduction);
+    if(goodsProdDiff) { patch.goodsProduction = goodsProdDiff; hasChanged = true; }
+    
+    const workingWorkersDiff = populationDiff(last?.workingWorkers, result.workingWorkers);
+    if(workingWorkersDiff) { patch.workingWorkers = workingWorkersDiff; hasChanged = true; }
+    
+    const freeWorkersDiff = populationDiff(last?.freeWorkers, result.freeWorkers);
+    if(freeWorkersDiff) { patch.freeWorkers = freeWorkersDiff; hasChanged = true; }
+    
+    if(last?.populationUpdates !== result.populationUpdates) {
+        const updatedPop: IndustryTickPatch["populationUpdates"] = {};
+        let popChanged = false;
+        for(const key in result.populationUpdates) {
+            const oldUpdate = last?.populationUpdates[key as keyof Population];
+            const newUpdate = result.populationUpdates[key as keyof Population];
+            if(!oldUpdate || populationUpdateDiff(oldUpdate, newUpdate)) {
+                updatedPop[key as keyof Population] = newUpdate;
+                popChanged = true;
+            }
+        }
+        if(popChanged) {
+            patch.populationUpdates = updatedPop;
+            hasChanged = true;
+        }
+    }
+    
+    const sectorProfitsDiff = shallowDiff(last?.sectorProfits, result.sectorProfits);
+    if(sectorProfitsDiff) { patch.sectorProfits = sectorProfitsDiff; hasChanged = true; }
+    
+    const popProfitsDiff = shallowDiff(last?.populationProfits, result.populationProfits);
+    if(popProfitsDiff) { patch.populationProfits = popProfitsDiff; hasChanged = true; }
+    
+    const sectorUtilDiff = shallowDiff(last?.sectorUtilization, result.sectorUtilization);
+    if(sectorUtilDiff) { patch.sectorUtilization = sectorUtilDiff; hasChanged = true; }
+    
+    const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
+    if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
+    
+    const sectorsDiff = shallowDiff(last?.sectors, result.sectors);
+    if(sectorsDiff) { patch.sectors = sectorsDiff; hasChanged = true; }
+    
+    const sectorWealthDiff = shallowDiff(last?.sectorWealth, result.sectorWealth);
+    if(sectorWealthDiff) { patch.sectorWealth = sectorWealthDiff; hasChanged = true; }
+    
+    const sectorCapitalDiff = shallowDiff(last?.sectorCapital, result.sectorCapital);
+    if(sectorCapitalDiff) { patch.sectorCapital = sectorCapitalDiff; hasChanged = true; }
+    
+    return hasChanged ? patch : null;
 }
 
 const qolSmoothing = 0.03;
@@ -87,8 +274,6 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         return
     }
 
-    const results: IndustryTickResult[] = [];
-
     const activeEntityIds = new Set<string>()
     for(const industry of event.data.industries) {
         activeEntityIds.add(industry.entityId)
@@ -99,6 +284,14 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             colonyPriceMemory.delete(entityId)
         }
     }
+
+    for(const entityId of lastResults.keys()) {
+        if(!activeEntityIds.has(entityId)) {
+            lastResults.delete(entityId)
+        }
+    }
+
+    const patches: IndustryTickPatch[] = [];
 
     for(const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors, settlementType, allowedSectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
@@ -413,7 +606,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             allowedSectors: allowedSectorsSet ? Array.from(allowedSectorsSet) : undefined,
         });
 
-        results.push({
+        const result: IndustryTickResult = {
             entityId,
             goodsRequirements,
             goodsProduction,
@@ -431,8 +624,15 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
             sectorCapital: currentSectorCapital,
             settlementType,
             allowedSectors,
-        });
+        };
+
+        const last = lastResults.get(entityId);
+        const patch = buildPatch(last, result);
+        if(patch) {
+            patches.push(patch);
+        }
+        lastResults.set(entityId, result);
     }
 
-    self.postMessage({ type: "result", results });
+    self.postMessage({ type: "result", patches });
 };

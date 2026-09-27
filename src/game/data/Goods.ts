@@ -146,7 +146,6 @@ export function getLowestGoodsRatio(
     )
 }
 
-const priceMemory: Partial<Record<keyof Goods, number>> = {};
 const priceDamping = 0.4;
 const priceMaxDeviation = 0.25;
 

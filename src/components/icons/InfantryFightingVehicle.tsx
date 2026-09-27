@@ -1,6 +1,6 @@
 import { LucideIcon, LucideProps } from "lucide-react";
 
-const InfantryFightingVehicle = (({ }: LucideProps) => {
+const InfantryFightingVehicle = ((_props: LucideProps) => {
   return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M3 15.5h17l1.5 1.5-1.5 1.5H3l-1-1.5 1-1.5Z" />
     <path d="M4 15.5 5 12h6l1-2h4l1 2h2l1 3.5" />
