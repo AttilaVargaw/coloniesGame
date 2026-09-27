@@ -8,7 +8,6 @@ import { System } from "@engine/systems/system"
 import { TestEntityComponent, TestEntityNode, testEntityNodeCtor, makeWorld, entityWithTag } from "@engine/test-utils"
 import { SelectEntityCommand } from "@engine/lib/SelectEntityCommand"
 import {
-    UpdateBeginEvent,
     EntityAddedEvent,
     ClickEventData,
 } from "@engine/lib/events"
@@ -124,17 +123,6 @@ describe("World (Engine refactor regression)", () => {
 
         world.update(16)
         expect(updates).toBe(0)
-    })
-
-    it("runs updateBegin handlers during the update loop", () => {
-        const world = makeWorld()
-        const updateBegin = vi.fn()
-
-        world.subscribe(UpdateBeginEvent, updateBegin)
-
-        world.update(16)
-
-        expect(updateBegin).toHaveBeenCalledWith(16)
     })
 
     it("fires entityAdded handlers during the update loop", () => {

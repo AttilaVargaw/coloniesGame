@@ -150,7 +150,7 @@ const priceMemory: Partial<Record<keyof Goods, number>> = {};
 const priceDamping = 0.4;
 const priceMaxDeviation = 0.25;
 
-export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>> = priceMemory): Record<keyof Goods, number> {
+export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): Record<keyof Goods, number> {
     const prices = {} as Record<keyof Goods, number>;
 
     for(const key of Object.keys(basePrices) as (keyof Goods)[]) {

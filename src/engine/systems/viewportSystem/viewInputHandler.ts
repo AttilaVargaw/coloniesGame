@@ -156,17 +156,16 @@ export class ViewportInputHandler {
     }
 
     removeFromEngine() {
-        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
-        if(!canvas) {
-            return
-        }
-
         window.removeEventListener("keydown", this.onKeyDown)
         window.removeEventListener("keyup", this.onKeyUp)
         window.removeEventListener("wheel", this.onWheel)
-        canvas.removeEventListener("mouseenter", this.onMouseEnter)
-        canvas.removeEventListener("mouseleave", this.onMouseLeave)
-        canvas.removeEventListener("contextmenu", this.onContextMenu)
+
+        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
+        if(canvas) {
+            canvas.removeEventListener("mouseenter", this.onMouseEnter)
+            canvas.removeEventListener("mouseleave", this.onMouseLeave)
+            canvas.removeEventListener("contextmenu", this.onContextMenu)
+        }
 
         this.heldKeys.clear()
     }

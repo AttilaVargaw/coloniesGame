@@ -30,6 +30,7 @@ import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { PositionComponent } from "@/engine/components/position"
+import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 
 export class Game {
     readonly engine: World
@@ -150,6 +151,7 @@ export class Game {
 
     destruct(): void {
         this.engine.destruct()
+        disposeAsteroidTextures()
 
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)

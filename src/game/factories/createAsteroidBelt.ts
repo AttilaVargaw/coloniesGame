@@ -73,6 +73,17 @@ const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
 const tintedDustTextures = [] as (OffscreenCanvas | HTMLImageElement)[]
 let tintedTexturesReady = false
 
+export function disposeAsteroidTextures() {
+    for(const texture of tintedTextures.values()) {
+        if(texture instanceof OffscreenCanvas) {
+            // OffscreenCanvas has no explicit close in all browsers; just drop references
+        }
+    }
+    tintedTextures.clear()
+    tintedDustTextures.length = 0
+    tintedTexturesReady = false
+}
+
 function Colorize(image: HTMLImageElement | OffscreenCanvas | ImageBitmap, color: `#${string}`) {
     const imageSize = image.width
 

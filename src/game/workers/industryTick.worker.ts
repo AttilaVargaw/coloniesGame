@@ -89,6 +89,17 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     const results: IndustryTickResult[] = [];
 
+    const activeEntityIds = new Set<string>()
+    for(const industry of event.data.industries) {
+        activeEntityIds.add(industry.entityId)
+    }
+
+    for(const entityId of colonyPriceMemory.keys()) {
+        if(!activeEntityIds.has(entityId)) {
+            colonyPriceMemory.delete(entityId)
+        }
+    }
+
     for(const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors, settlementType, allowedSectors } of event.data.industries) {
         const memory = colonyPriceMemory.get(entityId) || {};
         const prices = getPrices(goods, memory);

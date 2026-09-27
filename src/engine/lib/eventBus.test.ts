@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { EventBus } from "./eventBus"
 import {
-    UpdateBeginEvent,
-    // UpdateDoneEvent,
     EntityAddedEvent,
     EntityRemovedEvent,
     DayPassedEvent,
@@ -44,9 +42,7 @@ describe("EventBus", () => {
 
     describe("initialization", () => {
         it("pre-populates the expected default event queues", () => {
-            expect(bus.events.size).toBe(18)
-            expect(bus.events.has(UpdateBeginEvent)).toBe(true)
-            // expect(bus.events.has(UpdateDoneEvent)).toBe(true)
+            expect(bus.events.size).toBe(17)
             expect(bus.events.has(EntityAddedEvent)).toBe(true)
             expect(bus.events.has(EntityRemovedEvent)).toBe(true)
             expect(bus.events.has(DayPassedEvent)).toBe(true)
@@ -77,11 +73,11 @@ describe("EventBus", () => {
 
     describe("dispatchEvent", () => {
         it("enqueues event data for the matching event class", () => {
-            bus.dispatchEvent(new UpdateBeginEvent(16))
+            bus.dispatchEvent(new DayPassedEvent(null))
 
-            const queue = bus.events.get(UpdateBeginEvent)!
+            const queue = bus.events.get(DayPassedEvent)!
             expect(queue.length).toBe(1)
-            expect(queue.peek()?.data).toBe(16)
+            expect(queue.peek()?.data).toBe(null)
         })
 
         it("is a no-op for unregistered event classes", () => {
@@ -92,33 +88,33 @@ describe("EventBus", () => {
         })
 
         it("returns itself for chaining", () => {
-            expect(bus.dispatchEvent(new UpdateBeginEvent(1))).toBe(bus)
+            expect(bus.dispatchEvent(new DayPassedEvent(null))).toBe(bus)
         })
     })
 
     describe("subscribe / unsubscribe", () => {
         it("registers a handler for an event class", () => {
             const handler = vi.fn()
-            bus.subscribe(UpdateBeginEvent, handler)
+            bus.subscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.processEventHandler(UpdateBeginEvent)
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.processEventHandler(DayPassedEvent)
 
-            expect(handler).toHaveBeenCalledWith(16)
+            expect(handler).toHaveBeenCalledWith(null)
         })
 
         it("supports multiple handlers for the same event class", () => {
             const handlerA = vi.fn()
             const handlerB = vi.fn()
 
-            bus.subscribe(UpdateBeginEvent, handlerA)
-            bus.subscribe(UpdateBeginEvent, handlerB)
+            bus.subscribe(DayPassedEvent, handlerA)
+            bus.subscribe(DayPassedEvent, handlerB)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.processEventHandler(UpdateBeginEvent)
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.processEventHandler(DayPassedEvent)
 
-            expect(handlerA).toHaveBeenCalledWith(16)
-            expect(handlerB).toHaveBeenCalledWith(16)
+            expect(handlerA).toHaveBeenCalledWith(null)
+            expect(handlerB).toHaveBeenCalledWith(null)
         })
 
         it("invokes handlers with the correct payload for complex events", () => {
@@ -135,11 +131,11 @@ describe("EventBus", () => {
         it("does not invoke handlers after unsubscribe", () => {
             const handler = vi.fn()
 
-            bus.subscribe(UpdateBeginEvent, handler)
-            bus.unsubscribe(UpdateBeginEvent, handler)
+            bus.subscribe(DayPassedEvent, handler)
+            bus.unsubscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.processEventHandler(UpdateBeginEvent)
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.processEventHandler(DayPassedEvent)
 
             expect(handler).not.toHaveBeenCalled()
         })
@@ -147,8 +143,8 @@ describe("EventBus", () => {
         it("returns itself for chaining", () => {
             const handler = vi.fn()
 
-            expect(bus.subscribe(UpdateBeginEvent, handler)).toBe(bus)
-            expect(bus.unsubscribe(UpdateBeginEvent, handler)).toBe(bus)
+            expect(bus.subscribe(DayPassedEvent, handler)).toBe(bus)
+            expect(bus.unsubscribe(DayPassedEvent, handler)).toBe(bus)
         })
     })
 
@@ -207,17 +203,17 @@ describe("EventBus", () => {
             const updateHandler = vi.fn()
             const clickHandler = vi.fn()
 
-            bus.subscribe(UpdateBeginEvent, updateHandler)
+            bus.subscribe(DayPassedEvent, updateHandler)
             bus.subscribe(ClickEventData, clickHandler)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
+            bus.dispatchEvent(new DayPassedEvent(null))
             bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
 
             bus.processEventHandlers()
 
-            expect(updateHandler).toHaveBeenCalledWith(16)
+            expect(updateHandler).toHaveBeenCalledWith(null)
             expect(clickHandler).toHaveBeenCalledWith({ x: 0, y: 0 })
-            expect(bus.events.get(UpdateBeginEvent)!.length).toBe(0)
+            expect(bus.events.get(DayPassedEvent)!.length).toBe(0)
             expect(bus.events.get(ClickEventData)!.length).toBe(0)
         })
 
@@ -256,12 +252,12 @@ describe("EventBus", () => {
     describe("clearHandlers / clearEvents", () => {
         it("clearHandlers removes all subscribed handlers", () => {
             const handler = vi.fn()
-            bus.subscribe(UpdateBeginEvent, handler)
+            bus.subscribe(DayPassedEvent, handler)
             bus.subscribe(ClickEventData, handler)
 
             bus.clearHandlers()
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
+            bus.dispatchEvent(new DayPassedEvent(null))
             bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
             bus.processEventHandlers()
 
@@ -270,18 +266,18 @@ describe("EventBus", () => {
 
         it("clearEvents empties all event queues without affecting handlers", () => {
             const handler = vi.fn()
-            bus.subscribe(UpdateBeginEvent, handler)
+            bus.subscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.dispatchEvent(new UpdateBeginEvent(32))
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.dispatchEvent(new DayPassedEvent(null))
             bus.clearEvents()
 
-            expect(bus.events.get(UpdateBeginEvent)!.length).toBe(0)
+            expect(bus.events.get(DayPassedEvent)!.length).toBe(0)
 
-            bus.dispatchEvent(new UpdateBeginEvent(64))
-            bus.processEventHandler(UpdateBeginEvent)
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.processEventHandler(DayPassedEvent)
 
-            expect(handler).toHaveBeenCalledWith(64)
+            expect(handler).toHaveBeenCalledWith(null)
         })
     })
 
@@ -300,13 +296,13 @@ describe("EventBus", () => {
             const handlerA = vi.fn()
             const handlerB = vi.fn()
 
-            bus.subscribe(UpdateBeginEvent, handlerA)
+            bus.subscribe(DayPassedEvent, handlerA)
             // bus.subscribe(UpdateDoneEvent, handlerB)
 
-            bus.dispatchEvent(new UpdateBeginEvent(16))
-            bus.processEventHandler(UpdateBeginEvent)
+            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.processEventHandler(DayPassedEvent)
 
-            expect(handlerA).toHaveBeenCalledWith(16)
+            expect(handlerA).toHaveBeenCalledWith(null)
             expect(handlerB).not.toHaveBeenCalled()
         })
 
