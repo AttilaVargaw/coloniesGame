@@ -55,6 +55,6 @@ export class ButtonPressSystem extends SystemWithNodes<ButtonPressNode> {
             }
         }
 
-        keydownEvents!.clear()
+        keydownEvents.clear()
     }
 }

@@ -46,7 +46,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
             [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent],
-            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)!.emitLight)
+            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)?.emitLight)
         )
     }
 

@@ -297,7 +297,7 @@ export class ViewportInputHandler {
             this.dragMoved = false
             document.body.style.cursor = "default"
         }
-        this.mouseupArray!.clear()
+        this.mouseupArray?.clear()
     }
 
     private zoomWheel(camera: Camera, factor: number) {

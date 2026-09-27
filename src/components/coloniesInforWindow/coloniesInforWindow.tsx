@@ -20,7 +20,7 @@ export function ColoniesInforWindow() {
 
     useGameEvent(DayPassedEvent, useCallback(() => {
         if(currentColonyRef.current?.getComponent(IndustryComponent)) {
-            setIndustry({ ...currentColonyRef.current!.getComponent(IndustryComponent)! })
+            setIndustry({ ...currentColonyRef.current.getComponent(IndustryComponent)! })
         }
     }, []))
 
@@ -34,7 +34,7 @@ export function ColoniesInforWindow() {
         if(type === "colony") {
             if(data) {
                 setCurrentColony(data)
-                setIndustry({ ...data!.getComponent(IndustryComponent)! })
+                setIndustry({ ...data.getComponent(IndustryComponent)! })
             }
         } else {
             setCurrentColony(undefined)

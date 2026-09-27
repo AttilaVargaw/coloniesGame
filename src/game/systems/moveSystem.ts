@@ -228,13 +228,15 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
     }
 
     private clearShipNavigation(entity: Entity) {
+        if(!this.engine) return
+
         const drive = entity.getComponent(JumpDriveComponent)
         if(drive) {
             drive.target = undefined
             drive.clickX = undefined
             drive.clickY = undefined
         }
-        const targetSystem = this.engine!.getSystem(TargetSystem)
+        const targetSystem = this.engine.getSystem(TargetSystem)
         targetSystem?.clearTarget(entity)
     }
 

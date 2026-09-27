@@ -67,7 +67,7 @@ export class EventBus {
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
         } else {
-            this.eventHandlers.get(event)!.add(callback)
+            this.eventHandlers.get(event)?.add(callback)
         }
 
         return this

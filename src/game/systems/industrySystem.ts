@@ -93,7 +93,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             });
         }
 
-        this.workerPool!.tick(industries);
+        this.workerPool?.tick(industries);
     };
 
     removeFromEngine(): this {

@@ -60,9 +60,11 @@ export function DebugModal() {
     }
 
     const handleBloomSettingChange = (key: keyof BloomSettings, value: number) => {
+        if(!engine) return
+
         setBloomSettings(prev => {
             const next = { ...prev, [key]: value }
-            engine!.getDebugManager().bloomSettings = next
+            engine.getDebugManager().bloomSettings = next
             return next
         })
     }
