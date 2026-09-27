@@ -14,7 +14,7 @@
 
 import { ReadonlyRecord } from "@/lib/readonlyRecord";
 import { Goods } from "./Goods";
-import { populationPackets } from "./populationPackets";
+import { QOL_LEVELS } from "./populationPackets";
 import { getLowestRatio } from "../utils/getLowestRatio";
 
 export type PopulationBreakdown = {
@@ -84,17 +84,17 @@ export function getLowestPopulationRatio(requirements: Partial<Record<keyof Popu
 export function getRequirementsForQol(qol: number, number: number): Record<keyof Goods, number> {
     let lastData: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
 
-    for(const { data, id } of populationPackets.cumulative) {
-        if(Number(id) <= qol) {
-            lastData = data as Record<keyof Goods, number>;
+    for (const level of QOL_LEVELS) {
+        if (level.id <= qol) {
+            lastData = level.cumulativeData;
         } else {
             break;
         }
     }
 
     const requirements = {} as Record<keyof Goods, number>;
-    for(const [key, value] of Object.entries(lastData)) {
-        requirements[key as keyof Goods] = value * number;
+    for (const key in lastData) {
+        requirements[key as keyof Goods] = lastData[key as keyof Goods] * number;
     }
 
     return requirements;
@@ -109,32 +109,33 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     let lastAffordableCumulativeCost = 0
     let lastAffordableId = 0
     let lastAffordableData: Partial<Record<keyof Goods, number>> = {}
+    const budget = salary + wealth
 
-    for(const { data, id } of populationPackets.cumulative) {
-        const cumulativeCost = Object.entries(data).reduce((acc, [key, value]) => {
-            return acc + (value as number) * goodsPrices[key as keyof Goods]
-        }, 0)
-        const budget = salary + wealth
+    for (const level of QOL_LEVELS) {
+        const cumulativeCost = Object.entries(level.cumulativeData).reduce(
+            (acc, [key, value]) => acc + (value as number) * goodsPrices[key as keyof Goods],
+            0
+        )
 
-        if(budget >= cumulativeCost) {
-            qol = Number(id)
+        if (budget >= cumulativeCost) {
+            qol = level.id
             lastAffordableCumulativeCost = cumulativeCost
-            lastAffordableId = Number(id)
-            lastAffordableData = data as Record<keyof Goods, number>
+            lastAffordableId = level.id
+            lastAffordableData = level.cumulativeData
         } else {
             const margin = budget - lastAffordableCumulativeCost
             const gap = cumulativeCost - lastAffordableCumulativeCost
 
-            if(gap > 0 && margin >= 0) {
-                qol = lastAffordableId + (margin / gap) * (Number(id) - lastAffordableId)
+            if (gap > 0 && margin >= 0) {
+                qol = lastAffordableId + (margin / gap) * (level.id - lastAffordableId)
             }
             break
         }
     }
 
     const requirements = {} as Record<keyof Goods, number>
-    for(const [key, value] of Object.entries(lastAffordableData)) {
-        requirements[key as keyof Goods] = value * number
+    for (const key in lastAffordableData) {
+        requirements[key as keyof Goods] = (lastAffordableData[key as keyof Goods] ?? 0) * number
     }
 
     return { requirements, qol }
