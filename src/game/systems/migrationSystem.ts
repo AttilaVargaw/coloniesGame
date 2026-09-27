@@ -111,8 +111,8 @@ export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
 
     private handleCreateMigrationRoute(command: CreateMigrationRouteCommand) {
         const { sourceEntityId, destinationEntityId, workerCount, speed } = command;
-        const source = this.engine?.getAllEntities().find(e => e.id === sourceEntityId);
-        const destination = this.engine?.getAllEntities().find(e => e.id === destinationEntityId);
+        const source = this.engine?.getEntityById(sourceEntityId);
+        const destination = this.engine?.getEntityById(destinationEntityId);
 
         if(!source || !destination) return;
 
@@ -150,13 +150,13 @@ export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
     }
 
     private handleCancelMigrationRoute(command: CancelMigrationRouteCommand) {
-        const routeEntity = this.engine?.getAllEntities().find(e => e.id === command.routeEntityId);
+        const routeEntity = this.engine?.getEntityById(command.routeEntityId);
         if(!routeEntity) return;
 
         const route = routeEntity.getComponent(MigrationRouteComponent);
         if(!route) return;
 
-        const source = this.engine?.getAllEntities().find(e => e.id === route.sourceEntityId);
+        const source = this.engine?.getEntityById(route.sourceEntityId);
         if(source) {
             const sourceIndustry = source.getComponent(IndustryComponent);
             if(sourceIndustry) {
@@ -172,7 +172,7 @@ export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
 
     private completeMigrationRoute(node: MigrationRouteNode) {
         const { destinationEntityId, workerCount } = node.migrationRoute;
-        const destination = this.engine?.getAllEntities().find(e => e.id === destinationEntityId);
+        const destination = this.engine?.getEntityById(destinationEntityId);
         if(!destination) return;
 
         const destIndustry = destination.getComponent(IndustryComponent);

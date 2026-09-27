@@ -23,6 +23,7 @@ export interface Engine {
     unregisterNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>): void;
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>): T[];
     getAllEntities(): Entity[];
+    getEntityById(id: string): Entity | undefined;
     addCommand(command: CommandBase): void;
     getCommands<T extends CommandBase>(command: new (...args: any[]) => T): any;
     registerCommandQueue(command: Function): this;

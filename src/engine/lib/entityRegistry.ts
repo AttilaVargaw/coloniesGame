@@ -103,6 +103,10 @@ export class EntityRegistry {
         return Array.from(this.entities.values())
     }
 
+    getEntityById(id: string): Entity | undefined {
+        return this.entities.get(id)
+    }
+
     clear() {
         this.entities.clear()
         this.sceneNodes.clear()

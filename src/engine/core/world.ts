@@ -30,6 +30,9 @@ export class World implements Engine {
         this.debugManager = new DebugManager()
     }
 
+    getEntityById(id: string): Entity | undefined {
+        return this.entityRegistry.getEntityById(id)
+    }
 
     getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
         return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>

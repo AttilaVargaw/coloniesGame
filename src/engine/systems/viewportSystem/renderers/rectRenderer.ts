@@ -9,13 +9,7 @@ import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
 import { TWO_PI } from "@/game/constants";
 import { Vector3 } from "@/lib/Vector3";
-
-function hexToRgba(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16)
-    const g = parseInt(hex.slice(3, 5), 16)
-    const b = parseInt(hex.slice(5, 7), 16)
-    return `rgba(${r},${g},${b},${alpha})`
-}
+import { hexToRgba } from "./hexToRgba";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();

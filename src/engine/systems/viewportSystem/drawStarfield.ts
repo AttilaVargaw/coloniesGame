@@ -1,17 +1,10 @@
 import { TWO_PI } from "@/game/constants";
 import Camera from "@/lib/camera";
-
-const mulberry32 = (seed: number) => {
-    seed |= 0
-    return () => {
-        seed = seed + 0x6D2B79F5 | 0
-        let t = Math.imul(seed ^ seed >>> 15, 1 | seed)
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
-        return ((t ^ t >>> 14) >>> 0) / 4294967296
-    }
-}
+import { hexToRgba } from "./renderers/hexToRgba";
+import { mulberry32 } from "./mulberry32";
 
 const rng = mulberry32(42)
+
 const STAR_COLORS = [
     "#ffffff",
     "#fff8e7",
@@ -19,14 +12,7 @@ const STAR_COLORS = [
     "#ffd2a1",
     "#a1c2ff",
     "#ffb4a2",
-]
-
-function hexToRgba(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16)
-    const g = parseInt(hex.slice(3, 5), 16)
-    const b = parseInt(hex.slice(5, 7), 16)
-    return `rgba(${r},${g},${b},${alpha})`
-}
+] as const
 
 const createStarfield = (count: number) => {
     return Array.from({ length: count }, () => {
