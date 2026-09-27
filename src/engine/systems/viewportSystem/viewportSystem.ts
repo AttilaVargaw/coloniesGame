@@ -158,6 +158,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
         const bloomEntries: RenderEntry[] = []
+        const ellipses: RenderEntry[] = []
 
         for(const rendererClass of this.rendererClasses) {
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
@@ -183,6 +184,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
+        ellipses.sort((a, b) => b.projected.depth - a.projected.depth)
 
         for(const entry of allEntries) {
             entry.renderer.drawNode(entry.node, dt)
@@ -248,6 +250,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             drawStarfield(ctx, camera)
             drawNebulas(ctx, camera)
 
+            if(drawOrbits) {
+                this.drawOrbits(ctx)
+            }
 
             this.scheduleRender(dt, bloomSourceCtx)
             this.drawLensFlares(ctx, camera)
@@ -274,10 +279,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
             if(showCameraTarget) {
                 drawCameraTarget(ctx, camera)
-            }
-
-            if(drawOrbits) {
-                this.drawOrbits(ctx)
             }
 
             if(showJumpGraph) {
