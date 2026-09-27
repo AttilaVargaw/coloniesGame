@@ -8,6 +8,7 @@ export class TextureComponent extends EntityComponent {
         public tint?: string,
         public rotation?: number,
         public minimumScreenSize?: number,
+        public animationSpeed?: number,
     ) {
         super();
     }

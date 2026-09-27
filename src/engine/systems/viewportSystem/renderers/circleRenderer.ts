@@ -2,6 +2,7 @@ import { PositionComponent } from "../../../components/position";
 import { RadiusComponent } from "../../../components/radiusComponent";
 import { ColorComponent } from "../../../components/colorComponent";
 import { ThicknessComponent } from "../../../components/thicknessComponent";
+import { TextureComponent } from "../../../components/textureComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
@@ -23,9 +24,9 @@ const shadeSprite = (() => {
         SHADE_SIZE * 0.35, SHADE_SIZE * 0.35, SHADE_SIZE * 0.05,
         SHADE_SIZE * 0.5, SHADE_SIZE * 0.5, SHADE_SIZE * 0.5
     )
-    gradient.addColorStop(0, "rgba(255,255,255,0.25)")
+    gradient.addColorStop(0, "rgba(255,255,255,0.45)")
     gradient.addColorStop(0.5, "rgba(255,255,255,0.05)")
-    gradient.addColorStop(1, "rgba(0,0,0,0.35)")
+    gradient.addColorStop(1, "rgba(0,0,0,0.75)")
     octx.fillStyle = gradient
     octx.fillRect(0, 0, SHADE_SIZE, SHADE_SIZE)
     return canvas
@@ -39,8 +40,8 @@ function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius
 export class CircleRenderer extends BaseRenderer<CircleNode> {
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
-            [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent],
-            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)?.emitLight)
+            [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent, TextureComponent],
+            (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)?.emitLight, e.getComponent(TextureComponent))
         )
     }
 
@@ -111,12 +112,24 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             }
         }
         context.closePath()
-        circle.setColor(context)
-        context.lineWidth = thickness * center.scale
-        if(circle.color.fill) {
+
+        if(circle.texture?.texture) {
+            if(circle.color.fill) {
+                circle.setColor(context)
+                context.fill()
+            }
+            context.save()
+            context.clip()
+            context.drawImage(circle.texture.texture, 0, 0, circle.texture.texture.width || 128, circle.texture.texture.height || 128, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+            context.restore()
+        } else if(circle.color.fill) {
+            circle.setColor(context)
             context.fill()
         }
+
         if(circle.color.stroke) {
+            circle.setColor(context)
+            context.lineWidth = thickness * center.scale
             context.stroke()
         }
 

@@ -29,7 +29,9 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
+import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
+import { createPlanetTexture, createStarTexture } from "./createCircleTextures"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
     if(blueprint.mass !== undefined) return blueprint.mass
@@ -209,6 +211,14 @@ export async function createBody({
         : marker
 
     const body = createMarker({ shade: name !== "root", ...markerInput })
+
+    if(!buildable && typeof document !== "undefined") {
+        if(archetype === "sol") {
+            body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5))
+        } else if(archetype !== "baricenter") {
+            body.addComponent(new TextureComponent(undefined, undefined, createPlanetTexture(marker.color, archetype), undefined, undefined, undefined, 0.2))
+        }
+    }
 
     if(name !== "root") {
         const components = createBaseComponents(
