@@ -11,7 +11,6 @@ import { SystemRegistry } from "../lib/systemRegistry"
 import type { Engine } from "./engine"
 import { CommandBase } from "../lib/CommandBase"
 import { EventBase } from "../lib/events"
-import { UpdateBeginEvent, } from "../lib/events"
 import { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
 
@@ -136,7 +135,6 @@ export class World implements Engine {
         return this
     }
 
-
     removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
 
@@ -144,16 +142,11 @@ export class World implements Engine {
     }
 
     update(dt: number) {
-        this.eventBus.dispatchEvent(new UpdateBeginEvent(dt))
-
         this.eventBus.processEventHandlers()
 
         this.systemRegistry.update(dt)
 
         this.eventBus.processEventHandlers()
-
-        // this.eventBus.dispatchEvent(new UpdateDoneEvent(dt))
-        // this.eventBus.processEventHandler(UpdateDoneEvent)
     }
 
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {

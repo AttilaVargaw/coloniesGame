@@ -134,7 +134,16 @@ export async function createBody({
     if(population !== undefined) {
         applyComponents(body,
             new SelectableComponent(clickSize, "red"),
-            new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body)),
+            new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
+                label: "Info2",
+                id: "info2",
+                onClick: () => console.log("info2")
+            },
+            {
+                label: "View2",
+                id: "view2",
+                onClick: () => console.log("view2")
+            }]),
             new IndustryComponent(createStarterIndustry(population), createStarterWarehouse(population), createStarterPopulation(population), "standard")
         )
     } else {

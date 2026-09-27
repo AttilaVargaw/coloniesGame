@@ -9,6 +9,8 @@ import {
     HourPassedEvent,
     MonthPassedEvent,
     SelectionChangedEvent,
+    IndustryUpdatedEvent,
+    TargetChangedEvent,
     ComponentRemovedEvent,
     ClickEventData,
     MouseupEvent,
@@ -16,6 +18,8 @@ import {
     KeyupEvent,
     MousedownEvent,
     MousemoveEvent,
+    ContextMenuEvent,
+    ContextMenuOpenEvent,
     EventBase,
 } from "./events"
 import { Entity } from "../entities/entity"
@@ -40,7 +44,7 @@ describe("EventBus", () => {
 
     describe("initialization", () => {
         it("pre-populates the expected default event queues", () => {
-            expect(bus.events.size).toBe(14)
+            expect(bus.events.size).toBe(18)
             expect(bus.events.has(UpdateBeginEvent)).toBe(true)
             // expect(bus.events.has(UpdateDoneEvent)).toBe(true)
             expect(bus.events.has(EntityAddedEvent)).toBe(true)
@@ -49,6 +53,8 @@ describe("EventBus", () => {
             expect(bus.events.has(HourPassedEvent)).toBe(true)
             expect(bus.events.has(MonthPassedEvent)).toBe(true)
             expect(bus.events.has(SelectionChangedEvent)).toBe(true)
+            expect(bus.events.has(IndustryUpdatedEvent)).toBe(true)
+            expect(bus.events.has(TargetChangedEvent)).toBe(true)
             expect(bus.events.has(ComponentRemovedEvent)).toBe(true)
             expect(bus.events.has(ClickEventData)).toBe(true)
             expect(bus.events.has(MouseupEvent)).toBe(true)
@@ -56,6 +62,8 @@ describe("EventBus", () => {
             expect(bus.events.has(KeyupEvent)).toBe(true)
             expect(bus.events.has(MousedownEvent)).toBe(true)
             expect(bus.events.has(MousemoveEvent)).toBe(true)
+            expect(bus.events.has(ContextMenuEvent)).toBe(true)
+            expect(bus.events.has(ContextMenuOpenEvent)).toBe(true)
         })
 
         it("starts with no registered handlers", () => {

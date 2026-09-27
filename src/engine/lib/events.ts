@@ -33,3 +33,7 @@ export class KeyupEvent extends EventBase<KeyboardEvent> { }
 export class MousedownEvent extends EventBase<MouseEventData> { }
 export class MousemoveEvent extends EventBase<MouseEventData> { }
 export class MouseupEvent extends EventBase<MouseEventData> { }
+
+export class ContextMenuEvent extends EventBase<{ x: number, y: number }> { }
+
+export class ContextMenuOpenEvent extends EventBase<{ entity: Entity, screenX: number, screenY: number }> { }

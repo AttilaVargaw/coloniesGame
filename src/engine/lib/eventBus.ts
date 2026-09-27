@@ -9,6 +9,8 @@ import {
     HourPassedEvent,
     MonthPassedEvent,
     SelectionChangedEvent,
+    IndustryUpdatedEvent,
+    TargetChangedEvent,
     ComponentRemovedEvent,
     ClickEventData,
     MouseupEvent,
@@ -16,11 +18,14 @@ import {
     KeyupEvent,
     MousedownEvent,
     MousemoveEvent,
+    ContextMenuEvent,
+    ContextMenuOpenEvent,
 } from "./events"
 
 export class EventBus {
 
     readonly events: Map<new (...args: any[]) => EventBase, Queue<EventBase>> = new Map([
+
         [UpdateBeginEvent, new Queue()],
         // [UpdateDoneEvent, new Queue()],
         [EntityAddedEvent, new Queue()],
@@ -29,6 +34,8 @@ export class EventBus {
         [HourPassedEvent, new Queue()],
         [MonthPassedEvent, new Queue()],
         [SelectionChangedEvent, new Queue()],
+        [IndustryUpdatedEvent, new Queue()],
+        [TargetChangedEvent, new Queue()],
         [ComponentRemovedEvent, new Queue()],
         [ClickEventData, new Queue()],
         [MouseupEvent, new Queue()],
@@ -36,6 +43,8 @@ export class EventBus {
         [KeyupEvent, new Queue()],
         [MousedownEvent, new Queue()],
         [MousemoveEvent, new Queue()],
+        [ContextMenuEvent, new Queue()],
+        [ContextMenuOpenEvent, new Queue()],
     ])
 
     private readonly eventHandlers = new Map<new (...args: any[]) => EventBase, Set<(data: unknown) => void>>()
@@ -60,9 +69,6 @@ export class EventBus {
 
 
     subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void) {
-        if(event === MousemoveEvent) {
-            console.log("subscribing to mousemove")
-        }
         if(!this.eventHandlers.has(event)) {
             this.eventHandlers.set(event, new Set([callback]))
         } else {
@@ -102,6 +108,10 @@ export class EventBus {
 
     processEventHandlers() {
         for(const [eventType, eventQueue] of this.events.entries()) {
+            if(eventQueue.length > 100) {
+                console.warn("Event queue for " + eventType.name + " has more than 100 events. This may indicate a memory leak.")
+            }
+
             const handlers = this.eventHandlers.get(eventType)
 
             if(!handlers) {

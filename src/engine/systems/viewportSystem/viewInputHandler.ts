@@ -2,6 +2,7 @@ import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
+import { Queue } from "@/engine/lib/commandQueue";
 // import { CAMERA_INITIAL_DISTANCE } from "@/game/constants";
 
 const wasdButtons = new Set(["w", "a", "s", "d", "W", "A", "S", "D", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
@@ -143,6 +144,10 @@ export class ViewportInputHandler {
             return
         }
 
+        this.mousedownArray = this.viewportSystem?.engineRef?.getEvents(MousedownEvent)!
+        this.mouseupArray = this.viewportSystem?.engineRef?.getEvents(MouseupEvent)!
+        this.mouseMovedArray = this.viewportSystem?.engineRef?.getEvents(MousemoveEvent)!
+
         canvas.addEventListener("mouseenter", this.onMouseEnter)
         canvas.addEventListener("mouseleave", this.onMouseLeave)
         canvas.addEventListener("contextmenu", this.onContextMenu)
@@ -162,6 +167,7 @@ export class ViewportInputHandler {
         canvas.removeEventListener("mouseenter", this.onMouseEnter)
         canvas.removeEventListener("mouseleave", this.onMouseLeave)
         canvas.removeEventListener("contextmenu", this.onContextMenu)
+
         this.heldKeys.clear()
     }
 
@@ -197,6 +203,10 @@ export class ViewportInputHandler {
         this.wheelZoomAccum += event.deltaY
     }
 
+    private mousedownArray: Queue<MousedownEvent["data"]> | null = null
+    private mouseupArray: Queue<MouseupEvent["data"]> | null = null
+    private mouseMovedArray: Queue<MousemoveEvent["data"]> | null = null
+
     update(dt: number) {
         if(!this.viewportSystem.engineRef) {
             return
@@ -205,15 +215,12 @@ export class ViewportInputHandler {
         this._isZooming = false
 
         const camera = this.viewportSystem.viewport.camera
-        const mousedownArray = this.viewportSystem.engineRef.getEvents(MousedownEvent)!
-        const mouseupArray = this.viewportSystem.engineRef.getEvents(MouseupEvent)!
-        const mouseMovedArray = this.viewportSystem.engineRef.getEvents(MousemoveEvent)!
 
-        for(const { data } of mouseMovedArray) {
+        for(const { data } of this.mouseMovedArray!) {
             this.pointer = { x: data.x, y: data.y }
         }
 
-        for(const { data } of mousedownArray) {
+        for(const { data } of this.mousedownArray!) {
             const button = data.button
             if(button === 2 || button === 1) {
                 this._isDragging = true
@@ -226,10 +233,10 @@ export class ViewportInputHandler {
                 document.body.style.cursor = button === 2 ? "grab" : "move"
             }
         }
-        mousedownArray.clear()
+        this.mousedownArray?.clear()
 
         if(this._isDragging && this.lastPointer && this.dragButton !== null) {
-            for(const { data } of mouseMovedArray) {
+            for(const { data } of this.mouseMovedArray!) {
                 const dx = data.x - this.lastPointer.x
                 const dy = data.y - this.lastPointer.y
                 if(dx || dy) {
@@ -257,7 +264,7 @@ export class ViewportInputHandler {
         }
 
         let released = false
-        for(const { data } of mouseupArray) {
+        for(const { data } of this.mouseupArray!) {
             if(data.button === this.dragButton) {
                 released = true
                 break
@@ -270,7 +277,7 @@ export class ViewportInputHandler {
             this.dragMoved = false
             document.body.style.cursor = "default"
         }
-        mouseupArray.clear()
+        this.mouseupArray!.clear()
 
         if(!this._isDragging && this.wasRotatingWithoutTarget) {
             this.applyRotationInertia(camera)

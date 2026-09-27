@@ -6,7 +6,7 @@ import { ClickableComponent } from "../components/clickableComponent";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { PositionComponent } from "../components/position";
 import { getAbsolute } from "../lib/getAbsolute";
-import { ClickEventData, MousemoveEvent } from "../lib/events";
+import { ClickEventData, MousemoveEvent, ContextMenuEvent, ContextMenuOpenEvent } from "../lib/events";
 import { SelectionManager } from "@game/systems/selectionSystem";
 import { TargetSystem } from "@game/systems/targetSystem";
 import { MouseEvent as ReactMouseEvent } from "react"
@@ -40,14 +40,46 @@ export class PointerInteractionSystem extends System {
         this.hoverableNodes = engine.getNodeList(HoverableNode)
         this.clickableNodes.sort((a, b) => a.clickable.zIndex - b.clickable.zIndex)
 
+        engine.subscribe(ContextMenuEvent, this.onContextMenu)
+
         return this
     }
 
     removeFromEngine(): this {
         this.clickableNodes = []
         this.hoverableNodes = []
+        this.engine?.unsubscribe(ContextMenuEvent, this.onContextMenu)
         super.removeFromEngine()
         return this
+    }
+
+    private onContextMenu = ({ x, y }: { x: number, y: number }) => {
+        if(!this.engine) return
+
+        const { camera } = this.viewportSystem.viewport
+
+        for(const node of this.clickableNodes) {
+            const { clickable: { size: { width, height }, contextMenuItems, entity } } = node
+            if(!contextMenuItems || contextMenuItems.length === 0) continue
+
+            const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
+            const projected = camera.project(entityX, entityY, entityZ)
+            if(!projected) {
+                continue
+            }
+
+            const halfX = (width / 2) * projected.scale
+            const halfY = (height / 2) * projected.scale
+
+            if(
+                projected.x - halfX < x
+                && projected.x + halfX > x
+                && projected.y - halfY < y
+                && projected.y + halfY > y) {
+                this.engine.dispatchEvent(new ContextMenuOpenEvent({ entity: entity!, screenX: x, screenY: y }))
+                return
+            }
+        }
     }
 
     private doHover(data: { x: number, y: number } & ReactMouseEvent): void {
@@ -64,7 +96,7 @@ export class PointerInteractionSystem extends System {
             const [wx, wy, wz] = getAbsolute(hoverableNode.entity, this.engine!)
             const { hoverable: { size, cursor } } = hoverableNode
             const projected = camera.project(wx, wy, wz)
-            if (!projected) {
+            if(!projected) {
                 continue
             }
 
@@ -100,7 +132,7 @@ export class PointerInteractionSystem extends System {
             const { clickable: { size: { width, height }, onClick, entity } } = node
             const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
             const projected = camera.project(entityX, entityY, entityZ)
-            if (!projected) {
+            if(!projected) {
                 continue
             }
 
