@@ -30,12 +30,12 @@ export class WaypointGrid {
         this.rings = rings
     }
 
-    getKey(ringIdx: number, angleIdx: number): string {
+    static getKey(ringIdx: number, angleIdx: number): string {
         return `${ringIdx}:${angleIdx}`
     }
 
     getWaypoint(ringIdx: number, angleIdx: number): Entity | undefined {
-        return this.waypoints.get(this.getKey(ringIdx, angleIdx))
+        return this.waypoints.get(WaypointGrid.getKey(ringIdx, angleIdx))
     }
 
     getRingCount(): number {

@@ -1,7 +1,6 @@
-import { Engine } from "@/engine/core/engine";
 import { SHIP_RADIUS } from "../constants";
 import { createMarker } from "../factories/createSpaceship";
 
-export function createSpaceshipSelector(engine: Engine, color: string) {
-    return createMarker(engine, { color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } });
+export function createSpaceshipSelector(color: string) {
+    return createMarker({ color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } });
 }

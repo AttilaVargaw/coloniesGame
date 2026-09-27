@@ -74,7 +74,7 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
             case "colony":
                 break
             case "ship":
-                this.selector = createSpaceshipSelector(this.engine, "#0f04")
+                this.selector = createSpaceshipSelector("#0f04")
                 this.showSensorRangeForSelection(data)
                 break
         }
@@ -93,9 +93,9 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
 
         if(target) {
             if(target.getComponent(ShapeComponent)) {
-                this.targetSelector = createSpaceshipSelector(this.engine, "red")
+                this.targetSelector = createSpaceshipSelector("red")
             } else {
-                this.targetSelector = createSpaceshipSelector(this.engine, "#f004")
+                this.targetSelector = createSpaceshipSelector("#f004")
             }
 
             this.engine.addEntity(this.targetSelector!, target)
@@ -112,7 +112,7 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
         const suite = entity.getComponent(SensorSuiteComponent)
         if(!suite) return
 
-        const circle = createCircle(this.engine, "red", suite.range * UNIVERSE_SCALE)
+        const circle = createCircle("red", suite.range * UNIVERSE_SCALE)
 
         this.sensorRangeCircle = circle
         this.engine.addEntity(this.sensorRangeCircle!, entity)

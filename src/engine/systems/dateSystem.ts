@@ -58,7 +58,7 @@ export class DateSystem extends System {
 
         const node = this.node
 
-        const timeIncrease = dt * multiplier * 1000
+        const timeIncrease = dt * multiplier * 1000
 
         node.date.ms += timeIncrease
 

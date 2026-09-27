@@ -20,5 +20,7 @@ export function DialogInner(industry: IndustryComponent | null, page: DialogPage
             return <WarehouseBreakdown industry={industry} />;
         case "industry":
             return <IndustryBreakdown industry={industry} entity={entity!} />;
+        default:
+            return <></>;
     }
 }

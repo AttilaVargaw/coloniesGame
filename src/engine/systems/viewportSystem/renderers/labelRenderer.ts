@@ -15,7 +15,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         )
     }
 
-    protected getCullMargin(node: LabelNode): number {
+    static getCullMargin(node: LabelNode): number {
         return node.label.size
     }
 

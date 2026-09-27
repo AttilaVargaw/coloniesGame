@@ -6,6 +6,7 @@ import { World } from "@/engine/core/world"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "../factories/createStarterIndustry"
 import { createStarterWarehouse } from "../factories/createStarterWarehouse"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
 describe("industrySystem", () => {
     describe("addToEngine", () => {
@@ -14,7 +15,7 @@ describe("industrySystem", () => {
             const system = new IndustrySystem()
             system.addToEngine(world)
 
-            const entity = world.createEntity("colony")
+            const entity = createEntity("colony")
             const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard")
             entity.addComponent(industry)
             world.addEntity(entity)
@@ -32,7 +33,7 @@ describe("industrySystem", () => {
             const system = new IndustrySystem()
             system.addToEngine(world)
 
-            const entity = world.createEntity("colony")
+            const entity = createEntity("colony")
             entity.addComponent(new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard"))
             world.addEntity(entity)
 

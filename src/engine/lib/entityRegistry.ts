@@ -3,6 +3,11 @@ import { SceneNode } from "../entities/sceneNode"
 import { NodeManager } from "./nodeManager"
 import { EventBus } from "./eventBus"
 import { EntityRemovedEvent } from "./events"
+import { v4 } from "uuid"
+
+export function createEntity(id = v4()) {
+    return new Entity(id)
+}
 export class EntityRegistry {
     private readonly entities: Map<string, Entity> = new Map()
     private readonly sceneNodes: Map<string, SceneNode> = new Map()
@@ -13,9 +18,6 @@ export class EntityRegistry {
     ) {
     }
 
-    createEntity(id: string) {
-        return new Entity(id)
-    }
 
     addEntity(entity: Entity, parentEntity?: Entity | null) {
         if(this.entities.has(entity.id)) {

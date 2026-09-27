@@ -10,6 +10,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { PositionComponent } from "@engine/components/position";
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph";
 import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
+import { createEntity } from "@/engine/lib/entityRegistry";
 
 export function findPath(start: Entity, end: Entity): Entity[] {
     const startPath = start.getComponent(PathComponent)
@@ -166,7 +167,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     private createGraphEntity() {
         if(!this.engine) return
-        this.graphEntity = this.engine.createEntity("jumpGraph")
+        this.graphEntity = createEntity("jumpGraph")
             .addComponent(new JumpGraphComponent())
         this.engine.addEntity(this.graphEntity)
         this.graph = this.graphEntity.getComponent(JumpGraphComponent)!

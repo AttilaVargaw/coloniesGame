@@ -29,6 +29,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { MassComponent } from "@engine/components/massComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -185,7 +186,7 @@ export async function createAsteroidBelt({
         const argumentOfPeriapsis = generateRandomNumber(0, TWO_PI)
         const spinSpeed = generateRandomNumber(0, Math.PI / 2)
 
-        const asteroid = engine.createEntity()
+        const asteroid = createEntity()
         const asteroidBeltComponent = new AsteroidBeltComponent()
         asteroidBeltComponent.cullingDistanceThreshold = ASTEROID_CULLING_DISTANCE_THRESHOLD
 
@@ -218,7 +219,7 @@ export async function createAsteroidBelt({
         const angle = generateRandomNumber(0, TWO_PI)
         const size = generateRandomNumber(DUST_SIZE_MIN, DUST_SIZE_MAX)
 
-        const dust = engine.createEntity()
+        const dust = createEntity()
         const dustBeltComponent = new AsteroidBeltComponent()
         dustBeltComponent.cullingDistanceThreshold = DUST_CULLING_DISTANCE_THRESHOLD
 
@@ -255,7 +256,7 @@ export async function createAsteroidBelt({
         const inclination = 0
         const argumentOfPeriapsis = 0
 
-        const site = createMarker(engine, {
+        const site = createMarker({
             color: "yellow",
             shade: true,
             texture: buildableSite,

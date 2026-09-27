@@ -4,9 +4,10 @@ import { Engine } from "@/engine/core/engine";
 import { applyComponents } from "./helpers";
 import { createBody } from "./createBody";
 import { massByArchetype } from "./helpers";
+import { createEntity } from "@/engine/lib/entityRegistry";
 
 export async function init(engine: Engine) {
-    const root = engine.createEntity("root")
+    const root = createEntity("root")
 
     applyComponents(root,
         new PositionComponent(0, 0, 0),

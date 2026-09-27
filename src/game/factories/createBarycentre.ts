@@ -9,6 +9,7 @@ import { OrbitalBlueprint } from "../data/OrbitalBlueprint"
 import { PositionComponent } from "@/engine/components/position"
 import { MassComponent } from "@engine/components/massComponent"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
 function makeMoonOrbit(
     body: BodyBlueprint,
@@ -40,7 +41,7 @@ export async function createBarycentre(
     const totalSeparation = bodies.reduce((sum, body) => sum + (body.orbit?.radius ?? 0), 0)
     const commonAngularSpeed = totalSeparation > 0 ? angularSpeed(totalSeparation * UNIVERSE_SCALE, totalMass) : 0
 
-    const barycentre = engine.createEntity()
+    const barycentre = createEntity()
     engine.addEntity(barycentre, parent)
 
     barycentre.addComponent(new PositionComponent(0, 0))

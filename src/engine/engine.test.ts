@@ -12,6 +12,7 @@ import {
     ClickEventData,
 } from "@engine/lib/events"
 import { EventBase } from "@engine/lib/events"
+import { createEntity } from "./lib/entityRegistry"
 
 class ChildTagComponent extends EntityComponent {
     constructor(public tag: string = "child", entity?: Entity) {
@@ -32,7 +33,7 @@ describe("World (Engine refactor regression)", () => {
         const world = makeWorld()
 
         const withTag = entityWithTag(world)
-        const withoutTag = world.createEntity()
+        const withoutTag = createEntity()
         world.addEntity(withoutTag)
 
         expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
@@ -42,7 +43,7 @@ describe("World (Engine refactor regression)", () => {
     it("re-indexes the node list when reindexEntity is called after a component is added", () => {
         const world = makeWorld()
 
-        const entity = world.createEntity()
+        const entity = createEntity()
         world.addEntity(entity)
         expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(0)
 
@@ -63,8 +64,8 @@ describe("World (Engine refactor regression)", () => {
             (entity) => new ChildTagNode(entity)
         )
 
-        const parent = world.createEntity()
-        const child = world.createEntity()
+        const parent = createEntity()
+        const child = createEntity()
         child.addComponent(new ChildTagComponent())
 
         world.addEntity(parent)
@@ -84,7 +85,7 @@ describe("World (Engine refactor regression)", () => {
     it("removes a node when the last required component is removed and reindexed", () => {
         const world = makeWorld()
 
-        const entity = world.createEntity()
+        const entity = createEntity()
         entity.addComponent(new TestEntityComponent())
         world.addEntity(entity)
         expect(world.getNodeList(testEntityNodeCtor)).toHaveLength(1)
@@ -97,7 +98,7 @@ describe("World (Engine refactor regression)", () => {
     it("detaches the entity from the engine on removal", () => {
         const world = makeWorld()
 
-        const entity = world.createEntity()
+        const entity = createEntity()
         entity.addComponent(new TestEntityComponent())
         world.addEntity(entity)
         world.removeEntity(entity)
@@ -130,7 +131,7 @@ describe("World (Engine refactor regression)", () => {
         const onAdded = vi.fn()
         world.subscribe(EntityAddedEvent, onAdded)
 
-        const entity = world.createEntity()
+        const entity = createEntity()
         world.dispatchEvent(new EntityAddedEvent(entity))
         world.update(16)
 
@@ -242,7 +243,7 @@ describe("World (Engine refactor regression)", () => {
 
     it("reindexes an entity when called directly", () => {
         const world = makeWorld()
-        const entity = world.createEntity()
+        const entity = createEntity()
         world.addEntity(entity)
         entity.addComponent(new TestEntityComponent())
         world.reindexEntity(entity)
@@ -261,7 +262,7 @@ describe("World (Engine refactor regression)", () => {
 
         expect(() => world.getNodeList(testEntityNodeCtor)).toThrow()
 
-        const another = world.createEntity()
+        const another = createEntity()
         another.addComponent(new TestEntityComponent())
         world.addEntity(another)
         expect(() => world.getNodeList(testEntityNodeCtor)).toThrow()
@@ -293,7 +294,7 @@ describe("World (Engine refactor regression)", () => {
 
     it("adds a command to the specified queue", () => {
         const world = new World()
-        const testEntity = world.createEntity()
+        const testEntity = createEntity()
 
         world.addCommand(new SelectEntityCommand(testEntity))
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(1)

@@ -11,6 +11,7 @@ import {
     EntityRemovedEvent,
     ClickEventData,
 } from "../lib/events"
+import { createEntity } from "../lib/entityRegistry"
 
 class TagComponent extends EntityComponent {
     constructor(public tag: string = "tag", entity?: Entity) {
@@ -33,7 +34,7 @@ function makeWorld() {
 }
 
 function entityWithTag(world: World) {
-    const entity = world.createEntity()
+    const entity = createEntity()
     entity.addComponent(new TagComponent())
     world.addEntity(entity)
     return entity
@@ -41,16 +42,14 @@ function entityWithTag(world: World) {
 
 describe("World", () => {
     it("creates an entity with a generated UUID by default", () => {
-        const world = new World()
-        const entity = world.createEntity()
+        const entity = createEntity()
 
         expect(entity.id).toBeDefined()
         expect(entity.id.length).toBeGreaterThan(0)
     })
 
     it("creates an entity with a custom id when provided", () => {
-        const world = new World()
-        const entity = world.createEntity("custom-id")
+        const entity = createEntity("custom-id")
 
         expect(entity.id).toBe("custom-id")
     })
@@ -63,7 +62,7 @@ describe("World", () => {
 
     it("adds the entity to the engine via addEntity", () => {
         const world = makeWorld()
-        const entity = world.createEntity(undefined)
+        const entity = createEntity(undefined)
         entity.addComponent(new TagComponent())
 
         world.addEntity(entity)
@@ -82,7 +81,7 @@ describe("World", () => {
 
     it("returns itself from addEntity and removeEntity for chaining", () => {
         const world = makeWorld()
-        const entity = world.createEntity()
+        const entity = createEntity()
 
         expect(world.addEntity(entity)).toBe(world)
         expect(world.removeEntity(entity)).toBe(world)
@@ -131,7 +130,7 @@ describe("World", () => {
 
     it("returns itself from reindexEntity for chaining", () => {
         const world = makeWorld()
-        const entity = world.createEntity()
+        const entity = createEntity()
 
         expect(world.reindexEntity(entity)).toBe(world)
     })

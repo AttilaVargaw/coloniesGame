@@ -2,6 +2,7 @@ import { Entity } from "./entities/entity"
 import { EntityComponent } from "./entities/entityComponent"
 import { EntityNode, EntityNodeConstructor } from "./entities/entityNode"
 import { World } from "./core/world"
+import { createEntity } from "./lib/entityRegistry"
 
 export class TestEntityComponent extends EntityComponent {
     constructor(public tag: string = "tag", entity?: Entity) {
@@ -28,7 +29,7 @@ export function makeWorld() {
 }
 
 export function entityWithTag(world: World) {
-    const entity = world.createEntity()
+    const entity = createEntity()
     entity.addComponent(new TestEntityComponent())
     world.addEntity(entity)
     return entity

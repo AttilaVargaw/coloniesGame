@@ -14,6 +14,7 @@ import { MassComponent } from "@engine/components/massComponent"
 import { createBody, } from "./createBody"
 import { BodyBlueprint } from "../data/BodyBlueprint"
 import { UNIVERSE_SCALE } from "../constants"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
 const bodyBlueprint = (overrides: Partial<BodyBlueprint> = {}): BodyBlueprint => ({
     marker: { color: "blue", radius: 5, label: "TestBody" },
@@ -32,7 +33,7 @@ const homeworldBlueprint = (overrides: Partial<BodyBlueprint> = {}): BodyBluepri
 describe("createBody", () => {
     it("creates a body entity with base components", async () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("parent")
+        const parent = createEntity("parent")
 
         const body = await createBody(bodyBlueprint(), parent, engine, 0)
 
@@ -48,7 +49,7 @@ describe("createBody", () => {
 
     it("adds orbit component and sets initial position", async () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("planet")
+        const parent = createEntity("planet")
 
         const body = await createBody(bodyBlueprint({
             orbit: { radius: 100, angle: 0, eccentricity: 0.1 },
@@ -67,7 +68,7 @@ describe("createBody", () => {
 
     it("recursively creates systems inside the body", async () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("parent")
+        const parent = createEntity("parent")
 
         const child = bodyBlueprint({
             marker: { color: "grey", radius: 3, label: "Moon" },
@@ -89,7 +90,7 @@ describe("createBody", () => {
 
     it("creates vessels attached to the body", async () => {
         const engine = new World() as unknown as Engine
-        const planet = engine.createEntity("planet")
+        const planet = createEntity("planet")
 
         const body = await createBody(bodyBlueprint({
             vessels: [{ marker: { color: "red", radius: 4, label: "Ship1" }, orbit: { radius: 50, angle: 0 } }],
@@ -108,7 +109,7 @@ describe("createBody", () => {
 describe("createHomeworld", () => {
     it("adds interactive components when tribe is present", async () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("parent")
+        const parent = createEntity("parent")
 
         const colony = await createBody(homeworldBlueprint(), parent, engine, 0)
 
@@ -119,7 +120,7 @@ describe("createHomeworld", () => {
 
     it("uses population from tribe to build IndustryComponent", async () => {
         const engine = new World() as unknown as Engine
-        const parent = engine.createEntity("parent")
+        const parent = createEntity("parent")
 
         const population = 5000
         const colony = await createBody(homeworldBlueprint({

@@ -1,4 +1,4 @@
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
 import type { Entity } from "../entities/entity";
@@ -11,7 +11,7 @@ import { DebugManager } from "../lib/debugManager";
 
 export interface Engine {
     getSystem<T extends System>(system: new (...args: any[]) => T): T;
-    createEntity(id?: string): Entity;
+    // createEntity(id?: string): Entity;
     addEntity(entity: Entity, parentEntity?: Entity | null): this;
     removeEntity(entity: Entity): void;
     reindexEntity(entity: Entity): void;

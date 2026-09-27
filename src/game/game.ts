@@ -8,6 +8,7 @@ import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { TradeSystem } from "@game/systems/tradeSystem"
 import { AutoTradeSystem } from "@game/systems/autoTradeSystem"
+import { MigrationSystem } from "@game/systems/migrationSystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
@@ -31,6 +32,7 @@ import { DayPassedEvent, } from "@/engine/lib/events"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { PositionComponent } from "@/engine/components/position"
 import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
 export class Game {
     readonly engine: World
@@ -57,21 +59,22 @@ export class Game {
             .addSystem(IndustrySystem)
             .addSystem(TradeSystem)
             .addSystem(AutoTradeSystem)
+            .addSystem(MigrationSystem)
             .addSystem(DateSystem)
             .addSystem(TimeScaleSystem)
             .addSystem(OrbitSystem)
             .addSystem(ButtonPressSystem)
             .addSystem(ViewportSystem)
 
-        const viewportEntity = this.engine.createEntity()
+        const viewportEntity = createEntity()
             .addComponent(new ViewportComponent(camera))
         this.engine.addEntity(viewportEntity)
 
-        const dateEntity = this.engine.createEntity()
+        const dateEntity = createEntity()
             .addComponent(new DateComponent(0))
         this.engine.addEntity(dateEntity)
 
-        const timeScaleEntity = this.engine.createEntity()
+        const timeScaleEntity = createEntity()
             .addComponent(new TimeScaleComponent(1))
         this.engine.addEntity(timeScaleEntity)
 

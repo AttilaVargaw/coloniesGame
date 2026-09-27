@@ -20,8 +20,9 @@ import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
 import { SizeComponent } from "@engine/components/sizeComponent"
+import { createEntity } from "@/engine/lib/entityRegistry"
 
-export function createMarker(engine: Engine, {
+export function createMarker({
     offset,
     color,
     radius,
@@ -33,7 +34,7 @@ export function createMarker(engine: Engine, {
     texture,
     emitLight
 }: MapMarker) {
-    const marker = applyComponents(engine.createEntity(name),
+    const marker = applyComponents(createEntity(name),
         new PositionComponent(0, 0),
         new ThicknessComponent(1),
         new ColorComponent(color, "", shade, emitLight)
@@ -54,7 +55,7 @@ export function createMarker(engine: Engine, {
 }
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
-    const ship = createMarker(engine, {
+    const ship = createMarker({
         color: "red",
         radius: SHIP_RADIUS,
         label: name,
@@ -86,7 +87,7 @@ export function createVessel(
     const orbitAngle = angle ?? generateRandomNumber(0, TWO_PI)
     const orbitInclination = inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE)
 
-    const ship = applyComponents(engine.createEntity(),
+    const ship = applyComponents(createEntity(),
         new ColorComponent(color, "", false),
         new RadiusComponent(radius),
         new PositionComponent(...descartesToPolar(orbitAngle, orbitRadius)),

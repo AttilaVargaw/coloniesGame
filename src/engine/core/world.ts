@@ -1,8 +1,7 @@
-import type { Entity } from "../entities/entity"
+import { Entity } from "../entities/entity"
 import { SceneNode } from "../entities/sceneNode"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
 import type { System } from "../systems/system"
-import { v4 as uuid } from "uuid"
 import { EntityRegistry } from "../lib/entityRegistry"
 import { NodeManager } from "../lib/nodeManager"
 import { EventBus } from "../lib/eventBus"
@@ -66,10 +65,6 @@ export class World implements Engine {
         this.commandBus.removeCommandQueue(command)
 
         return this
-    }
-
-    createEntity(id = uuid()) {
-        return this.entityRegistry.createEntity(id)
     }
 
     getSceneNode(entity: Entity): SceneNode | undefined {

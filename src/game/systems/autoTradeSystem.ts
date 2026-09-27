@@ -9,12 +9,16 @@ const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
+import { MigrationRouteComponent } from "@game/components/migrationRouteComponent";
+import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 
 const MIN_TRADE_AMOUNT = 10;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 5;
 const SURPLUS_THRESHOLD_MULTIPLIER = 8;
 const DEFICIT_THRESHOLD_MULTIPLIER = 3;
 const MAX_ROUTE_SPEED = 2;
+const MIGRATION_SURPLUS_FACTOR = 1.5;
+const MIGRATION_DEFICIT_FACTOR = 0.75;
 
 export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     protected updateNode(_node: IndustryNode, _dT?: number): void {
@@ -58,6 +62,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         }
 
         this.evaluateTradeOpportunities(settlements);
+        this.evaluateMigrationOpportunities(settlements);
     };
 
     private countActiveRoutes(entityId: string): number {
@@ -147,6 +152,63 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
                     if (exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
                 }
+            }
+        }
+    }
+
+    private evaluateMigrationOpportunities(
+        settlements: Array<{
+            entityId: string;
+            position: { x: number; y: number };
+            goods: Goods;
+            population: Population;
+            routeCount: number;
+        }>
+    ) {
+        if (settlements.length < 2) return;
+
+        const populations = settlements.map(s => ({
+            entityId: s.entityId,
+            position: s.position,
+            totalPop: Object.values(s.population).reduce((sum, c) => sum + c.number, 0),
+            routeCount: s.routeCount,
+            freeWorkers: s.population.worker.number,
+        }));
+
+        const avgPop = populations.reduce((sum, p) => sum + p.totalPop, 0) / populations.length;
+
+        const surplus = populations.filter(p => p.totalPop > avgPop * MIGRATION_SURPLUS_FACTOR && p.freeWorkers > 0);
+        const deficit = populations.filter(p => p.totalPop < avgPop * MIGRATION_DEFICIT_FACTOR);
+
+        surplus.sort((a, b) => b.totalPop - a.totalPop);
+        deficit.sort((a, b) => a.totalPop - b.totalPop);
+
+        for (const source of surplus) {
+            if (source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+
+            for (const dest of deficit) {
+                if (dest.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+
+                const distance = Math.hypot(dest.position.x - source.position.x, dest.position.y - source.position.y);
+                const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
+                const workerCount = Math.min(source.freeWorkers, Math.max(1, Math.floor(source.freeWorkers * 0.1)));
+
+                if (workerCount <= 0) continue;
+                if (distance > travelDays * 10) continue;
+
+                this.engine?.addCommand(
+                    new CreateMigrationRouteCommand(
+                        source.entityId,
+                        dest.entityId,
+                        workerCount,
+                        MAX_ROUTE_SPEED
+                    )
+                );
+
+                source.routeCount++;
+                dest.routeCount++;
+
+                if (source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
             }
         }
     }

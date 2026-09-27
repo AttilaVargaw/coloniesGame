@@ -11,6 +11,7 @@ import { CancelTradeRouteCommand } from "@game/commands/cancelTradeRouteCommand"
 import { Goods } from "@game/data/Goods";
 import { v4 as uuid } from "uuid";
 import { Queue } from "@/engine/lib/commandQueue";
+import { createEntity } from "@/engine/lib/entityRegistry";
 
 const TRADE_SPEED = 0.5;
 
@@ -143,7 +144,7 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
 
         if(Object.keys(goodsToTransfer).length === 0) return;
 
-        const routeEntity = this.engine?.createEntity(uuid());
+        const routeEntity = createEntity(uuid());
         if(!routeEntity) return;
 
         routeEntity.addComponent(new TradeRouteComponent(
