@@ -3,8 +3,9 @@ import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesIn
 import { Header } from "./components/header/header";
 import { Screen } from "./components/map/screen";
 import { ProductionBar } from "./components/productionBar/productionBar";
-import { MousemoveEvent, MouseEventData, MousedownEvent, MouseupEvent, ClickEventData } from "./engine/lib/events";
+import { MousemoveEvent, MouseEventData, MousedownEvent, MouseupEvent, ClickEventData, ContextMenuEvent } from "./engine/lib/events";
 import { Game } from "./game/game";
+import { CircularContextMenu } from "./components/ui/circularContextMenu";
 
 export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
   game: Game | null;
@@ -13,6 +14,7 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
   map: RefObject<HTMLCanvasElement | null>;
 }) {
   return <>
+    <CircularContextMenu />
     <ColoniesInforWindow />
     <Header />
     <div className="flex bg-black">
@@ -53,6 +55,9 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
           ref={map}
           onClick={(data) => {
             game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData));
+          }}
+          onContextMenu={(data) => {
+            game?.engine.dispatchEvent(new ContextMenuEvent({ x: (data as any).x, y: (data as any).y }));
           }} />
       </div>
     </div>
