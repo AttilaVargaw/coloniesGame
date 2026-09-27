@@ -95,9 +95,10 @@ export class ViewportInputHandler {
         }
     }
 
-    private panCamera(camera: Camera, panRight: number, panForward: number, step: number) {
+    private panCamera(panRight: number, panForward: number, step: number) {
         if(!panRight && !panForward) return
 
+        const camera = this.viewportSystem.viewport.camera
         const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
         const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
         camera.moveTo(
@@ -123,10 +124,10 @@ export class ViewportInputHandler {
         if(y < threshold) panForward -= (1 - y / threshold) * step
         if(y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
 
-        this.panCamera(camera, panRight, panForward, step)
+        this.panCamera(panRight, panForward, step)
     }
 
-    private onContextMenu = (event: MouseEvent) => {
+    private static onContextMenu = (event: MouseEvent) => {
         event.preventDefault()
     }
 
@@ -150,7 +151,7 @@ export class ViewportInputHandler {
 
         canvas.addEventListener("mouseenter", this.onMouseEnter)
         canvas.addEventListener("mouseleave", this.onMouseLeave)
-        canvas.addEventListener("contextmenu", this.onContextMenu)
+        canvas.addEventListener("contextmenu", ViewportInputHandler.onContextMenu)
         window.addEventListener("keydown", this.onKeyDown)
         window.addEventListener("keyup", this.onKeyUp)
     }
@@ -164,7 +165,7 @@ export class ViewportInputHandler {
         if(canvas) {
             canvas.removeEventListener("mouseenter", this.onMouseEnter)
             canvas.removeEventListener("mouseleave", this.onMouseLeave)
-            canvas.removeEventListener("contextmenu", this.onContextMenu)
+            canvas.removeEventListener("contextmenu", ViewportInputHandler.onContextMenu)
         }
 
         this.heldKeys.clear()

@@ -4,14 +4,12 @@ import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
 import { basePrices, Goods } from "../data/Goods";
-
-const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
-import { MigrationRouteComponent } from "@game/components/migrationRouteComponent";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 
+const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
 const MIN_TRADE_AMOUNT = 10;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 5;
 const SURPLUS_THRESHOLD_MULTIPLIER = 8;

@@ -171,10 +171,18 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
                         const viewY = lightDir[0] * up[0] + lightDir[1] * up[1] + lightDir[2] * up[2]
 
                         const gradDirX = -viewX
-                        const gradDirY = -viewY
+                        const gradDirY = viewY
                         const gradLen = Math.sqrt(gradDirX * gradDirX + gradDirY * gradDirY)
 
-                        if(gradLen > 0.01) {
+                        if(gradLen <= 0.01) {
+                            const texSize = circle.texture.nightTexture.width
+                            context.save()
+                            context.beginPath()
+                            context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
+                            context.clip()
+                            context.drawImage(circle.texture.nightTexture, 0, 0, texSize, texSize, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+                            context.restore()
+                        } else if(gradLen > 0.01) {
                             const normGradX = gradDirX / gradLen
                             const normGradY = gradDirY / gradLen
 
@@ -196,11 +204,11 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
                             const gradEndX = size / 2 - normGradX * size / 2
                             const gradEndY = size / 2 - normGradY * size / 2
 
-                            const gradient = nightCtx.createLinearGradient(gradStartX, gradStartY, gradEndX, gradEndY)
-                            gradient.addColorStop(0, "rgba(0,0,0,1)")
-                            gradient.addColorStop(0.35, "rgba(0,0,0,1)")
-                            gradient.addColorStop(0.65, "rgba(0,0,0,0.2)")
-                            gradient.addColorStop(1, "rgba(0,0,0,0)")
+                            const gradient = nightCtx.createLinearGradient(gradEndX, gradEndY, gradStartX, gradStartY)
+                            gradient.addColorStop(0, "rgba(0,0,0,0)")
+                            gradient.addColorStop(0.35, "rgba(0,0,0,0.2)")
+                            gradient.addColorStop(0.65, "rgba(0,0,0,1)")
+                            gradient.addColorStop(1, "rgba(0,0,0,1)")
                             nightCtx.fillStyle = gradient
                             nightCtx.fillRect(0, 0, size, size)
 
@@ -222,7 +230,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             context.stroke()
         }
 
-        if(circle.color.shade) {
+        if(circle.color.shade && !circle.texture?.texture) {
             shadeCircle(context, center.x, center.y, screenRadius)
         }
         context.restore()

@@ -69,7 +69,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         return this.nodes?.[0]?.viewPort
     }
 
-    private clear(ctx: CanvasRenderingContext2D) {
+    private static clear(ctx: CanvasRenderingContext2D) {
         ctx.save()
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
         ctx.fillStyle = "#000008";
@@ -244,7 +244,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, ctx.canvas.width, ctx.canvas.height)
             bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
 
-            this.clear(ctx)
+            ViewportSystem.clear(ctx)
             drawStarfield(ctx, camera)
             drawNebulas(ctx, camera)
 
