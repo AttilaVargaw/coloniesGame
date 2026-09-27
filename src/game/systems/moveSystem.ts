@@ -115,77 +115,127 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         const alreadyMoved = new Set<Entity>();
 
         for(const { entity, jumpDrive } of this.nodes) {
-            if(!jumpDrive.target || entity === jumpDrive.target || alreadyMoved.has(entity)) continue
-            if(jumpDrive.isOrbitSelecting) continue
+            if(!this.canMove(entity, jumpDrive, alreadyMoved)) continue
 
-            const fuel = entity.getComponent(FuelComponent)
-            if(fuel) {
-                const pos = entity.getComponent(PositionComponent)
-                const targetPos = jumpDrive.target.getComponent(PositionComponent)
-                if(pos && targetPos) {
-                    const dist = Math.hypot(targetPos.x - pos.x, targetPos.y - pos.y)
-                    const cost = dist * fuel.consumptionRate * 0.01
-                    if(fuel.tylium < cost) continue
-                    //fuel.tylium -= cost
-                }
-            }
+            if(!this.consumeFuel(entity, jumpDrive.target)) continue
 
-            const waypoints = shipWaypoints.get(entity);
-            const shipNode = this.engine.getSceneNode(entity)!
-
+            const waypoints = shipWaypoints.get(entity)
             if(waypoints && waypoints.length > 0) {
-                const jumpedCount = 1;
-                const jumped = waypoints.slice(0, jumpedCount);
-                const remaining = waypoints.slice(jumpedCount);
-
-                const currentParent = shipNode.parent?.entity ?? entity;
-                const finalSector = jumped[jumped.length - 1];
-                const targetNode = this.engine.getSceneNode(finalSector)!
-                shipNode.parent?.removeChild(shipNode)
-                targetNode.addChild(shipNode)
-
-                this.positionShipAtTarget(entity, finalSector)
-
-                const drive = entity.getComponent(JumpDriveComponent);
-                if(remaining.length > 0) {
-                    shipWaypoints.set(entity, remaining);
-                    if(drive) {
-                        drive.target = remaining[0];
-                    }
-                    todaysJumps.set(entity, [currentParent, ...jumped]);
-                    alreadyMoved.add(entity)
-                    continue
-                } else {
-                    shipWaypoints.delete(entity);
-                    if(drive) {
-                        drive.target = undefined;
-                    }
-                }
+                const hasRemaining = this.processWaypoints(entity, waypoints, alreadyMoved)
+                if(hasRemaining) continue
             } else {
-                const targetNode = this.engine.getSceneNode(jumpDrive.target)!
-                shipNode.parent?.removeChild(shipNode)
-                targetNode.addChild(shipNode)
-
-                this.positionShipAtTarget(entity, jumpDrive.target)
+                this.jumpToTarget(entity, jumpDrive.target)
             }
 
             this.resolveOrbit(entity)
 
-            const shipParent = shipNode.parent?.entity
-            if(shipParent && shipParent.getComponent(SoiComponent)) {
-                shipWaypoints.delete(entity)
-                const drive = entity.getComponent(JumpDriveComponent)
-                if(drive) {
-                    drive.target = undefined
-                    drive.clickX = undefined
-                    drive.clickY = undefined
-                }
-                const targetSystem = this.engine!.getSystem(TargetSystem)
-                targetSystem?.clearTarget(entity)
+            if(this.arrivedAtSoi(entity)) {
+                this.clearShipNavigation(entity)
             }
 
             alreadyMoved.add(entity)
         }
+    }
+
+    private canMove(entity: Entity, jumpDrive: JumpDriveComponent, alreadyMoved: Set<Entity>): boolean {
+        if(!jumpDrive.target || entity === jumpDrive.target || alreadyMoved.has(entity)) return false
+        if(jumpDrive.isOrbitSelecting) return false
+        return true
+    }
+
+    private consumeFuel(entity: Entity, target: Entity | undefined): boolean {
+        if(!target) return true
+
+        const fuel = entity.getComponent(FuelComponent)
+        if(!fuel) return true
+
+        const pos = entity.getComponent(PositionComponent)
+        const targetPos = target.getComponent(PositionComponent)
+        if(!pos || !targetPos) return true
+
+        const dist = Math.hypot(targetPos.x - pos.x, targetPos.y - pos.y)
+        const cost = dist * fuel.consumptionRate * 0.01
+        if(fuel.tylium < cost) return false
+
+        return true
+    }
+
+    private processWaypoints(entity: Entity, waypoints: Entity[], alreadyMoved: Set<Entity>): boolean {
+        if(!this.engine) return false
+
+        const jumped = waypoints.slice(0, 1)
+        const remaining = waypoints.slice(1)
+
+        const shipNode = this.engine.getSceneNode(entity)!
+        if(!shipNode) return false
+
+        const currentParent = shipNode.parent?.entity ?? entity
+        const finalSector = jumped[jumped.length - 1]
+        const targetNode = this.engine.getSceneNode(finalSector)
+        if(!targetNode) return false
+
+        shipNode.parent?.removeChild(shipNode)
+        targetNode.addChild(shipNode)
+
+        this.positionShipAtTarget(entity, finalSector)
+
+        if(remaining.length > 0) {
+            shipWaypoints.set(entity, remaining)
+            const drive = entity.getComponent(JumpDriveComponent)
+            if(drive) {
+                drive.target = remaining[0]
+            }
+            todaysJumps.set(entity, [currentParent, ...jumped])
+            alreadyMoved.add(entity)
+            return true
+        } else {
+            shipWaypoints.delete(entity)
+            const drive = entity.getComponent(JumpDriveComponent)
+            if(drive) {
+                drive.target = undefined
+            }
+            return false
+        }
+    }
+
+    private jumpToTarget(entity: Entity, target: Entity | undefined) {
+        if(!target || !this.engine) return
+
+        const shipNode = this.engine.getSceneNode(entity)!
+        if(!shipNode) return
+
+        const targetNode = this.engine.getSceneNode(target)
+        if(!targetNode) return
+
+        shipNode.parent?.removeChild(shipNode)
+        targetNode.addChild(shipNode)
+
+        this.positionShipAtTarget(entity, target)
+    }
+
+    private arrivedAtSoi(entity: Entity): boolean {
+        if(!this.engine) return false
+
+        const shipNode = this.engine.getSceneNode(entity)
+        if(!shipNode) return false
+
+        const shipParent = shipNode.parent?.entity
+        if(shipParent && shipParent.getComponent(SoiComponent)) {
+            shipWaypoints.delete(entity)
+            return true
+        }
+        return false
+    }
+
+    private clearShipNavigation(entity: Entity) {
+        const drive = entity.getComponent(JumpDriveComponent)
+        if(drive) {
+            drive.target = undefined
+            drive.clickX = undefined
+            drive.clickY = undefined
+        }
+        const targetSystem = this.engine!.getSystem(TargetSystem)
+        targetSystem?.clearTarget(entity)
     }
 
     positionShipAtTarget(entity: Entity, targetEntity: Entity): void {

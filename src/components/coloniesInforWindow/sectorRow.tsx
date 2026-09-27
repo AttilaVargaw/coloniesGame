@@ -37,9 +37,9 @@ export function SectorRow({
 
     const config = industrySectorBlueprints.get(sectorKey);
     const inputLevel = value;
-    const sectorResult = industry.sectorResults?.[sectorKey];
+    const sectorResult = industry.sectorResults[sectorKey];
     const hasData = !!sectorResult;
-    const isStopped = sectorResult?.productionRatio === 0;
+    const isStopped = sectorResult.productionRatio === 0;
 
     const reqs = useMemo(() => {
         const items: React.ReactNode[] = [];

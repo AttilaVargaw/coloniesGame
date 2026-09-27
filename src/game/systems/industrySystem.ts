@@ -4,9 +4,9 @@ import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 import { Goods } from "../data/Goods";
-import { Population } from "../data/Population";
-import type { IndustrialSectors } from "../components/Factories";
+import { Population, PopulationBreakdown } from "../data/Population";
 import type { IndustryTickInput, IndustryTickPatch } from "../workers/industryTick.worker";
+import type { SectorResult } from "../systems/generateIndustrialSector";
 import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
 import { IndustryWorkerPool } from "./industryWorkerPool";
 
@@ -121,106 +121,91 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 }
 
 function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
-    if(patch.goods) {
-        for(const key in patch.goods) {
-            industry.goods[key as keyof Goods] = patch.goods[key as keyof Goods]!;
-        }
-    }
+    mergeRecord(industry.goods, patch.goods)
+    mergeRecord(industry.goodsRequirements, patch.goodsRequirements)
+    mergeRecord(industry.goodsProduction, patch.goodsProduction)
+    mergeRecord(industry.sectorProfits, patch.sectorProfits)
+    mergeRecord(industry.populationProfits, patch.populationProfits)
+    mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
+    mergeRecord(industry.sectorWealth, patch.sectorWealth)
+    mergeRecord(industry.sectorCapital, patch.sectorCapital)
 
-    if(patch.goodsRequirements) {
-        for(const key in patch.goodsRequirements) {
-            industry.goodsRequirements[key as keyof Goods] = patch.goodsRequirements[key as keyof Goods]!;
-        }
-    }
+    mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
+    mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)
 
-    if(patch.goodsProduction) {
-        for(const key in patch.goodsProduction) {
-            industry.goodsProduction[key as keyof Goods] = patch.goodsProduction[key as keyof Goods]!;
-        }
-    }
+    applyPopulationPatch(industry, patch.populationUpdates)
 
-    if(patch.workingWorkers) {
-        for(const key in patch.workingWorkers) {
-            const update = patch.workingWorkers[key as keyof Population]!;
-            industry.workingWorkers[key as keyof Population] = {
-                ...industry.workingWorkers[key as keyof Population],
-                ...update,
-            };
-        }
-    }
-
-    if(patch.freeWorkers) {
-        for(const key in patch.freeWorkers) {
-            const update = patch.freeWorkers[key as keyof Population]!;
-            industry.freeWorkers[key as keyof Population] = {
-                ...industry.freeWorkers[key as keyof Population],
-                ...update,
-            };
-        }
-    }
-
-    if(patch.populationUpdates) {
-        for(const [key, update] of Object.entries(patch.populationUpdates)) {
-            const pop = industry.population[key as keyof Population];
-            if(!pop) continue;
-
-            if(update.qol !== undefined) pop.qol = update.qol;
-            if(update.expectedQol !== undefined) pop.expectedQol = update.expectedQol;
-            if(update.populationChange !== undefined) pop.populationChange = update.populationChange;
-            if(update.wealth !== undefined) pop.wealth = update.wealth;
-            if(update.number !== undefined) pop.number = update.number;
-        }
-
-        industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
-        for(const [key, update] of Object.entries(patch.populationUpdates)) {
-            industry.populationRequirements[key as keyof Population] = update.requirements ?? {};
-        }
-    }
-
-    if(patch.sectorProfits) {
-        for(const [sector, profit] of Object.entries(patch.sectorProfits)) {
-            industry.sectorProfits[sector as keyof IndustrialSectors] = profit;
-        }
-    }
-
-    if(patch.populationProfits) {
-        for(const [group, profit] of Object.entries(patch.populationProfits)) {
-            industry.populationProfits[group as keyof Population] = profit;
-        }
-    }
-
-    if(patch.sectorUtilization) {
-        for(const [sector, utilization] of Object.entries(patch.sectorUtilization)) {
-            industry.sectorUtilization[sector as keyof IndustrialSectors] = utilization;
-        }
-    }
-
-    if(patch.sectorResults) {
-        for(const [name, sector] of Object.entries(patch.sectorResults.changed)) {
-            industry.sectorResults[name] = sector;
-        }
-        for(const name of patch.sectorResults.removed) {
-            delete industry.sectorResults[name];
-        }
-    }
+    applySectorResultsPatch(industry, patch.sectorResults)
 
     if(patch.sectors) {
-        const updated = { ...industry.sectors };
-        for(const [sector, level] of Object.entries(patch.sectors)) {
-            updated[sector as keyof IndustrialSectors] = level;
+        industry.sectors = { ...industry.sectors, ...patch.sectors }
+    }
+}
+
+function mergeRecord<T extends Record<string, any>>(
+    target: T,
+    patch: Partial<T> | undefined
+) {
+    if(!patch) return
+    for(const key in patch) {
+        target[key as keyof T] = patch[key as keyof T]!
+    }
+}
+
+function mergeWorkerRecord(
+    target: Record<keyof Population, PopulationBreakdown>,
+    patch: Partial<Record<keyof Population, Partial<PopulationBreakdown>>> | undefined
+) {
+    if(!patch) return
+    for(const key in patch) {
+        const update = patch[key as keyof Population]!
+        target[key as keyof Population] = {
+            ...target[key as keyof Population],
+            ...update,
         }
-        industry.sectors = updated;
+    }
+}
+
+function applyPopulationPatch(
+    industry: IndustryComponent,
+    updates: Partial<Record<keyof Population, {
+        qol?: number
+        expectedQol?: number
+        populationChange?: number
+        wealth?: number
+        number?: number
+        requirements?: Partial<Goods>
+    }>> | undefined
+) {
+    if(!updates) return
+
+    for(const [key, update] of Object.entries(updates)) {
+        const pop = industry.population[key as keyof Population]
+        if(!pop) continue
+
+        if(update.qol !== undefined) pop.qol = update.qol
+        if(update.expectedQol !== undefined) pop.expectedQol = update.expectedQol
+        if(update.populationChange !== undefined) pop.populationChange = update.populationChange
+        if(update.wealth !== undefined) pop.wealth = update.wealth
+        if(update.number !== undefined) pop.number = update.number
     }
 
-    if(patch.sectorWealth) {
-        for(const [sector, wealth] of Object.entries(patch.sectorWealth)) {
-            industry.sectorWealth[sector as keyof IndustrialSectors] = wealth;
-        }
+    industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>
+    for(const [key, update] of Object.entries(updates)) {
+        industry.populationRequirements[key as keyof Population] = update.requirements ?? {}
     }
+}
 
-    if(patch.sectorCapital) {
-        for(const [sector, capital] of Object.entries(patch.sectorCapital)) {
-            industry.sectorCapital[sector as keyof IndustrialSectors] = capital;
-        }
+function applySectorResultsPatch(
+    industry: IndustryComponent,
+    results: { changed: Record<string, SectorResult>; removed: string[] } | undefined
+) {
+    if(!results) return
+
+    for(const [name, sector] of Object.entries(results.changed)) {
+        industry.sectorResults[name] = sector
+    }
+    for(const name of results.removed) {
+        delete industry.sectorResults[name]
     }
 }

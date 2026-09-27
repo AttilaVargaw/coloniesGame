@@ -139,14 +139,14 @@ export class ViewportInputHandler {
     }
 
     addToEngine() {
-        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
+        const canvas = this.viewportSystem.viewport.camera.context.canvas
         if(!canvas) {
             return
         }
 
-        this.mousedownArray = this.viewportSystem?.engineRef?.getEvents(MousedownEvent)!
-        this.mouseupArray = this.viewportSystem?.engineRef?.getEvents(MouseupEvent)!
-        this.mouseMovedArray = this.viewportSystem?.engineRef?.getEvents(MousemoveEvent)!
+        this.mousedownArray = this.viewportSystem.engineRef?.getEvents(MousedownEvent)!
+        this.mouseupArray = this.viewportSystem.engineRef?.getEvents(MouseupEvent)!
+        this.mouseMovedArray = this.viewportSystem.engineRef?.getEvents(MousemoveEvent)!
 
         canvas.addEventListener("mouseenter", this.onMouseEnter)
         canvas.addEventListener("mouseleave", this.onMouseLeave)
@@ -160,7 +160,7 @@ export class ViewportInputHandler {
         window.removeEventListener("keyup", this.onKeyUp)
         window.removeEventListener("wheel", this.onWheel)
 
-        const canvas = this.viewportSystem?.viewport?.camera?.context.canvas
+        const canvas = this.viewportSystem.viewport.camera.context.canvas
         if(canvas) {
             canvas.removeEventListener("mouseenter", this.onMouseEnter)
             canvas.removeEventListener("mouseleave", this.onMouseLeave)
@@ -215,10 +215,27 @@ export class ViewportInputHandler {
 
         const camera = this.viewportSystem.viewport.camera
 
+        this.updatePointerPosition()
+        this.handleDragStart()
+        this.handleDragMove(camera)
+        this.handleDragEnd()
+
+        if(!this._isDragging && this.wasRotatingWithoutTarget) {
+            this.applyRotationInertia(camera)
+        }
+
+        this.applyKeyScroll(dt, camera)
+        this.applyEdgePan(dt, camera)
+        this.applyWheelZoom(camera)
+    }
+
+    private updatePointerPosition() {
         for(const { data } of this.mouseMovedArray!) {
             this.pointer = { x: data.x, y: data.y }
         }
+    }
 
+    private handleDragStart() {
         for(const { data } of this.mousedownArray!) {
             const button = data.button
             if(button === 2 || button === 1) {
@@ -233,35 +250,39 @@ export class ViewportInputHandler {
             }
         }
         this.mousedownArray?.clear()
+    }
 
-        if(this._isDragging && this.lastPointer && this.dragButton !== null) {
-            for(const { data } of this.mouseMovedArray!) {
-                const dx = data.x - this.lastPointer.x
-                const dy = data.y - this.lastPointer.y
-                if(dx || dy) {
-                    if(this.dragButton === 2) {
-                        camera.panByPixels(dx, dy)
-                    } else if(this.dragButton === 1) {
-                        if(this.hasFollowTarget) {
-                            camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
-                            camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
+    private handleDragMove(camera: Camera) {
+        if(!this._isDragging || !this.lastPointer || this.dragButton === null) return
 
-                            camera.invalidateViewBasis()
-                        } else {
-                            this.applyOrbitRotation(camera, dx, dy)
-                            this.wasRotatingWithoutTarget = true
-                        }
-                        this.rotationVelocityX = dx
-                        this.rotationVelocityY = dy
+        for(const { data } of this.mouseMovedArray!) {
+            const dx = data.x - this.lastPointer.x
+            const dy = data.y - this.lastPointer.y
+            if(dx || dy) {
+                if(this.dragButton === 2) {
+                    camera.panByPixels(dx, dy)
+                } else if(this.dragButton === 1) {
+                    if(this.hasFollowTarget) {
+                        camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
+                        camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
+
+                        camera.invalidateViewBasis()
+                    } else {
+                        this.applyOrbitRotation(camera, dx, dy)
+                        this.wasRotatingWithoutTarget = true
                     }
-                    if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
-                        this.dragMoved = true
-                    }
-                    this.lastPointer = { x: data.x, y: data.y }
+                    this.rotationVelocityX = dx
+                    this.rotationVelocityY = dy
                 }
+                if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
+                    this.dragMoved = true
+                }
+                this.lastPointer = { x: data.x, y: data.y }
             }
         }
+    }
 
+    private handleDragEnd() {
         let released = false
         for(const { data } of this.mouseupArray!) {
             if(data.button === this.dragButton) {
@@ -277,14 +298,6 @@ export class ViewportInputHandler {
             document.body.style.cursor = "default"
         }
         this.mouseupArray!.clear()
-
-        if(!this._isDragging && this.wasRotatingWithoutTarget) {
-            this.applyRotationInertia(camera)
-        }
-
-        this.applyKeyScroll(dt, camera)
-        this.applyEdgePan(dt, camera)
-        this.applyWheelZoom(camera)
     }
 
     private zoomWheel(camera: Camera, factor: number) {
