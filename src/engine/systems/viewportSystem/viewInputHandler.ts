@@ -140,13 +140,13 @@ export class ViewportInputHandler {
 
     addToEngine() {
         const canvas = this.viewportSystem.viewport.camera.context.canvas
-        if(!canvas) {
+        if(!canvas || !this.viewportSystem.engineRef) {
             return
         }
 
-        this.mousedownArray = this.viewportSystem.engineRef?.getEvents(MousedownEvent)!
-        this.mouseupArray = this.viewportSystem.engineRef?.getEvents(MouseupEvent)!
-        this.mouseMovedArray = this.viewportSystem.engineRef?.getEvents(MousemoveEvent)!
+        this.mousedownArray = this.viewportSystem.engineRef.getEvents(MousedownEvent)!
+        this.mouseupArray = this.viewportSystem.engineRef.getEvents(MouseupEvent)!
+        this.mouseMovedArray = this.viewportSystem.engineRef.getEvents(MousemoveEvent)!
 
         canvas.addEventListener("mouseenter", this.onMouseEnter)
         canvas.addEventListener("mouseleave", this.onMouseLeave)

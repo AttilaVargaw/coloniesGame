@@ -9,7 +9,6 @@ import { SoiComponent } from "@/engine/components/soiComponent"
 import { UNIVERSE_SCALE } from "../constants"
 import { Vector3 } from "@/lib/Vector3"
 
-
 export const soiRatios = {
     earth: 145.2,
     kobol: 145.2,

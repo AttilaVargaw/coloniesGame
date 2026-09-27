@@ -278,20 +278,24 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         }
 
         if(bestSoiEntity) {
-            this.orbit(this.engine, entity, bestSoiEntity, shipX, shipY)
+            this.orbit(entity, bestSoiEntity, shipX, shipY)
         }
     }
 
-    private orbit(engine: Engine, entity: Entity, bestSoiEntity: Entity, shipX: number, shipY: number) {
-        const shipNode = engine.getSceneNode(entity)!
-        const attractorNode = engine.getSceneNode(bestSoiEntity)!
+    private orbit(entity: Entity, bestSoiEntity: Entity, shipX: number, shipY: number) {
+        if(!this.engine) {
+            return
+        }
+
+        const shipNode = this.engine.getSceneNode(entity)!
+        const attractorNode = this.engine.getSceneNode(bestSoiEntity)!
 
         if(shipNode.parent?.entity !== bestSoiEntity) {
             shipNode.parent?.removeChild(shipNode)
             attractorNode.addChild(shipNode)
         }
 
-        const [ax, ay] = getAbsolute(bestSoiEntity, engine)
+        const [ax, ay] = getAbsolute(bestSoiEntity, this.engine)
         const attractorRadius = bestSoiEntity.getComponent(RadiusComponent)?.radius ?? 0
         const drive = entity.getComponent(JumpDriveComponent)
         const newAngle = (drive && drive.clickX !== undefined && drive.clickY !== undefined)

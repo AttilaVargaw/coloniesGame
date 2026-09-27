@@ -1,4 +1,5 @@
-import type { IndustryTickInput, IndustryTickPatch } from "../workers/industryTick.worker";
+import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
+import type { IndustryTickInput } from "../workers/IndustryTickInput";
 
 export interface WorkerPoolMessage {
     type: string;

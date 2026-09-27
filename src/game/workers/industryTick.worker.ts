@@ -8,89 +8,13 @@ import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorResult } from "../systems/generateIndustrialSector";
-import { SettlementType } from "../components/industryComponent";
-
-export interface IndustryTickInput {
-    entityId: string;
-    sectors: IndustrialSectors;
-    goods: Goods;
-    population: Population;
-    sectorWealth: Record<keyof IndustrialSectors, number>;
-    sectorCapital: Record<keyof IndustrialSectors, number>;
-    upgradeSectors: string[];
-    autoUpgradeSectors: Record<string, boolean>;
-    settlementType: SettlementType;
-    allowedSectors: (keyof IndustrialSectors)[] | undefined;
-}
-
-export interface IndustryTickPatch {
-    entityId: string;
-    goods?: Partial<Goods>;
-    goodsRequirements?: Partial<Goods>;
-    goodsProduction?: Partial<Goods>;
-    workingWorkers?: Partial<Population>;
-    freeWorkers?: Partial<Population>;
-    populationUpdates?: Partial<Record<keyof Population, {
-        qol?: number;
-        expectedQol?: number;
-        populationChange?: number;
-        wealth?: number;
-        number?: number;
-        requirements?: Partial<Goods>;
-    }>>;
-    sectorProfits?: Partial<Record<keyof IndustrialSectors, number>>;
-    populationProfits?: Partial<Record<keyof Population, number>>;
-    sectorUtilization?: Partial<Record<keyof IndustrialSectors, number>>;
-    sectorResults?: {
-        changed: Record<string, SectorResult>;
-        removed: string[];
-    };
-    sectors?: Partial<Record<keyof IndustrialSectors, number>>;
-    sectorWealth?: Partial<Record<keyof IndustrialSectors, number>>;
-    sectorCapital?: Partial<Record<keyof IndustrialSectors, number>>;
-}
-
-interface IndustryTickResult {
-    entityId: string;
-    goodsRequirements: Partial<Goods>;
-    goodsProduction: Partial<Goods>;
-    workingWorkers: Population;
-    freeWorkers: Population;
-    populationUpdates: Record<string, {
-        qol: number;
-        expectedQol: number;
-        populationChange: number;
-        wealth: number;
-        number: number;
-        requirements: Record<string, number>;
-    }>;
-    goods: Goods;
-    sectorProfits: Record<string, number>;
-    sectorMaintenance: Record<string, number>;
-    populationProfits: Record<string, number>;
-    sectorUtilization: Record<string, number>;
-    sectorResults: Record<string, SectorResult>;
-    sectors: IndustrialSectors;
-    sectorWealth: Record<keyof IndustrialSectors, number>;
-    sectorCapital: Record<keyof IndustrialSectors, number>;
-    settlementType: SettlementType;
-    allowedSectors: (keyof IndustrialSectors)[] | undefined;
-}
+import { IndustryTickInput } from "./IndustryTickInput";
+import { IndustryTickPatch } from "./IndustryTickPatch";
+import { IndustryTickResult } from "./IndustryTickResult";
+import { SectorBid } from "./SectorBid";
+import { SectorExecutionResult } from "./SectorExecutionResult";
 
 const lastResults = new Map<string, IndustryTickResult>();
-
-type SectorBid = {
-    name: string;
-    level: number;
-    budgetRatio: number;
-    inputCost: number;
-    laborCost: number;
-    idealWorkerDemand: Partial<Record<keyof Population, number>>;
-    idealGoodsDemand: Partial<Record<keyof Goods, number>>;
-    idealGoodsProduction: Partial<Record<keyof Goods, number>>;
-    outputLevel: number;
-    inputLevel: number;
-}
 
 function shallowDiff<T extends Record<string, number>>(oldObj: T | undefined, newObj: T): Partial<T> | null {
     if(!oldObj) return newObj;
@@ -158,7 +82,7 @@ function buildSectorResultsPatch(old: Record<string, SectorResult> | undefined, 
     const changed: Record<string, SectorResult> = {};
     const removed: string[] = [];
     let hasChanged = false;
-    
+
     for(const key in newResults) {
         const oldSector = old?.[key];
         const newSector = newResults[key];
@@ -167,7 +91,7 @@ function buildSectorResultsPatch(old: Record<string, SectorResult> | undefined, 
             hasChanged = true;
         }
     }
-    
+
     if(old) {
         for(const key in old) {
             if(!(key in newResults)) {
@@ -176,7 +100,7 @@ function buildSectorResultsPatch(old: Record<string, SectorResult> | undefined, 
             }
         }
     }
-    
+
     return hasChanged ? { changed, removed } : null;
 }
 
@@ -193,22 +117,22 @@ function populationUpdateDiff(old: IndustryTickResult["populationUpdates"][keyof
 function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickResult): IndustryTickPatch | null {
     const patch: IndustryTickPatch = { entityId: result.entityId };
     let hasChanged = false;
-    
+
     const goodsDiff = shallowDiff(last?.goods, result.goods);
     if(goodsDiff) { patch.goods = goodsDiff; hasChanged = true; }
-    
+
     const goodsReqDiff = shallowDiff(last?.goodsRequirements, result.goodsRequirements);
     if(goodsReqDiff) { patch.goodsRequirements = goodsReqDiff; hasChanged = true; }
-    
+
     const goodsProdDiff = shallowDiff(last?.goodsProduction, result.goodsProduction);
     if(goodsProdDiff) { patch.goodsProduction = goodsProdDiff; hasChanged = true; }
-    
+
     const workingWorkersDiff = populationDiff(last?.workingWorkers, result.workingWorkers);
     if(workingWorkersDiff) { patch.workingWorkers = workingWorkersDiff; hasChanged = true; }
-    
+
     const freeWorkersDiff = populationDiff(last?.freeWorkers, result.freeWorkers);
     if(freeWorkersDiff) { patch.freeWorkers = freeWorkersDiff; hasChanged = true; }
-    
+
     if(last?.populationUpdates !== result.populationUpdates) {
         const updatedPop: IndustryTickPatch["populationUpdates"] = {};
         let popChanged = false;
@@ -225,28 +149,28 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
             hasChanged = true;
         }
     }
-    
+
     const sectorProfitsDiff = shallowDiff(last?.sectorProfits, result.sectorProfits);
     if(sectorProfitsDiff) { patch.sectorProfits = sectorProfitsDiff; hasChanged = true; }
-    
+
     const popProfitsDiff = shallowDiff(last?.populationProfits, result.populationProfits);
     if(popProfitsDiff) { patch.populationProfits = popProfitsDiff; hasChanged = true; }
-    
+
     const sectorUtilDiff = shallowDiff(last?.sectorUtilization, result.sectorUtilization);
     if(sectorUtilDiff) { patch.sectorUtilization = sectorUtilDiff; hasChanged = true; }
-    
+
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
-    
+
     const sectorsDiff = shallowDiff(last?.sectors, result.sectors);
     if(sectorsDiff) { patch.sectors = sectorsDiff; hasChanged = true; }
-    
+
     const sectorWealthDiff = shallowDiff(last?.sectorWealth, result.sectorWealth);
     if(sectorWealthDiff) { patch.sectorWealth = sectorWealthDiff; hasChanged = true; }
-    
+
     const sectorCapitalDiff = shallowDiff(last?.sectorCapital, result.sectorCapital);
     if(sectorCapitalDiff) { patch.sectorCapital = sectorCapitalDiff; hasChanged = true; }
-    
+
     return hasChanged ? patch : null;
 }
 
@@ -349,19 +273,6 @@ function calculateMarketRatios(
     }
 
     return { workerMarketRatios, goodsMarketRatios };
-}
-
-interface SectorExecutionResult {
-    sectorResults: Record<string, SectorResult>;
-    sectorProfits: Record<string, number>;
-    sectorMaintenance: Record<string, number>;
-    sectorUtilization: Record<string, number>;
-    workingWorkers: Record<keyof Population, PopulationBreakdown>;
-    remainingWorkers: Record<keyof Population, PopulationBreakdown>;
-    remainingGoods: Goods;
-    sumGoodsRequirements: Goods;
-    sumGoodsProduction: Goods;
-    currentSectorCapital: Record<keyof IndustrialSectors, number>;
 }
 
 function executeSectors(
@@ -634,7 +545,7 @@ function processIndustry(
         sectorUtilization,
         workingWorkers,
         remainingWorkers,
-        remainingGoods,
+        // remainingGoods,
         sumGoodsRequirements,
         sumGoodsProduction,
         currentSectorCapital: updatedSectorCapital,

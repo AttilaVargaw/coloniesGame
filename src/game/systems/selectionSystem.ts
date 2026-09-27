@@ -77,6 +77,8 @@ export class SelectionManager extends SystemWithNodes<SelectionNode> {
                 this.selector = createSpaceshipSelector("#0f04")
                 this.showSensorRangeForSelection(data)
                 break
+            default:
+                throw new Error(`Unknown selection type: ${type}`)
         }
 
         if(this.selector) {
