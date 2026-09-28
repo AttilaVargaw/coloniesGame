@@ -4,7 +4,6 @@ import { mat4 } from "@/engine/lib/mat4"
 import { vec3, type Vec3 } from "@/engine/lib/vec3"
 import Camera from "@/lib/camera"
 import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
-import { WebGLSphereNode } from "./webglSphereSystem"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
@@ -12,9 +11,21 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
 import { WebGLTextureAtlas, type AtlasEntry } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
+import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
 
-const SPHERE_SEGMENTS = 24
+const SPHERE_SEGMENTS = 32
 
+export class WebGLSphereNode extends RenderableNode {
+    constructor(
+        entity: Entity,
+        public position: PositionComponent,
+        public radius: RadiusComponent,
+        public texture: TextureComponent,
+        public color: ColorComponent
+    ) {
+        super(color, entity)
+    }
+}
 export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     private gl: WebGLRenderingContext | null = null
     private shader: ShaderProgram | null = null
@@ -114,7 +125,10 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-        mat4.lookAt(this.view, camera.cameraPosition, camera.lookAt, [0, 0, 1])
+        const { fx, fy, fz } = camera.viewBasis
+        const [camX, camY, camZ] = camera.cameraPosition
+
+        mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 0, 1])
 
         for(const node of this.nodes) {
             if(!node.texture.texture) {
