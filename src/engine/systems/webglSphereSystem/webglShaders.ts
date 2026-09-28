@@ -9,12 +9,10 @@ export const VERTEX_SHADER_SOURCE = `
     uniform mat3 uNormalMatrix;
 
     varying vec3 vNormal;
-    varying vec3 vWorldPosition;
     varying vec2 vTexCoord;
 
     void main() {
         vec4 worldPos = uModel * vec4(aPosition, 1.0);
-        vWorldPosition = worldPos.xyz;
         vNormal = normalize(uNormalMatrix * aNormal);
         vTexCoord = aTexCoord;
         gl_Position = uProjection * uView * worldPos;
@@ -25,20 +23,22 @@ export const FRAGMENT_SHADER_SOURCE = `
     precision mediump float;
 
     varying vec3 vNormal;
-    varying vec3 vWorldPosition;
     varying vec2 vTexCoord;
 
     uniform sampler2D uTexture;
     uniform vec3 uLightDirection;
     uniform vec3 uLightColor;
     uniform vec3 uAmbientColor;
+    uniform vec2 uTextureOffset;
+    uniform vec2 uTextureScale;
 
     void main() {
         vec3 normal = normalize(vNormal);
         float NdotL = dot(normal, uLightDirection);
-        float diffuse = max(NdotL, 0.0);
+        float diffuse = max(NdotL, 0.0) * 0.85 + 0.15;
 
-        vec3 texColor = texture2D(uTexture, vTexCoord).rgb;
+        vec2 atlasUV = vec2(vTexCoord.x, 1.0 - vTexCoord.y) * uTextureScale + uTextureOffset;
+        vec3 texColor = texture2D(uTexture, atlasUV).rgb;
         vec3 color = texColor * (uAmbientColor + uLightColor * diffuse);
 
         gl_FragColor = vec4(color, 1.0);
@@ -61,6 +61,8 @@ export interface ShaderProgram {
         lightDirection: WebGLUniformLocation | null
         lightColor: WebGLUniformLocation | null
         ambientColor: WebGLUniformLocation | null
+        textureOffset: WebGLUniformLocation | null
+        textureScale: WebGLUniformLocation | null
     }
 }
 
@@ -109,6 +111,8 @@ export function createShaderProgram(gl: WebGLRenderingContext): ShaderProgram {
         lightDirection: gl.getUniformLocation(program, "uLightDirection"),
         lightColor: gl.getUniformLocation(program, "uLightColor"),
         ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
+        textureOffset: gl.getUniformLocation(program, "uTextureOffset"),
+        textureScale: gl.getUniformLocation(program, "uTextureScale"),
     }
 
     return { program, attribs, uniforms }

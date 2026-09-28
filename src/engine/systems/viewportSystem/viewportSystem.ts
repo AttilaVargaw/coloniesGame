@@ -166,6 +166,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
+            renderer.beginFrame()
             renderer.projectNodes()
 
             for(const { node, projected } of renderer.getProjectedCacheEntries()) {

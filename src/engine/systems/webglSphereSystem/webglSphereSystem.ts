@@ -157,10 +157,11 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
             const atlasTexture = this.atlas.getTexture(gl)
 
             this.renderer.render(
-                projected,
+                //projected,
                 worldPos,
                 node.radius.radius,
                 camera,
+                atlasEntry,
                 atlasTexture,
                 lightDir,
             )

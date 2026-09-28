@@ -29,7 +29,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
     onContextMenu?: (event: MouseEventData) => void,
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const glCanvasRef = useRef<HTMLCanvasElement>(null)
+    //const glCanvasRef = useRef<HTMLCanvasElement>(null)
 
     useLayoutEffect(() => {
         function resize() {
@@ -112,7 +112,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
     }
 
     return <>
-        <canvas style={{ pointerEvents: "none" }} ref={glCanvasRef} id="glCanvas" />
+        {/* <canvas style={{ pointerEvents: "none" }} ref={glCanvasRef} id="glCanvas" /> */}
         <canvas
             id="2dCanvas"
             ref={canvasRef}
