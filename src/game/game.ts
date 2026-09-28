@@ -2,7 +2,6 @@ import { DateComponent } from "@engine/components/dateComponent"
 import { TimeScaleComponent } from "@engine/components/timeScaleComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
 import { World } from "@engine/core/world"
-import { System } from "@engine/systems/system"
 import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
@@ -21,10 +20,8 @@ import { FIELD_OF_VIEW, CAMERA_INITIAL_DISTANCE, CAMERA_MIN_DISTANCE, CAMERA_MAX
 import { CommandBase } from "@/engine/lib/CommandBase"
 import { BodyBlueprint } from "./data/BodyBlueprint"
 import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRenderer"
-import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
-import { WebGLSphereSystem } from "@/engine/systems/webglSphereSystem/webglSphereSystem"
 import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
@@ -35,6 +32,7 @@ import { ColorComponent } from "@/engine/components/colorComponent"
 import { PositionComponent } from "@/engine/components/position"
 import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
+import { WebGLSphereRenderer } from "@/engine/systems/webglSphereSystem/webglSphereRenderer"
 
 export class Game {
     readonly engine: World
@@ -88,9 +86,9 @@ export class Game {
             .addSystem(MapSystem)
             .addSystem(OrbitSelectionSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
-            .addSystem(CircleRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
+            .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
             .addSystem(AsteroidSpinSystem)
@@ -98,10 +96,12 @@ export class Game {
         viewportEntity.addComponent(new CameraFollowComponent())
 
         this.engine.getSystem(ViewportSystem).setRendererClasses([
-            ShapeRenderer, CircleRenderer, LabelRenderer, RectRenderer
+            ShapeRenderer, LabelRenderer, RectRenderer, WebGLSphereRenderer
         ])
-        this.engine.addSystem(WebGLSphereSystem as new (...args: any[]) => System, ViewportSystem)
+        //this.engine.addSystem(WebGLSphereSystem, ViewportSystem)
         this.engine.getSystem(ViewportSystem).init()
+        this.engine.getSystem(WebGLSphereRenderer).init()
+
 
         setTimeout(() => {
             this.engine.dispatchEvent(new DayPassedEvent(null))
@@ -141,6 +141,11 @@ export class Game {
     }
 
     static async create(renderingContext: CanvasRenderingContext2D, map: BodyBlueprint) {
+        if(!renderingContext) {
+            console.error("No rendering context")
+
+            return
+        }
         const game = new Game(renderingContext, map)
         game.engine.getSystem(MapSystem).init().catch(console.error).then(() => {
             const { x, y, z, } = game.engine.getAllEntities().find(e => e.getComponent(ColorComponent)?.emitLight)!.getComponent(PositionComponent)!

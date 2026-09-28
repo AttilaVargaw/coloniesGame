@@ -1,27 +1,27 @@
 import "./App.css";
 import { renderingContextSettings } from './components/map/screen';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapCreationData } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { GameContext } from "./hooks/useGameContext";
 import { AppInner } from "./AppInner";
 
 function App() {
-  const mapRef = useRef<HTMLCanvasElement>(null);
+  //const mapRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   useEffect(() => {
-    if(!mapRef.current) {
+    if(!document.getElementById("2dCanvas")) {
       return
     }
 
     let gameInstance: Game | null = null
 
-    Game.create(mapRef.current.getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
+    Game.create((document.getElementById("2dCanvas") as HTMLCanvasElement).getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
       .then(newGame => {
-        gameInstance = newGame
-        setGame(newGame)
+        gameInstance = newGame!
+        setGame(newGame!)
       })
       .catch(console.error)
 
@@ -36,7 +36,7 @@ function App() {
       game={game}
       sidebarCollapsed={sidebarCollapsed}
       setSidebarCollapsed={setSidebarCollapsed}
-      map={mapRef}
+    //map={mapRef}
     />
   </GameContext>
 }

@@ -72,9 +72,9 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
-        if(circle.texture?.texture) {
-            return
-        }
+        // if(circle.texture?.texture) {
+        //     return
+        // }
 
         const { camera } = this.viewportSystem.viewport
         const context = ctx ?? camera.context
@@ -101,7 +101,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         }
 
         CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
-
         CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
 
         if(circle.texture?.nightTexture && !circle.emitLight) {
@@ -254,8 +253,8 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
         context.save()
         context.beginPath()
-        context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
-        context.clip()
+        context.rect(center.x, center.y, 1, 1)
+        //context.clip()
         context.drawImage(this._nightCanvas, center.x - screenRadius, center.y - screenRadius)
         context.restore()
     }

@@ -184,7 +184,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return entry
     }
 
-    private getWorldPosition(node: N): Vector3 {
+    protected getWorldPosition(node: N): Vector3 {
         const sceneNode = this.engine?.getSceneNode(node.entity)
         if(!sceneNode) {
             const pos = node.entity.getComponent(PositionComponent)

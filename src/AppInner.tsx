@@ -1,4 +1,4 @@
-import { RefObject, } from "react";
+// import { RefObject, } from "react";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { Header } from "./components/header/header";
 import { Screen } from "./components/map/screen";
@@ -7,11 +7,11 @@ import { MousemoveEvent, MouseEventData, MousedownEvent, MouseupEvent, ClickEven
 import { Game } from "./game/game";
 import { CircularContextMenu } from "./components/ui/circularContextMenu";
 
-export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
+export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
   game: Game | null;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void;
-  map: RefObject<HTMLCanvasElement | null>;
+  //map: RefObject<HTMLCanvasElement | null>;
 }) {
   return <>
     <CircularContextMenu />
@@ -52,7 +52,6 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed, map }: {
           onMouseUp={(data) => {
             game?.engine.dispatchEvent(new MouseupEvent(data as MouseEventData));
           }}
-          ref={map}
           onClick={(data) => {
             game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData));
           }}

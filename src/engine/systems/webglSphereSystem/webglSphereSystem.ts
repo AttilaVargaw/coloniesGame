@@ -7,16 +7,17 @@ import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { Entity } from "@/engine/entities/entity"
 import { ColorComponent } from "@/engine/components/colorComponent"
-import { EntityNode } from "@/engine/entities/entityNode"
+import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
 
-export class WebGLSphereNode extends EntityNode {
+export class WebGLSphereNode extends RenderableNode {
     constructor(
         entity: Entity,
         public position: PositionComponent,
         public radius: RadiusComponent,
-        public texture: TextureComponent | undefined,
+        public texture: TextureComponent,
+        public color: ColorComponent
     ) {
-        super(entity)
+        super(color, entity)
     }
 }
 
@@ -31,7 +32,7 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
 
     addToEngine(engine: any): this {
         super.addToEngine(engine)
-        this.initWebGL()
+
         return this
     }
 
@@ -43,7 +44,7 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
         return this
     }
 
-    private initWebGL() {
+    init() {
         if(typeof document === "undefined") {
             return
         }
@@ -60,14 +61,15 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
         this.glCanvas.style.zIndex = "0"
         this.glCanvas.width = mainCanvas.width
         this.glCanvas.height = mainCanvas.height
+        this.glCanvas.style.pointerEvents = "none"
 
         const container = mainCanvas.parentNode
         if(container) {
             container.insertBefore(this.glCanvas, mainCanvas)
         }
 
-        this.renderer = new WebGLSphereRenderer(this.glCanvas)
-        this.atlas = new WebGLTextureAtlas(this.renderer.glContext)
+        // this.renderer = new WebGLSphereRenderer(this.glCanvas)
+        this.atlas = new WebGLTextureAtlas(this.glCanvas.getContext("webgl")!)
     }
 
     protected updateNode(_node: WebGLSphereNode, _dT?: number): void {
@@ -76,23 +78,24 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
 
     protected registerNodes(engine: any): this {
         engine.registerNodeType(
-            this.constructor as any,
-            new Set([PositionComponent, RadiusComponent, TextureComponent]),
+            WebGLSphereNode,
+            new Set([PositionComponent, RadiusComponent, TextureComponent, ColorComponent]),
             (entity: Entity) => {
-                const pos = entity.getComponent(PositionComponent)
-                const radius = entity.getComponent(RadiusComponent)
-                const texture = entity.getComponent(TextureComponent)
-                if(!pos || !radius) {
-                    return null
-                }
-                return new WebGLSphereNode(entity, pos, radius, texture)
+                const pos = entity.getComponent(PositionComponent)!
+                const radius = entity.getComponent(RadiusComponent)!
+                const texture = entity.getComponent(TextureComponent)!
+                const color = entity.getComponent(ColorComponent)!
+
+                return new WebGLSphereNode(entity, pos, radius, texture, color)
             },
         )
         return this
     }
 
     update(_dt: number) {
-        if(!this.engine || !this.renderer || !this.atlas) {
+        console.log("update", this.nodes)
+
+        if(!this.engine || !this.renderer || !this.atlas || !this.glCanvas) {
             return
         }
 
@@ -117,7 +120,7 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
         const starPos = this.getWorldPosition(starEntity)
         const lightDir: [number, number, number] = [starPos[0], starPos[1], starPos[2]]
 
-        const gl = this.renderer.glContext
+        const gl = this.glCanvas.getContext("webgl")!
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
