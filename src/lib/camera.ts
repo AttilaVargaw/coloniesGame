@@ -45,7 +45,7 @@ export default class Camera {
     minDistance: number
     maxDistance: number
     minHeightAboveTarget: number
-    private aspectRatio: number = 1.0
+    public aspectRatio: number = 1.0
     public context: CanvasRenderingContext2D
 
     private viewport: {

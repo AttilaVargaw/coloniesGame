@@ -1,22 +1,23 @@
 import { SystemWithNodes } from "../system"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
-import Camera from "@/lib/camera"
 import { WebGLSphereRenderer } from "./webglSphereRenderer"
-import { WebGLTextureAtlas, type AtlasEntry } from "./webglTextureAtlas"
-import { ProjectedPoint } from "@/lib/camera"
+import { WebGLTextureAtlas } from "./webglTextureAtlas"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { Entity } from "@/engine/entities/entity"
 import { ColorComponent } from "@/engine/components/colorComponent"
+import { EntityNode } from "@/engine/entities/entityNode"
 
-export class WebGLSphereNode {
+export class WebGLSphereNode extends EntityNode {
     constructor(
-        public entity: Entity,
+        entity: Entity,
         public position: PositionComponent,
         public radius: RadiusComponent,
         public texture: TextureComponent | undefined,
-    ) {}
+    ) {
+        super(entity)
+    }
 }
 
 export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
@@ -43,6 +44,10 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
     }
 
     private initWebGL() {
+        if(typeof document === "undefined") {
+            return
+        }
+
         const mainCanvas = this.viewportSystem.viewport?.camera?.context?.canvas
         if(!mainCanvas) {
             return
@@ -119,6 +124,10 @@ export class WebGLSphereSystem extends SystemWithNodes<WebGLSphereNode> {
         for(const node of this.nodes) {
             if(!node.texture?.texture) {
                 continue
+            }
+
+            if(!this.atlas.getEntry(node.entity.id.toString())) {
+                this.atlas.addTexture(node.entity.id.toString(), node.texture.texture)
             }
 
             const worldPos = this.getWorldPosition(node.entity)

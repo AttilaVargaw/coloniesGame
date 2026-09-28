@@ -1,5 +1,3 @@
-import { Vec3 } from "@/engine/lib/vec3";
-
 export interface SphereMesh {
     positions: Float32Array
     normals: Float32Array

@@ -17,6 +17,9 @@ export class WebGLSphereRenderer {
     private textureUnit = 0
 
     constructor(canvas: HTMLCanvasElement) {
+        if(typeof document === "undefined") {
+            throw new Error("WebGL not available")
+        }
         const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false })!
         if(!gl) {
             throw new Error("WebGL not supported")
@@ -33,7 +36,6 @@ export class WebGLSphereRenderer {
 
         this.sphereVao = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
-        const stride = 8 * 4
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
             ...this.mesh.positions,
             ...this.mesh.normals,
@@ -60,7 +62,7 @@ export class WebGLSphereRenderer {
     private normalMatrix = new Float32Array(9)
 
     render(
-        center: ProjectedPoint,
+        _center: ProjectedPoint,
         worldPos: [number, number, number],
         worldRadius: number,
         camera: Camera,
@@ -68,7 +70,6 @@ export class WebGLSphereRenderer {
         lightDirectionWorld: Vec3,
     ) {
         const gl = this.gl
-        void center
 
         mat4.identity(this.model)
         mat4.translate(this.model, this.model, worldPos)
