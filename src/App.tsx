@@ -36,7 +36,6 @@ function App() {
       game={game}
       sidebarCollapsed={sidebarCollapsed}
       setSidebarCollapsed={setSidebarCollapsed}
-    //map={mapRef}
     />
   </GameContext>
 }

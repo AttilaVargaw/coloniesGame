@@ -112,7 +112,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
     }
 
     return <>
-        <canvas ref={glCanvasRef} id="glCanvas" />
+        <canvas style={{pointerEvents: "none"}} ref={glCanvasRef} id="glCanvas" />
         <canvas
             id="2dCanvas"
             ref={canvasRef}
