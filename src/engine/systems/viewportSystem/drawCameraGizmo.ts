@@ -57,7 +57,7 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.textBaseline = "middle";
     const coordX = cx - size - 12;
     const lookAt = camera.lookAt;
-    ctx.fillText(`(${lookAt[0].toFixed(1)}, ${lookAt[1].toFixed(1)}, ${lookAt[2].toFixed(1)})`, coordX, cy);
+    ctx.fillText(`(${lookAt[0].toFixed(1)}, ${lookAt[1].toFixed(1)}, ${lookAt[2].toFixed(1)}) pitch: ${camera.pitch.toFixed(2)} yaw: ${camera.yaw.toFixed(2)}`, coordX, cy);
 
     ctx.restore();
 }

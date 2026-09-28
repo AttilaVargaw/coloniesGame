@@ -41,7 +41,7 @@ export class Game {
 
         const camera = new Camera(renderingContext, {
             initialPosition: [
-                -5300.8, 3891.6, 128
+                -5357.8, 4398.6, 600
             ],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,
@@ -49,8 +49,8 @@ export class Game {
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: 1.5,
-            pitch: 0.5,
+            yaw: 1.15,
+            pitch: 0.8,
         })
 
         this.engine
