@@ -50,6 +50,10 @@ export class WebGLSphereRenderer {
         this.gl.viewport(0, 0, width, height)
     }
 
+    get glContext(): WebGLRenderingContext {
+        return this.gl
+    }
+
     private model = mat4.create()
     private view = mat4.create()
     private projection = mat4.create()
