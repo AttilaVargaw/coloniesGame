@@ -4,7 +4,7 @@ import { convertToReadable } from "@/lib/utils";
 import { colorBySign, } from "./colorBySign";
 import { InfoComponent } from "@/engine/components/infoComponent";
 
-function Sum(...args: number[]) {
+function sum(...args: number[]) {
     let sum = 0
 
     for(const it of args) {
@@ -16,7 +16,7 @@ function Sum(...args: number[]) {
 
 export function ColonySummary({ industry, info }: { industry: IndustryComponent; info?: InfoComponent }) {
     const populationSum = sumPopulation(industry.population);
-    const popGrowth = Sum(...Object.values(industry.population).map(e => e.populationChange))
+    const popGrowth = sum(...Object.values(industry.population).map(e => e.populationChange))
     const unemployedSum = sumPopulation(industry.freeWorkers) - industry.freeWorkers.retired.number - industry.freeWorkers.student.number;
 
     const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;

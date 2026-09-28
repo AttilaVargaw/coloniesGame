@@ -57,9 +57,7 @@ export function ColoniesInforWindow() {
                 overflowY: "auto",
             }}>
                 {info && <PatronGoodInfo info={info} />}
-                {
-                    DialogInner(industry, page, currentColony)
-                }
+                <DialogInner industry={industry} page={page} entity={currentColony} />
             </div>
             <DialogFooter>
                 <ToggleGroup style={{

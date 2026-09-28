@@ -8,7 +8,7 @@ import { ColonySummary } from "./colonySummary";
 
 export type DialogPage = "summary" | "population" | "warehouse" | "industry";
 
-export function DialogInner(industry: IndustryComponent | null, page: DialogPage, entity?: Entity): ReactNode {
+export function DialogInner({ industry, page, entity }: { industry: IndustryComponent | null, page: DialogPage, entity?: Entity }): ReactNode {
     if(!industry) return <></>;
 
     switch(page) {
