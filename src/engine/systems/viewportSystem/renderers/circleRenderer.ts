@@ -9,7 +9,6 @@ import { BaseRenderer } from "./baseRenderer";
 import { Entity } from "@/engine/entities/entity";
 import { TWO_PI } from "@/game/constants";
 import { hexToRgba } from "./hexToRgba";
-import { Vector3 } from "@/lib/Vector3";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
 
@@ -182,34 +181,19 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
-        const lightWorld: Vector3 = [
-            starWorldPos[0] - cx,
-            starWorldPos[1] - cy,
-            starWorldPos[2] - cz
-        ]
-        const lightLen = Math.sqrt(lightWorld[0] * lightWorld[0] + lightWorld[1] * lightWorld[1] + lightWorld[2] * lightWorld[2])
-
-        if(lightLen <= 0) {
+        const starProjected = camera.project(starWorldPos[0], starWorldPos[1], starWorldPos[2])
+        if(!starProjected) {
             return
         }
 
-        const lightDir: Vector3 = [lightWorld[0] / lightLen, lightWorld[1] / lightLen, lightWorld[2] / lightLen]
+        const dx = starProjected.x - center.x
+        const dy = starProjected.y - center.y
+        const dist = Math.hypot(dx, dy)
 
-        const basis = camera.getBasisVectors()
-        const right = basis.right
-        const up = basis.up
-
-        const viewX = lightDir[0] * right[0] + lightDir[1] * right[1] + lightDir[2] * right[2]
-        const viewY = lightDir[0] * up[0] + lightDir[1] * up[1] + lightDir[2] * up[2]
-
-        const gradDirX = -viewX
-        const gradDirY = viewY
-        const gradLen = Math.sqrt(gradDirX * gradDirX + gradDirY * gradDirY)
-
-        if(gradLen <= 0.01) {
+        if(dist <= 0.01) {
             CircleRenderer.drawSimpleNightTexture(context, circle, center, screenRadius)
-        } else if(gradLen > 0.01) {
-            this.drawGradientNightTexture(context, circle, center, screenRadius, gradDirX, gradDirY, gradLen)
+        } else {
+            this.drawGradientNightTexture(context, circle, center, screenRadius, dx, dy, dist)
         }
     }
 
@@ -239,16 +223,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const texSize = circle.texture!.nightTexture!.width
         nightCtx.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, 0, 0, size, size)
 
-        nightCtx.globalCompositeOperation = "destination-in"
-        const gradStartX = size / 2 + normGradX * size / 2
-        const gradStartY = size / 2 + normGradY * size / 2
-        const gradEndX = size / 2 - normGradX * size / 2
-        const gradEndY = size / 2 - normGradY * size / 2
-
-        const gradient = nightCtx.createLinearGradient(gradEndX, gradEndY, gradStartX, gradStartY)
+        nightCtx.globalCompositeOperation = "destination-out"
+        const gradient = nightCtx.createLinearGradient(
+            size / 2 - normGradX * size, size / 2 - normGradY * size,
+            size / 2 + normGradX * size, size / 2 + normGradY * size
+        )
         gradient.addColorStop(0, "rgba(0,0,0,0)")
-        gradient.addColorStop(0.35, "rgba(0,0,0,0.2)")
-        gradient.addColorStop(0.65, "rgba(0,0,0,1)")
+        gradient.addColorStop(0.45, "rgba(0,0,0,0.15)")
+        gradient.addColorStop(0.55, "rgba(0,0,0,0.85)")
         gradient.addColorStop(1, "rgba(0,0,0,1)")
         nightCtx.fillStyle = gradient
         nightCtx.fillRect(0, 0, size, size)
