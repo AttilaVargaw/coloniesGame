@@ -72,6 +72,10 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
+        if(circle.texture?.texture) {
+            return
+        }
+
         const { camera } = this.viewportSystem.viewport
         const context = ctx ?? camera.context
 
@@ -193,6 +197,22 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const lnx = lx / lLen
         const lny = ly / lLen
         const lnz = lz / lLen
+
+        const [camX, camY, camZ] = camera.cameraPosition
+        const viewDirX = cx - camX
+        const viewDirY = cy - camY
+        const viewDirZ = cz - camZ
+        const viewLen = Math.hypot(viewDirX, viewDirY, viewDirZ)
+        if(viewLen < 0.01) {
+            return
+        }
+        const vnx = viewDirX / viewLen
+        const vny = viewDirY / viewLen
+        const vnz = viewDirZ / viewLen
+
+        if(lnx * vnx + lny * vny + lnz * vnz < 0) {
+            return
+        }
 
         const litSurface = camera.project(cx + lnx * radius, cy + lny * radius, cz + lnz * radius)
         const darkSurface = camera.project(cx - lnx * radius, cy - lny * radius, cz - lnz * radius)

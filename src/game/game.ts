@@ -2,6 +2,7 @@ import { DateComponent } from "@engine/components/dateComponent"
 import { TimeScaleComponent } from "@engine/components/timeScaleComponent"
 import { ViewportComponent } from "@engine/components/viewportComponent"
 import { World } from "@engine/core/world"
+import { System } from "@engine/systems/system"
 import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
@@ -23,6 +24,7 @@ import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRe
 import { CircleRenderer } from "@/engine/systems/viewportSystem/renderers/circleRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
+import { WebGLSphereSystem } from "@/engine/systems/webglSphereSystem/webglSphereSystem"
 import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
@@ -98,6 +100,7 @@ export class Game {
         this.engine.getSystem(ViewportSystem).setRendererClasses([
             ShapeRenderer, CircleRenderer, LabelRenderer, RectRenderer
         ])
+        this.engine.addSystem(WebGLSphereSystem as new (...args: any[]) => System, ViewportSystem)
         this.engine.getSystem(ViewportSystem).init()
 
         setTimeout(() => {
