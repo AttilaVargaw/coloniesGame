@@ -28,8 +28,6 @@ import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollo
 import { DebugSystem } from "./systems/debugSystem"
 import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
-import { ColorComponent } from "@/engine/components/colorComponent"
-import { PositionComponent } from "@/engine/components/position"
 import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { WebGLSphereRenderer } from "@/engine/systems/webglSphereSystem/webglSphereRenderer"
@@ -43,7 +41,7 @@ export class Game {
 
         const camera = new Camera(renderingContext, {
             initialPosition: [
-                0, 0, 0
+                -5300.8, 3891.6, 128
             ],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,
@@ -51,8 +49,8 @@ export class Game {
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: 0,
-            pitch: 0,
+            yaw: 1.5,
+            pitch: 0.5,
         })
 
         this.engine
@@ -148,12 +146,6 @@ export class Game {
         }
         const game = new Game(renderingContext, map)
         game.engine.getSystem(MapSystem).init().catch(console.error).then(() => {
-            const { x, y, z, } = game.engine.getAllEntities().find(e => e.getComponent(ColorComponent)?.emitLight)!.getComponent(PositionComponent)!
-
-            const camera = game.engine.getSystem(ViewportSystem).viewport.camera
-
-            camera.moveTo(x, y, z)
-
             game.engine.getSystem(MapSystem).rebuildGraph()
         })
 
