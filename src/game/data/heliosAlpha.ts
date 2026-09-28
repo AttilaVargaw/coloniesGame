@@ -55,7 +55,7 @@ export const solarisAlpha = {
         bodies: [{
             marker: { color: "#879cb8", radius: 8, label: "Caprica" },
             archetype: "kobol",
-            orbit: { radius: 2, angle: 0, eccentricity: 0.02, inclination: 0 },
+            orbit: { radius: 2, angle: 0, eccentricity: 0.0, inclination: 0 },
             name: "Caprica",
             population: 4900000000,
             vessels: [
@@ -65,7 +65,7 @@ export const solarisAlpha = {
             mass: 0.9,
             marker: { color: "#a08156", radius: 8, label: "Gemenon" },
             archetype: "kobol",
-            orbit: { radius: 2, angle: Math.PI, eccentricity: 0.02, inclination: 0 },
+            orbit: { radius: 2, angle: Math.PI, eccentricity: 0.0, inclination: 0 },
             name: "Gemenon",
             population: 2800000000,
         }],

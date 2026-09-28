@@ -181,36 +181,36 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
-        const starProjected = camera.project(starWorldPos[0], starWorldPos[1], starWorldPos[2])
-        if(!starProjected) {
+        const radius = circle.radius.radius
+
+        const lx = starWorldPos[0] - cx
+        const ly = starWorldPos[1] - cy
+        const lz = starWorldPos[2] - cz
+        const lLen = Math.hypot(lx, ly, lz)
+        if(lLen < 0.01) {
+            return
+        }
+        const lnx = lx / lLen
+        const lny = ly / lLen
+        const lnz = lz / lLen
+
+        const litSurface = camera.project(cx + lnx * radius, cy + lny * radius, cz + lnz * radius)
+        const darkSurface = camera.project(cx - lnx * radius, cy - lny * radius, cz - lnz * radius)
+
+        if(!litSurface || !darkSurface) {
             return
         }
 
-        const dx = starProjected.x - center.x
-        const dy = starProjected.y - center.y
-        const dist = Math.hypot(dx, dy)
+        const halfSize = screenRadius
+        const litLocalX = litSurface.x - (center.x - halfSize)
+        const litLocalY = litSurface.y - (center.y - halfSize)
+        const darkLocalX = darkSurface.x - (center.x - halfSize)
+        const darkLocalY = darkSurface.y - (center.y - halfSize)
 
-        if(dist <= 0.01) {
-            CircleRenderer.drawSimpleNightTexture(context, circle, center, screenRadius)
-        } else {
-            this.drawGradientNightTexture(context, circle, center, screenRadius, dx, dy, dist)
-        }
+        this.drawGradientNightTexture(context, circle, center, screenRadius, litLocalX, litLocalY, darkLocalX, darkLocalY)
     }
 
-    private static drawSimpleNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
-        const texSize = circle.texture!.nightTexture!.width
-        context.save()
-        context.beginPath()
-        context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
-        context.clip()
-        context.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
-        context.restore()
-    }
-
-    private drawGradientNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, gradDirX: number, gradDirY: number, gradLen: number) {
-        const normGradX = gradDirX / gradLen
-        const normGradY = gradDirY / gradLen
-
+    private drawGradientNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, litX: number, litY: number, darkX: number, darkY: number) {
         const size = Math.ceil(screenRadius * 2)
         if(!this._nightCanvas || this._nightCanvas.width !== size || this._nightCanvas.height !== size) {
             this._nightCanvas = document.createElement("canvas")
@@ -224,10 +224,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         nightCtx.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, 0, 0, size, size)
 
         nightCtx.globalCompositeOperation = "destination-out"
-        const gradient = nightCtx.createLinearGradient(
-            size / 2 - normGradX * size, size / 2 - normGradY * size,
-            size / 2 + normGradX * size, size / 2 + normGradY * size
-        )
+        const gradient = nightCtx.createLinearGradient(darkX, darkY, litX, litY)
         gradient.addColorStop(0, "rgba(0,0,0,0)")
         gradient.addColorStop(0.45, "rgba(0,0,0,0.15)")
         gradient.addColorStop(0.55, "rgba(0,0,0,0.85)")
