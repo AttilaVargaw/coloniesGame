@@ -174,6 +174,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                     labelEntries.push({ renderer, node, projected })
                 } else if('emitLight' in node && (node as any).emitLight) {
                     allEntries.push({ renderer, node, projected })
+
                     if(bloomTargetCtx) {
                         bloomEntries.push({ renderer, node, projected })
                     }

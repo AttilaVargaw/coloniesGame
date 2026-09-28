@@ -57,7 +57,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.gl = gl
         this.shader = createShaderProgram(gl)
 
-
         this.glCanvas.style.position = "absolute"
         this.glCanvas.style.top = "0"
         this.glCanvas.style.left = "0"
@@ -68,6 +67,8 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.atlas = new WebGLTextureAtlas(gl)
 
         this.initBuffers()
+
+        this.gl.disable(this.gl.DEPTH_TEST)
     }
 
     private findStarEntity(): Entity | undefined {
@@ -87,12 +88,8 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
     }
 
-    protected updateNode(_node: WebGLSphereNode, _dT?: number, _ctx?: CanvasRenderingContext2D): void {
-        if(!this.engine || !this.atlas) {
-            return
-        }
-
-        if(this.glDrawnThisFrame) {
+    protected updateNode(node: WebGLSphereNode, _dT?: number, _ctx?: CanvasRenderingContext2D): void {
+        if(!this.engine || !this.atlas || this.glDrawnThisFrame) {
             return
         }
 
@@ -130,60 +127,58 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 0, 1])
 
-        for(const node of this.nodes) {
-            if(!node.texture.texture) {
-                continue
-            }
-
-            if(!this.atlas.getEntry(node.entity.id)) {
-                this.atlas.addTexture(node.entity.id, node.texture.texture)
-            }
-
-            const worldPos = this.getWorldPosition2(node.entity)
-            const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
-            if(!projected) {
-                continue
-            }
-
-            const screenRadius = node.radius.radius * projected.scale
-            if(
-                projected.x + screenRadius < 0 ||
-                projected.x - screenRadius > camera.cssWidth ||
-                projected.y + screenRadius < 0 ||
-                projected.y - screenRadius > camera.cssHeight
-            ) {
-                continue
-            }
-
-            const atlasEntry = this.atlas.getEntry(node.entity.id)
-            if(!atlasEntry) {
-                continue
-            }
-
-            const atlasTexture = this.atlas.getTexture(gl)
-
-            const lightDirRaw: Vec3 = [
-                starPos[0] - worldPos[0],
-                starPos[1] - worldPos[1],
-                starPos[2] - worldPos[2],
-            ]
-            const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
-            const lightDir: Vec3 = lightDirLength > 0
-                ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
-                : [0, 0, 1]
-
-            this.render(
-                worldPos,
-                node.radius.radius,
-                camera,
-                atlasEntry,
-                atlasTexture,
-                lightDir,
-            )
+        if(!node.texture.texture) {
+            return
         }
 
+        if(!this.atlas.getEntry(node.entity.id)) {
+            this.atlas.addTexture(node.entity.id, node.texture.texture)
+        }
+
+        const worldPos = this.getWorldPosition2(node.entity)
+        const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
+        if(!projected) {
+            return
+        }
+
+        const screenRadius = node.radius.radius * projected.scale
+        if(
+            projected.x + screenRadius < 0 ||
+            projected.x - screenRadius > camera.cssWidth ||
+            projected.y + screenRadius < 0 ||
+            projected.y - screenRadius > camera.cssHeight
+        ) {
+            return
+        }
+
+        const atlasEntry = this.atlas.getEntry(node.entity.id)
+        if(!atlasEntry) {
+            return
+        }
+
+        const atlasTexture = this.atlas.getTexture(gl)
+
+        const lightDirRaw: Vec3 = [
+            starPos[0] - worldPos[0],
+            starPos[1] - worldPos[1],
+            starPos[2] - worldPos[2],
+        ]
+        const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
+        const lightDir: Vec3 = lightDirLength > 0
+            ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
+            : [0, 0, 1]
+
+        this.render(
+            worldPos,
+            node.radius.radius,
+            camera,
+            atlasEntry,
+            atlasTexture,
+            lightDir,
+        )
+
         ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-        this.glDrawnThisFrame = true
+        //this.glDrawnThisFrame = true
     }
 
     constructor(viewport: ViewportSystem) {
