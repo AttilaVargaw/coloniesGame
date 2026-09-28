@@ -203,9 +203,9 @@ export class ViewportInputHandler {
         this.wheelZoomAccum += event.deltaY
     }
 
-    private mousedownArray: Queue<MousedownEvent["data"]> | null = null
-    private mouseupArray: Queue<MouseupEvent["data"]> | null = null
-    private mouseMovedArray: Queue<MousemoveEvent["data"]> | null = null
+    private mousedownArray: Queue<MousedownEvent> | null = null
+    private mouseupArray: Queue<MouseupEvent> | null = null
+    private mouseMovedArray: Queue<MousemoveEvent> | null = null
 
     update(dt: number) {
         if(!this.viewportSystem.engineRef) {

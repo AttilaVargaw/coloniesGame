@@ -6,7 +6,7 @@ function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanv
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
 
-    return { data: { x, y, ...event } }
+    return { x, y, ...event }
 }
 
 interface RenderingContextSettings {
@@ -112,7 +112,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
     }
 
     return <>
-        <canvas style={{pointerEvents: "none"}} ref={glCanvasRef} id="glCanvas" />
+        <canvas style={{ pointerEvents: "none" }} ref={glCanvasRef} id="glCanvas" />
         <canvas
             id="2dCanvas"
             ref={canvasRef}

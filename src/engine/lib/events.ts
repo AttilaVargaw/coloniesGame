@@ -1,12 +1,10 @@
 import { Entity } from "../entities/entity"
 import { MouseEvent as ReactMouseEvent } from "react"
 
-export interface MouseEventData {
-    data: {
-        x: number
-        y: number
-    } & ReactMouseEvent
-}
+export type MouseEventData = {
+    x: number
+    y: number
+} & ReactMouseEvent
 
 
 export abstract class EventBase<T = any> {
