@@ -12,6 +12,7 @@ import { CommandBase } from "../lib/CommandBase"
 import { EventBase } from "../lib/events"
 import { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
+import { CanvasManager } from "../systems/canvasManager"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -20,6 +21,7 @@ export class World implements Engine {
     private readonly commandBus: CommandBus
     private readonly systemRegistry: SystemRegistry
     private readonly debugManager: DebugManager
+    private readonly canvasManager: CanvasManager = new CanvasManager()
 
     constructor() {
         this.nodeManager = new NodeManager()
@@ -28,6 +30,15 @@ export class World implements Engine {
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus)
         this.systemRegistry = new SystemRegistry()
         this.debugManager = new DebugManager()
+    }
+
+    getCanvas(canvas: "webgl" | "2d") {
+        switch(canvas) {
+            case "webgl":
+                return this.canvasManager.webglCanvas!
+            case "2d":
+                return this.canvasManager.canvas!
+        }
     }
 
     getEntityById(id: string): Entity | undefined {

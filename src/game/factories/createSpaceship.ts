@@ -42,7 +42,7 @@ export function createMarker({
 
     if(texture) {
         marker.addComponent(new SizeComponent(radius * 2, radius * 2))
-        marker.addComponent(new TextureComponent(texture))
+        marker.addComponent(new TextureComponent(texture, undefined, undefined, undefined, undefined, undefined, undefined, undefined, name))
     } else {
         marker.addComponent(new RadiusComponent(radius))
     }
@@ -81,13 +81,13 @@ export function createSpaceship(engine: Engine, { name }: { name: string }) {
 export function createVessel(
     engine: Engine,
     parent: Entity,
-    { marker: { color, label, radius, labelColor, textSize }, orbit: { radius: orbitRadius, angle, inclination, periapsis, ascendingNode } }: VesselBlueprint,
+    { marker: { color, label, radius, labelColor, textSize, name }, orbit: { radius: orbitRadius, angle, inclination, periapsis, ascendingNode } }: VesselBlueprint,
     parentMass: number
 ) {
     const orbitAngle = angle ?? generateRandomNumber(0, TWO_PI)
     const orbitInclination = inclination ?? generateRandomNumber(...DEFAULT_ORBIT_INCLINATION_RANGE)
 
-    const ship = applyComponents(createEntity(),
+    const ship = applyComponents(createEntity(name),
         new ColorComponent(color, "", false),
         new RadiusComponent(radius),
         new PositionComponent(...descartesToPolar(orbitAngle, orbitRadius)),
@@ -97,7 +97,7 @@ export function createVessel(
         new SelectableComponent(80, "red"),
         new TargetableComponent(),
         new SizeComponent(20, 20),
-        new TextureComponent(battlestarDradisUrl),
+        new TextureComponent(battlestarDradisUrl, undefined, undefined, undefined, undefined, undefined, undefined, undefined, "BSDradis"),
         new HoverableComponent("pointer", { width: 80, height: 80 }),
         new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius * UNIVERSE_SCALE, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
     )

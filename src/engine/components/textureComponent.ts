@@ -1,4 +1,5 @@
 import { EntityComponent } from "../entities/entityComponent";
+import { v4 as uuid } from "uuid"
 
 export class TextureComponent extends EntityComponent {
     constructor(
@@ -10,6 +11,7 @@ export class TextureComponent extends EntityComponent {
         public minimumScreenSize?: number,
         public animationSpeed?: number,
         public nightTexture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas,
+        public id = uuid()
     ) {
         super();
     }

@@ -30,6 +30,7 @@ import { MassComponent } from "@engine/components/massComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
+import { v4 as uuid } from "uuid"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -178,7 +179,7 @@ export async function createAsteroidBelt({
         const textureKey = `${asteroidTintKeys[tintIndex]}-${textureIndex}`
         const texture = tintedTextures.get(textureKey)
 
-        const textureComponent = new TextureComponent(undefined, undefined, texture)
+        const textureComponent = new TextureComponent(undefined, undefined, texture, undefined, undefined, undefined, undefined, undefined, uuid())
         textureComponent.rotation = generateRandomNumber(0, TWO_PI)
 
         const eccentricity = generateRandomNumber(0, MAX_ECCENTRICITY)

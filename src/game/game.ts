@@ -31,6 +31,7 @@ import { DayPassedEvent, } from "@/engine/lib/events"
 import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { WebGLSphereRenderer } from "@/engine/systems/webglSphereSystem/webglSphereRenderer"
+import { WebGLRectRenderer } from "@/engine/systems/webglSphereSystem/webglRectRenderer"
 
 export class Game {
     readonly engine: World
@@ -86,6 +87,7 @@ export class Game {
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
             .addSystem(RectRenderer, ViewportSystem)
+            .addSystem(WebGLRectRenderer, ViewportSystem)
             .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
@@ -94,11 +96,12 @@ export class Game {
         viewportEntity.addComponent(new CameraFollowComponent())
 
         this.engine.getSystem(ViewportSystem).setRendererClasses([
-            ShapeRenderer, LabelRenderer, RectRenderer, WebGLSphereRenderer
+            ShapeRenderer, LabelRenderer, WebGLRectRenderer, WebGLSphereRenderer
         ])
         //this.engine.addSystem(WebGLSphereSystem, ViewportSystem)
         this.engine.getSystem(ViewportSystem).init()
         this.engine.getSystem(WebGLSphereRenderer).init()
+        this.engine.getSystem(WebGLRectRenderer).init()
 
 
         setTimeout(() => {

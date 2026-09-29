@@ -36,6 +36,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     private textureUnit = 0
     private atlas!: WebGLTextureAtlas
     private glCanvas!: HTMLCanvasElement
+    private canvas!: HTMLCanvasElement
     private glDrawnThisFrame = false
 
     beginFrame() {
@@ -43,19 +44,20 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     }
 
     init() {
-        if(typeof document === "undefined") {
+        if(!this.engine) {
             throw new Error("WebGL not available")
         }
 
-        this.glCanvas = document.createElement("canvas")! as HTMLCanvasElement
+        this.glCanvas = this.engine.getCanvas("webgl") as HTMLCanvasElement
+        this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
 
-        const gl = this.glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false })!
-        if(!gl) {
+        this.gl = this.glCanvas.getContext("webgl")
+
+        if(!this.gl) {
             throw new Error("WebGL not supported")
         }
 
-        this.gl = gl
-        this.shader = createShaderProgram(gl)
+        this.shader = createShaderProgram(this.gl)
 
         this.glCanvas.style.position = "absolute"
         this.glCanvas.style.top = "0"
@@ -64,7 +66,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.glCanvas.width = this.glCanvas.width
         this.glCanvas.height = this.glCanvas.height
         this.glCanvas.style.pointerEvents = "none"
-        this.atlas = new WebGLTextureAtlas(gl)
+        this.atlas = new WebGLTextureAtlas()
 
         this.initBuffers()
 
@@ -93,10 +95,11 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const ctx = this.viewportSystem.viewport.camera.context
+        //const ctx = this.viewportSystem.viewport.camera.context
         const camera = this.viewportSystem.viewport.camera
 
-        const mainCanvas = ctx.canvas
+        const mainCanvas = this.canvas
+
         if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
             this.glCanvas.width = mainCanvas.width
             this.glCanvas.height = mainCanvas.height
@@ -177,8 +180,8 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             lightDir,
         )
 
-        ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-        //this.glDrawnThisFrame = true
+        this.canvas.getContext("2d")!.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+        this.glDrawnThisFrame = true
     }
 
     constructor(viewport: ViewportSystem) {

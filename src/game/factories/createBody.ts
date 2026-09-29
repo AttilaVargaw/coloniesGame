@@ -210,15 +210,15 @@ export async function createBody({
         ? { ...marker, texture: buildableSite }
         : marker
 
-    const body = createMarker({ shade: name !== "root", ...markerInput })
+    const body = createMarker({ shade: name !== "root", name: name === "root" ? undefined : name, ...markerInput })
 
     if(!buildable && typeof document !== "undefined") {
         if(archetype === "sol") {
-            body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5))
+            body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5, undefined, name))
         } else if(archetype !== "baricenter") {
             const dayTexture = createPlanetTexture(marker.color, archetype)
             const nightTexture = createNightTexture(marker.color, archetype)
-            body.addComponent(new TextureComponent(undefined, undefined, dayTexture, undefined, undefined, undefined, 0.2, nightTexture))
+            body.addComponent(new TextureComponent(undefined, undefined, dayTexture, undefined, undefined, undefined, 0.2, nightTexture, name))
         }
     }
 

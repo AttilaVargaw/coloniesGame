@@ -18,7 +18,6 @@ export class EntityRegistry {
     ) {
     }
 
-
     addEntity(entity: Entity, parentEntity?: Entity | null) {
         if(this.entities.has(entity.id)) {
             return this

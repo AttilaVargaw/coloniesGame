@@ -13,7 +13,7 @@ export class WebGLTextureAtlas {
     private atlasCanvas: HTMLCanvasElement
     private atlasTexture: WebGLTexture | null = null
 
-    constructor(private gl: WebGLRenderingContext) {
+    constructor(public atlasSize = ATLAS_SIZE, public cellSize = CELL_SIZE) {
         if(typeof document === "undefined") {
             throw new Error("WebGL texture atlas not available")
         }
@@ -23,7 +23,11 @@ export class WebGLTextureAtlas {
     }
 
     addTexture(key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas): AtlasEntry {
-        if(!(source instanceof HTMLCanvasElement || source instanceof HTMLImageElement)) {
+        if(!(
+            source instanceof HTMLCanvasElement ||
+            source instanceof HTMLImageElement ||
+            source instanceof ImageBitmap ||
+            source instanceof OffscreenCanvas)) {
             throw new Error("Unsupported texture source type")
         }
 

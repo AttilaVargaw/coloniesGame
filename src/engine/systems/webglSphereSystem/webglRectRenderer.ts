@@ -1,0 +1,322 @@
+import { PositionComponent } from "@/engine/components/position"
+import { ColorComponent } from "@/engine/components/colorComponent"
+import { TextureComponent } from "@/engine/components/textureComponent"
+import { ViewportSystem } from "../viewportSystem/viewportSystem"
+import { RectNode } from "../viewportSystem/renderers/rectNode"
+import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
+import { mat4, Mat4 } from "@/engine/lib/mat4"
+import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
+import { WebGLTextureAtlas, type AtlasEntry } from "./webglTextureAtlas"
+import { Entity } from "@/engine/entities/entity"
+import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
+import { ProjectedPoint } from "@/lib/camera"
+import { Vector3 } from "@/lib/Vector3"
+import { SizeComponent } from "@/engine/components/sizeComponent"
+
+const QUAD_VERTICES = new Float32Array([
+    -0.5, -0.5, 0, 0,
+    0.5, -0.5, 1, 0,
+    0.5, 0.5, 1, 1,
+    -0.5, 0.5, 0, 1,
+])
+
+const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
+
+export class WebGLRectRenderer extends BaseRenderer<RectNode> {
+    private gl: WebGLRenderingContext | null = null
+    private shader: RectShaderProgram | null = null
+    private quadBuffer: WebGLBuffer | null = null
+    private quadIndexBuffer: WebGLBuffer | null = null
+    private quadIndexCount = 0
+    private textureUnit = 0
+    private atlas!: Map<`${number}-${number}`, WebGLTextureAtlas>
+    private glCanvas!: HTMLCanvasElement
+    private canvas!: HTMLCanvasElement
+    private glDrawnThisFrame = false
+    private whiteTexture: WebGLTexture | null = null
+    private projection = mat4.create()
+
+    beginFrame() {
+        this.glDrawnThisFrame = false
+    }
+
+    init() {
+        if(!this.engine) return
+
+        if(typeof document === "undefined") {
+            throw new Error("WebGL not available")
+        }
+        this.glCanvas = this.engine.getCanvas("webgl") as HTMLCanvasElement
+        this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
+        this.gl = this.glCanvas.getContext("webgl")
+
+        if(!this.gl) {
+            throw new Error("WebGL not supported")
+        }
+
+        this.shader = createRectShaderProgram(this.gl)
+        this.initBuffers()
+        this.initWhiteTexture()
+
+        // this.glCanvas.style.position = "absolute"
+        // this.glCanvas.style.top = "0"
+        // this.glCanvas.style.left = "0"
+        // this.glCanvas.style.zIndex = "0"
+        // this.glCanvas.width = this.glCanvas.width
+        // this.glCanvas.height = this.glCanvas.height
+        // this.glCanvas.style.pointerEvents = "none"
+
+        this.atlas = new Map<`${number}-${number}`, WebGLTextureAtlas>()
+    }
+
+    private initBuffers() {
+        if(!this.gl) return
+
+        this.quadBuffer = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.quadBuffer)
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, QUAD_VERTICES, this.gl.STATIC_DRAW)
+
+        this.quadIndexBuffer = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, QUAD_INDICES, this.gl.STATIC_DRAW)
+        this.quadIndexCount = QUAD_INDICES.length
+    }
+
+    private initWhiteTexture() {
+        const gl = this.gl
+        if(!gl) return
+
+        const texture = gl.createTexture()!
+        gl.bindTexture(gl.TEXTURE_2D, texture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]))
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        this.whiteTexture = texture
+    }
+
+    private static ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
+        const w = right - left
+        const h = top - bottom
+        const d = far - near
+        out[0] = 2 / w
+        out[1] = 0
+        out[2] = 0
+        out[3] = 0
+        out[4] = 0
+        out[5] = 2 / h
+        out[6] = 0
+        out[7] = 0
+        out[8] = 0
+        out[9] = 0
+        out[10] = -2 / d
+        out[11] = 0
+        out[12] = -(right + left) / w
+        out[13] = -(top + bottom) / h
+        out[14] = -(far + near) / d
+        out[15] = 1
+        return out
+    }
+
+    resize(width: number, height: number) {
+        if(!this.gl) return
+        this.gl.viewport(0, 0, width, height)
+    }
+
+    get glContext(): WebGLRenderingContext | null {
+        return this.gl
+    }
+
+    private getWorldPosition2(entity: Entity): [number, number, number] {
+        const sceneNode = this.engine?.getSceneNode(entity)
+        if(sceneNode) {
+            const pos = sceneNode.getWorldPosition()
+            return [pos[0], pos[1], pos[2]]
+        }
+        const pos = entity.getComponent(PositionComponent)
+        return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
+    }
+
+    protected updateNode(_node: RectNode, _dt?: number, _ctx?: CanvasRenderingContext2D): void {
+        if(_ctx) {
+            return
+        }
+
+        if(!this.engine || !this.atlas || this.glDrawnThisFrame) {
+            return
+        }
+
+        const ctx = this.viewportSystem.viewport.camera.context
+        const camera = this.viewportSystem.viewport.camera
+
+        // const mainCanvas = ctx.canvas
+        // if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
+        //     this.glCanvas.width = mainCanvas.width
+        //     this.glCanvas.height = mainCanvas.height
+        //     this.resize(mainCanvas.width, mainCanvas.height)
+        // }
+
+        const gl = this.glContext
+        if(!gl || this.glDrawnThisFrame) {
+            return
+        }
+
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        gl.clearColor(0, 0, 0, 0)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+        WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
+
+        for(const node of this.nodes) {
+            if(this.shouldSkipProjection(node, 0)) {
+                continue
+            }
+
+            const worldPos = this.getWorldPosition2(node.entity)
+            const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
+            if(!projected) {
+                continue
+            }
+
+            const screenWidth = node.size.width * projected.scale
+            const screenHeight = node.size.height * projected.scale
+
+            if(this.shouldCullNode(node, projected, worldPos)) {
+                continue
+            }
+
+            if(
+                projected.x + screenWidth < 0 ||
+                projected.x - screenWidth > camera.cssWidth ||
+                projected.y + screenHeight < 0 ||
+                projected.y - screenHeight > camera.cssHeight
+            ) {
+                continue
+            }
+
+            this.renderRect(node, projected)
+        }
+
+        ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+        this.glDrawnThisFrame = true
+    }
+
+    private renderRect(rect: RectNode, projected: ProjectedPoint) {
+        const gl = this.gl
+        if(!gl || !this.shader || !this.quadBuffer || !this.quadIndexBuffer) {
+            return
+        }
+
+        const screenWidth = rect.size.width * projected.scale
+        const screenHeight = rect.size.height * projected.scale
+
+        let atlasEntry: AtlasEntry | undefined
+        let atlasTexture: WebGLTexture | null
+
+        if(rect.texture?.texture) {
+            const key = `${rect.texture.texture.width}-${rect.texture.texture.width}` as `${number}-${number}`
+            let atlas = this.atlas.get(key)
+
+            if(!atlas) {
+                atlas = new WebGLTextureAtlas(rect.texture.texture.width * 8, rect.texture.texture.height * 8)
+
+                this.atlas.set(key, atlas)
+                atlasEntry = atlas.addTexture(rect.texture.id, rect.texture.texture)
+            } else {
+                atlasEntry = atlas!.getEntry(rect.entity.id)
+            }
+            atlasTexture = atlas!.getTexture(gl)
+        } else {
+            atlasTexture = this.whiteTexture
+        }
+
+        if(!atlasTexture) {
+            return
+        }
+
+        const hex = rect.color.fill || "#ffffff"
+        const r = parseInt(hex.slice(1, 3), 16) / 255
+        const g = parseInt(hex.slice(3, 5), 16) / 255
+        const b = parseInt(hex.slice(5, 7), 16) / 255
+
+        gl.useProgram(this.shader.program)
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer)
+        const stride = 4 * 4
+        gl.enableVertexAttribArray(this.shader.attribs.position)
+        gl.vertexAttribPointer(this.shader.attribs.position, 2, gl.FLOAT, false, stride, 0)
+        gl.enableVertexAttribArray(this.shader.attribs.texCoord)
+        gl.vertexAttribPointer(this.shader.attribs.texCoord, 2, gl.FLOAT, false, stride, 2 * 4)
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+
+        gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
+        gl.uniform2fv(this.shader.uniforms.translation, [projected.x, projected.y])
+        gl.uniform2fv(this.shader.uniforms.scale, [screenWidth, screenHeight])
+        gl.uniform1f(this.shader.uniforms.rotation, rect.texture?.rotation ?? 0)
+        gl.uniform2fv(this.shader.uniforms.textureOffset, atlasEntry ? [atlasEntry.u0, atlasEntry.v0] : [0, 0])
+        gl.uniform2fv(this.shader.uniforms.textureScale, atlasEntry ? [atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0] : [1, 1])
+        gl.uniform4fv(this.shader.uniforms.color, [r, g, b, 1.0])
+
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
+        gl.uniform1i(this.shader.uniforms.texture, 0)
+
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+        gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
+    }
+
+    protected getCullMargin(node: RectNode): number {
+        return Math.max(node.size.width, node.size.height) / 2
+    }
+
+    protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
+        const belt = node.entity.getComponent(AsteroidBeltComponent)
+        if(belt?.cullingDistanceThreshold !== undefined) {
+            const distance = this.viewportSystem.viewport.camera.distance
+            if(distance > belt.cullingDistanceThreshold) {
+                return true
+            }
+        }
+        return false
+    }
+
+    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        if(node.texture?.minimumScreenSize !== undefined && node.size) {
+            const worldSize = Math.max(node.size.width, node.size.height)
+            if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {
+                return true
+            }
+        }
+        return false
+    }
+
+    constructor(viewport: ViewportSystem) {
+        super(viewport,
+            [PositionComponent, SizeComponent, TextureComponent, ColorComponent],
+            (e) => {
+                const color = e.getComponent(ColorComponent) ?? new ColorComponent()
+
+                return new RectNode(e, e.getComponent(PositionComponent)!,
+                    e.getComponent(SizeComponent)!,
+                    e.getComponent(ColorComponent),
+                    e.getComponent(TextureComponent),
+                    e.getComponent(TextureComponent)?.rotation ?? 0,
+                    color.emitLight,
+                )
+            },
+        )
+    }
+
+    removeFromEngine(): this {
+        if(this.gl) {
+            if(this.quadBuffer) this.gl.deleteBuffer(this.quadBuffer)
+            if(this.quadIndexBuffer) this.gl.deleteBuffer(this.quadIndexBuffer)
+            if(this.whiteTexture) this.gl.deleteTexture(this.whiteTexture)
+            if(this.shader?.program) this.gl.deleteProgram(this.shader.program)
+        }
+        return super.removeFromEngine()
+    }
+}
