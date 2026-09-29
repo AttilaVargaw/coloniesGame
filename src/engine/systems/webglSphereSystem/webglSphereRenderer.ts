@@ -58,6 +58,24 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         }
     }
 
+    private greyTexture: WebGLTexture | null = null
+
+    private initGreyTexture() {
+        const gl = this.gl
+        if(!gl) return
+
+        const texture = gl.createTexture()!
+        gl.bindTexture(gl.TEXTURE_2D, texture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([100, 100, 100, 255]))
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        this.greyTexture = texture
+
+        console.log(gl.isTexture(this.greyTexture))
+    }
+
     endFrame() {
         if(!this.gl || !this.shader) {
             if(this.glDrawnThisFrame) {
@@ -103,7 +121,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         const atlasTexture = this.atlas.getTexture(gl)
         gl.activeTexture(gl.TEXTURE0 + this.textureUnit)
-        gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
+        gl.bindTexture(gl.TEXTURE_2D, this.greyTexture)
         gl.uniform1i(this.shader.uniforms.texture, this.textureUnit)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
@@ -207,6 +225,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
         this.initInstanceBuffer()
+        this.initGreyTexture()
 
         this.gl.disable(this.gl.DEPTH_TEST)
     }

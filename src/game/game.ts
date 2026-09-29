@@ -86,7 +86,7 @@ export class Game {
             .addSystem(OrbitSelectionSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
-            .addSystem(RectRenderer, ViewportSystem)
+            // .addSystem(RectRenderer, ViewportSystem)
             .addSystem(WebGLRectRenderer, ViewportSystem)
             .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)

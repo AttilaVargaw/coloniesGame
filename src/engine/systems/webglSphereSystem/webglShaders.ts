@@ -22,7 +22,7 @@ out vec3 vLightDir;
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
     vNormal = normalize(aInstanceNormalMatrix * aNormal);
-    vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y) * aInstanceTexScale + aInstanceTexOffset;
+    vTexCoord = vec2(aTexCoord.x, aTexCoord.y) * aInstanceTexScale + aInstanceTexOffset;
     vLightDir = normalize(aInstanceLightDir);
     gl_Position = uProjection * uView * worldPos;
 }

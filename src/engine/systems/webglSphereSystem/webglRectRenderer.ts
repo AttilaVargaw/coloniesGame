@@ -126,7 +126,9 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
                 continue
             }
 
-            this.instanceBuffer = gl.createBuffer()
+            if(!this.instanceBuffer) {
+                this.instanceBuffer = gl.createBuffer()
+            }
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
             gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
