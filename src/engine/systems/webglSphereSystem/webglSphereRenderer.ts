@@ -27,7 +27,7 @@ export class WebGLSphereNode extends RenderableNode {
     }
 }
 export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
-    private gl: WebGLRenderingContext | null = null
+    private gl: WebGL2RenderingContext | null = null
     private shader: ShaderProgram | null = null
     private sphereVao: WebGLBuffer | null = null
     private sphereIndexBuffer: WebGLBuffer | null = null
@@ -58,10 +58,10 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             throw new Error("WebGL not available")
         }
 
-        this.glCanvas = this.engine.getCanvas("webgl") as HTMLCanvasElement
+        this.glCanvas = this.engine.getCanvas("webgl2") as HTMLCanvasElement
         this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
 
-        this.gl = this.glCanvas.getContext("webgl")
+        this.gl = this.glCanvas.getContext("webgl2")
 
         if(!this.gl) {
             throw new Error("WebGL not supported")
@@ -243,7 +243,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.gl.viewport(0, 0, width, height)
     }
 
-    get glContext(): WebGLRenderingContext | null {
+    get glContext(): WebGL2RenderingContext | null {
         return this.gl
     }
 

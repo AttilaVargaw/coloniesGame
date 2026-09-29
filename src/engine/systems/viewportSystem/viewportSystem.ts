@@ -224,7 +224,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             return
         }
 
-        const gl = this.engine.getCanvas("webgl").getContext("webgl")
+        const gl = this.engine.getCanvas("webgl2").getContext("webgl2")
 
         if(!gl) {
             return

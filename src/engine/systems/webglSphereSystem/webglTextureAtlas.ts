@@ -59,7 +59,7 @@ export class WebGLTextureAtlas {
         return entry
     }
 
-    getTexture(gl: WebGLRenderingContext): WebGLTexture {
+    getTexture(gl: WebGL2RenderingContext): WebGLTexture {
         if(this.atlasTexture) {
             return this.atlasTexture
         }

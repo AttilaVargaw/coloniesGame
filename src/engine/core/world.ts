@@ -32,9 +32,9 @@ export class World implements Engine {
         this.debugManager = new DebugManager()
     }
 
-    getCanvas(canvas: "webgl" | "2d") {
+    getCanvas(canvas: "webgl2" | "2d") {
         switch(canvas) {
-            case "webgl":
+            case "webgl2":
                 return this.canvasManager.webglCanvas!
             case "2d":
                 return this.canvasManager.canvas!

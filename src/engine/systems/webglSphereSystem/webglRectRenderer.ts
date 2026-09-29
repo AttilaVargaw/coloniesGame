@@ -23,7 +23,7 @@ const QUAD_VERTICES = new Float32Array([
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
 
 export class WebGLRectRenderer extends BaseRenderer<RectNode> {
-    private gl: WebGLRenderingContext | null = null
+    private gl: WebGL2RenderingContext | null = null
     private shader: RectShaderProgram | null = null
     private quadBuffer: WebGLBuffer | null = null
     private quadIndexBuffer: WebGLBuffer | null = null
@@ -59,9 +59,9 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         if(typeof document === "undefined") {
             throw new Error("WebGL not available")
         }
-        this.glCanvas = this.engine.getCanvas("webgl") as HTMLCanvasElement
+        this.glCanvas = this.engine.getCanvas("webgl2") as HTMLCanvasElement
         this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
-        this.gl = this.glCanvas.getContext("webgl")
+        this.gl = this.glCanvas.getContext("webgl2")
 
         if(!this.gl) {
             throw new Error("WebGL not supported")
@@ -129,7 +129,7 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         this.gl.viewport(0, 0, width, height)
     }
 
-    get glContext(): WebGLRenderingContext | null {
+    get glContext(): WebGL2RenderingContext | null {
         return this.gl
     }
 

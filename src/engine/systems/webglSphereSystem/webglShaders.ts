@@ -1,49 +1,51 @@
-export const VERTEX_SHADER_SOURCE = `
-    attribute vec3 aPosition;
-    attribute vec3 aNormal;
-    attribute vec2 aTexCoord;
+export const VERTEX_SHADER_SOURCE = `#version 300 es
+in vec3 aPosition;
+in vec3 aNormal;
+in vec2 aTexCoord;
 
-    uniform mat4 uModel;
-    uniform mat4 uView;
-    uniform mat4 uProjection;
-    uniform mat3 uNormalMatrix;
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform mat3 uNormalMatrix;
 
-    varying vec3 vNormal;
-    varying vec2 vTexCoord;
+out vec3 vNormal;
+out vec2 vTexCoord;
 
-    void main() {
-        vec4 worldPos = uModel * vec4(aPosition, 1.0);
-        vNormal = normalize(uNormalMatrix * aNormal);
-        vTexCoord = aTexCoord;
-        gl_Position = uProjection * uView * worldPos;
-    }
-`
+void main() {
+    vec4 worldPos = uModel * vec4(aPosition, 1.0);
+    vNormal = normalize(uNormalMatrix * aNormal);
+    vTexCoord = aTexCoord;
+    gl_Position = uProjection * uView * worldPos;
+}
+`;
 
-export const FRAGMENT_SHADER_SOURCE = `
-    precision mediump float;
+export const FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
 
-    varying vec3 vNormal;
-    varying vec2 vTexCoord;
+in vec3 vNormal;
+in vec2 vTexCoord;
 
-    uniform sampler2D uTexture;
-    uniform vec3 uLightDirection;
-    uniform vec3 uLightColor;
-    uniform vec3 uAmbientColor;
-    uniform vec2 uTextureOffset;
-    uniform vec2 uTextureScale;
+uniform sampler2D uTexture;
+uniform vec3 uLightDirection;
+uniform vec3 uLightColor;
+uniform vec3 uAmbientColor;
+uniform vec2 uTextureOffset;
+uniform vec2 uTextureScale;
 
-    void main() {
-        vec3 normal = normalize(vNormal);
-        float NdotL = dot(normal, uLightDirection);
-        float diffuse = max(NdotL, 0.0) * 0.85 + 0.15;
+layout(location = 0) out vec4 fragColor;
 
-        vec2 atlasUV = vec2(vTexCoord.x, 1.0 - vTexCoord.y) * uTextureScale + uTextureOffset;
-        vec3 texColor = texture2D(uTexture, atlasUV).rgb;
-        vec3 color = texColor * (uAmbientColor + uLightColor * diffuse);
+void main() {
+    vec3 normal = normalize(vNormal);
+    float NdotL = dot(normal, uLightDirection);
+    float diffuse = max(NdotL, 0.0) * 0.85 + 0.15;
 
-        gl_FragColor = vec4(color, 1.0);
-    }
-`
+    vec2 atlasUV = vec2(vTexCoord.x, 1.0 - vTexCoord.y) * uTextureScale + uTextureOffset;
+    vec3 texColor = texture(uTexture, atlasUV).rgb;
+    vec3 color = texColor * (uAmbientColor + uLightColor * diffuse);
+
+    fragColor = vec4(color, 1.0);
+}
+`;
 
 export interface ShaderProgram {
     program: WebGLProgram
@@ -66,7 +68,7 @@ export interface ShaderProgram {
     }
 }
 
-export function compileShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader {
+export function compileShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
     const shader = gl.createShader(type)!
     gl.shaderSource(shader, source)
     gl.compileShader(shader)
@@ -78,7 +80,7 @@ export function compileShader(gl: WebGLRenderingContext, type: number, source: s
     return shader
 }
 
-export function createShaderProgram(gl: WebGLRenderingContext): ShaderProgram {
+export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
     const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE)
     const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE)
 

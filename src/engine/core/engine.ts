@@ -35,5 +35,5 @@ export interface Engine {
     destruct(): void;
     getDebugManager(): DebugManager;
     registerEventQueue(event: Function): this;
-    getCanvas(canvas: "webgl" | "2d"): HTMLCanvasElement;
+    getCanvas(canvas: "webgl2" | "2d"): HTMLCanvasElement;
 }
