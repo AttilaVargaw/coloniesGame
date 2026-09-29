@@ -21,8 +21,8 @@ export function ColonySummary({ industry, info }: { industry: IndustryComponent;
 
     const employedSum = populationSum - unemployedSum - industry.population.retired.number - industry.population.student.number;
 
-    const totalIncome = Object.entries(industry.population).reduce((sum, [key, value]) => {
-        return sum + (baseSalaries[key as keyof Population] || 0) * value.number;
+    const totalIncome = Object.entries(industry.population).reduce((summary, [key, value]) => {
+        return summary + (baseSalaries[key as keyof Population] || 0) * value.number;
     }, 0);
 
     const totalNet = Object.values(industry.populationProfits).reduce((sum, val) => sum + val, 0);

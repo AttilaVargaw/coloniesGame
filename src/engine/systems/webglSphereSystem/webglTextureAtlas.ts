@@ -18,8 +18,8 @@ export class WebGLTextureAtlas {
             throw new Error("WebGL texture atlas not available")
         }
         this.atlasCanvas = document.createElement("canvas")
-        this.atlasCanvas.width = ATLAS_SIZE
-        this.atlasCanvas.height = ATLAS_SIZE
+        this.atlasCanvas.width = atlasSize
+        this.atlasCanvas.height = atlasSize
     }
 
     addTexture(key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas): AtlasEntry {

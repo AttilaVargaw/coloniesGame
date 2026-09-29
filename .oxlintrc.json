@@ -28,6 +28,7 @@
         "**/*.tsx"
       ],
       "rules": {
+        "react/capitalized-calls": "allow",
         "no-use-before-define": "allow",
         "no-console": "allow",
         "no-undefined": "allow",

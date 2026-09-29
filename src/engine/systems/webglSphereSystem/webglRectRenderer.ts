@@ -220,9 +220,9 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
                 this.atlas.set(key, atlas)
                 atlasEntry = atlas.addTexture(rect.texture.id, rect.texture.texture)
             } else {
-                atlasEntry = atlas!.getEntry(rect.entity.id)
+                atlasEntry = atlas.getEntry(rect.texture.id)
             }
-            atlasTexture = atlas!.getTexture(gl)
+            atlasTexture = atlas.getTexture(gl)
         } else {
             atlasTexture = this.whiteTexture
         }

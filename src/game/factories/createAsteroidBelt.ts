@@ -41,10 +41,10 @@ const ASTEROID_COUNT_MIN = 200
 const MAX_ECCENTRICITY = 0.2
 const MAX_INCLINATION = 0.1
 const DUST_AREA_DENSITY = 0.3
-const ASTEROID_CULLING_DISTANCE_THRESHOLD = 200
-const DUST_CULLING_DISTANCE_THRESHOLD = 4000
-const DUST_SIZE_MIN = 30
-const DUST_SIZE_MAX = 80
+const ASTEROID_CULLING_DISTANCE_THRESHOLD = 10000
+const DUST_CULLING_DISTANCE_THRESHOLD = 10000
+const DUST_SIZE_MIN = 90
+const DUST_SIZE_MAX = 150
 const MINING_SITE_RADIUS = 4
 const MINING_SITE_AREA_DENSITY = 0.005
 
@@ -70,6 +70,8 @@ const SMOKE_TINTS = [
     "#a09888",
     "#6e6258"
 ] as const
+
+const DUST_TEXTURE_SIZE = 64
 
 const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
 const tintedDustTextures = [] as (OffscreenCanvas | HTMLImageElement)[]
@@ -126,8 +128,10 @@ async function buildTintedTextures() {
     const dustPromises = SMOKE_TINTS.map((tint, i) => new Promise<void>((resolve) => {
         const image = new Image()
         image.src = dust1
-        image.decode().then(() => {
-            tintedDustTextures[i] = Colorize(image, tint)
+        image.decode().then(() => createImageBitmap(image, {
+            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "pixelated"
+        })).then((bitmap) => {
+            tintedDustTextures[i] = Colorize(bitmap, tint)
             resolve()
         })
     }))
@@ -225,6 +229,7 @@ export async function createAsteroidBelt({
         dustBeltComponent.cullingDistanceThreshold = DUST_CULLING_DISTANCE_THRESHOLD
 
         const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[Math.floor(generateRandomNumber(0, tintedDustTextures.length, true))])
+        textureComponent.rotation = 0
 
         applyComponents(
             dust,
