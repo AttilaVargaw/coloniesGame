@@ -48,7 +48,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private fpsFrameCount = 0
     private fpsLastTime = performance.now()
     private currentFps = 0
-    private rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
+    private frameTimeSamples: number[] = []
+    private lastFrameTime = 0
+    private rendererTimings = new Map<string, number>()
+    rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
     webglDrawn = false
 
     get isDragging() {
@@ -160,43 +163,22 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
         const bloomEntries: RenderEntry[] = []
+        const timings: Record<string, number> = {}
+        const totalStart = performance.now()
 
-        for(const rendererClass of this.rendererClasses) {
-            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
-            if(!renderer) {
-                continue
-            }
+        this.projectRenderers(timings, allEntries, labelEntries, bloomEntries, bloomTargetCtx)
 
-            renderer.beginFrame()
-            renderer.projectNodes()
-
-            for(const { node, projected } of renderer.getProjectedCacheEntries()) {
-                if(renderer instanceof LabelRenderer) {
-                    labelEntries.push({ renderer, node, projected })
-                } else if('emitLight' in node && (node as any).emitLight) {
-                    allEntries.push({ renderer, node, projected })
-
-                    if(bloomTargetCtx) {
-                        bloomEntries.push({ renderer, node, projected })
-                    }
-                } else {
-                    allEntries.push({ renderer, node, projected })
-                }
-            }
-        }
-
-        allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
+        const drawStart = performance.now()
         for(const entry of allEntries) {
             entry.renderer.drawNode(entry.node, dt)
         }
+        timings.draw = (timings.draw || 0) + (performance.now() - drawStart)
 
-        for(const rendererClass of this.rendererClasses) {
-            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
-            renderer?.endFrame()
-        }
+        this.finishRenderers(timings)
 
+        const compositeStart = performance.now()
         if(this.webglDrawn) {
             const glCanvas = this.engine.getCanvas("webgl2")
             if(glCanvas) {
@@ -214,8 +196,66 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 entry.renderer.drawNode(entry.node, dt, bloomTargetCtx)
             }
         }
+        timings.composite = (timings.composite || 0) + (performance.now() - compositeStart)
 
         this.pendingLabelEntries = labelEntries
+        const totalMs = performance.now() - totalStart
+        this.frameTimeSamples.push(totalMs)
+        if(this.frameTimeSamples.length > 60) {
+            this.frameTimeSamples.shift()
+        }
+        this.lastFrameTime = totalMs
+        this.rendererTimings = new Map(Object.entries(timings))
+    }
+
+    private projectRenderers(
+        timings: Record<string, number>,
+        allEntries: RenderEntry[],
+        labelEntries: RenderEntry[],
+        bloomEntries: RenderEntry[],
+        bloomTargetCtx: CanvasRenderingContext2D | undefined
+    ) {
+        if(!this.engine) return
+        for(const rendererClass of this.rendererClasses) {
+            const name = rendererClass.name
+            const t0 = performance.now()
+            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
+            if(!renderer) {
+                continue
+            }
+
+            renderer.beginFrame()
+            const t1 = performance.now()
+            renderer.projectNodes()
+            const t2 = performance.now()
+            timings[name] = (timings[name] || 0) + (t2 - t0)
+            timings[`${name}:project`] = (timings[`${name}:project`] || 0) + (t2 - t1)
+
+            for(const { node, projected } of renderer.getProjectedCacheEntries()) {
+                if(renderer instanceof LabelRenderer) {
+                    labelEntries.push({ renderer, node, projected })
+                } else if('emitLight' in node && (node as any).emitLight) {
+                    allEntries.push({ renderer, node, projected })
+
+                    if(bloomTargetCtx) {
+                        bloomEntries.push({ renderer, node, projected })
+                    }
+                } else {
+                    allEntries.push({ renderer, node, projected })
+                }
+            }
+        }
+    }
+
+    private finishRenderers(timings: Record<string, number>) {
+        if(!this.engine) return
+        for(const rendererClass of this.rendererClasses) {
+            const name = rendererClass.name
+            const t0 = performance.now()
+            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
+            renderer?.endFrame()
+            timings[`${name}:end`] = (timings[`${name}:end`] || 0) + (performance.now() - t0)
+        }
     }
 
     private pendingLabelEntries: RenderEntry[] = []
@@ -272,7 +312,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             showCameraTarget,
             showFpsCounter,
             showJumpGraph,
-            showCullingOverlay } } = this.engine.getDebugManager()
+            showCullingOverlay,
+            showFrameTime } } = this.engine.getDebugManager()
 
         for(const { viewPort: { camera } } of this.nodes) {
             const ctx = camera.context
@@ -327,6 +368,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 this.drawFpsCounter(ctx)
             }
 
+            if(showFrameTime) {
+                this.drawFrameTime(ctx)
+            }
+
             if(showCullingOverlay) {
                 this.drawCullingOverlay(ctx)
             }
@@ -342,6 +387,32 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.textAlign = "left"
         ctx.textBaseline = "top"
         ctx.fillText(`FPS: ${this.currentFps}`, 10, 10)
+        ctx.restore()
+    }
+
+    private drawFrameTime(ctx: CanvasRenderingContext2D) {
+        if(!this.frameTimeSamples.length) return
+        const showFps = this.engine?.getDebugManager().debugflags.showFpsCounter ?? false
+        const avg = this.frameTimeSamples.reduce((a, b) => a + b, 0) / this.frameTimeSamples.length
+        const max = Math.max(...this.frameTimeSamples)
+        ctx.save()
+        ctx.font = "14px monospace"
+        ctx.fillStyle = "#0ff"
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
+        ctx.shadowBlur = 4
+        ctx.textAlign = "left"
+        ctx.textBaseline = "top"
+        let y = showFps ? 32 : 10
+        ctx.fillText(`Frame: ${avg.toFixed(1)}ms (${(1000 / Math.max(1, avg)).toFixed(0)}fps) max ${max.toFixed(1)}ms`, 64, y)
+        if(this.rendererTimings.size) {
+            y += 18
+            ctx.font = "12px monospace"
+            ctx.fillStyle = "#aaa"
+            for(const [key, ms] of this.rendererTimings) {
+                ctx.fillText(`${key}: ${ms.toFixed(2)}ms`, 64, y)
+                y += 14
+            }
+        }
         ctx.restore()
     }
 
@@ -364,7 +435,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             `Distance: ${viewport.camera.distance.toFixed(0)}`,
             `Rect projected: ${rectRenderer.projectedCount}`,
             `Rect culled: ${rectRenderer.culledCount}`,
-        ]
+        ] as const
 
         let y = 30
         for(const line of lines) {
