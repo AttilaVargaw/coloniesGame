@@ -21,7 +21,6 @@ import { CommandBase } from "@/engine/lib/CommandBase"
 import { BodyBlueprint } from "./data/BodyBlueprint"
 import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRenderer"
 import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
-import { RectRenderer } from "@/engine/systems/viewportSystem/renderers/rectRenderer"
 import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem, CameraFollowComponent } from "./systems/cameraFollowSystem"
@@ -86,7 +85,6 @@ export class Game {
             .addSystem(OrbitSelectionSystem, ViewportSystem)
             .addSystem(ShapeRenderer, ViewportSystem)
             .addSystem(LabelRenderer, ViewportSystem)
-            // .addSystem(RectRenderer, ViewportSystem)
             .addSystem(WebGLRectRenderer, ViewportSystem)
             .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
