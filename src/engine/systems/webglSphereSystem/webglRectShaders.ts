@@ -4,42 +4,37 @@ export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 aPosition;
 in vec2 aTexCoord;
 
-uniform vec2 uTranslation;
-uniform vec2 uScale;
-uniform float uRotation;
-uniform vec2 uTextureOffset;
-uniform vec2 uTextureScale;
-uniform vec4 uColor;
-
-out vec2 vTexCoord;
-out vec2 vTextureOffset;
-out vec2 vTextureScale;
-out vec4 vColor;
+in vec2 aInstanceTranslation;
+in vec2 aInstanceScale;
+in float aInstanceRotation;
+in vec2 aInstanceTexOffset;
+in vec2 aInstanceTexScale;
+in vec4 aInstanceColor;
 
 uniform mat4 uProjection;
+uniform sampler2D uTexture;
+
+out vec2 vAtlasUV;
+out vec4 vColor;
 
 void main() {
-    float cosR = cos(uRotation);
-    float sinR = sin(uRotation);
+    float cosR = cos(aInstanceRotation);
+    float sinR = sin(aInstanceRotation);
     vec2 rotatedPos = vec2(
         aPosition.x * cosR - aPosition.y * sinR,
         aPosition.x * sinR + aPosition.y * cosR
     );
-    vec2 worldPos = rotatedPos * uScale + uTranslation;
+    vec2 worldPos = rotatedPos * aInstanceScale + aInstanceTranslation;
     gl_Position = uProjection * vec4(worldPos, 0.0, 1.0);
-    vTexCoord = aTexCoord;
-    vTextureOffset = uTextureOffset;
-    vTextureScale = uTextureScale;
-    vColor = uColor;
+    vAtlasUV = vec2(aTexCoord.x, 1.0 - aTexCoord.y) * aInstanceTexScale + aInstanceTexOffset;
+    vColor = aInstanceColor;
 }
 `;
 
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
-in vec2 vTexCoord;
-in vec2 vTextureOffset;
-in vec2 vTextureScale;
+in vec2 vAtlasUV;
 in vec4 vColor;
 
 uniform sampler2D uTexture;
@@ -47,8 +42,7 @@ uniform sampler2D uTexture;
 layout(location = 0) out vec4 fragColor;
 
 void main() {
-    vec2 atlasUV = vec2(vTexCoord.x, 1.0 - vTexCoord.y) * vTextureScale + vTextureOffset;
-    vec4 texColor = texture(uTexture, atlasUV);
+    vec4 texColor = texture(uTexture, vAtlasUV);
     fragColor = vec4(texColor.rgb * vColor.rgb, texColor.a * vColor.a);
 }
 `;
@@ -58,16 +52,16 @@ export interface RectShaderProgram {
     attribs: {
         position: number;
         texCoord: number;
+        instanceTranslation: number;
+        instanceScale: number;
+        instanceRotation: number;
+        instanceTexOffset: number;
+        instanceTexScale: number;
+        instanceColor: number;
     };
     uniforms: {
         projection: WebGLUniformLocation | null;
         texture: WebGLUniformLocation | null;
-        translation: WebGLUniformLocation | null;
-        scale: WebGLUniformLocation | null;
-        rotation: WebGLUniformLocation | null;
-        textureOffset: WebGLUniformLocation | null;
-        textureScale: WebGLUniformLocation | null;
-        color: WebGLUniformLocation | null;
     };
 }
 
@@ -92,17 +86,17 @@ export function createRectShaderProgram(gl: WebGL2RenderingContext): RectShaderP
     const attribs = {
         position: gl.getAttribLocation(program, "aPosition"),
         texCoord: gl.getAttribLocation(program, "aTexCoord"),
+        instanceTranslation: gl.getAttribLocation(program, "aInstanceTranslation"),
+        instanceScale: gl.getAttribLocation(program, "aInstanceScale"),
+        instanceRotation: gl.getAttribLocation(program, "aInstanceRotation"),
+        instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
+        instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
+        instanceColor: gl.getAttribLocation(program, "aInstanceColor"),
     };
 
     const uniforms = {
         projection: gl.getUniformLocation(program, "uProjection"),
         texture: gl.getUniformLocation(program, "uTexture"),
-        translation: gl.getUniformLocation(program, "uTranslation"),
-        scale: gl.getUniformLocation(program, "uScale"),
-        rotation: gl.getUniformLocation(program, "uRotation"),
-        textureOffset: gl.getUniformLocation(program, "uTextureOffset"),
-        textureScale: gl.getUniformLocation(program, "uTextureScale"),
-        color: gl.getUniformLocation(program, "uColor"),
     };
 
     return { program, attribs, uniforms };
