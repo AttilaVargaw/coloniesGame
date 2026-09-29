@@ -179,6 +179,7 @@ The game uses runtime-generated 128×128 canvas textures for stars and planets, 
 - Use `engine.reindexEntity` to reindex an entity
 - Use `engine.addCommand` to queue a command
 - About 30 unique rendered bodies, so texture generation cost is negligible
+- The debug server is usually running, use it, don't kill it
 
 ## Known Issues
 

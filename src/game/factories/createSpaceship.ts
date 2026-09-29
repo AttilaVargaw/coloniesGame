@@ -89,7 +89,6 @@ export function createVessel(
 
     const ship = applyComponents(createEntity(name),
         new ColorComponent(color, "", false),
-        new RadiusComponent(radius),
         new PositionComponent(...descartesToPolar(orbitAngle, orbitRadius)),
         new JumpDriveComponent(),
         new SensorSuiteComponent(3),

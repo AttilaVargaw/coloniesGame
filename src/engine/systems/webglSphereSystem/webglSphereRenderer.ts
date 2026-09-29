@@ -8,7 +8,7 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
 import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
-import { WebGLTextureAtlas } from "./webglTextureAtlas"
+import { WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
 import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
 
@@ -39,6 +39,8 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     private glDrawnThisFrame = false
     private instanceBuffer: WebGLBuffer | null = null
     private pendingInstances: Array<{ depth: number; data: Float32Array }> = []
+
+
 
     beginFrame() {
         this.glDrawnThisFrame = false
@@ -265,13 +267,21 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         }
 
         const camera = this.viewportSystem.viewport.camera
+        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
-        if(!node.texture.texture) {
+        const textureSource = showCheckerPattern ? createCheckerPatternCanvas() : node.texture.texture
+
+        if(!textureSource) {
             return
         }
 
         if(!this.atlas.getEntry(node.entity.id)) {
-            this.atlas.addTexture(node.entity.id, node.texture.texture)
+            this.atlas.addTexture(node.entity.id, textureSource)
+        }
+
+        const atlasEntry = this.atlas.getEntry(node.entity.id)
+        if(!atlasEntry) {
+            return
         }
 
         const { worldPos, projected } = this.getProjected(node)
@@ -285,27 +295,24 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const atlasEntry = this.atlas.getEntry(node.entity.id)
-        if(!atlasEntry) {
-            return
-        }
-
         const starEntity = this.findStarEntity()
-        if(!starEntity) {
-            return
+
+        let lightDir: Vec3
+
+        if(starEntity) {
+            const starPos = this.getWorldPosition2(starEntity)
+            const lightDirRaw: Vec3 = [
+                starPos[0] - worldPos[0],
+                starPos[1] - worldPos[1],
+                starPos[2] - worldPos[2],
+            ]
+            const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
+            lightDir = lightDirLength > 0
+                ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
+                : [0, 0, 1]
+        } else {
+            lightDir = [0, 0, 1]
         }
-
-        const starPos = this.getWorldPosition2(starEntity)
-
-        const lightDirRaw: Vec3 = [
-            starPos[0] - worldPos[0],
-            starPos[1] - worldPos[1],
-            starPos[2] - worldPos[2],
-        ]
-        const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
-        const lightDir: Vec3 = lightDirLength > 0
-            ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
-            : [0, 0, 1]
 
         const model = mat4.create()
         mat4.identity(model)
@@ -338,7 +345,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     }
 
     constructor(viewport: ViewportSystem) {
-        super(viewport, [PositionComponent, RadiusComponent, TextureComponent, ColorComponent], (entity) => {
+        super(viewport, [PositionComponent, RadiusComponent, TextureComponent], (entity) => {
             const pos = entity.getComponent(PositionComponent)!
             const radius = entity.getComponent(RadiusComponent)!
             const texture = entity.getComponent(TextureComponent)!

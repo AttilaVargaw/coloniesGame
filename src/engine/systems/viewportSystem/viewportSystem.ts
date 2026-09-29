@@ -21,6 +21,7 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
+import { WebGLSphereRenderer } from "../webglSphereSystem/webglSphereRenderer";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 let bloomSourceCtx: CanvasRenderingContext2D | null = null
@@ -151,10 +152,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
+    skipRender = true
+
     private scheduleRender(dt: number, bloomTargetCtx?: CanvasRenderingContext2D) {
         if(!this.engine) {
             return
         }
+
+        setTimeout(() => {
+            this.skipRender = false
+        }, 2_000);
 
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
@@ -163,6 +170,10 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         for(const rendererClass of this.rendererClasses) {
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             if(!renderer) {
+                continue
+            }
+
+            if(renderer instanceof WebGLSphereRenderer && this.skipRender) {
                 continue
             }
 
@@ -188,10 +199,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
         for(const entry of allEntries) {
+            // entry.renderer instanceof WebGLSphereRenderer && console.log({ entry })
+
             entry.renderer.drawNode(entry.node, dt)
         }
 
         for(const rendererClass of this.rendererClasses) {
+            if(rendererClass instanceof WebGLSphereRenderer && this.skipRender) {
+                continue
+            }
+
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             renderer?.endFrame()
         }

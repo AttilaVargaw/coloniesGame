@@ -6,7 +6,7 @@ import { RectNode } from "../viewportSystem/renderers/rectNode"
 import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
 import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
-import { WebGLTextureAtlas, type AtlasEntry } from "./webglTextureAtlas"
+import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
 import { ProjectedPoint } from "@/lib/camera"
@@ -34,6 +34,7 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
     private canvas!: HTMLCanvasElement
     private glDrawnThisFrame = false
     private whiteTexture: WebGLTexture | null = null
+    private checkerPatternCanvas: HTMLCanvasElement | null = null
     private projection = mat4.create()
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
     private textureToAtlasKey = new WeakMap<object, string>()
@@ -382,10 +383,31 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         }
 
         const resolvedTexture = this.resolveTexture(node.texture)
+        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
         let atlasKey: string
         let atlasEntry: AtlasEntry | undefined
 
-        if(resolvedTexture) {
+        if(showCheckerPattern) {
+            if(!this.checkerPatternCanvas) {
+                this.checkerPatternCanvas = createCheckerPatternCanvas()
+            }
+
+            const sizeKey = `${this.checkerPatternCanvas.width}-${this.checkerPatternCanvas.height}` as `${number}-${number}`
+            let atlas = this.atlas.get(sizeKey)
+
+            if(!atlas) {
+                atlas = new WebGLTextureAtlas(1024, Math.max(this.checkerPatternCanvas.width, this.checkerPatternCanvas.height))
+                this.atlas.set(sizeKey, atlas)
+            }
+
+            const texKey = `__checker__`
+            atlasEntry = atlas.getEntry(texKey)
+            if(!atlasEntry) {
+                atlasEntry = atlas.addTexture(texKey, this.checkerPatternCanvas)
+            }
+
+            atlasKey = sizeKey
+        } else if(resolvedTexture) {
             const sizeKey = `${resolvedTexture.width}-${resolvedTexture.height}` as `${number}-${number}`
             let atlas = this.atlas.get(sizeKey)
 

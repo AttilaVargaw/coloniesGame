@@ -5,7 +5,7 @@ export interface BloomSettings {
     alpha: number
 }
 
-export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showCullingOverlay"
+export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showCullingOverlay" | "showCheckerPattern"
 
 export class DebugManager {
     private readonly _flags: Record<DebugFlag, boolean> = {
@@ -18,6 +18,7 @@ export class DebugManager {
         showColorGrading: false,
         showVignette: false,
         showCullingOverlay: false,
+        showCheckerPattern: false,
     }
 
     private _bloomSettings: BloomSettings = {

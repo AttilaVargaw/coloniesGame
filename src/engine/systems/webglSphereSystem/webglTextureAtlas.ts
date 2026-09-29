@@ -1,6 +1,7 @@
 const ATLAS_SIZE = 1024
 const CELL_SIZE = 128
 
+export { createCheckerPatternCanvas } from "./createCheckerPattern"
 export interface AtlasEntry {
     u0: number
     v0: number
@@ -50,9 +51,9 @@ export class WebGLTextureAtlas {
 
         const entry: AtlasEntry = {
             u0: x / ATLAS_SIZE,
-            v0: y / ATLAS_SIZE,
+            v0: 1 - (y + CELL_SIZE) / ATLAS_SIZE,
             u1: (x + CELL_SIZE) / ATLAS_SIZE,
-            v1: (y + CELL_SIZE) / ATLAS_SIZE,
+            v1: 1 - y / ATLAS_SIZE,
         }
         this.entries.set(key, entry)
         this.atlasTexture = null
@@ -66,11 +67,13 @@ export class WebGLTextureAtlas {
 
         const texture = gl.createTexture()!
         gl.bindTexture(gl.TEXTURE_2D, texture)
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.atlasCanvas)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
         this.atlasTexture = texture
         return texture
     }
