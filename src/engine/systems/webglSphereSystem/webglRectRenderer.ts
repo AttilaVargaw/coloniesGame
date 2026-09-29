@@ -185,10 +185,10 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         }
 
         if(
-            projected.x + screenWidth < 0 ||
-            projected.x - screenWidth > camera.cssWidth ||
-            projected.y + screenHeight < 0 ||
-            projected.y - screenHeight > camera.cssHeight
+            projected.x + screenWidth / 2 < 0 ||
+            projected.x - screenWidth / 2 > camera.cssWidth ||
+            projected.y + screenHeight / 2 < 0 ||
+            projected.y - screenHeight / 2 > camera.cssHeight
         ) {
             return
         }
@@ -211,7 +211,7 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         let atlasTexture: WebGLTexture | null
 
         if(rect.texture?.texture) {
-            const key = `${rect.texture.texture.width}-${rect.texture.texture.width}` as `${number}-${number}`
+            const key = `${rect.texture.texture.width}-${rect.texture.texture.height}` as `${number}-${number}`
             let atlas = this.atlas.get(key)
 
             if(!atlas) {
@@ -293,13 +293,12 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
 
     constructor(viewport: ViewportSystem) {
         super(viewport,
-            [PositionComponent, SizeComponent, TextureComponent, ColorComponent],
+            [PositionComponent, SizeComponent],
             (e) => {
                 const color = e.getComponent(ColorComponent) ?? new ColorComponent()
-
                 return new RectNode(e, e.getComponent(PositionComponent)!,
                     e.getComponent(SizeComponent)!,
-                    e.getComponent(ColorComponent),
+                    color,
                     e.getComponent(TextureComponent),
                     e.getComponent(TextureComponent)?.rotation ?? 0,
                     color.emitLight,
