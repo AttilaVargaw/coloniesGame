@@ -40,6 +40,16 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         this.glDrawnThisFrame = false
     }
 
+    endFrame() {
+        if(this.glDrawnThisFrame) {
+            const ctx = this.canvas.getContext("2d")
+            if(ctx) {
+                const camera = this.viewportSystem.viewport.camera
+                ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+            }
+        }
+    }
+
     init() {
         if(!this.engine) return
 
@@ -147,7 +157,6 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             return
         }
 
-        const ctx = this.viewportSystem.viewport.camera.context
         const camera = this.viewportSystem.viewport.camera
 
         // const mainCanvas = ctx.canvas
@@ -161,10 +170,6 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         if(!gl || this.glDrawnThisFrame) {
             return
         }
-
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
         WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
 
@@ -198,7 +203,6 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             this.renderRect(node, projected)
         }
 
-        ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
         this.glDrawnThisFrame = true
     }
 

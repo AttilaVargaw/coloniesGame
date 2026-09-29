@@ -191,6 +191,11 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             entry.renderer.drawNode(entry.node, dt)
         }
 
+        for(const rendererClass of this.rendererClasses) {
+            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
+            renderer?.endFrame()
+        }
+
         if(bloomTargetCtx) {
             bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
             for(const entry of bloomEntries) {

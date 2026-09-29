@@ -147,6 +147,10 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         // override in renderers that need per-frame reset
     }
 
+    endFrame() {
+        // override in renderers that need per-frame cleanup
+    }
+
     getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
         const entries: Array<{ node: N; projected: ProjectedPoint }> = []
         for(const [node, { projected }] of this.projectedCache) {

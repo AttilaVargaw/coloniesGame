@@ -43,6 +43,16 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.glDrawnThisFrame = false
     }
 
+    endFrame() {
+        if(this.glDrawnThisFrame) {
+            const ctx = this.canvas.getContext("2d")
+            if(ctx) {
+                const camera = this.viewportSystem.viewport.camera
+                ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+            }
+        }
+    }
+
     init() {
         if(!this.engine) {
             throw new Error("WebGL not available")
@@ -91,7 +101,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
     }
 
     protected updateNode(node: WebGLSphereNode, _dT?: number, _ctx?: CanvasRenderingContext2D): void {
-        if(!this.engine || !this.atlas || this.glDrawnThisFrame) {
+        if(!this.engine || !this.atlas) {
             return
         }
 
@@ -117,7 +127,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         const gl = this.glContext
 
-        if(!gl || this.glDrawnThisFrame) {
+        if(!gl) {
             return
         }
 
@@ -176,7 +186,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             lightDir,
         )
 
-        this.canvas.getContext("2d")!.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
         this.glDrawnThisFrame = true
     }
 
