@@ -21,7 +21,6 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
-import { WebGLSphereRenderer } from "../webglSphereSystem/webglSphereRenderer";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 let bloomSourceCtx: CanvasRenderingContext2D | null = null
@@ -168,10 +167,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
-            if(renderer instanceof WebGLSphereRenderer) {
-                continue
-            }
-
             renderer.beginFrame()
             renderer.projectNodes()
 
@@ -198,10 +193,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         for(const rendererClass of this.rendererClasses) {
-            if(rendererClass instanceof WebGLSphereRenderer) {
-                continue
-            }
-
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             renderer?.endFrame()
         }

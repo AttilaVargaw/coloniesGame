@@ -3,11 +3,10 @@ import { ColorComponent } from "@/engine/components/colorComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
 import { RectNode } from "../viewportSystem/renderers/rectNode"
-import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
+import { WebGLBaseRenderer } from "./webglBaseRenderer"
 import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
 import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
-import { Entity } from "@/engine/entities/entity"
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
 import { ProjectedPoint } from "@/lib/camera"
 import { Vector3 } from "@/lib/Vector3"
@@ -22,61 +21,36 @@ const QUAD_VERTICES = new Float32Array([
 
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
 
-export class WebGLRectRenderer extends BaseRenderer<RectNode> {
-    private gl: WebGL2RenderingContext | null = null
+export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private shader: RectShaderProgram | null = null
     private quadBuffer: WebGLBuffer | null = null
     private quadIndexBuffer: WebGLBuffer | null = null
     private quadIndexCount = 0
-    private textureUnit = 0
-    private atlas!: Map<`${number}-${number}`, WebGLTextureAtlas>
-    private glCanvas!: HTMLCanvasElement
-    private canvas!: HTMLCanvasElement
-    private glDrawnThisFrame = false
-    private whiteTexture: WebGLTexture | null = null
-    private checkerPatternCanvas: HTMLCanvasElement | null = null
-    private projection = mat4.create()
-    private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
-    private textureToAtlasKey = new WeakMap<object, string>()
+    private atlas!: WebGLTextureAtlas
+    private atlasKeyMap = new WeakMap<object, string>()
     private nextTextureKey = 0
-    private instanceBuffer: WebGLBuffer | null = null
-    private pendingInstances: Array<{ atlasKey: string; depth: number; data: Float32Array }> = []
+    private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
+    private projection = mat4.create()
+    private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
 
-    beginFrame() {
-        this.glDrawnThisFrame = false
+    beginFrame(): void {
         this.pendingInstances = []
-
-        if(!this.engine || !this.gl) {
-            return
-        }
-
-        const mainCanvas = this.canvas
-        if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
-            this.glCanvas.width = mainCanvas.width
-            this.glCanvas.height = mainCanvas.height
-            this.resize(mainCanvas.width, mainCanvas.height)
-            this.glCanvas.style.width = mainCanvas.style.width
-            this.glCanvas.style.height = mainCanvas.style.height
-        }
+        super.beginFrame()
     }
 
     endFrame() {
         if(!this.gl || !this.shader) {
-            if(this.glDrawnThisFrame) {
-                const ctx = this.canvas.getContext("2d")
-                if(ctx) {
-                    const camera = this.viewportSystem.viewport.camera
-                    ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-                }
-            }
+            this.endFrameFallback()
             return
         }
+
+        const gl = this.gl!
+
+        this.resetGLState(gl)
 
         if(this.pendingInstances.length === 0) {
             return
         }
-
-        const gl = this.gl
 
         const camera = this.viewportSystem.viewport.camera
         WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
@@ -93,16 +67,21 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
 
-        const groups = new Map<string, Array<{ depth: number; data: Float32Array }>>()
+        const instanceStride = 13 * 4
+
+        const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
         for(const inst of this.pendingInstances) {
-            if(!groups.has(inst.atlasKey)) {
-                groups.set(inst.atlasKey, [])
+            if(!groups.has(inst.page)) {
+                groups.set(inst.page, [])
             }
-            groups.get(inst.atlasKey)!.push({ depth: inst.depth, data: inst.data })
+            groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
         }
 
-        const instanceStride = 13 * 4
-        for(const [atlasKey, instances] of groups) {
+        if(!this.instanceBuffer) {
+            this.instanceBuffer = gl.createBuffer()
+        }
+
+        for(const [page, instances] of groups) {
             instances.sort((a, b) => b.depth - a.depth)
 
             const totalFloats = instances.length * 13
@@ -113,23 +92,6 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
                 offset += 13
             }
 
-            let texture: WebGLTexture | null = null
-            if(atlasKey === "__white__") {
-                texture = this.whiteTexture
-            } else {
-                const atlas = this.atlas.get(atlasKey as `${number}-${number}`)
-                if(atlas) {
-                    texture = atlas.getTexture(gl)
-                }
-            }
-
-            if(!texture) {
-                continue
-            }
-
-            if(!this.instanceBuffer) {
-                this.instanceBuffer = gl.createBuffer()
-            }
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
             gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
@@ -152,6 +114,7 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             gl.vertexAttribPointer(this.shader.attribs.instanceColor, 4, gl.FLOAT, false, instanceStride, 9 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 1)
 
+            const texture = this.atlas.getTextures(gl)[page]
             gl.activeTexture(gl.TEXTURE0)
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(this.shader.uniforms.texture, 0)
@@ -160,7 +123,9 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             gl.disable(gl.CULL_FACE)
             gl.enable(gl.BLEND)
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+            gl.depthMask(false)
             gl.drawElementsInstanced(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0, instances.length)
+            gl.depthMask(true)
 
             gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
             gl.disableVertexAttribArray(this.shader.attribs.instanceScale)
@@ -168,6 +133,12 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
             gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
             gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 0)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceScale, 0)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceRotation, 0)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
         }
 
         this.glDrawnThisFrame = true
@@ -177,23 +148,21 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
     init() {
         if(!this.engine) return
 
-        if(typeof document === "undefined") {
-            throw new Error("WebGL not available")
-        }
-        this.glCanvas = this.engine.getCanvas("webgl2") as HTMLCanvasElement
-        this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
-        this.gl = this.glCanvas.getContext("webgl2")
+        this.initCanvases()
+        const gl = this.initContext()
 
-        if(!this.gl) {
-            throw new Error("WebGL not supported")
-        }
-
-        this.shader = createRectShaderProgram(this.gl)
+        this.shader = createRectShaderProgram(gl)
         this.initBuffers()
         this.initInstanceBuffer()
-        this.initWhiteTexture()
 
-        this.atlas = new Map<`${number}-${number}`, WebGLTextureAtlas>()
+        this.atlas = new WebGLTextureAtlas()
+        const whiteCanvas = document.createElement("canvas")
+        whiteCanvas.width = 1
+        whiteCanvas.height = 1
+        const ctx = whiteCanvas.getContext("2d")!
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, 1, 1)
+        this.atlas.addTexture("__white__", whiteCanvas)
     }
 
     private initInstanceBuffer() {
@@ -213,20 +182,6 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, QUAD_INDICES, this.gl.STATIC_DRAW)
         this.quadIndexCount = QUAD_INDICES.length
-    }
-
-    private initWhiteTexture() {
-        const gl = this.gl
-        if(!gl) return
-
-        const texture = gl.createTexture()!
-        gl.bindTexture(gl.TEXTURE_2D, texture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]))
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-        this.whiteTexture = texture
     }
 
     private static ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
@@ -257,70 +212,12 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         this.gl.viewport(0, 0, width, height)
     }
 
-    get glContext(): WebGL2RenderingContext | null {
-        return this.gl
-    }
-
-    private getWorldPosition2(entity: Entity): [number, number, number] {
-        const sceneNode = this.engine?.getSceneNode(entity)
-        if(sceneNode) {
-            const pos = sceneNode.getWorldPosition()
-            return [pos[0], pos[1], pos[2]]
-        }
-        const pos = entity.getComponent(PositionComponent)
-        return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
-    }
-
-    private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas | undefined {
-        if(!texture) {
-            return undefined
-        }
-
-        if(texture.texture) {
-            return texture.texture
-        }
-
-        let sourceKey: string | undefined
-        let sourceUri: string | undefined
-
-        if(texture.svg) {
-            sourceKey = `svg:${texture.svg}`
-            sourceUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture.svg)}`
-        } else if(texture.src) {
-            sourceKey = `src:${texture.src}`
-            sourceUri = texture.src
-        }
-
-        if(!sourceKey || !sourceUri) {
-            return undefined
-        }
-
-        const cached = this.textureCache.get(sourceKey)
-        if(cached) {
-            return cached
-        }
-
-        const image = new Image()
-        image.src = sourceUri
-
-        if(image.complete) {
-            this.textureCache.set(sourceKey, image)
-            return image
-        }
-
-        image.onload = () => {
-            this.textureCache.set(sourceKey, image)
-        }
-
-        return undefined
-    }
-
-    private getAtlasKey(texture: HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas): string {
-        if(this.textureToAtlasKey.has(texture)) {
-            return this.textureToAtlasKey.get(texture)!
+    private getAtlasKey(texture: object): string {
+        if(this.atlasKeyMap.has(texture)) {
+            return this.atlasKeyMap.get(texture)!
         }
         const key = `tex-${this.nextTextureKey++}`
-        this.textureToAtlasKey.set(texture, key)
+        this.atlasKeyMap.set(texture, key)
         return key
     }
 
@@ -349,16 +246,11 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
             return
         }
 
-        if(!this.engine || !this.atlas) {
+        if(!this.engine || !this.atlas || !this.glContext) {
             return
         }
 
         const camera = this.viewportSystem.viewport.camera
-
-        const gl = this.glContext
-        if(!gl) {
-            return
-        }
 
         const { worldPos, projected } = this.getProjected(node)
         const scale = projected.scale
@@ -380,47 +272,25 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
 
         const resolvedTexture = this.resolveTexture(node.texture)
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
-        let atlasKey: string
         let atlasEntry: AtlasEntry | undefined
 
         if(showCheckerPattern) {
-            if(!this.checkerPatternCanvas) {
-                this.checkerPatternCanvas = createCheckerPatternCanvas()
-            }
-
-            const sizeKey = `${this.checkerPatternCanvas.width}-${this.checkerPatternCanvas.height}` as `${number}-${number}`
-            let atlas = this.atlas.get(sizeKey)
-
-            if(!atlas) {
-                atlas = new WebGLTextureAtlas(1024, Math.max(this.checkerPatternCanvas.width, this.checkerPatternCanvas.height))
-                this.atlas.set(sizeKey, atlas)
-            }
-
-            const texKey = `__checker__`
-            atlasEntry = atlas.getEntry(texKey)
+            atlasEntry = this.atlas.getEntry("__checker__")
             if(!atlasEntry) {
-                atlasEntry = atlas.addTexture(texKey, this.checkerPatternCanvas)
+                atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
             }
-
-            atlasKey = sizeKey
         } else if(resolvedTexture) {
-            const sizeKey = `${resolvedTexture.width}-${resolvedTexture.height}` as `${number}-${number}`
-            let atlas = this.atlas.get(sizeKey)
-
-            if(!atlas) {
-                atlas = new WebGLTextureAtlas(1024, Math.max(resolvedTexture.width, resolvedTexture.height))
-                this.atlas.set(sizeKey, atlas)
-            }
-
             const texKey = this.getAtlasKey(resolvedTexture)
-            atlasEntry = atlas.getEntry(texKey)
+            atlasEntry = this.atlas.getEntry(texKey)
             if(!atlasEntry) {
-                atlasEntry = atlas.addTexture(texKey, resolvedTexture)
+                atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
             }
-
-            atlasKey = sizeKey
         } else {
-            atlasKey = "__white__"
+            atlasEntry = this.atlas.getEntry("__white__")
+        }
+
+        if(!atlasEntry) {
+            return
         }
 
         const fill = node.color.fill || "#ffffff"
@@ -432,17 +302,17 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         instanceData[2] = screenWidth
         instanceData[3] = screenHeight
         instanceData[4] = node.texture?.rotation ?? 0
-        instanceData[5] = atlasEntry ? atlasEntry.u0 : 0
-        instanceData[6] = atlasEntry ? atlasEntry.v0 : 0
-        instanceData[7] = atlasEntry ? (atlasEntry.u1 - atlasEntry.u0) : 1
-        instanceData[8] = atlasEntry ? (atlasEntry.v1 - atlasEntry.v0) : 1
+        instanceData[5] = atlasEntry.u0
+        instanceData[6] = atlasEntry.v0
+        instanceData[7] = atlasEntry.u1 - atlasEntry.u0
+        instanceData[8] = atlasEntry.v1 - atlasEntry.v0
         instanceData[9] = r
         instanceData[10] = g
         instanceData[11] = b
         instanceData[12] = 1.0
 
         this.pendingInstances.push({
-            atlasKey,
+            page: atlasEntry.page,
             depth: projected.depth,
             data: instanceData
         })
@@ -493,10 +363,51 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         if(this.gl) {
             if(this.quadBuffer) this.gl.deleteBuffer(this.quadBuffer)
             if(this.quadIndexBuffer) this.gl.deleteBuffer(this.quadIndexBuffer)
-            if(this.instanceBuffer) this.gl.deleteBuffer(this.instanceBuffer)
-            if(this.whiteTexture) this.gl.deleteTexture(this.whiteTexture)
-            if(this.shader?.program) this.gl.deleteProgram(this.shader.program)
         }
         return super.removeFromEngine()
+    }
+
+    private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas | undefined {
+        if(!texture) {
+            return undefined
+        }
+
+        if(texture.texture) {
+            return texture.texture
+        }
+
+        let sourceKey: string | undefined
+        let sourceUri: string | undefined
+
+        if(texture.svg) {
+            sourceKey = `svg:${texture.svg}`
+            sourceUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture.svg)}`
+        } else if(texture.src) {
+            sourceKey = `src:${texture.src}`
+            sourceUri = texture.src
+        }
+
+        if(!sourceKey || !sourceUri) {
+            return undefined
+        }
+
+        const cached = this.textureCache.get(sourceKey)
+        if(cached) {
+            return cached
+        }
+
+        const image = new Image()
+        image.src = sourceUri
+
+        if(image.complete) {
+            this.textureCache.set(sourceKey, image)
+            return image
+        }
+
+        image.onload = () => {
+            this.textureCache.set(sourceKey, image)
+        }
+
+        return undefined
     }
 }

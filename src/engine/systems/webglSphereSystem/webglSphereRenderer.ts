@@ -1,13 +1,13 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram, type ShaderProgram } from "./webglShaders"
 import { mat4 } from "@/engine/lib/mat4"
-import { type Vec3 } from "@/engine/lib/vec3"
+import type { Vec3 } from "@/engine/lib/vec3"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
-import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer"
+import { WebGLBaseRenderer } from "./webglBaseRenderer"
 import { WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
 import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
@@ -25,67 +25,33 @@ export class WebGLSphereNode extends RenderableNode {
         super(color, entity)
     }
 }
-export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
-    private gl: WebGL2RenderingContext | null = null
+
+export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private shader: ShaderProgram | null = null
     private sphereVao: WebGLBuffer | null = null
     private sphereIndexBuffer: WebGLBuffer | null = null
     private sphereIndexCount = 0
     private sphereIndexType = 0
-    private textureUnit = 0
     private atlas!: WebGLTextureAtlas
-    private glCanvas!: HTMLCanvasElement
-    private canvas!: HTMLCanvasElement
-    private glDrawnThisFrame = false
-    private instanceBuffer: WebGLBuffer | null = null
-    private pendingInstances: Array<{ depth: number; data: Float32Array }> = []
+    private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
 
-
-
-    beginFrame() {
-        this.glDrawnThisFrame = false
+    beginFrame(): void {
         this.pendingInstances = []
-
-        if(!this.engine || !this.gl) {
-            return
-        }
-
-        const mainCanvas = this.canvas
-        if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
-            this.glCanvas.width = mainCanvas.width
-            this.glCanvas.height = mainCanvas.height
-            this.resize(mainCanvas.width, mainCanvas.height)
-            this.glCanvas.style.width = mainCanvas.style.width
-            this.glCanvas.style.height = mainCanvas.style.height
-        }
+        super.beginFrame()
     }
 
     endFrame() {
         if(!this.gl || !this.shader) {
-            if(this.glDrawnThisFrame) {
-                const ctx = this.canvas.getContext("2d")
-                if(ctx) {
-                    const camera = this.viewportSystem.viewport.camera
-                    ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-                }
-            }
+            this.endFrameFallback()
             return
         }
+
+        const gl = this.gl!
+
+        this.resetGLState(gl)
 
         if(this.pendingInstances.length === 0) {
             return
-        }
-
-        const gl = this.gl
-
-        this.pendingInstances.sort((a, b) => b.depth - a.depth)
-
-        const totalFloats = this.pendingInstances.length * 32
-        const instanceArray = new Float32Array(totalFloats)
-        let offset = 0
-        for(const inst of this.pendingInstances) {
-            instanceArray.set(inst.data, offset)
-            offset += 32
         }
 
         const camera = this.viewportSystem.viewport.camera
@@ -103,11 +69,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         gl.uniform3f(this.shader.uniforms.lightColor, 1, 0.95, 0.85)
         gl.uniform3f(this.shader.uniforms.ambientColor, 0.6, 0.6, 0.65)
 
-        const atlasTexture = this.atlas.getTexture(gl)
-        gl.activeTexture(gl.TEXTURE0 + this.textureUnit)
-        gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
-        gl.uniform1i(this.shader.uniforms.texture, this.textureUnit)
-
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 8 * 4
         gl.enableVertexAttribArray(this.shader.attribs.position)
@@ -122,60 +83,88 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         if(!this.instanceBuffer) {
             this.instanceBuffer = gl.createBuffer()
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-        gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
-        const modelLoc = this.shader.attribs.instanceModel
-        const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
         const instanceStride = 32 * 4
-        gl.enableVertexAttribArray(modelLoc)
-        gl.vertexAttribPointer(modelLoc, 4, gl.FLOAT, false, instanceStride, 0)
-        gl.vertexAttribDivisor(modelLoc, 1)
-        gl.enableVertexAttribArray(modelLoc + 1)
-        gl.vertexAttribPointer(modelLoc + 1, 4, gl.FLOAT, false, instanceStride, 16)
-        gl.vertexAttribDivisor(modelLoc + 1, 1)
-        gl.enableVertexAttribArray(modelLoc + 2)
-        gl.vertexAttribPointer(modelLoc + 2, 4, gl.FLOAT, false, instanceStride, 32)
-        gl.vertexAttribDivisor(modelLoc + 2, 1)
-        gl.enableVertexAttribArray(modelLoc + 3)
-        gl.vertexAttribPointer(modelLoc + 3, 4, gl.FLOAT, false, instanceStride, 48)
-        gl.vertexAttribDivisor(modelLoc + 3, 1)
-        gl.enableVertexAttribArray(normalMatrixLoc)
-        gl.vertexAttribPointer(normalMatrixLoc, 3, gl.FLOAT, false, instanceStride, 16 * 4)
-        gl.vertexAttribDivisor(normalMatrixLoc, 1)
-        gl.enableVertexAttribArray(normalMatrixLoc + 1)
-        gl.vertexAttribPointer(normalMatrixLoc + 1, 3, gl.FLOAT, false, instanceStride, 19 * 4)
-        gl.vertexAttribDivisor(normalMatrixLoc + 1, 1)
-        gl.enableVertexAttribArray(normalMatrixLoc + 2)
-        gl.vertexAttribPointer(normalMatrixLoc + 2, 3, gl.FLOAT, false, instanceStride, 22 * 4)
-        gl.vertexAttribDivisor(normalMatrixLoc + 2, 1)
-        gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
-        gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
-        gl.enableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-        gl.vertexAttribPointer(this.shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 28 * 4)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 1)
-        gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
-        gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
 
-        gl.enable(gl.DEPTH_TEST)
-        gl.enable(gl.CULL_FACE)
-        gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, this.pendingInstances.length)
+        const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
+        for(const inst of this.pendingInstances) {
+            if(!groups.has(inst.page)) {
+                groups.set(inst.page, [])
+            }
+            groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
+        }
+
+        for(const [page, instances] of groups) {
+            instances.sort((a, b) => b.depth - a.depth)
+
+            const totalFloats = instances.length * 32
+            const instanceArray = new Float32Array(totalFloats)
+            let offset = 0
+            for(const inst of instances) {
+                instanceArray.set(inst.data, offset)
+                offset += 32
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
+            gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
+
+
+            const modelLoc = this.shader.attribs.instanceModel
+            const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
+            gl.enableVertexAttribArray(modelLoc)
+            gl.vertexAttribPointer(modelLoc, 4, gl.FLOAT, false, instanceStride, 0)
+            gl.vertexAttribDivisor(modelLoc, 1)
+            gl.enableVertexAttribArray(modelLoc + 1)
+            gl.vertexAttribPointer(modelLoc + 1, 4, gl.FLOAT, false, instanceStride, 16)
+            gl.vertexAttribDivisor(modelLoc + 1, 1)
+            gl.enableVertexAttribArray(modelLoc + 2)
+            gl.vertexAttribPointer(modelLoc + 2, 4, gl.FLOAT, false, instanceStride, 32)
+            gl.vertexAttribDivisor(modelLoc + 2, 1)
+            gl.enableVertexAttribArray(modelLoc + 3)
+            gl.vertexAttribPointer(modelLoc + 3, 4, gl.FLOAT, false, instanceStride, 48)
+            gl.vertexAttribDivisor(modelLoc + 3, 1)
+            gl.enableVertexAttribArray(normalMatrixLoc)
+            gl.vertexAttribPointer(normalMatrixLoc, 3, gl.FLOAT, false, instanceStride, 16 * 4)
+            gl.vertexAttribDivisor(normalMatrixLoc, 1)
+            gl.enableVertexAttribArray(normalMatrixLoc + 1)
+            gl.vertexAttribPointer(normalMatrixLoc + 1, 3, gl.FLOAT, false, instanceStride, 19 * 4)
+            gl.vertexAttribDivisor(normalMatrixLoc + 1, 1)
+            gl.enableVertexAttribArray(normalMatrixLoc + 2)
+            gl.vertexAttribPointer(normalMatrixLoc + 2, 3, gl.FLOAT, false, instanceStride, 22 * 4)
+            gl.vertexAttribDivisor(normalMatrixLoc + 2, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
+            gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceTexOffset)
+            gl.vertexAttribPointer(this.shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 28 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
+            gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
+
+            const atlasTexture = this.atlas.getTextures(gl)[page]
+            gl.activeTexture(gl.TEXTURE0)
+            gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
+            gl.uniform1i(this.shader.uniforms.texture, 0)
+
+            gl.enable(gl.DEPTH_TEST)
+            gl.enable(gl.CULL_FACE)
+            gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
+
+            gl.disableVertexAttribArray(modelLoc)
+            gl.disableVertexAttribArray(modelLoc + 1)
+            gl.disableVertexAttribArray(modelLoc + 2)
+            gl.disableVertexAttribArray(modelLoc + 3)
+            gl.disableVertexAttribArray(normalMatrixLoc)
+            gl.disableVertexAttribArray(normalMatrixLoc + 1)
+            gl.disableVertexAttribArray(normalMatrixLoc + 2)
+            gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
+            gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
+            gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
+        }
 
         this.glDrawnThisFrame = true
         this.viewportSystem.webglDrawn = true
-
-        gl.disableVertexAttribArray(modelLoc)
-        gl.disableVertexAttribArray(modelLoc + 1)
-        gl.disableVertexAttribArray(modelLoc + 2)
-        gl.disableVertexAttribArray(modelLoc + 3)
-        gl.disableVertexAttribArray(normalMatrixLoc)
-        gl.disableVertexAttribArray(normalMatrixLoc + 1)
-        gl.disableVertexAttribArray(normalMatrixLoc + 2)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
     }
 
     init() {
@@ -183,16 +172,10 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             throw new Error("WebGL not available")
         }
 
-        this.glCanvas = this.engine.getCanvas("webgl2") as HTMLCanvasElement
-        this.canvas = this.engine.getCanvas("2d") as HTMLCanvasElement
+        this.initCanvases()
+        const gl = this.initContext()
 
-        this.gl = this.glCanvas.getContext("webgl2")
-
-        if(!this.gl) {
-            throw new Error("WebGL not supported")
-        }
-
-        this.shader = createShaderProgram(this.gl)
+        this.shader = createShaderProgram(gl)
 
         this.glCanvas.style.position = "absolute"
         this.glCanvas.style.top = "0"
@@ -204,17 +187,43 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         this.atlas = new WebGLTextureAtlas()
 
         this.initBuffers()
-        this.initInstanceBuffer()
 
-        this.gl.disable(this.gl.DEPTH_TEST)
+        gl.disable(gl.DEPTH_TEST)
     }
 
-    private initInstanceBuffer() {
+    private initBuffers() {
         if(!this.gl) {
             return
         }
 
-        this.instanceBuffer = this.gl.createBuffer()
+        const { indices, normals, positions, uvs } = createSphereMesh(SPHERE_SEGMENTS, Math.round(SPHERE_SEGMENTS * 0.66))
+
+        const vertexCount = positions.length / 3
+        const interleaved = new Float32Array(vertexCount * 8)
+        for(let i = 0; i < vertexCount; i++) {
+            const base = i * 8
+            const posBase = i * 3
+            const uvBase = i * 2
+
+            interleaved[base + 0] = positions[posBase + 0]
+            interleaved[base + 1] = positions[posBase + 1]
+            interleaved[base + 2] = positions[posBase + 2]
+            interleaved[base + 3] = normals[posBase + 0]
+            interleaved[base + 4] = normals[posBase + 1]
+            interleaved[base + 5] = normals[posBase + 2]
+            interleaved[base + 6] = uvs[uvBase + 0]
+            interleaved[base + 7] = uvs[uvBase + 1]
+        }
+
+        this.sphereVao = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.sphereVao)
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, interleaved, this.gl.STATIC_DRAW)
+
+        this.sphereIndexBuffer = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indices, this.gl.STATIC_DRAW)
+        this.sphereIndexCount = indices.length
+        this.sphereIndexType = indices instanceof Uint32Array ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT
     }
 
     private findStarEntity(): Entity | undefined {
@@ -222,16 +231,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             const color = e.getComponent(ColorComponent)
             return color?.emitLight
         })
-    }
-
-    private getWorldPosition2(entity: Entity): [number, number, number] {
-        const sceneNode = this.engine?.getSceneNode(entity)
-        if(sceneNode) {
-            const pos = sceneNode.getWorldPosition()
-            return [pos[0], pos[1], pos[2]]
-        }
-        const pos = entity.getComponent(PositionComponent)
-        return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
     }
 
     protected updateNode(node: WebGLSphereNode, _dT?: number, ctx?: CanvasRenderingContext2D): void {
@@ -316,6 +315,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         instanceData.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], 30)
 
         this.pendingInstances.push({
+            page: atlasEntry.page,
             depth: projected.depth,
             data: instanceData
         })
@@ -332,53 +332,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         })
     }
 
-    private initBuffers() {
-        if(!this.gl) {
-            return
-        }
-
-        const { indices, normals, positions, uvs } = createSphereMesh(SPHERE_SEGMENTS, Math.round(SPHERE_SEGMENTS * 0.66))
-
-        const vertexCount = positions.length / 3
-        const interleaved = new Float32Array(vertexCount * 8)
-        for(let i = 0; i < vertexCount; i++) {
-            const base = i * 8
-            const posBase = i * 3
-            const uvBase = i * 2
-
-            interleaved[base + 0] = positions[posBase + 0]
-            interleaved[base + 1] = positions[posBase + 1]
-            interleaved[base + 2] = positions[posBase + 2]
-            interleaved[base + 3] = normals[posBase + 0]
-            interleaved[base + 4] = normals[posBase + 1]
-            interleaved[base + 5] = normals[posBase + 2]
-            interleaved[base + 6] = uvs[uvBase + 0]
-            interleaved[base + 7] = uvs[uvBase + 1]
-        }
-
-        this.sphereVao = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.sphereVao)
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, interleaved, this.gl.STATIC_DRAW)
-
-        this.sphereIndexBuffer = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indices, this.gl.STATIC_DRAW)
-        this.sphereIndexCount = indices.length
-        this.sphereIndexType = indices instanceof Uint32Array ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT
-    }
-
-    resize(width: number, height: number) {
-        if(!this.gl) {
-            return
-        }
-
-        this.gl.viewport(0, 0, width, height)
-    }
-
-    get glContext(): WebGL2RenderingContext | null {
-        return this.gl
-    }
-
     private model = mat4.create()
     private view = mat4.create()
     private projection = mat4.create()
@@ -388,8 +341,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         if(this.gl) {
             if(this.sphereVao) this.gl.deleteBuffer(this.sphereVao)
             if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
-            if(this.instanceBuffer) this.gl.deleteBuffer(this.instanceBuffer)
-            if(this.shader?.program) this.gl.deleteProgram(this.shader.program)
         }
         return super.removeFromEngine()
     }
