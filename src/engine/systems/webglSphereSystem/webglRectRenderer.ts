@@ -148,60 +148,52 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
     }
 
-    protected updateNode(_node: RectNode, _dt?: number, _ctx?: CanvasRenderingContext2D): void {
-        if(_ctx) {
-            return
-        }
-
-        if(!this.engine || !this.atlas || this.glDrawnThisFrame) {
+    protected updateNode(node: RectNode, _dt?: number, _ctx?: CanvasRenderingContext2D): void {
+        if(!this.engine || !this.atlas) {
             return
         }
 
         const camera = this.viewportSystem.viewport.camera
 
-        // const mainCanvas = ctx.canvas
-        // if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
-        //     this.glCanvas.width = mainCanvas.width
-        //     this.glCanvas.height = mainCanvas.height
-        //     this.resize(mainCanvas.width, mainCanvas.height)
-        // }
+        const mainCanvas = this.canvas
+        if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
+            this.glCanvas.width = mainCanvas.width
+            this.glCanvas.height = mainCanvas.height
+            this.resize(mainCanvas.width, mainCanvas.height)
+            this.glCanvas.style.width = mainCanvas.style.width
+            this.glCanvas.style.height = mainCanvas.style.height
+        }
 
         const gl = this.glContext
-        if(!gl || this.glDrawnThisFrame) {
+        if(!gl) {
             return
         }
 
         WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
 
-        for(const node of this.nodes) {
-            if(this.shouldSkipProjection(node, 0)) {
-                continue
-            }
-
-            const worldPos = this.getWorldPosition2(node.entity)
-            const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
-            if(!projected) {
-                continue
-            }
-
-            const screenWidth = node.size.width * projected.scale
-            const screenHeight = node.size.height * projected.scale
-
-            if(this.shouldCullNode(node, projected, worldPos)) {
-                continue
-            }
-
-            if(
-                projected.x + screenWidth < 0 ||
-                projected.x - screenWidth > camera.cssWidth ||
-                projected.y + screenHeight < 0 ||
-                projected.y - screenHeight > camera.cssHeight
-            ) {
-                continue
-            }
-
-            this.renderRect(node, projected)
+        const worldPos = this.getWorldPosition2(node.entity)
+        const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
+        if(!projected) {
+            return
         }
+
+        const screenWidth = node.size.width * projected.scale
+        const screenHeight = node.size.height * projected.scale
+
+        if(this.shouldCullNode(node, projected, worldPos)) {
+            return
+        }
+
+        if(
+            projected.x + screenWidth < 0 ||
+            projected.x - screenWidth > camera.cssWidth ||
+            projected.y + screenHeight < 0 ||
+            projected.y - screenHeight > camera.cssHeight
+        ) {
+            return
+        }
+
+        this.renderRect(node, projected)
 
         this.glDrawnThisFrame = true
     }
@@ -267,6 +259,8 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
         gl.uniform1i(this.shader.uniforms.texture, 0)
 
+        gl.disable(gl.DEPTH_TEST)
+        gl.disable(gl.CULL_FACE)
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
