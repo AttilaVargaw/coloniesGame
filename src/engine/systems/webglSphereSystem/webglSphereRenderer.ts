@@ -121,13 +121,30 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
         gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
+        const modelLoc = this.shader.attribs.instanceModel
+        const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
         const instanceStride = 32 * 4
-        gl.enableVertexAttribArray(this.shader.attribs.instanceModel)
-        gl.vertexAttribPointer(this.shader.attribs.instanceModel, 4, gl.FLOAT, false, instanceStride, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceModel, 1)
-        gl.enableVertexAttribArray(this.shader.attribs.instanceNormalMatrix)
-        gl.vertexAttribPointer(this.shader.attribs.instanceNormalMatrix, 3, gl.FLOAT, false, instanceStride, 16 * 4)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceNormalMatrix, 1)
+        gl.enableVertexAttribArray(modelLoc)
+        gl.vertexAttribPointer(modelLoc, 4, gl.FLOAT, false, instanceStride, 0)
+        gl.vertexAttribDivisor(modelLoc, 1)
+        gl.enableVertexAttribArray(modelLoc + 1)
+        gl.vertexAttribPointer(modelLoc + 1, 4, gl.FLOAT, false, instanceStride, 16)
+        gl.vertexAttribDivisor(modelLoc + 1, 1)
+        gl.enableVertexAttribArray(modelLoc + 2)
+        gl.vertexAttribPointer(modelLoc + 2, 4, gl.FLOAT, false, instanceStride, 32)
+        gl.vertexAttribDivisor(modelLoc + 2, 1)
+        gl.enableVertexAttribArray(modelLoc + 3)
+        gl.vertexAttribPointer(modelLoc + 3, 4, gl.FLOAT, false, instanceStride, 48)
+        gl.vertexAttribDivisor(modelLoc + 3, 1)
+        gl.enableVertexAttribArray(normalMatrixLoc)
+        gl.vertexAttribPointer(normalMatrixLoc, 3, gl.FLOAT, false, instanceStride, 16 * 4)
+        gl.vertexAttribDivisor(normalMatrixLoc, 1)
+        gl.enableVertexAttribArray(normalMatrixLoc + 1)
+        gl.vertexAttribPointer(normalMatrixLoc + 1, 3, gl.FLOAT, false, instanceStride, 19 * 4)
+        gl.vertexAttribDivisor(normalMatrixLoc + 1, 1)
+        gl.enableVertexAttribArray(normalMatrixLoc + 2)
+        gl.vertexAttribPointer(normalMatrixLoc + 2, 3, gl.FLOAT, false, instanceStride, 22 * 4)
+        gl.vertexAttribDivisor(normalMatrixLoc + 2, 1)
         gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
         gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
         gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
@@ -144,8 +161,13 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         this.glDrawnThisFrame = true
 
-        gl.disableVertexAttribArray(this.shader.attribs.instanceModel)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceNormalMatrix)
+        gl.disableVertexAttribArray(modelLoc)
+        gl.disableVertexAttribArray(modelLoc + 1)
+        gl.disableVertexAttribArray(modelLoc + 2)
+        gl.disableVertexAttribArray(modelLoc + 3)
+        gl.disableVertexAttribArray(normalMatrixLoc)
+        gl.disableVertexAttribArray(normalMatrixLoc + 1)
+        gl.disableVertexAttribArray(normalMatrixLoc + 2)
         gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
@@ -300,6 +322,8 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             const radius = entity.getComponent(RadiusComponent)!
             const texture = entity.getComponent(TextureComponent)!
             const color = entity.getComponent(ColorComponent)!
+
+            console.log("not called", entity, pos)
 
             return new WebGLSphereNode(entity, pos, radius, texture, color)
         })

@@ -9,9 +9,12 @@ import { EventBase } from "../lib/events";
 import { CommandBase } from "../lib/CommandBase";
 import { DebugManager } from "../lib/debugManager";
 
+//This computes the camera-local coordinates (x = right, y = up, z = forward). Note that z is positive when the point is in front of the camera. In OpenGL, after the view transform, points in front of the camera have negative Z (because the camera looks down -Z). So the project() function uses a left-handed convention for the Z axis, while OpenGL uses a right-handed convention.
+
+
+
 export interface Engine {
     getSystem<T extends System>(system: new (...args: any[]) => T): T;
-    // createEntity(id?: string): Entity;
     addEntity(entity: Entity, parentEntity?: Entity | null): this;
     removeEntity(entity: Entity): void;
     reindexEntity(entity: Entity): void;

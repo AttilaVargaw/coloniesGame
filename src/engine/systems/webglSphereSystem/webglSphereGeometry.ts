@@ -39,8 +39,8 @@ export function createSphereMesh(widthSegments: number = 48, heightSegments: num
             const a = y * (widthSegments + 1) + x
             const b = a + widthSegments + 1
 
-            indices.push(a, b, a + 1)
-            indices.push(b, b + 1, a + 1)
+            indices.push(a, a + 1, b)
+            indices.push(b, a + 1, b + 1)
         }
     }
 
