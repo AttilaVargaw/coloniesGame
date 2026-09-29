@@ -214,6 +214,22 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.rendererClasses = classes
     }
 
+    clearWebgl() {
+        if(!this.engine) {
+            return
+        }
+
+        const gl = this.engine?.getCanvas("webgl").getContext("webgl")!
+
+        if(!gl) {
+            return
+        }
+
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        gl.clearColor(0, 0, 0, 0)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    }
+
     update(dt: number) {
         if(!this.engine) {
             return
@@ -248,6 +264,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
 
             ViewportSystem.clear(ctx)
+            this.clearWebgl()
+
             drawStarfield(ctx, camera)
             drawNebulas(ctx, camera)
 
