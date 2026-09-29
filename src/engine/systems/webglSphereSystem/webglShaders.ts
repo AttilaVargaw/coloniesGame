@@ -49,6 +49,9 @@ void main() {
     vec3 texColor = texture(uTexture, vTexCoord).rgb;
     vec3 color = texColor * (uAmbientColor + uLightColor * diffuse);
 
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0 / 2.2));
+
     fragColor = vec4(color, 1.0);
 }
 `;
