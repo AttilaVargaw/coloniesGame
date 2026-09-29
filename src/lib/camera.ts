@@ -93,9 +93,15 @@ export default class Camera {
     private viewBasisCache: ViewBase | null = null
 
     private viewBasisDirty = true
+    private _projectionVersion = 0
+
+    get projectionVersion(): number {
+        return this._projectionVersion
+    }
 
     private markViewDirty() {
         this.viewBasisDirty = true
+        this._projectionVersion++
     }
 
     private ensureViewBasis() {
@@ -184,6 +190,7 @@ export default class Camera {
         this.viewport.scale[1] = this.context.canvas.height / this.viewport.height
         this.viewport.cssWidth = this.context.canvas.clientWidth || this.context.canvas.width
         this.viewport.cssHeight = this.context.canvas.clientHeight || this.context.canvas.height
+        this.markViewDirty()
     }
 
     public get cssWidth(): number {

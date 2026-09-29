@@ -51,6 +51,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private frameTimeSamples: number[] = []
     private lastFrameTime = 0
     private rendererTimings = new Map<string, number>()
+    private lastCameraProjectionVersion = -1
     rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
     webglDrawn = false
 
@@ -271,6 +272,17 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.rendererClasses = classes
     }
 
+    private syncCameraDirtyState() {
+        const mainCamera = this.viewport?.camera
+        if(mainCamera && mainCamera.projectionVersion !== this.lastCameraProjectionVersion) {
+            this.lastCameraProjectionVersion = mainCamera.projectionVersion
+            for(const rendererClass of this.rendererClasses) {
+                const renderer = this.engine?.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as (BaseRenderer<any> & { markProjectionDirty?: () => void }) | undefined
+                renderer?.markProjectionDirty?.()
+            }
+        }
+    }
+
     clearWebgl() {
         if(!this.engine) {
             return
@@ -293,6 +305,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         this.inputHandler.update(dt)
+        this.syncCameraDirtyState()
 
         this.fpsFrameCount++
         const now = performance.now()

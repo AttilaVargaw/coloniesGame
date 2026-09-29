@@ -17,6 +17,8 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
     private _renderLogged = false
     protected debugCulledCount = 0
     protected debugProjectedCount = 0
+    private needsProjection = true
+    private lastProjectionCameraVersion = -1
 
     get projectedCount() {
         return this.debugProjectedCount
@@ -41,6 +43,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         super.addToEngine(engine)
         this.nodes = engine.getNodeList(this.constructor as any)
         engine.subscribe(EntityAddedEvent, this.onEntityAdded)
+        this.markProjectionDirty()
         return this
     }
 
@@ -53,6 +56,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
         this.engine.unregisterNodeType(this.constructor as any)
         this.nodes.length = 0
+        this.markProjectionDirty()
         super.removeFromEngine()
 
         return this
@@ -75,12 +79,22 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
     }
 
     // eslint-disable-next-line class-methods-use-this,no-empty-function
-    private onEntityAdded = () => { return }
+    private onEntityAdded = () => {
+        this.markProjectionDirty()
+    }
+
+    markProjectionDirty() {
+        this.needsProjection = true
+    }
 
     projectNodes(): void {
         const { camera } = this.viewportSystem.viewport
         if(!camera) {
             console.warn('[BaseRenderer]', this.constructor.name, 'no camera')
+            return
+        }
+
+        if(!this.needsProjection && this.lastProjectionCameraVersion === camera.projectionVersion) {
             return
         }
 
@@ -137,14 +151,17 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             const bProj = this.projectedCache.get(b)!.projected
             return bProj.depth - aProj.depth
         })
-    }
 
-    update(_dt: number): void {
-        this.projectNodes()
+        this.needsProjection = false
+        this.lastProjectionCameraVersion = camera.projectionVersion
     }
 
     beginFrame() {
         // override in renderers that need per-frame reset
+    }
+
+    update(_dt: number): void {
+        // projection and drawing are handled by ViewportSystem.scheduleRender()
     }
 
     endFrame() {
