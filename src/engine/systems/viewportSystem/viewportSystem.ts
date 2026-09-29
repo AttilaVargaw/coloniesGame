@@ -50,6 +50,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private fpsLastTime = performance.now()
     private currentFps = 0
     private rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
+    webglDrawn = false
 
     get isDragging() {
         return this.inputHandler.isDragging
@@ -152,17 +153,11 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
-    skipRender = true
-
     private scheduleRender(dt: number, bloomTargetCtx?: CanvasRenderingContext2D) {
         if(!this.engine) {
             return
         }
-
-        setTimeout(() => {
-            this.skipRender = false
-        }, 2_000);
-
+        this.webglDrawn = false
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
         const bloomEntries: RenderEntry[] = []
@@ -173,7 +168,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 continue
             }
 
-            if(renderer instanceof WebGLSphereRenderer && this.skipRender) {
+            if(renderer instanceof WebGLSphereRenderer) {
                 continue
             }
 
@@ -199,18 +194,27 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
         for(const entry of allEntries) {
-            // entry.renderer instanceof WebGLSphereRenderer && console.log({ entry })
-
             entry.renderer.drawNode(entry.node, dt)
         }
 
         for(const rendererClass of this.rendererClasses) {
-            if(rendererClass instanceof WebGLSphereRenderer && this.skipRender) {
+            if(rendererClass instanceof WebGLSphereRenderer) {
                 continue
             }
 
             const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             renderer?.endFrame()
+        }
+
+        if(this.webglDrawn) {
+            const glCanvas = this.engine.getCanvas("webgl2")
+            if(glCanvas) {
+                for(const { viewPort: { camera } } of this.nodes) {
+                    const ctx = camera.context
+                    ctx.drawImage(glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+                }
+            }
+            this.webglDrawn = false
         }
 
         if(bloomTargetCtx) {

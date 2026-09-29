@@ -171,11 +171,7 @@ export class WebGLRectRenderer extends BaseRenderer<RectNode> {
         }
 
         this.glDrawnThisFrame = true
-
-        const ctx = this.canvas.getContext("2d")
-        if(ctx) {
-            ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-        }
+        this.viewportSystem.webglDrawn = true
     }
 
     init() {

@@ -60,24 +60,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         }
     }
 
-    private greyTexture: WebGLTexture | null = null
-
-    private initGreyTexture() {
-        const gl = this.gl
-        if(!gl) return
-
-        const texture = gl.createTexture()!
-        gl.bindTexture(gl.TEXTURE_2D, texture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 100, 255]))
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-        this.greyTexture = texture
-
-        console.log(gl.isTexture(this.greyTexture))
-    }
-
     endFrame() {
         if(!this.gl || !this.shader) {
             if(this.glDrawnThisFrame) {
@@ -182,6 +164,7 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, this.pendingInstances.length)
 
         this.glDrawnThisFrame = true
+        this.viewportSystem.webglDrawn = true
 
         gl.disableVertexAttribArray(modelLoc)
         gl.disableVertexAttribArray(modelLoc + 1)
@@ -193,11 +176,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
-
-        const ctx = this.canvas.getContext("2d")
-        if(ctx) {
-            ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-        }
     }
 
     init() {
@@ -227,7 +205,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
         this.initInstanceBuffer()
-        this.initGreyTexture()
 
         this.gl.disable(this.gl.DEPTH_TEST)
     }

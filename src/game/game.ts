@@ -94,9 +94,11 @@ export class Game {
         viewportEntity.addComponent(new CameraFollowComponent())
 
         this.engine.getSystem(ViewportSystem).setRendererClasses([
-            ShapeRenderer, LabelRenderer, WebGLRectRenderer, WebGLSphereRenderer
+            ShapeRenderer,
+            LabelRenderer,
+            WebGLRectRenderer,
+            WebGLSphereRenderer
         ])
-        //this.engine.addSystem(WebGLSphereSystem, ViewportSystem)
         this.engine.getSystem(ViewportSystem).init()
         this.engine.getSystem(WebGLSphereRenderer).init()
         this.engine.getSystem(WebGLRectRenderer).init()
