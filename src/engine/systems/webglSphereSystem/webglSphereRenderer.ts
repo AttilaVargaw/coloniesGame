@@ -117,7 +117,9 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
 
-        this.instanceBuffer = gl.createBuffer()
+        if(!this.instanceBuffer) {
+            this.instanceBuffer = gl.createBuffer()
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
         gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
@@ -322,8 +324,6 @@ export class WebGLSphereRenderer extends BaseRenderer<WebGLSphereNode> {
             const radius = entity.getComponent(RadiusComponent)!
             const texture = entity.getComponent(TextureComponent)!
             const color = entity.getComponent(ColorComponent)!
-
-            console.log("not called", entity, pos)
 
             return new WebGLSphereNode(entity, pos, radius, texture, color)
         })
