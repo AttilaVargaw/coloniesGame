@@ -1,7 +1,5 @@
 import type { Engine } from "@/engine/core/engine";
-import { SystemWithNodes } from "../../system";
 import { ViewportSystem } from "../viewportSystem";
-import { EntityAddedEvent } from "@/engine/lib/events";
 import { RenderableNode } from "./renderableNode";
 import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
@@ -9,12 +7,13 @@ import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
 import { Vector3 } from "@/lib/Vector3";
 
-export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithNodes<N> {
+export abstract class BaseRenderer<N extends RenderableNode> {
+    protected nodes: N[] = []
+    protected engine: Engine | null = null
     protected readonly components: (new (...args: any[]) => EntityComponent)[];
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
     private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
-    private _renderLogged = false
     protected debugCulledCount = 0
     protected debugProjectedCount = 0
 
@@ -31,16 +30,16 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         components: (new (...args: any[]) => EntityComponent)[],
         nodeFactory: (entity: Entity) => N,
     ) {
-        super()
         this.viewportSystem = viewportSystem
         this.components = components
         this.nodeFactory = nodeFactory
     }
 
     addToEngine(engine: Engine): this {
-        super.addToEngine(engine)
+        this.engine = engine
+        this.registerNodes(engine)
         this.nodes = engine.getNodeList(this.constructor as any)
-        engine.subscribe(EntityAddedEvent, this.onEntityAdded)
+
         return this
     }
 
@@ -49,11 +48,8 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             return this
         }
 
-        this.engine.unsubscribe(EntityAddedEvent, this.onEntityAdded)
-
         this.engine.unregisterNodeType(this.constructor as any)
-        this.nodes.length = 0
-        super.removeFromEngine()
+        this.nodes = []
 
         return this
     }
@@ -73,9 +69,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
         return this
     }
-
-    // eslint-disable-next-line class-methods-use-this,no-empty-function
-    private onEntityAdded = () => { return }
 
     projectNodes(): void {
         const { camera } = this.viewportSystem.viewport
@@ -128,10 +121,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
             this.debugProjectedCount++
         }
 
-        if(entries.length > 0 && !this._renderLogged) {
-            this._renderLogged = true
-        }
-
         entries.sort((a, b) => {
             const aProj = this.projectedCache.get(a)!.projected
             const bProj = this.projectedCache.get(b)!.projected
@@ -141,10 +130,6 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
 
     beginFrame() {
         // override in renderers that need per-frame reset
-    }
-
-    update(_dt: number): void {
-        // projection and drawing are handled by ViewportSystem.scheduleRender()
     }
 
     endFrame() {
@@ -159,11 +144,7 @@ export abstract class BaseRenderer<N extends RenderableNode> extends SystemWithN
         return entries
     }
 
-    drawNode(node: N, dt: number, ctx?: CanvasRenderingContext2D): void {
-        this.updateNode(node, dt, ctx)
-    }
-
-    protected abstract updateNode(_node: N, _dT?: number, _ctx?: CanvasRenderingContext2D): void
+    abstract drawNode(node: N, dt: number, ctx: CanvasRenderingContext2D): void
 
     getViewportSystem(): ViewportSystem {
         return this.viewportSystem

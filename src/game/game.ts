@@ -83,26 +83,25 @@ export class Game {
             .addSystem(PointerInteractionSystem, ViewportSystem)
             .addSystem(MapSystem)
             .addSystem(OrbitSelectionSystem, ViewportSystem)
-            .addSystem(ShapeRenderer, ViewportSystem)
-            .addSystem(LabelRenderer, ViewportSystem)
-            .addSystem(WebGLRectRenderer, ViewportSystem)
-            .addSystem(WebGLSphereRenderer, ViewportSystem)
+            // .addSystem(ShapeRenderer, ViewportSystem)
+            // .addSystem(LabelRenderer, ViewportSystem)
+            // .addSystem(WebGLRectRenderer, ViewportSystem)
+            // .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, ViewportSystem)
             .addSystem(DebugSystem)
             .addSystem(AsteroidSpinSystem)
 
         viewportEntity.addComponent(new CameraFollowComponent())
 
-        this.engine.getSystem(ViewportSystem).setRendererClasses([
+        const renderers = [
             ShapeRenderer,
             WebGLSphereRenderer,
             LabelRenderer,
             WebGLRectRenderer,
-        ])
-        this.engine.getSystem(ViewportSystem).init()
-        this.engine.getSystem(WebGLSphereRenderer).init()
-        this.engine.getSystem(WebGLRectRenderer).init()
+        ]
 
+        this.engine.getSystem(ViewportSystem).init()
+        this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
 
         setTimeout(() => {
             this.engine.dispatchEvent(new DayPassedEvent(null))

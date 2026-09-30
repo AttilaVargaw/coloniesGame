@@ -106,7 +106,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return super.removeFromEngine();
     }
 
-    protected updateNode(rect: RectNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
+    drawNode(rect: RectNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
         const { projected } = this.getProjected(rect)
         const context = ctx ?? this.viewportSystem.viewport.camera.context;
 

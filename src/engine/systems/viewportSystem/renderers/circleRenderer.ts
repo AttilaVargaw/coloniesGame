@@ -67,14 +67,10 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         return this._starEntity
     }
 
-    updateNode = (circle: CircleNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
+    drawNode = (circle: CircleNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
         if(!this.engine) {
             return
         }
-
-        // if(circle.texture?.texture) {
-        //     return
-        // }
 
         const { camera } = this.viewportSystem.viewport
         const context = ctx ?? camera.context

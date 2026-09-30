@@ -22,7 +22,7 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
         return Math.max(node.width, node.height) / 2
     }
 
-    updateNode = (node: ShapeNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
+    drawNode = (node: ShapeNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
         const { projected } = this.getProjected(node)
         const context = ctx ?? this.viewportSystem.viewport.camera.context
         const { path } = node.shape

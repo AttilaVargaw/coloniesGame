@@ -21,6 +21,7 @@ import { RectRenderer } from "./renderers/rectRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
+import { RenderableNode } from "./renderers/renderableNode";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 let bloomSourceCtx: CanvasRenderingContext2D | null = null
@@ -51,7 +52,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private frameTimeSamples: number[] = []
     private lastFrameTime = 0
     private rendererTimings = new Map<string, number>()
-    rendererClasses: Array<new (...args: any[]) => BaseRenderer<any>> = []
+    private renderers: Map<new (...args: any[]) => BaseRenderer<any>, BaseRenderer<RenderableNode>> = new Map()
     webglDrawn = false
 
     get isDragging() {
@@ -163,7 +164,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const allEntries: RenderEntry[] = []
         const labelEntries: RenderEntry[] = []
         const bloomEntries: RenderEntry[] = []
-        const timings: Record<string, number> = {}
+        const timings: Map<string, number> = new Map()
         const totalStart = performance.now()
 
         this.projectRenderers(timings, allEntries, labelEntries, bloomEntries, bloomTargetCtx)
@@ -173,9 +174,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
         const drawStart = performance.now()
         for(const entry of allEntries) {
-            entry.renderer.drawNode(entry.node, dt)
+            entry.renderer.drawNode(entry.node, dt, entry.node[0])
         }
-        timings.draw = (timings.draw || 0) + (performance.now() - drawStart)
+        timings.set("draw", (timings.get("draw") || 0) + (performance.now() - drawStart))
 
         this.finishRenderers(timings)
 
@@ -197,7 +198,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 entry.renderer.drawNode(entry.node, dt, bloomTargetCtx)
             }
         }
-        timings.composite = (timings.composite || 0) + (performance.now() - compositeStart)
+        timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
 
         this.pendingLabelEntries = labelEntries
         const totalMs = performance.now() - totalStart
@@ -210,17 +211,16 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     private projectRenderers(
-        timings: Record<string, number>,
+        timings: Map<string, number> = new Map(),
         allEntries: RenderEntry[],
         labelEntries: RenderEntry[],
         bloomEntries: RenderEntry[],
         bloomTargetCtx: CanvasRenderingContext2D | undefined
     ) {
         if(!this.engine) return
-        for(const rendererClass of this.rendererClasses) {
-            const name = rendererClass.name
+
+        for(const [key, renderer] of this.renderers.entries()) {
             const t0 = performance.now()
-            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             if(!renderer) {
                 continue
             }
@@ -229,8 +229,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const t1 = performance.now()
             renderer.projectNodes()
             const t2 = performance.now()
-            timings[name] = (timings[name] || 0) + (t2 - t0)
-            timings[`${name}:project`] = (timings[`${name}:project`] || 0) + (t2 - t1)
+            timings.set(key.name, (timings.get(key.name)!) + (t2 - t0))
+            timings.set(`${name}:project`, (timings.get(`${name}:project`) || 0) + (t2 - t1))
 
             for(const { node, projected } of renderer.getProjectedCacheEntries()) {
                 if(renderer instanceof LabelRenderer) {
@@ -248,28 +248,34 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
     }
 
-    private finishRenderers(timings: Record<string, number>) {
+    private finishRenderers(timings: Map<string, number>) {
         if(!this.engine) return
-        for(const rendererClass of this.rendererClasses) {
-            const name = rendererClass.name
+
+        for(const [key, renderer] of this.renderers.entries()) {
+            const name = key.name
             const t0 = performance.now()
-            const renderer = this.engine.getSystem(rendererClass as new (...args: any[]) => BaseRenderer<any>) as BaseRenderer<any> | undefined
             renderer?.endFrame()
-            timings[`${name}:end`] = (timings[`${name}:end`] || 0) + (performance.now() - t0)
+            timings.set(`${name}:end`, (timings.get(`${name}:end`) || 0) + (performance.now() - t0))
         }
     }
 
     private pendingLabelEntries: RenderEntry[] = []
 
     private renderLabels() {
+        const canvas = this.viewport.camera.context
+
         for(const entry of this.pendingLabelEntries) {
-            entry.renderer.drawNode(entry.node, 0)
+            entry.renderer.drawNode(entry.node, 0, canvas)
         }
         this.pendingLabelEntries = []
     }
 
-    setRendererClasses(classes: Array<new (...args: any[]) => BaseRenderer<any>>) {
-        this.rendererClasses = classes
+    setRendererClasses(args: (new (...args: any[]) => BaseRenderer<any>)[]) {
+        this.renderers = args.reduce((prev, curr) => {
+            prev.set(curr, new curr(this))
+
+            return prev
+        }, new Map())
     }
 
     clearWebgl() {
@@ -419,7 +425,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private drawCullingOverlay(ctx: CanvasRenderingContext2D) {
         if(!this.engine) return
 
-        const rectRenderer = this.engine.getSystem(RectRenderer)
+        const rectRenderer = this.renderers.get(RectRenderer)
         const viewport = this.viewport
         if(!rectRenderer || !viewport) return
 
