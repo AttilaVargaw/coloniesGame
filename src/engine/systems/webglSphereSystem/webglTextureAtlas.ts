@@ -35,9 +35,9 @@ class AtlasPage {
 
         return {
             u0: x / this.size,
-            v0: 1 - (y + this.cellSize) / this.size,
+            v0: y / this.size,
             u1: (x + this.cellSize) / this.size,
-            v1: 1 - y / this.size,
+            v1: (y + this.cellSize) / this.size,
         }
     }
 
@@ -48,7 +48,6 @@ class AtlasPage {
 
         const texture = gl.createTexture()!
         gl.bindTexture(gl.TEXTURE_2D, texture)
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)

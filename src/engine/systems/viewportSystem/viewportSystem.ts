@@ -169,6 +169,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.projectRenderers(timings, allEntries, labelEntries, bloomEntries, bloomTargetCtx)
 
         bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
+        allEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
         const drawStart = performance.now()
         for(const entry of allEntries) {
