@@ -243,11 +243,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return [data[0] / 255, data[1] / 255, data[2] / 255]
     }
 
-    protected updateNode(node: RectNode, _dT?: number, ctx?: CanvasRenderingContext2D): void {
-        if(ctx) {
-            return
-        }
-
+    protected updateNode(node: RectNode, _dT?: number): void {
         if(!this.engine || !this.atlas || !this.glContext) {
             return
         }

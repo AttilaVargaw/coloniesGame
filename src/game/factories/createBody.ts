@@ -215,6 +215,7 @@ export async function createBody({
     if(!buildable && typeof document !== "undefined") {
         if(archetype === "sol") {
             body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5, undefined, name))
+            body.addComponent(new ColorComponent(marker.color, "", false, true))
         } else if(archetype !== "baricenter") {
             const dayTexture = createPlanetTexture(marker.color, archetype)
             const nightTexture = createNightTexture(marker.color, archetype)
