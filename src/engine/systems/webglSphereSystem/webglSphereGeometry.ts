@@ -114,7 +114,7 @@ export function createSphereMesh(subdivisions: number): SphereMesh {
         normals.push(x, y, z)
 
         const u = 0.5 + Math.atan2(x, z) / (2 * Math.PI)
-        const v = Math.acos(y) / Math.PI
+        const v = 0.5 + Math.asin(-y) / Math.PI
         uvs.push(u, v)
     }
 
