@@ -305,9 +305,9 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             const latitude = Math.abs(y / size - 0.5) * 2
             if(latitude > 0.78) {
                 const polarAlpha = (latitude - 0.78) / 0.22
-                r = lerp(r, Math.round(polesRgb.r * 0.05), polarAlpha * 0.85)
-                g = lerp(g, Math.round(polesRgb.g * 0.05), polarAlpha * 0.85)
-                b = lerp(b, Math.round(polesRgb.b * 0.05), polarAlpha * 0.85)
+                r = lerp(r, Math.round(polesRgb.r * 0.1), polarAlpha * 0.85)
+                g = lerp(g, Math.round(polesRgb.g * 0.1), polarAlpha * 0.85)
+                b = lerp(b, Math.round(polesRgb.b * 0.1), polarAlpha * 0.85)
             }
 
             const idx = (y * size + x) * 4

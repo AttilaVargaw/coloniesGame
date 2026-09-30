@@ -71,13 +71,11 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
-        const stride = 8 * 4
+        const stride = 6 * 4
         gl.enableVertexAttribArray(this.shader.attribs.position)
         gl.vertexAttribPointer(this.shader.attribs.position, 3, gl.FLOAT, false, stride, 0)
         gl.enableVertexAttribArray(this.shader.attribs.normal)
         gl.vertexAttribPointer(this.shader.attribs.normal, 3, gl.FLOAT, false, stride, 3 * 4)
-        gl.enableVertexAttribArray(this.shader.attribs.texCoord)
-        gl.vertexAttribPointer(this.shader.attribs.texCoord, 2, gl.FLOAT, false, stride, 6 * 4)
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
 
@@ -184,7 +182,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(this.shader.attribs.instanceEmissive)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.normal)
-        gl.disableVertexAttribArray(this.shader.attribs.texCoord)
         gl.vertexAttribDivisor(modelLoc, 0)
         gl.vertexAttribDivisor(modelLoc + 1, 0)
         gl.vertexAttribDivisor(modelLoc + 2, 0)
@@ -233,14 +230,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const { indices, normals, positions, uvs } = createSphereMesh(4)
+        const { indices, normals, positions } = createSphereMesh(4)
 
         const vertexCount = positions.length / 3
-        const interleaved = new Float32Array(vertexCount * 8)
+        const interleaved = new Float32Array(vertexCount * 6)
         for(let i = 0; i < vertexCount; i++) {
-            const base = i * 8
+            const base = i * 6
             const posBase = i * 3
-            const uvBase = i * 2
 
             interleaved[base + 0] = positions[posBase + 0]
             interleaved[base + 1] = positions[posBase + 1]
@@ -248,8 +244,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             interleaved[base + 3] = normals[posBase + 0]
             interleaved[base + 4] = normals[posBase + 1]
             interleaved[base + 5] = normals[posBase + 2]
-            interleaved[base + 6] = uvs[uvBase + 0]
-            interleaved[base + 7] = uvs[uvBase + 1]
         }
 
         this.sphereVao = this.gl.createBuffer()

@@ -1,7 +1,6 @@
 export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec3 aPosition;
 in vec3 aNormal;
-in vec2 aTexCoord;
 
 in mat4 aInstanceModel;
 in mat3 aInstanceNormalMatrix;
@@ -21,20 +20,26 @@ uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 
 out vec3 vNormal;
-out vec2 vTexCoord;
 out vec3 vLightDir;
 out float vEmissive;
 out vec3 vWorldPos;
-out vec2 vNightTexCoord;
+out vec2 vTexOffset;
+out vec2 vTexScale;
+out vec2 vNightTexOffset;
+out vec2 vNightTexScale;
+
+#define PI 3.14159265359
 
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
     vNormal = normalize(aInstanceNormalMatrix * aNormal);
-    vTexCoord = vec2(aTexCoord.x, aTexCoord.y) * aInstanceTexScale + aInstanceTexOffset;
     vLightDir = normalize(aInstanceLightDir);
     vEmissive = aInstanceEmissive;
     vWorldPos = worldPos.xyz;
-    vNightTexCoord = vec2(aTexCoord.x, aTexCoord.y) * aInstanceNightTexScale + aInstanceNightTexOffset;
+    vTexOffset = aInstanceTexOffset;
+    vTexScale = aInstanceTexScale;
+    vNightTexOffset = aInstanceNightTexOffset;
+    vNightTexScale = aInstanceNightTexScale;
     gl_Position = uProjection * uView * worldPos;
 }
 `;
@@ -42,12 +47,16 @@ void main() {
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
+#define PI 3.14159265359
+
 in vec3 vNormal;
-in vec2 vTexCoord;
 in vec3 vLightDir;
 in float vEmissive;
 in vec3 vWorldPos;
-in vec2 vNightTexCoord;
+in vec2 vTexOffset;
+in vec2 vTexScale;
+in vec2 vNightTexOffset;
+in vec2 vNightTexScale;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -68,8 +77,13 @@ void main() {
 
     float fresnel = pow(1.0 - NdotV, 3.0) * 0.25;
 
-    vec3 dayColor = texture(uTexture, vTexCoord).rgb;
-    vec3 nightColor = texture(uNightTexture, vNightTexCoord).rgb * 1.8;
+    float u = 0.5 + atan(normal.z, normal.x) / (2.0 * PI);
+    float v = 0.5 + asin(normal.y) / PI;
+    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
+    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
+
+    vec3 dayColor = texture(uTexture, texCoord).rgb;
+    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 1.8;
     vec3 lit = dayColor * uLightColor * diffuse;
     vec3 ambient = dayColor * uAmbientColor;
     vec3 rim = uLightColor * fresnel * dayColor;
@@ -90,7 +104,6 @@ export interface ShaderProgram {
     attribs: {
         position: number
         normal: number
-        texCoord: number
         instanceModel: number
         instanceNormalMatrix: number
         instanceLightDir: number
@@ -144,7 +157,6 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
     const attribs = {
         position: gl.getAttribLocation(program, "aPosition"),
         normal: gl.getAttribLocation(program, "aNormal"),
-        texCoord: gl.getAttribLocation(program, "aTexCoord"),
         instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
         instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
         instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
