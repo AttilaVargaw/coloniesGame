@@ -93,15 +93,9 @@ export default class Camera {
     private viewBasisCache: ViewBase | null = null
 
     private viewBasisDirty = true
-    private _projectionVersion = 0
-
-    get projectionVersion(): number {
-        return this._projectionVersion
-    }
 
     private markViewDirty() {
         this.viewBasisDirty = true
-        this._projectionVersion++
     }
 
     private ensureViewBasis() {

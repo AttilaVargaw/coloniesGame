@@ -37,7 +37,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 }
 
-const size = 96
+const size = 256 
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)

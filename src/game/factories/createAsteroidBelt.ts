@@ -115,7 +115,7 @@ async function buildTintedTextures() {
                     const image = new Image()
                     image.src = ASTEROID_TEXTURES[i]
                     image.decode().then(() => createImageBitmap(image, {
-                        resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "pixelated"
+                        resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "high"
                     })).then((bitmap) => {
                         tintedTextures.set(key, Colorize(bitmap, tint))
                         resolve()
@@ -129,7 +129,7 @@ async function buildTintedTextures() {
         const image = new Image()
         image.src = dust1
         image.decode().then(() => createImageBitmap(image, {
-            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "low"
+            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "high"
         })).then((bitmap) => {
             tintedDustTextures[i] = Colorize(bitmap, tint)
             resolve()
