@@ -126,20 +126,22 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.depthMask(false)
             gl.drawElementsInstanced(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0, instances.length)
             gl.depthMask(true)
-
-            gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceScale)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceRotation)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceScale, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceRotation, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
         }
+
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceScale)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceRotation)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
+        gl.disableVertexAttribArray(this.shader.attribs.position)
+        gl.disableVertexAttribArray(this.shader.attribs.texCoord)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceScale, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceRotation, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
 
         this.glDrawnThisFrame = true
         this.viewportSystem.webglDrawn = true

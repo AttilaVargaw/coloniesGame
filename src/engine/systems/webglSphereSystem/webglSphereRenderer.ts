@@ -67,7 +67,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniformMatrix4fv(this.shader.uniforms.view, false, this.view)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
         gl.uniform3f(this.shader.uniforms.lightColor, 1, 0.95, 0.85)
-        gl.uniform3f(this.shader.uniforms.ambientColor, 0.6, 0.6, 0.65)
+        gl.uniform3f(this.shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
+
+        gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 8 * 4
@@ -84,7 +86,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 32 * 4
+        const instanceStride = 33 * 4
 
         const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
         for(const inst of this.pendingInstances) {
@@ -94,23 +96,23 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
         }
 
+        const modelLoc = this.shader.attribs.instanceModel
+        const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
+
         for(const [page, instances] of groups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const totalFloats = instances.length * 32
+            const totalFloats = instances.length * 33
             const instanceArray = new Float32Array(totalFloats)
             let offset = 0
             for(const inst of instances) {
                 instanceArray.set(inst.data, offset)
-                offset += 32
+                offset += 33
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
             gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
 
-
-            const modelLoc = this.shader.attribs.instanceModel
-            const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
             gl.enableVertexAttribArray(modelLoc)
             gl.vertexAttribPointer(modelLoc, 4, gl.FLOAT, false, instanceStride, 0)
             gl.vertexAttribDivisor(modelLoc, 1)
@@ -141,6 +143,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
             gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceEmissive)
+            gl.vertexAttribPointer(this.shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 32 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 1)
 
             const atlasTexture = this.atlas.getTextures(gl)[page]
             gl.activeTexture(gl.TEXTURE0)
@@ -150,18 +155,33 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
-
-            gl.disableVertexAttribArray(modelLoc)
-            gl.disableVertexAttribArray(modelLoc + 1)
-            gl.disableVertexAttribArray(modelLoc + 2)
-            gl.disableVertexAttribArray(modelLoc + 3)
-            gl.disableVertexAttribArray(normalMatrixLoc)
-            gl.disableVertexAttribArray(normalMatrixLoc + 1)
-            gl.disableVertexAttribArray(normalMatrixLoc + 2)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-            gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
         }
+
+        gl.disableVertexAttribArray(modelLoc)
+        gl.disableVertexAttribArray(modelLoc + 1)
+        gl.disableVertexAttribArray(modelLoc + 2)
+        gl.disableVertexAttribArray(modelLoc + 3)
+        gl.disableVertexAttribArray(normalMatrixLoc)
+        gl.disableVertexAttribArray(normalMatrixLoc + 1)
+        gl.disableVertexAttribArray(normalMatrixLoc + 2)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceEmissive)
+        gl.disableVertexAttribArray(this.shader.attribs.position)
+        gl.disableVertexAttribArray(this.shader.attribs.normal)
+        gl.disableVertexAttribArray(this.shader.attribs.texCoord)
+        gl.vertexAttribDivisor(modelLoc, 0)
+        gl.vertexAttribDivisor(modelLoc + 1, 0)
+        gl.vertexAttribDivisor(modelLoc + 2, 0)
+        gl.vertexAttribDivisor(modelLoc + 3, 0)
+        gl.vertexAttribDivisor(normalMatrixLoc, 0)
+        gl.vertexAttribDivisor(normalMatrixLoc + 1, 0)
+        gl.vertexAttribDivisor(normalMatrixLoc + 2, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
 
         this.glDrawnThisFrame = true
         this.viewportSystem.webglDrawn = true
@@ -298,21 +318,22 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const normalMatrix = new Float32Array(9)
         normalMatrix[0] = model[0]
-        normalMatrix[1] = model[4]
-        normalMatrix[2] = model[8]
-        normalMatrix[3] = model[1]
+        normalMatrix[1] = model[1]
+        normalMatrix[2] = model[2]
+        normalMatrix[3] = model[4]
         normalMatrix[4] = model[5]
-        normalMatrix[5] = model[9]
-        normalMatrix[6] = model[2]
-        normalMatrix[7] = model[6]
+        normalMatrix[5] = model[6]
+        normalMatrix[6] = model[8]
+        normalMatrix[7] = model[9]
         normalMatrix[8] = model[10]
 
-        const instanceData = new Float32Array(32)
+        const instanceData = new Float32Array(33)
         instanceData.set(model, 0)
         instanceData.set(normalMatrix, 16)
         instanceData.set(lightDir, 25)
         instanceData.set([atlasEntry.u0, atlasEntry.v0], 28)
         instanceData.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], 30)
+        instanceData.set([node.color.emitLight ? 1.0 : 0.0], 32)
 
         this.pendingInstances.push({
             page: atlasEntry.page,
