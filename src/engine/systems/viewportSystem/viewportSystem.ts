@@ -271,8 +271,15 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     }
 
     setRendererClasses(args: (new (...args: any[]) => BaseRenderer<any>)[]) {
+        if(!this.engine) {
+            return
+        }
+
         this.renderers = args.reduce((prev, curr) => {
-            prev.set(curr, new curr(this))
+            const renderer = new curr(this)
+            prev.set(curr, renderer)
+            renderer?.addToEngine?.(this.engine!)
+            renderer?.init?.()
 
             return prev
         }, new Map())

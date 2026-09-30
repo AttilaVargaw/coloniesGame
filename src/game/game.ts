@@ -100,8 +100,8 @@ export class Game {
             WebGLRectRenderer,
         ]
 
-        this.engine.getSystem(ViewportSystem).init()
         this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
+        this.engine.getSystem(ViewportSystem).init()
 
         setTimeout(() => {
             this.engine.dispatchEvent(new DayPassedEvent(null))

@@ -1,5 +1,5 @@
 import { ShaderProgram } from "./ShaderProgram"
-import { VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE } from "./webglRectShaders"
+import { VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE } from "./webglSphereShaders"
 
 export function compileShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
     const shader = gl.createShader(type)!
