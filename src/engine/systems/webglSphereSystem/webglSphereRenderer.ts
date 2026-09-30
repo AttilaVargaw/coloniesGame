@@ -12,8 +12,6 @@ import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./web
 import { Entity } from "@/engine/entities/entity"
 import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
 
-const SPHERE_SEGMENTS = 32
-
 export class WebGLSphereNode extends RenderableNode {
     constructor(
         entity: Entity,
@@ -235,7 +233,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const { indices, normals, positions, uvs } = createSphereMesh(SPHERE_SEGMENTS, Math.round(SPHERE_SEGMENTS * 0.66))
+        const { indices, normals, positions, uvs } = createSphereMesh(4)
 
         const vertexCount = positions.length / 3
         const interleaved = new Float32Array(vertexCount * 8)
