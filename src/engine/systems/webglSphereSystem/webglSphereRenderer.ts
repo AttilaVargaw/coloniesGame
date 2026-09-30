@@ -167,7 +167,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
-            gl.cullFace(gl.FRONT)
+            gl.cullFace(gl.BACK)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
 
