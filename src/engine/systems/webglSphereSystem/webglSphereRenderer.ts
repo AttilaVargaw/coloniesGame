@@ -8,7 +8,7 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { ViewportSystem } from "../viewportSystem/viewportSystem"
 import { WebGLBaseRenderer } from "./webglBaseRenderer"
-import { WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
+import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
 import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
 
@@ -33,6 +33,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private sphereIndexCount = 0
     private sphereIndexType = 0
     private atlas!: WebGLTextureAtlas
+    private nightAtlas!: WebGLTextureAtlas
     private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
 
     beginFrame(): void {
@@ -86,7 +87,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 33 * 4
+        const instanceStride = 37 * 4
 
         const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
         for(const inst of this.pendingInstances) {
@@ -102,12 +103,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         for(const [page, instances] of groups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const totalFloats = instances.length * 33
+            const totalFloats = instances.length * 37
             const instanceArray = new Float32Array(totalFloats)
             let offset = 0
             for(const inst of instances) {
                 instanceArray.set(inst.data, offset)
-                offset += 33
+                offset += 37
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -143,8 +144,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
             gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceNightTexOffset)
+            gl.vertexAttribPointer(this.shader.attribs.instanceNightTexOffset, 2, gl.FLOAT, false, instanceStride, 32 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceNightTexScale)
+            gl.vertexAttribPointer(this.shader.attribs.instanceNightTexScale, 2, gl.FLOAT, false, instanceStride, 34 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 1)
             gl.enableVertexAttribArray(this.shader.attribs.instanceEmissive)
-            gl.vertexAttribPointer(this.shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 32 * 4)
+            gl.vertexAttribPointer(this.shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 36 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 1)
 
             const atlasTexture = this.atlas.getTextures(gl)[page]
@@ -152,8 +159,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
             gl.uniform1i(this.shader.uniforms.texture, 0)
 
+            const nightAtlasTextures = this.nightAtlas.getTextures(gl)
+            const nightPageTexture = nightAtlasTextures[page] ?? nightAtlasTextures[0]
+            gl.activeTexture(gl.TEXTURE1)
+            gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
+            gl.uniform1i(this.shader.uniforms.nightTexture, 1)
+
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
+            gl.cullFace(gl.FRONT)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
 
@@ -167,6 +181,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexOffset)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexScale)
         gl.disableVertexAttribArray(this.shader.attribs.instanceEmissive)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.normal)
@@ -181,6 +197,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
 
         this.glDrawnThisFrame = true
@@ -205,6 +223,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.glCanvas.height = this.glCanvas.height
         this.glCanvas.style.pointerEvents = "none"
         this.atlas = new WebGLTextureAtlas()
+        this.nightAtlas = new WebGLTextureAtlas()
 
         this.initBuffers()
 
@@ -266,6 +285,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
         const textureSource = showCheckerPattern ? createCheckerPatternCanvas() : node.texture.texture
+        const nightTextureSource = showCheckerPattern ? createCheckerPatternCanvas() : node.texture.nightTexture
 
         if(!textureSource) {
             return
@@ -278,6 +298,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const atlasEntry = this.atlas.getEntry(node.entity.id)
         if(!atlasEntry) {
             return
+        }
+
+        let nightAtlasEntry: AtlasEntry | undefined
+        if(nightTextureSource) {
+            const nightKey = `${node.entity.id}_night`
+            if(!this.nightAtlas.getEntry(nightKey)) {
+                this.nightAtlas.addTexture(nightKey, nightTextureSource)
+            }
+            nightAtlasEntry = this.nightAtlas.getEntry(nightKey)
         }
 
         const { worldPos, projected } = this.getProjected(node)
@@ -327,13 +356,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         normalMatrix[7] = model[9]
         normalMatrix[8] = model[10]
 
-        const instanceData = new Float32Array(33)
+        const instanceData = new Float32Array(37)
         instanceData.set(model, 0)
         instanceData.set(normalMatrix, 16)
         instanceData.set(lightDir, 25)
         instanceData.set([atlasEntry.u0, atlasEntry.v0], 28)
         instanceData.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], 30)
-        instanceData.set([node.color.emitLight ? 1.0 : 0.0], 32)
+        instanceData.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], 32)
+        instanceData.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], 34)
+        instanceData.set([node.color.emitLight ? 1.0 : 0.0], 36)
 
         this.pendingInstances.push({
             page: atlasEntry.page,

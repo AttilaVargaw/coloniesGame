@@ -268,20 +268,20 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
 
             let r: number, g: number, b: number
             if(normalizedLand > 0.48) {
-                r = landRgb.r * 0.08
-                g = landRgb.g * 0.08
-                b = landRgb.b * 0.08
+                r = landRgb.r * 0.04
+                g = landRgb.g * 0.04
+                b = landRgb.b * 0.04
             } else {
-                r = oceanRgb.r * 0.05
-                g = oceanRgb.g * 0.05
-                b = oceanRgb.b * 0.05
+                r = oceanRgb.r * 0.02
+                g = oceanRgb.g * 0.02
+                b = oceanRgb.b * 0.02
             }
 
             if(normalizedCloud > 0.55) {
                 const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
-                r = lerp(r, Math.round(cloudsRgb.r * 0.1), cloudAlpha * 0.7)
-                g = lerp(g, Math.round(cloudsRgb.g * 0.1), cloudAlpha * 0.7)
-                b = lerp(b, Math.round(cloudsRgb.b * 0.1), cloudAlpha * 0.7)
+                r = lerp(r, Math.round(cloudsRgb.r * 0.08), cloudAlpha * 0.7)
+                g = lerp(g, Math.round(cloudsRgb.g * 0.08), cloudAlpha * 0.7)
+                b = lerp(b, Math.round(cloudsRgb.b * 0.08), cloudAlpha * 0.7)
             }
 
             if(normalizedLand > 0.48) {
@@ -291,13 +291,13 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
                     const intensity = (normalizedCity - 0.62) / 0.38
                     const warmth = Math.random()
                     if(warmth > 0.5) {
-                        r = lerp(r, 255, intensity * 0.95)
-                        g = lerp(r, 180, intensity * 0.95)
-                        b = lerp(r, 80, intensity * 0.95)
+                        r = lerp(r, 255, intensity)
+                        g = lerp(g, 180, intensity)
+                        b = lerp(b, 80, intensity)
                     } else {
-                        r = lerp(r, 255, intensity * 0.95)
-                        g = lerp(r, 240, intensity * 0.95)
-                        b = lerp(r, 200, intensity * 0.95)
+                        r = lerp(r, 255, intensity)
+                        g = lerp(g, 240, intensity)
+                        b = lerp(b, 200, intensity)
                     }
                 }
             }
@@ -305,9 +305,9 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             const latitude = Math.abs(y / size - 0.5) * 2
             if(latitude > 0.78) {
                 const polarAlpha = (latitude - 0.78) / 0.22
-                r = lerp(r, Math.round(polesRgb.r * 0.1), polarAlpha * 0.85)
-                g = lerp(g, Math.round(polesRgb.g * 0.1), polarAlpha * 0.85)
-                b = lerp(b, Math.round(polesRgb.b * 0.1), polarAlpha * 0.85)
+                r = lerp(r, Math.round(polesRgb.r * 0.05), polarAlpha * 0.85)
+                g = lerp(g, Math.round(polesRgb.g * 0.05), polarAlpha * 0.85)
+                b = lerp(b, Math.round(polesRgb.b * 0.05), polarAlpha * 0.85)
             }
 
             const idx = (y * size + x) * 4
