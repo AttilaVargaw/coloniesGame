@@ -1,5 +1,6 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram, type ShaderProgram } from "./webglShaders"
+import { hexToRgba } from "../viewportSystem/renderers/hexToRgba"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
 import { PositionComponent } from "@/engine/components/position"
@@ -21,6 +22,10 @@ export class WebGLSphereNode extends RenderableNode {
         public color: ColorComponent
     ) {
         super(color, entity)
+    }
+
+    get emitLight(): boolean {
+        return this.color.emitLight
     }
 }
 
@@ -266,6 +271,28 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
     protected updateNode(node: WebGLSphereNode, _dT?: number, ctx?: CanvasRenderingContext2D): void {
         if(ctx) {
+            if(!node.color.emitLight) {
+                return
+            }
+
+            const { projected } = this.getProjected(node)
+            const screenRadius = node.radius.radius * projected.scale
+
+            const bloomRadius = screenRadius * 3
+            const gradient = ctx.createRadialGradient(
+                projected.x, projected.y, screenRadius * 0.5,
+                projected.x, projected.y, bloomRadius
+            )
+            const fill = node.color.fill || "#ffffff"
+            gradient.addColorStop(0, hexToRgba(fill, 0.35))
+            gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.globalCompositeOperation = "screen"
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(projected.x, projected.y, bloomRadius, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.globalCompositeOperation = "source-over"
             return
         }
 

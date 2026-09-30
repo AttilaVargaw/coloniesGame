@@ -95,8 +95,8 @@ export class Game {
 
         this.engine.getSystem(ViewportSystem).setRendererClasses([
             ShapeRenderer,
-            LabelRenderer,
             WebGLSphereRenderer,
+            LabelRenderer,
             WebGLRectRenderer,
         ])
         this.engine.getSystem(ViewportSystem).init()

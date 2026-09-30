@@ -14,7 +14,7 @@ export class DebugManager {
         showCameraGizmo: true,
         showFpsCounter: true,
         showCameraTarget: false,
-        showBloom: false,
+        showBloom: true,
         showColorGrading: false,
         showVignette: false,
         showCullingOverlay: false,

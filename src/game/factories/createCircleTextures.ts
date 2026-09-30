@@ -186,7 +186,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
-export function createStarTexture(_baseColor: string): HTMLCanvasElement {
+export function createStarTexture(baseColor: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -194,36 +194,54 @@ export function createStarTexture(_baseColor: string): HTMLCanvasElement {
 
     ctx.clearRect(0, 0, size, size)
 
-    const seed = 31337
+    const seed = seedFrom(baseColor, "star")
     const perm = buildPerm(seed)
+    const base = hexToRgb(baseColor)
 
     const imageData = ctx.createImageData(size, size)
     const data = imageData.data
 
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
-            const nx = x / size * 3
-            const ny = y / size * 3
-            const n = (sampleFbm(nx, ny, perm, 0.35, 5) + 1) / 2
-            const bright = 0.55 + n * 0.45
+            const nx = x / size * 5
+            const ny = y / size * 5
+
+            const fine = (sampleFbm(nx * 2, ny * 2, perm, 0.4, 6) + 1) / 2
+            const coarse = (sampleFbm(nx * 0.6 + 7, ny * 0.6 + 7, perm, 0.3, 4) + 1) / 2
+            const bright = 0.25 + fine * 0.60 + coarse * 0.15
             const v = Math.round(clamp(bright * 255, 0, 255))
+
+            const r = Math.round(clamp(v * (base.r / 255), 0, 255))
+            const g = Math.round(clamp(v * (base.g / 255), 0, 255))
+            const b = Math.round(clamp(v * (base.b / 255), 0, 255))
+
             const idx = (y * size + x) * 4
-            data[idx] = v
-            data[idx + 1] = v
-            data[idx + 2] = v
+            data[idx] = r
+            data[idx + 1] = g
+            data[idx + 2] = b
             data[idx + 3] = 255
         }
     }
 
     ctx.putImageData(imageData, 0, 0)
 
-    for(let i = 0; i < 80; i++) {
+    const radialGradient = ctx.createRadialGradient(
+        size / 2, size / 2, size * 0.15,
+        size / 2, size / 2, size * 0.5
+    )
+    radialGradient.addColorStop(0, "rgba(255,255,255,0.35)")
+    radialGradient.addColorStop(0.6, "rgba(255,255,255,0.05)")
+    radialGradient.addColorStop(1, "rgba(0,0,0,0.25)")
+    ctx.fillStyle = radialGradient
+    ctx.fillRect(0, 0, size, size)
+
+    for(let i = 0; i < 60; i++) {
         const x = Math.random() * size
         const y = Math.random() * size
-        const r = Math.random() * 12 + 3
+        const r = Math.random() * 25 + 5
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, r)
-        gradient.addColorStop(0, "rgba(255,255,255,0.8)")
-        gradient.addColorStop(0.5, "rgba(255,255,255,0.2)")
+        gradient.addColorStop(0, "rgba(255,255,255,0.9)")
+        gradient.addColorStop(0.3, "rgba(255,255,255,0.35)")
         gradient.addColorStop(1, "rgba(255,255,255,0)")
         ctx.fillStyle = gradient
         ctx.beginPath()

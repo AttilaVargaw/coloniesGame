@@ -72,9 +72,6 @@ void main() {
     float NdotL = dot(normal, vLightDir);
     float NdotV = abs(dot(normal, viewDir));
 
-    float diffuse = max(NdotL, 0.0);
-    float terminator = smoothstep(-0.05, 0.15, NdotL);
-
     float fresnel = pow(1.0 - NdotV, 3.0) * 0.25;
 
     float u = 0.5 + atan(normal.z, normal.x) / (2.0 * PI);
@@ -84,18 +81,28 @@ void main() {
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 1.8;
-    vec3 lit = dayColor * uLightColor * diffuse;
-    vec3 ambient = dayColor * uAmbientColor;
     vec3 rim = uLightColor * fresnel * dayColor;
 
-    vec3 color = mix(ambient + rim, lit + rim, terminator);
-    color = mix(color, nightColor, 1.0 - terminator);
-    color += dayColor * vEmissive;
+    if(vEmissive > 0.5) {
+        vec3 color = dayColor + rim;
+        color = color / (color + vec3(1.0));
+        color = pow(color, vec3(1.0 / 2.2));
+        fragColor = vec4(color, 1.0);
+    } else {
+        float diffuse = max(NdotL, 0.0);
+        float terminator = smoothstep(-0.05, 0.15, NdotL);
 
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0 / 2.2));
+        vec3 lit = dayColor * uLightColor * diffuse;
+        vec3 ambient = dayColor * uAmbientColor;
 
-    fragColor = vec4(color, 1.0);
+        vec3 color = mix(ambient + rim, lit + rim, terminator);
+        color = mix(color, nightColor, 1.0 - terminator);
+
+        color = color / (color + vec3(1.0));
+        color = pow(color, vec3(1.0 / 2.2));
+
+        fragColor = vec4(color, 1.0);
+    }
 }
 `;
 
