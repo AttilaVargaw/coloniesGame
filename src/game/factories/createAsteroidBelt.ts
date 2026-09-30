@@ -129,7 +129,7 @@ async function buildTintedTextures() {
         const image = new Image()
         image.src = dust1
         image.decode().then(() => createImageBitmap(image, {
-            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "pixelated"
+            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "low"
         })).then((bitmap) => {
             tintedDustTextures[i] = Colorize(bitmap, tint)
             resolve()
