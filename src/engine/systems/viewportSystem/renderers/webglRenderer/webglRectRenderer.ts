@@ -35,7 +35,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
     beginFrame(): void {
         this.pendingInstances = []
-        // super.beginFrame()
     }
 
     init() {
@@ -290,7 +289,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(this.shader.uniforms.texture, 0)
 
-            gl.disable(gl.DEPTH_TEST)
+            // gl.disable(gl.DEPTH_TEST)
             gl.disable(gl.CULL_FACE)
             gl.enable(gl.BLEND)
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)

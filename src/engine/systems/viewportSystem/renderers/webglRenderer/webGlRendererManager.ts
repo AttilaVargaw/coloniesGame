@@ -18,6 +18,9 @@ export class WebglRenderManager {
         this.rectRenderer.addToEngine(engine).init()
 
         this.engine = engine
+
+        const gl = this.engine.getCanvas("webgl2")!.getContext("webgl2")!
+        gl.enable(gl.DEPTH_TEST)
     }
 
     removeFromEngine() {
@@ -26,18 +29,18 @@ export class WebglRenderManager {
     }
 
     render() {
-        // this.sphereRenderer.beginFrame()
-        // this.rectRenderer.beginFrame()
-        const mainCanvas = this.viewport.camera.context.canvas
         const glCanvas = this.engine?.getCanvas("webgl2")!
-        const gl = this.sphereRenderer.gl!
+        const canvas = this.engine!.getCanvas("2d")!
 
-        if(glCanvas.width !== mainCanvas.width || glCanvas.height !== mainCanvas.height) {
-            glCanvas.width = mainCanvas.width
-            glCanvas.height = mainCanvas.height
-            gl.viewport(0, 0, mainCanvas.width, mainCanvas.height)
-            glCanvas.style.width = mainCanvas.style.width
-            glCanvas.style.height = mainCanvas.style.height
+        const gl = glCanvas.getContext("webgl2")!
+        const ctx = canvas.getContext("2d")!
+
+        if(glCanvas.width !== canvas.width || glCanvas.height !== canvas.height) {
+            glCanvas.width = canvas.width
+            glCanvas.height = canvas.height
+            gl.viewport(0, 0, canvas.width, canvas.height)
+            glCanvas.style.width = canvas.style.width
+            glCanvas.style.height = canvas.style.height
         }
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
@@ -48,13 +51,12 @@ export class WebglRenderManager {
         this.rectRenderer.beginFrame()
         this.projectNodes()
 
-
         this.sphereRenderer.drawNodes()
         this.rectRenderer.drawNodes()
 
         const camera = this.viewport.camera
 
-        camera.context.drawImage(this.sphereRenderer.gl!.canvas, 0, 0, camera.cssWidth, camera.cssHeight)
+        ctx.drawImage(glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
     }
 
     projectNodes() {

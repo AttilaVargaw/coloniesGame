@@ -5,7 +5,6 @@ import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { CAMERA_INITIAL_DISTANCE, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, FIELD_OF_VIEW, TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { BaseRenderer } from "./renderers/baseRenderer";
-import { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
@@ -33,13 +32,6 @@ function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: n
     }
     return canvas
 }
-
-interface RenderEntry {
-    renderer: BaseRenderer<any>
-    node: any
-    projected: ProjectedPoint
-}
-
 export class ViewportSystem extends System {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
     private inputHandler!: ViewportInputHandler
@@ -168,103 +160,6 @@ export class ViewportSystem extends System {
         }
 
         ctx.restore()
-    }
-
-    // private scheduleRender(bloomTargetCtx: CanvasRenderingContext2D) {
-    //     if(!this.engine) {
-    //         return
-    //     }
-    //     const bloomEntries: RenderEntry[] = []
-    //     const labelEntries: RenderEntry[] = []
-    //     const timings: Map<string, number> = new Map()
-    //     const totalStart = performance.now()
-
-    //     this.projectRenderers(timings, labelEntries, bloomEntries, bloomTargetCtx)
-
-    //     bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
-
-    //     const drawStart = performance.now()
-
-    //     timings.set("draw", (timings.get("draw") || 0) + (performance.now() - drawStart))
-
-    //     this.finishRenderers(timings)
-
-    //     const compositeStart = performance.now()
-
-    //     if(bloomTargetCtx) {
-    //         bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
-    //         for(const entry of bloomEntries) {
-    //             entry.renderer.drawNodes(bloomTargetCtx)
-    //         }
-    //     }
-    //     timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
-
-    //     const totalMs = performance.now() - totalStart
-    //     this.frameTimeSamples.push(totalMs)
-    //     if(this.frameTimeSamples.length > 60) {
-    //         this.frameTimeSamples.shift()
-    //     }
-    //     this.lastFrameTime = totalMs
-    //     this.rendererTimings = new Map(Object.entries(timings))
-    // }
-
-    private projectRenderers(
-        timings: Map<string, number> = new Map(),
-        labelEntries: RenderEntry[],
-        bloomEntries: RenderEntry[],
-        bloomTargetCtx: CanvasRenderingContext2D | undefined
-    ) {
-        if(!this.engine) return
-
-        for(const [key, renderer] of this.renderers.entries()) {
-            const t0 = performance.now()
-            if(!renderer) {
-                continue
-            }
-
-            renderer.beginFrame()
-            const t1 = performance.now()
-            renderer.projectNodes()
-            const t2 = performance.now()
-            timings.set(key.name, (timings.get(key.name)!) + (t2 - t0))
-            timings.set(`${name}:project`, (timings.get(`${name}:project`) || 0) + (t2 - t1))
-
-            for(const { node, projected } of renderer.getProjectedCacheEntries()) {
-                if(renderer instanceof LabelRenderer) {
-                    labelEntries.push({ renderer, node, projected })
-                } else if('emitLight' in node && (node as any).emitLight) {
-                    if(bloomTargetCtx) {
-                        bloomEntries.push({ renderer, node, projected })
-                    }
-                }
-            }
-        }
-    }
-
-    private finishRenderers(timings: Map<string, number>) {
-        if(!this.engine) return
-
-        for(const [key,] of this.renderers.entries()) {
-            const name = key.name
-            const t0 = performance.now()
-            timings.set(`${name}:end`, (timings.get(`${name}:end`) || 0) + (performance.now() - t0))
-        }
-    }
-
-    clearWebgl() {
-        if(!this.engine) {
-            return
-        }
-
-        const gl = this.engine.getCanvas("webgl2").getContext("webgl2")
-
-        if(!gl) {
-            return
-        }
-
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     }
 
     update(dt: number) {

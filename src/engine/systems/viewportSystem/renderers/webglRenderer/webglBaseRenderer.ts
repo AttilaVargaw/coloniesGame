@@ -69,12 +69,12 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     }
 
     protected resetGLState(gl: WebGL2RenderingContext): void {
-        gl.disable(gl.DEPTH_TEST)
+        // gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.CULL_FACE)
         gl.disable(gl.BLEND)
         gl.disable(gl.SCISSOR_TEST)
         gl.colorMask(true, true, true, true)
-        gl.depthMask(true)
+        // gl.depthMask(true)
     }
 
     removeFromEngine(): this {
