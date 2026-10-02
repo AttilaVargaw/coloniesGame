@@ -162,6 +162,56 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
+    private drawBloomSource(ctx: CanvasRenderingContext2D, camera: Camera) {
+        if(!this.engine) return
+
+        const allEntities = this.engine.getAllEntities()
+
+        ctx.save()
+        ctx.globalCompositeOperation = "source-over"
+
+        for(const entity of allEntities) {
+            const color = entity.getComponent(ColorComponent)
+            const radius = entity.getComponent(RadiusComponent)
+
+            if(!color?.emitLight || !radius || radius.radius < 10) continue
+
+            const [sx, sy, sz] = getAbsolute(entity, this.engine)
+            const projected = camera.project(sx, sy, sz)
+            if(!projected) continue
+
+            const screenX = projected.x
+            const screenY = projected.y
+            const screenRadius = radius.radius * projected.scale
+
+            if(
+                screenX + screenRadius * 3 < 0 ||
+                screenX - screenRadius * 3 > camera.cssWidth ||
+                screenY + screenRadius * 3 < 0 ||
+                screenY - screenRadius * 3 > camera.cssHeight
+            ) {
+                continue
+            }
+
+            const fill = color.fill || "#ffffff"
+            const r = parseInt(fill.slice(1, 3), 16) / 255
+            const g = parseInt(fill.slice(3, 5), 16) / 255
+            const b = parseInt(fill.slice(5, 7), 16) / 255
+
+            const bloomRadius = screenRadius * 3
+            const gradient = ctx.createRadialGradient(screenX, screenY, screenRadius * 0.5, screenX, screenY, bloomRadius)
+            gradient.addColorStop(0, `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},0.35)`)
+            gradient.addColorStop(0.5, `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},0.1)`)
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(screenX, screenY, bloomRadius, 0, TWO_PI)
+            ctx.fill()
+        }
+
+        ctx.restore()
+    }
+
     update(dt: number) {
         if(!this.engine) {
             return
@@ -196,6 +246,8 @@ export class ViewportSystem extends System {
 
 
         bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, context.canvas.width, context.canvas.height)
+        const bloomCtx = bloomSourceCanvas.getContext("2d")!
+        bloomCtx.clearRect(0, 0, bloomSourceCanvas.width, bloomSourceCanvas.height)
 
         ViewportSystem.clear(context)
         //     this.clearWebgl()
@@ -222,6 +274,7 @@ export class ViewportSystem extends System {
         this.drawLensFlares(context, this.camera)
 
         if(showBloom) {
+            this.drawBloomSource(bloomCtx, this.camera)
             applyBloomLayer(context, bloomSourceCanvas, bloomSettings)
         }
 
