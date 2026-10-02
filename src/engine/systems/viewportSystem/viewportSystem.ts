@@ -25,6 +25,7 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
 import { drawOrbits } from "./renderOrbits";
 import { drawJumpGraph } from "./renderers/drawJumpGraph";
+import { ShapeRenderer } from "./renderers/shapeRenderer";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 let bloomSourceCtx: CanvasRenderingContext2D | null = null
@@ -93,10 +94,6 @@ export class ViewportSystem extends System {
     consumeDragMoved() {
         return this.inputHandler.consumeDragMoved()
     }
-
-    // get viewport() {
-    //     return this._viewport?.viewPort
-    // }
 
     private static clear(ctx: CanvasRenderingContext2D) {
         ctx.save()
@@ -208,7 +205,6 @@ export class ViewportSystem extends System {
         }
         timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
 
-        this.pendingLabelEntries = labelEntries
         const totalMs = performance.now() - totalStart
         this.frameTimeSamples.push(totalMs)
         if(this.frameTimeSamples.length > 60) {
@@ -254,41 +250,11 @@ export class ViewportSystem extends System {
     private finishRenderers(timings: Map<string, number>) {
         if(!this.engine) return
 
-        for(const [key, renderer] of this.renderers.entries()) {
+        for(const [key,] of this.renderers.entries()) {
             const name = key.name
             const t0 = performance.now()
-            renderer?.endFrame()
             timings.set(`${name}:end`, (timings.get(`${name}:end`) || 0) + (performance.now() - t0))
         }
-    }
-
-    private pendingLabelEntries: RenderEntry[] = []
-
-    // private renderLabels() {
-    //     if(!this.engine || !this.viewport) { return }
-
-    //     const canvas = this.viewport.camera.context
-
-    //     for(const entry of this.pendingLabelEntries) {
-    //         entry.renderer.drawNode(entry.node, 0, canvas)
-    //     }
-
-    //     this.pendingLabelEntries = []
-    // }
-
-    setRendererClasses(args: (new (...args: any[]) => BaseRenderer<any>)[]) {
-        if(!this.engine) {
-            return
-        }
-
-        this.renderers = args.reduce((prev, curr) => {
-            const renderer = new curr(this)
-            prev.set(curr, renderer)
-            renderer?.addToEngine?.(this.engine!)
-            //renderer?.init?.()
-
-            return prev
-        }, new Map())
     }
 
     clearWebgl() {
@@ -358,6 +324,7 @@ export class ViewportSystem extends System {
         this.renderers.entries().forEach(([_key, renderer]) => {
             renderer.beginFrame()
             renderer.drawNodes(context)
+            renderer.endFrame()
         })
 
         this.drawLensFlares(context, this.camera)
@@ -482,6 +449,22 @@ export class ViewportSystem extends System {
         this.engine = engine
         super.addToEngine(engine)
 
+        this.renderers = [
+            ShapeRenderer,
+            LabelRenderer
+        ].reduce((prev, curr) => {
+            const renderer = new curr(this)
+
+            prev.set(curr, renderer)
+
+            renderer.addToEngine(this.engine!)
+            renderer.init?.()
+
+            return prev
+        }, new Map())
+
+        this.webglRenderManager.addToEngine(engine)
+
         return this
     }
 
@@ -491,6 +474,10 @@ export class ViewportSystem extends System {
         }
 
         this.inputHandler.removeFromEngine()
+
+        for(const renderer of this.renderers.values()) {
+            renderer.removeFromEngine()
+        }
 
         super.removeFromEngine()
 

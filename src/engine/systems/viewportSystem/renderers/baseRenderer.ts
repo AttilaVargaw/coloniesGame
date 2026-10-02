@@ -16,6 +16,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
     private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
     protected debugCulledCount = 0
     protected debugProjectedCount = 0
+    init?(): void
 
     get projectedCount() {
         return this.debugProjectedCount

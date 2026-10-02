@@ -32,8 +32,6 @@ export class WebGLSphereNode extends RenderableNode {
 }
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
-    endFrame(): void {
-    }
     drawNodes(_ctx: CanvasRenderingContext2D): void {
         if(!this.engine || !this.atlas) {
             return
@@ -349,6 +347,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.initBuffers()
 
         gl.disable(gl.DEPTH_TEST)
+        gl.clearColor(0, 0, 0, 0)
     }
 
     private initBuffers() {

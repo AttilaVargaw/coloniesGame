@@ -16,8 +16,6 @@ import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { OrbitSystem } from "@engine/systems/orbitSystem/orbitSystem"
 import { CommandBase } from "@/engine/lib/CommandBase"
 import { BodyBlueprint } from "./data/BodyBlueprint"
-import { ShapeRenderer } from "@/engine/systems/viewportSystem/renderers/shapeRenderer"
-import { LabelRenderer } from "@/engine/systems/viewportSystem/renderers/labelRenderer"
 import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSystem"
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem } from "./systems/cameraFollowSystem"
@@ -26,15 +24,6 @@ import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { WebGLSphereRenderer } from "@/engine/systems/viewportSystem/renderers/webglRenderer/webglSphereRenderer"
-import { WebGLRectRenderer } from "@/engine/systems/viewportSystem/renderers/webglRenderer/webglRectRenderer"
-
-const renderers = [
-    ShapeRenderer,
-    WebGLSphereRenderer,
-    LabelRenderer,
-    WebGLRectRenderer,
-]
 
 export class Game {
     readonly engine: World
@@ -79,7 +68,7 @@ export class Game {
 
         //viewportEntity.addComponent(new CameraFollowComponent())
 
-        this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
+        // this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
         this.engine.getSystem(ViewportSystem).init()
 
         setTimeout(() => {

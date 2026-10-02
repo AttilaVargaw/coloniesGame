@@ -21,7 +21,7 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         if(!this.glCanvas) {
             throw new Error("WebGL not available")
         }
-        const gl = this.glCanvas.getContext("webgl2")
+        const gl = this.glCanvas.getContext("webgl2", { alpha: true })
         if(!gl) {
             throw new Error("WebGL not supported")
         }
@@ -41,6 +41,16 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
             this.resize(mainCanvas.width, mainCanvas.height)
             this.glCanvas.style.width = mainCanvas.style.width
             this.glCanvas.style.height = mainCanvas.style.height
+        }
+
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT)
+    }
+
+    endFrame(): void {
+        const ctx = this.canvas.getContext("2d")
+        if(ctx && this.glCanvas.width > 0 && this.glCanvas.height > 0) {
+            const camera = this.viewportSystem.camera
+            ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
         }
     }
 

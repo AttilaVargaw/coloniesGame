@@ -22,8 +22,6 @@ const QUAD_VERTICES = new Float32Array([
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
 
 export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
-    endFrame(): void { }
-
     private shader: RectShaderProgram | null = null
     private quadBuffer: WebGLBuffer | null = null
     private quadIndexBuffer: WebGLBuffer | null = null
