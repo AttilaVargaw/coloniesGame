@@ -34,23 +34,25 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
         return Math.max(node.width, node.height) / 2
     }
 
-    drawNodes = (node: ShapeNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
-        const { projected } = this.getProjected(node)
-        const context = ctx ?? this.viewportSystem.camera.context
-        const { path } = node.shape
+    drawNodes = (ctx: CanvasRenderingContext2D) => {
+        for(const node of this.nodes) {
+            const { projected } = this.getProjected(node)
+            const context = ctx ?? this.viewportSystem.camera.context
+            const { path } = node.shape
 
-        context.save()
-        context.translate(projected.x, projected.y)
-        context.scale(projected.scale, projected.scale)
-        node.setColor(context);
-        context.beginPath();
+            context.save()
+            context.translate(projected.x, projected.y)
+            context.scale(projected.scale, projected.scale)
+            node.setColor(context);
+            context.beginPath();
 
-        for(let i = 1; i < path.length; i++) {
-            context.lineTo(...path[i]);
+            for(let i = 1; i < path.length; i++) {
+                context.lineTo(...path[i]);
+            }
+
+            context.closePath();
+            //node.draw(context)
+            context.restore()
         }
-
-        context.closePath();
-        //node.draw(context)
-        context.restore()
     }
 }

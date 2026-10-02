@@ -47,7 +47,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
     endFrame(): void {
     }
-    drawNodes(_node: CircleNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    drawNodes(_ctx: CanvasRenderingContext2D): void {
     }
     protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
@@ -80,7 +80,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         return this._starEntity
     }
 
-    drawNode = (circle: CircleNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
+    drawNode = (ctx: CanvasRenderingContext2D) => {
         if(!this.engine) {
             return
         }
@@ -88,35 +88,37 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const { camera } = this.viewportSystem
         const context = ctx ?? camera.context
 
-        const { projected: center, worldPos } = this.getProjected(circle)
-        const [cx, cy, cz] = worldPos
-        const radius = circle.radius.radius
-        const thickness = circle.thickness.thickness
-        const screenRadius = radius * center.scale
+        for(const circle of this.nodes) {
+            const { projected: center, worldPos } = this.getProjected(circle)
+            const [cx, cy, cz] = worldPos
+            const radius = circle.radius.radius
+            const thickness = circle.thickness.thickness
+            const screenRadius = radius * center.scale
 
-        if(
-            center.x + screenRadius < 0 ||
-            center.x - screenRadius > camera.cssWidth ||
-            center.y + screenRadius < 0 ||
-            center.y - screenRadius > camera.cssHeight
-        ) {
-            return
+            if(
+                center.x + screenRadius < 0 ||
+                center.x - screenRadius > camera.cssWidth ||
+                center.y + screenRadius < 0 ||
+                center.y - screenRadius > camera.cssHeight
+            ) {
+                return
+            }
+
+            context.save()
+
+            if(circle.emitLight) {
+                CircleRenderer.drawBloom(context, circle, center, screenRadius)
+            }
+
+            CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
+            CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
+
+            if(circle.texture?.nightTexture && !circle.emitLight) {
+                this.drawNightTexture(context, circle, center, screenRadius, cx, cy, cz, camera)
+            }
+
+            CircleRenderer.drawStrokeAndShade(context, circle, center, screenRadius, thickness)
         }
-
-        context.save()
-
-        if(circle.emitLight) {
-            CircleRenderer.drawBloom(context, circle, center, screenRadius)
-        }
-
-        CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
-        CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
-
-        if(circle.texture?.nightTexture && !circle.emitLight) {
-            this.drawNightTexture(context, circle, center, screenRadius, cx, cy, cz, camera)
-        }
-
-        CircleRenderer.drawStrokeAndShade(context, circle, center, screenRadius, thickness)
 
         context.restore()
     }

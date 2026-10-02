@@ -35,30 +35,32 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         return node.label.size
     }
 
-    drawNodes(node: LabelNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
-        const { projected } = this.getProjected(node)
-        const context = ctx ?? this.viewportSystem.camera.context;
+    drawNodes(context: CanvasRenderingContext2D): void {
+        for(const node of this.nodes) {
+            const { projected } = this.getProjected(node)
+            context ?? this.viewportSystem.camera.context;
 
-        context.save()
-        node.setColor(context);
-        const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
-        const offsetX = (node.label.offset.x || 0) * projected.scale
-        const offsetY = (node.label.offset.y || 0) * projected.scale
+            context.save()
+            node.setColor(context);
+            const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
+            const offsetX = (node.label.offset.x || 0) * projected.scale
+            const offsetY = (node.label.offset.y || 0) * projected.scale
 
-        context.font = `${screenSize}px Chronosfer`;
-        context.shadowColor = "rgba(0, 0, 0, 0.8)"
-        context.shadowBlur = screenSize * 0.25
-        context.shadowOffsetX = 0
-        context.shadowOffsetY = 0
+            context.font = `${screenSize}px Chronosfer`;
+            context.shadowColor = "rgba(0, 0, 0, 0.8)"
+            context.shadowBlur = screenSize * 0.25
+            context.shadowOffsetX = 0
+            context.shadowOffsetY = 0
 
-        const lines = node.label.text.split("\n")
-        const lineHeight = screenSize * 1.2
-        const totalHeight = lines.length * lineHeight
+            const lines = node.label.text.split("\n")
+            const lineHeight = screenSize * 1.2
+            const totalHeight = lines.length * lineHeight
 
-        let y = projected.y + offsetY - totalHeight / 2 + lineHeight / 2
-        for(const line of lines) {
-            context.fillText(line, projected.x + offsetX, y);
-            y += lineHeight
+            let y = projected.y + offsetY - totalHeight / 2 + lineHeight / 2
+            for(const line of lines) {
+                context.fillText(line, projected.x + offsetX, y);
+                y += lineHeight
+            }
         }
         context.restore()
     }

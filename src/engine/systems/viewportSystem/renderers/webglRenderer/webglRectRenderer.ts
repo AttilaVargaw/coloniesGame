@@ -50,10 +50,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         this.resetGLState(gl)
 
-        for(const it of this.nodes) {
-            this.drawNodes(it)
-        }
-
         if(this.pendingInstances.length === 0) {
             return
         }
@@ -252,77 +248,79 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return [data[0] / 255, data[1] / 255, data[2] / 255]
     }
 
-    drawNodes(node: RectNode, _dT?: number): void {
-        if(!this.engine || !this.atlas || !this.glContext) {
+    drawNodes(): void {
+        if(!this.engine || !this.glContext) {
             return
         }
 
-        const { camera } = this.viewportSystem
+        for(const node of this.nodes) {
+            const { camera } = this.viewportSystem
 
-        const { worldPos, projected } = this.getProjected(node)
-        const scale = projected.scale
-        const screenWidth = node.size.width * scale
-        const screenHeight = node.size.height * scale
+            const { worldPos, projected } = this.getProjected(node)
+            const scale = projected.scale
+            const screenWidth = node.size.width * scale
+            const screenHeight = node.size.height * scale
 
-        if(
-            projected.x + screenWidth / 2 < 0 ||
-            projected.x - screenWidth / 2 > camera.cssWidth ||
-            projected.y + screenHeight / 2 < 0 ||
-            projected.y - screenHeight / 2 > camera.cssHeight
-        ) {
-            return
-        }
-
-        if(this.shouldCullNode(node, projected, worldPos)) {
-            return
-        }
-
-        const resolvedTexture = this.resolveTexture(node.texture)
-        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
-        let atlasEntry: AtlasEntry | undefined
-
-        if(showCheckerPattern) {
-            atlasEntry = this.atlas.getEntry("__checker__")
-            if(!atlasEntry) {
-                atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
+            if(
+                projected.x + screenWidth / 2 < 0 ||
+                projected.x - screenWidth / 2 > camera.cssWidth ||
+                projected.y + screenHeight / 2 < 0 ||
+                projected.y - screenHeight / 2 > camera.cssHeight
+            ) {
+                return
             }
-        } else if(resolvedTexture) {
-            const texKey = this.getAtlasKey(resolvedTexture)
-            atlasEntry = this.atlas.getEntry(texKey)
-            if(!atlasEntry) {
-                atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
+
+            if(this.shouldCullNode(node, projected, worldPos)) {
+                return
             }
-        } else {
-            atlasEntry = this.atlas.getEntry("__white__")
+
+            const resolvedTexture = this.resolveTexture(node.texture)
+            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+            let atlasEntry: AtlasEntry | undefined
+
+            if(showCheckerPattern) {
+                atlasEntry = this.atlas.getEntry("__checker__")
+                if(!atlasEntry) {
+                    atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
+                }
+            } else if(resolvedTexture) {
+                const texKey = this.getAtlasKey(resolvedTexture)
+                atlasEntry = this.atlas.getEntry(texKey)
+                if(!atlasEntry) {
+                    atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
+                }
+            } else {
+                atlasEntry = this.atlas.getEntry("__white__")
+            }
+
+            if(!atlasEntry) {
+                return
+            }
+
+            const fill = node.color.fill || "#ffffff"
+            const [r, g, b] = WebGLRectRenderer.parseColor(fill)
+
+            const instanceData = new Float32Array(13)
+            instanceData[0] = projected.x
+            instanceData[1] = projected.y
+            instanceData[2] = screenWidth
+            instanceData[3] = screenHeight
+            instanceData[4] = node.texture?.rotation ?? 0
+            instanceData[5] = atlasEntry.u0
+            instanceData[6] = atlasEntry.v0
+            instanceData[7] = atlasEntry.u1 - atlasEntry.u0
+            instanceData[8] = atlasEntry.v1 - atlasEntry.v0
+            instanceData[9] = r
+            instanceData[10] = g
+            instanceData[11] = b
+            instanceData[12] = 1.0
+
+            this.pendingInstances.push({
+                page: atlasEntry.page,
+                depth: projected.depth,
+                data: instanceData
+            })
         }
-
-        if(!atlasEntry) {
-            return
-        }
-
-        const fill = node.color.fill || "#ffffff"
-        const [r, g, b] = WebGLRectRenderer.parseColor(fill)
-
-        const instanceData = new Float32Array(13)
-        instanceData[0] = projected.x
-        instanceData[1] = projected.y
-        instanceData[2] = screenWidth
-        instanceData[3] = screenHeight
-        instanceData[4] = node.texture?.rotation ?? 0
-        instanceData[5] = atlasEntry.u0
-        instanceData[6] = atlasEntry.v0
-        instanceData[7] = atlasEntry.u1 - atlasEntry.u0
-        instanceData[8] = atlasEntry.v1 - atlasEntry.v0
-        instanceData[9] = r
-        instanceData[10] = g
-        instanceData[11] = b
-        instanceData[12] = 1.0
-
-        this.pendingInstances.push({
-            page: atlasEntry.page,
-            depth: projected.depth,
-            data: instanceData
-        })
     }
 
     protected getCullMargin(node: RectNode): number {

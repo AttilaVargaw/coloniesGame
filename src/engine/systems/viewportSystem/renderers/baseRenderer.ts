@@ -139,7 +139,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return entries
     }
 
-    abstract drawNodes(node: N, dt: number, ctx: CanvasRenderingContext2D): void
+    abstract drawNodes(ctx: CanvasRenderingContext2D): void
 
     getViewportSystem(): ViewportSystem {
         return this.viewportSystem

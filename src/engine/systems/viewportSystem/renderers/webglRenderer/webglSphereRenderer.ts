@@ -34,7 +34,7 @@ export class WebGLSphereNode extends RenderableNode {
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     endFrame(): void {
     }
-    drawNodes(_node: WebGLSphereNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    drawNodes(_ctx: CanvasRenderingContext2D): void {
     }
     protected getCullMargin(_node: WebGLSphereNode): number {
         return 0

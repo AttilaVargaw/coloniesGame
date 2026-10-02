@@ -179,7 +179,7 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
-    private scheduleRender(dt: number, bloomTargetCtx: CanvasRenderingContext2D) {
+    private scheduleRender(bloomTargetCtx: CanvasRenderingContext2D) {
         if(!this.engine) {
             return
         }
@@ -203,7 +203,7 @@ export class ViewportSystem extends System {
         if(bloomTargetCtx) {
             bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
             for(const entry of bloomEntries) {
-                entry.renderer.drawNodes(entry.node, dt, bloomTargetCtx)
+                entry.renderer.drawNodes(bloomTargetCtx)
             }
         }
         timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
@@ -353,10 +353,11 @@ export class ViewportSystem extends System {
             drawOrbits(context, this.engine, this.camera)
         }
 
-        this.scheduleRender(dt, bloomSourceCtx)
+        this.scheduleRender(bloomSourceCtx)
 
         this.renderers.entries().forEach(([_key, renderer]) => {
             renderer.beginFrame()
+            renderer.drawNodes(context)
         })
 
         this.drawLensFlares(context, this.camera)

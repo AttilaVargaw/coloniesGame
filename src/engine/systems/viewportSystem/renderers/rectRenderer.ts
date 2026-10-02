@@ -16,7 +16,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     }
     endFrame(): void {
     }
-    drawNodes(_node: RectNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    drawNodes(_ctx: CanvasRenderingContext2D): void {
     }
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();
 
@@ -112,62 +112,65 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return super.removeFromEngine();
     }
 
-    drawNode(rect: RectNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
-        const { projected } = this.getProjected(rect)
-        const context = ctx ?? this.viewportSystem.camera.context;
+    drawNode(ctx: CanvasRenderingContext2D): void {
+        for(const rect of this.nodes) {
 
-        const screenWidth = rect.size.width * projected.scale
-        const screenHeight = rect.size.height * projected.scale
-        const x = projected.x - screenWidth / 2
-        const y = projected.y - screenHeight / 2
+            const { projected } = this.getProjected(rect)
+            const context = ctx ?? this.viewportSystem.camera.context;
 
-        const texture = this.resolveTexture(rect.texture)
+            const screenWidth = rect.size.width * projected.scale
+            const screenHeight = rect.size.height * projected.scale
+            const x = projected.x - screenWidth / 2
+            const y = projected.y - screenHeight / 2
 
-        if(rect.emitLight) {
-            context.save()
-            const bloomRadius = Math.max(screenWidth, screenHeight) * 1.5
-            const gradient = context.createRadialGradient(projected.x, projected.y, Math.max(screenWidth, screenHeight) * 0.25, projected.x, projected.y, bloomRadius)
-            const fill = rect.color.fill || "#ffffff"
-            gradient.addColorStop(0, hexToRgba(fill, 0.35))
-            gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
-            gradient.addColorStop(1, "rgba(0,0,0,0)")
-            context.globalCompositeOperation = "screen"
-            context.fillStyle = gradient
-            context.beginPath()
-            context.arc(projected.x, projected.y, bloomRadius, 0, TWO_PI)
-            context.fill()
-            context.restore()
-        }
+            const texture = this.resolveTexture(rect.texture)
 
-        if(texture) {
-            context.save()
-
-            context.translate(projected.x, projected.y)
-            context.rotate(rect.texture?.rotation ?? 0)
-            context.drawImage(texture, -screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight)
-
-            if(rect.texture?.tint) {
-                context.globalCompositeOperation = 'source-atop';
-                context.globalAlpha = 0.35;
-                context.fillStyle = rect.texture.tint;
-                context.fillRect(-screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight);
-                context.globalAlpha = 1.0;
+            if(rect.emitLight) {
+                context.save()
+                const bloomRadius = Math.max(screenWidth, screenHeight) * 1.5
+                const gradient = context.createRadialGradient(projected.x, projected.y, Math.max(screenWidth, screenHeight) * 0.25, projected.x, projected.y, bloomRadius)
+                const fill = rect.color.fill || "#ffffff"
+                gradient.addColorStop(0, hexToRgba(fill, 0.35))
+                gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+                gradient.addColorStop(1, "rgba(0,0,0,0)")
+                context.globalCompositeOperation = "screen"
+                context.fillStyle = gradient
+                context.beginPath()
+                context.arc(projected.x, projected.y, bloomRadius, 0, TWO_PI)
+                context.fill()
+                context.restore()
             }
 
-            context.restore()
-        } else {
-            context.save()
+            if(texture) {
+                context.save()
 
-            rect.setColor(context);
+                context.translate(projected.x, projected.y)
+                context.rotate(rect.texture?.rotation ?? 0)
+                context.drawImage(texture, -screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight)
 
-            context.fillRect(
-                x,
-                y,
-                screenWidth,
-                screenHeight
-            )
+                if(rect.texture?.tint) {
+                    context.globalCompositeOperation = 'source-atop';
+                    context.globalAlpha = 0.35;
+                    context.fillStyle = rect.texture.tint;
+                    context.fillRect(-screenWidth / 2, -screenHeight / 2, screenWidth, screenHeight);
+                    context.globalAlpha = 1.0;
+                }
 
-            context.restore()
+                context.restore()
+            } else {
+                context.save()
+
+                rect.setColor(context);
+
+                context.fillRect(
+                    x,
+                    y,
+                    screenWidth,
+                    screenHeight
+                )
+
+                context.restore()
+            }
         }
     }
 }
