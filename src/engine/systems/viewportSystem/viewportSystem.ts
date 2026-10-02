@@ -7,11 +7,6 @@ import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
-// import { drawRotationIndicator } from "./drawRotationIndicator";
-// import { drawStarfield } from "./drawStarfield";
-// import { drawNebulas } from "./drawNebulas";
-// import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
-// import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
 import { ColorComponent } from "../../components/colorComponent";
@@ -326,6 +321,7 @@ export class ViewportSystem extends System {
             renderer.endFrame()
         })
 
+        this.webglRenderManager.projectNodes()
         this.webglRenderManager.render()
 
         this.drawLensFlares(context, this.camera)

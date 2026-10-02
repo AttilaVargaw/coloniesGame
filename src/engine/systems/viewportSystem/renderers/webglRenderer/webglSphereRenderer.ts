@@ -1,6 +1,6 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
-import { type ShaderProgram } from "./ShaderProgram"
+import type { ShaderProgram } from "./ShaderProgram"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
 import { PositionComponent } from "@/engine/components/position"
@@ -159,6 +159,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const aspectRatio = camera.context.canvas.width / camera.context.canvas.height
         mat4.perspective(this.projection, camera.fieldOfView, aspectRatio, camera.minDistance * 0.1, camera.maxDistance * 2)
+        //this.projection[5] *= -1
 
         gl.useProgram(this.shader.program)
 
@@ -266,8 +267,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
 
-        this.viewportSystem.camera.context.drawImage(this.gl.canvas, 0, 0)
-
         //reset state
         gl.disableVertexAttribArray(modelLoc)
         gl.disableVertexAttribArray(modelLoc + 1)
@@ -318,7 +317,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
     beginFrame(): void {
         this.pendingInstances = []
-        super.beginFrame()
+        // super.beginFrame()
     }
 
     init() {

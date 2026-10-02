@@ -5,7 +5,7 @@ import { BaseRenderer } from "../baseRenderer";
 import { RenderableNode } from "../renderableNode";
 
 export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRenderer<N> {
-    protected gl: WebGL2RenderingContext | null = null
+    gl: WebGL2RenderingContext | null = null
     protected glCanvas!: HTMLCanvasElement
     protected canvas!: HTMLCanvasElement
     protected glDrawnThisFrame = false

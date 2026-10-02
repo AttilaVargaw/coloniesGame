@@ -35,7 +35,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
     beginFrame(): void {
         this.pendingInstances = []
-        super.beginFrame()
+        // super.beginFrame()
     }
 
     init() {
@@ -298,8 +298,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.drawElementsInstanced(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0, instances.length)
             gl.depthMask(true)
         }
-
-        this.viewportSystem.camera.context.drawImage(this.gl.canvas, 0, 0)
 
         //set state back
         gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
