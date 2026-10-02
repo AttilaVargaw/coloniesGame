@@ -31,10 +31,25 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private nextTextureKey = 0
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
     private projection = mat4.create()
-    private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
+    private readonly MAX_RECT_INSTANCES = 256
+    private rectInstancePool: Float32Array | null = null
+    private rectBatchBuffer: Float32Array | null = null
+    private pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
 
     beginFrame(): void {
         this.pendingInstances = []
+    }
+
+    private ensureRectCapacity(count: number): void {
+        const needed = count * 13
+        if(!this.rectInstancePool || this.rectInstancePool.length < needed) {
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 13)
+            this.rectInstancePool = new Float32Array(newSize)
+        }
+        if(!this.rectBatchBuffer || this.rectBatchBuffer.length < needed) {
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 13)
+            this.rectBatchBuffer = new Float32Array(newSize)
+        }
     }
 
     init() {
@@ -46,6 +61,9 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.shader = createRectShaderProgram(gl)
         this.initBuffers()
         this.initInstanceBuffer()
+
+        this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 13)
+        this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 13)
 
         this.atlas = new WebGLTextureAtlas()
         const whiteCanvas = document.createElement("canvas")
@@ -185,25 +203,30 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             const fill = node.color.fill || "#ffffff"
             const [r, g, b] = WebGLRectRenderer.parseColor(fill)
 
-            const instanceData = new Float32Array(13)
-            instanceData[0] = projected.x
-            instanceData[1] = projected.y
-            instanceData[2] = screenWidth
-            instanceData[3] = screenHeight
-            instanceData[4] = node.texture?.rotation ?? 0
-            instanceData[5] = atlasEntry.u0
-            instanceData[6] = atlasEntry.v0
-            instanceData[7] = atlasEntry.u1 - atlasEntry.u0
-            instanceData[8] = atlasEntry.v1 - atlasEntry.v0
-            instanceData[9] = r
-            instanceData[10] = g
-            instanceData[11] = b
-            instanceData[12] = 1.0
+            if(this.pendingInstances.length >= this.MAX_RECT_INSTANCES) {
+                this.ensureRectCapacity(this.pendingInstances.length + 1)
+            }
+
+            const poolOffset = this.pendingInstances.length * 13
+            const pool = this.rectInstancePool!
+            pool[poolOffset + 0] = projected.x
+            pool[poolOffset + 1] = projected.y
+            pool[poolOffset + 2] = screenWidth
+            pool[poolOffset + 3] = screenHeight
+            pool[poolOffset + 4] = node.texture?.rotation ?? 0
+            pool[poolOffset + 5] = atlasEntry.u0
+            pool[poolOffset + 6] = atlasEntry.v0
+            pool[poolOffset + 7] = atlasEntry.u1 - atlasEntry.u0
+            pool[poolOffset + 8] = atlasEntry.v1 - atlasEntry.v0
+            pool[poolOffset + 9] = r
+            pool[poolOffset + 10] = g
+            pool[poolOffset + 11] = b
+            pool[poolOffset + 12] = 1.0
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
                 depth: projected.depth,
-                data: instanceData
+                offset: poolOffset
             })
         }
 
@@ -237,13 +260,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         const instanceStride = 13 * 4
 
-        const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
+        const groups = new Map<number, Array<{ depth: number; offset: number }>>()
 
         for(const inst of this.pendingInstances) {
             if(!groups.has(inst.page)) {
-                groups.set(inst.page, [{ depth: inst.depth, data: inst.data }])
+                groups.set(inst.page, [{ depth: inst.depth, offset: inst.offset }])
             } else {
-                groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
+                groups.get(inst.page)!.push({ depth: inst.depth, offset: inst.offset })
             }
         }
 
@@ -255,15 +278,17 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             instances.sort((a, b) => b.depth - a.depth)
 
             const totalFloats = instances.length * 13
-            const instanceArray = new Float32Array(totalFloats)
-            let offset = 0
-            for(const inst of instances) {
-                instanceArray.set(inst.data, offset)
-                offset += 13
+            if(!this.rectBatchBuffer || this.rectBatchBuffer.length < totalFloats) {
+                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 13)
+                this.rectBatchBuffer = new Float32Array(newSize)
+            }
+            const batch = this.rectBatchBuffer!.subarray(0, totalFloats)
+            for(let i = 0; i < instances.length; i++) {
+                batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 13), i * 13)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, instanceArray, gl.DYNAMIC_DRAW)
+            gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
 
             gl.enableVertexAttribArray(this.shader.attribs.instanceTranslation)
             gl.vertexAttribPointer(this.shader.attribs.instanceTranslation, 2, gl.FLOAT, false, instanceStride, 0)
@@ -396,9 +421,9 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         const image = new Image()
         image.src = sourceUri
+        this.textureCache.set(sourceKey, image)
 
         if(image.complete) {
-            this.textureCache.set(sourceKey, image)
             return image
         }
 
@@ -406,6 +431,10 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             this.textureCache.set(sourceKey, image)
         }
 
-        return undefined
+        image.onerror = () => {
+            this.textureCache.delete(sourceKey)
+        }
+
+        return image
     }
 }

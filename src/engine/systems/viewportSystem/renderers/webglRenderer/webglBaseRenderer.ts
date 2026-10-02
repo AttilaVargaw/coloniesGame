@@ -47,11 +47,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     }
 
     endFrame(): void {
-        const ctx = this.canvas.getContext("2d")
-        if(ctx && this.glCanvas.width > 0 && this.glCanvas.height > 0) {
-            const camera = this.viewportSystem.camera
-            ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-        }
     }
 
     protected endFrameFallback(): void {
