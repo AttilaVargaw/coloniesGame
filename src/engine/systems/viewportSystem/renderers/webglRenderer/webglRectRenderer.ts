@@ -22,6 +22,8 @@ const QUAD_VERTICES = new Float32Array([
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
 
 export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
+    endFrame(): void { }
+
     private shader: RectShaderProgram | null = null
     private quadBuffer: WebGLBuffer | null = null
     private quadIndexBuffer: WebGLBuffer | null = null
@@ -49,7 +51,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.resetGLState(gl)
 
         for(const it of this.nodes) {
-            this.drawNode(it)
+            this.drawNodes(it)
         }
 
         if(this.pendingInstances.length === 0) {
@@ -250,7 +252,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return [data[0] / 255, data[1] / 255, data[2] / 255]
     }
 
-    drawNode(node: RectNode, _dT?: number): void {
+    drawNodes(node: RectNode, _dT?: number): void {
         if(!this.engine || !this.atlas || !this.glContext) {
             return
         }

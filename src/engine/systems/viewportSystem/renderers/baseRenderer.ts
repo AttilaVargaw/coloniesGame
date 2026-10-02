@@ -128,13 +128,8 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         })
     }
 
-    beginFrame() {
-        // override in renderers that need per-frame reset
-    }
-
-    endFrame() {
-        // override in renderers that need per-frame cleanup
-    }
+    abstract beginFrame(): void
+    abstract endFrame(): void
 
     getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
         const entries: Array<{ node: N; projected: ProjectedPoint }> = []
@@ -144,26 +139,20 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return entries
     }
 
-    abstract drawNode(node: N, dt: number, ctx: CanvasRenderingContext2D): void
+    abstract drawNodes(node: N, dt: number, ctx: CanvasRenderingContext2D): void
 
     getViewportSystem(): ViewportSystem {
         return this.viewportSystem
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected getCullMargin(_node: N): number {
-        return 0
-    }
+    protected abstract getCullMargin(_node: N): number
 
     // eslint-disable-next-line class-methods-use-this
-    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
-        return false
-    }
+    protected abstract shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean
 
     // eslint-disable-next-line class-methods-use-this
-    protected shouldSkipProjection(_node: N, _cameraScale: number): boolean {
-        return false
-    }
+    protected abstract shouldSkipProjection(_node: N, _cameraScale: number): boolean
 
     protected getProjected(node: N): { worldPos: Vector3; projected: ProjectedPoint } {
         const entry = this.projectedCache.get(node)

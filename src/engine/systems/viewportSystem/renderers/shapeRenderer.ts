@@ -4,8 +4,20 @@ import { ThicknessComponent } from "@/engine/components/thicknessComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { BaseRenderer } from "./baseRenderer";
 import { ShapeComponent, ShapeNode } from "./shapeNode";
+import { ProjectedPoint } from "@/lib/camera";
+import { Vector3 } from "@/lib/Vector3";
 
 export class ShapeRenderer extends BaseRenderer<ShapeNode> {
+    beginFrame(): void {
+    }
+    endFrame(): void {
+    }
+    shouldCullNode(_node: ShapeNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    shouldSkipProjection(_node: ShapeNode, _cameraScale: number): boolean {
+        return false
+    }
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
             [PositionComponent, ColorComponent, ThicknessComponent, ShapeComponent],
@@ -18,11 +30,11 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    protected getCullMargin(node: ShapeNode): number {
+    getCullMargin(node: ShapeNode): number {
         return Math.max(node.width, node.height) / 2
     }
 
-    drawNode = (node: ShapeNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
+    drawNodes = (node: ShapeNode, _dt?: number, ctx?: CanvasRenderingContext2D) => {
         const { projected } = this.getProjected(node)
         const context = ctx ?? this.viewportSystem.camera.context
         const { path } = node.shape

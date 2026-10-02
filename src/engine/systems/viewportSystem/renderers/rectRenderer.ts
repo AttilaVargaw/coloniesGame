@@ -12,6 +12,12 @@ import { Vector3 } from "@/lib/Vector3";
 import { hexToRgba } from "./hexToRgba";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
+    beginFrame(): void {
+    }
+    endFrame(): void {
+    }
+    drawNodes(_node: RectNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    }
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();
 
     constructor(viewportSystem: ViewportSystem) {

@@ -11,6 +11,7 @@ import { TWO_PI } from "@/game/constants";
 import { hexToRgba } from "./hexToRgba";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
+import { Vector3 } from "@/lib/Vector3";
 
 const SHADE_SIZE = 96
 
@@ -42,6 +43,18 @@ function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius
 }
 
 export class CircleRenderer extends BaseRenderer<CircleNode> {
+    beginFrame(): void {
+    }
+    endFrame(): void {
+    }
+    drawNodes(_node: CircleNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    }
+    protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: CircleNode, _cameraScale: number): boolean {
+        return false
+    }
     private _nightCanvas: HTMLCanvasElement | undefined
     private _starEntity: Entity | undefined
 

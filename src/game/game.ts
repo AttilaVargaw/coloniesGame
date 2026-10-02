@@ -28,6 +28,14 @@ import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { WebGLSphereRenderer } from "@/engine/systems/viewportSystem/renderers/webglRenderer/webglSphereRenderer"
 import { WebGLRectRenderer } from "@/engine/systems/viewportSystem/renderers/webglRenderer/webglRectRenderer"
+
+const renderers = [
+    ShapeRenderer,
+    WebGLSphereRenderer,
+    LabelRenderer,
+    WebGLRectRenderer,
+]
+
 export class Game {
     readonly engine: World
     private gameLoopId?: number
@@ -70,13 +78,6 @@ export class Game {
             .addSystem(AsteroidSpinSystem)
 
         //viewportEntity.addComponent(new CameraFollowComponent())
-
-        const renderers = [
-            ShapeRenderer,
-            WebGLSphereRenderer,
-            LabelRenderer,
-            WebGLRectRenderer,
-        ]
 
         this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
         this.engine.getSystem(ViewportSystem).init()

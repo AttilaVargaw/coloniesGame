@@ -4,10 +4,26 @@ import { ColorComponent } from "@engine/components/colorComponent";
 import { ViewportSystem } from "../viewportSystem";
 import { LabelNode } from "./labelNode";
 import { BaseRenderer } from "./baseRenderer";
+import { ProjectedPoint } from "@/lib/camera";
+import { Vector3 } from "@/lib/Vector3";
 
 const MAX_LABEL_SCREEN_SIZE = 48;
 
 export class LabelRenderer extends BaseRenderer<LabelNode> {
+    beginFrame(): void {
+    }
+    endFrame(): void {
+    }
+    protected getCullMargin(_node: LabelNode): number {
+        return 0
+    }
+    protected shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: LabelNode, _cameraScale: number): boolean {
+        return false
+    }
+
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
             [PositionComponent, ColorComponent, LabelComponent],
@@ -19,7 +35,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         return node.label.size
     }
 
-    drawNode(node: LabelNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
+    drawNodes(node: LabelNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
         const { projected } = this.getProjected(node)
         const context = ctx ?? this.viewportSystem.camera.context;
 

@@ -1,4 +1,4 @@
-import { compileShader } from "./webgShaders";
+import { compileShader } from "./webglShaders";
 
 export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 aPosition;

@@ -1,5 +1,5 @@
 import { createSphereMesh } from "./webglSphereGeometry"
-import { createShaderProgram } from "./webgShaders"
+import { createShaderProgram } from "./webglShaders"
 import { type ShaderProgram } from "./ShaderProgram"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
@@ -12,6 +12,8 @@ import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./web
 import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
+import { ProjectedPoint } from "@/lib/camera"
+import { Vector3 } from "@/lib/Vector3"
 
 export class WebGLSphereNode extends RenderableNode {
     constructor(
@@ -30,8 +32,20 @@ export class WebGLSphereNode extends RenderableNode {
 }
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
+    endFrame(): void {
+    }
+    drawNodes(_node: WebGLSphereNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+    }
+    protected getCullMargin(_node: WebGLSphereNode): number {
+        return 0
+    }
+    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraScale: number): boolean {
+        return false
+    }
     drawNode(_node: WebGLSphereNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
-        //throw new Error("Method not implemented.")
     }
     private shader: ShaderProgram | null = null
     private sphereVao: WebGLBuffer | null = null
@@ -316,9 +330,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
-
-        this.glDrawnThisFrame = true
-        this.viewportSystem.webglDrawn = true
     }
 
     init() {
