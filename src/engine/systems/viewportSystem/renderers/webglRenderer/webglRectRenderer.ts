@@ -40,7 +40,176 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         super.beginFrame()
     }
 
-    renderNodes() {
+    init() {
+        if(!this.engine) { return }
+
+        this.initCanvases()
+        const gl = this.initContext()
+
+        this.shader = createRectShaderProgram(gl)
+        this.initBuffers()
+        this.initInstanceBuffer()
+
+        this.atlas = new WebGLTextureAtlas()
+        const whiteCanvas = document.createElement("canvas")
+        whiteCanvas.width = 1
+        whiteCanvas.height = 1
+        const ctx = whiteCanvas.getContext("2d")!
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, 1, 1)
+        this.atlas.addTexture("__white__", whiteCanvas)
+    }
+
+    private initInstanceBuffer() {
+        if(!this.gl) return
+
+        this.instanceBuffer = this.gl.createBuffer()
+    }
+
+    private initBuffers() {
+        if(!this.gl) return
+
+        this.quadBuffer = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.quadBuffer)
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, QUAD_VERTICES, this.gl.STATIC_DRAW)
+
+        this.quadIndexBuffer = this.gl.createBuffer()
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, QUAD_INDICES, this.gl.STATIC_DRAW)
+        this.quadIndexCount = QUAD_INDICES.length
+    }
+
+    private static ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
+        const w = right - left
+        const h = top - bottom
+        const d = far - near
+        out[0] = 2 / w
+        out[1] = 0
+        out[2] = 0
+        out[3] = 0
+        out[4] = 0
+        out[5] = 2 / h
+        out[6] = 0
+        out[7] = 0
+        out[8] = 0
+        out[9] = 0
+        out[10] = -2 / d
+        out[11] = 0
+        out[12] = -(right + left) / w
+        out[13] = -(top + bottom) / h
+        out[14] = -(far + near) / d
+        out[15] = 1
+        return out
+    }
+
+    resize(width: number, height: number) {
+        if(!this.gl) return
+        this.gl.viewport(0, 0, width, height)
+    }
+
+    private getAtlasKey(texture: object): string {
+        if(this.atlasKeyMap.has(texture)) {
+            return this.atlasKeyMap.get(texture)!
+        }
+        const key = `tex-${this.nextTextureKey++}`
+        this.atlasKeyMap.set(texture, key)
+        return key
+    }
+
+    private static parseColor(color: string): [number, number, number] {
+        if(color.startsWith('#')) {
+            const r = parseInt(color.slice(1, 3), 16) / 255
+            const g = parseInt(color.slice(3, 5), 16) / 255
+            const b = parseInt(color.slice(5, 7), 16) / 255
+            if(!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                return [r, g, b]
+            }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = 1
+        canvas.height = 1
+        const ctx = canvas.getContext('2d')!
+        ctx.fillStyle = color
+        ctx.fillRect(0, 0, 1, 1)
+        const data = ctx.getImageData(0, 0, 1, 1).data
+        return [data[0] / 255, data[1] / 255, data[2] / 255]
+    }
+
+    drawNodes(): void {
+        if(!this.engine || !this.glContext) {
+            return
+        }
+
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
+            const { camera } = this.viewportSystem
+
+            const { worldPos } = this.getProjected(node)
+            const scale = projected.scale
+            const screenWidth = node.size.width * scale
+            const screenHeight = node.size.height * scale
+
+            if(
+                projected.x + screenWidth / 2 < 0 ||
+                projected.x - screenWidth / 2 > camera.cssWidth ||
+                projected.y + screenHeight / 2 < 0 ||
+                projected.y - screenHeight / 2 > camera.cssHeight
+            ) {
+                continue
+            }
+
+            if(this.shouldCullNode(node, projected, worldPos)) {
+                continue
+            }
+
+            const resolvedTexture = this.resolveTexture(node.texture)
+            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+            let atlasEntry: AtlasEntry | undefined
+
+            if(showCheckerPattern) {
+                atlasEntry = this.atlas.getEntry("__checker__")
+                if(!atlasEntry) {
+                    atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
+                }
+            } else if(resolvedTexture) {
+                const texKey = this.getAtlasKey(resolvedTexture)
+                atlasEntry = this.atlas.getEntry(texKey)
+                if(!atlasEntry) {
+                    atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
+                }
+            } else {
+                atlasEntry = this.atlas.getEntry("__white__")
+            }
+
+            if(!atlasEntry) {
+                continue
+            }
+
+            const fill = node.color.fill || "#ffffff"
+            const [r, g, b] = WebGLRectRenderer.parseColor(fill)
+
+            const instanceData = new Float32Array(13)
+            instanceData[0] = projected.x
+            instanceData[1] = projected.y
+            instanceData[2] = screenWidth
+            instanceData[3] = screenHeight
+            instanceData[4] = node.texture?.rotation ?? 0
+            instanceData[5] = atlasEntry.u0
+            instanceData[6] = atlasEntry.v0
+            instanceData[7] = atlasEntry.u1 - atlasEntry.u0
+            instanceData[8] = atlasEntry.v1 - atlasEntry.v0
+            instanceData[9] = r
+            instanceData[10] = g
+            instanceData[11] = b
+            instanceData[12] = 1.0
+
+            this.pendingInstances.push({
+                page: atlasEntry.page,
+                depth: projected.depth,
+                data: instanceData
+            })
+        }
+
         if(!this.gl || !this.shader) {
             this.endFrameFallback()
             return
@@ -147,180 +316,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
-
-        // this.glDrawnThisFrame = true
-        // this.viewportSystem.webglDrawn = true
-    }
-
-    init() {
-        if(!this.engine) { return }
-
-        this.initCanvases()
-        const gl = this.initContext()
-
-        this.shader = createRectShaderProgram(gl)
-        this.initBuffers()
-        this.initInstanceBuffer()
-
-        this.atlas = new WebGLTextureAtlas()
-        const whiteCanvas = document.createElement("canvas")
-        whiteCanvas.width = 1
-        whiteCanvas.height = 1
-        const ctx = whiteCanvas.getContext("2d")!
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, 1, 1)
-        this.atlas.addTexture("__white__", whiteCanvas)
-    }
-
-    private initInstanceBuffer() {
-        if(!this.gl) return
-
-        this.instanceBuffer = this.gl.createBuffer()
-    }
-
-    private initBuffers() {
-        if(!this.gl) return
-
-        this.quadBuffer = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.quadBuffer)
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, QUAD_VERTICES, this.gl.STATIC_DRAW)
-
-        this.quadIndexBuffer = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, QUAD_INDICES, this.gl.STATIC_DRAW)
-        this.quadIndexCount = QUAD_INDICES.length
-    }
-
-    private static ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
-        const w = right - left
-        const h = top - bottom
-        const d = far - near
-        out[0] = 2 / w
-        out[1] = 0
-        out[2] = 0
-        out[3] = 0
-        out[4] = 0
-        out[5] = 2 / h
-        out[6] = 0
-        out[7] = 0
-        out[8] = 0
-        out[9] = 0
-        out[10] = -2 / d
-        out[11] = 0
-        out[12] = -(right + left) / w
-        out[13] = -(top + bottom) / h
-        out[14] = -(far + near) / d
-        out[15] = 1
-        return out
-    }
-
-    resize(width: number, height: number) {
-        if(!this.gl) return
-        this.gl.viewport(0, 0, width, height)
-    }
-
-    private getAtlasKey(texture: object): string {
-        if(this.atlasKeyMap.has(texture)) {
-            return this.atlasKeyMap.get(texture)!
-        }
-        const key = `tex-${this.nextTextureKey++}`
-        this.atlasKeyMap.set(texture, key)
-        return key
-    }
-
-    private static parseColor(color: string): [number, number, number] {
-        if(color.startsWith('#')) {
-            const r = parseInt(color.slice(1, 3), 16) / 255
-            const g = parseInt(color.slice(3, 5), 16) / 255
-            const b = parseInt(color.slice(5, 7), 16) / 255
-            if(!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-                return [r, g, b]
-            }
-        }
-
-        const canvas = document.createElement('canvas')
-        canvas.width = 1
-        canvas.height = 1
-        const ctx = canvas.getContext('2d')!
-        ctx.fillStyle = color
-        ctx.fillRect(0, 0, 1, 1)
-        const data = ctx.getImageData(0, 0, 1, 1).data
-        return [data[0] / 255, data[1] / 255, data[2] / 255]
-    }
-
-    drawNodes(): void {
-        if(!this.engine || !this.glContext) {
-            return
-        }
-
-        for(const node of this.nodes) {
-            const { camera } = this.viewportSystem
-
-            const { worldPos, projected } = this.getProjected(node)
-            const scale = projected.scale
-            const screenWidth = node.size.width * scale
-            const screenHeight = node.size.height * scale
-
-            if(
-                projected.x + screenWidth / 2 < 0 ||
-                projected.x - screenWidth / 2 > camera.cssWidth ||
-                projected.y + screenHeight / 2 < 0 ||
-                projected.y - screenHeight / 2 > camera.cssHeight
-            ) {
-                return
-            }
-
-            if(this.shouldCullNode(node, projected, worldPos)) {
-                return
-            }
-
-            const resolvedTexture = this.resolveTexture(node.texture)
-            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
-            let atlasEntry: AtlasEntry | undefined
-
-            if(showCheckerPattern) {
-                atlasEntry = this.atlas.getEntry("__checker__")
-                if(!atlasEntry) {
-                    atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
-                }
-            } else if(resolvedTexture) {
-                const texKey = this.getAtlasKey(resolvedTexture)
-                atlasEntry = this.atlas.getEntry(texKey)
-                if(!atlasEntry) {
-                    atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
-                }
-            } else {
-                atlasEntry = this.atlas.getEntry("__white__")
-            }
-
-            if(!atlasEntry) {
-                return
-            }
-
-            const fill = node.color.fill || "#ffffff"
-            const [r, g, b] = WebGLRectRenderer.parseColor(fill)
-
-            const instanceData = new Float32Array(13)
-            instanceData[0] = projected.x
-            instanceData[1] = projected.y
-            instanceData[2] = screenWidth
-            instanceData[3] = screenHeight
-            instanceData[4] = node.texture?.rotation ?? 0
-            instanceData[5] = atlasEntry.u0
-            instanceData[6] = atlasEntry.v0
-            instanceData[7] = atlasEntry.u1 - atlasEntry.u0
-            instanceData[8] = atlasEntry.v1 - atlasEntry.v0
-            instanceData[9] = r
-            instanceData[10] = g
-            instanceData[11] = b
-            instanceData[12] = 1.0
-
-            this.pendingInstances.push({
-                page: atlasEntry.page,
-                depth: projected.depth,
-                data: instanceData
-            })
-        }
     }
 
     protected getCullMargin(node: RectNode): number {

@@ -11,8 +11,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     protected glDrawnThisFrame = false
     protected instanceBuffer: WebGLBuffer | null = null
 
-    abstract renderNodes(): void
-
     protected initCanvases(): void {
         if(!this.engine) return
         this.glCanvas = this.engine.getCanvas("webgl2") as HTMLCanvasElement

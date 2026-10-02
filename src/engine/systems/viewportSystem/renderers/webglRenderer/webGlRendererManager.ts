@@ -10,9 +10,4 @@ export class WebglRenderManager {
         this.sphereRenderer = new WebGLSphereRenderer(this.viewport)
         this.rectRenderer = new WebGLRectRenderer(this.viewport)
     }
-
-    render() {
-        this.sphereRenderer.renderNodes()
-        this.rectRenderer.renderNodes()
-    }
 }

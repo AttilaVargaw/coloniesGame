@@ -35,49 +35,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     endFrame(): void {
     }
     drawNodes(_ctx: CanvasRenderingContext2D): void {
-    }
-    protected getCullMargin(_node: WebGLSphereNode): number {
-        return 0
-    }
-    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
-        return false
-    }
-    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraScale: number): boolean {
-        return false
-    }
-    drawNode(_node: WebGLSphereNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
-    }
-    private shader: ShaderProgram | null = null
-    private sphereVao: WebGLBuffer | null = null
-    private sphereIndexBuffer: WebGLBuffer | null = null
-    private sphereIndexCount = 0
-    private sphereIndexType = 0
-    private atlas!: WebGLTextureAtlas
-    private nightAtlas!: WebGLTextureAtlas
-    private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
-
-    beginFrame(): void {
-        this.pendingInstances = []
-        super.beginFrame()
-    }
-
-    renderNodes() {
-        if(!this.gl || !this.shader) {
-            this.endFrameFallback()
-            return
-        }
-
-        const gl = this.gl!
-
-        this.resetGLState(gl)
-
         if(!this.engine || !this.atlas) {
             return
         }
 
         const { camera } = this.viewportSystem
 
-        for(const node of this.nodes) {
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
             const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
             const textureSource = node.texture.texture
@@ -89,8 +53,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                         this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
                     }
                 }
-                //textureSource = this.atlas.getEntry("__checker__")?.texture
-                return
+                continue
             }
 
             if(!this.atlas.getEntry(node.entity.id)) {
@@ -99,7 +62,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const atlasEntry = this.atlas.getEntry(node.entity.id)
             if(!atlasEntry) {
-                return
+                continue
             }
 
             let nightAtlasEntry: AtlasEntry | undefined
@@ -120,7 +83,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 }
             }
 
-            const { worldPos, projected } = this.getProjected(node)
+            const { worldPos } = this.getProjected(node)
             const screenRadius = node.radius.radius * projected.scale
             if(
                 projected.x + screenRadius < 0 ||
@@ -128,7 +91,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 projected.y + screenRadius < 0 ||
                 projected.y - screenRadius > camera.cssHeight
             ) {
-                return
+                continue
             }
 
             const starEntity = this.findStarEntity()
@@ -183,6 +146,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 data: instanceData
             })
         }
+
+        if(!this.gl || !this.shader) {
+            this.endFrameFallback()
+            return
+        }
+
+        const gl = this.gl!
+
+        this.resetGLState(gl)
 
         if(this.pendingInstances.length === 0) {
             return
@@ -330,6 +302,28 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
+    }
+    protected getCullMargin(_node: WebGLSphereNode): number {
+        return 0
+    }
+    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraScale: number): boolean {
+        return false
+    }
+    private shader: ShaderProgram | null = null
+    private sphereVao: WebGLBuffer | null = null
+    private sphereIndexBuffer: WebGLBuffer | null = null
+    private sphereIndexCount = 0
+    private sphereIndexType = 0
+    private atlas!: WebGLTextureAtlas
+    private nightAtlas!: WebGLTextureAtlas
+    private pendingInstances: Array<{ page: number; depth: number; data: Float32Array }> = []
+
+    beginFrame(): void {
+        this.pendingInstances = []
+        super.beginFrame()
     }
 
     init() {
