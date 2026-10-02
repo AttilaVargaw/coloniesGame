@@ -28,7 +28,6 @@ import { drawJumpGraph } from "./renderers/drawJumpGraph";
 import { ShapeRenderer } from "./renderers/shapeRenderer";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
-let bloomSourceCtx: CanvasRenderingContext2D | null = null
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
     if(!canvas || canvas.width !== width || canvas.height !== height) {
@@ -176,43 +175,43 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
-    private scheduleRender(bloomTargetCtx: CanvasRenderingContext2D) {
-        if(!this.engine) {
-            return
-        }
-        const bloomEntries: RenderEntry[] = []
-        const labelEntries: RenderEntry[] = []
-        const timings: Map<string, number> = new Map()
-        const totalStart = performance.now()
+    // private scheduleRender(bloomTargetCtx: CanvasRenderingContext2D) {
+    //     if(!this.engine) {
+    //         return
+    //     }
+    //     const bloomEntries: RenderEntry[] = []
+    //     const labelEntries: RenderEntry[] = []
+    //     const timings: Map<string, number> = new Map()
+    //     const totalStart = performance.now()
 
-        this.projectRenderers(timings, labelEntries, bloomEntries, bloomTargetCtx)
+    //     this.projectRenderers(timings, labelEntries, bloomEntries, bloomTargetCtx)
 
-        bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
+    //     bloomEntries.sort((a, b) => b.projected.depth - a.projected.depth)
 
-        const drawStart = performance.now()
+    //     const drawStart = performance.now()
 
-        timings.set("draw", (timings.get("draw") || 0) + (performance.now() - drawStart))
+    //     timings.set("draw", (timings.get("draw") || 0) + (performance.now() - drawStart))
 
-        this.finishRenderers(timings)
+    //     this.finishRenderers(timings)
 
-        const compositeStart = performance.now()
+    //     const compositeStart = performance.now()
 
-        if(bloomTargetCtx) {
-            bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
-            for(const entry of bloomEntries) {
-                entry.renderer.drawNodes(bloomTargetCtx)
-            }
-        }
-        timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
+    //     if(bloomTargetCtx) {
+    //         bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
+    //         for(const entry of bloomEntries) {
+    //             entry.renderer.drawNodes(bloomTargetCtx)
+    //         }
+    //     }
+    //     timings.set("composite", (timings.get("composite") || 0) + (performance.now() - compositeStart))
 
-        const totalMs = performance.now() - totalStart
-        this.frameTimeSamples.push(totalMs)
-        if(this.frameTimeSamples.length > 60) {
-            this.frameTimeSamples.shift()
-        }
-        this.lastFrameTime = totalMs
-        this.rendererTimings = new Map(Object.entries(timings))
-    }
+    //     const totalMs = performance.now() - totalStart
+    //     this.frameTimeSamples.push(totalMs)
+    //     if(this.frameTimeSamples.length > 60) {
+    //         this.frameTimeSamples.shift()
+    //     }
+    //     this.lastFrameTime = totalMs
+    //     this.rendererTimings = new Map(Object.entries(timings))
+    // }
 
     private projectRenderers(
         timings: Map<string, number> = new Map(),
@@ -307,7 +306,6 @@ export class ViewportSystem extends System {
 
 
         bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, context.canvas.width, context.canvas.height)
-        bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
 
         ViewportSystem.clear(context)
         //     this.clearWebgl()
@@ -319,13 +317,16 @@ export class ViewportSystem extends System {
             drawOrbits(context, this.engine, this.camera)
         }
 
-        this.scheduleRender(bloomSourceCtx)
+        // this.scheduleRender(bloomSourceCtx)
 
         this.renderers.entries().forEach(([_key, renderer]) => {
             renderer.beginFrame()
+            renderer.projectNodes()
             renderer.drawNodes(context)
             renderer.endFrame()
         })
+
+        this.webglRenderManager.render()
 
         this.drawLensFlares(context, this.camera)
 

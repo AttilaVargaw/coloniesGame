@@ -41,15 +41,21 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
             context.save()
             context.translate(projected.x, projected.y)
             context.scale(projected.scale, projected.scale)
-            node.setColor(context);
-            context.beginPath();
+            node.setColor(context)
+            context.beginPath()
 
-            for(let i = 1; i < path.length; i++) {
-                context.lineTo(...path[i]);
+            for(let i = 0; i < path.length; i++) {
+                const [x, y] = path[i]
+                if(i === 0) {
+                    context.moveTo(x, y)
+                } else {
+                    context.lineTo(x, y)
+                }
             }
 
-            context.closePath();
-            //node.draw(context)
+            context.closePath()
+            context.stroke()
+            context.fill()
             context.restore()
         }
     }

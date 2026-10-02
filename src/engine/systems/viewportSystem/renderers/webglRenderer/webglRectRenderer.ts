@@ -299,6 +299,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.depthMask(true)
         }
 
+        this.viewportSystem.camera.context.drawImage(this.gl.canvas, 0, 0)
+
         //set state back
         gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
         gl.disableVertexAttribArray(this.shader.attribs.instanceScale)

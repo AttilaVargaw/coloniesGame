@@ -21,4 +21,9 @@ export class WebglRenderManager {
         this.sphereRenderer.removeFromEngine()
         this.rectRenderer.removeFromEngine()
     }
+
+    render() {
+        this.sphereRenderer.drawNodes()
+        this.rectRenderer.drawNodes()
+    }
 }

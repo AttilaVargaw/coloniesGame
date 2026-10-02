@@ -32,8 +32,8 @@ export class WebGLSphereNode extends RenderableNode {
 }
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
-    drawNodes(_ctx: CanvasRenderingContext2D): void {
-        if(!this.engine || !this.atlas) {
+    drawNodes(): void {
+        if(!this.engine || !this.atlas || !this.gl || !this.shader) {
             return
         }
 
@@ -143,11 +143,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 depth: projected.depth,
                 data: instanceData
             })
-        }
-
-        if(!this.gl || !this.shader) {
-            this.endFrameFallback()
-            return
         }
 
         const gl = this.gl!
@@ -270,6 +265,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.cullFace(gl.BACK)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
+
+        this.viewportSystem.camera.context.drawImage(this.gl.canvas, 0, 0)
 
         //reset state
         gl.disableVertexAttribArray(modelLoc)
