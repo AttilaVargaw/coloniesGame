@@ -426,10 +426,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             })
     }
 
-    private model = mat4.create()
+
+
     private view = mat4.create()
     private projection = mat4.create()
-    private normalMatrix = new Float32Array(9)
 
     removeFromEngine(): this {
         if(this.gl) {

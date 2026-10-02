@@ -112,10 +112,6 @@ export class WebGLTextureAtlas {
         return { ...uv, page: pageIndex }
     }
 
-    getTexture(gl: WebGL2RenderingContext): WebGLTexture {
-        return this.pages[0].getTexture(gl)
-    }
-
     getTextures(gl: WebGL2RenderingContext): WebGLTexture[] {
         return this.pages.map(page => page.getTexture(gl))
     }

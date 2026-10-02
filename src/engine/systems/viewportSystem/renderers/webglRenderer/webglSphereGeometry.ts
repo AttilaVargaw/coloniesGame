@@ -1,7 +1,6 @@
 export interface SphereMesh {
     positions: Float32Array
     normals: Float32Array
-    uvs: Float32Array
     indices: Uint16Array | Uint32Array
 }
 
@@ -105,17 +104,12 @@ export function createSphereMesh(subdivisions: number): SphereMesh {
 
     const positions: number[] = []
     const normals: number[] = []
-    const uvs: number[] = []
     const finalIndices: number[] = []
 
     for (let i = 0; i < icoVertices.length; i += 3) {
         const [x, y, z] = normalize(icoVertices[i], icoVertices[i + 1], icoVertices[i + 2])
         positions.push(x, y, z)
         normals.push(x, y, z)
-
-        const u = 0.5 + Math.atan2(x, z) / (2 * Math.PI)
-        const v = 0.5 + Math.asin(-y) / Math.PI
-        uvs.push(u, v)
     }
 
     for (let i = 0; i < icoIndices.length; i++) {
@@ -125,7 +119,6 @@ export function createSphereMesh(subdivisions: number): SphereMesh {
     return {
         positions: new Float32Array(positions),
         normals: new Float32Array(normals),
-        uvs: new Float32Array(uvs),
         indices: finalIndices.length > 65535 ? new Uint32Array(finalIndices) : new Uint16Array(finalIndices),
     }
 }

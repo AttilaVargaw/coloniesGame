@@ -39,8 +39,6 @@ export class ViewportSystem extends System {
     private fpsLastTime = performance.now()
     private currentFps = 0
     private frameTimeSamples: number[] = []
-    private lastFrameTime = 0
-    private rendererTimings = new Map<string, number>()
     private renderers: Map<new (...args: any[]) => BaseRenderer<any>, BaseRenderer<RenderableNode>> = new Map()
     private webglRenderManager: WebglRenderManager
 
@@ -343,15 +341,6 @@ export class ViewportSystem extends System {
         ctx.textBaseline = "top"
         let y = showFps ? 32 : 10
         ctx.fillText(`Frame: ${avg.toFixed(1)}ms (${(1000 / Math.max(1, avg)).toFixed(0)}fps) max ${max.toFixed(1)}ms`, 64, y)
-        if(this.rendererTimings.size) {
-            y += 18
-            ctx.font = "12px monospace"
-            ctx.fillStyle = "#aaa"
-            for(const [key, ms] of this.rendererTimings) {
-                ctx.fillText(`${key}: ${ms.toFixed(2)}ms`, 64, y)
-                y += 14
-            }
-        }
         ctx.restore()
     }
 
