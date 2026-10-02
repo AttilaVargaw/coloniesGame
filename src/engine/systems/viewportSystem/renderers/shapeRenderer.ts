@@ -34,10 +34,8 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
         return Math.max(node.width, node.height) / 2
     }
 
-    drawNodes = (ctx: CanvasRenderingContext2D) => {
-        for(const node of this.nodes) {
-            const { projected } = this.getProjected(node)
-            const context = ctx ?? this.viewportSystem.camera.context
+    drawNodes = (context: CanvasRenderingContext2D) => {
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
             const { path } = node.shape
 
             context.save()

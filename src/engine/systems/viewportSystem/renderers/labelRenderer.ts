@@ -36,10 +36,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
     }
 
     drawNodes(context: CanvasRenderingContext2D): void {
-        for(const node of this.nodes) {
-            const { projected } = this.getProjected(node)
-            context ?? this.viewportSystem.camera.context;
-
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
             context.save()
             node.setColor(context);
             const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
@@ -61,7 +58,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
                 context.fillText(line, projected.x + offsetX, y);
                 y += lineHeight
             }
+            context.restore()
         }
-        context.restore()
     }
 }
