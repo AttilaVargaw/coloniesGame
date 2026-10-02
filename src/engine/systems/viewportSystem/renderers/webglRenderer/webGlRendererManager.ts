@@ -52,7 +52,9 @@ export class WebglRenderManager {
         this.sphereRenderer.drawNodes()
         this.rectRenderer.drawNodes()
 
-        this.viewport.camera.context.drawImage(this.sphereRenderer.gl!.canvas, 0, 0)
+        const camera = this.viewport.camera
+
+        camera.context.drawImage(this.sphereRenderer.gl!.canvas, 0, 0, camera.cssWidth, camera.cssHeight)
     }
 
     projectNodes() {
