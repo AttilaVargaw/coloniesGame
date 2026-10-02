@@ -8,6 +8,10 @@ export class SystemRegistry {
         return this.systems.get(system) as T
     }
 
+    hasSystem(system: new (...args: unknown[]) => System) {
+        return this.systems.has(system)
+    }
+
     addSystem(system: new (...args: unknown[]) => System, world: World, ...args: unknown[]) {
         const newSystem = new system(...args)
         newSystem.addToEngine(world)

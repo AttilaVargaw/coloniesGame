@@ -56,7 +56,7 @@ export class PointerInteractionSystem extends System {
     private onContextMenu = ({ x, y }: { x: number, y: number }) => {
         if(!this.engine) return
 
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
 
         for(const node of this.clickableNodes) {
             const { clickable: { size: { width, height }, contextMenuItems, entity } } = node
@@ -89,7 +89,7 @@ export class PointerInteractionSystem extends System {
             return
         }
 
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
         let hovered = false
 
         for(const hoverableNode of this.hoverableNodes) {
@@ -125,7 +125,7 @@ export class PointerInteractionSystem extends System {
     private hitTestClick(data: { x: number, y: number, shiftKey: boolean } & ReactMouseEvent): void {
         if(!this.engine) return
 
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
         let hit = false
 
         for(const node of this.clickableNodes) {

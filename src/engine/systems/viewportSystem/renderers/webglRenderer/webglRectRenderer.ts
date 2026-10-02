@@ -1,8 +1,6 @@
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
-import { ViewportSystem } from "../viewportSystem/viewportSystem"
-import { RectNode } from "../viewportSystem/renderers/rectNode"
 import { WebGLBaseRenderer } from "./webglBaseRenderer"
 import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
@@ -11,6 +9,8 @@ import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
 import { ProjectedPoint } from "@/lib/camera"
 import { Vector3 } from "@/lib/Vector3"
 import { SizeComponent } from "@/engine/components/sizeComponent"
+import { RectNode } from "../rectNode"
+import { ViewportSystem } from "../../viewportSystem"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -38,7 +38,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         super.beginFrame()
     }
 
-    endFrame() {
+    renderNodes() {
         if(!this.gl || !this.shader) {
             this.endFrameFallback()
             return
@@ -48,11 +48,15 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         this.resetGLState(gl)
 
+        for(const it of this.nodes) {
+            this.drawNode(it)
+        }
+
         if(this.pendingInstances.length === 0) {
             return
         }
 
-        const camera = this.viewportSystem.viewport.camera
+        const { camera } = this.viewportSystem
         WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
 
         gl.useProgram(this.shader.program)
@@ -70,11 +74,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         const instanceStride = 13 * 4
 
         const groups = new Map<number, Array<{ depth: number; data: Float32Array }>>()
+
         for(const inst of this.pendingInstances) {
             if(!groups.has(inst.page)) {
-                groups.set(inst.page, [])
+                groups.set(inst.page, [{ depth: inst.depth, data: inst.data }])
+            } else {
+                groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
             }
-            groups.get(inst.page)!.push({ depth: inst.depth, data: inst.data })
         }
 
         if(!this.instanceBuffer) {
@@ -128,6 +134,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.depthMask(true)
         }
 
+        //set state back
         gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
         gl.disableVertexAttribArray(this.shader.attribs.instanceScale)
         gl.disableVertexAttribArray(this.shader.attribs.instanceRotation)
@@ -143,12 +150,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
 
-        this.glDrawnThisFrame = true
-        this.viewportSystem.webglDrawn = true
+        // this.glDrawnThisFrame = true
+        // this.viewportSystem.webglDrawn = true
     }
 
     init() {
-        if(!this.engine) return
+        if(!this.engine) { return }
 
         this.initCanvases()
         const gl = this.initContext()
@@ -248,7 +255,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return
         }
 
-        const camera = this.viewportSystem.viewport.camera
+        const { camera } = this.viewportSystem
 
         const { worldPos, projected } = this.getProjected(node)
         const scale = projected.scale
@@ -323,7 +330,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
         if(belt?.cullingDistanceThreshold !== undefined) {
-            const distance = this.viewportSystem.viewport.camera.distance
+            const distance = this.viewportSystem.camera.distance
+
             if(distance > belt.cullingDistanceThreshold) {
                 return true
             }

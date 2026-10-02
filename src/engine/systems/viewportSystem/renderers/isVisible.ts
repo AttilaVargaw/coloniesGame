@@ -17,7 +17,7 @@ export function isVisible(
     engine: Engine
 ): boolean {
     const [x, y, z] = getAbsolute(entity, engine);
-    const camera = engine.getSystem(ViewportSystem)?.viewport?.camera
+    const camera = engine.getSystem(ViewportSystem)?.camera
     if (!camera) {
         return true
     }

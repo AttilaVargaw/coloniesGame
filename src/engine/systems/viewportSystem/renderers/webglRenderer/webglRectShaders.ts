@@ -1,4 +1,4 @@
-import { compileShader } from "./webglShaders";
+import { compileShader } from "./webgShaders";
 
 export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 aPosition;
@@ -28,8 +28,7 @@ void main() {
     gl_Position = uProjection * vec4(worldPos, 0.0, 1.0);
     vAtlasUV = vec2(aTexCoord.x, 1.0 - aTexCoord.y) * aInstanceTexScale + aInstanceTexOffset;
     vColor = aInstanceColor;
-}
-`;
+}`;
 
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
@@ -44,8 +43,7 @@ layout(location = 0) out vec4 fragColor;
 void main() {
     vec4 texColor = texture(uTexture, vAtlasUV);
     fragColor = vec4(texColor.rgb * vColor.rgb, texColor.a * vColor.a);
-}
-`;
+}`;
 
 export interface RectShaderProgram {
     program: WebGLProgram;
@@ -74,7 +72,7 @@ export function createRectShaderProgram(gl: WebGL2RenderingContext): RectShaderP
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         const info = gl.getProgramInfoLog(program);
         gl.deleteProgram(program);
         throw new Error(`Shader program link error: ${info}`);

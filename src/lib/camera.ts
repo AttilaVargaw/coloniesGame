@@ -46,7 +46,6 @@ export default class Camera {
     maxDistance: number
     minHeightAboveTarget: number
     public aspectRatio: number = 1.0
-    public context: CanvasRenderingContext2D
 
     private viewport: {
         left: number
@@ -60,8 +59,10 @@ export default class Camera {
         cssHeight: number
     }
 
-    constructor(public renderingContext: CanvasRenderingContext2D, settings: CameraSettings = {}) {
-        this.context = renderingContext
+    constructor(
+        settings: CameraSettings = {},
+        public context: CanvasRenderingContext2D,
+    ) {
         this.distance = settings.distance ?? 1000.0
         this.minDistance = settings.minDistance ?? 100.0
         this.maxDistance = settings.maxDistance ?? 12000.0
@@ -156,6 +157,7 @@ export default class Camera {
 
     begin() {
         this.context.save()
+
         this.applyScale()
         this.applyTranslation()
     }

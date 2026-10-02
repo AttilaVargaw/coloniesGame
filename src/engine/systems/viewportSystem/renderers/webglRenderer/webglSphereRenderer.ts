@@ -1,5 +1,5 @@
 import { createSphereMesh } from "./webglSphereGeometry"
-import { createShaderProgram } from "./webglShaders"
+import { createShaderProgram } from "./webgShaders"
 import { type ShaderProgram } from "./ShaderProgram"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
@@ -7,11 +7,11 @@ import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
-import { ViewportSystem } from "../viewportSystem/viewportSystem"
 import { WebGLBaseRenderer } from "./webglBaseRenderer"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
-import { RenderableNode } from "../viewportSystem/renderers/renderableNode"
+import { ViewportSystem } from "../../viewportSystem"
+import { RenderableNode } from "../renderableNode"
 
 export class WebGLSphereNode extends RenderableNode {
     constructor(
@@ -30,6 +30,9 @@ export class WebGLSphereNode extends RenderableNode {
 }
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
+    drawNode(_node: WebGLSphereNode, _dt: number, _ctx: CanvasRenderingContext2D): void {
+        //throw new Error("Method not implemented.")
+    }
     private shader: ShaderProgram | null = null
     private sphereVao: WebGLBuffer | null = null
     private sphereIndexBuffer: WebGLBuffer | null = null
@@ -44,7 +47,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         super.beginFrame()
     }
 
-    endFrame() {
+    renderNodes() {
         if(!this.gl || !this.shader) {
             this.endFrameFallback()
             return
@@ -54,11 +57,123 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.resetGLState(gl)
 
+        if(!this.engine || !this.atlas) {
+            return
+        }
+
+        const { camera } = this.viewportSystem
+
+        for(const node of this.nodes) {
+            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+
+            const textureSource = node.texture.texture
+            const nightTextureSource = node.texture.nightTexture
+
+            if(!textureSource) {
+                if(showCheckerPattern) {
+                    if(!this.atlas.getEntry("__checker__")) {
+                        this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
+                    }
+                }
+                //textureSource = this.atlas.getEntry("__checker__")?.texture
+                return
+            }
+
+            if(!this.atlas.getEntry(node.entity.id)) {
+                this.atlas.addTexture(node.entity.id, textureSource)
+            }
+
+            const atlasEntry = this.atlas.getEntry(node.entity.id)
+            if(!atlasEntry) {
+                return
+            }
+
+            let nightAtlasEntry: AtlasEntry | undefined
+
+            if(nightTextureSource) {
+                const nightKey = `${node.entity.id}_night`
+                if(!this.nightAtlas.getEntry(nightKey)) {
+                    this.nightAtlas.addTexture(nightKey, nightTextureSource)
+                }
+                nightAtlasEntry = this.nightAtlas.getEntry(nightKey)
+            }
+
+            if(showCheckerPattern) {
+                nightAtlasEntry = this.nightAtlas.getEntry("__checker__")
+                if(!nightAtlasEntry) {
+                    const entry = this.nightAtlas.addTexture("__checker__", createCheckerPatternCanvas())
+                    nightAtlasEntry = entry
+                }
+            }
+
+            const { worldPos, projected } = this.getProjected(node)
+            const screenRadius = node.radius.radius * projected.scale
+            if(
+                projected.x + screenRadius < 0 ||
+                projected.x - screenRadius > camera.cssWidth ||
+                projected.y + screenRadius < 0 ||
+                projected.y - screenRadius > camera.cssHeight
+            ) {
+                return
+            }
+
+            const starEntity = this.findStarEntity()
+
+            let lightDir: Vec3
+
+            if(starEntity) {
+                const starPos = this.getWorldPosition2(starEntity)
+                const lightDirRaw: Vec3 = [
+                    starPos[0] - worldPos[0],
+                    starPos[1] - worldPos[1],
+                    starPos[2] - worldPos[2],
+                ]
+                const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
+                lightDir = lightDirLength > 0
+                    ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
+                    : [0, 0, 1]
+            } else {
+                lightDir = [0, 0, 1]
+            }
+
+            const model = mat4.create()
+            mat4.identity(model)
+            mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
+            const scale = node.radius.radius
+            mat4.scale(model, model, [scale, scale, scale])
+
+            const normalMatrix = new Float32Array(9)
+            normalMatrix[0] = model[0]
+            normalMatrix[1] = model[1]
+            normalMatrix[2] = model[2]
+            normalMatrix[3] = model[4]
+            normalMatrix[4] = model[5]
+            normalMatrix[5] = model[6]
+            normalMatrix[6] = model[8]
+            normalMatrix[7] = model[9]
+            normalMatrix[8] = model[10]
+
+            const instanceData = new Float32Array(37)
+            instanceData.set(model, 0)
+            instanceData.set(normalMatrix, 16)
+            instanceData.set(lightDir, 25)
+            instanceData.set([atlasEntry.u0, atlasEntry.v0], 28)
+            instanceData.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], 30)
+            instanceData.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], 32)
+            instanceData.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], 34)
+            instanceData.set([node.color.emitLight ? 1.0 : 0.0], 36)
+
+            this.pendingInstances.push({
+                page: atlasEntry.page,
+                depth: projected.depth,
+                data: instanceData
+            })
+        }
+
         if(this.pendingInstances.length === 0) {
             return
         }
 
-        const camera = this.viewportSystem.viewport.camera
         const { fx, fy, fz } = camera.viewBasis
         const [camX, camY, camZ] = camera.cameraPosition
         mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 0, 1])
@@ -172,6 +287,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
 
+        //reset state
         gl.disableVertexAttribArray(modelLoc)
         gl.disableVertexAttribArray(modelLoc + 1)
         gl.disableVertexAttribArray(modelLoc + 2)
@@ -269,127 +385,20 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         })
     }
 
-    drawNode(node: WebGLSphereNode, _dT?: number): void {
-        if(!this.engine || !this.atlas) {
-            return
-        }
-
-        const camera = this.viewportSystem.viewport.camera
-        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
-
-        const textureSource = node.texture.texture
-        const nightTextureSource = node.texture.nightTexture
-
-        if(!textureSource) {
-            if(showCheckerPattern) {
-                if(!this.atlas.getEntry("__checker__")) {
-                    this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
-                }
-            }
-            //textureSource = this.atlas.getEntry("__checker__")?.texture
-            return
-        }
-
-        if(!this.atlas.getEntry(node.entity.id)) {
-            this.atlas.addTexture(node.entity.id, textureSource)
-        }
-
-        const atlasEntry = this.atlas.getEntry(node.entity.id)
-        if(!atlasEntry) {
-            return
-        }
-
-        let nightAtlasEntry: AtlasEntry | undefined
-
-        if(nightTextureSource) {
-            const nightKey = `${node.entity.id}_night`
-            if(!this.nightAtlas.getEntry(nightKey)) {
-                this.nightAtlas.addTexture(nightKey, nightTextureSource)
-            }
-            nightAtlasEntry = this.nightAtlas.getEntry(nightKey)
-        }
-
-        if(showCheckerPattern) {
-            nightAtlasEntry = this.nightAtlas.getEntry("__checker__")
-            if(!nightAtlasEntry) {
-                const entry = this.nightAtlas.addTexture("__checker__", createCheckerPatternCanvas())
-                nightAtlasEntry = entry
-            }
-        }
-
-        const { worldPos, projected } = this.getProjected(node)
-        const screenRadius = node.radius.radius * projected.scale
-        if(
-            projected.x + screenRadius < 0 ||
-            projected.x - screenRadius > camera.cssWidth ||
-            projected.y + screenRadius < 0 ||
-            projected.y - screenRadius > camera.cssHeight
-        ) {
-            return
-        }
-
-        const starEntity = this.findStarEntity()
-
-        let lightDir: Vec3
-
-        if(starEntity) {
-            const starPos = this.getWorldPosition2(starEntity)
-            const lightDirRaw: Vec3 = [
-                starPos[0] - worldPos[0],
-                starPos[1] - worldPos[1],
-                starPos[2] - worldPos[2],
-            ]
-            const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
-            lightDir = lightDirLength > 0
-                ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
-                : [0, 0, 1]
-        } else {
-            lightDir = [0, 0, 1]
-        }
-
-        const model = mat4.create()
-        mat4.identity(model)
-        mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
-        const scale = node.radius.radius
-        mat4.scale(model, model, [scale, scale, scale])
-
-        const normalMatrix = new Float32Array(9)
-        normalMatrix[0] = model[0]
-        normalMatrix[1] = model[1]
-        normalMatrix[2] = model[2]
-        normalMatrix[3] = model[4]
-        normalMatrix[4] = model[5]
-        normalMatrix[5] = model[6]
-        normalMatrix[6] = model[8]
-        normalMatrix[7] = model[9]
-        normalMatrix[8] = model[10]
-
-        const instanceData = new Float32Array(37)
-        instanceData.set(model, 0)
-        instanceData.set(normalMatrix, 16)
-        instanceData.set(lightDir, 25)
-        instanceData.set([atlasEntry.u0, atlasEntry.v0], 28)
-        instanceData.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], 30)
-        instanceData.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], 32)
-        instanceData.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], 34)
-        instanceData.set([node.color.emitLight ? 1.0 : 0.0], 36)
-
-        this.pendingInstances.push({
-            page: atlasEntry.page,
-            depth: projected.depth,
-            data: instanceData
-        })
-    }
-
     constructor(viewport: ViewportSystem) {
-        super(viewport, [PositionComponent, RadiusComponent, TextureComponent], (entity) => {
-            const pos = entity.getComponent(PositionComponent)!
-            const radius = entity.getComponent(RadiusComponent)!
-            const texture = entity.getComponent(TextureComponent)!
-            const color = entity.getComponent(ColorComponent)!
+        super(
+            viewport,
+            [
+                PositionComponent, RadiusComponent, TextureComponent
+            ],
+            (entity) => {
+                const pos = entity.getComponent(PositionComponent)!
+                const radius = entity.getComponent(RadiusComponent)!
+                const texture = entity.getComponent(TextureComponent)!
+                const color = entity.getComponent(ColorComponent)!
 
-            return new WebGLSphereNode(entity, pos, radius, texture, color)
-        })
+                return new WebGLSphereNode(entity, pos, radius, texture, color)
+            })
     }
 
     private model = mat4.create()

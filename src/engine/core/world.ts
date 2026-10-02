@@ -139,7 +139,13 @@ export class World implements Engine {
 
 
     addSystem(system: new (...args: any[]) => System, ...args: any[]) {
-        this.systemRegistry.addSystem(system, this, ...args.map(cn => this.getSystem(cn)))
+        this.systemRegistry.addSystem(system, this, ...args.map(cn => {
+            if(cn instanceof Function) {
+                return this.getSystem(cn)
+            } else {
+                return cn
+            }
+        }))
 
         return this
     }

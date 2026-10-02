@@ -1,21 +1,19 @@
 import type { Engine } from "@/engine/core/engine";
-import { SystemWithNodes, } from "../system";
-import { ViewportComponent } from "../../components/viewportComponent";
-import { ViewportNode } from "./ViewportNode";
+import { System, } from "../system";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitNode } from "../orbitSystem/orbitNode";
-import { TWO_PI } from "@/game/constants";
+import { CAMERA_INITIAL_DISTANCE, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, FIELD_OF_VIEW, TWO_PI } from "@/game/constants";
 import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { MapSystem } from "@game/systems/mapSystem";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
-import { drawRotationIndicator } from "./drawRotationIndicator";
-import { drawStarfield } from "./drawStarfield";
-import { drawNebulas } from "./drawNebulas";
-import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
-import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
+// import { drawRotationIndicator } from "./drawRotationIndicator";
+// import { drawStarfield } from "./drawStarfield";
+// import { drawNebulas } from "./drawNebulas";
+// import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
+// import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { RectRenderer } from "./renderers/rectRenderer";
 import { precomputeOrbitalTrig } from "../orbitSystem/orbitalTrig";
@@ -23,18 +21,18 @@ import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
 import { RenderableNode } from "./renderers/renderableNode";
 
-let bloomSourceCanvas: HTMLCanvasElement | null = null
-let bloomSourceCtx: CanvasRenderingContext2D | null = null
+// let bloomSourceCanvas: HTMLCanvasElement | null = null
+// let bloomSourceCtx: CanvasRenderingContext2D | null = null
 
-function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
-    if(!canvas || canvas.width !== width || canvas.height !== height) {
-        const c = document.createElement("canvas")
-        c.width = width
-        c.height = height
-        return c
-    }
-    return canvas
-}
+// function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
+//     if(!canvas || canvas.width !== width || canvas.height !== height) {
+//         const c = document.createElement("canvas")
+//         c.width = width
+//         c.height = height
+//         return c
+//     }
+//     return canvas
+// }
 
 interface RenderEntry {
     renderer: BaseRenderer<any>
@@ -42,9 +40,8 @@ interface RenderEntry {
     projected: ProjectedPoint
 }
 
-export class ViewportSystem extends SystemWithNodes<ViewportNode> {
+export class ViewportSystem extends System {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
-    protected updateNode(_node: ViewportNode, _dT?: number) { };
     private inputHandler!: ViewportInputHandler
     private fpsFrameCount = 0
     private fpsLastTime = performance.now()
@@ -54,6 +51,25 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
     private rendererTimings = new Map<string, number>()
     private renderers: Map<new (...args: any[]) => BaseRenderer<any>, BaseRenderer<RenderableNode>> = new Map()
     webglDrawn = false
+
+    camera: Camera
+
+    constructor(canvasContext: CanvasRenderingContext2D) {
+        super()
+        this.camera = new Camera({
+            initialPosition: [
+                -5357.8, 4398.6, 600
+            ],
+            distance: CAMERA_INITIAL_DISTANCE,
+            fieldOfView: FIELD_OF_VIEW,
+            scaleX: 1.0,
+            scaleY: 1.0,
+            minDistance: CAMERA_MIN_DISTANCE,
+            maxDistance: CAMERA_MAX_DISTANCE,
+            yaw: 1.15,
+            pitch: 0.8,
+        }, canvasContext)
+    }
 
     get isDragging() {
         return this.inputHandler.isDragging
@@ -71,9 +87,9 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         return this.inputHandler.consumeDragMoved()
     }
 
-    get viewport() {
-        return this.nodes?.[0]?.viewPort
-    }
+    // get viewport() {
+    //     return this._viewport?.viewPort
+    // }
 
     private static clear(ctx: CanvasRenderingContext2D) {
         ctx.save()
@@ -181,16 +197,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         this.finishRenderers(timings)
 
         const compositeStart = performance.now()
-        if(this.webglDrawn) {
-            const glCanvas = this.engine.getCanvas("webgl2")
-            if(glCanvas) {
-                for(const { viewPort: { camera } } of this.nodes) {
-                    const ctx = camera.context
-                    ctx.drawImage(glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
-                }
-            }
-            this.webglDrawn = false
-        }
 
         if(bloomTargetCtx) {
             bloomTargetCtx.clearRect(0, 0, bloomTargetCtx.canvas.width, bloomTargetCtx.canvas.height)
@@ -261,14 +267,17 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
 
     private pendingLabelEntries: RenderEntry[] = []
 
-    private renderLabels() {
-        const canvas = this.viewport.camera.context
+    // private renderLabels() {
+    //     if(!this.engine || !this.viewport) { return }
 
-        for(const entry of this.pendingLabelEntries) {
-            entry.renderer.drawNode(entry.node, 0, canvas)
-        }
-        this.pendingLabelEntries = []
-    }
+    //     const canvas = this.viewport.camera.context
+
+    //     for(const entry of this.pendingLabelEntries) {
+    //         entry.renderer.drawNode(entry.node, 0, canvas)
+    //     }
+
+    //     this.pendingLabelEntries = []
+    // }
 
     setRendererClasses(args: (new (...args: any[]) => BaseRenderer<any>)[]) {
         if(!this.engine) {
@@ -279,7 +288,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const renderer = new curr(this)
             prev.set(curr, renderer)
             renderer?.addToEngine?.(this.engine!)
-            renderer?.init?.()
+            //renderer?.init?.()
 
             return prev
         }, new Map())
@@ -316,79 +325,85 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             this.fpsLastTime = now
         }
 
-        const { bloomSettings, debugflags: {
-            showBloom,
-            showColorGrading,
-            showVignette,
-            drawOrbits,
-            showCameraGizmo,
-            showCameraTarget,
-            showFpsCounter,
-            showJumpGraph,
-            showCullingOverlay,
-            showFrameTime } } = this.engine.getDebugManager()
+        const {
+            // bloomSettings,
+            debugflags: {
+                // showBloom,
+                // showColorGrading,
+                // showVignette,
+                // drawOrbits,
+                // showCameraGizmo,
+                // showCameraTarget,
+                // showFpsCounter,
+                // showJumpGraph,
+                // showCullingOverlay,
+                showFrameTime }
+        } = this.engine.getDebugManager()
 
-        for(const { viewPort: { camera } } of this.nodes) {
-            const ctx = camera.context
 
-            bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, ctx.canvas.width, ctx.canvas.height)
-            bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
+        //     bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, ctx.canvas.width, ctx.canvas.height)
+        //     bloomSourceCtx = bloomSourceCanvas.getContext("2d")!
 
-            ViewportSystem.clear(ctx)
-            this.clearWebgl()
+        //     ViewportSystem.clear(ctx)
+        //     this.clearWebgl()
 
-            drawStarfield(ctx, camera)
-            drawNebulas(ctx, camera)
+        //     drawStarfield(ctx, camera)
+        //     drawNebulas(ctx, camera)
 
-            if(drawOrbits) {
-                this.drawOrbits(ctx)
-            }
+        //     if(drawOrbits) {
+        //         this.drawOrbits(ctx)
+        //     }
 
-            this.scheduleRender(dt, bloomSourceCtx)
-            this.drawLensFlares(ctx, camera)
+        //     //this.scheduleRender(dt, bloomSourceCtx)
 
-            if(showBloom) {
-                applyBloomLayer(ctx, bloomSourceCanvas, bloomSettings)
-            }
+        //     this.renderers.entries().forEach(([key, renderer]) => {
+        //         renderer.drawNode(dt, ctx)
+        //     })
 
-            if(showColorGrading) {
-                applyColorGrading(ctx, ctx.canvas.width, ctx.canvas.height)
-            }
+        //     this.drawLensFlares(ctx, camera)
 
-            if(showVignette) {
-                applyVignette(ctx, ctx.canvas.width, ctx.canvas.height)
-            }
+        //     if(showBloom) {
+        //         applyBloomLayer(ctx, bloomSourceCanvas, bloomSettings)
+        //     }
 
-            if(this.inputHandler.isRotatingWithoutTarget) {
-                drawRotationIndicator(ctx, camera)
-            }
+        //     if(showColorGrading) {
+        //         applyColorGrading(ctx, ctx.canvas.width, ctx.canvas.height)
+        //     }
 
-            if(showCameraGizmo) {
-                drawCameraGizmo(ctx, camera)
-            }
+        //     if(showVignette) {
+        //         applyVignette(ctx, ctx.canvas.width, ctx.canvas.height)
+        //     }
 
-            if(showCameraTarget) {
-                drawCameraTarget(ctx, camera)
-            }
+        //     if(this.inputHandler.isRotatingWithoutTarget) {
+        //         drawRotationIndicator(ctx, camera)
+        //     }
 
-            if(showJumpGraph) {
-                this.drawJumpGraph(ctx)
-            }
+        //     if(showCameraGizmo) {
+        //         drawCameraGizmo(ctx, camera)
+        //     }
 
-            this.renderLabels()
+        //     if(showCameraTarget) {
+        //         drawCameraTarget(ctx, camera)
+        //     }
 
-            if(showFpsCounter) {
-                this.drawFpsCounter(ctx)
-            }
+        //     if(showJumpGraph) {
+        //         this.drawJumpGraph(ctx)
+        //     }
 
-            if(showFrameTime) {
-                this.drawFrameTime(ctx)
-            }
+        //     this.renderLabels()
 
-            if(showCullingOverlay) {
-                this.drawCullingOverlay(ctx)
-            }
+        //     if(showFpsCounter) {
+        //         this.drawFpsCounter(ctx)
+        //     }
+
+        if(showFrameTime) {
+            this.drawFrameTime(this.camera.context)
         }
+
+        //     if(showCullingOverlay) {
+        //         this.drawCullingOverlay(ctx)
+        //     }
+        // }
     }
 
     private drawFpsCounter(ctx: CanvasRenderingContext2D) {
@@ -433,8 +448,8 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         if(!this.engine) return
 
         const rectRenderer = this.renderers.get(RectRenderer)
-        const viewport = this.viewport
-        if(!rectRenderer || !viewport) return
+        //const viewport = this.viewport
+        if(!rectRenderer) return
 
         ctx.save()
         ctx.font = "14px monospace"
@@ -445,7 +460,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.textBaseline = "top"
 
         const lines = [
-            `Distance: ${viewport.camera.distance.toFixed(0)}`,
+            `Distance: ${this.camera.distance.toFixed(0)}`,
             `Rect projected: ${rectRenderer.projectedCount}`,
             `Rect culled: ${rectRenderer.culledCount}`,
         ] as const
@@ -468,7 +483,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         const graph = mapSystem.getJumpGraph()
         if(!graph) return
 
-        const { camera } = this.viewport
         ctx.save()
         ctx.strokeStyle = "rgba(0, 255, 255, 0.4)"
         ctx.lineWidth = 1
@@ -485,13 +499,13 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const [sx, sy, sz] = getAbsolute(source, this.engine)
                 const [tx, ty, tz] = getAbsolute(target, this.engine)
 
-                const sourceProjected = camera.project(sx, sy, sz)
-                const targetProjected = camera.project(tx, ty, tz)
+                const sourceProjected = this.camera.project(sx, sy, sz)
+                const targetProjected = this.camera.project(tx, ty, tz)
 
                 if(!sourceProjected || !targetProjected) continue
 
-                const cssWidth = camera.cssWidth
-                const cssHeight = camera.cssHeight
+                const cssWidth = this.camera.cssWidth
+                const cssHeight = this.camera.cssHeight
 
                 const minX = Math.min(sourceProjected.x, targetProjected.x)
                 const maxX = Math.max(sourceProjected.x, targetProjected.x)
@@ -522,14 +536,13 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             return
         }
 
-        const { camera } = this.viewport
         ctx.save()
 
         ctx.strokeStyle = "rgba(100, 149, 237, 0.2)"
         ctx.lineWidth = 1
 
-        const cssWidth = camera.cssWidth
-        const cssHeight = camera.cssHeight
+        const cssWidth = this.camera.cssWidth
+        const cssHeight = this.camera.cssHeight
 
         for(const node of this.engine.getNodeList(OrbitNode)) {
             if(node.orbit.hideOrbitInDebugDrawing) {
@@ -545,7 +558,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
             const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
             const orbit = node.orbit
 
-            const center = camera.project(cx, cy, cz)
+            const center = this.camera.project(cx, cy, cz)
             if(!center) {
                 continue
             }
@@ -576,7 +589,7 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
                 const ry = x * sinA + y * cosA
                 const x1 = rx * cosL - ry * cosI * sinL
                 const y1 = rx * sinL + ry * cosI * cosL
-                const projected = camera.project(cx + x1, cy + y1, cz + ry * sinI)
+                const projected = this.camera.project(cx + x1, cy + y1, cz + ry * sinI)
                 if(projected) points.push({ x: projected.x, y: projected.y })
             }
 
@@ -593,28 +606,14 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         ctx.restore()
     }
 
-    registerNodes(engine: Engine) {
-        engine.registerNodeType(ViewportNode,
-            new Set([
-                ViewportComponent
-            ]),
-            (entity) => new ViewportNode(
-                entity.getComponent(ViewportComponent)!,
-                entity
-            )
-        )
-
-        return this
-    }
-
     init() {
         this.inputHandler = new ViewportInputHandler(this, this.engine!.getSystem(CameraFollowSystem)!)
         this.inputHandler.addToEngine()
     }
 
     addToEngine(engine: Engine): this {
+        this.engine = engine
         super.addToEngine(engine)
-        this.nodes = engine.getNodeList(ViewportNode)
 
         return this
     }
@@ -625,8 +624,6 @@ export class ViewportSystem extends SystemWithNodes<ViewportNode> {
         }
 
         this.inputHandler.removeFromEngine()
-
-        this.nodes.length = 0
 
         super.removeFromEngine()
 

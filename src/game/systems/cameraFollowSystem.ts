@@ -74,7 +74,7 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
     protected updateNode(node: CameraFollowNode, _dT?: number): void {
         if(!this.engine) return
 
-        const viewport = this.viewportSystem.viewport
+        const viewport = this.viewportSystem
         if(!viewport) return
 
         if(this.viewportSystem.isDragging) {

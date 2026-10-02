@@ -1,7 +1,8 @@
-import { BaseRenderer } from "../viewportSystem/renderers/baseRenderer";
-import { RenderableNode } from "../viewportSystem/renderers/renderableNode";
+
 import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
+import { BaseRenderer } from "../baseRenderer";
+import { RenderableNode } from "../renderableNode";
 
 export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRenderer<N> {
     protected gl: WebGL2RenderingContext | null = null
@@ -9,6 +10,8 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     protected canvas!: HTMLCanvasElement
     protected glDrawnThisFrame = false
     protected instanceBuffer: WebGLBuffer | null = null
+
+    abstract renderNodes(): void
 
     protected initCanvases(): void {
         if(!this.engine) return
@@ -29,8 +32,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     }
 
     beginFrame(): void {
-        this.glDrawnThisFrame = false
-
         if(!this.engine || !this.gl) {
             return
         }
@@ -46,12 +47,10 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     }
 
     protected endFrameFallback(): void {
-        if(!this.glDrawnThisFrame) {
-            return
-        }
         const ctx = this.canvas.getContext("2d")
         if(ctx) {
-            const camera = this.viewportSystem.viewport.camera
+            const camera = this.viewportSystem.camera
+
             ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
         }
     }

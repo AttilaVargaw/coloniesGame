@@ -41,8 +41,9 @@ export class OrbitSelectionSystem extends System {
     }
 
     private onMouseMove = (data: { clientX: number, clientY: number }) => {
-        if (!this.viewport) return
-        const rect = this.viewport.viewport.camera.context.canvas.getBoundingClientRect()
+        if(!this.viewport) return
+        const rect = this.viewport!.camera.context.canvas.getBoundingClientRect()
+
         this.mouseX = data.clientX - rect.left
         this.mouseY = data.clientY - rect.top
     }
@@ -73,9 +74,9 @@ export class OrbitSelectionSystem extends System {
         drive.isOrbitSelecting = false
 
         const [cx, cy, cz] = getAbsolute(target, this.engine)
-        const camera = this.viewport.viewport.camera
+        const camera = this.viewport.camera
         const projected = camera.project(cx, cy, cz)
-        if (!projected) return
+        if(!projected) return
 
         const screenDist = Math.hypot(this.mouseX - projected.x, this.mouseY - projected.y)
         const dist = screenDist / projected.scale
@@ -104,10 +105,10 @@ export class OrbitSelectionSystem extends System {
                 return
             }
 
-            const camera = this.viewport.viewport.camera
+            const camera = this.viewport.camera
             const [cx, cy, cz] = getAbsolute(target, this.engine)
             const projected = camera.project(cx, cy, cz)
-            if (!projected) {
+            if(!projected) {
                 return
             }
 
@@ -165,7 +166,7 @@ export class OrbitSelectionSystem extends System {
         const ctx = camera.context
         const [cx, cy, cz] = getAbsolute(target, this.engine)
         const projected = camera.project(cx, cy, cz)
-        if (!projected) {
+        if(!projected) {
             return
         }
 

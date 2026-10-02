@@ -98,7 +98,7 @@ export class ViewportInputHandler {
     private panCamera(panRight: number, panForward: number, step: number) {
         if(!panRight && !panForward) return
 
-        const camera = this.viewportSystem.viewport.camera
+        const camera = this.viewportSystem.camera
         const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
         const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
         camera.moveTo(
@@ -109,7 +109,7 @@ export class ViewportInputHandler {
     }
 
     private applyEdgePan(dt: number, camera: Camera) {
-        if(this._isDragging || !this.viewportSystem.viewport) return
+        if(this._isDragging || !this.viewportSystem) return
 
         const bounds = camera.visibleBounds
         const { x, y } = this.pointer
@@ -140,7 +140,7 @@ export class ViewportInputHandler {
     }
 
     addToEngine() {
-        const canvas = this.viewportSystem.viewport.camera.context.canvas
+        const canvas = this.viewportSystem.camera.context.canvas
         if(!canvas || !this.viewportSystem.engineRef) {
             return
         }
@@ -161,7 +161,7 @@ export class ViewportInputHandler {
         window.removeEventListener("keyup", this.onKeyUp)
         window.removeEventListener("wheel", this.onWheel)
 
-        const canvas = this.viewportSystem.viewport.camera.context.canvas
+        const canvas = this.viewportSystem.camera.context.canvas
         if(canvas) {
             canvas.removeEventListener("mouseenter", this.onMouseEnter)
             canvas.removeEventListener("mouseleave", this.onMouseLeave)
@@ -193,7 +193,7 @@ export class ViewportInputHandler {
 
         event.preventDefault()
 
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
         const rect = camera.context.canvas.getBoundingClientRect()
         this.lastWheelScreen = {
             x: event.clientX - rect.left,
@@ -214,7 +214,7 @@ export class ViewportInputHandler {
 
         this._isZooming = false
 
-        const camera = this.viewportSystem.viewport.camera
+        const camera = this.viewportSystem.camera
 
         this.updatePointerPosition()
         this.handleDragStart()
@@ -314,7 +314,7 @@ export class ViewportInputHandler {
         if(this.hasFollowTarget) {
             camera.zoomBy(factor, this.lastWheelScreen.x, this.lastWheelScreen.y)
         } else {
-            this.viewportSystem.viewport.camera.moveTo(
+            this.viewportSystem.camera.moveTo(
                 camera.lookAt[0],
                 camera.lookAt[1],
                 Math.max(ViewportInputHandler.MIN_ZOOM, Math.min(camera.lookAt[2] += this.wheelZoomAccum, ViewportInputHandler.MAX_ZOOM))

@@ -9,29 +9,13 @@ export abstract class System {
 
     }
 
-    protected registerNodes(_engine: Engine) {
-        return this
-    }
-
-    protected unregisterNodeTypes() {
-        if(!this.engine) {
-            return
-        }
-
-        this.engine.unregisterNodeType(this.constructor as EntityNodeConstructor<EntityNode>)
-
-        return this
-    }
-
     addToEngine(engine: Engine): this {
         this.engine = engine
-        this.registerNodes(engine)
 
         return this
     }
 
     removeFromEngine(): this {
-        this.unregisterNodeTypes()
         this.engine = undefined
 
         return this
@@ -43,6 +27,7 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
+        this.registerNodes(engine)
 
         return this
     }
@@ -50,6 +35,21 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
     removeFromEngine(): this {
         this.nodes.length = 0
         super.removeFromEngine()
+        this.unregisterNodeTypes()
+
+        return this
+    }
+
+    protected registerNodes(_engine: Engine) {
+        return this
+    }
+
+    protected unregisterNodeTypes() {
+        if(!this.engine) {
+            return
+        }
+
+        this.engine.unregisterNodeType(this.constructor as EntityNodeConstructor<EntityNode>)
 
         return this
     }

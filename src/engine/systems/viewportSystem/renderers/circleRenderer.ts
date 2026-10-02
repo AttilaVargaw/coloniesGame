@@ -72,7 +72,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
         const context = ctx ?? camera.context
 
         const { projected: center, worldPos } = this.getProjected(circle)

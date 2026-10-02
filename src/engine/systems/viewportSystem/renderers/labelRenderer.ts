@@ -21,7 +21,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
 
     drawNode(node: LabelNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
         const { projected } = this.getProjected(node)
-        const context = ctx ?? this.viewportSystem.viewport.camera.context;
+        const context = ctx ?? this.viewportSystem.camera.context;
 
         context.save()
         node.setColor(context);

@@ -71,7 +71,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
     }
 
     projectNodes(): void {
-        const { camera } = this.viewportSystem.viewport
+        const { camera } = this.viewportSystem
         if(!camera) {
             console.warn('[BaseRenderer]', this.constructor.name, 'no camera')
             return

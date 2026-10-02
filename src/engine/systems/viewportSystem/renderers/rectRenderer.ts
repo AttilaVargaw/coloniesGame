@@ -38,7 +38,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
         if(belt?.cullingDistanceThreshold !== undefined) {
-            const distance = this.viewportSystem.viewport.camera.distance
+            const distance = this.viewportSystem.camera.distance
             if(distance > belt.cullingDistanceThreshold) {
                 return true
             }
@@ -108,7 +108,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
 
     drawNode(rect: RectNode, _dt?: number, ctx?: CanvasRenderingContext2D): void {
         const { projected } = this.getProjected(rect)
-        const context = ctx ?? this.viewportSystem.viewport.camera.context;
+        const context = ctx ?? this.viewportSystem.camera.context;
 
         const screenWidth = rect.size.width * projected.scale
         const screenHeight = rect.size.height * projected.scale

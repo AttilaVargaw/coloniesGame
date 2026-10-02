@@ -52,7 +52,7 @@ export class AsteroidSpinSystem extends SystemWithNodes<AsteroidSpinNode> {
     update(dt: number): void {
         if (!this.engine) return
 
-        const camera = this.engine.getSystem(ViewportSystem)?.viewport?.camera
+        const camera = this.engine.getSystem(ViewportSystem)?.camera
         if (!camera) {
             super.update(dt)
             return
