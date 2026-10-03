@@ -32,12 +32,7 @@ function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: n
 
 export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
-    // eslint-disable-next-line class-methods-use-this,no-empty-function
     private inputHandler!: ViewportInputHandler
-    private fpsFrameCount = 0
-    private fpsLastTime = performance.now()
-    private currentFps = 0
-    private frameTimeSamples: number[] = []
     private _renderers: Map<RendererConstructor<any>, BaseRenderer<RenderableNode>> = new Map()
     private webglRenderManager: WebglRenderManager
     private debugRenderer: DebugRenderer
@@ -221,14 +216,7 @@ export class ViewportSystem extends System {
         }
 
         this.inputHandler.update(dt)
-        this.fpsFrameCount++
-        const now = performance.now()
-        const elapsed = now - this.fpsLastTime
-        if(elapsed >= 500) {
-            this.currentFps = Math.round((this.fpsFrameCount * 1000) / elapsed)
-            this.fpsFrameCount = 0
-            this.fpsLastTime = now
-        }
+        this.debugRenderer.update(dt)
 
         const {
             bloomSettings,
@@ -279,8 +267,6 @@ export class ViewportSystem extends System {
         if(this.inputHandler.isRotatingWithoutTarget) {
             drawRotationIndicator(context, this.camera)
         }
-
-
     }
 
     init() {

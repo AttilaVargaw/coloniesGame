@@ -3,7 +3,6 @@ import { drawCameraGizmo, drawCameraTarget } from "../drawCameraGizmo"
 import { drawOrbits } from "../renderOrbits"
 import { drawJumpGraph } from "./drawJumpGraph"
 import { ViewportSystem } from "../viewportSystem"
-import { RectRenderer } from "./rectRenderer"
 import Camera from "@/lib/camera"
 
 import { WebGLRectRenderer } from "./webglRenderer/webglRectRenderer"
@@ -12,7 +11,7 @@ import { Engine } from "@/engine/core/engine"
 
 export class DebugRenderer extends System {
     private fpsFrameCount = 0
-    private fpsLastTime = 0
+    private fpsLastTime = performance.now()
     private currentFps = 0
     private frameTimeSamples: number[] = []
     private camera: Camera
@@ -32,6 +31,17 @@ export class DebugRenderer extends System {
         this.debugManager = engine.getDebugManager()
 
         return this
+    }
+
+    update(_dt: number) {
+        this.fpsFrameCount++
+        const now = performance.now()
+        const elapsed = now - this.fpsLastTime
+        if(elapsed >= 500) {
+            this.currentFps = Math.round((this.fpsFrameCount * 1000) / elapsed)
+            this.fpsFrameCount = 0
+            this.fpsLastTime = now
+        }
     }
 
     private drawFpsCounter(ctx: CanvasRenderingContext2D) {
@@ -66,12 +76,6 @@ export class DebugRenderer extends System {
     }
 
     private drawCullingOverlay(ctx: CanvasRenderingContext2D) {
-        const rectRenderer = this.viewport.renderers(RectRenderer)
-
-        if(!rectRenderer) {
-            return
-        }
-
         ctx.save()
         ctx.font = "14px monospace"
         ctx.fillStyle = "#0f0"
@@ -82,8 +86,8 @@ export class DebugRenderer extends System {
 
         const lines = [
             `Distance: ${this.camera?.distance.toFixed(0)}`,
-            `Rect projected: ${rectRenderer.projectedCount}`,
-            `Rect culled: ${rectRenderer.culledCount}`,
+            `Rect projected: ${this.rectRenderer.projectedCount}`,
+            `Rect culled: ${this.rectRenderer.culledCount}`,
         ] as const
 
         let y = 30
