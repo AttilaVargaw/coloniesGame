@@ -12,10 +12,10 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
     }
     endFrame(): void {
     }
-    static shouldCullNode(_node: ShapeNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    shouldCullNode(_node: ShapeNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    static shouldSkipProjection(_node: ShapeNode, _cameraScale: number): boolean {
+    shouldSkipProjection(_node: ShapeNode, _cameraDistance: number, _cameraScale: number): boolean {
         return false
     }
     constructor(viewportSystem: ViewportSystem) {
@@ -29,7 +29,7 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
             ))
     }
 
-    static getCullMargin(node: ShapeNode): number {
+    getCullMargin(node: ShapeNode): number {
         return Math.max(node.width, node.height) / 2
     }
 

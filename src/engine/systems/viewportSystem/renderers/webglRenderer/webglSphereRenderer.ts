@@ -296,13 +296,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
     }
-    static getCullMargin(_node: WebGLSphereNode): number {
+    protected getCullMargin(_node: WebGLSphereNode): number {
         return 0
     }
-    static shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    static shouldSkipProjection(_node: WebGLSphereNode, _cameraScale: number): boolean {
+    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraDistance: number, _cameraScale: number): boolean {
         return false
     }
     private shader: ShaderProgram | null = null

@@ -14,13 +14,13 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
     }
     endFrame(): void {
     }
-    static getCullMargin(node: LabelNode): number {
+    protected getCullMargin(node: LabelNode): number {
         return node.label.size
     }
-    static shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    static shouldSkipProjection(_node: LabelNode, _cameraScale: number): boolean {
+    protected shouldSkipProjection(_node: LabelNode, _cameraDistance: number, _cameraScale: number): boolean {
         return false
     }
 

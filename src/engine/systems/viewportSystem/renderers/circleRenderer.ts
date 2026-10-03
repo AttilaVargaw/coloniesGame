@@ -53,14 +53,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    static shouldSkipProjection(node: CircleNode, cameraDistance: number, _cameraScale: number): boolean {
+    protected shouldSkipProjection(node: CircleNode, cameraDistance: number, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
         if (belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
             return true
         }
         return false
     }
-    static getCullMargin(node: CircleNode): number {
+    protected getCullMargin(node: CircleNode): number {
         return node.radius.radius
     }
 
