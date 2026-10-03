@@ -1,4 +1,4 @@
-import { TWO_PI } from "@/game/constants";
+import { TWO_PI } from "@/engine/lib/cameraConstants";
 import Camera from "@/lib/camera";
 import { hexToRgba } from "./renderers/hexToRgba";
 import { mulberry32 } from "./mulberry32";

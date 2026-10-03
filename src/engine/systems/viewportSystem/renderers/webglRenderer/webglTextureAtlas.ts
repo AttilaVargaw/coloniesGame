@@ -2,6 +2,8 @@ const ATLAS_SIZE = 1024
 const CELL_SIZE = 128
 const BORDER = 1
 
+import { getPlatform } from "@/engine/lib/platform"
+
 export { createCheckerPatternCanvas } from "./createCheckerPattern"
 export interface AtlasEntry {
     u0: number
@@ -17,7 +19,7 @@ class AtlasPage {
     private dirty = true
 
     constructor(public size: number, public cellSize: number) {
-        this.canvas = document.createElement("canvas")
+        this.canvas = getPlatform().createCanvas()
         this.canvas.width = size
         this.canvas.height = size
     }
@@ -83,9 +85,6 @@ export class WebGLTextureAtlas {
     private cachedTextures: WebGLTexture[] | null = null
 
     constructor(atlasSize = ATLAS_SIZE, cellSize = CELL_SIZE) {
-        if(typeof document === "undefined") {
-            throw new Error("WebGL texture atlas not available")
-        }
         this.pages.push(new AtlasPage(atlasSize, cellSize))
     }
 

@@ -9,6 +9,7 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
+import { getPlatform } from "@/engine/lib/platform"
 import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
@@ -336,7 +337,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this._lastShowCheckerPattern = showCheckerPattern
             this.atlas = new WebGLTextureAtlas()
             this.nightAtlas = new WebGLTextureAtlas()
-            const whiteCanvas = document.createElement("canvas")
+            const whiteCanvas = getPlatform().createCanvas()
             whiteCanvas.width = 1
             whiteCanvas.height = 1
             const whiteCtx = whiteCanvas.getContext("2d")!
@@ -443,7 +444,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
     private getBlackCanvas(): HTMLCanvasElement {
         if(!this._blackCanvas) {
-            const canvas = document.createElement("canvas")
+            const canvas = getPlatform().createCanvas()
             canvas.width = 1
             canvas.height = 1
             const ctx = canvas.getContext("2d")!

@@ -8,6 +8,7 @@ import { PositionComponent } from "../components/position";
 import { RadiusComponent } from "../components/radiusComponent";
 import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, MousemoveEvent, ContextMenuEvent, ContextMenuOpenEvent, PointerEventData } from "../lib/events";
+import { getPlatform } from "@/engine/lib/platform";
 import { SelectionManager } from "@game/systems/selectionSystem";
 import { TargetSystem } from "@game/systems/targetSystem";
 
@@ -128,7 +129,7 @@ export class PointerInteractionSystem extends System {
                 : this.hitTestBox(data.x, data.y, projected, size.width, size.height)
 
             if(hit) {
-                document.body.style.cursor = cursor
+                getPlatform().document.body.style.cursor = cursor
                 const screenRadius = (radius ?? Math.max(size.width, size.height) / 2) * projected.scale
                 this.hoveredProjected = { x: projected.x, y: projected.y, radius: screenRadius }
                 hovered = true
@@ -138,9 +139,9 @@ export class PointerInteractionSystem extends System {
 
         if(!hovered) {
             this.hoveredProjected = null
-            const { cursor } = document.body.style
+            const { cursor } = getPlatform().document.body.style
             if(cursor !== 'default' && cursor !== "grabbing") {
-                document.body.style.cursor = 'default'
+                getPlatform().document.body.style.cursor = 'default'
             }
         }
     }

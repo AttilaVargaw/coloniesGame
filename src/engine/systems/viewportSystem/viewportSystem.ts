@@ -3,6 +3,7 @@ import { System, } from "../system";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { CAMERA_INITIAL_DISTANCE, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, FIELD_OF_VIEW, TWO_PI } from "@/engine/lib/cameraConstants";
+import { getPlatform } from "@/engine/lib/platform";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
@@ -21,7 +22,7 @@ let bloomSourceCanvas: HTMLCanvasElement | null = null
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
     if(!canvas || canvas.width !== width || canvas.height !== height) {
-        const c = document.createElement("canvas")
+        const c = getPlatform().createCanvas()
         c.width = width
         c.height = height
         return c

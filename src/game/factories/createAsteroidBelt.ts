@@ -17,7 +17,6 @@ import dust1 from "../../components/icons/dust1.png"
 import { applyComponents, calculateSoi, createAttractorClickHandler } from "./helpers"
 import { createMarker } from "./createSpaceship"
 import { RotationComponent } from "../components/rotationComponent"
-import { AsteroidBeltComponent } from "../components/asteroidBeltComponent"
 import { generateRandomNumber } from "../../lib/generateRandomNumber"
 import buildableSite from "../../components/icons/buildable.svg"
 import { BuildableComponent } from "../components/buildableComponent"
@@ -30,6 +29,7 @@ import { MassComponent } from "@engine/components/massComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
+import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1

@@ -6,8 +6,8 @@ import { ViewportSystem } from "../viewportSystem";
 import { RectNode } from "./rectNode";
 import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
-import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
-import { TWO_PI } from "@/game/constants";
+import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
+import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { Vector3 } from "@/lib/Vector3";
 import { hexToRgba } from "./hexToRgba";
 

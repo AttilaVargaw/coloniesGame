@@ -1,4 +1,5 @@
 import type { BloomSettings } from "@/engine/lib/debugManager"
+import { getPlatform } from "@/engine/lib/platform"
 
 let offscreen: HTMLCanvasElement | null = null
 let offCtx: CanvasRenderingContext2D | null = null
@@ -8,7 +9,7 @@ let tempCtx: CanvasRenderingContext2D | null = null
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
     if(!canvas || canvas.width !== width || canvas.height !== height) {
-        const c = document.createElement("canvas")
+        const c = getPlatform().createCanvas()
         c.width = width
         c.height = height
         return c

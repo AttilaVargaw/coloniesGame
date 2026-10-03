@@ -7,12 +7,13 @@ import { ViewportSystem } from "../viewportSystem";
 import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
 import { Entity } from "@/engine/entities/entity";
-import { TWO_PI } from "@/game/constants";
+import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { hexToRgba } from "./hexToRgba";
+import { getPlatform } from "@/engine/lib/platform";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
 import { Vector3 } from "@/lib/Vector3";
-import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
+import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
 
 export class CircleRenderer extends BaseRenderer<CircleNode> {
     beginFrame(): void {
@@ -233,7 +234,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     private drawGradientNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, litX: number, litY: number, darkX: number, darkY: number) {
         const size = Math.ceil(screenRadius * 2)
         if(!this._nightCanvas || this._nightCanvas.width !== size || this._nightCanvas.height !== size) {
-            this._nightCanvas = document.createElement("canvas")
+            this._nightCanvas = getPlatform().createCanvas()
             this._nightCanvas.width = size
             this._nightCanvas.height = size
         }

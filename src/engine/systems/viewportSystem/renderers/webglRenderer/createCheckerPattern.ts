@@ -1,3 +1,5 @@
+import { getPlatform } from "@/engine/lib/platform"
+
 const CHECKER_SIZE = 16
 
 let canvas: HTMLCanvasElement | null = null
@@ -7,11 +9,7 @@ export function createCheckerPatternCanvas(size = 128): HTMLCanvasElement {
         return canvas
     }
 
-    if(typeof document === "undefined") {
-        throw new Error("Checker pattern not available")
-    }
-
-    canvas = document.createElement("canvas")
+    canvas = getPlatform().createCanvas()
     canvas.width = size
     canvas.height = size
 

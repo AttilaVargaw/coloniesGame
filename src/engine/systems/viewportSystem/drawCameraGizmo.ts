@@ -1,5 +1,5 @@
 import Camera from "@/lib/camera";
-import { TWO_PI } from "@/game/constants";
+import { TWO_PI } from "@/engine/lib/cameraConstants";
 
 export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     const size = 50;

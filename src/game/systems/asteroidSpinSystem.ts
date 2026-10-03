@@ -1,12 +1,12 @@
 import { SystemWithNodes } from "@engine/systems/system"
 import { TextureComponent } from "@engine/components/textureComponent"
 import { RotationComponent } from "@/game/components/rotationComponent"
-import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
 import { EntityNode } from "@engine/entities/entityNode"
 import { Engine } from "@/engine/core/engine"
 import { isVisible, VisibleBounds } from "@engine/systems/viewportSystem/renderers/isVisible"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { Entity } from "@/engine/entities/entity"
+import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent"
 
 export class AsteroidSpinNode extends EntityNode {
     constructor(public rotation: RotationComponent, entity: Entity) {

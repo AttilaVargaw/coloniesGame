@@ -5,7 +5,8 @@ import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
 import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
-import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent"
+import { getPlatform } from "@/engine/lib/platform"
+import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent"
 import { ProjectedPoint } from "@/lib/camera"
 import { Vector3 } from "@/lib/Vector3"
 import { SizeComponent } from "@/engine/components/sizeComponent"
@@ -69,7 +70,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 17)
 
         this.atlas = new WebGLTextureAtlas()
-        const whiteCanvas = document.createElement("canvas")
+        const whiteCanvas = getPlatform().createCanvas()
         whiteCanvas.width = 1
         whiteCanvas.height = 1
         const ctx = whiteCanvas.getContext("2d")!

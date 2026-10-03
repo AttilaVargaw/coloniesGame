@@ -3,7 +3,7 @@ import { SystemWithNodes } from "../system";
 import { OrbitNode } from "./orbitNode";
 import { PositionComponent } from "../../components/position";
 import { OrbitComponent } from "../../components/orbitComponent";
-import { TWO_PI } from "@/game/constants";
+import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { TimeScaleNode } from "../timeScaleNode";
 import { precomputeOrbitalTrig } from "./orbitalTrig";
 

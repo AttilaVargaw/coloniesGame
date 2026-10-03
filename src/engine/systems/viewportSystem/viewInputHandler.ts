@@ -2,6 +2,7 @@ import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { Queue } from "@/engine/lib/commandQueue";
+import { getPlatform } from "@/engine/lib/platform";
 
 interface CameraFollowTarget {
     isFollowing(): boolean
@@ -135,11 +136,11 @@ export class ViewportInputHandler {
     }
 
     private onMouseEnter = () => {
-        window.addEventListener("wheel", this.onWheel, { passive: false })
+        getPlatform().window.addEventListener("wheel", this.onWheel, { passive: false })
     }
 
     private onMouseLeave = () => {
-        window.removeEventListener("wheel", this.onWheel)
+        getPlatform().window.removeEventListener("wheel", this.onWheel)
     }
 
     addToEngine() {
@@ -155,14 +156,14 @@ export class ViewportInputHandler {
         canvas.addEventListener("mouseenter", this.onMouseEnter)
         canvas.addEventListener("mouseleave", this.onMouseLeave)
         canvas.addEventListener("contextmenu", ViewportInputHandler.onContextMenu)
-        window.addEventListener("keydown", this.onKeyDown)
-        window.addEventListener("keyup", this.onKeyUp)
+        getPlatform().window.addEventListener("keydown", this.onKeyDown)
+        getPlatform().window.addEventListener("keyup", this.onKeyUp)
     }
 
     removeFromEngine() {
-        window.removeEventListener("keydown", this.onKeyDown)
-        window.removeEventListener("keyup", this.onKeyUp)
-        window.removeEventListener("wheel", this.onWheel)
+        getPlatform().window.removeEventListener("keydown", this.onKeyDown)
+        getPlatform().window.removeEventListener("keyup", this.onKeyUp)
+        getPlatform().window.removeEventListener("wheel", this.onWheel)
 
         const canvas = this.viewportSystem.camera.context.canvas
         if (canvas) {
@@ -249,7 +250,7 @@ export class ViewportInputHandler {
                 this.rotationVelocityX = 0
                 this.rotationVelocityY = 0
                 this.wasRotatingWithoutTarget = false
-                document.body.style.cursor = button === 2 ? "grab" : "move"
+                getPlatform().document.body.style.cursor = button === 2 ? "grab" : "move"
             }
         }
         this.mousedownArray?.clear()
@@ -298,7 +299,7 @@ export class ViewportInputHandler {
             this.dragButton = null
             this.lastPointer = null
             this.dragMoved = false
-            document.body.style.cursor = "default"
+            getPlatform().document.body.style.cursor = "default"
         }
         this.mouseupArray?.clear()
     }
