@@ -7,19 +7,16 @@ import { CameraFollowSystem } from "@/game/systems/cameraFollowSystem";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
-import { RectRenderer } from "./renderers/rectRenderer";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
 import { RenderableNode } from "./renderers/renderableNode";
-import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo";
 import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
-import { drawOrbits } from "./renderOrbits";
-import { drawJumpGraph } from "./renderers/drawJumpGraph";
 import { ShapeRenderer } from "./renderers/shapeRenderer";
+import { DebugRenderer } from "./renderers/debugRenderer";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 
@@ -32,6 +29,8 @@ function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: n
     }
     return canvas
 }
+
+export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
     private inputHandler!: ViewportInputHandler
@@ -39,10 +38,15 @@ export class ViewportSystem extends System {
     private fpsLastTime = performance.now()
     private currentFps = 0
     private frameTimeSamples: number[] = []
-    private renderers: Map<new (...args: any[]) => BaseRenderer<any>, BaseRenderer<RenderableNode>> = new Map()
+    private _renderers: Map<RendererConstructor<any>, BaseRenderer<RenderableNode>> = new Map()
     private webglRenderManager: WebglRenderManager
+    private debugRenderer: DebugRenderer
 
     camera: Camera
+
+    renderers<T extends RendererConstructor<any>>(key: T): InstanceType<T> {
+        return this._renderers.get(key)! as InstanceType<T>
+    }
 
     constructor(canvasContext: CanvasRenderingContext2D) {
         super()
@@ -61,6 +65,7 @@ export class ViewportSystem extends System {
         }, canvasContext)
 
         this.webglRenderManager = new WebglRenderManager(this)
+        this.debugRenderer = new DebugRenderer(this)
     }
 
     get isDragging() {
@@ -231,35 +236,21 @@ export class ViewportSystem extends System {
                 showBloom,
                 showColorGrading,
                 showVignette,
-                drawOrbits: isDrawOrbit,
-                showCameraGizmo,
-                showCameraTarget,
-                showFpsCounter,
-                showJumpGraph,
-                showCullingOverlay,
-                showFrameTime }
+            }
         } = this.engine.getDebugManager()
 
         const { context } = this.camera
-
 
         bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, context.canvas.width, context.canvas.height)
         const bloomCtx = bloomSourceCanvas.getContext("2d")!
         bloomCtx.clearRect(0, 0, bloomSourceCanvas.width, bloomSourceCanvas.height)
 
         ViewportSystem.clear(context)
-        //     this.clearWebgl()
 
         drawStarfield(context, this.camera)
         drawNebulas(context, this.camera)
 
-        if(isDrawOrbit) {
-            drawOrbits(context, this.engine, this.camera)
-        }
-
-        // this.scheduleRender(bloomSourceCtx)
-
-        this.renderers.entries().forEach(([_key, renderer]) => {
+        this._renderers.entries().forEach(([_key, renderer]) => {
             renderer.beginFrame()
             renderer.projectNodes()
             renderer.drawNodes(context)
@@ -268,6 +259,7 @@ export class ViewportSystem extends System {
 
         this.webglRenderManager.projectNodes()
         this.webglRenderManager.render()
+        this.debugRenderer.render()
 
         this.drawLensFlares(context, this.camera)
 
@@ -288,90 +280,7 @@ export class ViewportSystem extends System {
             drawRotationIndicator(context, this.camera)
         }
 
-        if(showCameraGizmo) {
-            drawCameraGizmo(context, this.camera)
-        }
 
-        if(showCameraTarget) {
-            drawCameraTarget(context, this.camera)
-        }
-
-        if(showJumpGraph) {
-            drawJumpGraph(context, this.engine, this.camera)
-        }
-
-        //this.renderLabels()
-
-        if(showFpsCounter) {
-            this.drawFpsCounter(context)
-        }
-
-        if(showFrameTime) {
-            this.drawFrameTime(this.camera.context)
-        }
-
-        if(showCullingOverlay) {
-            this.drawCullingOverlay(context)
-        }
-    }
-
-    private drawFpsCounter(ctx: CanvasRenderingContext2D) {
-        ctx.save()
-        ctx.font = "16px monospace"
-        ctx.fillStyle = "#0f0"
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
-        ctx.shadowBlur = 4
-        ctx.textAlign = "left"
-        ctx.textBaseline = "top"
-        ctx.fillText(`FPS: ${this.currentFps}`, 10, 10)
-        ctx.restore()
-    }
-
-    private drawFrameTime(ctx: CanvasRenderingContext2D) {
-        if(!this.frameTimeSamples.length) return
-        const showFps = this.engine?.getDebugManager().debugflags.showFpsCounter ?? false
-        const avg = this.frameTimeSamples.reduce((a, b) => a + b, 0) / this.frameTimeSamples.length
-        const max = Math.max(...this.frameTimeSamples)
-        ctx.save()
-        ctx.font = "14px monospace"
-        ctx.fillStyle = "#0ff"
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
-        ctx.shadowBlur = 4
-        ctx.textAlign = "left"
-        ctx.textBaseline = "top"
-        let y = showFps ? 32 : 10
-        ctx.fillText(`Frame: ${avg.toFixed(1)}ms (${(1000 / Math.max(1, avg)).toFixed(0)}fps) max ${max.toFixed(1)}ms`, 64, y)
-        ctx.restore()
-    }
-
-    private drawCullingOverlay(ctx: CanvasRenderingContext2D) {
-        if(!this.engine) return
-
-        const rectRenderer = this.renderers.get(RectRenderer)
-        //const viewport = this.viewport
-        if(!rectRenderer) return
-
-        ctx.save()
-        ctx.font = "14px monospace"
-        ctx.fillStyle = "#0f0"
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)"
-        ctx.shadowBlur = 4
-        ctx.textAlign = "left"
-        ctx.textBaseline = "top"
-
-        const lines = [
-            `Distance: ${this.camera.distance.toFixed(0)}`,
-            `Rect projected: ${rectRenderer.projectedCount}`,
-            `Rect culled: ${rectRenderer.culledCount}`,
-        ] as const
-
-        let y = 30
-        for(const line of lines) {
-            ctx.fillText(line, 10, y)
-            y += 18
-        }
-
-        ctx.restore()
     }
 
     init() {
@@ -383,7 +292,7 @@ export class ViewportSystem extends System {
         this.engine = engine
         super.addToEngine(engine)
 
-        this.renderers = [
+        this._renderers = [
             ShapeRenderer,
             LabelRenderer
         ].reduce((prev, curr) => {
@@ -398,6 +307,7 @@ export class ViewportSystem extends System {
         }, new Map())
 
         this.webglRenderManager.addToEngine(engine)
+        this.debugRenderer.addToEngine(engine)
 
         return this
     }
@@ -409,7 +319,7 @@ export class ViewportSystem extends System {
 
         this.inputHandler.removeFromEngine()
 
-        for(const renderer of this.renderers.values()) {
+        for(const renderer of this._renderers.values()) {
             renderer.removeFromEngine()
         }
 
