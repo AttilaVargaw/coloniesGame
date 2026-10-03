@@ -32,6 +32,15 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { createPlanetTexture, createStarTexture, createNightTexture } from "./createCircleTextures"
 
+let textureGenerationCount = 0
+const TEXTURE_YIELD_INTERVAL = 5
+
+async function maybeYieldAfterTexture() {
+    if (++textureGenerationCount % TEXTURE_YIELD_INTERVAL === 0) {
+        await new Promise(r => setTimeout(r, 0))
+    }
+}
+
 export function resolveMass(blueprint: BodyBlueprint): number {
     if(blueprint.mass !== undefined) return blueprint.mass
     return massByArchetype[blueprint.archetype]
@@ -219,6 +228,7 @@ export async function createBody({
             const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype) : undefined
             body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, animationSpeed: 0.2, id: name }))
         }
+        await maybeYieldAfterTexture()
     }
 
     if(name !== "root") {

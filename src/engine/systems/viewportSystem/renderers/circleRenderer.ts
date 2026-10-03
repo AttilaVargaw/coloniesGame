@@ -37,7 +37,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     private _nightCanvas: HTMLCanvasElement | undefined
-    private _starEntity: Entity | undefined
 
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
@@ -46,14 +45,25 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         )
     }
 
-    private findStarEntity(): Entity | undefined {
-        if(!this._starEntity && this.engine) {
-            this._starEntity = this.engine.getAllEntities().find(e => {
-                const color = e.getComponent(ColorComponent)
-                return color?.emitLight
-            })
+    private findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
+        if (!this.engine) return undefined
+
+        let current: Entity | undefined = planetEntity
+        while (current) {
+            const sceneNode = this.engine.getSceneNode(current)
+            if (sceneNode?.parent) {
+                current = sceneNode.parent.entity
+            } else {
+                break
+            }
+
+            const color = current.getComponent(ColorComponent)
+            if (color?.emitLight) {
+                return current
+            }
         }
-        return this._starEntity
+
+        return undefined
     }
 
     drawNode = (ctx: CanvasRenderingContext2D) => {
@@ -171,7 +181,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     private drawNightTexture(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
-        const starEntity = this.findStarEntity()
+        const starEntity = this.findStarEntityForPlanet(circle.entity)
         if(!starEntity) {
             return
         }

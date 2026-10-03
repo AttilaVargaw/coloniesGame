@@ -40,8 +40,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const { camera } = this.viewportSystem
 
-        const starEntity = this.findStarEntity()
-
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
         for(const { node, projected } of this.getProjectedCacheEntries()) {
@@ -80,6 +78,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             ) {
                 continue
             }
+
+            const starEntity = this.findStarEntityForPlanet(node.entity)
 
             let lightDir: Vec3
 
@@ -325,7 +325,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number }> = []
     private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number }>>()
     private _blackCanvas: HTMLCanvasElement | undefined
-    private starEntity: Entity | undefined = undefined
     private _lastShowCheckerPattern = false
 
     beginFrame(): void {
@@ -417,13 +416,25 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.sphereIndexType = indices instanceof Uint32Array ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT
     }
 
-    private findStarEntity(): Entity | undefined {
-        if(this.starEntity) return this.starEntity
-        this.starEntity = this.engine?.getAllEntities().find(e => {
-            const color = e.getComponent(ColorComponent)
-            return color?.emitLight
-        })
-        return this.starEntity
+    private findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
+        if (!this.engine) return undefined
+
+        let current: Entity | undefined = planetEntity
+        while (current) {
+            const sceneNode = this.engine.getSceneNode(current)
+            if (sceneNode?.parent) {
+                current = sceneNode.parent.entity
+            } else {
+                break
+            }
+
+            const color = current.getComponent(ColorComponent)
+            if (color?.emitLight) {
+                return current
+            }
+        }
+
+        return undefined
     }
 
     constructor(viewport: ViewportSystem) {
