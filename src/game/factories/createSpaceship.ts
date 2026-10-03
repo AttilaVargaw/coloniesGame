@@ -94,10 +94,10 @@ export function createVessel(
         new SensorSuiteComponent(3),
         new FuelComponent(100, 1),
         new SelectableComponent(80, "red"),
-        new TargetableComponent(),
+        //new TargetableComponent(),
         new SizeComponent(20, 20),
         new TextureComponent(battlestarDradisUrl, undefined, undefined, undefined, undefined, undefined, undefined, undefined, "BSDradis"),
-        new HoverableComponent("pointer", { width: 80, height: 80 }),
+        //new HoverableComponent("pointer", { width: radius, height: radius }),
         new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius * UNIVERSE_SCALE, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
     )
 
@@ -105,9 +105,9 @@ export function createVessel(
         ship.addComponent(new LabelComponent(label, textSize ?? 18, { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor ?? "yellow"))
     }
 
-    ship.addComponent(new HoverableComponent("pointer", { width: SHIP_RADIUS, height: SHIP_RADIUS }))
+    ship.addComponent(new HoverableComponent("pointer", { width: SHIP_RADIUS * 2.5, height: SHIP_RADIUS * 2.5 }))
 
-    ship.addComponent(new ClickableComponent(true, { width: SHIP_RADIUS, height: SHIP_RADIUS }, createShipClickHandler(engine, ship)))
+    ship.addComponent(new ClickableComponent(true, { width: SHIP_RADIUS * 2.5, height: SHIP_RADIUS * 2.5 }, createShipClickHandler(engine, ship)))
 
     engine.addEntity(ship)
 
