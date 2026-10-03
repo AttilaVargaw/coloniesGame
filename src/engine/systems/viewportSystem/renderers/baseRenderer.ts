@@ -14,6 +14,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
     private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
+    private projectedCacheEntries: Array<{ node: N; projected: ProjectedPoint }> = []
     protected debugCulledCount = 0
     protected debugProjectedCount = 0
     init?(): void
@@ -79,7 +80,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         }
 
         this.projectedCache.clear()
-        const entries: N[] = []
+        this.projectedCacheEntries.length = 0
         this.debugCulledCount = 0
         this.debugProjectedCount = 0
 
@@ -118,26 +119,18 @@ export abstract class BaseRenderer<N extends RenderableNode> {
             }
 
             this.projectedCache.set(node, { worldPos, projected })
-            entries.push(node)
+            this.projectedCacheEntries.push({ node, projected })
             this.debugProjectedCount++
         }
 
-        entries.sort((a, b) => {
-            const aProj = this.projectedCache.get(a)!.projected
-            const bProj = this.projectedCache.get(b)!.projected
-            return bProj.depth - aProj.depth
-        })
+        this.projectedCacheEntries.sort((a, b) => b.projected.depth - a.projected.depth)
     }
 
     abstract beginFrame(): void
     abstract endFrame(): void
 
     getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
-        const entries: Array<{ node: N; projected: ProjectedPoint }> = []
-        for(const [node, { projected }] of this.projectedCache) {
-            entries.push({ node, projected })
-        }
-        return entries
+        return this.projectedCacheEntries
     }
 
     abstract drawNodes(ctx: CanvasRenderingContext2D): void

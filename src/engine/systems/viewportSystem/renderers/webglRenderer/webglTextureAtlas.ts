@@ -63,6 +63,7 @@ class AtlasPage {
 export class WebGLTextureAtlas {
     private pages: AtlasPage[] = []
     private entries = new Map<string, { page: number; index: number; entry: { u0: number; v0: number; u1: number; v1: number } }>()
+    private cachedTextures: WebGLTexture[] | null = null
 
     constructor(atlasSize = ATLAS_SIZE, cellSize = CELL_SIZE) {
         if(typeof document === "undefined") {
@@ -108,12 +109,18 @@ export class WebGLTextureAtlas {
         const uv = page.addTexture(key, source, cellIndex)
 
         this.entries.set(key, { page: pageIndex, index: cellIndex, entry: uv })
+        this.cachedTextures = null
 
         return { ...uv, page: pageIndex }
     }
 
     getTextures(gl: WebGL2RenderingContext): WebGLTexture[] {
-        return this.pages.map(page => page.getTexture(gl))
+        if (this.cachedTextures) {
+            return this.cachedTextures
+        }
+        const textures = this.pages.map(page => page.getTexture(gl))
+        this.cachedTextures = textures
+        return textures
     }
 
     getEntry(key: string): AtlasEntry | undefined {

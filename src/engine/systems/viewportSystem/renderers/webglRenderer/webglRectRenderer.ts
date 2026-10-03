@@ -35,9 +35,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private rectInstancePool: Float32Array | null = null
     private rectBatchBuffer: Float32Array | null = null
     private pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
+    private groupsMap = new Map<number, Array<{ depth: number; offset: number }>>()
+    private parseColorCache = new Map<string, [number, number, number]>()
 
     beginFrame(): void {
-        this.pendingInstances = []
+        this.pendingInstances.length = 0
+        this.groupsMap.clear()
     }
 
     private ensureRectCapacity(count: number): void {
@@ -131,13 +134,19 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return key
     }
 
-    private static parseColor(color: string): [number, number, number] {
+    private parseColor(color: string): [number, number, number] {
+        const cached = this.parseColorCache.get(color)
+        if (cached) return cached
+        
+        let r: number, g: number, b: number
         if(color.startsWith('#')) {
-            const r = parseInt(color.slice(1, 3), 16) / 255
-            const g = parseInt(color.slice(3, 5), 16) / 255
-            const b = parseInt(color.slice(5, 7), 16) / 255
+            r = parseInt(color.slice(1, 3), 16) / 255
+            g = parseInt(color.slice(3, 5), 16) / 255
+            b = parseInt(color.slice(5, 7), 16) / 255
             if(!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-                return [r, g, b]
+                const result = [r, g, b] as [number, number, number]
+                this.parseColorCache.set(color, result)
+                return result
             }
         }
 
@@ -148,7 +157,9 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         ctx.fillStyle = color
         ctx.fillRect(0, 0, 1, 1)
         const data = ctx.getImageData(0, 0, 1, 1).data
-        return [data[0] / 255, data[1] / 255, data[2] / 255]
+        const result = [data[0] / 255, data[1] / 255, data[2] / 255] as [number, number, number]
+        this.parseColorCache.set(color, result)
+        return result
     }
 
     drawNodes(): void {
@@ -201,7 +212,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             }
 
             const fill = node.color.fill || "#ffffff"
-            const [r, g, b] = WebGLRectRenderer.parseColor(fill)
+            const [r, g, b] = this.parseColor(fill)
 
             if(this.pendingInstances.length >= this.MAX_RECT_INSTANCES) {
                 this.ensureRectCapacity(this.pendingInstances.length + 1)
@@ -260,14 +271,15 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         const instanceStride = 13 * 4
 
-        const groups = new Map<number, Array<{ depth: number; offset: number }>>()
-
+        const groups = this.groupsMap
+        groups.clear()
         for(const inst of this.pendingInstances) {
-            if(!groups.has(inst.page)) {
-                groups.set(inst.page, [{ depth: inst.depth, offset: inst.offset }])
-            } else {
-                groups.get(inst.page)!.push({ depth: inst.depth, offset: inst.offset })
+            let group = groups.get(inst.page)
+            if(!group) {
+                group = []
+                groups.set(inst.page, group)
             }
+            group.push({ depth: inst.depth, offset: inst.offset })
         }
 
         if(!this.instanceBuffer) {

@@ -193,13 +193,16 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const instanceStride = 37 * 4
 
-        const groups = new Map<string, Array<{ depth: number; offset: number; nightPage: number }>>()
+        const groups = this.groupsMap
+        groups.clear()
         for(const inst of this.pendingInstances) {
             const key = `${inst.page}:${inst.nightPage}`
-            if(!groups.has(key)) {
-                groups.set(key, [])
+            let group = groups.get(key)
+            if(!group) {
+                group = []
+                groups.set(key, group)
             }
-            groups.get(key)!.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage })
+            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage })
         }
 
         const modelLoc = this.shader.attribs.instanceModel
@@ -329,9 +332,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
     private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number }> = []
+    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number }>>()
+    private starEntity: Entity | undefined = undefined
 
     beginFrame(): void {
-        this.pendingInstances = []
+        this.pendingInstances.length = 0
+        this.groupsMap.clear()
         // super.beginFrame()
     }
 
@@ -404,10 +410,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     }
 
     private findStarEntity(): Entity | undefined {
-        return this.engine?.getAllEntities().find(e => {
+        if(this.starEntity) return this.starEntity
+        this.starEntity = this.engine?.getAllEntities().find(e => {
             const color = e.getComponent(ColorComponent)
             return color?.emitLight
         })
+        return this.starEntity
     }
 
     constructor(viewport: ViewportSystem) {
