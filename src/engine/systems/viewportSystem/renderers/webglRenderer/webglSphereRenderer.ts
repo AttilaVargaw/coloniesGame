@@ -54,17 +54,17 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 continue
             }
 
-            const atlasEntry = this.atlas.getOrCreateEntry(node.entity.id, textureSource)
+            const atlasEntry = showCheckerPattern
+                ? this.atlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
+                : this.atlas.getOrCreateEntry(node.entity.id, textureSource)
 
             let nightAtlasEntry: AtlasEntry | undefined
 
-            if(nightTextureSource) {
-                const nightKey = `${node.entity.id}_night`
-                nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource)
-            }
-
             if(showCheckerPattern) {
                 nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
+            } else if(nightTextureSource) {
+                const nightKey = `${node.entity.id}_night`
+                nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource)
             }
 
             const { worldPos } = this.getProjected(node)
