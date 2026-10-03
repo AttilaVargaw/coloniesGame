@@ -55,8 +55,8 @@ export class WebglRenderManager {
         this.rectRenderer.beginFrame()
         this.projectNodes()
 
-        this.sphereRenderer.drawNodes()
         this.rectRenderer.drawNodes()
+        this.sphereRenderer.drawNodes()
 
         const camera = this.viewport.camera
 

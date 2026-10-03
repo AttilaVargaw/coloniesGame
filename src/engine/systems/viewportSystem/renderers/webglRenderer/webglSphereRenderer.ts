@@ -262,7 +262,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
             gl.uniform1i(this.shader.uniforms.nightTexture, 1)
 
-            // gl.enable(gl.DEPTH_TEST)
+            gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
             gl.cullFace(gl.BACK)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)

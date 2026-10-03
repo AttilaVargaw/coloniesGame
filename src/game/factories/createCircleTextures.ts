@@ -37,35 +37,50 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 }
 
-const size = 256 
+const size = 256
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
 }
 
-function grad(hash: number, x: number, y: number): number {
-    const h = hash & 3
-    const u = h < 2 ? x : y
-    const v = h < 2 ? y : x
+function grad3(hash: number, x: number, y: number, z: number): number {
+    const h = hash & 15
+    const u = h < 8 ? x : y
+    const v = h < 4 ? y : (h === 12 || h === 14 ? x : z)
     return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v)
 }
 
-function perlin(x: number, y: number, perm: number[]): number {
+function perlin3d(x: number, y: number, z: number, perm: number[]): number {
     const xi = Math.floor(x) & 255
     const yi = Math.floor(y) & 255
+    const zi = Math.floor(z) & 255
+
     const xf = x - Math.floor(x)
     const yf = y - Math.floor(y)
+    const zf = z - Math.floor(z)
+
     const u = fade(xf)
     const v = fade(yf)
+    const w = fade(zf)
 
-    const aa = perm[perm[xi] + yi]
-    const ab = perm[perm[xi] + yi + 1]
-    const ba = perm[perm[xi + 1] + yi]
-    const bb = perm[perm[xi + 1] + yi + 1]
+    const aaa = perm[perm[perm[xi] + yi] + zi]
+    const aab = perm[perm[perm[xi] + yi] + zi + 1]
+    const aba = perm[perm[perm[xi] + yi + 1] + zi]
+    const abb = perm[perm[perm[xi] + yi + 1] + zi + 1]
+    const baa = perm[perm[perm[xi + 1] + yi] + zi]
+    const bab = perm[perm[perm[xi + 1] + yi] + zi + 1]
+    const bba = perm[perm[perm[xi + 1] + yi + 1] + zi]
+    const bbb = perm[perm[perm[xi + 1] + yi + 1] + zi + 1]
 
-    const x1 = lerp(grad(aa, xf, yf), grad(ba, xf - 1, yf), u)
-    const x2 = lerp(grad(ab, xf, yf - 1), grad(bb, xf - 1, yf - 1), u)
-    return lerp(x1, x2, v)
+    const x1 = lerp(grad3(aaa, xf, yf, zf), grad3(baa, xf - 1, yf, zf), u)
+    const x2 = lerp(grad3(aba, xf, yf - 1, zf), grad3(bba, xf - 1, yf - 1, zf), u)
+    const y1 = lerp(x1, x2, v)
+
+    const x3 = lerp(grad3(aab, xf, yf, zf - 1), grad3(bab, xf - 1, yf, zf - 1), u)
+    const x4 = lerp(grad3(abb, xf, yf - 1, zf - 1), grad3(bbb, xf - 1, yf - 1, zf - 1), u)
+    const y2 = lerp(x3, x4, v)
+
+    return lerp(y1, y2, w)
 }
 
 function buildPerm(seed: number): number[] {
@@ -79,13 +94,13 @@ function buildPerm(seed: number): number[] {
     return [...p, ...p]
 }
 
-function fbm(x: number, y: number, perm: number[], octaves = 6): number {
+function fbm3d(x: number, y: number, z: number, perm: number[], octaves = 6): number {
     let value = 0
     let amplitude = 1
     let frequency = 1
     let maxValue = 0
     for(let i = 0; i < octaves; i++) {
-        value += perlin(x * frequency, y * frequency, perm) * amplitude
+        value += perlin3d(x * frequency, y * frequency, z * frequency, perm) * amplitude
         maxValue += amplitude
         amplitude *= 0.5
         frequency *= 2
@@ -93,10 +108,10 @@ function fbm(x: number, y: number, perm: number[], octaves = 6): number {
     return value / maxValue
 }
 
-function sampleFbm(x: number, y: number, perm: number[], warp = 0.35, octaves = 5): number {
-    const qx = fbm(x + 1.7, y + 9.2, perm, octaves)
-    const qy = fbm(x + 8.3, y + 2.8, perm, octaves)
-    return fbm(x + warp * qx, y + warp * qy, perm, octaves)
+function sampleFbm3d(x: number, y: number, z: number, perm: number[], warp = 0.35, octaves = 5): number {
+    const qx = fbm3d(x + 1.7, y + 9.2, z + 2.3, perm, octaves)
+    const qy = fbm3d(x + 8.3, y + 2.8, z + 7.1, perm, octaves)
+    return fbm3d(x + warp * qx, y + warp * qy, z + warp * 0.3 * (qx + qy), perm, octaves)
 }
 
 function seedFrom(base: string, archetype: string): number {
@@ -105,6 +120,18 @@ function seedFrom(base: string, archetype: string): number {
     for(let i = 0; i < archetype.length; i++) h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
     return Math.abs(h) || 1
 }
+
+function uvToSpherePoint(u: number, v: number): [number, number, number] {
+    const phi = (u - 0.5) * 2 * Math.PI
+    const theta = (v - 0.5) * Math.PI
+    const y = Math.sin(theta)
+    const cosTheta = Math.cos(theta)
+    const x = cosTheta * Math.cos(phi)
+    const z = cosTheta * Math.sin(phi)
+    return [x, y, z]
+}
+
+const noiseScale = 4
 
 export function createPlanetTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
@@ -130,12 +157,14 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
 
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
-            const nx = x / size * 4
-            const ny = y / size * 4
+            const u = x / size
+            const v = y / size
 
-            const landMask = sampleFbm(nx, ny, perm, 0.4, 5)
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
+
+            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
             const normalizedLand = (landMask + 1) / 2
-            const cloudNoise = sampleFbm(nx * 1.5 + 10, ny * 1.5 + 10, perm, 0.3, 4)
+            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
             const normalizedCloud = (cloudNoise + 1) / 2
 
             let r: number, g: number, b: number
@@ -203,17 +232,18 @@ export function createStarTexture(baseColor: string): HTMLCanvasElement {
 
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
-            const nx = x / size * 5
-            const ny = y / size * 5
+            const u = x / size
+            const v = y / size
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
 
-            const fine = (sampleFbm(nx * 2, ny * 2, perm, 0.4, 6) + 1) / 2
-            const coarse = (sampleFbm(nx * 0.6 + 7, ny * 0.6 + 7, perm, 0.3, 4) + 1) / 2
+            const fine = (sampleFbm3d(sx * noiseScale * 1.25, sy * noiseScale * 1.25, sz * noiseScale * 1.25, perm, 0.4, 6) + 1) / 2
+            const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
             const bright = 0.25 + fine * 0.60 + coarse * 0.15
-            const v = Math.round(clamp(bright * 255, 0, 255))
+            const brightness = Math.round(clamp(bright * 255, 0, 255))
 
-            const r = Math.round(clamp(v * (base.r / 255), 0, 255))
-            const g = Math.round(clamp(v * (base.g / 255), 0, 255))
-            const b = Math.round(clamp(v * (base.b / 255), 0, 255))
+            const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
+            const g = Math.round(clamp(brightness * (base.g / 255), 0, 255))
+            const b = Math.round(clamp(brightness * (base.b / 255), 0, 255))
 
             const idx = (y * size + x) * 4
             data[idx] = r
@@ -236,9 +266,11 @@ export function createStarTexture(baseColor: string): HTMLCanvasElement {
     ctx.fillRect(0, 0, size, size)
 
     for(let i = 0; i < 60; i++) {
-        const x = Math.random() * size
-        const y = Math.random() * size
-        const r = Math.random() * 25 + 5
+        const spotU = (perlin3d(i * 1.7, 42.1, 13.7, perm) + 1) / 2
+        const spotV = (perlin3d(42.1, i * 1.7, 13.7, perm) + 1) / 2
+        const x = spotU * size
+        const y = spotV * size
+        const r = (perlin3d(13.7, 42.1, i * 1.7, perm) + 1) / 2 * 20 + 5
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, r)
         gradient.addColorStop(0, "rgba(255,255,255,0.9)")
         gradient.addColorStop(0.3, "rgba(255,255,255,0.35)")
@@ -276,12 +308,13 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
 
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
-            const nx = x / size * 4
-            const ny = y / size * 4
+            const u = x / size
+            const v = y / size
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
 
-            const landMask = sampleFbm(nx, ny, perm, 0.4, 5)
+            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
             const normalizedLand = (landMask + 1) / 2
-            const cloudNoise = sampleFbm(nx * 1.5 + 10, ny * 1.5 + 10, perm, 0.3, 4)
+            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
             const normalizedCloud = (cloudNoise + 1) / 2
 
             let r: number, g: number, b: number
@@ -303,7 +336,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             }
 
             if(normalizedLand > 0.48) {
-                const cityNoise = sampleFbm(nx * 3 + 50, ny * 3 + 50, perm, 0.35, 3)
+                const cityNoise = sampleFbm3d(sx * noiseScale * 3 + 50, sy * noiseScale * 3 + 50, sz * noiseScale * 3 + 50, perm, 0.35, 3)
                 const normalizedCity = (cityNoise + 1) / 2
                 if(normalizedCity > 0.62) {
                     const intensity = (normalizedCity - 0.62) / 0.38

@@ -136,8 +136,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
     private parseColor(color: string): [number, number, number] {
         const cached = this.parseColorCache.get(color)
-        if (cached) return cached
-        
+        if(cached) return cached
+
         let r: number, g: number, b: number
         if(color.startsWith('#')) {
             r = parseInt(color.slice(1, 3), 16) / 255
@@ -330,7 +330,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(this.shader.uniforms.texture, 0)
 
-            // gl.disable(gl.DEPTH_TEST)
+            gl.enable(gl.DEPTH_TEST)
             gl.disable(gl.CULL_FACE)
             gl.enable(gl.BLEND)
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
