@@ -14,8 +14,8 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
     }
     endFrame(): void {
     }
-    protected getCullMargin(_node: LabelNode): number {
-        return 0
+    protected getCullMargin(node: LabelNode): number {
+        return node.label.size
     }
     protected shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
@@ -29,10 +29,6 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
             [PositionComponent, ColorComponent, LabelComponent],
             (e) => new LabelNode(e, e.getComponent(PositionComponent)!, e.getComponent(ColorComponent)!, e.getComponent(LabelComponent)!),
         )
-    }
-
-    static getCullMargin(node: LabelNode): number {
-        return node.label.size
     }
 
     drawNodes(context: CanvasRenderingContext2D): void {

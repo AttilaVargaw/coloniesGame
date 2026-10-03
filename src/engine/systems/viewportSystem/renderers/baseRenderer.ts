@@ -94,10 +94,10 @@ export abstract class BaseRenderer<N extends RenderableNode> {
             const scaledMargin = margin * projected.scale
             const bounds = camera.visibleBounds
             if(
-                projected.x + scaledMargin < bounds.left ||
-                projected.x - scaledMargin > bounds.right ||
-                projected.y + scaledMargin < bounds.top ||
-                projected.y - scaledMargin > bounds.bottom
+                projected.x + scaledMargin <= bounds.left ||
+                projected.x - scaledMargin >= bounds.right ||
+                projected.y + scaledMargin <= bounds.top ||
+                projected.y - scaledMargin >= bounds.bottom
             ) {
                 this.debugCulledCount++
                 continue

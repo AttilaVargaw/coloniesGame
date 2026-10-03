@@ -12,6 +12,7 @@ import { hexToRgba } from "./hexToRgba";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
 import { Vector3 } from "@/lib/Vector3";
+import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
 
 const SHADE_SIZE = 96
 
@@ -52,7 +53,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    protected shouldSkipProjection(_node: CircleNode, _cameraScale: number): boolean {
+    protected shouldSkipProjection(node: CircleNode, _cameraScale: number): boolean {
+        const belt = node.entity.getComponent(AsteroidBeltComponent)
+        if (belt?.cullingDistanceThreshold !== undefined) {
+            const distance = this.viewportSystem.camera.distance
+            if (distance > belt.cullingDistanceThreshold) {
+                return true
+            }
+        }
         return false
     }
     private _nightCanvas: HTMLCanvasElement | undefined
