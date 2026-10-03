@@ -209,7 +209,7 @@ export async function createBody({
         ? { ...marker, texture: buildableSite }
         : marker
 
-    const body = createMarker({ shade: name !== "root", name: name === "root" ? undefined : name, ...markerInput })
+    const body = createMarker({ name: name === "root" ? undefined : name, ...markerInput })
 
     if(!buildable && typeof document !== "undefined") {
         if(archetype === "sol") {

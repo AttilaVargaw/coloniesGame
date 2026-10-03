@@ -206,7 +206,6 @@ export async function createAsteroidBelt({
 
         const site = createMarker({
             color: "yellow",
-            shade: true,
             texture: buildableSite,
             radius: MINING_SITE_RADIUS,
             label: `${name} Mining Site ${i + 1}`,

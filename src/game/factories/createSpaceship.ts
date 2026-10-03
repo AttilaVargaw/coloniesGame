@@ -29,7 +29,6 @@ export function createMarker({
     label,
     labelColor = "red",
     textSize = 18,
-    shade = false,
     name,
     texture,
     emitLight
@@ -37,7 +36,7 @@ export function createMarker({
     const marker = applyComponents(createEntity(name),
         new PositionComponent(0, 0),
         new ThicknessComponent(1),
-        new ColorComponent(color, "", shade, emitLight)
+        new ColorComponent(color, "", emitLight)
     )
 
     if(texture) {

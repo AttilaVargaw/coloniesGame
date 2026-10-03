@@ -14,35 +14,6 @@ import Camera from "@/lib/camera";
 import { Vector3 } from "@/lib/Vector3";
 import { AsteroidBeltComponent } from "@/game/components/asteroidBeltComponent";
 
-const SHADE_SIZE = 96
-
-const shadeSprite = (() => {
-    const canvas = document.createElement("canvas")
-    canvas.width = SHADE_SIZE
-    canvas.height = SHADE_SIZE
-
-    const octx = canvas.getContext("2d")!
-    octx.beginPath()
-    octx.arc(SHADE_SIZE / 2, SHADE_SIZE / 2, SHADE_SIZE / 2, 0, TWO_PI)
-    octx.clip()
-
-    const gradient = octx.createRadialGradient(
-        SHADE_SIZE * 0.35, SHADE_SIZE * 0.35, SHADE_SIZE * 0.05,
-        SHADE_SIZE * 0.5, SHADE_SIZE * 0.5, SHADE_SIZE * 0.5
-    )
-    gradient.addColorStop(0, "rgba(255,255,255,0.25)")
-    gradient.addColorStop(0.5, "rgba(255,255,255,0.05)")
-    gradient.addColorStop(1, "rgba(0,0,0,0.35)")
-    octx.fillStyle = gradient
-    octx.fillRect(0, 0, SHADE_SIZE, SHADE_SIZE)
-    return canvas
-})()
-
-function shadeCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
-    const size = radius * 2
-    ctx.drawImage(shadeSprite, x - size / 2, y - size / 2, size, size)
-}
-
 export class CircleRenderer extends BaseRenderer<CircleNode> {
     beginFrame(): void {
     }
@@ -161,12 +132,9 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         }
     }
 
-    private static buildCirclePath(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
+    private static buildCirclePath(context: CanvasRenderingContext2D, circle: CircleNode, _center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
         context.beginPath()
-        if(circle.color.shade) {
-            context.arc(center.x, center.y, screenRadius, 0, TWO_PI)
-        } else {
-            const segments = Math.max(32, Math.min(98, Math.round(screenRadius / 2)))
+        const segments = Math.max(32, Math.min(98, Math.round(screenRadius / 2)))
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
                 const worldX = cx + circle.radius.radius * Math.cos(angle)
@@ -182,7 +150,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
                     context.lineTo(projected.x, projected.y)
                 }
             }
-        }
         context.closePath()
     }
 
@@ -293,15 +260,11 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         context.restore()
     }
 
-    private static drawStrokeAndShade(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, thickness: number) {
+    private static drawStrokeAndShade(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, _screenRadius: number, thickness: number) {
         if(circle.color.stroke) {
             circle.setColor(context)
             context.lineWidth = thickness * center.scale
             context.stroke()
-        }
-
-        if(circle.color.shade && !circle.texture?.texture) {
-            shadeCircle(context, center.x, center.y, screenRadius)
         }
     }
 }

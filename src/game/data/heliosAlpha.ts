@@ -3,7 +3,7 @@ import { SOLAR_UNIT, STAR_SIZE } from "@game/constants"
 
 export const solarisAlpha = {
     name: "Helios Alpha",
-    marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha", shade: true, emitLight: true },
+    marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha", emitLight: true },
     archetype: "sol",
     orbit: { radius: 200, angle: Math.PI / 2, eccentricity: 0, inclination: 0 },
     systems: [{

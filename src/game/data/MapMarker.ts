@@ -6,7 +6,6 @@ export type MapMarker = Readonly<{
     label?: string;
     labelColor?: string;
     textSize?: number;
-    shade?: boolean;
     offset?: WorldPosition;
     name?: string;
     texture?: string;

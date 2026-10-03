@@ -14,7 +14,6 @@ import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
-import { ShapeRenderer } from "./renderers/shapeRenderer";
 import { DebugRenderer } from "./renderers/debugRenderer";
 import { PointerInteractionSystem } from "../pointerInteractionSystem";
 
@@ -301,7 +300,6 @@ export class ViewportSystem extends System {
         super.addToEngine(engine)
 
         this._renderers = [
-            ShapeRenderer,
             LabelRenderer
         ].reduce((prev, curr) => {
             const renderer = new curr(this)
