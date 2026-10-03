@@ -79,6 +79,7 @@ uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform vec3 uTintColor;
+uniform vec3 uPaletteColor;
 uniform float uTintAlpha;
 uniform float uTime;
 
@@ -154,6 +155,9 @@ void main() {
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
 
-        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
+        float atmosphere = pow(1.0 - NdotV, 4.0) * 0.25;
+        vec3 atmColor = mix(vec3(0.3, 0.6, 1.0), uPaletteColor, 0.5);
+        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive), 1.0);
+        fragColor = vec4(mix(fragColor.rgb, fragColor.rgb * uTintColor, uTintAlpha), 1.0);
     }
 }`;

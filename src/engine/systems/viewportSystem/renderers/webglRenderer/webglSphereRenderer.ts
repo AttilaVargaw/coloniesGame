@@ -16,6 +16,13 @@ import { RenderableNode } from "../renderableNode"
 import { ProjectedPoint } from "@/lib/camera"
 import { Vector3 } from "@/lib/Vector3"
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+        : { r: 0.3, g: 0.6, b: 1.0 }
+}
+
 export class WebGLSphereNode extends RenderableNode {
     constructor(
         entity: Entity,
@@ -139,6 +146,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 lightDir = [0, 0, 1]
             }
 
+            const paletteRgb = hexToRgb(node.color.fill || "#808080")
+
             const model = mat4.create()
             mat4.identity(model)
             mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
@@ -182,7 +191,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 nightPage: nightAtlasEntry?.page ?? 0,
                 roughnessPage: roughnessAtlasEntry?.page ?? 0,
                 cloudPage,
-                normalPage
+                normalPage,
+                paletteR: paletteRgb.r / 255,
+                paletteG: paletteRgb.g / 255,
+                paletteB: paletteRgb.b / 255
             })
         }
 
@@ -238,7 +250,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 group = []
                 groups.set(key, group)
             }
-            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage, cloudPage: inst.cloudPage, normalPage: inst.normalPage })
+            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage, cloudPage: inst.cloudPage, normalPage: inst.normalPage, paletteR: inst.paletteR, paletteG: inst.paletteG, paletteB: inst.paletteB })
         }
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
@@ -335,6 +347,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindTexture(gl.TEXTURE_2D, normalPageTexture)
             gl.uniform1i(this.shader.uniforms.normalMap, 4)
 
+            const first = instances[0]
+            gl.uniform3f(this.shader.uniforms.paletteColor, first.paletteR, first.paletteG, first.paletteB)
+
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
             gl.cullFace(gl.BACK)
@@ -395,8 +410,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private readonly MAX_SPHERE_INSTANCES = 256
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number }> = []
-    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number }>>()
+    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }> = []
+    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>>()
     private _blackCanvas: HTMLCanvasElement | undefined
     private _lastShowCheckerPattern = false
 

@@ -56,6 +56,7 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         roughness: gl.getUniformLocation(program, "uRoughness"),
         cloudTexture: gl.getUniformLocation(program, "uCloudTexture"),
         normalMap: gl.getUniformLocation(program, "uNormalMap"),
+        paletteColor: gl.getUniformLocation(program, "uPaletteColor"),
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
         time: gl.getUniformLocation(program, "uTime"),
