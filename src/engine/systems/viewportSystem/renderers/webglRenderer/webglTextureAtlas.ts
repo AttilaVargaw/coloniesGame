@@ -1,5 +1,6 @@
 const ATLAS_SIZE = 1024
 const CELL_SIZE = 128
+const BORDER = 1
 
 export { createCheckerPatternCanvas } from "./createCheckerPattern"
 export interface AtlasEntry {
@@ -29,15 +30,31 @@ class AtlasPage {
         const y = row * this.cellSize
 
         const ctx = this.canvas.getContext("2d")!
-        ctx.drawImage(source, x, y, this.cellSize, this.cellSize)
+
+        const contentX = x + BORDER
+        const contentY = y + BORDER
+        const contentW = this.cellSize - BORDER * 2
+        const contentH = this.cellSize - BORDER * 2
+
+        ctx.drawImage(source, contentX, contentY, contentW, contentH)
+
+        const srcW = source.width
+        const srcH = source.height
+
+        if(srcW > 0 && srcH > 0) {
+            ctx.drawImage(source, 0, 0, srcW, 1, contentX, y, contentW, BORDER)
+            ctx.drawImage(source, 0, srcH - 1, srcW, 1, contentX, y + this.cellSize - BORDER, contentW, BORDER)
+            ctx.drawImage(source, 0, 0, 1, srcH, x, contentY, BORDER, contentH)
+            ctx.drawImage(source, srcW - 1, 0, 1, srcH, x + this.cellSize - BORDER, contentY, BORDER, contentH)
+        }
 
         this.dirty = true
 
         return {
-            u0: x / this.size,
-            v0: y / this.size,
-            u1: (x + this.cellSize) / this.size,
-            v1: (y + this.cellSize) / this.size,
+            u0: contentX / this.size,
+            v0: contentY / this.size,
+            u1: (contentX + contentW) / this.size,
+            v1: (contentY + contentH) / this.size,
         }
     }
 
@@ -51,8 +68,8 @@ class AtlasPage {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
         this.texture = texture
         this.dirty = false
