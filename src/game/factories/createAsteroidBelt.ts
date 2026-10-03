@@ -126,7 +126,7 @@ export async function createAsteroidBelt({
         const tint = ASTEROID_TINTS[tintIndex]
         const baseTexture = preloadedAsteroidImages[textureIndex]
 
-        const textureComponent = new TextureComponent(undefined, undefined, baseTexture, tint, generateRandomNumber(0, TWO_PI))
+        const textureComponent = new TextureComponent({ day: baseTexture, tint, rotation: generateRandomNumber(0, TWO_PI) })
 
         const eccentricity = generateRandomNumber(0, MAX_ECCENTRICITY)
         const inclination = (generateRandomNumber(0, 1) - 0.5) * 2 * MAX_INCLINATION
@@ -171,7 +171,7 @@ export async function createAsteroidBelt({
         dustBeltComponent.cullingDistanceThreshold = DUST_CULLING_DISTANCE_THRESHOLD
 
         const tint = SMOKE_TINTS[Math.floor(generateRandomNumber(0, SMOKE_TINTS.length, true))]
-        const textureComponent = new TextureComponent(undefined, undefined, preloadedDustImages[0], tint, 0)
+        const textureComponent = new TextureComponent({ day: preloadedDustImages[0], tint, rotation: 0 })
 
         applyComponents(
             dust,

@@ -88,7 +88,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
             CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
 
-            if(circle.texture?.nightTexture && !circle.emitLight) {
+            if(circle.texture?.night && !circle.emitLight) {
                 this.drawNightTexture(context, circle, center, screenRadius, cx, cy, cz, camera)
             }
 
@@ -154,14 +154,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     private static drawTextureFill(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
-        if(circle.texture?.texture) {
+        if(circle.texture?.day) {
             if(circle.color.fill) {
                 circle.setColor(context)
                 context.fill()
             }
             context.save()
             context.clip()
-            context.drawImage(circle.texture.texture, 0, 0, circle.texture.texture.width || 96, circle.texture.texture.height || 96, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+            context.drawImage(circle.texture.day, 0, 0, circle.texture.day.width || 96, circle.texture.day.height || 96, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
             context.restore()
         } else if(circle.color.fill) {
             circle.setColor(context)
@@ -240,8 +240,8 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         const nightCtx = this._nightCanvas.getContext("2d")!
 
         nightCtx.clearRect(0, 0, size, size)
-        const texSize = circle.texture!.nightTexture!.width
-        nightCtx.drawImage(circle.texture!.nightTexture!, 0, 0, texSize, texSize, 0, 0, size, size)
+        const texSize = circle.texture!.night!.width
+        nightCtx.drawImage(circle.texture!.night!, 0, 0, texSize, texSize, 0, 0, size, size)
 
         nightCtx.globalCompositeOperation = "destination-out"
         const gradient = nightCtx.createLinearGradient(darkX, darkY, litX, litY)

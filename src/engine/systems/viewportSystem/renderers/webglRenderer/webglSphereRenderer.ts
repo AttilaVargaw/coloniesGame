@@ -44,8 +44,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
         for(const { node, projected } of this.getProjectedCacheEntries()) {
-            const textureSource = node.texture.texture
-            const nightTextureSource = node.texture.nightTexture
+            const textureSource = node.texture.day
+            const nightTextureSource = node.texture.night
 
             if(!textureSource) {
                 if(showCheckerPattern) {

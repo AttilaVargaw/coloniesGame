@@ -213,11 +213,11 @@ export async function createBody({
 
     if(!buildable && typeof document !== "undefined") {
         if(archetype === "sol") {
-            body.addComponent(new TextureComponent(undefined, undefined, createStarTexture(marker.color), undefined, undefined, undefined, 0.5, undefined, name))
+            body.addComponent(new TextureComponent({ day: createStarTexture(marker.color), animationSpeed: 0.5, id: name }))
         } else if(archetype !== "baricenter") {
             const dayTexture = createPlanetTexture(marker.color, archetype)
             const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype) : undefined
-            body.addComponent(new TextureComponent(undefined, undefined, dayTexture, undefined, undefined, undefined, 0.2, nightTexture, name))
+            body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, animationSpeed: 0.2, id: name }))
         }
     }
 

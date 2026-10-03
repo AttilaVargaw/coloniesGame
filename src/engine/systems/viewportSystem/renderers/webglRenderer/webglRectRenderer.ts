@@ -412,8 +412,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return undefined
         }
 
-        if(texture.texture) {
-            return texture.texture
+        if(texture.day) {
+            return texture.day
         }
 
         let sourceKey: string | undefined

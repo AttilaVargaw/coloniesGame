@@ -1,18 +1,40 @@
 import { EntityComponent } from "../entities/entityComponent";
-import { v4 as uuid } from "uuid"
+
+export type TextureSource = HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas;
+
+export type TextureComponentOptions = {
+    day?: TextureSource;
+    night?: TextureSource;
+    src?: string;
+    svg?: string;
+    tint?: string;
+    rotation?: number;
+    minimumScreenSize?: number;
+    animationSpeed?: number;
+    id?: string;
+};
 
 export class TextureComponent extends EntityComponent {
-    constructor(
-        public src?: string,
-        public svg?: string,
-        public texture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas,
-        public tint?: string,
-        public rotation?: number,
-        public minimumScreenSize?: number,
-        public animationSpeed?: number,
-        public nightTexture?: HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas,
-        public id = uuid()
-    ) {
+    day?: TextureSource;
+    night?: TextureSource;
+    src?: string;
+    svg?: string;
+    tint?: string;
+    rotation?: number;
+    minimumScreenSize?: number;
+    animationSpeed?: number;
+    id?: string;
+
+    constructor(options: TextureComponentOptions = {}) {
         super();
+        this.day = options.day;
+        this.night = options.night;
+        this.src = options.src;
+        this.svg = options.svg;
+        this.tint = options.tint;
+        this.rotation = options.rotation;
+        this.minimumScreenSize = options.minimumScreenSize;
+        this.animationSpeed = options.animationSpeed;
+        this.id = options.id;
     }
 }
