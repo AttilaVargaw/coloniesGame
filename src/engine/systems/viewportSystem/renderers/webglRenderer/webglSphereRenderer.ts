@@ -65,6 +65,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             } else if(nightTextureSource) {
                 const nightKey = `${node.entity.id}_night`
                 nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource)
+            } else {
+                nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__black__", this.getBlackCanvas())
             }
 
             const { worldPos } = this.getProjected(node)
@@ -321,12 +323,28 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private sphereBatchBuffer: Float32Array | null = null
     private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number }> = []
     private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number }>>()
+    private _blackCanvas: HTMLCanvasElement | undefined
     private starEntity: Entity | undefined = undefined
+    private _lastShowCheckerPattern = false
 
     beginFrame(): void {
         this.pendingInstances.length = 0
         this.groupsMap.clear()
-        // super.beginFrame()
+
+        const showCheckerPattern = this.engine?.getDebugManager().debugflags.showCheckerPattern
+        if(showCheckerPattern !== undefined && showCheckerPattern !== this._lastShowCheckerPattern) {
+            this._lastShowCheckerPattern = showCheckerPattern
+            this.atlas = new WebGLTextureAtlas()
+            this.nightAtlas = new WebGLTextureAtlas()
+            const whiteCanvas = document.createElement("canvas")
+            whiteCanvas.width = 1
+            whiteCanvas.height = 1
+            const whiteCtx = whiteCanvas.getContext("2d")!
+            whiteCtx.fillStyle = "#ffffff"
+            whiteCtx.fillRect(0, 0, 1, 1)
+            this.nightAtlas.addTexture("__white__", whiteCanvas)
+            this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
+        }
     }
 
     init() {
@@ -356,6 +374,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         whiteCtx.fillStyle = "#ffffff"
         whiteCtx.fillRect(0, 0, 1, 1)
         this.nightAtlas.addTexture("__white__", whiteCanvas)
+        this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
 
         this.initBuffers()
 
@@ -422,7 +441,18 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             })
     }
 
-
+    private getBlackCanvas(): HTMLCanvasElement {
+        if(!this._blackCanvas) {
+            const canvas = document.createElement("canvas")
+            canvas.width = 1
+            canvas.height = 1
+            const ctx = canvas.getContext("2d")!
+            ctx.fillStyle = "#000000"
+            ctx.fillRect(0, 0, 1, 1)
+            this._blackCanvas = canvas
+        }
+        return this._blackCanvas
+    }
 
     private view = mat4.create()
     private projection = mat4.create()
