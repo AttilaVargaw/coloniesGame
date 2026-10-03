@@ -168,7 +168,7 @@ export async function createAsteroidBelt({
         )
 
         engine.addEntity(asteroid, parent)
-        await maybeYieldAfterAsteroidEntity()
+        // await maybeYieldAfterAsteroidEntity()
     }
 
     for(let i = 0; i < dustCount; ++i) {
@@ -246,6 +246,6 @@ export async function createAsteroidBelt({
         )
 
         engine.addEntity(site, parent)
-        await maybeYieldAfterAsteroidEntity()
+        // await maybeYieldAfterAsteroidEntity()
     }
 }

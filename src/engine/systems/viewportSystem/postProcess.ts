@@ -126,3 +126,22 @@ export function applyVignette(ctx: CanvasRenderingContext2D, width: number, heig
 
     ctx.restore()
 }
+
+let contrastCanvas: HTMLCanvasElement | null = null
+let contrastCtx: CanvasRenderingContext2D | null = null
+
+export function applyContrastSaturation(ctx: CanvasRenderingContext2D, width: number, height: number, contrast = 1.15, saturation = 1.1) {
+    contrastCanvas = ensureCanvas(contrastCanvas, width, height)
+    contrastCtx = contrastCanvas.getContext("2d")!
+
+    contrastCtx.clearRect(0, 0, width, height)
+    contrastCtx.filter = `contrast(${contrast}) saturate(${saturation})`
+    contrastCtx.drawImage(ctx.canvas, 0, 0)
+    contrastCtx.filter = "none"
+
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, width, height)
+    ctx.drawImage(contrastCanvas, 0, 0)
+    ctx.restore()
+}

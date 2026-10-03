@@ -10,7 +10,7 @@ import { LabelRenderer } from "./renderers/labelRenderer";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
 import { RenderableNode } from "./renderers/renderableNode";
-import { applyBloomLayer, applyColorGrading, applyVignette } from "./postProcess";
+import { applyBloomLayer, applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawRotationIndicator } from "./drawRotationIndicator";
@@ -235,6 +235,8 @@ export class ViewportSystem extends System {
             return
         }
 
+        this.camera.updateViewport()
+
         this.inputHandler.update(dt)
         this.debugRenderer.update(dt)
 
@@ -244,6 +246,7 @@ export class ViewportSystem extends System {
                 showBloom,
                 showColorGrading,
                 showVignette,
+                showContrastSaturation,
             }
         } = this.engine.getDebugManager()
 
@@ -284,6 +287,10 @@ export class ViewportSystem extends System {
 
         if(showVignette) {
             applyVignette(context, context.canvas.width, context.canvas.height)
+        }
+
+        if(showContrastSaturation) {
+            applyContrastSaturation(context, context.canvas.width, context.canvas.height)
         }
 
         if(this.inputHandler.isRotatingWithoutTarget) {

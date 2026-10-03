@@ -218,7 +218,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         gl.uniformMatrix4fv(this.shader.uniforms.view, false, this.view)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
-        gl.uniform3f(this.shader.uniforms.lightColor, 1, 0.95, 0.85)
+        gl.uniform3f(this.shader.uniforms.lightColor, 2.0, 1.8, 1.5)
         gl.uniform3f(this.shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
 
         gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)

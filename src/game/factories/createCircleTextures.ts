@@ -150,6 +150,8 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
     const epsilon = 0.04
     const strength = 0.01
 
+    const raw = new Float32Array(size * size * 3)
+
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
             const u = x / size
@@ -164,9 +166,9 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
                 ty = 0
                 tz = -nx
             } else {
-                tx = 1
+                tx = 0
                 ty = 0
-                tz = 0
+                tz = ny > 0 ? -1 : 1
             }
             const tLen = Math.sqrt(tx * tx + ty * ty + tz * tz)
             tx /= tLen
@@ -196,17 +198,78 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
             nny /= nLen
             nnz /= nLen
 
-            const idx = (y * size + x) * 4
-            data[idx] = clamp(Math.round((nnx * 0.5 + 0.5) * 255), 0, 255)
-            data[idx + 1] = clamp(Math.round((nny * 0.5 + 0.5) * 255), 0, 255)
-            data[idx + 2] = clamp(Math.round((nnz * 0.5 + 0.5) * 255), 0, 255)
-            data[idx + 3] = 255
+            const idx = (y * size + x) * 3
+            raw[idx] = nnx
+            raw[idx + 1] = nny
+            raw[idx + 2] = nnz
         }
+    }
+
+    const blurred = boxBlurNormalMap(raw, size, size, 1)
+
+    for(let i = 0; i < size * size; i++) {
+        const idx = i * 4
+        data[idx] = clamp(Math.round((blurred[i * 3] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 1] = clamp(Math.round((blurred[i * 3 + 1] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 2] = clamp(Math.round((blurred[i * 3 + 2] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 3] = 255
     }
 
     ctx.putImageData(imageData, 0, 0)
 
     return canvas
+}
+
+function boxBlurNormalMap(src: Float32Array, width: number, height: number, radius: number): Float32Array {
+    const out = new Float32Array(src.length)
+    const tmp = new Float32Array(src.length)
+
+    for(let y = 0; y < height; y++) {
+        for(let x = 0; x < width; x++) {
+            let rx = 0, ry = 0, rz = 0
+            let count = 0
+            for(let dy = -radius; dy <= radius; dy++) {
+                for(let dx = -radius; dx <= radius; dx++) {
+                    const sx = (x + dx + width) % width
+                    const sy = (y + dy + height) % height
+                    const idx = (sy * width + sx) * 3
+                    rx += src[idx]
+                    ry += src[idx + 1]
+                    rz += src[idx + 2]
+                    count++
+                }
+            }
+            const idx = (y * width + x) * 3
+            tmp[idx] = rx / count
+            tmp[idx + 1] = ry / count
+            tmp[idx + 2] = rz / count
+        }
+    }
+
+    for(let y = 0; y < height; y++) {
+        for(let x = 0; x < width; x++) {
+            let rx = 0, ry = 0, rz = 0
+            let count = 0
+            for(let dy = -radius; dy <= radius; dy++) {
+                for(let dx = -radius; dx <= radius; dx++) {
+                    const sx = (x + dx + width) % width
+                    const sy = (y + dy + height) % height
+                    const idx = (sy * width + sx) * 3
+                    rx += tmp[idx]
+                    ry += tmp[idx + 1]
+                    rz += tmp[idx + 2]
+                    count++
+                }
+            }
+            const idx = (y * width + x) * 3
+            const len = Math.sqrt(rx * rx + ry * ry + rz * rz)
+            out[idx] = rx / len
+            out[idx + 1] = ry / len
+            out[idx + 2] = rz / len
+        }
+    }
+
+    return out
 }
 
 export function createPlanetTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
