@@ -5,8 +5,8 @@ export class CreateMigrationRouteCommand extends CommandBase {
         public sourceEntityId: string,
         public destinationEntityId: string,
         public workerCount: number,
-        public speed: number = 0.5
+        public speed: number
     ) {
-        super();
+        super()
     }
 }

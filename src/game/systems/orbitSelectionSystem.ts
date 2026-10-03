@@ -48,8 +48,8 @@ export class OrbitSelectionSystem extends System {
         this.mouseY = data.clientY - rect.top
     }
 
-    private onKeydown = (event: KeyboardEvent) => {
-        if(event.key === "Escape" && this.selection) {
+    private onKeydown = ({ key }: { key: string; preventDefault(): void }) => {
+        if(key === "Escape" && this.selection) {
             this.cancelOrbitSelection()
         }
     }

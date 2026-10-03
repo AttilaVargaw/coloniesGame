@@ -1,8 +1,8 @@
 import { EntityComponent } from "../entities/entityComponent";
 import { Entity } from "../entities/entity";
-import { MouseEvent } from "react"
+import { PointerEventData } from "../lib/events"
 
-export type ClickEventHandler = (event: { target: Entity, event: MouseEvent, worldX: number, worldY: number }) => void
+export type ClickEventHandler = (event: { target: Entity, event: PointerEventData, worldX: number, worldY: number }) => void
 
 export type ContextMenuItems = {
     label: string,

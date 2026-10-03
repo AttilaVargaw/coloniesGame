@@ -33,9 +33,9 @@ export abstract class SystemWithNodes<N extends EntityNode> extends System {
     }
 
     removeFromEngine(): this {
+        this.unregisterNodeTypes()
         this.nodes.length = 0
         super.removeFromEngine()
-        this.unregisterNodeTypes()
 
         return this
     }

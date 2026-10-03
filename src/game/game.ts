@@ -51,28 +51,31 @@ export class Game {
             .addComponent(new TimeScaleComponent(1))
         this.engine.addEntity(timeScaleEntity)
 
+        const viewport = this.engine.getSystem(ViewportSystem)
+
         this.engine
             .addSystem(MoveSystem)
             .addSystem(SelectionManager)
             .addSystem(TargetSystem)
-            .addSystem(PointerInteractionSystem, ViewportSystem)
+            .addSystem(PointerInteractionSystem, viewport)
             .addSystem(MapSystem)
-            .addSystem(OrbitSelectionSystem, ViewportSystem)
+            .addSystem(OrbitSelectionSystem, viewport)
             // .addSystem(ShapeRenderer, ViewportSystem)
             // .addSystem(LabelRenderer, ViewportSystem)
             // .addSystem(WebGLRectRenderer, ViewportSystem)
             // .addSystem(WebGLSphereRenderer, ViewportSystem)
-            .addSystem(CameraFollowSystem, ViewportSystem)
+            .addSystem(CameraFollowSystem, viewport)
             .addSystem(DebugSystem)
             .addSystem(AsteroidSpinSystem)
 
         //viewportEntity.addComponent(new CameraFollowComponent())
 
         // this.engine.getSystem(ViewportSystem).setRendererClasses(renderers)
-        this.engine.getSystem(ViewportSystem).init()
+        const cameraFollowSystem = this.engine.getSystem(CameraFollowSystem)
+        this.engine.getSystem(ViewportSystem).init(cameraFollowSystem)
 
         setTimeout(() => {
-            this.engine.dispatchEvent(new DayPassedEvent(null))
+            this.engine.dispatchEvent(new DayPassedEvent())
         }, 100);
 
         let previousTime = 0.0

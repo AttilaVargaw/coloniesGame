@@ -73,11 +73,11 @@ describe("EventBus", () => {
 
     describe("dispatchEvent", () => {
         it("enqueues event data for the matching event class", () => {
-            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.dispatchEvent(new DayPassedEvent())
 
             const queue = bus.events.get(DayPassedEvent)!
             expect(queue.length).toBe(1)
-            expect(queue.peek()?.data).toBe(null)
+            expect(queue.peek()?.data).toBeUndefined()
         })
 
         it("is a no-op for unregistered event classes", () => {
@@ -88,7 +88,7 @@ describe("EventBus", () => {
         })
 
         it("returns itself for chaining", () => {
-            expect(bus.dispatchEvent(new DayPassedEvent(null))).toBe(bus)
+            expect(bus.dispatchEvent(new DayPassedEvent())).toBe(bus)
         })
     })
 
@@ -97,10 +97,10 @@ describe("EventBus", () => {
             const handler = vi.fn()
             bus.subscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.processEventHandler(DayPassedEvent)
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.processEventHandlers()
 
-            expect(handler).toHaveBeenCalledWith(null)
+            expect(handler).toHaveBeenCalledWith(undefined)
         })
 
         it("supports multiple handlers for the same event class", () => {
@@ -110,11 +110,11 @@ describe("EventBus", () => {
             bus.subscribe(DayPassedEvent, handlerA)
             bus.subscribe(DayPassedEvent, handlerB)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.processEventHandler(DayPassedEvent)
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.processEventHandlers()
 
-            expect(handlerA).toHaveBeenCalledWith(null)
-            expect(handlerB).toHaveBeenCalledWith(null)
+            expect(handlerA).toHaveBeenCalledWith(undefined)
+            expect(handlerB).toHaveBeenCalledWith(undefined)
         })
 
         it("invokes handlers with the correct payload for complex events", () => {
@@ -123,7 +123,7 @@ describe("EventBus", () => {
 
             bus.subscribe(EntityAddedEvent, handler)
             bus.dispatchEvent(new EntityAddedEvent(entity))
-            bus.processEventHandler(EntityAddedEvent)
+            bus.processEventHandlers()
 
             expect(handler).toHaveBeenCalledWith(entity)
         })
@@ -134,8 +134,8 @@ describe("EventBus", () => {
             bus.subscribe(DayPassedEvent, handler)
             bus.unsubscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.processEventHandler(DayPassedEvent)
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.processEventHandlers()
 
             expect(handler).not.toHaveBeenCalled()
         })
@@ -206,20 +206,20 @@ describe("EventBus", () => {
             bus.subscribe(DayPassedEvent, updateHandler)
             bus.subscribe(ClickEventData, clickHandler)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.dispatchEvent(new DayPassedEvent())
             bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
 
             bus.processEventHandlers()
 
-            expect(updateHandler).toHaveBeenCalledWith(null)
+            expect(updateHandler).toHaveBeenCalledWith(undefined)
             expect(clickHandler).toHaveBeenCalledWith({ x: 0, y: 0 })
             expect(bus.events.get(DayPassedEvent)!.length).toBe(0)
             expect(bus.events.get(ClickEventData)!.length).toBe(0)
         })
 
         it("skips event types with no registered handlers", () => {
-            bus.dispatchEvent(new MonthPassedEvent(null))
-            bus.dispatchEvent(new KeydownEvent(new KeyboardEvent("keydown")))
+            bus.dispatchEvent(new MonthPassedEvent())
+            bus.dispatchEvent(new KeydownEvent({ key: "Escape", preventDefault: () => {} }))
 
             expect(() => bus.processEventHandlers()).not.toThrow()
         })
@@ -257,7 +257,7 @@ describe("EventBus", () => {
 
             bus.clearHandlers()
 
-            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.dispatchEvent(new DayPassedEvent())
             bus.dispatchEvent(new ClickEventData({ x: 0, y: 0 } as any))
             bus.processEventHandlers()
 
@@ -268,16 +268,16 @@ describe("EventBus", () => {
             const handler = vi.fn()
             bus.subscribe(DayPassedEvent, handler)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.dispatchEvent(new DayPassedEvent(null))
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.dispatchEvent(new DayPassedEvent())
             bus.clearEvents()
 
             expect(bus.events.get(DayPassedEvent)!.length).toBe(0)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.processEventHandler(DayPassedEvent)
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.processEventHandlers()
 
-            expect(handler).toHaveBeenCalledWith(null)
+            expect(handler).toHaveBeenCalledWith(undefined)
         })
     })
 
@@ -286,10 +286,8 @@ describe("EventBus", () => {
             expect(() => bus.unsubscribe(KeydownEvent, vi.fn())).not.toThrow()
         })
 
-        it("ignores processEventHandler for an unregistered event class", () => {
-            class UnknownEvent extends EventBase<string> {}
-
-            expect(() => bus.processEventHandler(UnknownEvent)).not.toThrow()
+        it("ignores processEventHandlers for an unregistered event class", () => {
+            expect(() => bus.processEventHandlers()).not.toThrow()
         })
 
         it("does not share handlers between different event classes", () => {
@@ -299,10 +297,10 @@ describe("EventBus", () => {
             bus.subscribe(DayPassedEvent, handlerA)
             // bus.subscribe(UpdateDoneEvent, handlerB)
 
-            bus.dispatchEvent(new DayPassedEvent(null))
-            bus.processEventHandler(DayPassedEvent)
+            bus.dispatchEvent(new DayPassedEvent())
+            bus.processEventHandlers()
 
-            expect(handlerA).toHaveBeenCalledWith(null)
+            expect(handlerA).toHaveBeenCalledWith(undefined)
             expect(handlerB).not.toHaveBeenCalled()
         })
 
@@ -314,8 +312,8 @@ describe("EventBus", () => {
             const handler = vi.fn()
             bus.subscribe(KeydownEvent, handler)
 
-            bus.dispatchEvent(new KeydownEvent(new KeyboardEvent("keydown")))
-            bus.processEventHandler(KeydownEvent)
+            bus.dispatchEvent(new KeydownEvent({ key: "Escape", preventDefault: () => {} }))
+            bus.processEventHandlers()
 
             expect(handler).toHaveBeenCalledTimes(1)
         })

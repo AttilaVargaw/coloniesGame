@@ -8,6 +8,6 @@ export class CreateTradeRouteCommand extends CommandBase {
         public goods: Partial<Goods>,
         public speed: number = 0.5
     ) {
-        super();
+        super()
     }
 }

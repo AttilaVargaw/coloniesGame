@@ -68,12 +68,12 @@ export class DateSystem extends System {
 
         if(this.timeSinceLastHour > lastHour) {
             this.timeSinceLastHour = 0
-            this.engine.dispatchEvent(new HourPassedEvent(null))
+            this.engine.dispatchEvent(new HourPassedEvent())
         }
 
         if(this.timeSinceLastDay > lastDay) {
             this.timeSinceLastDay = 0
-            this.engine.dispatchEvent(new DayPassedEvent(null))
+            this.engine.dispatchEvent(new DayPassedEvent())
         }
 
         const date = ColonialDate(node.date.ms)
@@ -81,7 +81,7 @@ export class DateSystem extends System {
         if(this.lastMonth !== date.month) {
             this.lastMonth = date.month
             this.timeSinceLasMonth = 0
-            this.engine.dispatchEvent(new MonthPassedEvent(null))
+            this.engine.dispatchEvent(new MonthPassedEvent())
         }
     }
 }

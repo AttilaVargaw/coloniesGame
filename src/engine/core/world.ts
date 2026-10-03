@@ -8,9 +8,9 @@ import { EventBus } from "../lib/eventBus"
 import { CommandBus } from "../lib/commandBus"
 import { SystemRegistry } from "../lib/systemRegistry"
 import type { Engine } from "./engine"
-import { CommandBase } from "../lib/CommandBase"
-import { EventBase } from "../lib/events"
-import { Queue } from "../lib/commandQueue"
+import type { CommandBase } from "../lib/CommandBase"
+import type { EventBase } from "../lib/events"
+import type { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
 import { CanvasManager } from "../systems/canvasManager"
 
@@ -32,12 +32,14 @@ export class World implements Engine {
         this.debugManager = new DebugManager()
     }
 
-    getCanvas(canvas: "webgl2" | "2d") {
+    getCanvas(canvas: "webgl2" | "2d"): HTMLCanvasElement {
         switch(canvas) {
             case "webgl2":
-                return this.canvasManager.webglCanvas!
+                return this.canvasManager.webglCanvas
             case "2d":
-                return this.canvasManager.canvas!
+                return this.canvasManager.canvas
+            default:
+                throw new Error(`Unknown canvas type: ${canvas}`)
         }
     }
 
@@ -45,13 +47,12 @@ export class World implements Engine {
         return this.entityRegistry.getEntityById(id)
     }
 
-    getEvents<T extends new (...args: any) => EventBase<any>>(name: T) {
-        return this.eventBus.events.get(name) as unknown as Queue<InstanceType<T> extends EventBase<infer U> ? U : never>
+    getEvents<T extends EventBase>(event: new (...args: any[]) => T): Queue<T> {
+        return this.eventBus.events.get(event) as unknown as Queue<T>
     }
 
-
-    getCommands<T extends new (...args: any) => CommandBase>(name: T) {
-        return this.commandBus.commands.get(name) as unknown as Queue<InstanceType<T>>
+    getCommands<T extends CommandBase>(command: new (...args: any[]) => T): Queue<T> {
+        return this.commandBus.commands.get(command) as unknown as Queue<T>
     }
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
@@ -67,17 +68,13 @@ export class World implements Engine {
         this.eventBus.clearHandlers()
     }
 
-    // eslint-disable-next-line 
-    registerCommandQueue(command: Function) {
+    registerCommandQueue(command: new (...args: any[]) => CommandBase): this {
         this.commandBus.registerCommandQueue(command)
-
         return this
     }
 
-    // eslint-disable-next-line 
-    removeCommandQueue(command: Function) {
+    removeCommandQueue(command: new (...args: any[]) => CommandBase): this {
         this.commandBus.removeCommandQueue(command)
-
         return this
     }
 
@@ -89,25 +86,17 @@ export class World implements Engine {
         return this.entityRegistry.getAllEntities()
     }
 
-    getSystem<T extends System>(system: new (...args: any[]) => T) {
+    getSystem<T extends System>(system: new (...args: any[]) => T): T {
         return this.systemRegistry.getSystem(system)
     }
 
-    // eslint-disable-next-line
-    //@ts-ignore
-
-    subscribe<T extends EventBase>(event: new (...args: any[]) => EventBase, callback: (data: T["data"]) => void): this {
+    subscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this {
         this.eventBus.subscribe(event, callback)
-
         return this
     }
 
-    // eslint-disable-next-line
-    //@ts-ignore 
-
-    unsubscribe(event: new (...args: any[]) => EventBase, callback: (data: any) => void): this {
+    unsubscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this {
         this.eventBus.unsubscribe(event, callback)
-
         return this
     }
 
@@ -117,91 +106,77 @@ export class World implements Engine {
 
     registerNodeType<T extends EntityNode>(
         nodeName: EntityNodeConstructor<T>,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        keys: Set<Function>,
-        converter: (entity: Entity) => T) {
+        keys: Set<new (...args: any[]) => import("../entities/entityComponent").EntityComponent>,
+        converter: (entity: Entity) => T): this {
         this.nodeManager.registerNodeType(nodeName, keys, converter)
-
         return this
     }
 
     removeEntity(entity: Entity) {
         this.entityRegistry.removeEntity(entity)
-
         return this
     }
 
     addEntity(entity: Entity, parentEntity?: Entity | null) {
         this.entityRegistry.addEntity(entity, parentEntity)
-
         return this
     }
 
-
     addSystem(system: new (...args: any[]) => System, ...args: any[]) {
-        this.systemRegistry.addSystem(system, this, ...args.map(cn => {
-            if(cn instanceof Function) {
-                return this.getSystem(cn)
-            } else {
-                return cn
-            }
-        }))
-
+        this.systemRegistry.addSystem(system, this, ...args)
         return this
     }
 
     removeSystem(system: new (...args: any[]) => System) {
         this.systemRegistry.removeSystem(system)
-
         return this
     }
 
     update(dt: number) {
         this.eventBus.processEventHandlers()
-
         this.systemRegistry.update(dt)
-
         this.eventBus.processEventHandlers()
     }
 
-    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
+    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>): T[] {
         return this.nodeManager.getNodeList(node)
     }
 
     reindexEntity(entity: Entity) {
         const sceneNode = this.entityRegistry.getSceneNode(entity)
         this.nodeManager.reindexEntity(entity, sceneNode)
-
         return this
     }
 
     addCommand(command: CommandBase) {
         this.commandBus.addCommand(command)
-
         return this
     }
 
     dispatchEvent(event: EventBase) {
         this.eventBus.dispatchEvent(event)
-
         return this
     }
-    // eslint-disable-next-line
-    registerEventQueue(event: Function) {
 
-        this.eventBus.registerEventQueue(event as new (...args: any[]) => EventBase)
-
+    registerEventQueue<T extends EventBase>(event: new (...args: any[]) => T): this {
+        this.eventBus.registerEventQueue(event)
         return this
     }
-    // eslint-disable-next-line
-    removeEventQueue(event: Function) {
 
-        this.eventBus.removeEventQueue(event as new (...args: any[]) => EventBase)
-
+    removeEventQueue<T extends EventBase>(event: new (...args: any[]) => T): this {
+        this.eventBus.removeEventQueue(event)
         return this
     }
 
     getDebugManager() {
         return this.debugManager
+    }
+
+    *getEntitiesWith<T extends import("../entities/entityComponent").EntityComponent>(component: new (...args: any[]) => T): IterableIterator<Entity> {
+        for (const entity of this.entityRegistry.getAllEntities()) {
+            if (entity.getComponent(component)) {
+                yield entity
+            }
+        }
     }
 }

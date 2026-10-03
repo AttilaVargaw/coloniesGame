@@ -6,6 +6,6 @@ export class UpgradeSectorCommand extends CommandBase {
         public entityId: string,
         public sectorName: keyof IndustrialSectors
     ) {
-        super();
+        super()
     }
 }

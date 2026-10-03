@@ -1,11 +1,11 @@
 import { Entity } from "../entities/entity"
 import { SceneNode } from "../entities/sceneNode"
 import { EntityNode, EntityNodeConstructor } from "../entities/entityNode"
+import type { EntityComponent } from "../entities/entityComponent"
 
 export class NodeManager {
     private readonly _nodes = new Map<typeof EntityNode, EntityNode[]>()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    private readonly nodeTypes: Map<typeof EntityNode, Set<Function>> = new Map()
+    private readonly nodeTypes: Map<typeof EntityNode, Set<new (...args: any[]) => EntityComponent>> = new Map()
     private readonly nodeConverters: Map<typeof EntityNode, (entity: Entity) => EntityNode> = new Map()
 
     nodes<Key extends EntityNodeConstructor>(key: Key) {
@@ -20,10 +20,9 @@ export class NodeManager {
 
     registerNodeType<T extends EntityNode>(
         nodeName: EntityNodeConstructor<T>,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        keys: Set<Function>,
+        keys: Set<new (...args: any[]) => EntityComponent>,
         converter: (entity: Entity) => T) {
-        if(this._nodes.has(nodeName)) {
+        if (this._nodes.has(nodeName)) {
             throw new Error(`Node ${nodeName} already exists`)
         }
 
@@ -34,20 +33,19 @@ export class NodeManager {
         return this
     }
 
-    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>) {
-        if(!this._nodes.has(node)) {
+    getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>): T[] {
+        if (!this._nodes.has(node)) {
             throw new Error(`Node ${node} does not exist`)
         }
 
         return (this._nodes.get(node) ?? []) as T[]
     }
 
-    private static getEntityComponentConstructors(entity: Entity): Set<Function> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        const constructors: Set<Function> = new Set()
+    private static getEntityComponentConstructors(entity: Entity): Set<new (...args: any[]) => EntityComponent> {
+        const constructors: Set<new (...args: any[]) => EntityComponent> = new Set()
 
-        for(const component of entity.components.values()) {
-            constructors.add(component.constructor)
+        for (const component of entity.components.values()) {
+            constructors.add(component.constructor as new (...args: any[]) => EntityComponent)
         }
 
         return constructors
@@ -56,16 +54,17 @@ export class NodeManager {
     addEntityToNodes(entity: Entity, sceneNode?: SceneNode) {
         const entityComponentConstructors = NodeManager.getEntityComponentConstructors(entity)
 
-        for(const nodeName of this.nodeTypes.keys()) {
+        for (const nodeName of this.nodeTypes.keys()) {
+            const requiredKeys = this.nodeTypes.get(nodeName)!
             let skip = false
-            for(const keyValues of this.nodeTypes.get(nodeName)!.values()) {
-                if(!entityComponentConstructors.has((keyValues))) {
+            for (const keyConstructor of requiredKeys) {
+                if (!entityComponentConstructors.has(keyConstructor)) {
                     skip = true
                     break
                 }
             }
 
-            if(skip) {
+            if (skip) {
                 continue
             }
 
@@ -75,7 +74,7 @@ export class NodeManager {
 
         const currentNode = sceneNode ?? new SceneNode(entity.id)
 
-        for(const child of currentNode.childrenRef) {
+        for (const child of currentNode.childrenRef) {
             this.addEntityToNodes(child.entity, child)
         }
     }
@@ -83,18 +82,19 @@ export class NodeManager {
     removeEntityFromNodes(entity: Entity, sceneNode?: SceneNode) {
         const entityComponentConstructors = NodeManager.getEntityComponentConstructors(entity)
 
-        for(const nodeName of this.nodeTypes.keys()) {
-            const keyValues = this.nodeTypes.get(nodeName)!.values().toArray()
+        for (const nodeName of this.nodeTypes.keys()) {
+            const requiredKeys = this.nodeTypes.get(nodeName)!
+            const keyArray = Array.from(requiredKeys)
 
-            if(keyValues.every((nodeConstructor) => entityComponentConstructors.has(nodeConstructor))) {
+            if (keyArray.every((nodeConstructor) => entityComponentConstructors.has(nodeConstructor))) {
                 const nodes = this._nodes.get(nodeName)
 
-                if(!nodes) {
+                if (!nodes) {
                     continue
                 }
 
-                for(let i = 0; i < nodes.length; i++) {
-                    if(nodes[i].entity === entity) {
+                for (let i = 0; i < nodes.length; i++) {
+                    if (nodes[i].entity === entity) {
                         nodes.splice(i, 1)
                         break
                     }
@@ -104,23 +104,23 @@ export class NodeManager {
 
         const currentNode = sceneNode ?? new SceneNode(entity.id)
 
-        for(const child of currentNode.childrenRef) {
+        for (const child of currentNode.childrenRef) {
             this.removeEntityFromNodes(child.entity, child)
         }
     }
 
     reindexEntity(entity: Entity, sceneNode?: SceneNode) {
         const removeSubtree = (current: Entity, currentNode: SceneNode) => {
-            for(const nodes of this._nodes.values()) {
-                for(let i = 0; i < nodes.length; i++) {
-                    if(nodes[i].entity === current) {
+            for (const nodes of this._nodes.values()) {
+                for (let i = 0; i < nodes.length; i++) {
+                    if (nodes[i].entity === current) {
                         nodes.splice(i, 1)
                         break
                     }
                 }
             }
 
-            for(const child of currentNode.childrenRef) {
+            for (const child of currentNode.childrenRef) {
                 removeSubtree(child.entity, child)
             }
         }

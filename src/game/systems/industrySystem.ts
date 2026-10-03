@@ -74,9 +74,9 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
                 list.push(cmd.sectorName);
             }
-        }
 
-        commands.clear();
+            commands.clear();
+        }
 
         const industries: IndustryTickInput[] = [];
         for(const { entity, industry } of this.nodes) {

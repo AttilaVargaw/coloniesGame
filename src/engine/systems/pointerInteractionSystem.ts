@@ -6,10 +6,9 @@ import { ClickableComponent } from "../components/clickableComponent";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { PositionComponent } from "../components/position";
 import { getAbsolute } from "../lib/getAbsolute";
-import { ClickEventData, MousemoveEvent, ContextMenuEvent, ContextMenuOpenEvent } from "../lib/events";
+import { ClickEventData, MousemoveEvent, ContextMenuEvent, ContextMenuOpenEvent, PointerEventData } from "../lib/events";
 import { SelectionManager } from "@game/systems/selectionSystem";
 import { TargetSystem } from "@game/systems/targetSystem";
-import { MouseEvent as ReactMouseEvent } from "react"
 
 export class PointerInteractionSystem extends System {
     private clickableNodes: ClickableNode[] = []
@@ -82,7 +81,7 @@ export class PointerInteractionSystem extends System {
         }
     }
 
-    private doHover(data: { x: number, y: number } & ReactMouseEvent): void {
+    private doHover(data: PointerEventData): void {
         if(!this.engine) return
 
         if(this.viewportSystem.isDragging) {
@@ -122,7 +121,7 @@ export class PointerInteractionSystem extends System {
         }
     }
 
-    private hitTestClick(data: { x: number, y: number, shiftKey: boolean } & ReactMouseEvent): void {
+    private hitTestClick(data: PointerEventData): void {
         if(!this.engine) return
 
         const { camera } = this.viewportSystem

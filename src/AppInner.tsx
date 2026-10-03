@@ -1,9 +1,7 @@
-// import { RefObject, } from "react";
 import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesInforWindow";
 import { Header } from "./components/header/header";
 import { Screen } from "./components/map/screen";
 import { ProductionBar } from "./components/productionBar/productionBar";
-import { MousemoveEvent, MouseEventData, MousedownEvent, MouseupEvent, ClickEventData, ContextMenuEvent } from "./engine/lib/events";
 import { Game } from "./game/game";
 import { CircularContextMenu } from "./components/ui/circularContextMenu";
 
@@ -11,7 +9,6 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
   game: Game | null;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void;
-  //map: RefObject<HTMLCanvasElement | null>;
 }) {
   return <>
     <CircularContextMenu />
@@ -42,21 +39,20 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
       </div>
       <div className="screenContainer flex-1 overflow-auto">
         <Screen
-          className="screenContainer"
           onMouseMove={(data) => {
-            game?.engine.dispatchEvent(new MousemoveEvent(data as MouseEventData));
+            game?.engine.dispatchEvent(data)
           }}
           onMouseDown={(data) => {
-            game?.engine.dispatchEvent(new MousedownEvent(data as MouseEventData));
+            game?.engine.dispatchEvent(data)
           }}
           onMouseUp={(data) => {
-            game?.engine.dispatchEvent(new MouseupEvent(data as MouseEventData));
+            game?.engine.dispatchEvent(data)
           }}
           onClick={(data) => {
-            game?.engine.dispatchEvent(new ClickEventData(data as MouseEventData));
+            game?.engine.dispatchEvent(data)
           }}
           onContextMenu={(data) => {
-            game?.engine.dispatchEvent(new ContextMenuEvent({ x: (data as any).x, y: (data as any).y }));
+            game?.engine.dispatchEvent(data)
           }} />
       </div>
     </div>

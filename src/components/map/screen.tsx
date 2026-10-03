@@ -1,12 +1,21 @@
-import { MouseEventData } from '@/engine/lib/events';
-import { MouseEvent, ComponentPropsWithRef, useLayoutEffect, useRef } from 'react';
+import { PointerEventData, ClickEventData, MousedownEvent, MouseupEvent, MousemoveEvent, ContextMenuEvent } from '@/engine/lib/events';
+import { MouseEvent, useLayoutEffect, useRef } from 'react';
 
-function getCursorPosition(canvas: HTMLCanvasElement, event: MouseEvent<HTMLCanvasElement>) {
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-
-    return { x, y, ...event }
+function toPointerData(event: MouseEvent): PointerEventData {
+    return {
+        x: event.clientX,
+        y: event.clientY,
+        button: event.button,
+        shiftKey: event.shiftKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+        preventDefault: () => event.preventDefault(),
+        stopPropagation: () => event.stopPropagation(),
+        type: event.type,
+        timeStamp: event.timeStamp,
+        isTrusted: event.isTrusted,
+    }
 }
 
 interface RenderingContextSettings {
@@ -21,49 +30,50 @@ export const renderingContextSettings: RenderingContextSettings = {
     colorSpace: "srgb",
 } as const
 
-export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContextMenu, ref }: ComponentPropsWithRef<"div"> & {
-    onClick: (event: MouseEventData) => void,
-    onMouseMove: (event: MouseEventData) => void,
-    onMouseDown: (event: MouseEventData) => void,
-    onMouseUp: (event: MouseEventData) => void,
-    onContextMenu?: (event: MouseEventData) => void,
-}) {
+interface ScreenProps {
+    onClick: (event: ClickEventData) => void,
+    onMouseMove: (event: MousemoveEvent) => void,
+    onMouseDown: (event: MousedownEvent) => void,
+    onMouseUp: (event: MouseupEvent) => void,
+    onContextMenu?: (event: ContextMenuEvent) => void,
+}
+
+export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContextMenu }: ScreenProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    //const glCanvasRef = useRef<HTMLCanvasElement>(null)
 
     useLayoutEffect(() => {
         function resize() {
-            if(typeof canvasRef === "function" || !canvasRef?.current) {
+            if (!canvasRef?.current) {
                 return
             }
 
             const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined
-            if(!container) {
+            if (!container) {
                 return
             }
 
-            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
             const { clientWidth } = container
             const width = clientWidth
-            const height = window.innerHeight;
+            const height = window.innerHeight
 
-            canvasRef.current.width = width * dpr;
-            canvasRef.current.height = (height - 76) * dpr;
-            canvasRef.current.style.width = `${width}px`;
-            canvasRef.current.style.height = `${height - 76}px`;
+            canvasRef.current.width = width * dpr
+            canvasRef.current.height = (height - 76) * dpr
+            canvasRef.current.style.width = `${width}px`
+            canvasRef.current.style.height = `${height - 76}px`
             const ctx = canvasRef.current.getContext('2d')
             ctx?.resetTransform()
-            ctx?.scale(dpr, dpr);
+            ctx?.scale(dpr, dpr)
         }
 
         resize()
 
         const observer = new ResizeObserver(() => resize())
 
-        const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined;
+        const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined
 
-        if(container) {
+        if (container) {
             observer.observe(container)
         }
 
@@ -73,46 +83,45 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
             window.removeEventListener('resize', resize)
             observer.disconnect()
         }
-    }, [ref])
+    }, [])
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {
-        if(typeof canvasRef === "function" || !canvasRef?.current) {
+        if (!canvasRef?.current) {
             return
         }
-        onClick(getCursorPosition(canvasRef?.current, event))
+        onClick(new ClickEventData(toPointerData(event)))
     }
 
     const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
-        if(typeof canvasRef === "function" || !canvasRef?.current) {
+        if (!canvasRef?.current) {
             return
         }
-        onMouseMove(getCursorPosition(canvasRef?.current, event))
+        onMouseMove(new MousemoveEvent(toPointerData(event)))
     }
 
     const handleMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
-        if(typeof canvasRef === "function" || !canvasRef?.current) {
+        if (!canvasRef?.current) {
             return
         }
-        onMouseDown(getCursorPosition(canvasRef?.current, event))
+        onMouseDown(new MousedownEvent(toPointerData(event)))
     }
 
     const handleMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
-        if(typeof canvasRef === "function" || !canvasRef?.current) {
+        if (!canvasRef?.current) {
             return
         }
-        onMouseUp(getCursorPosition(canvasRef?.current, event))
+        onMouseUp(new MouseupEvent(toPointerData(event)))
     }
 
     const handleContextMenu = (event: MouseEvent<HTMLCanvasElement>) => {
-        if(typeof canvasRef === "function" || !canvasRef?.current) {
+        if (!canvasRef?.current) {
             return
         }
         event.preventDefault()
-        onContextMenu?.(getCursorPosition(canvasRef?.current, event))
+        onContextMenu?.(new ContextMenuEvent({ x: event.clientX, y: event.clientY }))
     }
 
     return <>
-        {/* <canvas style={{ pointerEvents: "none" }} ref={glCanvasRef} id="glCanvas" /> */}
         <canvas
             id="2dCanvas"
             ref={canvasRef}
