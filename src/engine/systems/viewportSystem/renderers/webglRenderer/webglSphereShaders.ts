@@ -62,6 +62,8 @@ uniform sampler2D uNightTexture;
 uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
+uniform vec3 uTintColor;
+uniform float uTintAlpha;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -86,7 +88,7 @@ void main() {
         vec3 color = dayColor + rim;
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
-        fragColor = vec4(color, 1.0);
+        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
         float diffuse = max(NdotL, 0.0);
         float terminator = smoothstep(-0.05, 0.15, NdotL);
@@ -100,6 +102,6 @@ void main() {
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
 
-        fragColor = vec4(color, 1.0);
+        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     }
 }`;

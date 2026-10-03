@@ -161,6 +161,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform3f(this.shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
 
         gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
+        gl.uniform3f(this.shader.uniforms.tintColor, 1, 1, 1)
+        gl.uniform1f(this.shader.uniforms.tintAlpha, 0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 6 * 4

@@ -30,7 +30,6 @@ import { MassComponent } from "@engine/components/massComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { v4 as uuid } from "uuid"
 
 const ASTEROID_TEXTURES = [asteroids1, asteroids2, asteroids3, asteroids4, asteroids5, asteroids6] as const
 const ASTEROID_SIZE_MIN = 1
@@ -47,8 +46,6 @@ const DUST_SIZE_MIN = 30
 const DUST_SIZE_MAX = 80
 const MINING_SITE_RADIUS = 4
 const MINING_SITE_AREA_DENSITY = 0.005
-
-const asteroidImageSize = 32
 
 const ASTEROID_TINTS = [
     "#8a7e72",
@@ -71,78 +68,25 @@ const SMOKE_TINTS = [
     "#6e6258"
 ] as const
 
-const DUST_TEXTURE_SIZE = 64
-
-const tintedTextures = new Map<string, OffscreenCanvas | HTMLImageElement>()
-const tintedDustTextures = [] as (OffscreenCanvas | HTMLImageElement)[]
-let tintedTexturesReady = false
-
-export function disposeAsteroidTextures() {
-    for(const texture of tintedTextures.values()) {
-        if(texture instanceof OffscreenCanvas) {
-            // OffscreenCanvas has no explicit close in all browsers; just drop references
-        }
-    }
-    tintedTextures.clear()
-    tintedDustTextures.length = 0
-    tintedTexturesReady = false
-}
-
-function Colorize(image: HTMLImageElement | OffscreenCanvas | ImageBitmap, color: `#${string}`) {
-    const imageSize = image.width
-
-    const offscreen = new OffscreenCanvas(imageSize, imageSize)
-    const ctx = offscreen.getContext("2d")!
-
-    ctx.drawImage(image, 0, 0)
-    ctx.globalCompositeOperation = "multiply"
-    ctx.fillStyle = color
-    ctx.fillRect(0, 0, imageSize, imageSize)
-
-    ctx.globalCompositeOperation = "destination-in"
-    ctx.drawImage(image, 0, 0)
-
-    return offscreen
-}
-
-async function buildTintedTextures() {
-    const asteroidPromises: Promise<void>[] = []
-    for(const tint of ASTEROID_TINTS) {
-        for(let i = 0; i < ASTEROID_TEXTURES.length; ++i) {
-            const key = `${tint}-${i}`
-            asteroidPromises.push(
-                new Promise<void>((resolve) => {
-                    const image = new Image()
-                    image.src = ASTEROID_TEXTURES[i]
-                    image.decode().then(() => createImageBitmap(image, {
-                        resizeHeight: asteroidImageSize, resizeWidth: asteroidImageSize, resizeQuality: "high"
-                    })).then((bitmap) => {
-                        tintedTextures.set(key, Colorize(bitmap, tint))
-                        resolve()
-                    })
-                })
-            )
-        }
-    }
-
-    const dustPromises = SMOKE_TINTS.map((tint, i) => new Promise<void>((resolve) => {
+function preloadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
         const image = new Image()
-        image.src = dust1
-        image.decode().then(() => createImageBitmap(image, {
-            resizeHeight: DUST_TEXTURE_SIZE, resizeWidth: DUST_TEXTURE_SIZE, resizeQuality: "high"
-        })).then((bitmap) => {
-            tintedDustTextures[i] = Colorize(bitmap, tint)
-            resolve()
-        })
-    }))
-
-    await Promise.all([...asteroidPromises, ...dustPromises])
-    tintedTexturesReady = true
+        image.src = src
+        image.onload = () => resolve(image)
+        image.onerror = reject
+    })
 }
 
-async function ensureTintedTextures() {
-    if(!tintedTexturesReady) {
-        await buildTintedTextures()
+const preloadedAsteroidImages: HTMLImageElement[] = []
+const preloadedDustImages: HTMLImageElement[] = []
+
+async function ensurePreloadedTextures() {
+    if(preloadedAsteroidImages.length === 0) {
+        const images = await Promise.all(ASTEROID_TEXTURES.map(src => preloadImage(src)))
+        preloadedAsteroidImages.push(...images)
+    }
+    if(preloadedDustImages.length === 0) {
+        preloadedDustImages.push(await preloadImage(dust1))
     }
 }
 
@@ -161,7 +105,7 @@ export async function createAsteroidBelt({
     parentMass: number
     name: string
 }): Promise<void> {
-    await ensureTintedTextures()
+    await ensurePreloadedTextures()
 
     const beltArea = Math.PI * (outerRadius * outerRadius - innerRadius * innerRadius)
     const count = Math.max(ASTEROID_COUNT_MIN, Math.floor(beltArea * ASTEROID_AREA_DENSITY))
@@ -169,8 +113,7 @@ export async function createAsteroidBelt({
     const mid = (innerRadius + outerRadius) / 2
     const half = (outerRadius - innerRadius) * RADIUS_SPREAD / 2
 
-    const asteroidTintKeys = ASTEROID_TINTS.map(t => t as string)
-    const asteroidTextureCount = ASTEROID_TEXTURES.length
+    const asteroidTextureCount = preloadedAsteroidImages.length
 
     for(let i = 0; i < count; ++i) {
         const radius = mid + (generateRandomNumber(0, 1) + generateRandomNumber(0, 1) - 1) * half
@@ -180,11 +123,10 @@ export async function createAsteroidBelt({
 
         const tintIndex = Math.floor(generateRandomNumber(0, ASTEROID_TINTS.length, true))
         const textureIndex = Math.floor(generateRandomNumber(0, asteroidTextureCount, true))
-        const textureKey = `${asteroidTintKeys[tintIndex]}-${textureIndex}`
-        const texture = tintedTextures.get(textureKey)
+        const tint = ASTEROID_TINTS[tintIndex]
+        const baseTexture = preloadedAsteroidImages[textureIndex]
 
-        const textureComponent = new TextureComponent(undefined, undefined, texture, undefined, undefined, undefined, undefined, undefined, uuid())
-        textureComponent.rotation = generateRandomNumber(0, TWO_PI)
+        const textureComponent = new TextureComponent(undefined, undefined, baseTexture, tint, generateRandomNumber(0, TWO_PI))
 
         const eccentricity = generateRandomNumber(0, MAX_ECCENTRICITY)
         const inclination = (generateRandomNumber(0, 1) - 0.5) * 2 * MAX_INCLINATION
@@ -228,8 +170,8 @@ export async function createAsteroidBelt({
         const dustBeltComponent = new AsteroidBeltComponent()
         dustBeltComponent.cullingDistanceThreshold = DUST_CULLING_DISTANCE_THRESHOLD
 
-        const textureComponent = new TextureComponent(undefined, undefined, tintedDustTextures[Math.floor(generateRandomNumber(0, tintedDustTextures.length, true))])
-        textureComponent.rotation = 0
+        const tint = SMOKE_TINTS[Math.floor(generateRandomNumber(0, SMOKE_TINTS.length, true))]
+        const textureComponent = new TextureComponent(undefined, undefined, preloadedDustImages[0], tint, 0)
 
         applyComponents(
             dust,

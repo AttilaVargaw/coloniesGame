@@ -22,7 +22,6 @@ import { CameraFollowSystem } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
 import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
-import { disposeAsteroidTextures } from "./factories/createAsteroidBelt"
 import { createEntity } from "@/engine/lib/entityRegistry"
 
 export class Game {
@@ -127,7 +126,6 @@ export class Game {
 
     destruct(): void {
         this.engine.destruct()
-        disposeAsteroidTextures()
 
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)

@@ -44,13 +44,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     }
 
     private ensureRectCapacity(count: number): void {
-        const needed = count * 13
+        const needed = count * 17
         if(!this.rectInstancePool || this.rectInstancePool.length < needed) {
-            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 13)
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 17)
             this.rectInstancePool = new Float32Array(newSize)
         }
         if(!this.rectBatchBuffer || this.rectBatchBuffer.length < needed) {
-            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 13)
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 17)
             this.rectBatchBuffer = new Float32Array(newSize)
         }
     }
@@ -65,8 +65,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.initBuffers()
         this.initInstanceBuffer()
 
-        this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 13)
-        this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 13)
+        this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 17)
+        this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 17)
 
         this.atlas = new WebGLTextureAtlas()
         const whiteCanvas = document.createElement("canvas")
@@ -212,7 +212,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
                 this.ensureRectCapacity(this.pendingInstances.length + 1)
             }
 
-            const poolOffset = this.pendingInstances.length * 13
+            const poolOffset = this.pendingInstances.length * 17
             const pool = this.rectInstancePool!
             pool[poolOffset + 0] = projected.x
             pool[poolOffset + 1] = projected.y
@@ -227,6 +227,11 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             pool[poolOffset + 10] = g
             pool[poolOffset + 11] = b
             pool[poolOffset + 12] = 1.0
+            const [tintR, tintG, tintB] = node.texture?.tint ? this.parseColor(node.texture.tint) : [1, 1, 1]
+            pool[poolOffset + 13] = tintR
+            pool[poolOffset + 14] = tintG
+            pool[poolOffset + 15] = tintB
+            pool[poolOffset + 16] = node.texture?.tint ? 1.0 : 0.0
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -262,7 +267,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
 
-        const instanceStride = 13 * 4
+        const instanceStride = 17 * 4
 
         const groups = this.groupsMap
         groups.clear()
@@ -282,14 +287,14 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         for(const [page, instances] of groups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const totalFloats = instances.length * 13
+            const totalFloats = instances.length * 17
             if(!this.rectBatchBuffer || this.rectBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 13)
+                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 17)
                 this.rectBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.rectBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 13), i * 13)
+                batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 17), i * 17)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -313,6 +318,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.enableVertexAttribArray(this.shader.attribs.instanceColor)
             gl.vertexAttribPointer(this.shader.attribs.instanceColor, 4, gl.FLOAT, false, instanceStride, 9 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceTintColor)
+            gl.vertexAttribPointer(this.shader.attribs.instanceTintColor, 3, gl.FLOAT, false, instanceStride, 13 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTintColor, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceTintAlpha)
+            gl.vertexAttribPointer(this.shader.attribs.instanceTintAlpha, 1, gl.FLOAT, false, instanceStride, 16 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 1)
 
             const texture = this.atlas.getTextures(gl)[page]
             gl.activeTexture(gl.TEXTURE0)
@@ -335,6 +346,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
         gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
         gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTintColor)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceTintAlpha)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.texCoord)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 0)
@@ -343,6 +356,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTintColor, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 0)
     }
     protected getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
