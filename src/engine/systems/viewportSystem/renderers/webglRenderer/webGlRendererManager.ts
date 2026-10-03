@@ -2,20 +2,24 @@ import { Engine } from "@/engine/core/engine";
 import { ViewportSystem } from "../../viewportSystem";
 import { WebGLRectRenderer } from "./webglRectRenderer";
 import { WebGLSphereRenderer } from "./webglSphereRenderer";
+import { WebGLOrbitRenderer } from "./webglOrbitRenderer";
 
 export class WebglRenderManager {
     private readonly sphereRenderer: WebGLSphereRenderer
     private readonly rectRenderer: WebGLRectRenderer
+    private readonly orbitRenderer: WebGLOrbitRenderer
     private engine: Engine | null = null
 
     constructor(private viewport: ViewportSystem) {
         this.sphereRenderer = new WebGLSphereRenderer(this.viewport)
         this.rectRenderer = new WebGLRectRenderer(this.viewport)
+        this.orbitRenderer = new WebGLOrbitRenderer(this.viewport)
     }
 
     addToEngine(engine: Engine) {
         this.sphereRenderer.addToEngine(engine).init()
         this.rectRenderer.addToEngine(engine).init()
+        this.orbitRenderer.addToEngine(engine).init()
 
         this.engine = engine
 
@@ -26,6 +30,7 @@ export class WebglRenderManager {
     removeFromEngine() {
         this.sphereRenderer.removeFromEngine()
         this.rectRenderer.removeFromEngine()
+        this.orbitRenderer.removeFromEngine()
     }
 
     getRectRenderer(): WebGLRectRenderer {
@@ -53,8 +58,10 @@ export class WebglRenderManager {
 
         this.sphereRenderer.beginFrame()
         this.rectRenderer.beginFrame()
+        this.orbitRenderer.beginFrame()
         this.projectNodes()
 
+        this.orbitRenderer.drawNodes()
         this.rectRenderer.drawNodes()
         this.sphereRenderer.drawNodes()
 
@@ -66,5 +73,6 @@ export class WebglRenderManager {
     projectNodes() {
         this.sphereRenderer.projectNodes()
         this.rectRenderer.projectNodes()
+        this.orbitRenderer.projectNodes()
     }
 }

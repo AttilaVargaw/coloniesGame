@@ -1,6 +1,5 @@
 import { System } from "../../system"
 import { drawCameraGizmo, drawCameraTarget } from "../drawCameraGizmo"
-import { drawOrbits } from "../renderOrbits"
 import { drawJumpGraph } from "./drawJumpGraph"
 import { ViewportSystem } from "../viewportSystem"
 import Camera from "@/lib/camera"
@@ -106,7 +105,6 @@ export class DebugRenderer extends System {
     render() {
         const {
             debugflags: {
-                drawOrbits: isDrawOrbit,
                 showCameraGizmo,
                 showCameraTarget,
                 showFpsCounter,
@@ -124,10 +122,6 @@ export class DebugRenderer extends System {
 
         if(showCameraTarget) {
             drawCameraTarget(context, this.camera)
-        }
-
-        if(isDrawOrbit) {
-            drawOrbits(context, this.viewport.engineRef!, this.camera)
         }
 
         if(showJumpGraph) {
