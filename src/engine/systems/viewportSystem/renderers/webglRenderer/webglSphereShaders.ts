@@ -81,7 +81,7 @@ void main() {
     vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
-    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 1.8;
+    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
     vec3 rim = uLightColor * fresnel * dayColor;
 
     if(vEmissive > 0.5) {

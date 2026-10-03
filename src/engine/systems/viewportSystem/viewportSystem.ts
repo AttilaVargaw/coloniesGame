@@ -20,7 +20,7 @@ import { DebugRenderer } from "./renderers/debugRenderer";
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
-    if (!canvas || canvas.width !== width || canvas.height !== height) {
+    if(!canvas || canvas.width !== width || canvas.height !== height) {
         const c = document.createElement("canvas")
         c.width = width
         c.height = height
@@ -91,7 +91,7 @@ export class ViewportSystem extends System {
     }
 
     private drawLensFlares(ctx: CanvasRenderingContext2D, camera: Camera) {
-        if (!this.engine) return
+        if(!this.engine) return
 
         const centerX = camera.cssWidth / 2
         const centerY = camera.cssHeight / 2
@@ -101,20 +101,20 @@ export class ViewportSystem extends System {
         ctx.save()
         ctx.globalCompositeOperation = "screen"
 
-        for (const entity of allEntities) {
+        for(const entity of allEntities) {
             const color = entity.getComponent(ColorComponent)
             const radius = entity.getComponent(RadiusComponent)
 
-            if (!color?.emitLight || !radius || radius.radius < 10) continue
+            if(!color?.emitLight || !radius || radius.radius < 10) continue
 
             const [sx, sy, sz] = getAbsolute(entity, this.engine)
             const projected = camera.project(sx, sy, sz)
-            if (!projected) continue
+            if(!projected) continue
 
             const screenX = projected.x
             const screenY = projected.y
 
-            if (
+            if(
                 screenX < -100 ||
                 screenX > camera.cssWidth + 100 ||
                 screenY < -100 ||
@@ -127,13 +127,13 @@ export class ViewportSystem extends System {
             const dy = centerY - screenY
             const dist = Math.hypot(dx, dy)
 
-            if (dist < 5) continue
+            if(dist < 5) continue
 
             const starColor = color.fill || "#ffffff"
 
             const maxT = 0.35
             const totalSteps = Math.min(5, Math.max(2, Math.floor(dist / 60)))
-            for (let i = 1; i <= totalSteps; i++) {
+            for(let i = 1; i <= totalSteps; i++) {
                 const t = (i / (totalSteps + 1)) * maxT
                 const fx = screenX + dx * t
                 const fy = screenY + dy * t
@@ -147,7 +147,7 @@ export class ViewportSystem extends System {
                 ctx.fill()
             }
 
-            if (dist < 300) {
+            if(dist < 300) {
                 const centralAlpha = 0.18 * (1 - dist / 300)
                 ctx.globalAlpha = centralAlpha
                 const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 18)
@@ -164,28 +164,28 @@ export class ViewportSystem extends System {
     }
 
     private drawBloomSource(ctx: CanvasRenderingContext2D, camera: Camera) {
-        if (!this.engine) return
+        if(!this.engine) return
 
         const allEntities = this.engine.getAllEntities()
 
         ctx.save()
         ctx.globalCompositeOperation = "source-over"
 
-        for (const entity of allEntities) {
+        for(const entity of allEntities) {
             const color = entity.getComponent(ColorComponent)
             const radius = entity.getComponent(RadiusComponent)
 
-            if (!color?.emitLight || !radius || radius.radius < 10) continue
+            if(!color?.emitLight || !radius || radius.radius < 10) continue
 
             const [sx, sy, sz] = getAbsolute(entity, this.engine)
             const projected = camera.project(sx, sy, sz)
-            if (!projected) continue
+            if(!projected) continue
 
             const screenX = projected.x
             const screenY = projected.y
             const screenRadius = radius.radius * projected.scale
 
-            if (
+            if(
                 screenX + screenRadius * 3 < 0 ||
                 screenX - screenRadius * 3 > camera.cssWidth ||
                 screenY + screenRadius * 3 < 0 ||
@@ -214,7 +214,7 @@ export class ViewportSystem extends System {
     }
 
     update(dt: number) {
-        if (!this.engine) {
+        if(!this.engine) {
             return
         }
 
@@ -241,6 +241,7 @@ export class ViewportSystem extends System {
         drawStarfield(context, this.camera)
         drawNebulas(context, this.camera)
 
+        this.debugRenderer.render()
         this._renderers.entries().forEach(([_key, renderer]) => {
             renderer.beginFrame()
             renderer.projectNodes()
@@ -250,24 +251,23 @@ export class ViewportSystem extends System {
 
         this.webglRenderManager.projectNodes()
         this.webglRenderManager.render()
-        this.debugRenderer.render()
 
         this.drawLensFlares(context, this.camera)
 
-        if (showBloom) {
+        if(showBloom) {
             this.drawBloomSource(bloomCtx, this.camera)
             applyBloomLayer(context, bloomSourceCanvas, bloomSettings)
         }
 
-        if (showColorGrading) {
+        if(showColorGrading) {
             applyColorGrading(context, context.canvas.width, context.canvas.height)
         }
 
-        if (showVignette) {
+        if(showVignette) {
             applyVignette(context, context.canvas.width, context.canvas.height)
         }
 
-        if (this.inputHandler.isRotatingWithoutTarget) {
+        if(this.inputHandler.isRotatingWithoutTarget) {
             drawRotationIndicator(context, this.camera)
         }
     }
@@ -302,13 +302,13 @@ export class ViewportSystem extends System {
     }
 
     removeFromEngine(): this {
-        if (!this.engine) {
+        if(!this.engine) {
             return this
         }
 
         this.inputHandler.removeFromEngine()
 
-        for (const renderer of this._renderers.values()) {
+        for(const renderer of this._renderers.values()) {
             renderer.removeFromEngine()
         }
 
