@@ -7,7 +7,7 @@ import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
-import { WebGLBaseRenderer } from "./webglBaseRenderer"
+import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
@@ -191,10 +191,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage })
         }
 
+        const sortedGroups = sortGroupsByDepth(this.groupsMap)
+
         const modelLoc = this.shader.attribs.instanceModel
         const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
 
-        for(const [key, instances] of groups) {
+        for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
             const [dayPage, nightPage] = key.split(':').map(Number)

@@ -4,6 +4,14 @@ import { PositionComponent } from "@/engine/components/position";
 import { BaseRenderer } from "../baseRenderer";
 import { RenderableNode } from "../renderableNode";
 
+export function sortGroupsByDepth<K, T extends { depth: number }>(groups: Map<K, T[]>): Array<[K, T[]]> {
+    return Array.from(groups.entries()).sort((a, b) => {
+        const avgA = a[1].reduce((s, i) => s + i.depth, 0) / a[1].length
+        const avgB = b[1].reduce((s, i) => s + i.depth, 0) / b[1].length
+        return avgB - avgA
+    })
+}
+
 export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRenderer<N> {
     gl: WebGL2RenderingContext | null = null
     protected glCanvas!: HTMLCanvasElement

@@ -1,7 +1,7 @@
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
-import { WebGLBaseRenderer } from "./webglBaseRenderer"
+import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
 import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
@@ -284,7 +284,9 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        for(const [page, instances] of groups) {
+        const sortedGroups = sortGroupsByDepth(this.groupsMap)
+
+        for(const [page, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
             const totalFloats = instances.length * 17
