@@ -344,24 +344,19 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
     }
-
-    protected getCullMargin(node: RectNode): number {
+    static getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
     }
 
-    protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
+    static shouldSkipProjection(node: RectNode, cameraDistance: number, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if(belt?.cullingDistanceThreshold !== undefined) {
-            const distance = this.viewportSystem.camera.distance
-
-            if(distance > belt.cullingDistanceThreshold) {
-                return true
-            }
+        if(belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
+            return true
         }
         return false
     }
 
-    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    static shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
             if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {

@@ -76,9 +76,10 @@ export abstract class BaseRenderer<N extends RenderableNode> {
 
         const f = camera.cssHeight / (2 * Math.tan(camera.fieldOfView / 2))
         const cameraScale = f / camera.distance
+        const cameraDistance = camera.distance
 
         for(const node of this.nodes) {
-            if(this.shouldSkipProjection(node, cameraScale)) {
+            if(this.shouldSkipProjection(node, cameraDistance, cameraScale)) {
                 this.debugCulledCount++
                 continue
             }
@@ -129,14 +130,15 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return this.viewportSystem
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    protected abstract getCullMargin(_node: N): number
-
-    // eslint-disable-next-line class-methods-use-this
-    protected abstract shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean
-
-    // eslint-disable-next-line class-methods-use-this
-    protected abstract shouldSkipProjection(_node: N, _cameraScale: number): boolean
+    protected getCullMargin(_node: N): number {
+        return 0
+    }
+    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: N, _cameraDistance: number, _cameraScale: number): boolean {
+        return false
+    }
 
     protected getProjected(node: N): { worldPos: Vector3; projected: ProjectedPoint } {
         const entry = this.projectedCache.get(node)

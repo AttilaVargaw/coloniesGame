@@ -36,24 +36,19 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         )
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    protected getCullMargin(node: RectNode): number {
+    static getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
     }
 
-    protected shouldSkipProjection(node: RectNode, _cameraScale: number): boolean {
+    static shouldSkipProjection(node: RectNode, cameraDistance: number, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if(belt?.cullingDistanceThreshold !== undefined) {
-            const distance = this.viewportSystem.camera.distance
-            if(distance > belt.cullingDistanceThreshold) {
-                return true
-            }
+        if(belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
+            return true
         }
         return false
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    static shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
             if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {

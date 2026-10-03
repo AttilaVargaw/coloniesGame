@@ -12,10 +12,10 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
     }
     endFrame(): void {
     }
-    shouldCullNode(_node: ShapeNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    static shouldCullNode(_node: ShapeNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    shouldSkipProjection(_node: ShapeNode, _cameraScale: number): boolean {
+    static shouldSkipProjection(_node: ShapeNode, _cameraScale: number): boolean {
         return false
     }
     constructor(viewportSystem: ViewportSystem) {
@@ -29,8 +29,7 @@ export class ShapeRenderer extends BaseRenderer<ShapeNode> {
             ))
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    getCullMargin(node: ShapeNode): number {
+    static getCullMargin(node: ShapeNode): number {
         return Math.max(node.width, node.height) / 2
     }
 

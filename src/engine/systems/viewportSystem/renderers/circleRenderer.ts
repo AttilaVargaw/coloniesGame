@@ -53,16 +53,17 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
     }
-    protected shouldSkipProjection(node: CircleNode, _cameraScale: number): boolean {
+    static shouldSkipProjection(node: CircleNode, cameraDistance: number, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if (belt?.cullingDistanceThreshold !== undefined) {
-            const distance = this.viewportSystem.camera.distance
-            if (distance > belt.cullingDistanceThreshold) {
-                return true
-            }
+        if (belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
+            return true
         }
         return false
     }
+    static getCullMargin(node: CircleNode): number {
+        return node.radius.radius
+    }
+
     private _nightCanvas: HTMLCanvasElement | undefined
     private _starEntity: Entity | undefined
 
@@ -71,11 +72,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             [PositionComponent, RadiusComponent, ColorComponent, ThicknessComponent, TextureComponent],
             (e) => new CircleNode(e, e.getComponent(PositionComponent)!, e.getComponent(RadiusComponent)!, e.getComponent(ColorComponent), e.getComponent(ThicknessComponent), e.getComponent(ColorComponent)?.emitLight, e.getComponent(TextureComponent))
         )
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    protected getCullMargin(node: CircleNode): number {
-        return node.radius.radius
     }
 
     private findStarEntity(): Entity | undefined {
