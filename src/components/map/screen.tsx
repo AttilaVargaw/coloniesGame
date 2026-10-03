@@ -1,20 +1,21 @@
 import { PointerEventData, ClickEventData, MousedownEvent, MouseupEvent, MousemoveEvent, ContextMenuEvent } from '@/engine/lib/events';
 import { MouseEvent, useLayoutEffect, useRef } from 'react';
 
-function toPointerData(event: MouseEvent): PointerEventData {
+function toPointerData(event: MouseEvent<HTMLCanvasElement>): PointerEventData {
+    const { nativeEvent } = event
     return {
-        x: event.clientX,
-        y: event.clientY,
-        button: event.button,
-        shiftKey: event.shiftKey,
-        ctrlKey: event.ctrlKey,
-        altKey: event.altKey,
-        metaKey: event.metaKey,
-        preventDefault: () => event.preventDefault(),
-        stopPropagation: () => event.stopPropagation(),
-        type: event.type,
-        timeStamp: event.timeStamp,
-        isTrusted: event.isTrusted,
+        x: nativeEvent.offsetX,
+        y: nativeEvent.offsetY,
+        button: nativeEvent.button,
+        shiftKey: nativeEvent.shiftKey,
+        ctrlKey: nativeEvent.ctrlKey,
+        altKey: nativeEvent.altKey,
+        metaKey: nativeEvent.metaKey,
+        preventDefault: () => nativeEvent.preventDefault(),
+        stopPropagation: () => nativeEvent.stopPropagation(),
+        type: nativeEvent.type,
+        timeStamp: nativeEvent.timeStamp,
+        isTrusted: nativeEvent.isTrusted,
     }
 }
 
@@ -118,7 +119,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
             return
         }
         event.preventDefault()
-        onContextMenu?.(new ContextMenuEvent({ x: event.clientX, y: event.clientY }))
+        onContextMenu?.(new ContextMenuEvent({ x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY }))
     }
 
     return <>

@@ -5,7 +5,6 @@ import { BodyBlueprint } from "../data/BodyBlueprint"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import buildableSite from "../../components/icons/buildable.svg"
-
 import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype, soiRatios } from "./helpers"
 import { createMarker, createVessel } from "./createSpaceship"
 import { createBarycentre } from "./createBarycentre"

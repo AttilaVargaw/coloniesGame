@@ -8,6 +8,10 @@ import Camera from "@/lib/camera"
 import { WebGLRectRenderer } from "./webglRenderer/webglRectRenderer"
 import { DebugManager } from "@/engine/lib/debugManager"
 import { Engine } from "@/engine/core/engine"
+import { ClickableNode } from "../ClickableNode"
+import { HoverableNode } from "@/game/systems/cursorSystem"
+import { RadiusComponent } from "@/engine/components/radiusComponent"
+import { getAbsolute } from "@/engine/lib/getAbsolute"
 
 export class DebugRenderer extends System {
     private fpsFrameCount = 0
@@ -108,7 +112,8 @@ export class DebugRenderer extends System {
                 showFpsCounter,
                 showJumpGraph,
                 showCullingOverlay,
-                showFrameTime }
+                showFrameTime,
+                showClickBoxes }
         } = this.debugManager
 
         const { context } = this.camera
@@ -140,5 +145,65 @@ export class DebugRenderer extends System {
         if(showCullingOverlay) {
             this.drawCullingOverlay(context)
         }
+
+        if(showClickBoxes) {
+            this.drawClickBoxes(context)
+        }
+    }
+
+    private drawClickBoxes(ctx: CanvasRenderingContext2D) {
+        if(!this.viewport.engineRef) return
+
+        const engine = this.viewport.engineRef
+        const camera = this.camera
+        ctx.save()
+
+        const clickables = engine.getNodeList(ClickableNode)
+        const hoverables = engine.getNodeList(HoverableNode)
+
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.6)"
+        ctx.lineWidth = 1
+        ctx.setLineDash([4, 2])
+
+        for(const node of clickables) {
+            const [wx, wy, wz] = getAbsolute(node.entity, engine)
+            const projected = camera.project(wx, wy, wz)
+            if(!projected) continue
+
+            const radius = node.entity.getComponent(RadiusComponent)?.radius
+            const size = node.clickable.size
+
+            if(radius !== undefined) {
+                ctx.beginPath()
+                ctx.arc(projected.x, projected.y, radius * projected.scale, 0, Math.PI * 2)
+                ctx.stroke()
+            } else {
+                const halfX = (size.width / 2) * projected.scale
+                const halfY = (size.height / 2) * projected.scale
+                ctx.strokeRect(projected.x - halfX, projected.y - halfY, halfX * 2, halfY * 2)
+            }
+        }
+
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.6)"
+        for(const node of hoverables) {
+            const [wx, wy, wz] = getAbsolute(node.entity, engine)
+            const projected = camera.project(wx, wy, wz)
+            if(!projected) continue
+
+            const radius = node.entity.getComponent(RadiusComponent)?.radius
+            const size = node.hoverable.size
+
+            if(radius !== undefined) {
+                ctx.beginPath()
+                ctx.arc(projected.x, projected.y, radius * projected.scale, 0, Math.PI * 2)
+                ctx.stroke()
+            } else {
+                const halfX = (size.width / 2) * projected.scale
+                const halfY = (size.height / 2) * projected.scale
+                ctx.strokeRect(projected.x - halfX, projected.y - halfY, halfX * 2, halfY * 2)
+            }
+        }
+
+        ctx.restore()
     }
 }

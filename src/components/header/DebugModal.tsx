@@ -28,6 +28,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showCullingOverlay", label: "Show Culling Overlay" },
     { flag: "showCheckerPattern", label: "Show Checker Pattern" },
     { flag: "showFrameTime", label: "Show Frame Time" },
+    { flag: "showClickBoxes", label: "Show Click Boxes" },
 ]
 
 const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
@@ -51,6 +52,7 @@ export function DebugModal() {
         showCullingOverlay: false,
         showCheckerPattern: false,
         showFrameTime: false,
+        showClickBoxes: false,
     })
     const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()

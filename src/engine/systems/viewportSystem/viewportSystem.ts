@@ -16,6 +16,7 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
 import { ShapeRenderer } from "./renderers/shapeRenderer";
 import { DebugRenderer } from "./renderers/debugRenderer";
+import { PointerInteractionSystem } from "../pointerInteractionSystem";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
 
@@ -163,6 +164,22 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
+    private drawHoverIndicator(ctx: CanvasRenderingContext2D) {
+        if(!this.engine) return
+
+        const pointerSystem = this.engine.getSystem(PointerInteractionSystem)
+        const projected = pointerSystem?.getHoveredProjected()
+        if(!projected) return
+
+        ctx.save()
+        ctx.strokeStyle = '#00ff00'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(projected.x, projected.y, projected.radius, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.restore()
+    }
+
     private drawBloomSource(ctx: CanvasRenderingContext2D, camera: Camera) {
         if(!this.engine) return
 
@@ -251,6 +268,8 @@ export class ViewportSystem extends System {
 
         this.webglRenderManager.projectNodes()
         this.webglRenderManager.render()
+
+        this.drawHoverIndicator(context)
 
         this.drawLensFlares(context, this.camera)
 

@@ -5,6 +5,7 @@ import type { Engine } from "@/engine/core/engine";
 import { ClickableComponent } from "../components/clickableComponent";
 import { ViewportSystem } from "./viewportSystem/viewportSystem";
 import { PositionComponent } from "../components/position";
+import { RadiusComponent } from "../components/radiusComponent";
 import { getAbsolute } from "../lib/getAbsolute";
 import { ClickEventData, MousemoveEvent, ContextMenuEvent, ContextMenuOpenEvent, PointerEventData } from "../lib/events";
 import { SelectionManager } from "@game/systems/selectionSystem";
@@ -14,8 +15,32 @@ export class PointerInteractionSystem extends System {
     private clickableNodes: ClickableNode[] = []
     private hoverableNodes: HoverableNode[] = []
 
+    private hoveredProjected: { x: number, y: number, radius: number } | null = null
+
     constructor(private readonly viewportSystem: ViewportSystem) {
         super()
+    }
+
+    getHoveredProjected(): { x: number, y: number, radius: number } | null {
+        return this.hoveredProjected
+    }
+
+    private hitTestCircle(px: number, py: number, projected: { x: number, y: number, scale: number }, radius: number): boolean {
+        const screenRadius = radius * projected.scale
+        const dx = px - projected.x
+        const dy = py - projected.y
+        return dx * dx + dy * dy < screenRadius * screenRadius
+    }
+
+    private hitTestBox(px: number, py: number, projected: { x: number, y: number, scale: number }, width: number, height: number): boolean {
+        const halfX = (width / 2) * projected.scale
+        const halfY = (height / 2) * projected.scale
+        return (
+            projected.x - halfX < px
+            && projected.x + halfX > px
+            && projected.y - halfY < py
+            && projected.y + halfY > py
+        )
     }
 
     addToEngine(engine: Engine): this {
@@ -58,7 +83,7 @@ export class PointerInteractionSystem extends System {
         const { camera } = this.viewportSystem
 
         for(const node of this.clickableNodes) {
-            const { clickable: { size: { width, height }, contextMenuItems, entity } } = node
+            const { clickable: { size, contextMenuItems, entity } } = node
             if(!contextMenuItems || contextMenuItems.length === 0) continue
 
             const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
@@ -67,14 +92,12 @@ export class PointerInteractionSystem extends System {
                 continue
             }
 
-            const halfX = (width / 2) * projected.scale
-            const halfY = (height / 2) * projected.scale
+            const radius = node.entity.getComponent(RadiusComponent)?.radius
+            const hit = radius !== undefined
+                ? this.hitTestCircle(x, y, projected, radius)
+                : this.hitTestBox(x, y, projected, size.width, size.height)
 
-            if(
-                projected.x - halfX < x
-                && projected.x + halfX > x
-                && projected.y - halfY < y
-                && projected.y + halfY > y) {
+            if(hit) {
                 this.engine.dispatchEvent(new ContextMenuOpenEvent({ entity: entity!, screenX: x, screenY: y }))
                 return
             }
@@ -99,21 +122,22 @@ export class PointerInteractionSystem extends System {
                 continue
             }
 
-            const halfX = (size.width / 2) * projected.scale
-            const halfY = (size.height / 2) * projected.scale
+            const radius = hoverableNode.entity.getComponent(RadiusComponent)?.radius
+            const hit = radius !== undefined
+                ? this.hitTestCircle(data.x, data.y, projected, radius)
+                : this.hitTestBox(data.x, data.y, projected, size.width, size.height)
 
-            if(
-                projected.x - halfX < data.x
-                && projected.x + halfX > data.x
-                && projected.y - halfY < data.y
-                && projected.y + halfY > data.y) {
+            if(hit) {
                 document.body.style.cursor = cursor
+                const screenRadius = (radius ?? Math.max(size.width, size.height) / 2) * projected.scale
+                this.hoveredProjected = { x: projected.x, y: projected.y, radius: screenRadius }
                 hovered = true
                 break
             }
         }
 
         if(!hovered) {
+            this.hoveredProjected = null
             const { cursor } = document.body.style
             if(cursor !== 'default' && cursor !== "grabbing") {
                 document.body.style.cursor = 'default'
@@ -128,22 +152,21 @@ export class PointerInteractionSystem extends System {
         let hit = false
 
         for(const node of this.clickableNodes) {
-            const { clickable: { size: { width, height }, onClick, entity } } = node
+            const { clickable: { size, onClick, entity } } = node
             const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
             const projected = camera.project(entityX, entityY, entityZ)
             if(!projected) {
                 continue
             }
 
-            const halfX = (width / 2) * projected.scale
-            const halfY = (height / 2) * projected.scale
+            const radius = node.entity.getComponent(RadiusComponent)?.radius
+            const isHit = radius !== undefined
+                ? this.hitTestCircle(data.x, data.y, projected, radius)
+                : this.hitTestBox(data.x, data.y, projected, size.width, size.height)
 
             if(
                 onClick &&
-                projected.x - halfX < data.x
-                && projected.x + halfX > data.x
-                && projected.y - halfY < data.y
-                && projected.y + halfY > data.y) {
+                isHit) {
                 onClick({ target: entity!, event: data, worldX: entityX, worldY: entityY })
                 hit = true
                 break
