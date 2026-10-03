@@ -85,6 +85,18 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry("__mid__", midGray)
             }
 
+            const cloudSource = node.texture.cloud
+            let cloudAtlasEntry: AtlasEntry | undefined
+            let cloudPage = -1
+            if(showCheckerPattern) {
+                cloudAtlasEntry = this.cloudAtlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
+                cloudPage = cloudAtlasEntry.page
+            } else if(cloudSource) {
+                const cloudKey = `${node.entity.id}_cloud`
+                cloudAtlasEntry = this.cloudAtlas.getOrCreateEntry(cloudKey, cloudSource)
+                cloudPage = cloudAtlasEntry.page
+            }
+
             const { worldPos } = this.getProjected(node)
             const screenRadius = node.radius.radius * projected.scale
             if(
@@ -132,9 +144,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             normalMatrix[7] = model[9]
             normalMatrix[8] = model[10]
 
-            const poolOffset = this.pendingInstances.length * 37
-            if(poolOffset + 37 > this.sphereInstancePool!.length) {
-                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 37 + this.MAX_SPHERE_INSTANCES * 37)
+            const poolOffset = this.pendingInstances.length * 38
+            if(poolOffset + 38 > this.sphereInstancePool!.length) {
+                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 38 + this.MAX_SPHERE_INSTANCES * 38)
                 const newPool = new Float32Array(newSize)
                 newPool.set(this.sphereInstancePool!)
                 this.sphereInstancePool = newPool
@@ -148,13 +160,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             pool.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], poolOffset + 32)
             pool.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], poolOffset + 34)
             pool.set([node.color.emitLight ? 1.0 : 0.0], poolOffset + 36)
+            pool.set([cloudPage], poolOffset + 37)
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
                 depth: projected.depth,
                 offset: poolOffset,
                 nightPage: nightAtlasEntry?.page ?? 0,
-                roughnessPage: roughnessAtlasEntry?.page ?? 0
+                roughnessPage: roughnessAtlasEntry?.page ?? 0,
+                cloudPage
             })
         }
 
@@ -184,6 +198,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
         gl.uniform3f(this.shader.uniforms.tintColor, 1, 1, 1)
         gl.uniform1f(this.shader.uniforms.tintAlpha, 0)
+        gl.uniform1f(this.shader.uniforms.time, performance.now() / 1000.0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 6 * 4
@@ -198,18 +213,18 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 37 * 4
+        const instanceStride = 38 * 4
 
         const groups = this.groupsMap
         groups.clear()
         for(const inst of this.pendingInstances) {
-            const key = `${inst.page}:${inst.nightPage}:${inst.roughnessPage}`
+            const key = `${inst.page}:${inst.nightPage}:${inst.roughnessPage}:${inst.cloudPage}`
             let group = groups.get(key)
             if(!group) {
                 group = []
                 groups.set(key, group)
             }
-            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage })
+            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage, cloudPage: inst.cloudPage })
         }
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
@@ -220,15 +235,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const [dayPage, nightPage, roughnessPage] = key.split(':').map(Number)
-            const totalFloats = instances.length * 37
+            const [dayPage, nightPage, roughnessPage, cloudPage] = key.split(':').map(Number)
+            const totalFloats = instances.length * 38
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 37)
+                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 38)
                 this.sphereBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 37), i * 37)
+                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 38), i * 38)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -273,6 +288,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enableVertexAttribArray(this.shader.attribs.instanceEmissive)
             gl.vertexAttribPointer(this.shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 36 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceCloudPage)
+            gl.vertexAttribPointer(this.shader.attribs.instanceCloudPage, 1, gl.FLOAT, false, instanceStride, 37 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceCloudPage, 1)
 
             const atlasTexture = this.atlas.getTextures(gl)[dayPage]
             gl.activeTexture(gl.TEXTURE0)
@@ -290,6 +308,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.activeTexture(gl.TEXTURE2)
             gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
             gl.uniform1i(this.shader.uniforms.roughness, 2)
+
+            const cloudAtlasTextures = this.cloudAtlas.getTextures(gl)
+            const cloudPageTexture = cloudAtlasTextures[cloudPage] ?? cloudAtlasTextures[0]
+            gl.activeTexture(gl.TEXTURE3)
+            gl.bindTexture(gl.TEXTURE_2D, cloudPageTexture)
+            gl.uniform1i(this.shader.uniforms.cloudTexture, 3)
 
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
@@ -311,6 +335,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexOffset)
         gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexScale)
         gl.disableVertexAttribArray(this.shader.attribs.instanceEmissive)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceCloudPage)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.normal)
         gl.vertexAttribDivisor(modelLoc, 0)
@@ -326,6 +351,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceCloudPage, 0)
     }
     protected getCullMargin(_node: WebGLSphereNode): number {
         return 0
@@ -344,11 +370,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private atlas!: WebGLTextureAtlas
     private nightAtlas!: WebGLTextureAtlas
     private roughnessAtlas!: WebGLTextureAtlas
+    private cloudAtlas!: WebGLTextureAtlas
     private readonly MAX_SPHERE_INSTANCES = 256
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number }> = []
-    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number }>>()
+    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number }> = []
+    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number }>>()
     private _blackCanvas: HTMLCanvasElement | undefined
     private _lastShowCheckerPattern = false
 
@@ -362,6 +389,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.atlas = new WebGLTextureAtlas()
             this.nightAtlas = new WebGLTextureAtlas()
             this.roughnessAtlas = new WebGLTextureAtlas()
+            this.cloudAtlas = new WebGLTextureAtlas()
             const whiteCanvas = getPlatform().createCanvas()
             whiteCanvas.width = 1
             whiteCanvas.height = 1
@@ -400,6 +428,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.atlas = new WebGLTextureAtlas()
         this.nightAtlas = new WebGLTextureAtlas()
         this.roughnessAtlas = new WebGLTextureAtlas()
+        this.cloudAtlas = new WebGLTextureAtlas()
 
         const whiteCanvas = document.createElement("canvas")
         whiteCanvas.width = 1
@@ -419,8 +448,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
 
-        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 37)
-        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 37)
+        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 38)
+        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 38)
 
         gl.clearColor(0, 0, 0, 0)
     }

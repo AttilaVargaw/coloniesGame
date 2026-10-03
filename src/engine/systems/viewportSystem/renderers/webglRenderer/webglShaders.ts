@@ -42,6 +42,7 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
         instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
         instanceEmissive: gl.getAttribLocation(program, "aInstanceEmissive"),
+        instanceCloudPage: gl.getAttribLocation(program, "aInstanceCloudPage"),
     }
 
     const uniforms = {
@@ -53,8 +54,10 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         texture: gl.getUniformLocation(program, "uTexture"),
         nightTexture: gl.getUniformLocation(program, "uNightTexture"),
         roughness: gl.getUniformLocation(program, "uRoughness"),
+        cloudTexture: gl.getUniformLocation(program, "uCloudTexture"),
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
+        time: gl.getUniformLocation(program, "uTime"),
     }
 
     return { program, attribs, uniforms }

@@ -10,6 +10,7 @@ in vec2 aInstanceTexScale;
 in vec2 aInstanceNightTexOffset;
 in vec2 aInstanceNightTexScale;
 in float aInstanceEmissive;
+in float aInstanceCloudPage;
 
 uniform mat4 uView;
 uniform mat4 uProjection;
@@ -19,6 +20,8 @@ uniform vec3 uCameraPosition;
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uRoughness;
+uniform sampler2D uCloudTexture;
+uniform float uTime;
 
 out vec3 vNormal;
 out vec3 vLightDir;
@@ -30,6 +33,7 @@ out vec2 vNightTexOffset;
 out vec2 vNightTexScale;
 out vec2 vRoughnessTexOffset;
 out vec2 vRoughnessTexScale;
+out float vCloudPage;
 
 #define PI 3.14159265359
 
@@ -45,6 +49,7 @@ void main() {
     vNightTexScale = aInstanceNightTexScale;
     vRoughnessTexOffset = aInstanceTexOffset;
     vRoughnessTexScale = aInstanceTexScale;
+    vCloudPage = aInstanceCloudPage;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -63,17 +68,27 @@ in vec2 vNightTexOffset;
 in vec2 vNightTexScale;
 in vec2 vRoughnessTexOffset;
 in vec2 vRoughnessTexScale;
+in float vCloudPage;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uRoughness;
+uniform sampler2D uCloudTexture;
 uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform vec3 uTintColor;
 uniform float uTintAlpha;
+uniform float uTime;
 
 layout(location = 0) out vec4 fragColor;
+
+vec2 rotateUV(vec2 uv, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    vec2 centered = uv - 0.5;
+    return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
+}
 
 void main() {
     vec3 normal = normalize(vNormal);
@@ -113,6 +128,14 @@ void main() {
 
         vec3 color = mix(ambient + rim, lit + rim, terminator);
         color = mix(color, nightColor, 1.0 - terminator);
+
+        if(vCloudPage > -0.5) {
+            vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
+            float cloudAlpha = texture(uCloudTexture, cloudUV).a;
+            float cloudLight = smoothstep(-0.1, 0.2, NdotL);
+            vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
+            color = mix(color, cloudColor, cloudAlpha * 0.7);
+        }
 
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));

@@ -30,7 +30,7 @@ import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { createPlanetTexture, createStarTexture, createNightTexture, createRoughnessTexture } from "./createCircleTextures"
+import { createPlanetTexture, createStarTexture, createNightTexture, createRoughnessTexture, createCloudTexture } from "./createCircleTextures"
 
 let textureGenerationCount = 0
 const TEXTURE_YIELD_INTERVAL = 5
@@ -227,7 +227,8 @@ export async function createBody({
             const dayTexture = createPlanetTexture(marker.color, archetype)
             const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype) : undefined
             const roughnessTexture = createRoughnessTexture(marker.color, archetype)
-            body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, roughness: roughnessTexture, animationSpeed: 0.2, id: name }))
+            const cloudTexture = population !== undefined ? createCloudTexture(marker.color, archetype) : undefined
+            body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, roughness: roughnessTexture, cloud: cloudTexture, animationSpeed: 0.2, id: name }))
         }
         await maybeYieldAfterTexture()
     }

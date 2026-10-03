@@ -13,6 +13,7 @@ export interface ShaderProgram {
         instanceNightTexOffset: number;
         instanceNightTexScale: number;
         instanceEmissive: number;
+        instanceCloudPage: number;
     };
     uniforms: {
         view: WebGLUniformLocation | null;
@@ -23,7 +24,9 @@ export interface ShaderProgram {
         texture: WebGLUniformLocation | null;
         nightTexture: WebGLUniformLocation | null;
         roughness: WebGLUniformLocation | null;
+        cloudTexture: WebGLUniformLocation | null;
         tintColor: WebGLUniformLocation | null;
         tintAlpha: WebGLUniformLocation | null;
+        time: WebGLUniformLocation | null;
     };
 }

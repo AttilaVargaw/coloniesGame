@@ -342,6 +342,52 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
     return canvas
 }
 
+export function createCloudTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext("2d")!
+
+    ctx.clearRect(0, 0, size, size)
+
+    const palette = PALETTES[archetype] || { clouds: "#ffffff" }
+    const base = hexToRgb(baseColor)
+    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
+
+    const seed = seedFrom(baseColor, `${archetype}-clouds`)
+    const perm = buildPerm(seed)
+
+    const imageData = ctx.createImageData(size, size)
+    const data = imageData.data
+
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
+            const u = x / size
+            const v = y / size
+
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
+
+            const cloudNoise = sampleFbm3d(sx * noiseScale * 0.8 + 20, sy * noiseScale * 0.8 + 20, sz * noiseScale * 0.8 + 20, perm, 0.35, 4)
+            const normalizedCloud = (cloudNoise + 1) / 2
+
+            let alpha = 0
+            if(normalizedCloud > 0.52) {
+                alpha = Math.min(1, (normalizedCloud - 0.52) * 2.5)
+            }
+
+            const idx = (y * size + x) * 4
+            data[idx] = cloudsRgb.r
+            data[idx + 1] = cloudsRgb.g
+            data[idx + 2] = cloudsRgb.b
+            data[idx + 3] = Math.round(clamp(alpha * 200, 0, 255))
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas
+}
+
 export function createNightTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
