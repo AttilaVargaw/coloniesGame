@@ -22,7 +22,7 @@ export class DebugRenderer extends System {
         super()
 
         this.camera = viewport.camera
-        this.rectRenderer = viewport.renderers(WebGLRectRenderer)!
+        this.rectRenderer = viewport.webglManager.getRectRenderer()
         this.debugManager = viewport.engineRef?.getDebugManager()!
     }
 

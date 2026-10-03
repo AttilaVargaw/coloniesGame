@@ -28,6 +28,10 @@ export class WebglRenderManager {
         this.rectRenderer.removeFromEngine()
     }
 
+    getRectRenderer(): WebGLRectRenderer {
+        return this.rectRenderer
+    }
+
     render() {
         const glCanvas = this.engine?.getCanvas("webgl2")!
         const canvas = this.engine!.getCanvas("2d")!

@@ -75,6 +75,10 @@ export class ViewportSystem extends System {
         return this.engine
     }
 
+    get webglManager() {
+        return this.webglRenderManager
+    }
+
     consumeDragMoved() {
         return this.inputHandler.consumeDragMoved()
     }
