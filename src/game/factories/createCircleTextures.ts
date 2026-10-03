@@ -284,6 +284,64 @@ export function createStarTexture(baseColor: string): HTMLCanvasElement {
     return canvas
 }
 
+export function createRoughnessTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext("2d")!
+
+    ctx.clearRect(0, 0, size, size)
+
+    const seed = seedFrom(baseColor, archetype)
+    const perm = buildPerm(seed)
+
+    const imageData = ctx.createImageData(size, size)
+    const data = imageData.data
+
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
+            const u = x / size
+            const v = y / size
+
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
+
+            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+            const normalizedLand = (landMask + 1) / 2
+            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
+            const normalizedCloud = (cloudNoise + 1) / 2
+
+            let roughness: number
+            if(normalizedLand > 0.48) {
+                roughness = lerp(0.55, 0.85, normalizedLand)
+            } else {
+                roughness = lerp(0.08, 0.18, normalizedLand)
+            }
+
+            if(normalizedCloud > 0.55) {
+                const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
+                roughness = lerp(roughness, 0.35, cloudAlpha * 0.6)
+            }
+
+            const latitude = Math.abs(y / size - 0.5) * 2
+            if(latitude > 0.78) {
+                const polarAlpha = (latitude - 0.78) / 0.22
+                roughness = lerp(roughness, 0.15, polarAlpha * 0.7)
+            }
+
+            const value = Math.round(clamp(roughness, 0, 1) * 255)
+            const idx = (y * size + x) * 4
+            data[idx] = value
+            data[idx + 1] = value
+            data[idx + 2] = value
+            data[idx + 3] = 255
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas
+}
+
 export function createNightTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size

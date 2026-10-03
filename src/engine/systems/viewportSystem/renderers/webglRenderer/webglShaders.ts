@@ -52,6 +52,7 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         cameraPosition: gl.getUniformLocation(program, "uCameraPosition"),
         texture: gl.getUniformLocation(program, "uTexture"),
         nightTexture: gl.getUniformLocation(program, "uNightTexture"),
+        roughness: gl.getUniformLocation(program, "uRoughness"),
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
     }

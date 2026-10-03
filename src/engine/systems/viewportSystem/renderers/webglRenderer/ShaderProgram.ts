@@ -22,6 +22,7 @@ export interface ShaderProgram {
         cameraPosition: WebGLUniformLocation | null;
         texture: WebGLUniformLocation | null;
         nightTexture: WebGLUniformLocation | null;
+        roughness: WebGLUniformLocation | null;
         tintColor: WebGLUniformLocation | null;
         tintAlpha: WebGLUniformLocation | null;
     };

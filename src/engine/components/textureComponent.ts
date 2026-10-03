@@ -5,6 +5,7 @@ export type TextureSource = HTMLImageElement | HTMLCanvasElement | ImageBitmap |
 export type TextureComponentOptions = {
     day?: TextureSource;
     night?: TextureSource;
+    roughness?: TextureSource;
     src?: string;
     svg?: string;
     tint?: string;
@@ -17,6 +18,7 @@ export type TextureComponentOptions = {
 export class TextureComponent extends EntityComponent {
     day?: TextureSource;
     night?: TextureSource;
+    roughness?: TextureSource;
     src?: string;
     svg?: string;
     tint?: string;
@@ -29,6 +31,7 @@ export class TextureComponent extends EntityComponent {
         super();
         this.day = options.day;
         this.night = options.night;
+        this.roughness = options.roughness;
         this.src = options.src;
         this.svg = options.svg;
         this.tint = options.tint;

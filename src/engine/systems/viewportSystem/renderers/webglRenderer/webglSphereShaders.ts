@@ -18,6 +18,7 @@ uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
+uniform sampler2D uRoughness;
 
 out vec3 vNormal;
 out vec3 vLightDir;
@@ -27,6 +28,8 @@ out vec2 vTexOffset;
 out vec2 vTexScale;
 out vec2 vNightTexOffset;
 out vec2 vNightTexScale;
+out vec2 vRoughnessTexOffset;
+out vec2 vRoughnessTexScale;
 
 #define PI 3.14159265359
 
@@ -40,6 +43,8 @@ void main() {
     vTexScale = aInstanceTexScale;
     vNightTexOffset = aInstanceNightTexOffset;
     vNightTexScale = aInstanceNightTexScale;
+    vRoughnessTexOffset = aInstanceTexOffset;
+    vRoughnessTexScale = aInstanceTexScale;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -56,9 +61,12 @@ in vec2 vTexOffset;
 in vec2 vTexScale;
 in vec2 vNightTexOffset;
 in vec2 vNightTexScale;
+in vec2 vRoughnessTexOffset;
+in vec2 vRoughnessTexScale;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
+uniform sampler2D uRoughness;
 uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
@@ -79,9 +87,11 @@ void main() {
     float v = 0.5 + asin(normal.y) / PI;
     vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
     vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
+    vec2 roughnessTexCoord = vec2(u, v) * vRoughnessTexScale + vRoughnessTexOffset;
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
+    float roughness = texture(uRoughness, roughnessTexCoord).r;
     vec3 rim = uLightColor * fresnel * dayColor;
 
     if(vEmissive > 0.5) {
@@ -93,7 +103,12 @@ void main() {
         float diffuse = max(NdotL, 0.0);
         float terminator = smoothstep(-0.05, 0.15, NdotL);
 
-        vec3 lit = dayColor * uLightColor * diffuse;
+        vec3 halfVec = normalize(vLightDir + viewDir);
+        float NdotH = dot(normal, halfVec);
+        float specPower = mix(8.0, 128.0, 1.0 - roughness);
+        vec3 specular = uLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
+
+        vec3 lit = dayColor * uLightColor * diffuse + specular;
         vec3 ambient = dayColor * uAmbientColor;
 
         vec3 color = mix(ambient + rim, lit + rim, terminator);

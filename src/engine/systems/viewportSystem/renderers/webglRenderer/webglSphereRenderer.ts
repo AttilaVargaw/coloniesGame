@@ -68,6 +68,23 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__black__", this.getBlackCanvas())
             }
 
+            const roughnessSource = node.texture.roughness
+            let roughnessAtlasEntry: AtlasEntry | undefined
+            if(showCheckerPattern) {
+                roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
+            } else if(roughnessSource) {
+                const roughnessKey = `${node.entity.id}_roughness`
+                roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry(roughnessKey, roughnessSource)
+            } else {
+                const midGray = getPlatform().createCanvas()
+                midGray.width = 1
+                midGray.height = 1
+                const midCtx = midGray.getContext("2d")!
+                midCtx.fillStyle = "#808080"
+                midCtx.fillRect(0, 0, 1, 1)
+                roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry("__mid__", midGray)
+            }
+
             const { worldPos } = this.getProjected(node)
             const screenRadius = node.radius.radius * projected.scale
             if(
@@ -136,7 +153,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 page: atlasEntry.page,
                 depth: projected.depth,
                 offset: poolOffset,
-                nightPage: nightAtlasEntry?.page ?? 0
+                nightPage: nightAtlasEntry?.page ?? 0,
+                roughnessPage: roughnessAtlasEntry?.page ?? 0
             })
         }
 
@@ -185,13 +203,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const groups = this.groupsMap
         groups.clear()
         for(const inst of this.pendingInstances) {
-            const key = `${inst.page}:${inst.nightPage}`
+            const key = `${inst.page}:${inst.nightPage}:${inst.roughnessPage}`
             let group = groups.get(key)
             if(!group) {
                 group = []
                 groups.set(key, group)
             }
-            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage })
+            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage })
         }
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
@@ -202,7 +220,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const [dayPage, nightPage] = key.split(':').map(Number)
+            const [dayPage, nightPage, roughnessPage] = key.split(':').map(Number)
             const totalFloats = instances.length * 37
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
                 const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 37)
@@ -267,6 +285,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
             gl.uniform1i(this.shader.uniforms.nightTexture, 1)
 
+            const roughnessAtlasTextures = this.roughnessAtlas.getTextures(gl)
+            const roughnessPageTexture = roughnessAtlasTextures[roughnessPage] ?? roughnessAtlasTextures[0]
+            gl.activeTexture(gl.TEXTURE2)
+            gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
+            gl.uniform1i(this.shader.uniforms.roughness, 2)
+
             gl.enable(gl.DEPTH_TEST)
             gl.enable(gl.CULL_FACE)
             gl.cullFace(gl.BACK)
@@ -319,11 +343,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private sphereIndexType = 0
     private atlas!: WebGLTextureAtlas
     private nightAtlas!: WebGLTextureAtlas
+    private roughnessAtlas!: WebGLTextureAtlas
     private readonly MAX_SPHERE_INSTANCES = 256
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number }> = []
-    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number }>>()
+    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number }> = []
+    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number }>>()
     private _blackCanvas: HTMLCanvasElement | undefined
     private _lastShowCheckerPattern = false
 
@@ -336,6 +361,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this._lastShowCheckerPattern = showCheckerPattern
             this.atlas = new WebGLTextureAtlas()
             this.nightAtlas = new WebGLTextureAtlas()
+            this.roughnessAtlas = new WebGLTextureAtlas()
             const whiteCanvas = getPlatform().createCanvas()
             whiteCanvas.width = 1
             whiteCanvas.height = 1
@@ -344,6 +370,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             whiteCtx.fillRect(0, 0, 1, 1)
             this.nightAtlas.addTexture("__white__", whiteCanvas)
             this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
+            const midGray = getPlatform().createCanvas()
+            midGray.width = 1
+            midGray.height = 1
+            const midCtx = midGray.getContext("2d")!
+            midCtx.fillStyle = "#808080"
+            midCtx.fillRect(0, 0, 1, 1)
+            this.roughnessAtlas.addTexture("__mid__", midGray)
         }
     }
 
@@ -366,6 +399,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.glCanvas.style.pointerEvents = "none"
         this.atlas = new WebGLTextureAtlas()
         this.nightAtlas = new WebGLTextureAtlas()
+        this.roughnessAtlas = new WebGLTextureAtlas()
 
         const whiteCanvas = document.createElement("canvas")
         whiteCanvas.width = 1
@@ -375,6 +409,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         whiteCtx.fillRect(0, 0, 1, 1)
         this.nightAtlas.addTexture("__white__", whiteCanvas)
         this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
+        const midGray = document.createElement("canvas")
+        midGray.width = 1
+        midGray.height = 1
+        const midCtx = midGray.getContext("2d")!
+        midCtx.fillStyle = "#808080"
+        midCtx.fillRect(0, 0, 1, 1)
+        this.roughnessAtlas.addTexture("__mid__", midGray)
 
         this.initBuffers()
 
