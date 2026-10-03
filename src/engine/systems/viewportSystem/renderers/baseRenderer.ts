@@ -62,16 +62,6 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return this
     }
 
-    protected unregisterNodeTypes(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine.unregisterNodeType(this.constructor as any)
-
-        return this
-    }
-
     projectNodes(): void {
         const { camera } = this.viewportSystem
         if(!camera) {

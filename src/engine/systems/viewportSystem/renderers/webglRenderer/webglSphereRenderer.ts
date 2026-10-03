@@ -41,46 +41,30 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const starEntity = this.findStarEntity()
 
-        for(const { node, projected } of this.getProjectedCacheEntries()) {
-            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
             const textureSource = node.texture.texture
             const nightTextureSource = node.texture.nightTexture
 
             if(!textureSource) {
                 if(showCheckerPattern) {
-                    if(!this.atlas.getEntry("__checker__")) {
-                        this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
-                    }
+                    this.atlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
                 }
                 continue
             }
 
-            if(!this.atlas.getEntry(node.entity.id)) {
-                this.atlas.addTexture(node.entity.id, textureSource)
-            }
-
-            const atlasEntry = this.atlas.getEntry(node.entity.id)
-            if(!atlasEntry) {
-                continue
-            }
+            const atlasEntry = this.atlas.getOrCreateEntry(node.entity.id, textureSource)
 
             let nightAtlasEntry: AtlasEntry | undefined
 
             if(nightTextureSource) {
                 const nightKey = `${node.entity.id}_night`
-                if(!this.nightAtlas.getEntry(nightKey)) {
-                    this.nightAtlas.addTexture(nightKey, nightTextureSource)
-                }
-                nightAtlasEntry = this.nightAtlas.getEntry(nightKey)
+                nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource)
             }
 
             if(showCheckerPattern) {
-                nightAtlasEntry = this.nightAtlas.getEntry("__checker__")
-                if(!nightAtlasEntry) {
-                    const entry = this.nightAtlas.addTexture("__checker__", createCheckerPatternCanvas())
-                    nightAtlasEntry = entry
-                }
+                nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
             }
 
             const { worldPos } = this.getProjected(node)

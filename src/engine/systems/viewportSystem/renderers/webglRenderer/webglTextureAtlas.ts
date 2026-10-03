@@ -114,6 +114,14 @@ export class WebGLTextureAtlas {
         return { ...uv, page: pageIndex }
     }
 
+    getOrCreateEntry(key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas): AtlasEntry {
+        const existing = this.entries.get(key)
+        if(existing) {
+            return { ...existing.entry, page: existing.page }
+        }
+        return this.addTexture(key, source)
+    }
+
     getTextures(gl: WebGL2RenderingContext): WebGLTexture[] {
         if (this.cachedTextures) {
             return this.cachedTextures

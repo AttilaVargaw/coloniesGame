@@ -8,7 +8,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
     gl: WebGL2RenderingContext | null = null
     protected glCanvas!: HTMLCanvasElement
     protected canvas!: HTMLCanvasElement
-    protected glDrawnThisFrame = false
     protected instanceBuffer: WebGLBuffer | null = null
 
     protected initCanvases(): void {
@@ -29,21 +28,9 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         return gl
     }
 
-    beginFrame(): void {
-        if(!this.engine || !this.gl) {
-            return
-        }
-
-        const mainCanvas = this.canvas
-        if(this.glCanvas.width !== mainCanvas.width || this.glCanvas.height !== mainCanvas.height) {
-            this.glCanvas.width = mainCanvas.width
-            this.glCanvas.height = mainCanvas.height
-            this.resize(mainCanvas.width, mainCanvas.height)
-            this.glCanvas.style.width = mainCanvas.style.width
-            this.glCanvas.style.height = mainCanvas.style.height
-        }
-
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT)
+    resize(width: number, height: number): void {
+        if(!this.gl) return
+        this.gl.viewport(0, 0, width, height)
     }
 
     endFrame(): void {
@@ -58,18 +45,15 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         }
     }
 
-    resize(width: number, height: number): void {
-        if(!this.gl) return
-        this.gl.viewport(0, 0, width, height)
+    protected get glContext(): WebGL2RenderingContext | null {
+        return this.gl
     }
 
     protected resetGLState(gl: WebGL2RenderingContext): void {
-        // gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.CULL_FACE)
         gl.disable(gl.BLEND)
         gl.disable(gl.SCISSOR_TEST)
         gl.colorMask(true, true, true, true)
-        // gl.depthMask(true)
     }
 
     removeFromEngine(): this {
@@ -90,9 +74,5 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         }
         const pos = entity.getComponent(PositionComponent)
         return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
-    }
-
-    protected get glContext(): WebGL2RenderingContext | null {
-        return this.gl
     }
 }

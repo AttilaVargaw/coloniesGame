@@ -167,9 +167,10 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return
         }
 
-        for(const { node, projected } of this.getProjectedCacheEntries()) {
-            const { camera } = this.viewportSystem
+        const { camera } = this.viewportSystem
+        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
 
+        for(const { node, projected } of this.getProjectedCacheEntries()) {
             const { worldPos } = this.getProjected(node)
             const scale = projected.scale
             const screenWidth = node.size.width * scale
@@ -189,20 +190,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             }
 
             const resolvedTexture = this.resolveTexture(node.texture)
-            const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
             let atlasEntry: AtlasEntry | undefined
 
             if(showCheckerPattern) {
-                atlasEntry = this.atlas.getEntry("__checker__")
-                if(!atlasEntry) {
-                    atlasEntry = this.atlas.addTexture("__checker__", createCheckerPatternCanvas())
-                }
+                atlasEntry = this.atlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
             } else if(resolvedTexture) {
                 const texKey = this.getAtlasKey(resolvedTexture)
-                atlasEntry = this.atlas.getEntry(texKey)
-                if(!atlasEntry) {
-                    atlasEntry = this.atlas.addTexture(texKey, resolvedTexture)
-                }
+                atlasEntry = this.atlas.getOrCreateEntry(texKey, resolvedTexture)
             } else {
                 atlasEntry = this.atlas.getEntry("__white__")
             }
@@ -254,7 +248,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return
         }
 
-        const { camera } = this.viewportSystem
         WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
 
         gl.useProgram(this.shader.program)
