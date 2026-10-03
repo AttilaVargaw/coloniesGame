@@ -74,6 +74,7 @@ uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uRoughness;
 uniform sampler2D uCloudTexture;
+uniform sampler2D uNormalMap;
 uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
@@ -91,18 +92,24 @@ vec2 rotateUV(vec2 uv, float angle) {
 }
 
 void main() {
-    vec3 normal = normalize(vNormal);
+    vec3 geometricNormal = normalize(vNormal);
+    float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
+    float v = 0.5 + asin(geometricNormal.y) / PI;
+    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
+    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
+    vec2 roughnessTexCoord = vec2(u, v) * vRoughnessTexScale + vRoughnessTexOffset;
+
+    vec3 T = normalize(cross(geometricNormal, vec3(0.0, 1.0, 0.0)));
+    if(length(T) < 0.001) T = normalize(cross(geometricNormal, vec3(1.0, 0.0, 0.0)));
+    vec3 B = cross(geometricNormal, T);
+    mat3 tBN = mat3(T, B, geometricNormal);
+    vec3 mappedNormal = normalize(tBN * (texture(uNormalMap, texCoord).rgb * 2.0 - 1.0));
+    vec3 normal = mappedNormal;
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
     float NdotL = dot(normal, vLightDir);
     float NdotV = abs(dot(normal, viewDir));
 
     float fresnel = pow(1.0 - NdotV, 3.0) * 0.25;
-
-    float u = 0.5 + atan(normal.z, normal.x) / (2.0 * PI);
-    float v = 0.5 + asin(normal.y) / PI;
-    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
-    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
-    vec2 roughnessTexCoord = vec2(u, v) * vRoughnessTexScale + vRoughnessTexOffset;
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
@@ -115,15 +122,22 @@ void main() {
         color = pow(color, vec3(1.0 / 2.2));
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float diffuse = max(NdotL, 0.0);
-        float terminator = smoothstep(-0.05, 0.15, NdotL);
+        float cosTheta = max(NdotL, 0.0);
+        float cosTheta2 = cosTheta * cosTheta;
+        float sinTheta = sqrt(1.0 - cosTheta2);
+        float tanTheta = sinTheta / max(cosTheta, 0.001);
+        float roughness2 = roughness * roughness;
+        float A = 1.0 - 0.5 * roughness2 / (roughness2 + 0.33);
+        float B = 0.45 * roughness2 / (roughness2 + 0.09);
+        float diff = cosTheta * (A + B * max(0.0, NdotV) * tanTheta);
+        float terminator = diff;
 
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);
         float specPower = mix(8.0, 128.0, 1.0 - roughness);
         vec3 specular = uLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
 
-        vec3 lit = dayColor * uLightColor * diffuse + specular;
+        vec3 lit = dayColor * uLightColor * terminator + specular;
         vec3 ambient = dayColor * uAmbientColor;
 
         vec3 color = mix(ambient + rim, lit + rim, terminator);

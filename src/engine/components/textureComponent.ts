@@ -7,6 +7,7 @@ export type TextureComponentOptions = {
     night?: TextureSource;
     roughness?: TextureSource;
     cloud?: TextureSource;
+    normal?: TextureSource;
     src?: string;
     svg?: string;
     tint?: string;
@@ -21,6 +22,7 @@ export class TextureComponent extends EntityComponent {
     night?: TextureSource;
     roughness?: TextureSource;
     cloud?: TextureSource;
+    normal?: TextureSource;
     src?: string;
     svg?: string;
     tint?: string;
@@ -35,6 +37,7 @@ export class TextureComponent extends EntityComponent {
         this.night = options.night;
         this.roughness = options.roughness;
         this.cloud = options.cloud;
+        this.normal = options.normal;
         this.src = options.src;
         this.svg = options.svg;
         this.tint = options.tint;

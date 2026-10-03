@@ -133,6 +133,82 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
 
 const noiseScale = 4
 
+export function createNormalTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext("2d")!
+
+    ctx.clearRect(0, 0, size, size)
+
+    const seed = seedFrom(baseColor, archetype)
+    const perm = buildPerm(seed)
+
+    const imageData = ctx.createImageData(size, size)
+    const data = imageData.data
+
+    const epsilon = 0.04
+    const strength = 0.01
+
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
+            const u = x / size
+            const v = y / size
+
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
+
+            const nx = sx, ny = sy, nz = sz
+            let tx, ty, tz
+            if(Math.abs(ny) < 0.999) {
+                tx = nz
+                ty = 0
+                tz = -nx
+            } else {
+                tx = 1
+                ty = 0
+                tz = 0
+            }
+            const tLen = Math.sqrt(tx * tx + ty * ty + tz * tz)
+            tx /= tLen
+            ty /= tLen
+            tz /= tLen
+
+            const bx = ny * tz - nz * ty
+            const by = nz * tx - nx * tz
+            const bz = nx * ty - ny * tx
+            const bLen = Math.sqrt(bx * bx + by * by + bz * bz)
+            const nbx = bx / bLen
+            const nby = by / bLen
+            const nbz = bz / bLen
+
+            const h = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+            const hT = sampleFbm3d((sx + tx * epsilon) * noiseScale, (sy + ty * epsilon) * noiseScale, (sz + tz * epsilon) * noiseScale, perm, 0.4, 5)
+            const hB = sampleFbm3d((sx + nbx * epsilon) * noiseScale, (sy + nby * epsilon) * noiseScale, (sz + nbz * epsilon) * noiseScale, perm, 0.4, 5)
+
+            const dhDT = (hT - h) / epsilon
+            const dhDB = (hB - h) / epsilon
+
+            let nnx = -dhDT * strength
+            let nny = -dhDB * strength
+            let nnz = 1.0
+            const nLen = Math.sqrt(nnx * nnx + nny * nny + nnz * nnz)
+            nnx /= nLen
+            nny /= nLen
+            nnz /= nLen
+
+            const idx = (y * size + x) * 4
+            data[idx] = clamp(Math.round((nnx * 0.5 + 0.5) * 255), 0, 255)
+            data[idx + 1] = clamp(Math.round((nny * 0.5 + 0.5) * 255), 0, 255)
+            data[idx + 2] = clamp(Math.round((nnz * 0.5 + 0.5) * 255), 0, 255)
+            data[idx + 3] = 255
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas
+}
+
 export function createPlanetTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size

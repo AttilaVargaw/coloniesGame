@@ -25,6 +25,7 @@ export interface ShaderProgram {
         nightTexture: WebGLUniformLocation | null;
         roughness: WebGLUniformLocation | null;
         cloudTexture: WebGLUniformLocation | null;
+        normalMap: WebGLUniformLocation | null;
         tintColor: WebGLUniformLocation | null;
         tintAlpha: WebGLUniformLocation | null;
         time: WebGLUniformLocation | null;
