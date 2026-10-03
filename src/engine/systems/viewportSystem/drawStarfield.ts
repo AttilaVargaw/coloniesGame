@@ -75,6 +75,17 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         for(const star of stars) {
             ctx.globalAlpha = star.alpha
             ctx.fillStyle = star.color
+            ctx.strokeStyle = star.color
+            ctx.lineWidth = Math.max(0.5, star.r * 0.15)
+            if(star.r > 1.2 && star.alpha > 0.55) {
+                const len = star.r * 3.5
+                ctx.beginPath()
+                ctx.moveTo(star.x - len, star.y)
+                ctx.lineTo(star.x + len, star.y)
+                ctx.moveTo(star.x, star.y - len)
+                ctx.lineTo(star.x, star.y + len)
+                ctx.stroke()
+            }
             ctx.beginPath()
             ctx.arc(star.x, star.y, star.r, 0, TWO_PI)
             ctx.fill()

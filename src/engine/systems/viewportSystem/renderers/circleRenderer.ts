@@ -122,17 +122,22 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             }
 
             CircleRenderer.drawStrokeAndShade(context, circle, center, screenRadius, thickness)
+
+            if(circle.emitLight) {
+                CircleRenderer.drawSpikes(context, center, screenRadius)
+            }
         }
 
         context.restore()
     }
 
     private static drawBloom(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
-        const bloomRadius = screenRadius * 3
-        const gradient = context.createRadialGradient(center.x, center.y, screenRadius * 0.5, center.x, center.y, bloomRadius)
         const fill = circle.color.fill || "#ffffff"
-        gradient.addColorStop(0, hexToRgba(fill, 0.35))
-        gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
+        const bloomRadius = screenRadius * 8
+        const gradient = context.createRadialGradient(center.x, center.y, screenRadius * 0.2, center.x, center.y, bloomRadius)
+        gradient.addColorStop(0, hexToRgba("#ffffff", 0.9))
+        gradient.addColorStop(0.15, hexToRgba(fill, 0.6))
+        gradient.addColorStop(0.4, hexToRgba(fill, 0.15))
         gradient.addColorStop(1, "rgba(0,0,0,0)")
         context.globalCompositeOperation = "screen"
         context.fillStyle = gradient
@@ -140,6 +145,20 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         context.arc(center.x, center.y, bloomRadius, 0, TWO_PI)
         context.fill()
         context.globalCompositeOperation = "source-over"
+    }
+
+    private static drawSpikes(context: CanvasRenderingContext2D, center: ProjectedPoint, screenRadius: number) {
+        if(screenRadius > 2) {
+            const len = screenRadius * 6
+            context.lineWidth = Math.max(1.5, screenRadius * 0.1)
+            context.strokeStyle = "rgba(255,255,255,0.85)"
+            context.beginPath()
+            context.moveTo(center.x - len, center.y)
+            context.lineTo(center.x + len, center.y)
+            context.moveTo(center.x, center.y - len)
+            context.lineTo(center.x, center.y + len)
+            context.stroke()
+        }
     }
 
     private static buildCirclePath(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
