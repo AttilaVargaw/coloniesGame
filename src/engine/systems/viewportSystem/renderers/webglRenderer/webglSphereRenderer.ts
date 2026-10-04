@@ -258,6 +258,16 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const modelLoc = this.shader.attribs.instanceModel
         const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
 
+        gl.enable(gl.DEPTH_TEST)
+        gl.enable(gl.CULL_FACE)
+        gl.cullFace(gl.BACK)
+
+        let lastDayPage = -1
+        let lastNightPage = -1
+        let lastRoughnessPage = -1
+        let lastCloudPage = -1
+        let lastNormalPage = -1
+
         for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
@@ -318,43 +328,58 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.vertexAttribPointer(this.shader.attribs.instanceCloudPage, 1, gl.FLOAT, false, instanceStride, 37 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceCloudPage, 1)
 
-            const atlasTexture = this.atlas.getTextures(gl)[dayPage]
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
-            gl.uniform1i(this.shader.uniforms.texture, 0)
+            if(dayPage !== lastDayPage) {
+                const atlasTexture = this.atlas.getTextures(gl)[dayPage]
+                gl.activeTexture(gl.TEXTURE0)
+                gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
+                gl.uniform1i(this.shader.uniforms.texture, 0)
+                lastDayPage = dayPage
+            }
 
-            const nightAtlasTextures = this.nightAtlas.getTextures(gl)
-            const nightPageTexture = nightAtlasTextures[nightPage] ?? nightAtlasTextures[0]
-            gl.activeTexture(gl.TEXTURE1)
-            gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
-            gl.uniform1i(this.shader.uniforms.nightTexture, 1)
+            if(nightPage !== lastNightPage) {
+                const nightAtlasTextures = this.nightAtlas.getTextures(gl)
+                const nightPageTexture = nightAtlasTextures[nightPage] ?? nightAtlasTextures[0]
+                gl.activeTexture(gl.TEXTURE1)
+                gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
+                gl.uniform1i(this.shader.uniforms.nightTexture, 1)
+                lastNightPage = nightPage
+            }
 
-            const roughnessAtlasTextures = this.roughnessAtlas.getTextures(gl)
-            const roughnessPageTexture = roughnessAtlasTextures[roughnessPage] ?? roughnessAtlasTextures[0]
-            gl.activeTexture(gl.TEXTURE2)
-            gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
-            gl.uniform1i(this.shader.uniforms.roughness, 2)
+            if(roughnessPage !== lastRoughnessPage) {
+                const roughnessAtlasTextures = this.roughnessAtlas.getTextures(gl)
+                const roughnessPageTexture = roughnessAtlasTextures[roughnessPage] ?? roughnessAtlasTextures[0]
+                gl.activeTexture(gl.TEXTURE2)
+                gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
+                gl.uniform1i(this.shader.uniforms.roughness, 2)
+                lastRoughnessPage = roughnessPage
+            }
 
-            const cloudAtlasTextures = this.cloudAtlas.getTextures(gl)
-            const cloudPageTexture = cloudAtlasTextures[cloudPage] ?? cloudAtlasTextures[0]
-            gl.activeTexture(gl.TEXTURE3)
-            gl.bindTexture(gl.TEXTURE_2D, cloudPageTexture)
-            gl.uniform1i(this.shader.uniforms.cloudTexture, 3)
+            if(cloudPage !== lastCloudPage) {
+                const cloudAtlasTextures = this.cloudAtlas.getTextures(gl)
+                const cloudPageTexture = cloudAtlasTextures[cloudPage] ?? cloudAtlasTextures[0]
+                gl.activeTexture(gl.TEXTURE3)
+                gl.bindTexture(gl.TEXTURE_2D, cloudPageTexture)
+                gl.uniform1i(this.shader.uniforms.cloudTexture, 3)
+                lastCloudPage = cloudPage
+            }
 
-            const normalAtlasTextures = this.normalAtlas.getTextures(gl)
-            const normalPageTexture = normalAtlasTextures[normalPage] ?? normalAtlasTextures[0]
-            gl.activeTexture(gl.TEXTURE4)
-            gl.bindTexture(gl.TEXTURE_2D, normalPageTexture)
-            gl.uniform1i(this.shader.uniforms.normalMap, 4)
+            if(normalPage !== lastNormalPage) {
+                const normalAtlasTextures = this.normalAtlas.getTextures(gl)
+                const normalPageTexture = normalAtlasTextures[normalPage] ?? normalAtlasTextures[0]
+                gl.activeTexture(gl.TEXTURE4)
+                gl.bindTexture(gl.TEXTURE_2D, normalPageTexture)
+                gl.uniform1i(this.shader.uniforms.normalMap, 4)
+                lastNormalPage = normalPage
+            }
 
             const first = instances[0]
             gl.uniform3f(this.shader.uniforms.paletteColor, first.paletteR, first.paletteG, first.paletteB)
 
-            gl.enable(gl.DEPTH_TEST)
-            gl.enable(gl.CULL_FACE)
-            gl.cullFace(gl.BACK)
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
+
+        gl.disable(gl.DEPTH_TEST)
+        gl.disable(gl.CULL_FACE)
 
         //reset state
         gl.disableVertexAttribArray(modelLoc)

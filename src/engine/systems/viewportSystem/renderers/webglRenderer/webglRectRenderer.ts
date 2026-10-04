@@ -287,6 +287,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
 
+        gl.enable(gl.DEPTH_TEST)
+        gl.disable(gl.CULL_FACE)
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+        gl.depthMask(false)
+
         for(const [page, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
@@ -333,14 +339,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.bindTexture(gl.TEXTURE_2D, texture)
             gl.uniform1i(this.shader.uniforms.texture, 0)
 
-            gl.enable(gl.DEPTH_TEST)
-            gl.disable(gl.CULL_FACE)
-            gl.enable(gl.BLEND)
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-            gl.depthMask(false)
             gl.drawElementsInstanced(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0, instances.length)
-            gl.depthMask(true)
         }
+
+        gl.depthMask(true)
+        gl.disable(gl.DEPTH_TEST)
+        gl.disable(gl.BLEND)
+        gl.enable(gl.CULL_FACE)
 
         //set state back
         gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)

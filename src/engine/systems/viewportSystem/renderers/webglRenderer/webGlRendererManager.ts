@@ -47,7 +47,6 @@ export class WebglRenderManager {
         if(glCanvas.width !== canvas.width || glCanvas.height !== canvas.height) {
             glCanvas.width = canvas.width
             glCanvas.height = canvas.height
-            gl.viewport(0, 0, canvas.width, canvas.height)
             glCanvas.style.width = canvas.style.width
             glCanvas.style.height = canvas.style.height
         }

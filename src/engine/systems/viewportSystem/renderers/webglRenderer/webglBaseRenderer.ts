@@ -61,6 +61,8 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         gl.disable(gl.CULL_FACE)
         gl.disable(gl.BLEND)
         gl.disable(gl.SCISSOR_TEST)
+        gl.disable(gl.DEPTH_TEST)
+        gl.depthMask(true)
         gl.colorMask(true, true, true, true)
     }
 
