@@ -37,7 +37,7 @@ export class ViewportInputHandler {
     private static readonly KEY_PAN_SPEED = 0.02
     private static readonly KEY_PAN_ACCELERATION = 0.3
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 40
+    private static readonly WHEEL_ZOOM_STEP = 80
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0.82
@@ -77,12 +77,12 @@ export class ViewportInputHandler {
     private applyKeyScroll(dt: number, camera: Camera) {
         let panForward = 0
         let panRight = 0
-        if (this.heldKeys.has("w")) panForward += 1
-        if (this.heldKeys.has("s")) panForward -= 1
-        if (this.heldKeys.has("d")) panRight += 1
-        if (this.heldKeys.has("a")) panRight -= 1
+        if(this.heldKeys.has("w")) panForward += 1
+        if(this.heldKeys.has("s")) panForward -= 1
+        if(this.heldKeys.has("d")) panRight += 1
+        if(this.heldKeys.has("a")) panRight -= 1
 
-        if (panForward || panRight) {
+        if(panForward || panRight) {
             const { rx, ry, fx, fy } = camera.viewBasis
             const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
             const targetVx = (panForward * fx + panRight * rx) * targetSpeed
@@ -102,9 +102,9 @@ export class ViewportInputHandler {
     }
 
     private panCamera(panRight: number, panForward: number, step: number) {
-        if (!panRight && !panForward) return
+        if(!panRight && !panForward) return
 
-        const camera = this.viewportSystem.camera
+        const camera = this.viewportSystem.camera!
         const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
         const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
         camera.moveTo(
@@ -115,7 +115,7 @@ export class ViewportInputHandler {
     }
 
     private applyEdgePan(dt: number, camera: Camera) {
-        if (this._isDragging || !this.viewportSystem) return
+        if(this._isDragging || !this.viewportSystem) return
 
         const bounds = camera.visibleBounds
         const { x, y } = this.pointer
@@ -125,10 +125,10 @@ export class ViewportInputHandler {
         let panRight = 0
         let panForward = 0
 
-        if (x < threshold) panRight -= (1 - x / threshold) * step
-        if (x > bounds.right - threshold) panRight += (1 - (bounds.right - x) / threshold) * step
-        if (y < threshold) panForward -= (1 - y / threshold) * step
-        if (y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
+        if(x < threshold) panRight -= (1 - x / threshold) * step
+        if(x > bounds.right - threshold) panRight += (1 - (bounds.right - x) / threshold) * step
+        if(y < threshold) panForward -= (1 - y / threshold) * step
+        if(y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
 
         this.panCamera(panRight, panForward, step)
     }
@@ -165,8 +165,8 @@ export class ViewportInputHandler {
     }
 
     addToEngine() {
-        const canvas = this.viewportSystem.camera.context.canvas
-        if (!canvas || !this.viewportSystem.engineRef) {
+        const canvas = this.viewportSystem.camera!.context.canvas
+        if(!canvas || !this.viewportSystem.engineRef) {
             return
         }
 
@@ -186,8 +186,8 @@ export class ViewportInputHandler {
         getPlatform().window.removeEventListener("keyup", this.onKeyUp)
         getPlatform().window.removeEventListener("wheel", this.onWheel)
 
-        const canvas = this.viewportSystem.camera.context.canvas
-        if (canvas) {
+        const canvas = this.viewportSystem.camera!.context.canvas
+        if(canvas) {
             canvas.removeEventListener("mouseenter", this.onMouseEnter)
             canvas.removeEventListener("mouseleave", this.onMouseLeave)
             canvas.removeEventListener("contextmenu", ViewportInputHandler.onContextMenu)
@@ -202,8 +202,8 @@ export class ViewportInputHandler {
     private onKeyDown = (event: KeyboardEvent) => {
         const key = event.key
 
-        if (allButtons.has(key)) {
-            if (wasdButtons.has(key)) {
+        if(allButtons.has(key)) {
+            if(wasdButtons.has(key)) {
                 this.cameraFollowSystem?.stopFollowing()
             }
             this.heldKeys.add(key)
@@ -216,12 +216,12 @@ export class ViewportInputHandler {
     }
 
     private onWheel = (event: WheelEvent) => {
-        if (!this.viewportSystem.engineRef) return
+        if(!this.viewportSystem.engineRef) return
 
         event.preventDefault()
 
         const { camera } = this.viewportSystem
-        const rect = camera.context.canvas.getBoundingClientRect()
+        const rect = camera!.context.canvas.getBoundingClientRect()
         this.lastWheelScreen = {
             x: event.clientX - rect.left,
             y: event.clientY - rect.top
@@ -235,7 +235,7 @@ export class ViewportInputHandler {
     private mouseMovedArray: Queue<MousemoveEvent> | null = null
 
     update(dt: number) {
-        if (!this.viewportSystem.engineRef) {
+        if(!this.viewportSystem.engineRef) {
             return
         }
 
@@ -245,29 +245,29 @@ export class ViewportInputHandler {
 
         this.updatePointerPosition()
         this.handleDragStart()
-        this.handleDragMove(camera)
+        this.handleDragMove(camera!)
         this.handleDragEnd()
 
-        if (!this._isDragging && this.wasRotatingWithoutTarget) {
-            this.applyRotationInertia(camera)
+        if(!this._isDragging && this.wasRotatingWithoutTarget) {
+            this.applyRotationInertia(camera!)
         }
 
-        this.applyKeyScroll(dt, camera)
-        this.applyEdgePan(dt, camera)
-        this.applyPanVelocity(dt, camera)
-        this.applyWheelZoom(camera)
+        this.applyKeyScroll(dt, camera!)
+        this.applyEdgePan(dt, camera!)
+        this.applyPanVelocity(dt, camera!)
+        this.applyWheelZoom(camera!)
     }
 
     private updatePointerPosition() {
-        for (const { data } of this.mouseMovedArray!) {
+        for(const { data } of this.mouseMovedArray!) {
             this.pointer = { x: data.x, y: data.y }
         }
     }
 
     private handleDragStart() {
-        for (const { data } of this.mousedownArray!) {
+        for(const { data } of this.mousedownArray!) {
             const button = data.button
-            if (button === 2 || button === 1) {
+            if(button === 2 || button === 1) {
                 this._isDragging = true
                 this.dragButton = button
                 this.lastPointer = { x: data.x, y: data.y }
@@ -282,16 +282,16 @@ export class ViewportInputHandler {
     }
 
     private handleDragMove(camera: Camera) {
-        if (!this._isDragging || !this.lastPointer || this.dragButton === null) return
+        if(!this._isDragging || !this.lastPointer || this.dragButton === null) return
 
-        for (const { data } of this.mouseMovedArray!) {
+        for(const { data } of this.mouseMovedArray!) {
             const dx = data.x - this.lastPointer.x
             const dy = data.y - this.lastPointer.y
-            if (dx || dy) {
-                if (this.dragButton === 2) {
+            if(dx || dy) {
+                if(this.dragButton === 2) {
                     camera.panByPixels(dx, dy)
                 } else if(this.dragButton === 1) {
-                    if (this.hasFollowTarget) {
+                    if(this.hasFollowTarget) {
                         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
                         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
 
@@ -303,7 +303,7 @@ export class ViewportInputHandler {
                     this.rotationVelocityX = dx
                     this.rotationVelocityY = dy
                 }
-                if (Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
+                if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
                     this.dragMoved = true
                 }
                 this.lastPointer = { x: data.x, y: data.y }
@@ -313,13 +313,13 @@ export class ViewportInputHandler {
 
     private handleDragEnd() {
         let released = false
-        for (const { data } of this.mouseupArray!) {
-            if (data.button === this.dragButton) {
+        for(const { data } of this.mouseupArray!) {
+            if(data.button === this.dragButton) {
                 released = true
                 break
             }
         }
-        if (released) {
+        if(released) {
             this._isDragging = false
             this.dragButton = null
             this.lastPointer = null
@@ -332,17 +332,17 @@ export class ViewportInputHandler {
     private zoomWheel(camera: Camera, factor: number) {
         this._isZooming = true
 
-        if (this.wheelZoomAccum > 0 && camera.lookAt[2] >= ViewportInputHandler.MAX_ZOOM) {
+        if(this.wheelZoomAccum > 0 && camera.lookAt[2] >= ViewportInputHandler.MAX_ZOOM) {
             return
         }
-        if (this.wheelZoomAccum < 0 && camera.lookAt[2] <= ViewportInputHandler.MIN_ZOOM) {
+        if(this.wheelZoomAccum < 0 && camera.lookAt[2] <= ViewportInputHandler.MIN_ZOOM) {
             return
         }
 
-        if (this.hasFollowTarget) {
+        if(this.hasFollowTarget) {
             camera.zoomBy(factor, this.lastWheelScreen.x, this.lastWheelScreen.y)
         } else {
-            this.viewportSystem.camera.moveTo(
+            this.viewportSystem.camera!.moveTo(
                 camera.lookAt[0],
                 camera.lookAt[1],
                 Math.max(ViewportInputHandler.MIN_ZOOM, Math.min(camera.lookAt[2] += this.wheelZoomAccum, ViewportInputHandler.MAX_ZOOM))
@@ -353,17 +353,17 @@ export class ViewportInputHandler {
     private applyWheelZoom(camera: Camera) {
         const step = ViewportInputHandler.WHEEL_ZOOM_STEP
 
-        if (this.wheelZoomAccum >= step) {
+        if(this.wheelZoomAccum >= step) {
             this.zoomWheel(camera, 1.02)
             this.wheelZoomAccum -= step
-        } else if (this.wheelZoomAccum <= -step) {
+        } else if(this.wheelZoomAccum <= -step) {
             this.zoomWheel(camera, 0.98)
             this.wheelZoomAccum += step
         }
     }
 
     private applyRotationInertia(camera: Camera) {
-        if (Math.abs(this.rotationVelocityX) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD ||
+        if(Math.abs(this.rotationVelocityX) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD ||
             Math.abs(this.rotationVelocityY) > ViewportInputHandler.ROTATION_INERTIA_THRESHOLD) {
             ViewportInputHandler.applyOrbitRotation(camera, this.rotationVelocityX, this.rotationVelocityY)
             this.rotationVelocityX *= ViewportInputHandler.ROTATION_INERTIA_DECAY
