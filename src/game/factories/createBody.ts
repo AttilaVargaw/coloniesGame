@@ -222,13 +222,13 @@ export async function createBody({
 
     if(!buildable && typeof document !== "undefined") {
         if(archetype === "sol") {
-            body.addComponent(new TextureComponent({ day: createStarTexture(marker.color), animationSpeed: 0.5, id: name }))
+            body.addComponent(new TextureComponent({ day: createStarTexture(marker.color, name), animationSpeed: 0.5, id: name }))
         } else if(archetype !== "baricenter") {
-            const dayTexture = createPlanetTexture(marker.color, archetype)
-            const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype) : undefined
-            const roughnessTexture = createRoughnessTexture(marker.color, archetype)
-            const cloudTexture = population !== undefined ? createCloudTexture(marker.color, archetype) : undefined
-            const normalTexture = createNormalTexture(marker.color, archetype)
+            const dayTexture = createPlanetTexture(marker.color, archetype, name)
+            const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype, name) : undefined
+            const roughnessTexture = createRoughnessTexture(marker.color, archetype, name)
+            const cloudTexture = population !== undefined ? createCloudTexture(marker.color, archetype, name) : undefined
+            const normalTexture = createNormalTexture(marker.color, archetype, name)
             body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, roughness: roughnessTexture, cloud: cloudTexture, normal: normalTexture, animationSpeed: 0.2, id: name }))
         }
         await maybeYieldAfterTexture()

@@ -37,7 +37,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 }
 
-const size = 256
+const size = 384
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
@@ -114,10 +114,13 @@ function sampleFbm3d(x: number, y: number, z: number, perm: number[], warp = 0.3
     return fbm3d(x + warp * qx, y + warp * qy, z + warp * 0.3 * (qx + qy), perm, octaves)
 }
 
-function seedFrom(base: string, archetype: string): number {
+function seedFrom(base: string, archetype: string, extra?: string): number {
     let h = 0
     for(let i = 0; i < base.length; i++) h = ((h << 5) - h + base.charCodeAt(i)) | 0
     for(let i = 0; i < archetype.length; i++) h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
+    if(extra) {
+        for(let i = 0; i < extra.length; i++) h = ((h << 5) - h + extra.charCodeAt(i)) | 0
+    }
     return Math.abs(h) || 1
 }
 
@@ -133,7 +136,7 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
 
 const noiseScale = 4
 
-export function createNormalTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -141,7 +144,7 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
 
     ctx.clearRect(0, 0, size, size)
 
-    const seed = seedFrom(baseColor, archetype)
+    const seed = seedFrom(baseColor, archetype, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
@@ -249,7 +252,7 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
     for(let y = 0; y < height; y++) {
         for(let x = 0; x < width; x++) {
             let rx = 0, ry = 0, rz = 0
-            let count = 0
+            //let count = 0
             for(let dy = -radius; dy <= radius; dy++) {
                 for(let dx = -radius; dx <= radius; dx++) {
                     const sx = (x + dx + width) % width
@@ -258,7 +261,7 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
                     rx += tmp[idx]
                     ry += tmp[idx + 1]
                     rz += tmp[idx + 2]
-                    count++
+                    //count++
                 }
             }
             const idx = (y * width + x) * 3
@@ -272,7 +275,7 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
     return out
 }
 
-export function createPlanetTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -280,7 +283,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
 
     ctx.clearRect(0, 0, size, size)
 
-    const palette = PALETTES[archetype] || { land: baseColor, ocean: baseColor, clouds: "#ffffff", poles: "#e0e0e0" }
+    const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 
     const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
@@ -288,7 +291,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
     const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
 
-    const seed = seedFrom(baseColor, archetype)
+    const seed = seedFrom(baseColor, archetype, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
@@ -354,7 +357,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
-export function createStarTexture(baseColor: string): HTMLCanvasElement {
+export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -362,8 +365,8 @@ export function createStarTexture(baseColor: string): HTMLCanvasElement {
 
     ctx.clearRect(0, 0, size, size)
 
-    const seed = seedFrom(baseColor, "star")
-    const perm = buildPerm(seed)
+    const seedVal = seedFrom(baseColor, "star", seedKey)
+    const perm = buildPerm(seedVal)
     const base = hexToRgb(baseColor)
 
     const imageData = ctx.createImageData(size, size)
@@ -423,7 +426,7 @@ export function createStarTexture(baseColor: string): HTMLCanvasElement {
     return canvas
 }
 
-export function createRoughnessTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+export function createRoughnessTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -431,7 +434,7 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
 
     ctx.clearRect(0, 0, size, size)
 
-    const seed = seedFrom(baseColor, archetype)
+    const seed = seedFrom(baseColor, archetype, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
@@ -481,7 +484,7 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
     return canvas
 }
 
-export function createCloudTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+export function createCloudTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -493,7 +496,7 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
     const base = hexToRgb(baseColor)
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
 
-    const seed = seedFrom(baseColor, `${archetype}-clouds`)
+    const seed = seedFrom(baseColor, `${archetype}-clouds`, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
@@ -527,7 +530,7 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
     return canvas
 }
 
-export function createNightTexture(baseColor: string, archetype: string = "earth"): HTMLCanvasElement {
+export function createNightTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
@@ -543,7 +546,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
     const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
 
-    const seed = seedFrom(baseColor, archetype)
+    const seed = seedFrom(baseColor, archetype, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
