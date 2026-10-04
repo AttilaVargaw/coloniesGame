@@ -179,7 +179,6 @@ export class ViewportSystem extends System {
         this.debugRenderer.update(dt)
 
         const {
-            bloomSettings,
             debugflags: {
                 showBloom,
                 showColorGrading,

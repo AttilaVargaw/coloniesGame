@@ -5,16 +5,15 @@ in vec3 aNormal;
 in mat4 aInstanceModel;
 in mat3 aInstanceNormalMatrix;
 in vec3 aInstanceLightDir;
+in vec3 aInstanceLightColor;
 in vec2 aInstanceTexOffset;
 in vec2 aInstanceTexScale;
 in vec2 aInstanceNightTexOffset;
 in vec2 aInstanceNightTexScale;
-in float aInstanceEmissive;
-in float aInstanceCloudPage;
+in vec2 aInstanceEmissiveCloud;
 
 uniform mat4 uView;
 uniform mat4 uProjection;
-uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform sampler2D uTexture;
@@ -25,6 +24,7 @@ uniform float uTime;
 
 out vec3 vNormal;
 out vec3 vLightDir;
+out vec3 vLightColor;
 out float vEmissive;
 out vec3 vWorldPos;
 out vec2 vTexOffset;
@@ -41,7 +41,8 @@ void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
     vNormal = normalize(aInstanceNormalMatrix * aNormal);
     vLightDir = normalize(aInstanceLightDir);
-    vEmissive = aInstanceEmissive;
+    vLightColor = aInstanceLightColor;
+    vEmissive = aInstanceEmissiveCloud.x;
     vWorldPos = worldPos.xyz;
     vTexOffset = aInstanceTexOffset;
     vTexScale = aInstanceTexScale;
@@ -49,7 +50,7 @@ void main() {
     vNightTexScale = aInstanceNightTexScale;
     vRoughnessTexOffset = aInstanceTexOffset;
     vRoughnessTexScale = aInstanceTexScale;
-    vCloudPage = aInstanceCloudPage;
+    vCloudPage = aInstanceEmissiveCloud.y;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -130,12 +131,12 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
         instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
         instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
+        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
         instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
         instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
         instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
         instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
-        instanceEmissive: gl.getAttribLocation(program, "aInstanceEmissive"),
-        instanceCloudPage: gl.getAttribLocation(program, "aInstanceCloudPage"),
+        instanceEmissiveCloud: gl.getAttribLocation(program, "aInstanceEmissiveCloud"),
     }
 
     const uniforms = {
@@ -241,6 +242,7 @@ precision mediump float;
 
 in vec3 vNormal;
 in vec3 vLightDir;
+in vec3 vLightColor;
 in float vEmissive;
 in vec3 vWorldPos;
 in vec2 vTexOffset;
@@ -256,7 +258,6 @@ uniform sampler2D uNightTexture;
 uniform sampler2D uRoughness;
 uniform sampler2D uCloudTexture;
 uniform sampler2D uNormalMap;
-uniform vec3 uLightColor;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform vec3 uTintColor;
@@ -297,7 +298,7 @@ void main() {
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
     float roughness = texture(uRoughness, roughnessTexCoord).r;
-    vec3 rim = uLightColor * fresnel * dayColor * cosTheta;
+    vec3 rim = vLightColor * fresnel * dayColor * cosTheta;
 
     if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
@@ -310,9 +311,9 @@ void main() {
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);
         float specPower = mix(8.0, 128.0, 1.0 - roughness);
-        vec3 specular = uLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
+        vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
 
-        vec3 lit = dayColor * uLightColor * diff + specular * cosTheta;
+        vec3 lit = dayColor * vLightColor * diff + specular * cosTheta;
         vec3 ambient = dayColor * uAmbientColor;
 
         vec3 color = mix(ambient + rim, lit + rim, diff);

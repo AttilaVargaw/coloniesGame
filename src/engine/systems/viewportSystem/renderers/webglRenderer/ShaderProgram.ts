@@ -6,19 +6,18 @@ export interface ShaderProgramAttribs {
     instanceModel: number;
     instanceNormalMatrix: number;
     instanceLightDir: number;
+    instanceLightColor: number;
     instanceTexOffset: number;
     instanceTexScale: number;
     instanceNightTexOffset: number;
     instanceNightTexScale: number;
-    instanceEmissive: number;
-    instanceCloudPage: number;
+    instanceEmissiveCloud: number;
     [key: string]: number;
 }
 
 export interface ShaderProgramUniforms {
     view: WebGLUniformLocation | null;
     projection: WebGLUniformLocation | null;
-    lightColor: WebGLUniformLocation | null;
     ambientColor: WebGLUniformLocation | null;
     cameraPosition: WebGLUniformLocation | null;
     texture: WebGLUniformLocation | null;

@@ -126,6 +126,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
             let lightDir: Vec3
+            let starColor = [1.0, 1.0, 1.0] as Vec3
 
             if(starEntity) {
                 const starPos = this.getWorldPosition2(starEntity)
@@ -138,6 +139,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 lightDir = lightDirLength > 0
                     ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
                     : [0, 0, 1]
+
+                const starColorComponent = starEntity.getComponent(ColorComponent)
+                if(starColorComponent?.fill) {
+                    const parsed = hexToRgb(starColorComponent.fill)
+                    starColor = [parsed.r / 255, parsed.g / 255, parsed.b / 255]
+                }
             } else {
                 lightDir = [0, 0, 1]
             }
@@ -161,9 +168,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             normalMatrix[7] = model[9]
             normalMatrix[8] = model[10]
 
-            const poolOffset = this.pendingInstances.length * 39
-            if(poolOffset + 39 > this.sphereInstancePool!.length) {
-                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 39 + this.MAX_SPHERE_INSTANCES * 39)
+            const poolOffset = this.pendingInstances.length * 42
+            if(poolOffset + 42 > this.sphereInstancePool!.length) {
+                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 42 + this.MAX_SPHERE_INSTANCES * 42)
                 const newPool = new Float32Array(newSize)
                 newPool.set(this.sphereInstancePool!)
                 this.sphereInstancePool = newPool
@@ -172,13 +179,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             pool.set(model, poolOffset)
             pool.set(normalMatrix, poolOffset + 16)
             pool.set(lightDir, poolOffset + 25)
-            pool.set([atlasEntry.u0, atlasEntry.v0], poolOffset + 28)
-            pool.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], poolOffset + 30)
-            pool.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], poolOffset + 32)
-            pool.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], poolOffset + 34)
-            pool.set([node.color.emitLight ? 1.0 : 0.0], poolOffset + 36)
-            pool.set([cloudPage], poolOffset + 37)
-            pool.set([normalPage], poolOffset + 38)
+            pool.set(starColor, poolOffset + 28)
+            pool.set([atlasEntry.u0, atlasEntry.v0], poolOffset + 31)
+            pool.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], poolOffset + 33)
+            pool.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], poolOffset + 35)
+            pool.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], poolOffset + 37)
+            pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage], poolOffset + 39)
+            pool.set([normalPage], poolOffset + 41)
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -332,7 +339,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         gl.uniformMatrix4fv(shader.uniforms.view, false, this.view)
         gl.uniformMatrix4fv(shader.uniforms.projection, false, this.projection)
-        gl.uniform3f(shader.uniforms.lightColor, 1.0, 0.9, 0.8)
         gl.uniform3f(shader.uniforms.ambientColor, 0.03, 0.03, 0.05)
 
         const [camX, camY, camZ] = camera.cameraPosition
@@ -356,7 +362,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 38 * 4
+        const instanceStride = 42 * 4
 
         let lastDayPage = -1
         let lastNightPage = -1
@@ -375,14 +381,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             instances.sort((a, b) => b.depth - a.depth)
 
             const [dayPage, nightPage, roughnessPage, cloudPage, normalPage] = key.split(':').map(Number)
-            const totalFloats = instances.length * 38
+            const totalFloats = instances.length * 42
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 38)
+                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 42)
                 this.sphereBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 38), i * 38)
+                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 42), i * 42)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -412,24 +418,24 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enableVertexAttribArray(shader.attribs.instanceLightDir)
             gl.vertexAttribPointer(shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
             gl.vertexAttribDivisor(shader.attribs.instanceLightDir, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceLightColor)
+            gl.vertexAttribPointer(shader.attribs.instanceLightColor, 3, gl.FLOAT, false, instanceStride, 28 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceLightColor, 1)
             gl.enableVertexAttribArray(shader.attribs.instanceTexOffset)
-            gl.vertexAttribPointer(shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 28 * 4)
+            gl.vertexAttribPointer(shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 31 * 4)
             gl.vertexAttribDivisor(shader.attribs.instanceTexOffset, 1)
             gl.enableVertexAttribArray(shader.attribs.instanceTexScale)
-            gl.vertexAttribPointer(shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
+            gl.vertexAttribPointer(shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 33 * 4)
             gl.vertexAttribDivisor(shader.attribs.instanceTexScale, 1)
             gl.enableVertexAttribArray(shader.attribs.instanceNightTexOffset)
-            gl.vertexAttribPointer(shader.attribs.instanceNightTexOffset, 2, gl.FLOAT, false, instanceStride, 32 * 4)
+            gl.vertexAttribPointer(shader.attribs.instanceNightTexOffset, 2, gl.FLOAT, false, instanceStride, 35 * 4)
             gl.vertexAttribDivisor(shader.attribs.instanceNightTexOffset, 1)
             gl.enableVertexAttribArray(shader.attribs.instanceNightTexScale)
-            gl.vertexAttribPointer(shader.attribs.instanceNightTexScale, 2, gl.FLOAT, false, instanceStride, 34 * 4)
+            gl.vertexAttribPointer(shader.attribs.instanceNightTexScale, 2, gl.FLOAT, false, instanceStride, 37 * 4)
             gl.vertexAttribDivisor(shader.attribs.instanceNightTexScale, 1)
-            gl.enableVertexAttribArray(shader.attribs.instanceEmissive)
-            gl.vertexAttribPointer(shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 36 * 4)
-            gl.vertexAttribDivisor(shader.attribs.instanceEmissive, 1)
-            gl.enableVertexAttribArray(shader.attribs.instanceCloudPage)
-            gl.vertexAttribPointer(shader.attribs.instanceCloudPage, 1, gl.FLOAT, false, instanceStride, 37 * 4)
-            gl.vertexAttribDivisor(shader.attribs.instanceCloudPage, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceEmissiveCloud)
+            gl.vertexAttribPointer(shader.attribs.instanceEmissiveCloud, 2, gl.FLOAT, false, instanceStride, 39 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceEmissiveCloud, 1)
 
             if(dayPage !== lastDayPage) {
                 const atlasTexture = this.atlas.getTextures(gl)[dayPage]
@@ -496,8 +502,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(shader.attribs.instanceTexScale)
         gl.disableVertexAttribArray(shader.attribs.instanceNightTexOffset)
         gl.disableVertexAttribArray(shader.attribs.instanceNightTexScale)
-        gl.disableVertexAttribArray(shader.attribs.instanceEmissive)
-        gl.disableVertexAttribArray(shader.attribs.instanceCloudPage)
+        gl.disableVertexAttribArray(shader.attribs.instanceEmissiveCloud)
         gl.disableVertexAttribArray(shader.attribs.position)
         gl.disableVertexAttribArray(shader.attribs.normal)
         gl.vertexAttribDivisor(modelLoc, 0)
@@ -508,12 +513,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(normalMatrixLoc + 1, 0)
         gl.vertexAttribDivisor(normalMatrixLoc + 2, 0)
         gl.vertexAttribDivisor(shader.attribs.instanceLightDir, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceLightColor, 0)
         gl.vertexAttribDivisor(shader.attribs.instanceTexOffset, 0)
         gl.vertexAttribDivisor(shader.attribs.instanceTexScale, 0)
         gl.vertexAttribDivisor(shader.attribs.instanceNightTexOffset, 0)
         gl.vertexAttribDivisor(shader.attribs.instanceNightTexScale, 0)
-        gl.vertexAttribDivisor(shader.attribs.instanceEmissive, 0)
-        gl.vertexAttribDivisor(shader.attribs.instanceCloudPage, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceEmissiveCloud, 0)
     }
 
     private renderGpuBloom(
@@ -757,8 +762,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
 
-        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 39)
-        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 38)
+        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 42)
+        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 42)
 
         gl.clearColor(0, 0, 0, 0)
     }

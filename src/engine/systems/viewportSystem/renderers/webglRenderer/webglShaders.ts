@@ -37,18 +37,17 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
         instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
         instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
+        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
         instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
         instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
         instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
         instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
-        instanceEmissive: gl.getAttribLocation(program, "aInstanceEmissive"),
-        instanceCloudPage: gl.getAttribLocation(program, "aInstanceCloudPage"),
+        instanceEmissiveCloud: gl.getAttribLocation(program, "aInstanceEmissiveCloud"),
     }
 
     const uniforms = {
         view: gl.getUniformLocation(program, "uView"),
         projection: gl.getUniformLocation(program, "uProjection"),
-        lightColor: gl.getUniformLocation(program, "uLightColor"),
         ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
         cameraPosition: gl.getUniformLocation(program, "uCameraPosition"),
         texture: gl.getUniformLocation(program, "uTexture"),
