@@ -19,6 +19,7 @@ import { DebugRenderer } from "./renderers/debugRenderer";
 import { PointerInteractionSystem } from "../pointerInteractionSystem";
 
 let bloomSourceCanvas: HTMLCanvasElement | null = null
+let nightBloomCanvas: HTMLCanvasElement | null = null
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
     if(!canvas || canvas.width !== width || canvas.height !== height) {
@@ -181,10 +182,8 @@ export class ViewportSystem extends System {
     }
 
     private drawNightBloom(bloomCtx: CanvasRenderingContext2D, bloom: { pixels: Uint8Array; width: number; height: number }): void {
-        const tempCanvas = getPlatform().createCanvas()
-        tempCanvas.width = bloom.width
-        tempCanvas.height = bloom.height
-        const tempCtx = tempCanvas.getContext("2d")!
+        nightBloomCanvas = ensureCanvas(nightBloomCanvas, bloom.width, bloom.height)
+        const tempCtx = nightBloomCanvas.getContext("2d")!
         const imageData = tempCtx.createImageData(bloom.width, bloom.height)
         imageData.data.set(bloom.pixels)
         tempCtx.putImageData(imageData, 0, 0)
@@ -192,7 +191,7 @@ export class ViewportSystem extends System {
         bloomCtx.save()
         bloomCtx.globalCompositeOperation = "screen"
         bloomCtx.globalAlpha = 1
-        bloomCtx.drawImage(tempCanvas, 0, 0, bloomCtx.canvas.width, bloomCtx.canvas.height)
+        bloomCtx.drawImage(nightBloomCanvas, 0, 0, bloomCtx.canvas.width, bloomCtx.canvas.height)
         bloomCtx.restore()
     }
 

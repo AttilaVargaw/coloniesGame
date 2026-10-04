@@ -85,13 +85,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const roughnessKey = `${node.entity.id}_roughness`
                 roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry(roughnessKey, roughnessSource)
             } else {
-                const midGray = getPlatform().createCanvas()
-                midGray.width = 1
-                midGray.height = 1
-                const midCtx = midGray.getContext("2d")!
-                midCtx.fillStyle = "#808080"
-                midCtx.fillRect(0, 0, 1, 1)
-                roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry("__mid__", midGray)
+                roughnessAtlasEntry = this.roughnessAtlas.getOrCreateEntry("__mid__", this.getMidGrayCanvas())
             }
 
             const cloudSource = node.texture.cloud
@@ -259,6 +253,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }> = []
     private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>>()
     private _blackCanvas: HTMLCanvasElement | undefined
+    private _midGrayCanvas: HTMLCanvasElement | undefined
     private _lastShowCheckerPattern = false
     private bloomFramebuffer: WebGLFramebuffer | null = null
     private bloomTexture: WebGLTexture | null = null
@@ -529,30 +524,38 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.renderPass(gl, this.bloomShader, this.bloomFramebuffer, this.bloomWidth, this.bloomHeight, sortedGroups, camera)
 
-        const pixels = new Uint8Array(this.bloomWidth * this.bloomHeight * 4)
-        gl.readPixels(0, 0, this.bloomWidth, this.bloomHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+        if(!this.bloomPixels || this.bloomPixels.length !== this.bloomWidth * this.bloomHeight * 4) {
+            this.bloomPixels = new Uint8Array(this.bloomWidth * this.bloomHeight * 4)
+        }
+        gl.readPixels(0, 0, this.bloomWidth, this.bloomHeight, gl.RGBA, gl.UNSIGNED_BYTE, this.bloomPixels)
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
-        this.bloomPixels = pixels
         this.bloomPixelWidth = this.bloomWidth
         this.bloomPixelHeight = this.bloomHeight
+
+        this.bloomDebugFrame++
+        if(this.bloomDebugFrame % WebGLSphereRenderer.BLOOM_DEBUG_INTERVAL === 0) {
+            let maxBrightness = 0
+            for(let i = 0; i < this.bloomPixels.length; i += 4) {
+                if(this.bloomPixels[i] > maxBrightness) {
+                    maxBrightness = this.bloomPixels[i]
+                }
+            }
+            if(maxBrightness > 0) {
+                console.log(`[bloom] max brightness: ${maxBrightness}, size: ${this.bloomPixelWidth}x${this.bloomPixelHeight}`)
+            }
+        }
     }
 
     getBloomPixels(): { pixels: Uint8Array; width: number; height: number } | null {
         if(!this.bloomPixels) return null
-        let maxBrightness = 0
-        for(let i = 0; i < this.bloomPixels.length; i += 4) {
-            if(this.bloomPixels[i] > maxBrightness) {
-                maxBrightness = this.bloomPixels[i]
-            }
-        }
-        if(maxBrightness > 0) {
-            console.log(`[bloom] max brightness: ${maxBrightness}, size: ${this.bloomPixelWidth}x${this.bloomPixelHeight}`)
-        }
         return { pixels: this.bloomPixels, width: this.bloomPixelWidth, height: this.bloomPixelHeight }
     }
+
+    private static BLOOM_DEBUG_INTERVAL = 60
+    private bloomDebugFrame = 0
 
     beginFrame(): void {
         this.pendingInstances.length = 0
@@ -715,6 +718,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
                 return new WebGLSphereNode(entity, pos, radius, texture, color)
             })
+    }
+
+    private getMidGrayCanvas(): HTMLCanvasElement {
+        if(!this._midGrayCanvas) {
+            const canvas = getPlatform().createCanvas()
+            canvas.width = 1
+            canvas.height = 1
+            const ctx = canvas.getContext("2d")!
+            ctx.fillStyle = "#808080"
+            ctx.fillRect(0, 0, 1, 1)
+            this._midGrayCanvas = canvas
+        }
+        return this._midGrayCanvas
     }
 
     private getBlackCanvas(): HTMLCanvasElement {
