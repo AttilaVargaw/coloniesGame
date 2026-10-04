@@ -37,8 +37,8 @@ export class WebglRenderManager {
         return this.rectRenderer
     }
 
-    getBloomPixels(): { pixels: Uint8Array; width: number; height: number } | null {
-        return this.sphereRenderer.getBloomPixels()
+    setShowBloom(value: boolean) {
+        this.sphereRenderer.setShowBloom(value)
     }
 
     render() {

@@ -8,7 +8,6 @@ import { CircleNode } from "./circleNode";
 import { BaseRenderer } from "./baseRenderer";
 import { Entity } from "@/engine/entities/entity";
 import { TWO_PI } from "@/engine/lib/cameraConstants";
-import { hexToRgba } from "./hexToRgba";
 import { getPlatform } from "@/engine/lib/platform";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
@@ -92,10 +91,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
             context.save()
 
-            if(circle.emitLight) {
-                CircleRenderer.drawBloom(context, circle, center, screenRadius)
-            }
-
             CircleRenderer.buildCirclePath(context, circle, center, screenRadius, cx, cy, cz, camera)
             CircleRenderer.drawTextureFill(context, circle, center, screenRadius)
 
@@ -111,22 +106,6 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
         }
 
         context.restore()
-    }
-
-    private static drawBloom(context: CanvasRenderingContext2D, circle: CircleNode, center: ProjectedPoint, screenRadius: number) {
-        const fill = circle.color.fill || "#ffffff"
-        const bloomRadius = screenRadius * 8
-        const gradient = context.createRadialGradient(center.x, center.y, screenRadius * 0.2, center.x, center.y, bloomRadius)
-        gradient.addColorStop(0, hexToRgba("#ffffff", 0.9))
-        gradient.addColorStop(0.15, hexToRgba(fill, 0.6))
-        gradient.addColorStop(0.4, hexToRgba(fill, 0.15))
-        gradient.addColorStop(1, "rgba(0,0,0,0)")
-        context.globalCompositeOperation = "screen"
-        context.fillStyle = gradient
-        context.beginPath()
-        context.arc(center.x, center.y, bloomRadius, 0, TWO_PI)
-        context.fill()
-        context.globalCompositeOperation = "source-over"
     }
 
     private static drawSpikes(context: CanvasRenderingContext2D, center: ProjectedPoint, screenRadius: number) {

@@ -1,6 +1,6 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
-import { createBloomShaderProgram } from "./webglSphereShaders"
+import { createBloomShaderProgram, createBlurShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
@@ -226,7 +226,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         if(!this.shader) return
 
         this.renderPass(gl, this.shader, null, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
-        this.renderBloomPass(gl, camera, sortedGroups)
+        if(this._showBloom) {
+            this.renderGpuBloom(gl, camera, sortedGroups)
+        }
     }
     protected getCullMargin(_node: WebGLSphereNode): number {
         return 0
@@ -260,9 +262,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private bloomShader: ShaderProgram | null = null
     private bloomWidth = 0
     private bloomHeight = 0
-    private bloomPixels: Uint8Array | null = null
-    private bloomPixelWidth = 0
-    private bloomPixelHeight = 0
+    private blurFramebufferA: WebGLFramebuffer | null = null
+    private blurTextureA: WebGLTexture | null = null
+    private blurFramebufferB: WebGLFramebuffer | null = null
+    private blurTextureB: WebGLTexture | null = null
+    private blurShader: ShaderProgram<any, any> | null = null
+    private quadVao: WebGLBuffer | null = null
+    private quadIndexBuffer: WebGLBuffer | null = null
+    private quadIndexCount = 0
+    private _showBloom = false
+
+    setShowBloom(value: boolean) {
+        this._showBloom = value
+    }
 
     private createBloomFramebuffer(gl: WebGL2RenderingContext): void {
         if(this.bloomFramebuffer) {
@@ -502,12 +514,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(shader.attribs.instanceCloudPage, 0)
     }
 
-    private renderBloomPass(
+    private renderGpuBloom(
         gl: WebGL2RenderingContext,
         camera: Camera,
         sortedGroups: Array<[string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>]>
     ): void {
-        if(!this.bloomFramebuffer || !this.bloomShader) {
+        if(!this.bloomFramebuffer || !this.bloomShader || !this.blurFramebufferA || !this.blurFramebufferB || !this.blurShader || !this.bloomTexture || !this.blurTextureA || !this.blurTextureB) {
             return
         }
 
@@ -515,6 +527,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const bh = Math.max(1, Math.floor(gl.canvas.height / 2))
         if(bw !== this.bloomWidth || bh !== this.bloomHeight) {
             this.createBloomFramebuffer(gl)
+            this.createBlurFramebuffers(gl)
         }
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloomFramebuffer)
@@ -524,38 +537,125 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.renderPass(gl, this.bloomShader, this.bloomFramebuffer, this.bloomWidth, this.bloomHeight, sortedGroups, camera)
 
-        if(!this.bloomPixels || this.bloomPixels.length !== this.bloomWidth * this.bloomHeight * 4) {
-            this.bloomPixels = new Uint8Array(this.bloomWidth * this.bloomHeight * 4)
-        }
-        gl.readPixels(0, 0, this.bloomWidth, this.bloomHeight, gl.RGBA, gl.UNSIGNED_BYTE, this.bloomPixels)
-
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
-        this.bloomPixelWidth = this.bloomWidth
-        this.bloomPixelHeight = this.bloomHeight
+        const intensity = 1.2
+        this.renderBlurPass(gl, this.bloomTexture, this.blurFramebufferA, [1.0 / this.bloomWidth, 0.0], this.bloomWidth, this.bloomHeight, intensity)
+        this.renderBlurPass(gl, this.blurTextureA, this.blurFramebufferB, [0.0, 1.0 / this.bloomHeight], this.bloomWidth, this.bloomHeight, intensity)
 
-        this.bloomDebugFrame++
-        if(this.bloomDebugFrame % WebGLSphereRenderer.BLOOM_DEBUG_INTERVAL === 0) {
-            let maxBrightness = 0
-            for(let i = 0; i < this.bloomPixels.length; i += 4) {
-                if(this.bloomPixels[i] > maxBrightness) {
-                    maxBrightness = this.bloomPixels[i]
-                }
-            }
-            if(maxBrightness > 0) {
-                console.log(`[bloom] max brightness: ${maxBrightness}, size: ${this.bloomPixelWidth}x${this.bloomPixelHeight}`)
-            }
+        gl.enable(gl.BLEND)
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+        this.renderBlurPass(gl, this.blurTextureB, null, [0.0, 0.0], this.bloomWidth, this.bloomHeight, intensity)
+        gl.disable(gl.BLEND)
+    }
+
+    private createBlurFramebuffers(gl: WebGL2RenderingContext): void {
+        if(this.blurFramebufferA) {
+            gl.deleteFramebuffer(this.blurFramebufferA)
+            this.blurFramebufferA = null
         }
+        if(this.blurTextureA) {
+            gl.deleteTexture(this.blurTextureA)
+            this.blurTextureA = null
+        }
+        if(this.blurFramebufferB) {
+            gl.deleteFramebuffer(this.blurFramebufferB)
+            this.blurFramebufferB = null
+        }
+        if(this.blurTextureB) {
+            gl.deleteTexture(this.blurTextureB)
+            this.blurTextureB = null
+        }
+
+        const width = this.bloomWidth
+        const height = this.bloomHeight
+
+        this.blurFramebufferA = gl.createFramebuffer()
+        this.blurTextureA = gl.createTexture()
+        gl.bindTexture(gl.TEXTURE_2D, this.blurTextureA)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.blurFramebufferA)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.blurTextureA, 0)
+
+        this.blurFramebufferB = gl.createFramebuffer()
+        this.blurTextureB = gl.createTexture()
+        gl.bindTexture(gl.TEXTURE_2D, this.blurTextureB)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.blurFramebufferB)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.blurTextureB, 0)
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     }
 
-    getBloomPixels(): { pixels: Uint8Array; width: number; height: number } | null {
-        if(!this.bloomPixels) return null
-        return { pixels: this.bloomPixels, width: this.bloomPixelWidth, height: this.bloomPixelHeight }
+    private initQuadBuffer(gl: WebGL2RenderingContext): void {
+        const vertices = new Float32Array([
+            -1, -1, 0, 0,
+             1, -1, 1, 0,
+            -1,  1, 0, 1,
+             1,  1, 1, 1,
+        ])
+        const indices = new Uint16Array([0, 1, 2, 2, 1, 3])
+
+        this.quadVao = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVao)
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+        this.quadIndexBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+
+        this.quadIndexCount = indices.length
     }
 
-    private static BLOOM_DEBUG_INTERVAL = 60
-    private bloomDebugFrame = 0
+    private renderBlurPass(
+        gl: WebGL2RenderingContext,
+        sourceTexture: WebGLTexture,
+        targetFbo: WebGLFramebuffer | null,
+        direction: [number, number],
+        width: number,
+        height: number,
+        intensity: number
+    ): void {
+        if(!this.blurShader || !this.quadVao || !this.quadIndexBuffer) {
+            return
+        }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, targetFbo)
+        if(targetFbo) {
+            gl.viewport(0, 0, width, height)
+        } else {
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        }
+
+        gl.useProgram(this.blurShader.program)
+        gl.uniform2f(this.blurShader.uniforms.direction, direction[0], direction[1])
+        gl.uniform1f(this.blurShader.uniforms.intensity, intensity)
+
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, sourceTexture)
+        gl.uniform1i(this.blurShader.uniforms.texture, 0)
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVao)
+        gl.enableVertexAttribArray(this.blurShader.attribs.position)
+        gl.vertexAttribPointer(this.blurShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
+        gl.enableVertexAttribArray(this.blurShader.attribs.texCoord)
+        gl.vertexAttribPointer(this.blurShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+        gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
+
+        gl.disableVertexAttribArray(this.blurShader.attribs.position)
+        gl.disableVertexAttribArray(this.blurShader.attribs.texCoord)
+    }
 
     beginFrame(): void {
         this.pendingInstances.length = 0
@@ -604,8 +704,11 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.shader = createShaderProgram(gl)
         this.bloomShader = createBloomShaderProgram(gl)
+        this.blurShader = createBlurShaderProgram(gl)
 
         this.createBloomFramebuffer(gl)
+        this.createBlurFramebuffers(gl)
+        this.initQuadBuffer(gl)
 
         this.glCanvas.style.position = "absolute"
         this.glCanvas.style.top = "0"
@@ -755,6 +858,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
             if(this.bloomFramebuffer) this.gl.deleteFramebuffer(this.bloomFramebuffer)
             if(this.bloomTexture) this.gl.deleteTexture(this.bloomTexture)
+            if(this.blurFramebufferA) this.gl.deleteFramebuffer(this.blurFramebufferA)
+            if(this.blurTextureA) this.gl.deleteTexture(this.blurTextureA)
+            if(this.blurFramebufferB) this.gl.deleteFramebuffer(this.blurFramebufferB)
+            if(this.blurTextureB) this.gl.deleteTexture(this.blurTextureB)
+            if(this.quadVao) this.gl.deleteBuffer(this.quadVao)
+            if(this.quadIndexBuffer) this.gl.deleteBuffer(this.quadIndexBuffer)
         }
         return super.removeFromEngine()
     }

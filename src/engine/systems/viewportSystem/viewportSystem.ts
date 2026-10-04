@@ -3,33 +3,19 @@ import { System, } from "../system";
 import { ViewportInputHandler } from "./viewInputHandler";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { CAMERA_INITIAL_DISTANCE, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, FIELD_OF_VIEW, TWO_PI } from "@/engine/lib/cameraConstants";
-import { getPlatform } from "@/engine/lib/platform";
 import { BaseRenderer } from "./renderers/baseRenderer";
 import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
 import { RenderableNode } from "./renderers/renderableNode";
-import { applyBloomLayer, applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess";
+import { applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
 import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
 import { DebugRenderer } from "./renderers/debugRenderer";
 import { PointerInteractionSystem } from "../pointerInteractionSystem";
-
-let bloomSourceCanvas: HTMLCanvasElement | null = null
-let nightBloomCanvas: HTMLCanvasElement | null = null
-
-function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
-    if(!canvas || canvas.width !== width || canvas.height !== height) {
-        const c = getPlatform().createCanvas()
-        c.width = width
-        c.height = height
-        return c
-    }
-    return canvas
-}
 
 export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
@@ -181,70 +167,6 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
-    private drawNightBloom(bloomCtx: CanvasRenderingContext2D, bloom: { pixels: Uint8Array; width: number; height: number }): void {
-        nightBloomCanvas = ensureCanvas(nightBloomCanvas, bloom.width, bloom.height)
-        const tempCtx = nightBloomCanvas.getContext("2d")!
-        const imageData = tempCtx.createImageData(bloom.width, bloom.height)
-        imageData.data.set(bloom.pixels)
-        tempCtx.putImageData(imageData, 0, 0)
-
-        bloomCtx.save()
-        bloomCtx.globalCompositeOperation = "screen"
-        bloomCtx.globalAlpha = 1
-        bloomCtx.drawImage(nightBloomCanvas, 0, 0, bloomCtx.canvas.width, bloomCtx.canvas.height)
-        bloomCtx.restore()
-    }
-
-    private drawBloomSource(ctx: CanvasRenderingContext2D, camera: Camera) {
-        if(!this.engine) return
-
-        const allEntities = this.engine.getAllEntities()
-
-        ctx.save()
-        ctx.globalCompositeOperation = "source-over"
-
-        for(const entity of allEntities) {
-            const color = entity.getComponent(ColorComponent)
-            const radius = entity.getComponent(RadiusComponent)
-
-            if(!color?.emitLight || !radius || radius.radius < 10) continue
-
-            const [sx, sy, sz] = getAbsolute(entity, this.engine)
-            const projected = camera.project(sx, sy, sz)
-            if(!projected) continue
-
-            const screenX = projected.x
-            const screenY = projected.y
-            const screenRadius = radius.radius * projected.scale
-
-            if(
-                screenX + screenRadius * 3 < 0 ||
-                screenX - screenRadius * 3 > camera.cssWidth ||
-                screenY + screenRadius * 3 < 0 ||
-                screenY - screenRadius * 3 > camera.cssHeight
-            ) {
-                continue
-            }
-
-            const fill = color.fill || "#ffffff"
-            const r = parseInt(fill.slice(1, 3), 16) / 255
-            const g = parseInt(fill.slice(3, 5), 16) / 255
-            const b = parseInt(fill.slice(5, 7), 16) / 255
-
-            const bloomRadius = screenRadius * 3
-            const gradient = ctx.createRadialGradient(screenX, screenY, screenRadius * 0.5, screenX, screenY, bloomRadius)
-            gradient.addColorStop(0, `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},0.35)`)
-            gradient.addColorStop(0.5, `rgba(${r * 255 | 0},${g * 255 | 0},${b * 255 | 0},0.1)`)
-            gradient.addColorStop(1, "rgba(0,0,0,0)")
-            ctx.fillStyle = gradient
-            ctx.beginPath()
-            ctx.arc(screenX, screenY, bloomRadius, 0, TWO_PI)
-            ctx.fill()
-        }
-
-        ctx.restore()
-    }
-
     update(dt: number) {
         if(!this.engine) {
             return
@@ -268,17 +190,13 @@ export class ViewportSystem extends System {
 
         const { context } = this.camera
 
-        bloomSourceCanvas = ensureCanvas(bloomSourceCanvas, context.canvas.width, context.canvas.height)
-        const bloomCtx = bloomSourceCanvas.getContext("2d")!
-        bloomCtx.clearRect(0, 0, bloomSourceCanvas.width, bloomSourceCanvas.height)
-
         ViewportSystem.clear(context)
 
         drawStarfield(context, this.camera)
         drawNebulas(context, this.camera)
 
         this.debugRenderer.render()
-        this._renderers.entries().forEach(([_key, renderer]) => {
+        this._renderers.values().forEach((renderer) => {
             renderer.beginFrame()
             renderer.projectNodes()
             renderer.drawNodes(context)
@@ -286,20 +204,12 @@ export class ViewportSystem extends System {
         })
 
         this.webglRenderManager.projectNodes()
+        this.webglRenderManager.setShowBloom(showBloom)
         this.webglRenderManager.render()
 
         this.drawHoverIndicator(context)
 
         this.drawLensFlares(context, this.camera)
-
-        if(showBloom) {
-            this.drawBloomSource(bloomCtx, this.camera)
-            const nightBloom = this.webglRenderManager.getBloomPixels()
-            if(nightBloom) {
-                this.drawNightBloom(bloomCtx, nightBloom)
-            }
-            applyBloomLayer(context, bloomSourceCanvas, bloomSettings)
-        }
 
         if(showColorGrading) {
             applyColorGrading(context, context.canvas.width, context.canvas.height)

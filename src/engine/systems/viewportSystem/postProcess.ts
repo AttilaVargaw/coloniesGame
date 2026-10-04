@@ -1,11 +1,5 @@
-import type { BloomSettings } from "@/engine/lib/debugManager"
-import { getPlatform } from "@/engine/lib/platform"
 
-let offscreen: HTMLCanvasElement | null = null
-let offCtx: CanvasRenderingContext2D | null = null
-let bloomCanvas: HTMLCanvasElement | null = null
-let tempCanvas: HTMLCanvasElement | null = null
-let tempCtx: CanvasRenderingContext2D | null = null
+import { getPlatform } from "@/engine/lib/platform"
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
     if(!canvas || canvas.width !== width || canvas.height !== height) {
@@ -15,65 +9,6 @@ function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: n
         return c
     }
     return canvas
-}
-
-function blurCanvas(source: HTMLCanvasElement, target: HTMLCanvasElement, iterations: number) {
-    const w = source.width
-    const h = source.height
-    const targetCtx = target.getContext("2d")!
-    targetCtx.clearRect(0, 0, w, h)
-
-    tempCanvas = ensureCanvas(tempCanvas, w, h)
-    tempCtx = tempCanvas.getContext("2d")!
-    tempCtx.clearRect(0, 0, w, h)
-    tempCtx.drawImage(source, 0, 0)
-
-    for(let i = 0; i < iterations; i++) {
-        targetCtx.clearRect(0, 0, w, h)
-        targetCtx.filter = `blur(${8 + i * 4}px)`
-        targetCtx.globalCompositeOperation = "screen"
-        targetCtx.globalAlpha = 0.7
-        targetCtx.drawImage(tempCanvas, 0, 0)
-        tempCtx.clearRect(0, 0, w, h)
-        tempCtx.drawImage(target, 0, 0)
-    }
-
-    targetCtx.filter = "none"
-    targetCtx.globalCompositeOperation = "source-over"
-    targetCtx.globalAlpha = 1
-}
-
-export function applyBloom(ctx: CanvasRenderingContext2D, width: number, height: number, settings: BloomSettings) {
-    offscreen = ensureCanvas(offscreen, width, height)
-    bloomCanvas = ensureCanvas(bloomCanvas, width, height)
-    offCtx = offscreen.getContext("2d")!
-
-    offCtx.clearRect(0, 0, width, height)
-    offCtx.filter = `brightness(${settings.brightness}) contrast(${settings.contrast})`
-    offCtx.drawImage(ctx.canvas, 0, 0)
-    offCtx.filter = "none"
-
-    blurCanvas(offscreen, bloomCanvas, settings.iterations)
-
-    ctx.save()
-    ctx.globalCompositeOperation = "screen"
-    ctx.globalAlpha = settings.alpha
-    ctx.drawImage(bloomCanvas, 0, 0)
-    ctx.restore()
-}
-
-export function applyBloomLayer(ctx: CanvasRenderingContext2D, source: HTMLCanvasElement, settings: BloomSettings) {
-    const width = source.width
-    const height = source.height
-    bloomCanvas = ensureCanvas(bloomCanvas, width, height)
-
-    blurCanvas(source, bloomCanvas, settings.iterations)
-
-    ctx.save()
-    ctx.globalCompositeOperation = "screen"
-    ctx.globalAlpha = settings.alpha
-    ctx.drawImage(bloomCanvas, 0, 0)
-    ctx.restore()
 }
 
 let gradient: CanvasGradient | null = null

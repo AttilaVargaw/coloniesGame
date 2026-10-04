@@ -77,11 +77,25 @@ void main() {
     vec3 geometricNormal = normalize(vNormal);
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
+    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
     vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
 
-    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb;
-    float brightness = dot(nightColor, vec3(0.299, 0.587, 0.114));
-    fragColor = vec4(vec3(brightness * 4.0), 1.0);
+    vec3 color;
+    if(vEmissive > 0.5) {
+        color = texture(uTexture, texCoord).rgb;
+    } else {
+        color = texture(uNightTexture, nightTexCoord).rgb;
+    }
+    float brightness = dot(color, vec3(0.299, 0.587, 0.114));
+
+    float bloomMask = 1.0;
+    if(vEmissive < 0.5) {
+        float NdotL = dot(geometricNormal, vLightDir);
+        float cosTheta = smoothstep(-0.05, 0.05, NdotL);
+        bloomMask = 1.0 - cosTheta;
+    }
+
+    fragColor = vec4(vec3(brightness * 4.0 * bloomMask), 1.0);
 }
 `;
 
@@ -135,6 +149,80 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
         time: gl.getUniformLocation(program, "uTime"),
+    }
+
+    return { program, attribs, uniforms }
+}
+
+export const BLUR_VERTEX_SHADER_SOURCE = `#version 300 es
+in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+void main() {
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}`;
+
+export const BLUR_FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+in vec2 vTexCoord;
+uniform sampler2D uTexture;
+uniform vec2 uDirection;
+uniform float uIntensity;
+out vec4 fragColor;
+void main() {
+    vec4 color = texture(uTexture, vTexCoord) * 0.2270270270;
+    color += texture(uTexture, vTexCoord + uDirection * 1.0) * 0.1945945946;
+    color += texture(uTexture, vTexCoord - uDirection * 1.0) * 0.1945945946;
+    color += texture(uTexture, vTexCoord + uDirection * 2.0) * 0.1216216216;
+    color += texture(uTexture, vTexCoord - uDirection * 2.0) * 0.1216216216;
+    color += texture(uTexture, vTexCoord + uDirection * 3.0) * 0.0540540540;
+    color += texture(uTexture, vTexCoord - uDirection * 3.0) * 0.0540540540;
+    color += texture(uTexture, vTexCoord + uDirection * 4.0) * 0.0162162162;
+    color += texture(uTexture, vTexCoord - uDirection * 4.0) * 0.0162162162;
+    fragColor = color * uIntensity;
+}`;
+
+interface BlurAttribs {
+    position: number;
+    texCoord: number;
+    [key: string]: number;
+}
+
+interface BlurUniforms {
+    texture: WebGLUniformLocation | null;
+    direction: WebGLUniformLocation | null;
+    intensity: WebGLUniformLocation | null;
+    [key: string]: WebGLUniformLocation | null;
+}
+
+export function createBlurShaderProgram(gl: WebGL2RenderingContext): ShaderProgram<BlurAttribs, BlurUniforms> {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, BLUR_VERTEX_SHADER_SOURCE)
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, BLUR_FRAGMENT_SHADER_SOURCE)
+
+    const program = gl.createProgram()!
+    gl.attachShader(program, vertexShader)
+    gl.attachShader(program, fragmentShader)
+    gl.linkProgram(program)
+
+    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        const info = gl.getProgramInfoLog(program)
+        gl.deleteProgram(program)
+        throw new Error(`Blur shader program link error: ${info}`)
+    }
+
+    gl.deleteShader(vertexShader)
+    gl.deleteShader(fragmentShader)
+
+    const attribs = {
+        position: gl.getAttribLocation(program, "aPosition"),
+        texCoord: gl.getAttribLocation(program, "aTexCoord"),
+    }
+
+    const uniforms = {
+        texture: gl.getUniformLocation(program, "uTexture"),
+        direction: gl.getUniformLocation(program, "uDirection"),
+        intensity: gl.getUniformLocation(program, "uIntensity"),
     }
 
     return { program, attribs, uniforms }
@@ -211,7 +299,7 @@ void main() {
         color = pow(color, vec3(1.0 / 2.2));
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float diff = max(NdotL, 0.0);
+        float diff = cosTheta;
 
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);

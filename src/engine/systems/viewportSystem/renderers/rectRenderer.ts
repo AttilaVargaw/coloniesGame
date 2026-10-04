@@ -7,9 +7,7 @@ import { RectNode } from "./rectNode";
 import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
-import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { Vector3 } from "@/lib/Vector3";
-import { hexToRgba } from "./hexToRgba";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
     beginFrame(): void {
@@ -119,22 +117,6 @@ export class RectRenderer extends BaseRenderer<RectNode> {
             const y = projected.y - screenHeight / 2
 
             const texture = this.resolveTexture(rect.texture)
-
-            if(rect.emitLight) {
-                context.save()
-                const bloomRadius = Math.max(screenWidth, screenHeight) * 1.5
-                const gradient = context.createRadialGradient(projected.x, projected.y, Math.max(screenWidth, screenHeight) * 0.25, projected.x, projected.y, bloomRadius)
-                const fill = rect.color.fill || "#ffffff"
-                gradient.addColorStop(0, hexToRgba(fill, 0.35))
-                gradient.addColorStop(0.5, hexToRgba(fill, 0.1))
-                gradient.addColorStop(1, "rgba(0,0,0,0)")
-                context.globalCompositeOperation = "screen"
-                context.fillStyle = gradient
-                context.beginPath()
-                context.arc(projected.x, projected.y, bloomRadius, 0, TWO_PI)
-                context.fill()
-                context.restore()
-            }
 
             if(texture) {
                 context.save()
