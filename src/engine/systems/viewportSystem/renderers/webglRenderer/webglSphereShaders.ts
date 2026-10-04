@@ -54,6 +54,43 @@ void main() {
     gl_Position = uProjection * uView * worldPos;
 }`;
 
+export const BLOOM_VERTEX_SHADER_SOURCE = `#version 300 es
+in vec3 aPosition;
+in vec3 aNormal;
+
+in mat4 aInstanceModel;
+in mat3 aInstanceNormalMatrix;
+in vec3 aInstanceLightDir;
+in vec3 aInstanceLightColor;
+in vec2 aInstanceTexOffset;
+in vec2 aInstanceTexScale;
+in vec2 aInstanceNightTexOffset;
+in vec2 aInstanceNightTexScale;
+in vec2 aInstanceEmissiveCloud;
+
+uniform mat4 uView;
+uniform mat4 uProjection;
+
+out vec3 vNormal;
+out vec3 vLightDir;
+out float vEmissive;
+out vec2 vTexOffset;
+out vec2 vTexScale;
+out vec2 vNightTexOffset;
+out vec2 vNightTexScale;
+
+void main() {
+    vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
+    vNormal = normalize(aInstanceNormalMatrix * aNormal);
+    vLightDir = normalize(aInstanceLightDir);
+    vEmissive = aInstanceEmissiveCloud.x;
+    vTexOffset = aInstanceTexOffset;
+    vTexScale = aInstanceTexScale;
+    vNightTexOffset = aInstanceNightTexOffset;
+    vNightTexScale = aInstanceNightTexScale;
+    gl_Position = uProjection * uView * worldPos;
+}`;
+
 export const BLOOM_FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
@@ -62,13 +99,10 @@ precision mediump float;
 in vec3 vNormal;
 in vec3 vLightDir;
 in float vEmissive;
-in vec3 vWorldPos;
 in vec2 vTexOffset;
 in vec2 vTexScale;
 in vec2 vNightTexOffset;
 in vec2 vNightTexScale;
-in vec2 vRoughnessTexOffset;
-in vec2 vRoughnessTexScale;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -105,60 +139,38 @@ void main() {
 `;
 
 import { compileShader } from "./webglShaders"
-import type { ShaderProgram } from "./ShaderProgram"
+import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
 
 export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
-    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE)
-    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, BLOOM_FRAGMENT_SHADER_SOURCE)
-
-    const program = gl.createProgram()!
-    gl.attachShader(program, vertexShader)
-    gl.attachShader(program, fragmentShader)
-    gl.linkProgram(program)
-
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        const info = gl.getProgramInfoLog(program)
-        gl.deleteProgram(program)
-        throw new Error(`Bloom shader program link error: ${info}`)
-    }
-
-    gl.deleteShader(vertexShader)
-    gl.deleteShader(fragmentShader)
-
-    const attribs = {
-        position: gl.getAttribLocation(program, "aPosition"),
-        normal: gl.getAttribLocation(program, "aNormal"),
-        instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
-        instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
-        instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
-        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
-        instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
-        instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
-        instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
-        instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
-        instanceEmissiveCloud: gl.getAttribLocation(program, "aInstanceEmissiveCloud"),
-    }
-
-    const uniforms = {
-        view: gl.getUniformLocation(program, "uView"),
-        projection: gl.getUniformLocation(program, "uProjection"),
-        lightColor: gl.getUniformLocation(program, "uLightColor"),
-        ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
-        cameraPosition: gl.getUniformLocation(program, "uCameraPosition"),
-        texture: gl.getUniformLocation(program, "uTexture"),
-        nightTexture: gl.getUniformLocation(program, "uNightTexture"),
-        roughness: gl.getUniformLocation(program, "uRoughness"),
-        cloudTexture: gl.getUniformLocation(program, "uCloudTexture"),
-        normalMap: gl.getUniformLocation(program, "uNormalMap"),
-        paletteColor: gl.getUniformLocation(program, "uPaletteColor"),
-        tintColor: gl.getUniformLocation(program, "uTintColor"),
-        tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
-        time: gl.getUniformLocation(program, "uTime"),
-        bloomBrightness: gl.getUniformLocation(program, "uBloomBrightness"),
-        bloomThreshold: gl.getUniformLocation(program, "uBloomThreshold"),
-    }
-
-    return { program, attribs, uniforms }
+    return buildShaderProgram(gl, BLOOM_VERTEX_SHADER_SOURCE, BLOOM_FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["normal", "aNormal"],
+        ["instanceModel", "aInstanceModel"],
+        ["instanceNormalMatrix", "aInstanceNormalMatrix"],
+        ["instanceLightDir", "aInstanceLightDir"],
+        ["instanceLightColor", "aInstanceLightColor"],
+        ["instanceTexOffset", "aInstanceTexOffset"],
+        ["instanceTexScale", "aInstanceTexScale"],
+        ["instanceNightTexOffset", "aInstanceNightTexOffset"],
+        ["instanceNightTexScale", "aInstanceNightTexScale"],
+        ["instanceEmissiveCloud", "aInstanceEmissiveCloud"],
+    ], [
+        ["view", "uView"],
+        ["projection", "uProjection"],
+        ["ambientColor", "uAmbientColor"],
+        ["cameraPosition", "uCameraPosition"],
+        ["texture", "uTexture"],
+        ["nightTexture", "uNightTexture"],
+        ["roughness", "uRoughness"],
+        ["cloudTexture", "uCloudTexture"],
+        ["normalMap", "uNormalMap"],
+        ["paletteColor", "uPaletteColor"],
+        ["tintColor", "uTintColor"],
+        ["tintAlpha", "uTintAlpha"],
+        ["time", "uTime"],
+        ["bloomBrightness", "uBloomBrightness"],
+        ["bloomThreshold", "uBloomThreshold"],
+    ])
 }
 
 export const BLUR_VERTEX_SHADER_SOURCE = `#version 300 es
@@ -203,9 +215,18 @@ interface BlurUniforms {
     [key: string]: WebGLUniformLocation | null;
 }
 
-export function createBlurShaderProgram(gl: WebGL2RenderingContext): ShaderProgram<BlurAttribs, BlurUniforms> {
-    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, BLUR_VERTEX_SHADER_SOURCE)
-    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, BLUR_FRAGMENT_SHADER_SOURCE)
+export function buildShaderProgram<
+    A extends Record<string, number> = ShaderProgramAttribs,
+    U extends Record<string, WebGLUniformLocation | null> = ShaderProgramUniforms
+>(
+    gl: WebGL2RenderingContext,
+    vertSource: string,
+    fragSource: string,
+    attribs: Array<[string, string]>,
+    uniforms: Array<[string, string]>
+): ShaderProgram<A, U> {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertSource)
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragSource)
 
     const program = gl.createProgram()!
     gl.attachShader(program, vertexShader)
@@ -215,24 +236,34 @@ export function createBlurShaderProgram(gl: WebGL2RenderingContext): ShaderProgr
     if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         const info = gl.getProgramInfoLog(program)
         gl.deleteProgram(program)
-        throw new Error(`Blur shader program link error: ${info}`)
+        throw new Error(`Shader program link error: ${info}`)
     }
 
     gl.deleteShader(vertexShader)
     gl.deleteShader(fragmentShader)
 
-    const attribs = {
-        position: gl.getAttribLocation(program, "aPosition"),
-        texCoord: gl.getAttribLocation(program, "aTexCoord"),
+    const attribMap: Record<string, number> = {}
+    for(const [name, glName] of attribs) {
+        attribMap[name] = gl.getAttribLocation(program, glName)
     }
 
-    const uniforms = {
-        texture: gl.getUniformLocation(program, "uTexture"),
-        direction: gl.getUniformLocation(program, "uDirection"),
-        intensity: gl.getUniformLocation(program, "uIntensity"),
+    const uniformMap: Record<string, WebGLUniformLocation | null> = {}
+    for(const [name, glName] of uniforms) {
+        uniformMap[name] = gl.getUniformLocation(program, glName)
     }
 
-    return { program, attribs, uniforms }
+    return { program, attribs: attribMap as A, uniforms: uniformMap as U }
+}
+
+export function createBlurShaderProgram(gl: WebGL2RenderingContext): ShaderProgram<BlurAttribs, BlurUniforms> {
+    return buildShaderProgram<BlurAttribs, BlurUniforms>(gl, BLUR_VERTEX_SHADER_SOURCE, BLUR_FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["texCoord", "aTexCoord"],
+    ], [
+        ["texture", "uTexture"],
+        ["direction", "uDirection"],
+        ["intensity", "uIntensity"],
+    ])
 }
 
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es

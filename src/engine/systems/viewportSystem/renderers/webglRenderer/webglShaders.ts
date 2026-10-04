@@ -1,5 +1,5 @@
 import { ShaderProgram } from "./ShaderProgram"
-import { VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE } from "./webglSphereShaders"
+import { VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE, buildShaderProgram } from "./webglSphereShaders"
 
 export function compileShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
     const shader = gl.createShader(type)!
@@ -14,54 +14,33 @@ export function compileShader(gl: WebGL2RenderingContext, type: number, source: 
 }
 
 export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
-    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE)
-    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE)
-
-    const program = gl.createProgram()!
-    gl.attachShader(program, vertexShader)
-    gl.attachShader(program, fragmentShader)
-    gl.linkProgram(program)
-
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        const info = gl.getProgramInfoLog(program)
-        gl.deleteProgram(program)
-        throw new Error(`Shader program link error: ${info}`)
-    }
-
-    gl.deleteShader(vertexShader)
-    gl.deleteShader(fragmentShader)
-
-    const attribs = {
-        position: gl.getAttribLocation(program, "aPosition"),
-        normal: gl.getAttribLocation(program, "aNormal"),
-        instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
-        instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
-        instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
-        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
-        instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
-        instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
-        instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
-        instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
-        instanceEmissiveCloud: gl.getAttribLocation(program, "aInstanceEmissiveCloud"),
-    }
-
-    const uniforms = {
-        view: gl.getUniformLocation(program, "uView"),
-        projection: gl.getUniformLocation(program, "uProjection"),
-        ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
-        cameraPosition: gl.getUniformLocation(program, "uCameraPosition"),
-        texture: gl.getUniformLocation(program, "uTexture"),
-        nightTexture: gl.getUniformLocation(program, "uNightTexture"),
-        roughness: gl.getUniformLocation(program, "uRoughness"),
-        cloudTexture: gl.getUniformLocation(program, "uCloudTexture"),
-        normalMap: gl.getUniformLocation(program, "uNormalMap"),
-        paletteColor: gl.getUniformLocation(program, "uPaletteColor"),
-        tintColor: gl.getUniformLocation(program, "uTintColor"),
-        tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
-        time: gl.getUniformLocation(program, "uTime"),
-        bloomBrightness: gl.getUniformLocation(program, "uBloomBrightness"),
-        bloomThreshold: gl.getUniformLocation(program, "uBloomThreshold"),
-    }
-
-    return { program, attribs, uniforms }
+    return buildShaderProgram(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["normal", "aNormal"],
+        ["instanceModel", "aInstanceModel"],
+        ["instanceNormalMatrix", "aInstanceNormalMatrix"],
+        ["instanceLightDir", "aInstanceLightDir"],
+        ["instanceLightColor", "aInstanceLightColor"],
+        ["instanceTexOffset", "aInstanceTexOffset"],
+        ["instanceTexScale", "aInstanceTexScale"],
+        ["instanceNightTexOffset", "aInstanceNightTexOffset"],
+        ["instanceNightTexScale", "aInstanceNightTexScale"],
+        ["instanceEmissiveCloud", "aInstanceEmissiveCloud"],
+    ], [
+        ["view", "uView"],
+        ["projection", "uProjection"],
+        ["ambientColor", "uAmbientColor"],
+        ["cameraPosition", "uCameraPosition"],
+        ["texture", "uTexture"],
+        ["nightTexture", "uNightTexture"],
+        ["roughness", "uRoughness"],
+        ["cloudTexture", "uCloudTexture"],
+        ["normalMap", "uNormalMap"],
+        ["paletteColor", "uPaletteColor"],
+        ["tintColor", "uTintColor"],
+        ["tintAlpha", "uTintAlpha"],
+        ["time", "uTime"],
+        ["bloomBrightness", "uBloomBrightness"],
+        ["bloomThreshold", "uBloomThreshold"],
+    ])
 }
