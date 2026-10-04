@@ -52,11 +52,14 @@ class AtlasPage {
 
         this.dirty = true
 
+        const halfU = 0.5 / this.size
+        const halfV = 0.5 / this.size
+
         return {
-            u0: contentX / this.size,
-            v0: contentY / this.size,
-            u1: (contentX + contentW) / this.size,
-            v1: (contentY + contentH) / this.size,
+            u0: contentX / this.size + halfU,
+            v0: contentY / this.size + halfV,
+            u1: (contentX + contentW) / this.size - halfU,
+            v1: (contentY + contentH) / this.size - halfV,
         }
     }
 

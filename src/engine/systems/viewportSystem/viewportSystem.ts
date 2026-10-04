@@ -236,6 +236,7 @@ export class ViewportSystem extends System {
         }
 
         this.camera.updateViewport()
+        this.camera.updateSmoothZoom(dt)
 
         this.inputHandler.update(dt)
         this.debugRenderer.update(dt)

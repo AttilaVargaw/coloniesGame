@@ -12,7 +12,7 @@ export class CameraFollowComponent extends EntityComponent {
     constructor(
         public target: Entity | null = null,
         public offset: Vector3 = [0, 0, 0],
-        public smoothFactor: number = 1,
+        public smoothFactor: number = 0.1,
     ) {
         super()
     }
@@ -94,10 +94,11 @@ export class CameraFollowSystem extends SystemWithNodes<CameraFollowNode> {
 
         if(smoothFactor < 1) {
             const [cx, cy, cz] = camera.lookAt
+            const t = 1 - Math.pow(1 - smoothFactor, (_dT ?? 16.667) / 16.667)
             camera.moveTo(
-                cx + (targetX - cx) * smoothFactor,
-                cy + (targetY - cy) * smoothFactor,
-                cz + (targetZ - cz) * smoothFactor,
+                cx + (targetX - cx) * t,
+                cy + (targetY - cy) * t,
+                cz + (targetZ - cz) * t,
             )
         } else {
             camera.moveTo(targetX, targetY, targetZ)

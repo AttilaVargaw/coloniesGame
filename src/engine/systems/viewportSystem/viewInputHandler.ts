@@ -1,5 +1,6 @@
 import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
+import { Vector3 } from "@/lib/Vector3";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { Queue } from "@/engine/lib/commandQueue";
 import { getPlatform } from "@/engine/lib/platform";
@@ -27,18 +28,20 @@ export class ViewportInputHandler {
     private rotationVelocityX = 0
     private rotationVelocityY = 0
     private wasRotatingWithoutTarget = false
+    private panVelocity: Vector3 = [0, 0, 0]
 
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem?: CameraFollowTarget) { }
 
     private static readonly DRAG_THRESHOLD = 3
     private static readonly ZOOM_SPEED = 1
     private static readonly KEY_PAN_SPEED = 0.02
+    private static readonly KEY_PAN_ACCELERATION = 0.3
     private static readonly MOUSE_ROTATE_SPEED = 0.008
     private static readonly WHEEL_ZOOM_STEP = 40
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
-    private static readonly ROTATION_INERTIA_DECAY = 0
-    private static readonly ROTATION_INERTIA_THRESHOLD = 0
+    private static readonly ROTATION_INERTIA_DECAY = 0.82
+    private static readonly ROTATION_INERTIA_THRESHOLD = 0.01
     private static readonly MAX_ZOOM = 5_000
     private static readonly MIN_ZOOM = -1000
 
@@ -80,14 +83,13 @@ export class ViewportInputHandler {
         if (this.heldKeys.has("a")) panRight -= 1
 
         if (panForward || panRight) {
-            const { rx, ry, fx, fy, } = camera.viewBasis
-            const speed = ViewportInputHandler.KEY_PAN_SPEED * dt * camera.distance
-
-            camera.moveTo(
-                camera.lookAt[0] + (panForward * fx + panRight * rx) * speed,
-                camera.lookAt[1] + (panForward * fy + panRight * ry) * speed,
-                camera.lookAt[2]
-            )
+            const { rx, ry, fx, fy } = camera.viewBasis
+            const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
+            const targetVx = (panForward * fx + panRight * rx) * targetSpeed
+            const targetVy = (panForward * fy + panRight * ry) * targetSpeed
+            const t = 1 - Math.pow(1 - ViewportInputHandler.KEY_PAN_ACCELERATION, dt / 16.667)
+            this.panVelocity[0] += (targetVx - this.panVelocity[0]) * t
+            this.panVelocity[1] += (targetVy - this.panVelocity[1]) * t
         }
 
         if (this.heldKeys.has("-") || this.heldKeys.has("=")) {
@@ -97,19 +99,6 @@ export class ViewportInputHandler {
             this._isZooming = true
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
         }
-    }
-
-    private panCamera(panRight: number, panForward: number, step: number) {
-        if (!panRight && !panForward) return
-
-        const camera = this.viewportSystem.camera
-        const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
-        const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
-        camera.moveTo(
-            camera.lookAt[0] + (panRight * rx + panForward * fx) * speed,
-            camera.lookAt[1] + (panRight * ry + panForward * fy) * speed,
-            camera.lookAt[2] + (panRight * rz + panForward * fz) * speed,
-        )
     }
 
     private applyEdgePan(dt: number, camera: Camera) {
@@ -128,7 +117,34 @@ export class ViewportInputHandler {
         if (y < threshold) panForward -= (1 - y / threshold) * step
         if (y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
 
-        this.panCamera(panRight, panForward, step)
+        if (panRight || panForward) {
+            const { rx, ry, fx, fy } = camera.viewBasis
+            const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
+            const targetVx = (panRight * rx + panForward * fx) * targetSpeed
+            const targetVy = (panRight * ry + panForward * fy) * targetSpeed
+            const t = 1 - Math.pow(0.1, dt / 16.667)
+            this.panVelocity[0] += (targetVx - this.panVelocity[0]) * t
+            this.panVelocity[1] += (targetVy - this.panVelocity[1]) * t
+        }
+    }
+
+    private applyPanVelocity(dt: number, camera: Camera) {
+        const [vx, vy] = this.panVelocity
+        if (vx !== 0 || vy !== 0) {
+            camera.moveTo(
+                camera.lookAt[0] + vx * dt,
+                camera.lookAt[1] + vy * dt,
+                camera.lookAt[2]
+            )
+            const damping = Math.pow(0.55, dt / 16.667)
+            this.panVelocity[0] *= damping
+            this.panVelocity[1] *= damping
+
+            if (Math.abs(this.panVelocity[0]) < 0.001 && Math.abs(this.panVelocity[1]) < 0.001) {
+                this.panVelocity[0] = 0
+                this.panVelocity[1] = 0
+            }
+        }
     }
 
     private static onContextMenu = (event: MouseEvent) => {
@@ -173,6 +189,9 @@ export class ViewportInputHandler {
         }
 
         this.heldKeys.clear()
+        this.panVelocity[0] = 0
+        this.panVelocity[1] = 0
+        this.panVelocity[2] = 0
     }
 
     private onKeyDown = (event: KeyboardEvent) => {
@@ -230,6 +249,7 @@ export class ViewportInputHandler {
 
         this.applyKeyScroll(dt, camera)
         this.applyEdgePan(dt, camera)
+        this.applyPanVelocity(dt, camera)
         this.applyWheelZoom(camera)
     }
 
@@ -264,7 +284,7 @@ export class ViewportInputHandler {
             const dy = data.y - this.lastPointer.y
             if (dx || dy) {
                 if (this.dragButton === 2) {
-                    Camera.panByPixels(dx, dy)
+                    camera.panByPixels(dx, dy)
                 } else if (this.dragButton === 1) {
                     if (this.hasFollowTarget) {
                         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED

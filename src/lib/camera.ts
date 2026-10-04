@@ -46,6 +46,7 @@ export default class Camera {
     maxDistance: number
     minHeightAboveTarget: number
     public aspectRatio: number = 1.0
+    private targetDistance: number
 
     private viewport: {
         left: number
@@ -73,6 +74,7 @@ export default class Camera {
         this.pitch = settings.pitch ?? Math.PI / 2
 
         this.fieldOfView = settings.fieldOfView ?? Math.PI / 4.0
+        this.targetDistance = this.distance
         this.viewport = {
             left: 0,
             right: 0,
@@ -211,9 +213,22 @@ export default class Camera {
 
     public zoomTo(z: number) {
         const effectiveMin = this.minHeightAboveTarget / Math.sin(this.pitch)
-        this.distance = Math.min(this.maxDistance, Math.max(effectiveMin, z))
+        this.targetDistance = Math.min(this.maxDistance, Math.max(effectiveMin, z))
         this.updateViewport()
         this.markViewDirty()
+    }
+
+    public updateSmoothZoom(dt: number) {
+        if (Math.abs(this.distance - this.targetDistance) > 0.01) {
+            const t = 1 - Math.pow(0.02, dt / 16.667)
+            this.distance += (this.targetDistance - this.distance) * t
+            this.updateViewport()
+            this.markViewDirty()
+        } else if (this.distance !== this.targetDistance) {
+            this.distance = this.targetDistance
+            this.updateViewport()
+            this.markViewDirty()
+        }
     }
 
     public zoomToAnchored(z: number, screenX: number, screenY: number) {
@@ -231,18 +246,16 @@ export default class Camera {
         this.zoomToAnchored(this.distance * factor, screenX, screenY)
     }
 
-    public static panByPixels(_dxPixels: number, _dyPixels: number) {
-        // const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
-        // const worldDeltaRight = (dxPixels / f) * this.distance
-        // const worldDeltaForward = (-dyPixels / f) * this.distance
-
-        // const { fx, fy, fz, rx, ry, rz } = this.viewBasis
-
-        // this.moveTo(
-        //     this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
-        //     this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
-        //     this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
-        // )
+    public panByPixels(dxPixels: number, dyPixels: number) {
+        const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
+        const worldDeltaRight = (dxPixels / f) * this.distance
+        const worldDeltaForward = (-dyPixels / f) * this.distance
+        const { fx, fy, fz, rx, ry, rz } = this.viewBasis
+        this.moveTo(
+            this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
+            this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
+            this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
+        )
     }
 
     moveTo(x: number, y: number, z: number) {
