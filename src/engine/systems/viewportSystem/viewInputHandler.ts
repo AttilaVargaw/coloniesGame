@@ -92,13 +92,26 @@ export class ViewportInputHandler {
             this.panVelocity[1] += (targetVy - this.panVelocity[1]) * t
         }
 
-        if (this.heldKeys.has("-") || this.heldKeys.has("=")) {
+        if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
             this._isZooming = true
             camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
-        } else if (this.heldKeys.has("+") || this.heldKeys.has("_")) {
+        } else if(this.heldKeys.has("+") || this.heldKeys.has("_")) {
             this._isZooming = true
             camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
         }
+    }
+
+    private panCamera(panRight: number, panForward: number, step: number) {
+        if (!panRight && !panForward) return
+
+        const camera = this.viewportSystem.camera
+        const { fx, fy, fz, rx, ry, rz } = camera.viewBasis
+        const speed = ViewportInputHandler.KEY_PAN_SPEED * step * camera.distance
+        camera.moveTo(
+            camera.lookAt[0] + (panRight * rx + panForward * fx) * speed,
+            camera.lookAt[1] + (panRight * ry + panForward * fy) * speed,
+            camera.lookAt[2] + (panRight * rz + panForward * fz) * speed,
+        )
     }
 
     private applyEdgePan(dt: number, camera: Camera) {
@@ -117,20 +130,12 @@ export class ViewportInputHandler {
         if (y < threshold) panForward -= (1 - y / threshold) * step
         if (y > bounds.bottom - threshold) panForward += (1 - (bounds.bottom - y) / threshold) * step
 
-        if (panRight || panForward) {
-            const { rx, ry, fx, fy } = camera.viewBasis
-            const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
-            const targetVx = (panRight * rx + panForward * fx) * targetSpeed
-            const targetVy = (panRight * ry + panForward * fy) * targetSpeed
-            const t = 1 - Math.pow(0.1, dt / 16.667)
-            this.panVelocity[0] += (targetVx - this.panVelocity[0]) * t
-            this.panVelocity[1] += (targetVy - this.panVelocity[1]) * t
-        }
+        this.panCamera(panRight, panForward, step)
     }
 
     private applyPanVelocity(dt: number, camera: Camera) {
         const [vx, vy] = this.panVelocity
-        if (vx !== 0 || vy !== 0) {
+        if(vx !== 0 || vy !== 0) {
             camera.moveTo(
                 camera.lookAt[0] + vx * dt,
                 camera.lookAt[1] + vy * dt,
@@ -140,7 +145,7 @@ export class ViewportInputHandler {
             this.panVelocity[0] *= damping
             this.panVelocity[1] *= damping
 
-            if (Math.abs(this.panVelocity[0]) < 0.001 && Math.abs(this.panVelocity[1]) < 0.001) {
+            if(Math.abs(this.panVelocity[0]) < 0.001 && Math.abs(this.panVelocity[1]) < 0.001) {
                 this.panVelocity[0] = 0
                 this.panVelocity[1] = 0
             }
@@ -285,7 +290,7 @@ export class ViewportInputHandler {
             if (dx || dy) {
                 if (this.dragButton === 2) {
                     camera.panByPixels(dx, dy)
-                } else if (this.dragButton === 1) {
+                } else if(this.dragButton === 1) {
                     if (this.hasFollowTarget) {
                         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
                         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
