@@ -8,7 +8,6 @@ import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
 import { ColorComponent } from "../../components/colorComponent";
 import { RadiusComponent } from "../../components/radiusComponent";
-import { RenderableNode } from "./renderers/renderableNode";
 import { applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
@@ -20,15 +19,11 @@ import { PointerInteractionSystem } from "../pointerInteractionSystem";
 export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
     private inputHandler!: ViewportInputHandler
-    private _renderers: Map<RendererConstructor<any>, BaseRenderer<RenderableNode>> = new Map()
     private webglRenderManager: WebglRenderManager
     private debugRenderer: DebugRenderer
+    private labelRenderer: LabelRenderer
 
     camera: Camera
-
-    renderers<T extends RendererConstructor<any>>(key: T): InstanceType<T> {
-        return this._renderers.get(key)! as InstanceType<T>
-    }
 
     constructor(canvasContext: CanvasRenderingContext2D) {
         super()
@@ -48,6 +43,7 @@ export class ViewportSystem extends System {
 
         this.webglRenderManager = new WebglRenderManager(this)
         this.debugRenderer = new DebugRenderer(this)
+        this.labelRenderer = new LabelRenderer(this)
     }
 
     get isDragging() {
@@ -194,13 +190,8 @@ export class ViewportSystem extends System {
         drawStarfield(context, this.camera)
         drawNebulas(context, this.camera)
 
-        this.debugRenderer.render()
-        this._renderers.values().forEach((renderer) => {
-            renderer.beginFrame()
-            renderer.projectNodes()
-            renderer.drawNodes(context)
-            renderer.endFrame()
-        })
+        this.labelRenderer.projectNodes()
+        this.labelRenderer.drawNodes(context)
 
         this.webglRenderManager.projectNodes()
         this.webglRenderManager.setShowBloom(showBloom)
@@ -225,6 +216,7 @@ export class ViewportSystem extends System {
         if(this.inputHandler.isRotatingWithoutTarget) {
             drawRotationIndicator(context, this.camera)
         }
+        this.debugRenderer.render()
     }
 
     init(cameraFollowSystem?: { isFollowing(): boolean; stopFollowing(): void }) {
@@ -236,19 +228,7 @@ export class ViewportSystem extends System {
         this.engine = engine
         super.addToEngine(engine)
 
-        this._renderers = [
-            LabelRenderer
-        ].reduce((prev, curr) => {
-            const renderer = new curr(this)
-
-            prev.set(curr, renderer)
-
-            renderer.addToEngine(this.engine!)
-            renderer.init?.()
-
-            return prev
-        }, new Map())
-
+        this.labelRenderer.addToEngine(engine)
         this.webglRenderManager.addToEngine(engine)
         this.debugRenderer.addToEngine(engine)
 
@@ -261,10 +241,7 @@ export class ViewportSystem extends System {
         }
 
         this.inputHandler.removeFromEngine()
-
-        for(const renderer of this._renderers.values()) {
-            renderer.removeFromEngine()
-        }
+        this.labelRenderer.removeFromEngine()
 
         super.removeFromEngine()
 
