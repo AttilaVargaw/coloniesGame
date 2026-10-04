@@ -20,7 +20,7 @@ import { PointerInteractionSystem } from "@/engine/systems/pointerInteractionSys
 import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
-import { AsteroidSpinSystem } from "./systems/asteroidSpinSystem"
+import { SpinSystem } from "./systems/spinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
 
@@ -65,7 +65,7 @@ export class Game {
             // .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, viewport)
             .addSystem(DebugSystem)
-            .addSystem(AsteroidSpinSystem)
+            .addSystem(SpinSystem)
 
         //viewportEntity.addComponent(new CameraFollowComponent())
 

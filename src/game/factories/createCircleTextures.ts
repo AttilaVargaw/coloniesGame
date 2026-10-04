@@ -47,7 +47,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 } as const satisfies Record<string, Palette>
 
-const size = 384
+const size = 384 
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
@@ -316,7 +316,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             const normalizedCloud = (cloudNoise + 1) / 2
 
             let r: number, g: number, b: number
-            if(normalizedLand > 0.48) {
+            if(normalizedLand > 0.4) {
                 r = lerp(landRgb.r * 0.7, landRgb.r * 1.3, normalizedLand)
                 g = lerp(landRgb.g * 0.7, landRgb.g * 1.3, normalizedLand)
                 b = lerp(landRgb.b * 0.7, landRgb.b * 1.3, normalizedLand)
@@ -513,15 +513,15 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
             const normalizedCloud = (cloudNoise + 1) / 2
 
             let alpha = 0
-            if(normalizedCloud > 0.52) {
-                alpha = Math.min(1, (normalizedCloud - 0.52) * 2.5)
+            if(normalizedCloud > 0.4) {
+                alpha = Math.min(1, (normalizedCloud - 0.48) * 3.5)
             }
 
             const idx = (y * size + x) * 4
             data[idx] = cloudsRgb.r
             data[idx + 1] = cloudsRgb.g
             data[idx + 2] = cloudsRgb.b
-            data[idx + 3] = Math.round(clamp(alpha * 200, 0, 255))
+            data[idx + 3] = Math.round(clamp(alpha * 230, 0, 255))
         }
     }
 
@@ -536,7 +536,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
 
     ctx.clearRect(0, 0, size, size)
 
-    const palette = PALETTES[archetype] || { land: baseColor, ocean: baseColor, clouds: "#ffffff", poles: "#e0e0e0" }
+    const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 
     const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)

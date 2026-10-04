@@ -106,6 +106,10 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     }
 
     drawNode(ctx: CanvasRenderingContext2D): void {
+        if(!this.engine || !this.viewportSystem.camera) {
+            return
+        }
+
         for(const rect of this.nodes) {
 
             const { projected } = this.getProjected(rect)

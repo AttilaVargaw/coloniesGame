@@ -164,7 +164,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     }
 
     drawNodes(): void {
-        if(!this.engine || !this.glContext) {
+        if(!this.engine || !this.glContext || !this.shader || !this.viewportSystem.camera) {
             return
         }
 

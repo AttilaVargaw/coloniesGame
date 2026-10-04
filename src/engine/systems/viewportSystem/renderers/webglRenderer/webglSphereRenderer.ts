@@ -43,7 +43,7 @@ export class WebGLSphereNode extends RenderableNode {
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     drawNodes(): void {
-        if(!this.engine || !this.atlas || !this.gl || !this.shader) {
+        if(!this.engine || !this.atlas || !this.gl || !this.shader || !this.viewportSystem.camera) {
             return
         }
 
@@ -168,9 +168,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             normalMatrix[7] = model[9]
             normalMatrix[8] = model[10]
 
-            const poolOffset = this.pendingInstances.length * 42
-            if(poolOffset + 42 > this.sphereInstancePool!.length) {
-                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 42 + this.MAX_SPHERE_INSTANCES * 42)
+            const poolOffset = this.pendingInstances.length * 43
+            if(poolOffset + 43 > this.sphereInstancePool!.length) {
+                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 43 + this.MAX_SPHERE_INSTANCES * 43)
                 const newPool = new Float32Array(newSize)
                 newPool.set(this.sphereInstancePool!)
                 this.sphereInstancePool = newPool
@@ -184,8 +184,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             pool.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], poolOffset + 33)
             pool.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], poolOffset + 35)
             pool.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], poolOffset + 37)
-            pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage], poolOffset + 39)
-            pool.set([normalPage], poolOffset + 41)
+            pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage, node.texture.rotation ?? 0], poolOffset + 39)
+            pool.set([normalPage], poolOffset + 42)
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -237,8 +237,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.renderGpuBloom(gl, camera, sortedGroups)
         }
     }
-    protected getCullMargin(_node: WebGLSphereNode): number {
-        return 0
+    protected getCullMargin(node: WebGLSphereNode): number {
+        return node.radius.radius
     }
     protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
         return false
@@ -362,7 +362,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 42 * 4
+        const instanceStride = 43 * 4
 
         let lastDayPage = -1
         let lastNightPage = -1
@@ -381,14 +381,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             instances.sort((a, b) => b.depth - a.depth)
 
             const [dayPage, nightPage, roughnessPage, cloudPage, normalPage] = key.split(':').map(Number)
-            const totalFloats = instances.length * 42
+            const totalFloats = instances.length * 43
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 42)
+                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 43)
                 this.sphereBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 42), i * 42)
+                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 43), i * 43)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -414,7 +414,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             setupAttrib(shader.attribs.instanceTexScale, 2, 33 * 4)
             setupAttrib(shader.attribs.instanceNightTexOffset, 2, 35 * 4)
             setupAttrib(shader.attribs.instanceNightTexScale, 2, 37 * 4)
-            setupAttrib(shader.attribs.instanceEmissiveCloud, 2, 39 * 4)
+            setupAttrib(shader.attribs.instanceEmissiveCloud, 3, 39 * 4)
 
             if(dayPage !== lastDayPage) {
                 const atlasTexture = this.atlas.getTextures(gl)[dayPage]
@@ -745,8 +745,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
 
-        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 42)
-        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 42)
+        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
+        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
 
         gl.clearColor(0, 0, 0, 0)
     }

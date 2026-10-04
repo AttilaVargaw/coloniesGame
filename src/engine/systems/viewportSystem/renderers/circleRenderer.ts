@@ -26,7 +26,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
     protected shouldSkipProjection(node: CircleNode, cameraDistance: number, _cameraScale: number): boolean {
         const belt = node.entity.getComponent(AsteroidBeltComponent)
-        if (belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
+        if(belt?.cullingDistanceThreshold !== undefined && cameraDistance > belt.cullingDistanceThreshold) {
             return true
         }
         return false
@@ -45,19 +45,19 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     private findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
-        if (!this.engine) return undefined
+        if(!this.engine) return undefined
 
         let current: Entity | undefined = planetEntity
-        while (current) {
+        while(current) {
             const sceneNode = this.engine.getSceneNode(current)
-            if (sceneNode?.parent) {
+            if(sceneNode?.parent) {
                 current = sceneNode.parent.entity
             } else {
                 break
             }
 
             const color = current.getComponent(ColorComponent)
-            if (color?.emitLight) {
+            if(color?.emitLight) {
                 return current
             }
         }
@@ -66,7 +66,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
 
     drawNode = (ctx: CanvasRenderingContext2D) => {
-        if(!this.engine) {
+        if(!this.engine || !this.viewportSystem.camera) {
             return
         }
 
@@ -125,21 +125,21 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     private static buildCirclePath(context: CanvasRenderingContext2D, circle: CircleNode, _center: ProjectedPoint, screenRadius: number, cx: number, cy: number, cz: number, camera: Camera) {
         context.beginPath()
         const segments = Math.max(32, Math.min(98, Math.round(screenRadius / 2)))
-            for(let i = 0; i <= segments; i++) {
-                const angle = (i / segments) * TWO_PI
-                const worldX = cx + circle.radius.radius * Math.cos(angle)
-                const worldY = cy + circle.radius.radius * Math.sin(angle)
-                const worldZ = cz
-                const projected = camera.project(worldX, worldY, worldZ)
-                if(!projected) {
-                    continue
-                }
-                if(i === 0) {
-                    context.moveTo(projected.x, projected.y)
-                } else {
-                    context.lineTo(projected.x, projected.y)
-                }
+        for(let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * TWO_PI
+            const worldX = cx + circle.radius.radius * Math.cos(angle)
+            const worldY = cy + circle.radius.radius * Math.sin(angle)
+            const worldZ = cz
+            const projected = camera.project(worldX, worldY, worldZ)
+            if(!projected) {
+                continue
             }
+            if(i === 0) {
+                context.moveTo(projected.x, projected.y)
+            } else {
+                context.lineTo(projected.x, projected.y)
+            }
+        }
         context.closePath()
     }
 
@@ -151,7 +151,14 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             }
             context.save()
             context.clip()
-            context.drawImage(circle.texture.day, 0, 0, circle.texture.day.width || 96, circle.texture.day.height || 96, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+            const rotation = circle.texture.rotation ?? 0
+            if(rotation !== 0) {
+                context.translate(center.x, center.y)
+                context.rotate(rotation)
+                context.drawImage(circle.texture.day, 0, 0, circle.texture.day.width || 96, circle.texture.day.height || 96, -screenRadius, -screenRadius, screenRadius * 2, screenRadius * 2)
+            } else {
+                context.drawImage(circle.texture.day, 0, 0, circle.texture.day.width || 96, circle.texture.day.height || 96, center.x - screenRadius, center.y - screenRadius, screenRadius * 2, screenRadius * 2)
+            }
             context.restore()
         } else if(circle.color.fill) {
             circle.setColor(context)

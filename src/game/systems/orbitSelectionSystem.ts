@@ -41,7 +41,7 @@ export class OrbitSelectionSystem extends System {
     }
 
     private onMouseMove = (data: { clientX: number, clientY: number }) => {
-        if(!this.viewport) return
+        if(!this.viewport || !this.viewport.camera) return
         const rect = this.viewport!.camera.context.canvas.getBoundingClientRect()
 
         this.mouseX = data.clientX - rect.left
@@ -65,7 +65,7 @@ export class OrbitSelectionSystem extends System {
     }
 
     confirmOrbitSelection() {
-        if(!this.selection || !this.engine || !this.viewport) return
+        if(!this.selection || !this.engine || !this.viewport || !this.viewport.camera) return
         const { ship, target } = this.selection
 
         const drive = ship.getComponent(JumpDriveComponent)
@@ -91,7 +91,7 @@ export class OrbitSelectionSystem extends System {
     }
 
     update(_dt: number): void {
-        if(!this.engine || !this.viewport) return
+        if(!this.engine || !this.viewport || !this.viewport.camera) return
 
         if(!this.selection) {
             this.detectOrbitSelection()

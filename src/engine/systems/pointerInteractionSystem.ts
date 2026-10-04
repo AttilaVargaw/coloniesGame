@@ -79,7 +79,7 @@ export class PointerInteractionSystem extends System {
     }
 
     private onContextMenu = ({ x, y }: { x: number, y: number }) => {
-        if(!this.engine) return
+        if(!this.engine || !this.viewportSystem.camera) return
 
         const { camera } = this.viewportSystem
 
@@ -106,7 +106,7 @@ export class PointerInteractionSystem extends System {
     }
 
     private doHover(data: PointerEventData): void {
-        if(!this.engine) return
+        if(!this.engine || !this.viewportSystem.camera) return
 
         if(this.viewportSystem.isDragging) {
             return
@@ -147,7 +147,7 @@ export class PointerInteractionSystem extends System {
     }
 
     private hitTestClick(data: PointerEventData): void {
-        if(!this.engine) return
+        if(!this.engine || !this.viewportSystem.camera) return
 
         const { camera } = this.viewportSystem
         let hit = false

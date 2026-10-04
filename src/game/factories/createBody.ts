@@ -22,6 +22,7 @@ import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
+import { RotationComponent } from "@/game/components/rotationComponent"
 import { angularSpeed } from "../utils/orbital"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
@@ -251,6 +252,7 @@ export async function createBody({
             const cloudBitmap = population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
             
             body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
+            body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
         }
         await maybeYieldAfterTexture()
     }

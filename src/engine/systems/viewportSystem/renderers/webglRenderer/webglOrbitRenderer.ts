@@ -45,7 +45,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
     }
 
     drawNodes(): void {
-        if(!this.engine || !this.gl || !this.shader) {
+        if(!this.engine || !this.gl || !this.shader || !this.viewportSystem.camera) {
             return
         }
 

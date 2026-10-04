@@ -6,40 +6,39 @@ import { Engine } from "@/engine/core/engine"
 import { isVisible, VisibleBounds } from "@engine/systems/viewportSystem/renderers/isVisible"
 import { ViewportSystem } from "@engine/systems/viewportSystem/viewportSystem"
 import { Entity } from "@/engine/entities/entity"
-import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent"
+import { RadiusComponent } from "@/engine/components/radiusComponent"
 
-export class AsteroidSpinNode extends EntityNode {
+export class SpinNode extends EntityNode {
     constructor(public rotation: RotationComponent, entity: Entity) {
         super(entity)
     }
 }
 
-export class AsteroidSpinSystem extends SystemWithNodes<AsteroidSpinNode> {
+export class SpinSystem extends SystemWithNodes<SpinNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
 
         engine.registerNodeType(
-            AsteroidSpinNode,
-            new Set([AsteroidBeltComponent]),
-            (entity) => new AsteroidSpinNode(
+            SpinNode,
+            new Set([RotationComponent, TextureComponent]),
+            (entity) => new SpinNode(
                 entity.getComponent(RotationComponent)!,
                 entity
             )
         )
 
-        this.nodes = engine.getNodeList(AsteroidSpinNode)
+        this.nodes = engine.getNodeList(SpinNode)
 
         return this
     }
 
     removeFromEngine(): this {
-        this.engine?.unregisterNodeType(AsteroidSpinNode)
+        this.engine?.unregisterNodeType(SpinNode)
         super.removeFromEngine()
         return this
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    protected updateNode(node: AsteroidSpinNode, dt?: number): void {
+    protected updateNode(node: SpinNode, dt?: number): void {
         const entity = node.entity
         const rotation = node.rotation
         const texture = entity.getComponent(TextureComponent)
@@ -65,20 +64,10 @@ export class AsteroidSpinSystem extends SystemWithNodes<AsteroidSpinNode> {
             bottom: camera.cssHeight,
         }
 
-        const visibleParents = new Map<string, boolean>()
-
         for (const node of this.nodes) {
-            const sceneNode = this.engine.getSceneNode(node.entity)
-            const parent = sceneNode?.parent?.entity
-            if (!parent) continue
-
-            let isVisibleResult = visibleParents.get(parent.id)
-            if (isVisibleResult === undefined) {
-                isVisibleResult = isVisible(bounds, 0, parent, this.engine)
-                visibleParents.set(parent.id, isVisibleResult)
-            }
-
-            if (isVisibleResult) {
+            const radius = node.entity.getComponent(RadiusComponent)
+            const margin = radius ? radius.radius : 0
+            if (isVisible(bounds, margin, node.entity, this.engine)) {
                 this.updateNode(node, dt)
             }
         }
