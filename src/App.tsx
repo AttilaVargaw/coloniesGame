@@ -1,5 +1,4 @@
 import "./App.css";
-import { renderingContextSettings } from './components/map/screen';
 import { useEffect, useState } from 'react';
 import { MapCreationData } from "@game/data/gameData";
 import { Game } from "@game/game";
@@ -18,7 +17,7 @@ function App() {
 
     let gameInstance: Game | null = null
 
-    Game.create((document.getElementById("2dCanvas") as HTMLCanvasElement).getContext("2d", renderingContextSettings) as CanvasRenderingContext2D, MapCreationData)
+    Game.create(MapCreationData)
       .then(newGame => {
         gameInstance = newGame!
         setGame(newGame!)

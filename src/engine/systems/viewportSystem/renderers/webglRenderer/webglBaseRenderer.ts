@@ -49,7 +49,7 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         if(ctx) {
             const camera = this.viewportSystem.camera
 
-            ctx.drawImage(this.glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
+            ctx.drawImage(this.glCanvas, 0, 0, camera!.cssWidth, camera!.cssHeight)
         }
     }
 

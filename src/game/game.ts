@@ -28,7 +28,7 @@ export class Game {
     readonly engine: World
     private gameLoopId?: number
 
-    private constructor(public renderingContext: CanvasRenderingContext2D, public map: BodyBlueprint) {
+    private constructor(public map: BodyBlueprint) {
         this.engine = new World()
 
         this.engine
@@ -40,7 +40,7 @@ export class Game {
             .addSystem(TimeScaleSystem)
             .addSystem(OrbitSystem)
             .addSystem(ButtonPressSystem)
-            .addSystem(ViewportSystem, renderingContext)
+            .addSystem(ViewportSystem)
 
         const dateEntity = createEntity()
             .addComponent(new DateComponent(0))
@@ -110,13 +110,8 @@ export class Game {
         update(previousTime)
     }
 
-    static async create(renderingContext: CanvasRenderingContext2D, map: BodyBlueprint) {
-        if(!renderingContext) {
-            console.error("No rendering context")
-
-            return
-        }
-        const game = new Game(renderingContext, map)
+    static async create(map: BodyBlueprint) {
+        const game = new Game(map)
         game.engine.getSystem(MapSystem).init().catch(console.error).then(() => {
             game.engine.getSystem(MapSystem).rebuildGraph()
         })

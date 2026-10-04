@@ -17,14 +17,13 @@ export class DebugRenderer extends System {
     private fpsLastTime = performance.now()
     private currentFps = 0
     private frameTimeSamples: number[] = []
-    private camera: Camera
+    private camera?: Camera
     private rectRenderer: WebGLRectRenderer
-    private debugManager: DebugManager 
+    private debugManager: DebugManager
 
     constructor(private viewport: ViewportSystem) {
         super()
 
-        this.camera = viewport.camera
         this.rectRenderer = viewport.webglManager.getRectRenderer()
         this.debugManager = viewport.engineRef?.getDebugManager()!
     }
@@ -32,6 +31,7 @@ export class DebugRenderer extends System {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine)
         this.debugManager = engine.getDebugManager()
+        this.camera = this.viewport.camera
 
         return this
     }
@@ -114,6 +114,10 @@ export class DebugRenderer extends System {
                 showClickBoxes }
         } = this.debugManager
 
+        if(!this.engine || !this.camera) {
+            return
+        }
+
         const { context } = this.camera
 
         if(showCameraGizmo) {
@@ -146,6 +150,10 @@ export class DebugRenderer extends System {
     }
 
     private drawClickBoxes(ctx: CanvasRenderingContext2D) {
+        if(!this.camera) {
+            return
+        }
+
         if(!this.viewport.engineRef) return
 
         const engine = this.viewport.engineRef

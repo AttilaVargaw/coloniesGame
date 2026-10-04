@@ -20,29 +20,15 @@ export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any
 export class ViewportSystem extends System {
     private inputHandler!: ViewportInputHandler
     private webglRenderManager: WebglRenderManager
-    private debugRenderer: DebugRenderer
+    private debugRenderer?: DebugRenderer
     private labelRenderer: LabelRenderer
 
-    camera: Camera
+    camera?: Camera
 
-    constructor(canvasContext: CanvasRenderingContext2D) {
+    constructor() {
         super()
-        this.camera = new Camera({
-            initialPosition: [
-                -5357.8, 4398.6, 600
-            ],
-            distance: CAMERA_INITIAL_DISTANCE,
-            fieldOfView: FIELD_OF_VIEW,
-            scaleX: 1.0,
-            scaleY: 1.0,
-            minDistance: CAMERA_MIN_DISTANCE,
-            maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: 1.15,
-            pitch: 0.8,
-        }, canvasContext)
 
         this.webglRenderManager = new WebglRenderManager(this)
-        this.debugRenderer = new DebugRenderer(this)
         this.labelRenderer = new LabelRenderer(this)
     }
 
@@ -164,7 +150,7 @@ export class ViewportSystem extends System {
     }
 
     update(dt: number) {
-        if(!this.engine) {
+        if(!this.engine || !this.camera || !this.debugRenderer) {
             return
         }
 
@@ -230,6 +216,22 @@ export class ViewportSystem extends System {
 
         this.labelRenderer.addToEngine(engine)
         this.webglRenderManager.addToEngine(engine)
+
+        this.camera = new Camera({
+            initialPosition: [
+                -5357.8, 4398.6, 600
+            ],
+            distance: CAMERA_INITIAL_DISTANCE,
+            fieldOfView: FIELD_OF_VIEW,
+            scaleX: 1.0,
+            scaleY: 1.0,
+            minDistance: CAMERA_MIN_DISTANCE,
+            maxDistance: CAMERA_MAX_DISTANCE,
+            yaw: 1.15,
+            pitch: 0.8,
+        }, engine.getCanvas("2d").getContext("2d")!)
+
+        this.debugRenderer = new DebugRenderer(this)
         this.debugRenderer.addToEngine(engine)
 
         return this

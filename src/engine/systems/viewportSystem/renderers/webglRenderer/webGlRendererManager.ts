@@ -68,7 +68,7 @@ export class WebglRenderManager {
         this.rectRenderer.drawNodes()
         this.sphereRenderer.drawNodes()
 
-        const camera = this.viewport.camera
+        const camera = this.viewport.camera!
 
         ctx.drawImage(glCanvas, 0, 0, camera.cssWidth, camera.cssHeight)
     }
