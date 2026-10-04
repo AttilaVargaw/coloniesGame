@@ -105,9 +105,10 @@ void main() {
     vec3 B = cross(geometricNormal, T);
     mat3 tBN = mat3(T, B, geometricNormal);
     vec3 mappedNormal = normalize(tBN * (texture(uNormalMap, texCoord).rgb * 2.0 - 1.0));
-    vec3 normal = mappedNormal;
+    float NdotL = dot(geometricNormal, vLightDir);
+    float normalBlend = max(NdotL, 0.0);
+    vec3 normal = normalize(mix(geometricNormal, mappedNormal, normalBlend));
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
-    float NdotL = dot(normal, vLightDir);
     float NdotV = abs(dot(normal, viewDir));
 
     float fresnel = pow(1.0 - NdotV, 3.0) * 0.25;
@@ -138,7 +139,7 @@ void main() {
         float specPower = mix(8.0, 128.0, 1.0 - roughness);
         vec3 specular = uLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
 
-        vec3 lit = dayColor * uLightColor * terminator + specular;
+        vec3 lit = dayColor * uLightColor * terminator + specular * cosTheta;
         vec3 ambient = dayColor * uAmbientColor;
 
         vec3 color = mix(ambient + rim, lit + rim, terminator);
