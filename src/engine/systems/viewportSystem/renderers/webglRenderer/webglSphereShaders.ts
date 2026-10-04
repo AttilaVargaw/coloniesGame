@@ -34,7 +34,6 @@ out vec2 vNightTexScale;
 out vec2 vRoughnessTexOffset;
 out vec2 vRoughnessTexScale;
 out float vCloudPage;
-out float vRotation;
 
 #define PI 3.14159265359
 
@@ -52,7 +51,6 @@ void main() {
     vRoughnessTexOffset = aInstanceTexOffset;
     vRoughnessTexScale = aInstanceTexScale;
     vCloudPage = aInstanceEmissiveCloud.y;
-    vRotation = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -80,7 +78,6 @@ out vec2 vTexOffset;
 out vec2 vTexScale;
 out vec2 vNightTexOffset;
 out vec2 vNightTexScale;
-out float vRotation;
 
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
@@ -91,7 +88,6 @@ void main() {
     vTexScale = aInstanceTexScale;
     vNightTexOffset = aInstanceNightTexOffset;
     vNightTexScale = aInstanceNightTexScale;
-    vRotation = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -107,7 +103,6 @@ in vec2 vTexOffset;
 in vec2 vTexScale;
 in vec2 vNightTexOffset;
 in vec2 vNightTexScale;
-in float vRotation;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -121,9 +116,7 @@ void main() {
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
     vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
-    texCoord.x = fract(texCoord.x - vRotation / (2.0 * PI));
     vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
-    nightTexCoord.x = fract(nightTexCoord.x - vRotation / (2.0 * PI));
 
     vec3 color;
     if(vEmissive > 0.5) {
@@ -290,7 +283,6 @@ in vec2 vNightTexScale;
 in vec2 vRoughnessTexOffset;
 in vec2 vRoughnessTexScale;
 in float vCloudPage;
-in float vRotation;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -318,11 +310,8 @@ void main() {
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
     vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
-    texCoord.x = fract(texCoord.x - vRotation / (2.0 * PI));
     vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
-    nightTexCoord.x = fract(nightTexCoord.x - vRotation / (2.0 * PI));
     vec2 roughnessTexCoord = vec2(u, v) * vRoughnessTexScale + vRoughnessTexOffset;
-    roughnessTexCoord.x = fract(roughnessTexCoord.x - vRotation / (2.0 * PI));
 
     vec3 T = normalize(cross(geometricNormal, vec3(0.0, 1.0, 0.0)));
     if(length(T) < 0.001) T = normalize(cross(geometricNormal, vec3(1.0, 0.0, 0.0)));

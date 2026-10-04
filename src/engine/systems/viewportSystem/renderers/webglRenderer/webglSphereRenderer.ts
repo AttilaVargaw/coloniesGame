@@ -138,7 +138,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
                 lightDir = lightDirLength > 0
                     ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
-                    : [0, 0, 1]
+                    : [0, 1, 0]
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {
@@ -146,7 +146,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                     starColor = [parsed.r / 255, parsed.g / 255, parsed.b / 255]
                 }
             } else {
-                lightDir = [0, 0, 1]
+                lightDir = [0, 1, 0]
             }
 
             const paletteRgb = hexToRgb(node.color.fill || "#808080")
@@ -154,18 +154,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             const model = mat4.create()
             mat4.identity(model)
             mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
+            mat4.rotateY(model, model, node.texture.rotation ?? 0)
             const scale = node.radius.radius
             mat4.scale(model, model, [scale, scale, scale])
 
             const normalMatrix = new Float32Array(9)
             normalMatrix[0] = model[0]
-            normalMatrix[1] = model[1]
-            normalMatrix[2] = model[2]
-            normalMatrix[3] = model[4]
+            normalMatrix[1] = model[4]
+            normalMatrix[2] = model[8]
+            normalMatrix[3] = model[1]
             normalMatrix[4] = model[5]
-            normalMatrix[5] = model[6]
-            normalMatrix[6] = model[8]
-            normalMatrix[7] = model[9]
+            normalMatrix[5] = model[9]
+            normalMatrix[6] = model[2]
+            normalMatrix[7] = model[6]
             normalMatrix[8] = model[10]
 
             const poolOffset = this.pendingInstances.length * 43
@@ -211,7 +212,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const { fx, fy, fz } = camera.viewBasis
         const [camX, camY, camZ] = camera.cameraPosition
-        mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 0, 1])
+        mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 1, 0])
 
         const aspectRatio = camera.context.canvas.width / camera.context.canvas.height
         mat4.perspective(this.projection, camera.fieldOfView, aspectRatio, camera.minDistance * 0.1, camera.maxDistance * 2)

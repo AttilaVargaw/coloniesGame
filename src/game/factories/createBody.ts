@@ -33,6 +33,8 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { TextureWorkerPool } from "../systems/textureWorkerPool"
 
+//Z is up, change it!
+
 let textureWorkerPool: TextureWorkerPool | null = null
 
 function getTextureWorkerPool(): TextureWorkerPool {

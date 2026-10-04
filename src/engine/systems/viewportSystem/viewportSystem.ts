@@ -227,8 +227,8 @@ export class ViewportSystem extends System {
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: 1.15,
-            pitch: 0.8,
+            yaw: 0,
+            pitch: 0,
         }, engine.getCanvas("2d").getContext("2d")!)
 
         this.debugRenderer = new DebugRenderer(this)

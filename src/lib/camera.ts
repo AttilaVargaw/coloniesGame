@@ -68,11 +68,9 @@ export default class Camera {
         this.minDistance = settings.minDistance ?? 100.0
         this.maxDistance = settings.maxDistance ?? 12000.0
         this.minHeightAboveTarget = settings.minHeightAboveTarget ?? 20.0
-        this.lookAt = settings.initialPosition ?? [0, 0, 0]
-
+        this.lookAt = settings.initialPosition ?? [0, 1, 0]
         this.yaw = settings.yaw ?? 0
-        this.pitch = settings.pitch ?? Math.PI / 2
-
+        this.pitch = settings.pitch ?? 0
         this.fieldOfView = settings.fieldOfView ?? Math.PI / 4.0
         this.targetDistance = this.distance
         this.viewport = {
@@ -123,7 +121,7 @@ export default class Camera {
         fy /= fLen
         fz /= fLen
 
-        const worldUp = [0, 0, 1]
+        const worldUp = [0, 1, 0]
 
         let rx: number
         let ry: number
@@ -219,12 +217,12 @@ export default class Camera {
     }
 
     public updateSmoothZoom(dt: number) {
-        if (Math.abs(this.distance - this.targetDistance) > 0.01) {
+        if(Math.abs(this.distance - this.targetDistance) > 0.01) {
             const t = 1 - Math.pow(0.02, dt / 16.667)
             this.distance += (this.targetDistance - this.distance) * t
             this.updateViewport()
             this.markViewDirty()
-        } else if (this.distance !== this.targetDistance) {
+        } else if(this.distance !== this.targetDistance) {
             this.distance = this.targetDistance
             this.updateViewport()
             this.markViewDirty()
