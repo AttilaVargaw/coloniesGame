@@ -109,8 +109,6 @@ export function createRectShaderProgram(gl: WebGL2RenderingContext): RectShaderP
     const uniforms = {
         projection: gl.getUniformLocation(program, "uProjection"),
         texture: gl.getUniformLocation(program, "uTexture"),
-        tintColor: gl.getUniformLocation(program, "uTintColor"),
-        tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
     };
 
     return { program, attribs, uniforms };

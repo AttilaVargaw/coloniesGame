@@ -106,8 +106,8 @@ void main() {
     mat3 tBN = mat3(T, B, geometricNormal);
     vec3 mappedNormal = normalize(tBN * (texture(uNormalMap, texCoord).rgb * 2.0 - 1.0));
     float NdotL = dot(geometricNormal, vLightDir);
-    float normalBlend = max(NdotL, 0.0);
-    vec3 normal = normalize(mix(geometricNormal, mappedNormal, normalBlend));
+    float cosTheta = smoothstep(-0.05, 0.05, NdotL);
+    vec3 normal = normalize(mix(geometricNormal, mappedNormal, cosTheta));
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
     float NdotV = abs(dot(normal, viewDir));
 
@@ -116,7 +116,6 @@ void main() {
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
     float roughness = texture(uRoughness, roughnessTexCoord).r;
-    float cosTheta = smoothstep(-0.05, 0.05, NdotL);
     vec3 rim = uLightColor * fresnel * dayColor * cosTheta;
 
     if(vEmissive > 0.5) {
@@ -125,25 +124,18 @@ void main() {
         color = pow(color, vec3(1.0 / 2.2));
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float cosTheta2 = cosTheta * cosTheta;
-        float sinTheta = sqrt(1.0 - cosTheta2);
-        float tanTheta = sinTheta / max(cosTheta, 0.001);
-        float roughness2 = roughness * roughness;
-        float A = 1.0 - 0.5 * roughness2 / (roughness2 + 0.33);
-        float B = 0.45 * roughness2 / (roughness2 + 0.09);
-        float diff = cosTheta * (A + B * max(0.0, NdotV) * tanTheta);
-        float terminator = diff;
+        float diff = max(NdotL, 0.0);
 
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);
         float specPower = mix(8.0, 128.0, 1.0 - roughness);
         vec3 specular = uLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
 
-        vec3 lit = dayColor * uLightColor * terminator + specular * cosTheta;
+        vec3 lit = dayColor * uLightColor * diff + specular * cosTheta;
         vec3 ambient = dayColor * uAmbientColor;
 
-        vec3 color = mix(ambient + rim, lit + rim, terminator);
-        color = mix(color, nightColor, 1.0 - terminator);
+        vec3 color = mix(ambient + rim, lit + rim, diff);
+        color = mix(color, nightColor, 1.0 - diff);
 
         if(vCloudPage > -0.5) {
             vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
@@ -152,9 +144,6 @@ void main() {
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
             color = mix(color, cloudColor, cloudAlpha * 0.7 * cosTheta);
         }
-
-        float terminatorScatter = smoothstep(-0.15, 0.0, NdotL) * 0.12;
-        color += uLightColor * dayColor * terminatorScatter;
 
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
