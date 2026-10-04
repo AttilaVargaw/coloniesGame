@@ -30,6 +30,8 @@ export interface ShaderProgramUniforms {
     tintColor: WebGLUniformLocation | null;
     tintAlpha: WebGLUniformLocation | null;
     time: WebGLUniformLocation | null;
+    bloomBrightness: WebGLUniformLocation | null;
+    bloomThreshold: WebGLUniformLocation | null;
     [key: string]: WebGLUniformLocation | null;
 }
 

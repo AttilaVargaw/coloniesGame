@@ -72,6 +72,7 @@ in vec2 vRoughnessTexScale;
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform float uBloomBrightness;
+uniform float uBloomThreshold;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -96,7 +97,9 @@ void main() {
         bloomMask = 1.0 - cosTheta;
     }
 
-    fragColor = vec4(color * uBloomBrightness * bloomMask, 1.0);
+    float brightness = dot(color, vec3(0.299, 0.587, 0.114));
+    float contribution = max(0.0, brightness - uBloomThreshold);
+    fragColor = vec4(color * contribution * uBloomBrightness * bloomMask, 1.0);
 }
 `;
 
@@ -151,6 +154,7 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
         time: gl.getUniformLocation(program, "uTime"),
         bloomBrightness: gl.getUniformLocation(program, "uBloomBrightness"),
+        bloomThreshold: gl.getUniformLocation(program, "uBloomThreshold"),
     }
 
     return { program, attribs, uniforms }

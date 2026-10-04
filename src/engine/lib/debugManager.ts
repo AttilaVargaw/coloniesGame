@@ -3,6 +3,7 @@ export interface BloomSettings {
     contrast: number
     iterations: number
     alpha: number
+    threshold: number
 }
 
 export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showContrastSaturation" | "showCullingOverlay" | "showCheckerPattern" | "showFrameTime" | "showClickBoxes"
@@ -25,10 +26,11 @@ export class DebugManager {
     }
 
     private _bloomSettings: BloomSettings = {
-        brightness: 0.6,
+        brightness: 0.3,
         contrast: 2,
         iterations: 3,
-        alpha: 0.4,
+        alpha: 0.25,
+        threshold: 0.4,
     }
 
     get debugflags() {

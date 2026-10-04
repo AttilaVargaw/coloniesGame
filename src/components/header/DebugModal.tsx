@@ -33,10 +33,11 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
 ]
 
 const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
-    brightness: 0.6,
+    brightness: 0.3,
     contrast: 2,
     iterations: 3,
-    alpha: 0.4,
+    alpha: 0.25,
+    threshold: 0.4,
 }
 
 export function DebugModal() {
@@ -160,6 +161,19 @@ export function DebugModal() {
                                     max={1}
                                     step={0.1}
                                     onValueChange={([value]) => handleBloomSettingChange("alpha", value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Threshold</Label>
+                                    <span className="text-xs text-muted-foreground">{bloomSettings.threshold.toFixed(1)}</span>
+                                </div>
+                                <Slider
+                                    value={[bloomSettings.threshold]}
+                                    min={0}
+                                    max={1}
+                                    step={0.05}
+                                    onValueChange={([value]) => handleBloomSettingChange("threshold", value)}
                                 />
                             </div>
                         </div>

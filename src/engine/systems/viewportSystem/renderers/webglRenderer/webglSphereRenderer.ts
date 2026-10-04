@@ -332,15 +332,16 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         gl.uniformMatrix4fv(shader.uniforms.view, false, this.view)
         gl.uniformMatrix4fv(shader.uniforms.projection, false, this.projection)
-        gl.uniform3f(shader.uniforms.lightColor, 2.0, 1.8, 1.5)
-        gl.uniform3f(shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
+        gl.uniform3f(shader.uniforms.lightColor, 1.0, 0.9, 0.8)
+        gl.uniform3f(shader.uniforms.ambientColor, 0.03, 0.03, 0.05)
 
         const [camX, camY, camZ] = camera.cameraPosition
         gl.uniform3f(shader.uniforms.cameraPosition, camX, camY, camZ)
         gl.uniform3f(shader.uniforms.tintColor, 1, 1, 1)
         gl.uniform1f(shader.uniforms.tintAlpha, 0)
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
-        gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 1.2)
+        gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 0.3)
+        gl.uniform1f(shader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.4)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 6 * 4
