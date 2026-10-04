@@ -6,6 +6,16 @@ function clamp(v: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, v))
 }
 
+function createCanvas(width: number, height: number): HTMLCanvasElement | OffscreenCanvas {
+    if(typeof document !== "undefined") {
+        const canvas = document.createElement("canvas")
+        canvas.width = width
+        canvas.height = height
+        return canvas
+    }
+    return new OffscreenCanvas(width, height)
+}
+
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
@@ -35,7 +45,7 @@ const PALETTES: Record<string, Palette> = {
     uranus: { land: "#7ec8c8", ocean: "#5aa8a8", clouds: "#b8e8e8", poles: "#d8f4f4" },
     neptune: { land: "#3a6cb0", ocean: "#1e4a80", clouds: "#6090d0", poles: "#c0d8f8" },
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
-}
+} as const satisfies Record<string, Palette>
 
 const size = 384
 
@@ -136,10 +146,8 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
 
 const noiseScale = 4
 
-export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -275,10 +283,8 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
     return out
 }
 
-export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -345,7 +351,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
 
     ctx.putImageData(imageData, 0, 0)
 
-    const atmosphereColor = palette.atmosphere || palette.clouds
+    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
     const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
     const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
     atmGradient.addColorStop(0, "rgba(0,0,0,0)")
@@ -357,10 +363,8 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
-export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -426,10 +430,8 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
     return canvas
 }
 
-export function createRoughnessTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createRoughnessTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -484,10 +486,8 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
     return canvas
 }
 
-export function createCloudTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createCloudTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -530,10 +530,8 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
     return canvas
 }
 
-export function createNightTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement {
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
+export function createNightTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
     ctx.clearRect(0, 0, size, size)
@@ -617,7 +615,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
 
     ctx.putImageData(imageData, 0, 0)
 
-    const atmosphereColor = palette.atmosphere || palette.clouds
+    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
     const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
     const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
     atmGradient.addColorStop(0, "rgba(0,0,0,0)")

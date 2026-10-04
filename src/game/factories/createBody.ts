@@ -30,7 +30,21 @@ import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { createPlanetTexture, createStarTexture, createNightTexture, createRoughnessTexture, createCloudTexture, createNormalTexture } from "./createCircleTextures"
+import { TextureWorkerPool } from "../systems/textureWorkerPool"
+
+let textureWorkerPool: TextureWorkerPool | null = null
+
+function getTextureWorkerPool(): TextureWorkerPool {
+    if(!textureWorkerPool) {
+        textureWorkerPool = new TextureWorkerPool({
+            workerCount: Math.min(navigator.hardwareConcurrency || 4, 8),
+            onResult: () => {},
+            onError: (message) => console.error("Texture worker error:", message),
+        })
+        textureWorkerPool.start()
+    }
+    return textureWorkerPool
+}
 
 let textureGenerationCount = 0
 const TEXTURE_YIELD_INTERVAL = 5
@@ -221,15 +235,22 @@ export async function createBody({
     const body = createMarker({ name: name === "root" ? undefined : name, ...markerInput })
 
     if(!buildable && typeof document !== "undefined") {
+        const pool = getTextureWorkerPool()
+        
         if(archetype === "sol") {
-            body.addComponent(new TextureComponent({ day: createStarTexture(marker.color, name), animationSpeed: 0.5, id: name }))
+            const dayBitmap = await pool.generate("star", marker.color, undefined, name)
+            body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
         } else if(archetype !== "baricenter") {
-            const dayTexture = createPlanetTexture(marker.color, archetype, name)
-            const nightTexture = population !== undefined ? createNightTexture(marker.color, archetype, name) : undefined
-            const roughnessTexture = createRoughnessTexture(marker.color, archetype, name)
-            const cloudTexture = population !== undefined ? createCloudTexture(marker.color, archetype, name) : undefined
-            const normalTexture = createNormalTexture(marker.color, archetype, name)
-            body.addComponent(new TextureComponent({ day: dayTexture, night: nightTexture, roughness: roughnessTexture, cloud: cloudTexture, normal: normalTexture, animationSpeed: 0.2, id: name }))
+            const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
+                pool.generate("planet", marker.color, archetype, name),
+                pool.generate("roughness", marker.color, archetype, name),
+                pool.generate("normal", marker.color, archetype, name),
+            ])
+            
+            const nightBitmap = population !== undefined ? await pool.generate("night", marker.color, archetype, name) : undefined
+            const cloudBitmap = population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
+            
+            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
         }
         await maybeYieldAfterTexture()
     }
