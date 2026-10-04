@@ -20,7 +20,7 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.arc(cx, cy, size, 0, TWO_PI);
     ctx.stroke();
 
-    const { rx, ry, ux, uy, fx, fy } = camera.viewBasis;
+    const { rx, ry, rz, ux, uy, uz, fx, fy, fz } = camera.viewBasis;
 
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
@@ -28,19 +28,19 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.strokeStyle = "rgba(255, 0, 0, 0.9)";
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + rx * axisLength, cy - ry * axisLength);
+    ctx.lineTo(cx + rx * axisLength, cy - rz * axisLength);
     ctx.stroke();
 
     ctx.strokeStyle = "rgba(0, 255, 0, 0.9)";
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + ux * axisLength, cy - uy * axisLength);
+    ctx.lineTo(cx + ux * axisLength, cy - uz * axisLength);
     ctx.stroke();
 
     ctx.strokeStyle = "rgba(0, 100, 255, 0.9)";
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + fx * axisLength, cy - fy * axisLength);
+    ctx.lineTo(cx + fx * axisLength, cy - fz * axisLength);
     ctx.stroke();
 
     ctx.font = "10px monospace";
@@ -49,9 +49,9 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.textBaseline = "middle";
 
     const labelOffset = axisLength + 8;
-    ctx.fillText("R", cx + rx * labelOffset, cy - ry * labelOffset);
-    ctx.fillText("U", cx + ux * labelOffset, cy - uy * labelOffset);
-    ctx.fillText("F", cx + fx * labelOffset, cy - fy * labelOffset);
+    ctx.fillText("R", cx + rx * labelOffset, cy - rz * labelOffset);
+    ctx.fillText("U", cx + ux * labelOffset, cy - uz * labelOffset);
+    ctx.fillText("F", cx + fx * labelOffset, cy - fz * labelOffset);
 
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";

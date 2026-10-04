@@ -120,7 +120,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 const ry = x * sinA + y * cosA
                 const x1 = rx * cosL - ry * cosI * sinL
                 const y1 = rx * sinL + ry * cosI * cosL
-                const projected = camera.project(cx + x1, cy + y1, cz + ry * sinI)
+                const projected = camera.project(cx + x1, cy + ry * sinI, cz + y1)
                 if(projected) {
                     points[i * 2] = projected.x
                     points[i * 2 + 1] = projected.y
