@@ -1,5 +1,6 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
+import { createBloomShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
 import { mat4 } from "@/engine/lib/mat4"
 import type { Vec3 } from "@/engine/lib/vec3"
@@ -13,6 +14,7 @@ import { getPlatform } from "@/engine/lib/platform"
 import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
+import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
 import { Vector3 } from "@/lib/Vector3"
 
@@ -212,34 +214,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const aspectRatio = camera.context.canvas.width / camera.context.canvas.height
         mat4.perspective(this.projection, camera.fieldOfView, aspectRatio, camera.minDistance * 0.1, camera.maxDistance * 2)
-        //this.projection[5] *= -1
-
-        gl.useProgram(this.shader.program)
-
-        gl.uniformMatrix4fv(this.shader.uniforms.view, false, this.view)
-        gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
-        gl.uniform3f(this.shader.uniforms.lightColor, 2.0, 1.8, 1.5)
-        gl.uniform3f(this.shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
-
-        gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
-        gl.uniform3f(this.shader.uniforms.tintColor, 1, 1, 1)
-        gl.uniform1f(this.shader.uniforms.tintAlpha, 0)
-        gl.uniform1f(this.shader.uniforms.time, performance.now() / 1000.0)
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
-        const stride = 6 * 4
-        gl.enableVertexAttribArray(this.shader.attribs.position)
-        gl.vertexAttribPointer(this.shader.attribs.position, 3, gl.FLOAT, false, stride, 0)
-        gl.enableVertexAttribArray(this.shader.attribs.normal)
-        gl.vertexAttribPointer(this.shader.attribs.normal, 3, gl.FLOAT, false, stride, 3 * 4)
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
-
-        if(!this.instanceBuffer) {
-            this.instanceBuffer = gl.createBuffer()
-        }
-
-        const instanceStride = 38 * 4
 
         const groups = this.groupsMap
         groups.clear()
@@ -255,18 +229,138 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
 
-        const modelLoc = this.shader.attribs.instanceModel
-        const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
+        if(!this.shader) return
 
-        gl.enable(gl.DEPTH_TEST)
-        gl.enable(gl.CULL_FACE)
-        gl.cullFace(gl.BACK)
+        this.renderPass(gl, this.shader, null, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
+        this.renderBloomPass(gl, camera, sortedGroups)
+    }
+    protected getCullMargin(_node: WebGLSphereNode): number {
+        return 0
+    }
+    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        return false
+    }
+    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraDistance: number, _cameraScale: number): boolean {
+        return false
+    }
+    private shader: ShaderProgram | null = null
+    private sphereVao: WebGLBuffer | null = null
+    private sphereIndexBuffer: WebGLBuffer | null = null
+    private sphereIndexCount = 0
+    private sphereIndexType = 0
+    private atlas!: WebGLTextureAtlas
+    private nightAtlas!: WebGLTextureAtlas
+    private roughnessAtlas!: WebGLTextureAtlas
+    private cloudAtlas!: WebGLTextureAtlas
+    private normalAtlas!: WebGLTextureAtlas
+    private readonly MAX_SPHERE_INSTANCES = 256
+    private sphereInstancePool: Float32Array | null = null
+    private sphereBatchBuffer: Float32Array | null = null
+    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }> = []
+    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>>()
+    private _blackCanvas: HTMLCanvasElement | undefined
+    private _lastShowCheckerPattern = false
+    private bloomFramebuffer: WebGLFramebuffer | null = null
+    private bloomTexture: WebGLTexture | null = null
+    private bloomShader: ShaderProgram | null = null
+    private bloomWidth = 0
+    private bloomHeight = 0
+    private bloomPixels: Uint8Array | null = null
+    private bloomPixelWidth = 0
+    private bloomPixelHeight = 0
+
+    private createBloomFramebuffer(gl: WebGL2RenderingContext): void {
+        if(this.bloomFramebuffer) {
+            gl.deleteFramebuffer(this.bloomFramebuffer)
+            this.bloomFramebuffer = null
+        }
+        if(this.bloomTexture) {
+            gl.deleteTexture(this.bloomTexture)
+            this.bloomTexture = null
+        }
+
+        const width = Math.max(1, Math.floor(gl.canvas.width / 2))
+        const height = Math.max(1, Math.floor(gl.canvas.height / 2))
+        this.bloomWidth = width
+        this.bloomHeight = height
+
+        this.bloomFramebuffer = gl.createFramebuffer()
+        this.bloomTexture = gl.createTexture()
+
+        gl.bindTexture(gl.TEXTURE_2D, this.bloomTexture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloomFramebuffer)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.bloomTexture, 0)
+
+        const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
+        if(status !== gl.FRAMEBUFFER_COMPLETE) {
+            throw new Error(`Bloom framebuffer incomplete: ${status}`)
+        }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    }
+
+    private renderPass(
+        gl: WebGL2RenderingContext,
+        shader: ShaderProgram,
+        targetFramebuffer: WebGLFramebuffer | null,
+        width: number,
+        height: number,
+        sortedGroups: Array<[string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>]>,
+        camera: Camera
+    ): void {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, targetFramebuffer)
+        if(targetFramebuffer) {
+            gl.viewport(0, 0, width, height)
+        } else {
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        }
+
+        gl.useProgram(shader.program)
+
+        gl.uniformMatrix4fv(shader.uniforms.view, false, this.view)
+        gl.uniformMatrix4fv(shader.uniforms.projection, false, this.projection)
+        gl.uniform3f(shader.uniforms.lightColor, 2.0, 1.8, 1.5)
+        gl.uniform3f(shader.uniforms.ambientColor, 0.02, 0.02, 0.04)
+
+        const [camX, camY, camZ] = camera.cameraPosition
+        gl.uniform3f(shader.uniforms.cameraPosition, camX, camY, camZ)
+        gl.uniform3f(shader.uniforms.tintColor, 1, 1, 1)
+        gl.uniform1f(shader.uniforms.tintAlpha, 0)
+        gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
+        const stride = 6 * 4
+        gl.enableVertexAttribArray(shader.attribs.position)
+        gl.vertexAttribPointer(shader.attribs.position, 3, gl.FLOAT, false, stride, 0)
+        gl.enableVertexAttribArray(shader.attribs.normal)
+        gl.vertexAttribPointer(shader.attribs.normal, 3, gl.FLOAT, false, stride, 3 * 4)
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
+
+        if(!this.instanceBuffer) {
+            this.instanceBuffer = gl.createBuffer()
+        }
+
+        const instanceStride = 38 * 4
 
         let lastDayPage = -1
         let lastNightPage = -1
         let lastRoughnessPage = -1
         let lastCloudPage = -1
         let lastNormalPage = -1
+
+        gl.enable(gl.DEPTH_TEST)
+        gl.enable(gl.CULL_FACE)
+        gl.cullFace(gl.BACK)
+
+        const modelLoc = shader.attribs.instanceModel
+        const normalMatrixLoc = shader.attribs.instanceNormalMatrix
 
         for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
@@ -306,33 +400,33 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.enableVertexAttribArray(normalMatrixLoc + 2)
             gl.vertexAttribPointer(normalMatrixLoc + 2, 3, gl.FLOAT, false, instanceStride, 22 * 4)
             gl.vertexAttribDivisor(normalMatrixLoc + 2, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
-            gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 28 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceNightTexOffset)
-            gl.vertexAttribPointer(this.shader.attribs.instanceNightTexOffset, 2, gl.FLOAT, false, instanceStride, 32 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceNightTexScale)
-            gl.vertexAttribPointer(this.shader.attribs.instanceNightTexScale, 2, gl.FLOAT, false, instanceStride, 34 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceEmissive)
-            gl.vertexAttribPointer(this.shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 36 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceCloudPage)
-            gl.vertexAttribPointer(this.shader.attribs.instanceCloudPage, 1, gl.FLOAT, false, instanceStride, 37 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceCloudPage, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceLightDir)
+            gl.vertexAttribPointer(shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 25 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceLightDir, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceTexOffset)
+            gl.vertexAttribPointer(shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 28 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceTexOffset, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceTexScale)
+            gl.vertexAttribPointer(shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 30 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceTexScale, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceNightTexOffset)
+            gl.vertexAttribPointer(shader.attribs.instanceNightTexOffset, 2, gl.FLOAT, false, instanceStride, 32 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceNightTexOffset, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceNightTexScale)
+            gl.vertexAttribPointer(shader.attribs.instanceNightTexScale, 2, gl.FLOAT, false, instanceStride, 34 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceNightTexScale, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceEmissive)
+            gl.vertexAttribPointer(shader.attribs.instanceEmissive, 1, gl.FLOAT, false, instanceStride, 36 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceEmissive, 1)
+            gl.enableVertexAttribArray(shader.attribs.instanceCloudPage)
+            gl.vertexAttribPointer(shader.attribs.instanceCloudPage, 1, gl.FLOAT, false, instanceStride, 37 * 4)
+            gl.vertexAttribDivisor(shader.attribs.instanceCloudPage, 1)
 
             if(dayPage !== lastDayPage) {
                 const atlasTexture = this.atlas.getTextures(gl)[dayPage]
                 gl.activeTexture(gl.TEXTURE0)
                 gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
-                gl.uniform1i(this.shader.uniforms.texture, 0)
+                gl.uniform1i(shader.uniforms.texture, 0)
                 lastDayPage = dayPage
             }
 
@@ -341,7 +435,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const nightPageTexture = nightAtlasTextures[nightPage] ?? nightAtlasTextures[0]
                 gl.activeTexture(gl.TEXTURE1)
                 gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
-                gl.uniform1i(this.shader.uniforms.nightTexture, 1)
+                gl.uniform1i(shader.uniforms.nightTexture, 1)
                 lastNightPage = nightPage
             }
 
@@ -350,7 +444,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const roughnessPageTexture = roughnessAtlasTextures[roughnessPage] ?? roughnessAtlasTextures[0]
                 gl.activeTexture(gl.TEXTURE2)
                 gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
-                gl.uniform1i(this.shader.uniforms.roughness, 2)
+                gl.uniform1i(shader.uniforms.roughness, 2)
                 lastRoughnessPage = roughnessPage
             }
 
@@ -359,7 +453,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const cloudPageTexture = cloudAtlasTextures[cloudPage] ?? cloudAtlasTextures[0]
                 gl.activeTexture(gl.TEXTURE3)
                 gl.bindTexture(gl.TEXTURE_2D, cloudPageTexture)
-                gl.uniform1i(this.shader.uniforms.cloudTexture, 3)
+                gl.uniform1i(shader.uniforms.cloudTexture, 3)
                 lastCloudPage = cloudPage
             }
 
@@ -368,12 +462,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const normalPageTexture = normalAtlasTextures[normalPage] ?? normalAtlasTextures[0]
                 gl.activeTexture(gl.TEXTURE4)
                 gl.bindTexture(gl.TEXTURE_2D, normalPageTexture)
-                gl.uniform1i(this.shader.uniforms.normalMap, 4)
+                gl.uniform1i(shader.uniforms.normalMap, 4)
                 lastNormalPage = normalPage
             }
 
             const first = instances[0]
-            gl.uniform3f(this.shader.uniforms.paletteColor, first.paletteR, first.paletteG, first.paletteB)
+            gl.uniform3f(shader.uniforms.paletteColor, first.paletteR, first.paletteG, first.paletteB)
 
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
@@ -381,7 +475,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.CULL_FACE)
 
-        //reset state
         gl.disableVertexAttribArray(modelLoc)
         gl.disableVertexAttribArray(modelLoc + 1)
         gl.disableVertexAttribArray(modelLoc + 2)
@@ -389,15 +482,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(normalMatrixLoc)
         gl.disableVertexAttribArray(normalMatrixLoc + 1)
         gl.disableVertexAttribArray(normalMatrixLoc + 2)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceLightDir)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexOffset)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceNightTexScale)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceEmissive)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceCloudPage)
-        gl.disableVertexAttribArray(this.shader.attribs.position)
-        gl.disableVertexAttribArray(this.shader.attribs.normal)
+        gl.disableVertexAttribArray(shader.attribs.instanceLightDir)
+        gl.disableVertexAttribArray(shader.attribs.instanceTexOffset)
+        gl.disableVertexAttribArray(shader.attribs.instanceTexScale)
+        gl.disableVertexAttribArray(shader.attribs.instanceNightTexOffset)
+        gl.disableVertexAttribArray(shader.attribs.instanceNightTexScale)
+        gl.disableVertexAttribArray(shader.attribs.instanceEmissive)
+        gl.disableVertexAttribArray(shader.attribs.instanceCloudPage)
+        gl.disableVertexAttribArray(shader.attribs.position)
+        gl.disableVertexAttribArray(shader.attribs.normal)
         gl.vertexAttribDivisor(modelLoc, 0)
         gl.vertexAttribDivisor(modelLoc + 1, 0)
         gl.vertexAttribDivisor(modelLoc + 2, 0)
@@ -405,40 +498,61 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.vertexAttribDivisor(normalMatrixLoc, 0)
         gl.vertexAttribDivisor(normalMatrixLoc + 1, 0)
         gl.vertexAttribDivisor(normalMatrixLoc + 2, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexOffset, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceNightTexScale, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceEmissive, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceCloudPage, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceLightDir, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceTexOffset, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceTexScale, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceNightTexOffset, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceNightTexScale, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceEmissive, 0)
+        gl.vertexAttribDivisor(shader.attribs.instanceCloudPage, 0)
     }
-    protected getCullMargin(_node: WebGLSphereNode): number {
-        return 0
+
+    private renderBloomPass(
+        gl: WebGL2RenderingContext,
+        camera: Camera,
+        sortedGroups: Array<[string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>]>
+    ): void {
+        if(!this.bloomFramebuffer || !this.bloomShader) {
+            return
+        }
+
+        const bw = Math.max(1, Math.floor(gl.canvas.width / 2))
+        const bh = Math.max(1, Math.floor(gl.canvas.height / 2))
+        if(bw !== this.bloomWidth || bh !== this.bloomHeight) {
+            this.createBloomFramebuffer(gl)
+        }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloomFramebuffer)
+        gl.viewport(0, 0, this.bloomWidth, this.bloomHeight)
+        gl.clearColor(0, 0, 0, 1)
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        this.renderPass(gl, this.bloomShader, this.bloomFramebuffer, this.bloomWidth, this.bloomHeight, sortedGroups, camera)
+
+        const pixels = new Uint8Array(this.bloomWidth * this.bloomHeight * 4)
+        gl.readPixels(0, 0, this.bloomWidth, this.bloomHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+
+        this.bloomPixels = pixels
+        this.bloomPixelWidth = this.bloomWidth
+        this.bloomPixelHeight = this.bloomHeight
     }
-    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
-        return false
+
+    getBloomPixels(): { pixels: Uint8Array; width: number; height: number } | null {
+        if(!this.bloomPixels) return null
+        let maxBrightness = 0
+        for(let i = 0; i < this.bloomPixels.length; i += 4) {
+            if(this.bloomPixels[i] > maxBrightness) {
+                maxBrightness = this.bloomPixels[i]
+            }
+        }
+        if(maxBrightness > 0) {
+            console.log(`[bloom] max brightness: ${maxBrightness}, size: ${this.bloomPixelWidth}x${this.bloomPixelHeight}`)
+        }
+        return { pixels: this.bloomPixels, width: this.bloomPixelWidth, height: this.bloomPixelHeight }
     }
-    protected shouldSkipProjection(_node: WebGLSphereNode, _cameraDistance: number, _cameraScale: number): boolean {
-        return false
-    }
-    private shader: ShaderProgram | null = null
-    private sphereVao: WebGLBuffer | null = null
-    private sphereIndexBuffer: WebGLBuffer | null = null
-    private sphereIndexCount = 0
-    private sphereIndexType = 0
-    private atlas!: WebGLTextureAtlas
-    private nightAtlas!: WebGLTextureAtlas
-    private roughnessAtlas!: WebGLTextureAtlas
-    private cloudAtlas!: WebGLTextureAtlas
-    private normalAtlas!: WebGLTextureAtlas
-    private readonly MAX_SPHERE_INSTANCES = 256
-    private sphereInstancePool: Float32Array | null = null
-    private sphereBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }> = []
-    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>>()
-    private _blackCanvas: HTMLCanvasElement | undefined
-    private _lastShowCheckerPattern = false
 
     beginFrame(): void {
         this.pendingInstances.length = 0
@@ -486,6 +600,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const gl = this.initContext()
 
         this.shader = createShaderProgram(gl)
+        this.bloomShader = createBloomShaderProgram(gl)
+
+        this.createBloomFramebuffer(gl)
 
         this.glCanvas.style.position = "absolute"
         this.glCanvas.style.top = "0"
@@ -620,6 +737,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         if(this.gl) {
             if(this.sphereVao) this.gl.deleteBuffer(this.sphereVao)
             if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
+            if(this.bloomFramebuffer) this.gl.deleteFramebuffer(this.bloomFramebuffer)
+            if(this.bloomTexture) this.gl.deleteTexture(this.bloomTexture)
         }
         return super.removeFromEngine()
     }

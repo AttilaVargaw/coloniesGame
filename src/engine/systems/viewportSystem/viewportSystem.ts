@@ -180,6 +180,22 @@ export class ViewportSystem extends System {
         ctx.restore()
     }
 
+    private drawNightBloom(bloomCtx: CanvasRenderingContext2D, bloom: { pixels: Uint8Array; width: number; height: number }): void {
+        const tempCanvas = getPlatform().createCanvas()
+        tempCanvas.width = bloom.width
+        tempCanvas.height = bloom.height
+        const tempCtx = tempCanvas.getContext("2d")!
+        const imageData = tempCtx.createImageData(bloom.width, bloom.height)
+        imageData.data.set(bloom.pixels)
+        tempCtx.putImageData(imageData, 0, 0)
+
+        bloomCtx.save()
+        bloomCtx.globalCompositeOperation = "screen"
+        bloomCtx.globalAlpha = 1
+        bloomCtx.drawImage(tempCanvas, 0, 0, bloomCtx.canvas.width, bloomCtx.canvas.height)
+        bloomCtx.restore()
+    }
+
     private drawBloomSource(ctx: CanvasRenderingContext2D, camera: Camera) {
         if(!this.engine) return
 
@@ -279,6 +295,10 @@ export class ViewportSystem extends System {
 
         if(showBloom) {
             this.drawBloomSource(bloomCtx, this.camera)
+            const nightBloom = this.webglRenderManager.getBloomPixels()
+            if(nightBloom) {
+                this.drawNightBloom(bloomCtx, nightBloom)
+            }
             applyBloomLayer(context, bloomSourceCanvas, bloomSettings)
         }
 

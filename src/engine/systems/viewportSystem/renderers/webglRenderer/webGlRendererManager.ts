@@ -37,6 +37,10 @@ export class WebglRenderManager {
         return this.rectRenderer
     }
 
+    getBloomPixels(): { pixels: Uint8Array; width: number; height: number } | null {
+        return this.sphereRenderer.getBloomPixels()
+    }
+
     render() {
         const glCanvas = this.engine?.getCanvas("webgl2")!
         const canvas = this.engine!.getCanvas("2d")!

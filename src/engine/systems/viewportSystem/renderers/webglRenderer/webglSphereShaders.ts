@@ -53,6 +53,93 @@ void main() {
     gl_Position = uProjection * uView * worldPos;
 }`;
 
+export const BLOOM_FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+
+#define PI 3.14159265359
+
+in vec3 vNormal;
+in vec3 vLightDir;
+in vec3 vWorldPos;
+in vec2 vTexOffset;
+in vec2 vTexScale;
+in vec2 vNightTexOffset;
+in vec2 vNightTexScale;
+in vec2 vRoughnessTexOffset;
+in vec2 vRoughnessTexScale;
+
+uniform sampler2D uNightTexture;
+uniform float uTime;
+
+layout(location = 0) out vec4 fragColor;
+
+void main() {
+    vec3 geometricNormal = normalize(vNormal);
+    float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
+    float v = 0.5 + asin(geometricNormal.y) / PI;
+    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
+
+    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb;
+    float brightness = dot(nightColor, vec3(0.299, 0.587, 0.114));
+    fragColor = vec4(vec3(brightness * 4.0), 1.0);
+}
+`;
+
+import { compileShader } from "./webglShaders"
+import type { ShaderProgram } from "./ShaderProgram"
+
+export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE)
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, BLOOM_FRAGMENT_SHADER_SOURCE)
+
+    const program = gl.createProgram()!
+    gl.attachShader(program, vertexShader)
+    gl.attachShader(program, fragmentShader)
+    gl.linkProgram(program)
+
+    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        const info = gl.getProgramInfoLog(program)
+        gl.deleteProgram(program)
+        throw new Error(`Bloom shader program link error: ${info}`)
+    }
+
+    gl.deleteShader(vertexShader)
+    gl.deleteShader(fragmentShader)
+
+    const attribs = {
+        position: gl.getAttribLocation(program, "aPosition"),
+        normal: gl.getAttribLocation(program, "aNormal"),
+        instanceModel: gl.getAttribLocation(program, "aInstanceModel"),
+        instanceNormalMatrix: gl.getAttribLocation(program, "aInstanceNormalMatrix"),
+        instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
+        instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
+        instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
+        instanceNightTexOffset: gl.getAttribLocation(program, "aInstanceNightTexOffset"),
+        instanceNightTexScale: gl.getAttribLocation(program, "aInstanceNightTexScale"),
+        instanceEmissive: gl.getAttribLocation(program, "aInstanceEmissive"),
+        instanceCloudPage: gl.getAttribLocation(program, "aInstanceCloudPage"),
+    }
+
+    const uniforms = {
+        view: gl.getUniformLocation(program, "uView"),
+        projection: gl.getUniformLocation(program, "uProjection"),
+        lightColor: gl.getUniformLocation(program, "uLightColor"),
+        ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
+        cameraPosition: gl.getUniformLocation(program, "uCameraPosition"),
+        texture: gl.getUniformLocation(program, "uTexture"),
+        nightTexture: gl.getUniformLocation(program, "uNightTexture"),
+        roughness: gl.getUniformLocation(program, "uRoughness"),
+        cloudTexture: gl.getUniformLocation(program, "uCloudTexture"),
+        normalMap: gl.getUniformLocation(program, "uNormalMap"),
+        paletteColor: gl.getUniformLocation(program, "uPaletteColor"),
+        tintColor: gl.getUniformLocation(program, "uTintColor"),
+        tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
+        time: gl.getUniformLocation(program, "uTime"),
+    }
+
+    return { program, attribs, uniforms }
+}
+
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
