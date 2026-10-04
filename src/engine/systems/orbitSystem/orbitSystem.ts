@@ -62,8 +62,8 @@ export class OrbitSystem extends SystemWithNodes<OrbitNode> {
         const x1 = rx * cosA - ry * sinA
         const y1 = rx * sinA + ry * cosA
         position.x = x1 * cosL - y1 * cosI * sinL
-        position.y = x1 * sinL + y1 * cosI * cosL
-        position.z = y1 * sinI
+        position.z = x1 * sinL + y1 * cosI * cosL
+        position.y = y1 * sinI
     }
 
     protected registerNodes(engine: Engine): this {

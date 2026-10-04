@@ -70,7 +70,7 @@ export default class Camera {
         this.minHeightAboveTarget = settings.minHeightAboveTarget ?? 20.0
         this.lookAt = settings.initialPosition ?? [0, 1, 0]
         this.yaw = settings.yaw ?? 0
-        this.pitch = settings.pitch ?? 0
+        this.pitch = settings.pitch ?? Math.PI / 3.0
         this.fieldOfView = settings.fieldOfView ?? Math.PI / 4.0
         this.targetDistance = this.distance
         this.viewport = {
@@ -110,8 +110,8 @@ export default class Camera {
         const sinYaw = Math.sin(this.yaw)
 
         const camX = this.lookAt[0] + this.distance * cosPitch * sinYaw
-        const camY = this.lookAt[1] + this.distance * cosPitch * cosYaw
-        const camZ = this.lookAt[2] + this.distance * sinPitch
+        const camY = this.lookAt[1] + this.distance * sinPitch
+        const camZ = this.lookAt[2] + this.distance * cosPitch * cosYaw
 
         let fx = this.lookAt[0] - camX
         let fy = this.lookAt[1] - camY
@@ -200,8 +200,8 @@ export default class Camera {
     public get cameraPosition(): Vector3 {
         return [
             this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
-            this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
-            this.lookAt[2] + this.distance * Math.sin(this.pitch),
+            this.lookAt[1] + this.distance * Math.sin(this.pitch),
+            this.lookAt[2] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
         ]
     }
 
@@ -308,8 +308,8 @@ export default class Camera {
     private computeCameraPosition(): { camX: number; camY: number; camZ: number } {
         return {
             camX: this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
-            camY: this.lookAt[1] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
-            camZ: this.lookAt[2] + this.distance * Math.sin(this.pitch),
+            camY: this.lookAt[1] + this.distance * Math.sin(this.pitch),
+            camZ: this.lookAt[2] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
         }
     }
 

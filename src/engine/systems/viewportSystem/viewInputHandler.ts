@@ -83,13 +83,13 @@ export class ViewportInputHandler {
         if(this.heldKeys.has("a")) panRight -= 1
 
         if(panForward || panRight) {
-            const { rx, ry, fx, fy } = camera.viewBasis
+            const { rx, ry, rz, fx, fy, fz } = camera.viewBasis
             const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
             const targetVx = (panForward * fx + panRight * rx) * targetSpeed
-            const targetVy = (panForward * fy + panRight * ry) * targetSpeed
+            const targetVz = (panForward * fz + panRight * rz) * targetSpeed
             const t = 1 - Math.pow(1 - ViewportInputHandler.KEY_PAN_ACCELERATION, dt / 16.667)
             this.panVelocity[0] += (targetVx - this.panVelocity[0]) * t
-            this.panVelocity[1] += (targetVy - this.panVelocity[1]) * t
+            this.panVelocity[2] += (targetVz - this.panVelocity[2]) * t
         }
 
         if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
@@ -134,20 +134,20 @@ export class ViewportInputHandler {
     }
 
     private applyPanVelocity(dt: number, camera: Camera) {
-        const [vx, vy] = this.panVelocity
-        if(vx !== 0 || vy !== 0) {
+        const [vx, , vz] = this.panVelocity
+        if(vx !== 0 || vz !== 0) {
             camera.moveTo(
                 camera.lookAt[0] + vx * dt,
-                camera.lookAt[1] + vy * dt,
-                camera.lookAt[2]
+                camera.lookAt[1],
+                camera.lookAt[2] + vz * dt
             )
             const damping = Math.pow(0.55, dt / 16.667)
             this.panVelocity[0] *= damping
-            this.panVelocity[1] *= damping
+            this.panVelocity[2] *= damping
 
-            if(Math.abs(this.panVelocity[0]) < 0.001 && Math.abs(this.panVelocity[1]) < 0.001) {
+            if(Math.abs(this.panVelocity[0]) < 0.001 && Math.abs(this.panVelocity[2]) < 0.001) {
                 this.panVelocity[0] = 0
-                this.panVelocity[1] = 0
+                this.panVelocity[2] = 0
             }
         }
     }
@@ -332,10 +332,10 @@ export class ViewportInputHandler {
     private zoomWheel(camera: Camera, factor: number) {
         this._isZooming = true
 
-        if(this.wheelZoomAccum > 0 && camera.lookAt[2] >= ViewportInputHandler.MAX_ZOOM) {
+        if(this.wheelZoomAccum > 0 && camera.lookAt[1] >= ViewportInputHandler.MAX_ZOOM) {
             return
         }
-        if(this.wheelZoomAccum < 0 && camera.lookAt[2] <= ViewportInputHandler.MIN_ZOOM) {
+        if(this.wheelZoomAccum < 0 && camera.lookAt[1] <= ViewportInputHandler.MIN_ZOOM) {
             return
         }
 
@@ -344,8 +344,8 @@ export class ViewportInputHandler {
         } else {
             this.viewportSystem.camera!.moveTo(
                 camera.lookAt[0],
-                camera.lookAt[1],
-                Math.max(ViewportInputHandler.MIN_ZOOM, Math.min(camera.lookAt[2] += this.wheelZoomAccum, ViewportInputHandler.MAX_ZOOM))
+                Math.max(ViewportInputHandler.MIN_ZOOM, Math.min(camera.lookAt[1] += this.wheelZoomAccum, ViewportInputHandler.MAX_ZOOM)),
+                camera.lookAt[2]
             )
         }
     }
