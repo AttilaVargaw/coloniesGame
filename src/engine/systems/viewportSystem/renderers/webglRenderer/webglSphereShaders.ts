@@ -116,7 +116,8 @@ void main() {
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
     float roughness = texture(uRoughness, roughnessTexCoord).r;
-    vec3 rim = uLightColor * fresnel * dayColor;
+    float cosTheta = max(NdotL, 0.0);
+    vec3 rim = uLightColor * fresnel * dayColor * cosTheta;
 
     if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
@@ -124,7 +125,6 @@ void main() {
         color = pow(color, vec3(1.0 / 2.2));
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float cosTheta = max(NdotL, 0.0);
         float cosTheta2 = cosTheta * cosTheta;
         float sinTheta = sqrt(1.0 - cosTheta2);
         float tanTheta = sinTheta / max(cosTheta, 0.001);
@@ -150,7 +150,7 @@ void main() {
             float cloudAlpha = texture(uCloudTexture, cloudUV).a;
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
-            color = mix(color, cloudColor, cloudAlpha * 0.7);
+            color = mix(color, cloudColor, cloudAlpha * 0.7 * cosTheta);
         }
 
         color = color / (color + vec3(1.0));
@@ -158,7 +158,7 @@ void main() {
 
         float atmosphere = pow(1.0 - NdotV, 4.0) * 0.25;
         vec3 atmColor = mix(vec3(0.3, 0.6, 1.0), uPaletteColor, 0.5);
-        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive), 1.0);
+        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive) * cosTheta, 1.0);
         fragColor = vec4(mix(fragColor.rgb, fragColor.rgb * uTintColor, uTintAlpha), 1.0);
     }
 }`;
