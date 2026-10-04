@@ -116,7 +116,7 @@ void main() {
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
     float roughness = texture(uRoughness, roughnessTexCoord).r;
-    float cosTheta = max(NdotL, 0.0);
+    float cosTheta = smoothstep(-0.05, 0.05, NdotL);
     vec3 rim = uLightColor * fresnel * dayColor * cosTheta;
 
     if(vEmissive > 0.5) {
@@ -152,6 +152,9 @@ void main() {
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
             color = mix(color, cloudColor, cloudAlpha * 0.7 * cosTheta);
         }
+
+        float terminatorScatter = smoothstep(-0.15, 0.0, NdotL) * 0.12;
+        color += uLightColor * dayColor * terminatorScatter;
 
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
