@@ -60,6 +60,7 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
         time: gl.getUniformLocation(program, "uTime"),
+        bloomBrightness: gl.getUniformLocation(program, "uBloomBrightness"),
     }
 
     return { program, attribs, uniforms }

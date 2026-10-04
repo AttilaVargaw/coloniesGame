@@ -60,6 +60,7 @@ precision mediump float;
 
 in vec3 vNormal;
 in vec3 vLightDir;
+in float vEmissive;
 in vec3 vWorldPos;
 in vec2 vTexOffset;
 in vec2 vTexScale;
@@ -68,8 +69,9 @@ in vec2 vNightTexScale;
 in vec2 vRoughnessTexOffset;
 in vec2 vRoughnessTexScale;
 
+uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
-uniform float uTime;
+uniform float uBloomBrightness;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -86,7 +88,6 @@ void main() {
     } else {
         color = texture(uNightTexture, nightTexCoord).rgb;
     }
-    float brightness = dot(color, vec3(0.299, 0.587, 0.114));
 
     float bloomMask = 1.0;
     if(vEmissive < 0.5) {
@@ -95,7 +96,7 @@ void main() {
         bloomMask = 1.0 - cosTheta;
     }
 
-    fragColor = vec4(vec3(brightness * 4.0 * bloomMask), 1.0);
+    fragColor = vec4(color * uBloomBrightness * bloomMask, 1.0);
 }
 `;
 
@@ -149,6 +150,7 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         tintColor: gl.getUniformLocation(program, "uTintColor"),
         tintAlpha: gl.getUniformLocation(program, "uTintAlpha"),
         time: gl.getUniformLocation(program, "uTime"),
+        bloomBrightness: gl.getUniformLocation(program, "uBloomBrightness"),
     }
 
     return { program, attribs, uniforms }

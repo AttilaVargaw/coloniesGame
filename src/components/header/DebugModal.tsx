@@ -33,10 +33,10 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
 ]
 
 const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
-    brightness: 1.2,
+    brightness: 0.6,
     contrast: 2,
     iterations: 3,
-    alpha: 0.9,
+    alpha: 0.4,
 }
 
 export function DebugModal() {

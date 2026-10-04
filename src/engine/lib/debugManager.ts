@@ -25,10 +25,10 @@ export class DebugManager {
     }
 
     private _bloomSettings: BloomSettings = {
-        brightness: 1.2,
+        brightness: 0.6,
         contrast: 2,
         iterations: 3,
-        alpha: 0.9,
+        alpha: 0.4,
     }
 
     get debugflags() {

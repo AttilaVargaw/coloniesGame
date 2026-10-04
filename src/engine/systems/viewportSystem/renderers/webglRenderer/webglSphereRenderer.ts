@@ -340,6 +340,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform3f(shader.uniforms.tintColor, 1, 1, 1)
         gl.uniform1f(shader.uniforms.tintAlpha, 0)
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
+        gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 1.2)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 6 * 4
@@ -523,6 +524,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
+        const settings = this.engine?.getDebugManager()?.bloomSettings ?? { brightness: 1.2, contrast: 2, iterations: 3, alpha: 0.9 }
+        const passes = Math.max(1, Math.round(settings.iterations))
+        const intensity = settings.alpha
+
         const bw = Math.max(1, Math.floor(gl.canvas.width / 2))
         const bh = Math.max(1, Math.floor(gl.canvas.height / 2))
         if(bw !== this.bloomWidth || bh !== this.bloomHeight) {
@@ -540,13 +545,16 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
-        const intensity = 1.2
-        this.renderBlurPass(gl, this.bloomTexture, this.blurFramebufferA, [1.0 / this.bloomWidth, 0.0], this.bloomWidth, this.bloomHeight, intensity)
-        this.renderBlurPass(gl, this.blurTextureA, this.blurFramebufferB, [0.0, 1.0 / this.bloomHeight], this.bloomWidth, this.bloomHeight, intensity)
+        let readTexture = this.bloomTexture
+        for(let i = 0; i < passes; i++) {
+            this.renderBlurPass(gl, readTexture, this.blurFramebufferA, [1.0 / this.bloomWidth, 0.0], this.bloomWidth, this.bloomHeight, intensity)
+            this.renderBlurPass(gl, this.blurTextureA, this.blurFramebufferB, [0.0, 1.0 / this.bloomHeight], this.bloomWidth, this.bloomHeight, intensity)
+            readTexture = this.blurTextureB
+        }
 
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-        this.renderBlurPass(gl, this.blurTextureB, null, [0.0, 0.0], this.bloomWidth, this.bloomHeight, intensity)
+        this.renderBlurPass(gl, readTexture, null, [0.0, 0.0], this.bloomWidth, this.bloomHeight, intensity)
         gl.disable(gl.BLEND)
     }
 
