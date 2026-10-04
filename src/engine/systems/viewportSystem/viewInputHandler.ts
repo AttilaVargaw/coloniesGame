@@ -37,7 +37,7 @@ export class ViewportInputHandler {
     private static readonly KEY_PAN_SPEED = 0.02
     private static readonly KEY_PAN_ACCELERATION = 0.3
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 80
+    private static readonly WHEEL_ZOOM_STEP = 40
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0.82
@@ -227,7 +227,7 @@ export class ViewportInputHandler {
             y: event.clientY - rect.top
         }
 
-        this.wheelZoomAccum += event.deltaY
+        this.wheelZoomAccum += event.deltaY * 0.5
     }
 
     private mousedownArray: Queue<MousedownEvent> | null = null
@@ -354,10 +354,10 @@ export class ViewportInputHandler {
         const step = ViewportInputHandler.WHEEL_ZOOM_STEP
 
         if(this.wheelZoomAccum >= step) {
-            this.zoomWheel(camera, 1.02)
+            this.zoomWheel(camera, 0.8)
             this.wheelZoomAccum -= step
         } else if(this.wheelZoomAccum <= -step) {
-            this.zoomWheel(camera, 0.98)
+            this.zoomWheel(camera, 0.6)
             this.wheelZoomAccum += step
         }
     }
