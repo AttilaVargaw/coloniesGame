@@ -97,29 +97,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.quadIndexCount = QUAD_INDICES.length
     }
 
-    private static ortho(out: mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): mat4 {
-        const w = right - left
-        const h = top - bottom
-        const d = far - near
-        out[0] = 2 / w
-        out[1] = 0
-        out[2] = 0
-        out[3] = 0
-        out[4] = 0
-        out[5] = 2 / h
-        out[6] = 0
-        out[7] = 0
-        out[8] = 0
-        out[9] = 0
-        out[10] = -2 / d
-        out[11] = 0
-        out[12] = -(right + left) / w
-        out[13] = -(top + bottom) / h
-        out[14] = -(far + near) / d
-        out[15] = 1
-        return out
-    }
-
     resize(width: number, height: number) {
         if(!this.gl) return
         this.gl.viewport(0, 0, width, height)
@@ -253,7 +230,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return
         }
 
-        WebGLRectRenderer.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
+        mat4.ortho(this.projection, 0, camera.cssWidth, camera.cssHeight, 0, -1, 1)
 
         gl.useProgram(this.shader.program)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)

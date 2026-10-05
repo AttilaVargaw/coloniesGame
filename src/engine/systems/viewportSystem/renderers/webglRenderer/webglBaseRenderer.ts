@@ -76,11 +76,10 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         return super.removeFromEngine()
     }
 
-    protected getWorldPosition2(entity: Entity): [number, number, number] {
+    protected getWorldPosition2(entity: Entity) {
         const sceneNode = this.engine?.getSceneNode(entity)
         if(sceneNode) {
-            const pos = sceneNode.getWorldPosition()
-            return [pos[0], pos[1], pos[2]]
+            return sceneNode.getWorldPosition()
         }
         const pos = entity.getComponent(PositionComponent)
         return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]

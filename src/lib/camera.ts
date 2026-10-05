@@ -112,37 +112,32 @@ export default class Camera {
         const camY = this.lookAt[1] + this.distance * sinPitch
         const camZ = this.lookAt[2] + this.distance * cosPitch * cosYaw
 
-        let fx = this.lookAt[0] - camX
-        let fy = this.lookAt[1] - camY
-        let fz = this.lookAt[2] - camZ
-        const fLen = Math.sqrt(fx * fx + fy * fy + fz * fz)
-        fx /= fLen
-        fy /= fLen
-        fz /= fLen
+        const forward = vec3.normalize(vec3.create(), vec3.sub(vec3.create(), this.lookAt, [camX, camY, camZ]))
+        const fx = forward[0]
+        const fy = forward[1]
+        const fz = forward[2]
 
-        const worldUp = [0, 1, 0]
+        const worldUp: vec3 = [0, 1, 0]
 
         let rx: number
         let ry: number
         let rz: number
 
-        if(Math.abs(fx * worldUp[0] + fy * worldUp[1] + fz * worldUp[2]) > 0.9999) {
+        if(Math.abs(vec3.dot(forward, worldUp)) > 0.9999) {
             rx = 1
             ry = 0
             rz = 0
         } else {
-            rx = fy * worldUp[2] - fz * worldUp[1]
-            ry = fz * worldUp[0] - fx * worldUp[2]
-            rz = fx * worldUp[1] - fy * worldUp[0]
-            const rLen = Math.sqrt(rx * rx + ry * ry + rz * rz)
-            rx /= rLen
-            ry /= rLen
-            rz /= rLen
+            const right = vec3.normalize(vec3.create(), vec3.cross(vec3.create(), forward, worldUp))
+            rx = right[0]
+            ry = right[1]
+            rz = right[2]
         }
 
-        const ux = ry * fz - rz * fy
-        const uy = rz * fx - rx * fz
-        const uz = rx * fy - ry * fx
+        const up = vec3.cross(vec3.create(), [rx, ry, rz], forward)
+        const ux = up[0]
+        const uy = up[1]
+        const uz = up[2]
 
         this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ }
         this.viewBasisDirty = false
@@ -348,11 +343,11 @@ export default class Camera {
         const dirX = rx * ndcX + ux * ndcY + fx
         const dirY = ry * ndcX + uy * ndcY + fy
         const dirZ = rz * ndcX + uz * ndcY + fz
-        const dLen = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ)
+        const direction = vec3.normalize(vec3.create(), [dirX, dirY, dirZ])
 
         return {
             origin: [camX, camY, camZ],
-            direction: [dirX / dLen, dirY / dLen, dirZ / dLen],
+            direction,
         }
     }
 }

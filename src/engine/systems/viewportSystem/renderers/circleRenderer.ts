@@ -11,7 +11,7 @@ import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { getPlatform } from "@/engine/lib/platform";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
-import type { vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
 
 export class CircleRenderer extends BaseRenderer<CircleNode> {
@@ -184,35 +184,28 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
 
         const radius = circle.radius.radius
 
-        const lx = starWorldPos[0] - cx
-        const ly = starWorldPos[1] - cy
-        const lz = starWorldPos[2] - cz
-        const lLen = Math.hypot(lx, ly, lz)
-        if(lLen < 0.01) {
-            return
-        }
-        const lnx = lx / lLen
-        const lny = ly / lLen
-        const lnz = lz / lLen
-
-        const [camX, camY, camZ] = camera.cameraPosition
-        const viewDirX = cx - camX
-        const viewDirY = cy - camY
-        const viewDirZ = cz - camZ
-        const viewLen = Math.hypot(viewDirX, viewDirY, viewDirZ)
-        if(viewLen < 0.01) {
-            return
-        }
-        const vnx = viewDirX / viewLen
-        const vny = viewDirY / viewLen
-        const vnz = viewDirZ / viewLen
-
-        if(lnx * vnx + lny * vny + lnz * vnz < 0) {
+        const lightDir = vec3.normalize(
+            vec3.create(),
+            vec3.sub(vec3.create(), starWorldPos, [cx, cy, cz])
+        )
+        if(vec3.length(lightDir) < 0.01) {
             return
         }
 
-        const litSurface = camera.project(cx + lnx * radius, cy + lny * radius, cz + lnz * radius)
-        const darkSurface = camera.project(cx - lnx * radius, cy - lny * radius, cz - lnz * radius)
+        const viewDir = vec3.normalize(
+            vec3.create(),
+            vec3.sub(vec3.create(), [cx, cy, cz], camera.cameraPosition)
+        )
+        if(vec3.length(viewDir) < 0.01) {
+            return
+        }
+
+        if(vec3.dot(lightDir, viewDir) < 0) {
+            return
+        }
+
+        const litSurface = camera.project(cx + lightDir[0] * radius, cy + lightDir[1] * radius, cz + lightDir[2] * radius)
+        const darkSurface = camera.project(cx - lightDir[0] * radius, cy - lightDir[1] * radius, cz - lightDir[2] * radius)
 
         if(!litSurface || !darkSurface) {
             return

@@ -10,7 +10,7 @@ import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import type { ProjectedPoint } from "@/lib/camera"
-import type { vec3 } from "gl-matrix"
+import { mat4, type vec3 } from "gl-matrix"
 
 export class WebGLOrbitNode extends RenderableNode {
     constructor(
@@ -65,7 +65,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
 
         gl.useProgram(this.shader.program)
 
-        WebGLOrbitRenderer.ortho(this.projection, 0, cssWidth, cssHeight, 0, -1, 1)
+        mat4.ortho(this.projection, 0, cssWidth, cssHeight, 0, -1, 1)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
         gl.uniform4f(this.shader.uniforms.color, 0.39, 0.58, 0.92, 0.2)
 
@@ -138,28 +138,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
         gl.disableVertexAttribArray(this.shader.attribs.position)
     }
 
-    private static ortho(out: Float32Array, left: number, right: number, bottom: number, top: number, near: number, far: number): Float32Array {
-        const w = right - left
-        const h = top - bottom
-        const d = far - near
-        out[0] = 2 / w
-        out[1] = 0
-        out[2] = 0
-        out[3] = 0
-        out[4] = 0
-        out[5] = 2 / h
-        out[6] = 0
-        out[7] = 0
-        out[8] = 0
-        out[9] = 0
-        out[10] = -2 / d
-        out[11] = 0
-        out[12] = -(right + left) / w
-        out[13] = -(top + bottom) / h
-        out[14] = -(far + near) / d
-        out[15] = 1
-        return out
-    }
+
 
     protected getCullMargin(_node: WebGLOrbitNode): number {
         return 0

@@ -14,7 +14,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
-import { vec3, mat4 } from "gl-matrix"
+import { vec3, mat4, mat3 } from "gl-matrix"
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -123,19 +123,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
-            let lightDir = [0, 1, 0]
-            let starColor = [1.0, 1.0, 1.0]
+            let lightDir = vec3.fromValues(0, 1, 0)
+            let starColor = vec3.fromValues(1.0, 1.0, 1.0)
 
             if(starEntity) {
-                const starPos = this.getWorldPosition2(starEntity)
-                const lightDirRaw: vec3 = [
-                    worldPos[0] - starPos[0],
-                    worldPos[1] - starPos[1],
-                    worldPos[2] - starPos[2],
-                ]
-                const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
+                const lightDirRaw: vec3 = vec3.sub(vec3.create(), this.getWorldPosition2(starEntity), worldPos)
+
+                const lightDirLength = vec3.length(lightDirRaw)
                 lightDir = lightDirLength > 0
-                    ? [lightDirRaw[0] / lightDirLength, lightDirRaw[1] / lightDirLength, lightDirRaw[2] / lightDirLength]
+                    ? vec3.normalize(vec3.create(), lightDirRaw)
                     : [0, 1, 0]
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
@@ -151,19 +147,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             mat4.identity(model)
             mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
             mat4.rotateY(model, model, node.texture.rotation ?? 0)
+
             const scale = node.radius.radius
+
             mat4.scale(model, model, [scale, scale, scale])
 
-            const normalMatrix = new Float32Array(9)
-            normalMatrix[0] = model[0]
-            normalMatrix[1] = model[4]
-            normalMatrix[2] = model[8]
-            normalMatrix[3] = model[1]
-            normalMatrix[4] = model[5]
-            normalMatrix[5] = model[9]
-            normalMatrix[6] = model[2]
-            normalMatrix[7] = model[6]
-            normalMatrix[8] = model[10]
+            const normalMatrix = mat3.create()
+            mat3.fromMat4(normalMatrix, model)
+            mat3.transpose(normalMatrix, normalMatrix)
 
             const poolOffset = this.pendingInstances.length * 43
             if(poolOffset + 43 > this.sphereInstancePool!.length) {
