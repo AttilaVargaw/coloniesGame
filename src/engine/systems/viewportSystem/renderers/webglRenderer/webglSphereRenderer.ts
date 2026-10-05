@@ -2,8 +2,6 @@ import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
 import { createBloomShaderProgram, createBlurShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
-import { mat4 } from "@/engine/lib/mat4"
-import type { Vec3 } from "@/engine/lib/vec3"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
@@ -16,7 +14,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
-import { Vector3 } from "@/lib/Vector3"
+import { vec3, mat4 } from "gl-matrix"
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -125,12 +123,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
-            let lightDir: Vec3
-            let starColor = [1.0, 1.0, 1.0] as Vec3
+            let lightDir = [0, 1, 0] as vec3
+            let starColor = [1.0, 1.0, 1.0] as vec3
 
             if(starEntity) {
                 const starPos = this.getWorldPosition2(starEntity)
-                const lightDirRaw: Vec3 = [
+                const lightDirRaw: vec3 = [
                     worldPos[0] - starPos[0],
                     worldPos[1] - starPos[1],
                     worldPos[2] - starPos[2],
@@ -145,8 +143,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                     const parsed = hexToRgb(starColorComponent.fill)
                     starColor = [parsed.r / 255, parsed.g / 255, parsed.b / 255]
                 }
-            } else {
-                lightDir = [0, 1, 0]
             }
 
             const paletteRgb = hexToRgb(node.color.fill || "#808080")
@@ -241,7 +237,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     protected getCullMargin(node: WebGLSphereNode): number {
         return node.radius.radius
     }
-    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: WebGLSphereNode, _projected: ProjectedPoint, _worldPos: vec3): boolean {
         return false
     }
     protected shouldSkipProjection(_node: WebGLSphereNode, _cameraDistance: number, _cameraScale: number): boolean {
@@ -597,9 +593,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private initQuadBuffer(gl: WebGL2RenderingContext): void {
         const vertices = new Float32Array([
             -1, -1, 0, 0,
-             1, -1, 1, 0,
-            -1,  1, 0, 1,
-             1,  1, 1, 1,
+            1, -1, 1, 0,
+            -1, 1, 0, 1,
+            1, 1, 1, 1,
         ])
         const indices = new Uint16Array([0, 1, 2, 2, 1, 3])
 
@@ -785,19 +781,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     }
 
     private findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
-        if (!this.engine) return undefined
+        if(!this.engine) return undefined
 
         let current: Entity | undefined = planetEntity
-        while (current) {
+        while(current) {
             const sceneNode = this.engine.getSceneNode(current)
-            if (sceneNode?.parent) {
+            if(sceneNode?.parent) {
                 current = sceneNode.parent.entity
             } else {
                 break
             }
 
             const color = current.getComponent(ColorComponent)
-            if (color?.emitLight) {
+            if(color?.emitLight) {
                 return current
             }
         }

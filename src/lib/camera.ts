@@ -1,5 +1,4 @@
-import { Vector2 } from "./Vector2"
-import { Vector3 } from "./Vector3"
+import { vec2, vec3 } from "gl-matrix"
 
 export interface ProjectedPoint {
     x: number
@@ -10,7 +9,7 @@ export interface ProjectedPoint {
 
 interface CameraSettings {
     distance?: number
-    initialPosition?: Vector3
+    initialPosition?: vec3
     yaw?: number
     pitch?: number
     fieldOfView?: number
@@ -37,7 +36,7 @@ type ViewBase = {
 }
 
 export default class Camera {
-    lookAt: Vector3
+    lookAt: vec3
     yaw: number
     pitch: number
     distance: number
@@ -55,7 +54,7 @@ export default class Camera {
         bottom: number
         width: number
         height: number
-        scale: Vector2
+        scale: vec2
         cssWidth: number
         cssHeight: number
     }
@@ -197,7 +196,7 @@ export default class Camera {
         return this.viewport.cssHeight
     }
 
-    public get cameraPosition(): Vector3 {
+    public get cameraPosition(): vec3 {
         return [
             this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
             this.lookAt[1] + this.distance * Math.sin(this.pitch),
@@ -296,7 +295,7 @@ export default class Camera {
         return obj
     }
 
-    public getBasisVectors(): { right: Vector3; up: Vector3 } {
+    public getBasisVectors(): { right: vec3; up: vec3 } {
         const { rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
 
         return {
@@ -337,7 +336,7 @@ export default class Camera {
         return { x: screenX, y: screenY, scale, depth: z }
     }
 
-    public screenToWorldRay(screenX: number, screenY: number): { origin: Vector3; direction: Vector3 } {
+    public screenToWorldRay(screenX: number, screenY: number): { origin: vec3; direction: vec3 } {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
         const { camX, camY, camZ } = this.computeCameraPosition()
 

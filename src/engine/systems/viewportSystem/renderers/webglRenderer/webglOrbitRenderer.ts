@@ -10,7 +10,7 @@ import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import type { ProjectedPoint } from "@/lib/camera"
-import type { Vector3 } from "@/lib/Vector3"
+import type { vec3 } from "gl-matrix"
 
 export class WebGLOrbitNode extends RenderableNode {
     constructor(
@@ -165,7 +165,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
         return 0
     }
 
-    protected shouldCullNode(node: WebGLOrbitNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(node: WebGLOrbitNode, _projected: ProjectedPoint, _worldPos: vec3): boolean {
         if(!this.engine || !this.viewportSystem.camera) {
             return false
         }

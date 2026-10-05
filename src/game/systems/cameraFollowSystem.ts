@@ -6,12 +6,12 @@ import { Entity } from "@/engine/entities/entity";
 import type { Engine } from "@/engine/core/engine";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { SelectionChangedEvent } from "@/engine/lib/events";
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 
 export class CameraFollowComponent extends EntityComponent {
     constructor(
         public target: Entity | null = null,
-        public offset: Vector3 = [0, 0, 0],
+        public offset: vec3 = [0, 0, 0],
         public smoothFactor: number = 0.1,
     ) {
         super()

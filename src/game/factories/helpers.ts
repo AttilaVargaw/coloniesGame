@@ -7,7 +7,6 @@ import { Engine } from "@/engine/core/engine"
 import type { EntityComponent } from "@engine/entities/entityComponent"
 import { SoiComponent } from "@/engine/components/soiComponent"
 import { UNIVERSE_SCALE } from "../constants"
-import { Vector3 } from "@/lib/Vector3"
 
 export const soiRatios = {
     earth: 145.2,
@@ -41,12 +40,12 @@ export const massByArchetype = {
 
 export type PlanetArchetype = keyof typeof soiRatios
 
-export function descartesToPolar(orbitAngle: number, orbitRadius: number) {
+export function descartesToPolar(orbitAngle: number, orbitRadius: number): [number, number, number] {
     return [
         Math.cos(orbitAngle) * orbitRadius,
         Math.sin(orbitAngle) * orbitRadius,
         0
-    ] as Vector3
+    ]
 }
 
 export function calculateSoi(radius: number, archetype: keyof typeof soiRatios) {

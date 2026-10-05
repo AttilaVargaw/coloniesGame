@@ -5,7 +5,7 @@ import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
 import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 
 export abstract class BaseRenderer<N extends RenderableNode> {
     protected nodes: N[] = []
@@ -13,7 +13,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
     protected readonly components: (new (...args: any[]) => EntityComponent)[];
     protected readonly nodeFactory: (entity: Entity) => N;
     protected readonly viewportSystem: ViewportSystem;
-    private projectedCache = new Map<N, { worldPos: Vector3; projected: ProjectedPoint }>()
+    private projectedCache = new Map<N, { worldPos: vec3; projected: ProjectedPoint }>()
     private projectedCacheEntries: Array<{ node: N; projected: ProjectedPoint }> = []
     protected debugCulledCount = 0
     protected debugProjectedCount = 0
@@ -133,14 +133,14 @@ export abstract class BaseRenderer<N extends RenderableNode> {
     protected getCullMargin(_node: N): number {
         return 0
     }
-    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: N, _projected: ProjectedPoint, _worldPos: vec3): boolean {
         return false
     }
     protected shouldSkipProjection(_node: N, _cameraDistance: number, _cameraScale: number): boolean {
         return false
     }
 
-    protected getProjected(node: N): { worldPos: Vector3; projected: ProjectedPoint } {
+    protected getProjected(node: N): { worldPos: vec3; projected: ProjectedPoint } {
         const entry = this.projectedCache.get(node)
         if(!entry) {
             throw new Error(`Node ${node.entity.id} not found in projection cache`)
@@ -148,7 +148,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return entry
     }
 
-    protected getWorldPosition(node: N): Vector3 {
+    protected getWorldPosition(node: N): vec3 {
         const sceneNode = this.engine?.getSceneNode(node.entity)
         if(!sceneNode) {
             const pos = node.entity.getComponent(PositionComponent)

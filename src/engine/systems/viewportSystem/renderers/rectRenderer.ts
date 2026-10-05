@@ -7,7 +7,7 @@ import { RectNode } from "./rectNode";
 import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 
 export class RectRenderer extends BaseRenderer<RectNode> {
     beginFrame(): void {
@@ -46,7 +46,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
         return false
     }
 
-    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: vec3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
             if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {

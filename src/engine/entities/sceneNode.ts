@@ -1,6 +1,6 @@
 import { Entity } from "./entity"
 import { PositionComponent } from "../components/position"
-import { Vector3 } from "@/lib/Vector3"
+import type { vec3 } from "gl-matrix"
 
 export class SceneNode {
     readonly entityId: string
@@ -59,7 +59,7 @@ export class SceneNode {
         node.parent = null
     }
 
-    getWorldPosition(): Vector3 {
+    getWorldPosition(): vec3 {
         const position = this.entity.getComponent(PositionComponent)
 
         if(!position) {

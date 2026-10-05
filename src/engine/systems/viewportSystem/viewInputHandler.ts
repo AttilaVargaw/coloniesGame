@@ -1,9 +1,9 @@
 import { ViewportSystem } from "./viewportSystem";
 import Camera from "@/lib/camera";
-import { Vector3 } from "@/lib/Vector3";
 import { MousedownEvent, MouseupEvent, MousemoveEvent } from "@/engine/lib/events";
 import { Queue } from "@/engine/lib/commandQueue";
 import { getPlatform } from "@/engine/lib/platform";
+import { vec3 } from "gl-matrix";
 
 interface CameraFollowTarget {
     isFollowing(): boolean
@@ -28,7 +28,7 @@ export class ViewportInputHandler {
     private rotationVelocityX = 0
     private rotationVelocityY = 0
     private wasRotatingWithoutTarget = false
-    private panVelocity: Vector3 = [0, 0, 0]
+    private panVelocity: vec3 = [0, 0, 0]
 
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem?: CameraFollowTarget) { }
 

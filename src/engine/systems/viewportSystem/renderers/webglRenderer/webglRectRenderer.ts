@@ -2,16 +2,15 @@ import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
-import { mat4, Mat4 } from "@/engine/lib/mat4"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
 import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { getPlatform } from "@/engine/lib/platform"
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent"
 import { ProjectedPoint } from "@/lib/camera"
-import { Vector3 } from "@/lib/Vector3"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 import { RectNode } from "../rectNode"
 import { ViewportSystem } from "../../viewportSystem"
+import { mat4, vec3 } from "gl-matrix"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -98,7 +97,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.quadIndexCount = QUAD_INDICES.length
     }
 
-    private static ortho(out: Mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
+    private static ortho(out: mat4, left: number, right: number, bottom: number, top: number, near: number, far: number): mat4 {
         const w = right - left
         const h = top - bottom
         const d = far - near
@@ -379,7 +378,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return false
     }
 
-    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(node: RectNode, projected: ProjectedPoint, _worldPos: vec3): boolean {
         if(node.texture?.minimumScreenSize !== undefined && node.size) {
             const worldSize = Math.max(node.size.width, node.size.height)
             if(worldSize > 0 && projected.scale < node.texture.minimumScreenSize / worldSize) {

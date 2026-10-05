@@ -11,7 +11,7 @@ import { TWO_PI } from "@/engine/lib/cameraConstants";
 import { getPlatform } from "@/engine/lib/platform";
 import type { ProjectedPoint } from "@/lib/camera";
 import Camera from "@/lib/camera";
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
 
 export class CircleRenderer extends BaseRenderer<CircleNode> {
@@ -21,7 +21,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
     }
     drawNodes(_ctx: CanvasRenderingContext2D): void {
     }
-    protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: CircleNode, _projected: ProjectedPoint, _worldPos: vec3): boolean {
         return false
     }
     protected shouldSkipProjection(node: CircleNode, cameraDistance: number, _cameraScale: number): boolean {

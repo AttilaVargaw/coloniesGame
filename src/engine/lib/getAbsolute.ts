@@ -1,9 +1,9 @@
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 import { PositionComponent } from "../components/position";
 import type { Engine } from "../core/engine";
 import { Entity } from "../entities/entity";
 
-export function getAbsolute(entity: Entity, engine: Engine): Vector3 {
+export function getAbsolute(entity: Entity, engine: Engine): vec3 {
     const sceneNode = engine.getSceneNode(entity)
     if(!sceneNode) {
         const pos = entity.getComponent(PositionComponent)

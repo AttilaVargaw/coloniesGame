@@ -3,7 +3,7 @@ import { astar } from "./pathfinder"
 import { Entity } from "@/engine/entities/entity"
 import { PositionComponent } from "@engine/components/position"
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph"
-import { Vector2 } from "@/lib/Vector2"
+import type { vec2 } from "gl-matrix"
 
 function createJumpNode(id: string, x: number, y: number) {
     const entity = new Entity(id)
@@ -12,7 +12,7 @@ function createJumpNode(id: string, x: number, y: number) {
     return entity
 }
 
-function createLinearPathGraph(nodes: Array<[string, number, number]>, edges: Vector2[]) {
+function createLinearPathGraph(nodes: Array<[string, number, number]>, edges: vec2[]) {
     const graph = new JumpGraphComponent()
     const entities = nodes.map(([id, x, y]) => createJumpNode(id, x, y))
     for(const [from, to] of edges) {

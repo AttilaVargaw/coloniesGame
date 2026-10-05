@@ -5,7 +5,7 @@ import { ViewportSystem } from "../viewportSystem";
 import { LabelNode } from "./labelNode";
 import { BaseRenderer } from "./baseRenderer";
 import { ProjectedPoint } from "@/lib/camera";
-import { Vector3 } from "@/lib/Vector3";
+import type { vec3 } from "gl-matrix";
 
 const MAX_LABEL_SCREEN_SIZE = 48;
 
@@ -17,7 +17,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
     protected getCullMargin(node: LabelNode): number {
         return node.label.size
     }
-    protected shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+    protected shouldCullNode(_node: LabelNode, _projected: ProjectedPoint, _worldPos: vec3): boolean {
         return false
     }
     protected shouldSkipProjection(_node: LabelNode, _cameraDistance: number, _cameraScale: number): boolean {
