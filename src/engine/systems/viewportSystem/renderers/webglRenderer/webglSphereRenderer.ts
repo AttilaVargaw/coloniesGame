@@ -145,16 +145,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const model = mat4.create()
             mat4.identity(model)
-            mat4.translate(model, model, [worldPos[0], worldPos[1], worldPos[2]])
-            mat4.rotateY(model, model, node.texture.rotation ?? 0)
+            mat4.translate(model, model, worldPos)
 
             const scale = node.radius.radius
 
             mat4.scale(model, model, [scale, scale, scale])
 
             const normalMatrix = mat3.create()
-            mat3.fromMat4(normalMatrix, model)
-            mat3.transpose(normalMatrix, normalMatrix)
+            mat3.normalFromMat4(normalMatrix, model)
+
 
             const poolOffset = this.pendingInstances.length * 43
             if(poolOffset + 43 > this.sphereInstancePool!.length) {

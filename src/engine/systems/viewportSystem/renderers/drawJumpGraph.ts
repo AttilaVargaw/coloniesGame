@@ -29,11 +29,11 @@ export function drawJumpGraph(context: CanvasRenderingContext2D, engine: Engine,
             }
             drawn.add(key)
 
-            const [sx, sy, sz] = getAbsolute(source, engine)
-            const [tx, ty, tz] = getAbsolute(target, engine)
+            const s = getAbsolute(source, engine)
+            const t = getAbsolute(target, engine)
 
-            const sourceProjected = camera.project(sx, sy, sz)
-            const targetProjected = camera.project(tx, ty, tz)
+            const sourceProjected = camera.project(s)
+            const targetProjected = camera.project(t)
 
             if(!sourceProjected || !targetProjected) {
                 continue

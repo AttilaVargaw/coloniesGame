@@ -34,6 +34,7 @@ out vec2 vNightTexScale;
 out vec2 vRoughnessTexOffset;
 out vec2 vRoughnessTexScale;
 out float vCloudPage;
+out float vRotationAngle;
 
 #define PI 3.14159265359
 
@@ -51,6 +52,7 @@ void main() {
     vRoughnessTexOffset = aInstanceTexOffset;
     vRoughnessTexScale = aInstanceTexScale;
     vCloudPage = aInstanceEmissiveCloud.y;
+    vRotationAngle = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
 }`;
 
@@ -283,6 +285,7 @@ in vec2 vNightTexScale;
 in vec2 vRoughnessTexOffset;
 in vec2 vRoughnessTexScale;
 in float vCloudPage;
+in float vRotationAngle;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -305,13 +308,20 @@ vec2 rotateUV(vec2 uv, float angle) {
     return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
 }
 
+vec3 rotateY(vec3 v, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c);
+}
+
 void main() {
     vec3 geometricNormal = normalize(vNormal);
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
-    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
-    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
-    vec2 roughnessTexCoord = vec2(u, v) * vRoughnessTexScale + vRoughnessTexOffset;
+    float spunU = fract(u - vRotationAngle / (2.0 * PI));
+    vec2 texCoord = vec2(spunU, v) * vTexScale + vTexOffset;
+    vec2 nightTexCoord = vec2(spunU, v) * vNightTexScale + vNightTexOffset;
+    vec2 roughnessTexCoord = vec2(spunU, v) * vRoughnessTexScale + vRoughnessTexOffset;
 
     vec3 T = normalize(cross(geometricNormal, vec3(0.0, 1.0, 0.0)));
     if(length(T) < 0.001) T = normalize(cross(geometricNormal, vec3(1.0, 0.0, 0.0)));

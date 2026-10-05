@@ -168,8 +168,8 @@ export class DebugRenderer extends System {
         ctx.setLineDash([4, 2])
 
         for(const node of clickables) {
-            const [wx, wy, wz] = getAbsolute(node.entity, engine)
-            const projected = camera.project(wx, wy, wz)
+            const w = getAbsolute(node.entity, engine)
+            const projected = camera.project(w)
             if(!projected) continue
 
             const radius = node.entity.getComponent(RadiusComponent)?.radius
@@ -188,8 +188,8 @@ export class DebugRenderer extends System {
 
         ctx.strokeStyle = "rgba(0, 255, 0, 0.6)"
         for(const node of hoverables) {
-            const [wx, wy, wz] = getAbsolute(node.entity, engine)
-            const projected = camera.project(wx, wy, wz)
+            const w = getAbsolute(node.entity, engine)
+            const projected = camera.project(w)
             if(!projected) continue
 
             const radius = node.entity.getComponent(RadiusComponent)?.radius

@@ -16,14 +16,14 @@ export function isVisible(
     entity: Entity,
     engine: Engine
 ): boolean {
-    const [x, y, z] = getAbsolute(entity, engine);
+    const entityPos = getAbsolute(entity, engine);
     const camera = engine.getSystem(ViewportSystem)?.camera
-    if (!camera) {
+    if(!camera) {
         return true
     }
 
-    const projected = camera.project(x, y, z)
-    if (!projected) {
+    const projected = camera.project(entityPos)
+    if(!projected) {
         return false
     }
 

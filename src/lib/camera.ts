@@ -96,7 +96,7 @@ export default class Camera {
     }
 
     private ensureViewBasis(): ViewBasis {
-        if (!this.viewBasisDirty && this.viewBasisCache) {
+        if(!this.viewBasisDirty && this.viewBasisCache) {
             return this.viewBasisCache
         }
 
@@ -174,11 +174,11 @@ export default class Camera {
     }
 
     public updateSmoothZoom(dt: number) {
-        if (Math.abs(this.distance - this.targetDistance) > 0.01) {
+        if(Math.abs(this.distance - this.targetDistance) > 0.01) {
             const t = 1 - Math.pow(0.02, dt / 16.667)
             this.distance += (this.targetDistance - this.distance) * t
             this.invalidateView()
-        } else if (this.distance !== this.targetDistance) {
+        } else if(this.distance !== this.targetDistance) {
             this.distance = this.targetDistance
             this.invalidateView()
         }
@@ -239,8 +239,8 @@ export default class Camera {
     }
 
     public worldToScreen(x: number, y: number, z = 0, obj: { x: number; y: number } = { x: 0, y: 0 }) {
-        const projected = this.project(x, y, z)
-        if (projected) {
+        const projected = this.project([x, y, z])
+        if(projected) {
             obj.x = projected.x
             obj.y = projected.y
         }
@@ -255,7 +255,7 @@ export default class Camera {
         }
     }
 
-    project(wx: number, wy: number, wz: number): ProjectedPoint | null {
+    project([wx, wy, wz]: vec3): ProjectedPoint | null {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ } = this.viewBasis
 
         const vx = wx - camX
@@ -266,7 +266,7 @@ export default class Camera {
         const y = vx * ux + vy * uy + vz * uz
         const z = vx * fx + vy * fy + vz * fz
 
-        if (z <= 0.01) {
+        if(z <= 0.01) {
             return null
         }
 

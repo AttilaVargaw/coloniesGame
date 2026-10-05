@@ -63,7 +63,7 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
 }
 
 export function drawCameraTarget(ctx: CanvasRenderingContext2D, camera: Camera) {
-    const projected = camera.project(camera.lookAt[0], camera.lookAt[1], camera.lookAt[2])
+    const projected = camera.project(camera.lookAt)
     if(!projected) return
 
     ctx.save()

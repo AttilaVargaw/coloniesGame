@@ -88,10 +88,10 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 continue
             }
 
-            const [cx, cy, cz] = getAbsolute(parentEntity, this.engine!)
+            const c = getAbsolute(parentEntity, this.engine!)
             const orbit = node.orbit
 
-            const center = camera.project(cx, cy, cz)
+            const center = camera.project(c)
             if(!center) {
                 continue
             }
@@ -122,7 +122,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 const ry = x * sinA + y * cosA
                 const x1 = rx * cosL - ry * cosI * sinL
                 const y1 = rx * sinL + ry * cosI * cosL
-                const projectedPoint = camera.project(cx + x1, cy + ry * sinI, cz + y1)
+                const projectedPoint = camera.project([c[0] + x1, c[1] + ry * sinI, c[2] + y1])
                 if(projectedPoint) {
                     points[i * 2] = projectedPoint.x
                     points[i * 2 + 1] = projectedPoint.y
@@ -137,8 +137,6 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
         gl.enable(gl.DEPTH_TEST)
         gl.disableVertexAttribArray(this.shader.attribs.position)
     }
-
-
 
     protected getCullMargin(_node: WebGLOrbitNode): number {
         return 0
@@ -155,13 +153,13 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
             return true
         }
 
-        const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
+        const c = getAbsolute(parentEntity, this.engine)
         const orbit = node.orbit
         const camera = this.viewportSystem.camera
         const cssWidth = camera.cssWidth
         const cssHeight = camera.cssHeight
 
-        const center = camera.project(cx, cy, cz)
+        const center = camera.project(getAbsolute(parentEntity, this.engine))
         if(!center) {
             return true
         }
@@ -178,7 +176,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
             const ry = x * sinA + y * cosA
             const x1 = rx * cosL - ry * cosI * sinL
             const y1 = rx * sinL + ry * cosI * cosL
-            const projected = camera.project(cx + x1, cy + ry * sinI, cz + y1)
+            const projected = camera.project([c[0] + x1, c[1] + ry * sinI, c[2] + y1])
             if(projected) {
                 const margin = 10
                 if(

@@ -130,7 +130,7 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             const worldX = cx + circle.radius.radius * Math.cos(angle)
             const worldY = cy + circle.radius.radius * Math.sin(angle)
             const worldZ = cz
-            const projected = camera.project(worldX, worldY, worldZ)
+            const projected = camera.project([worldX, worldY, worldZ])
             if(!projected) {
                 continue
             }
@@ -204,8 +204,8 @@ export class CircleRenderer extends BaseRenderer<CircleNode> {
             return
         }
 
-        const litSurface = camera.project(cx + lightDir[0] * radius, cy + lightDir[1] * radius, cz + lightDir[2] * radius)
-        const darkSurface = camera.project(cx - lightDir[0] * radius, cy - lightDir[1] * radius, cz - lightDir[2] * radius)
+        const litSurface = camera.project([cx + lightDir[0] * radius, cy + lightDir[1] * radius, cz + lightDir[2] * radius])
+        const darkSurface = camera.project([cx - lightDir[0] * radius, cy - lightDir[1] * radius, cz - lightDir[2] * radius])
 
         if(!litSurface || !darkSurface) {
             return

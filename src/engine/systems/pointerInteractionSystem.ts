@@ -87,8 +87,8 @@ export class PointerInteractionSystem extends System {
             const { clickable: { size, contextMenuItems, entity } } = node
             if(!contextMenuItems || contextMenuItems.length === 0) continue
 
-            const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
-            const projected = camera.project(entityX, entityY, entityZ)
+            const entityPos = getAbsolute(node.entity, this.engine!)
+            const projected = camera.project(entityPos)
             if(!projected) {
                 continue
             }
@@ -116,9 +116,9 @@ export class PointerInteractionSystem extends System {
         let hovered = false
 
         for(const hoverableNode of this.hoverableNodes) {
-            const [wx, wy, wz] = getAbsolute(hoverableNode.entity, this.engine!)
+            const w = getAbsolute(hoverableNode.entity, this.engine!)
             const { hoverable: { size, cursor } } = hoverableNode
-            const projected = camera.project(wx, wy, wz)
+            const projected = camera.project(w)
             if(!projected) {
                 continue
             }
@@ -154,8 +154,8 @@ export class PointerInteractionSystem extends System {
 
         for(const node of this.clickableNodes) {
             const { clickable: { size, onClick, entity } } = node
-            const [entityX, entityY, entityZ] = getAbsolute(node.entity, this.engine!)
-            const projected = camera.project(entityX, entityY, entityZ)
+            const entityPos = getAbsolute(node.entity, this.engine!)
+            const projected = camera.project(entityPos)
             if(!projected) {
                 continue
             }
@@ -168,7 +168,7 @@ export class PointerInteractionSystem extends System {
             if(
                 onClick &&
                 isHit) {
-                onClick({ target: entity!, event: data, worldX: entityX, worldY: entityY })
+                onClick({ target: entity!, event: data, worldX: entityPos[0], worldY: entityPos[1] })
                 hit = true
                 break
             }

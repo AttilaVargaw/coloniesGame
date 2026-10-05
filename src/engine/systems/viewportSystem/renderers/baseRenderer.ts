@@ -85,7 +85,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
             }
 
             const worldPos = this.getWorldPosition(node)
-            const projected = camera.project(worldPos[0], worldPos[1], worldPos[2])
+            const projected = camera.project(worldPos)
             if(!projected) {
                 this.debugCulledCount++
                 continue

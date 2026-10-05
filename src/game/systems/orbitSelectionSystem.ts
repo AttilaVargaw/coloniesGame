@@ -73,9 +73,9 @@ export class OrbitSelectionSystem extends System {
 
         drive.isOrbitSelecting = false
 
-        const [cx, cy, cz] = getAbsolute(target, this.engine)
+        const c = getAbsolute(target, this.engine)
         const camera = this.viewport.camera
-        const projected = camera.project(cx, cy, cz)
+        const projected = camera.project(c)
         if(!projected) return
 
         const screenDist = Math.hypot(this.mouseX - projected.x, this.mouseY - projected.y)
@@ -84,8 +84,8 @@ export class OrbitSelectionSystem extends System {
 
         const theta = Math.atan2(this.mouseY - projected.y, this.mouseX - projected.x)
 
-        drive.clickX = cx + r * Math.cos(theta)
-        drive.clickY = cy + r * Math.sin(theta)
+        drive.clickX = c[0] + r * Math.cos(theta)
+        drive.clickY = c[1] + r * Math.sin(theta)
 
         this.selection = null
     }
@@ -106,8 +106,8 @@ export class OrbitSelectionSystem extends System {
             }
 
             const camera = this.viewport.camera
-            const [cx, cy, cz] = getAbsolute(target, this.engine)
-            const projected = camera.project(cx, cy, cz)
+            const c = getAbsolute(target, this.engine)
+            const projected = camera.project(c)
             if(!projected) {
                 return
             }
@@ -164,8 +164,8 @@ export class OrbitSelectionSystem extends System {
         }
 
         const ctx = camera.context
-        const [cx, cy, cz] = getAbsolute(target, this.engine)
-        const projected = camera.project(cx, cy, cz)
+        const c = getAbsolute(target, this.engine)
+        const projected = camera.project(c)
         if(!projected) {
             return
         }

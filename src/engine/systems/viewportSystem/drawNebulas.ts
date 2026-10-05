@@ -35,7 +35,7 @@ export function drawNebulas(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.globalCompositeOperation = "screen"
 
     for(const n of nebulas) {
-        const projected = camera.project(n.x, n.y, n.z)
+        const projected = camera.project([n.x, n.y, n.z])
         if(!projected) continue
 
         const screenRadius = n.radius * projected.scale

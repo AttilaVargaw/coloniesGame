@@ -39,7 +39,7 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
     const glow: { x: number; y: number; r: number; color: string; alpha: number }[] = []
 
     for(const s of starfield) {
-        const projected = camera.project(s.x, s.y, s.z);
+        const projected = camera.project([s.x, s.y, s.z]);
         if(!projected) {
             continue;
         }

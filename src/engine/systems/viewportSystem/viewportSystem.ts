@@ -77,8 +77,8 @@ export class ViewportSystem extends System {
 
             if(!color?.emitLight || !radius || radius.radius < 10) continue
 
-            const [sx, sy, sz] = getAbsolute(entity, this.engine)
-            const projected = camera.project(sx, sy, sz)
+            const s = getAbsolute(entity, this.engine)
+            const projected = camera.project(s)
             if(!projected) continue
 
             const screenX = projected.x

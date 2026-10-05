@@ -42,17 +42,20 @@ export class SpinSystem extends SystemWithNodes<SpinNode> {
         const entity = node.entity
         const rotation = node.rotation
         const texture = entity.getComponent(TextureComponent)
-        if (!texture) return
 
-        rotation.angle += rotation.speed * ((dt ?? 0) / 1000)
-        texture.rotation = rotation.angle % (Math.PI * 2)
+        rotation.angle += (rotation.speed * ((dt ?? 0) / 1000)) 
+        rotation.angle %= Math.PI * 2
+
+        if(texture) {
+            texture.rotation = rotation.angle % (Math.PI * 2)
+        }
     }
 
     update(dt: number): void {
-        if (!this.engine) return
+        if(!this.engine) return
 
         const camera = this.engine.getSystem(ViewportSystem)?.camera
-        if (!camera) {
+        if(!camera) {
             super.update(dt)
             return
         }
@@ -64,10 +67,10 @@ export class SpinSystem extends SystemWithNodes<SpinNode> {
             bottom: camera.cssHeight,
         }
 
-        for (const node of this.nodes) {
+        for(const node of this.nodes) {
             const radius = node.entity.getComponent(RadiusComponent)
             const margin = radius ? radius.radius : 0
-            if (isVisible(bounds, margin, node.entity, this.engine)) {
+            if(isVisible(bounds, margin, node.entity, this.engine)) {
                 this.updateNode(node, dt)
             }
         }
