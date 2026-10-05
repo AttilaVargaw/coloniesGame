@@ -67,11 +67,11 @@ export class SceneNode {
         }
 
         if(!this._parent) {
-            return position.getVector()
+            return vec3.clone(position.getVector())
         }
 
         const parentPos = this._parent.getWorldPosition()
-        return vec3.add([0, 0, 0], parentPos, position.getVector())
+        return vec3.add(vec3.create(), parentPos, position.getVector())
     }
 
     // Thx ai, why entity[]?

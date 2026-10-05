@@ -1,4 +1,4 @@
-import { vec2, vec3 } from "gl-matrix"
+import { mat4, vec2, vec3 } from "gl-matrix"
 
 export interface ProjectedPoint {
     x: number
@@ -94,6 +94,8 @@ export default class Camera {
 
     private viewBasisDirty = true
 
+    private viewMatrix = mat4.create()
+
     private markViewDirty() {
         this.viewBasisDirty = true
     }
@@ -103,43 +105,19 @@ export default class Camera {
             return this.viewBasisCache
         }
 
-        const cosPitch = Math.cos(this.pitch)
-        const sinPitch = Math.sin(this.pitch)
-        const cosYaw = Math.cos(this.yaw)
-        const sinYaw = Math.sin(this.yaw)
+        const camPos: vec3 = [
+            this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
+            this.lookAt[1] + this.distance * Math.sin(this.pitch),
+            this.lookAt[2] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
+        ]
 
-        const camX = this.lookAt[0] + this.distance * cosPitch * sinYaw
-        const camY = this.lookAt[1] + this.distance * sinPitch
-        const camZ = this.lookAt[2] + this.distance * cosPitch * cosYaw
+        mat4.lookAt(this.viewMatrix, camPos, this.lookAt, [0, 1, 0])
 
-        const forward = vec3.normalize(vec3.create(), vec3.sub(vec3.create(), this.lookAt, [camX, camY, camZ]))
-        const fx = forward[0]
-        const fy = forward[1]
-        const fz = forward[2]
+        const fx = -this.viewMatrix[2], fy = -this.viewMatrix[6], fz = -this.viewMatrix[10]
+        const rx = this.viewMatrix[0], ry = this.viewMatrix[4], rz = this.viewMatrix[8]
+        const ux = this.viewMatrix[1], uy = this.viewMatrix[5], uz = this.viewMatrix[9]
 
-        const worldUp: vec3 = [0, 1, 0]
-
-        let rx: number
-        let ry: number
-        let rz: number
-
-        if(Math.abs(vec3.dot(forward, worldUp)) > 0.9999) {
-            rx = 1
-            ry = 0
-            rz = 0
-        } else {
-            const right = vec3.normalize(vec3.create(), vec3.cross(vec3.create(), forward, worldUp))
-            rx = right[0]
-            ry = right[1]
-            rz = right[2]
-        }
-
-        const up = vec3.cross(vec3.create(), [rx, ry, rz], forward)
-        const ux = up[0]
-        const uy = up[1]
-        const uz = up[2]
-
-        this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ }
+        this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX: camPos[0], camY: camPos[1], camZ: camPos[2] }
         this.viewBasisDirty = false
 
         return this.viewBasisCache
@@ -192,11 +170,8 @@ export default class Camera {
     }
 
     public get cameraPosition(): vec3 {
-        return [
-            this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
-            this.lookAt[1] + this.distance * Math.sin(this.pitch),
-            this.lookAt[2] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
-        ]
+        const { camX, camY, camZ } = this.viewBasis
+        return [camX, camY, camZ]
     }
 
     public get viewBasis() {
@@ -299,17 +274,8 @@ export default class Camera {
         }
     }
 
-    private computeCameraPosition(): { camX: number; camY: number; camZ: number } {
-        return {
-            camX: this.lookAt[0] + this.distance * Math.cos(this.pitch) * Math.sin(this.yaw),
-            camY: this.lookAt[1] + this.distance * Math.sin(this.pitch),
-            camZ: this.lookAt[2] + this.distance * Math.cos(this.pitch) * Math.cos(this.yaw),
-        }
-    }
-
-    public project(wx: number, wy: number, wz: number): ProjectedPoint | null {
-        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-        const { camX, camY, camZ } = this.computeCameraPosition()
+ project(wx: number, wy: number, wz: number): ProjectedPoint | null {
+        const { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ } = this.viewBasis
 
         const vx = wx - camX
         const vy = wy - camY
@@ -332,8 +298,7 @@ export default class Camera {
     }
 
     public screenToWorldRay(screenX: number, screenY: number): { origin: vec3; direction: vec3 } {
-        const { fx, fy, fz, rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-        const { camX, camY, camZ } = this.computeCameraPosition()
+        const { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ } = this.viewBasis
 
         const f = this.viewport.cssHeight / (2 * Math.tan(this.fieldOfView / 2))
 
