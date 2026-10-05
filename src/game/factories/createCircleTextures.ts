@@ -155,89 +155,57 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
 
 const noiseScale = 4
 
-export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+type PixelProcessor = (x: number, y: number, sx: number, sy: number, sz: number, data: Uint8ClampedArray, perm: number[]) => void
+
+interface TextureResult {
+    canvas: HTMLCanvasElement | OffscreenCanvas
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D
+    data: Uint8ClampedArray
+    imageData: ImageData
+    size: number
+    perm: number[]
+}
+
+function generateTexture(
+    baseColor: string,
+    seedArchetype: string,
+    seedKey: string | undefined,
+    processPixel: PixelProcessor
+): TextureResult {
     const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
-
     ctx.clearRect(0, 0, size, size)
 
-    const seed = seedFrom(baseColor, archetype, seedKey)
+    const seed = seedFrom(baseColor, seedArchetype, seedKey)
     const perm = buildPerm(seed)
 
     const imageData = ctx.createImageData(size, size)
     const data = imageData.data
 
-    const epsilon = 0.04
-    const strength = 0.01
-
-    const raw = new Float32Array(size * size * 3)
-
     for(let y = 0; y < size; y++) {
         for(let x = 0; x < size; x++) {
             const u = x / size
             const v = y / size
-
             const [sx, sy, sz] = uvToSpherePoint(u, v)
-
-            const nx = sx, ny = sy, nz = sz
-            let tx, ty, tz
-            if(Math.abs(ny) < 0.999) {
-                tx = nz
-                ty = 0
-                tz = -nx
-            } else {
-                tx = 0
-                ty = 0
-                tz = ny > 0 ? -1 : 1
-            }
-            const tLen = Math.sqrt(tx * tx + ty * ty + tz * tz)
-            tx /= tLen
-            ty /= tLen
-            tz /= tLen
-
-            const bx = ny * tz - nz * ty
-            const by = nz * tx - nx * tz
-            const bz = nx * ty - ny * tx
-            const bLen = Math.sqrt(bx * bx + by * by + bz * bz)
-            const nbx = bx / bLen
-            const nby = by / bLen
-            const nbz = bz / bLen
-
-            const h = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
-            const hT = sampleFbm3d((sx + tx * epsilon) * noiseScale, (sy + ty * epsilon) * noiseScale, (sz + tz * epsilon) * noiseScale, perm, 0.4, 5)
-            const hB = sampleFbm3d((sx + nbx * epsilon) * noiseScale, (sy + nby * epsilon) * noiseScale, (sz + nbz * epsilon) * noiseScale, perm, 0.4, 5)
-
-            const dhDT = (hT - h) / epsilon
-            const dhDB = (hB - h) / epsilon
-
-            let nnx = -dhDT * strength
-            let nny = -dhDB * strength
-            let nnz = 1.0
-            const nLen = Math.sqrt(nnx * nnx + nny * nny + nnz * nnz)
-            nnx /= nLen
-            nny /= nLen
-            nnz /= nLen
-
-            const idx = (y * size + x) * 3
-            raw[idx] = nnx
-            raw[idx + 1] = nny
-            raw[idx + 2] = nnz
+            processPixel(x, y, sx, sy, sz, data, perm)
         }
     }
 
-    const blurred = boxBlurNormalMap(raw, size, size, 1)
+    return { canvas, ctx, data, imageData, size, perm }
+}
 
-    for(let i = 0; i < size * size; i++) {
-        const idx = i * 4
-        data[idx] = clamp(Math.round((blurred[i * 3] * 0.5 + 0.5) * 255), 0, 255)
-        data[idx + 1] = clamp(Math.round((blurred[i * 3 + 1] * 0.5 + 0.5) * 255), 0, 255)
-        data[idx + 2] = clamp(Math.round((blurred[i * 3 + 2] * 0.5 + 0.5) * 255), 0, 255)
-        data[idx + 3] = 255
-    }
-
-    ctx.putImageData(imageData, 0, 0)
-
-    return canvas
+function applyAtmosphereGradient(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    size: number,
+    rgb: { r: number; g: number; b: number },
+    alpha: number
+): void {
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
+    gradient.addColorStop(0, "rgba(0,0,0,0)")
+    gradient.addColorStop(0.85, "rgba(0,0,0,0)")
+    gradient.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`)
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, size, size)
 }
 
 function boxBlurNormalMap(src: Float32Array, width: number, height: number, radius: number): Float32Array {
@@ -269,7 +237,6 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
     for(let y = 0; y < height; y++) {
         for(let x = 0; x < width; x++) {
             let rx = 0, ry = 0, rz = 0
-            //let count = 0
             for(let dy = -radius; dy <= radius; dy++) {
                 for(let dx = -radius; dx <= radius; dx++) {
                     const sx = (x + dx + width) % width
@@ -278,7 +245,6 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
                     rx += tmp[idx]
                     ry += tmp[idx + 1]
                     rz += tmp[idx + 2]
-                    //count++
                 }
             }
             const idx = (y * width + x) * 3
@@ -293,90 +259,6 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
 }
 
 const GAS_GIANTS = new Set(["jupiter", "saturn", "uranus", "neptune"])
-
-export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    if(GAS_GIANTS.has(archetype)) {
-        return createGasGiantTexture(baseColor, archetype, seedKey)
-    }
-
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
-
-    ctx.clearRect(0, 0, size, size)
-
-    const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
-    const base = hexToRgb(baseColor)
-
-    const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
-    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.35)
-    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
-    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
-
-    const seed = seedFrom(baseColor, archetype, seedKey)
-    const perm = buildPerm(seed)
-
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
-
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
-
-            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
-            const normalizedLand = (landMask + 1) / 2
-            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
-            const normalizedCloud = (cloudNoise + 1) / 2
-
-            let r: number, g: number, b: number
-            if(normalizedLand > 0.4) {
-                r = lerp(landRgb.r * 0.7, landRgb.r * 1.3, normalizedLand)
-                g = lerp(landRgb.g * 0.7, landRgb.g * 1.3, normalizedLand)
-                b = lerp(landRgb.b * 0.7, landRgb.b * 1.3, normalizedLand)
-            } else {
-                r = lerp(oceanRgb.r * 0.8, oceanRgb.r * 1.2, normalizedLand)
-                g = lerp(oceanRgb.g * 0.8, oceanRgb.g * 1.2, normalizedLand)
-                b = lerp(oceanRgb.b * 0.8, oceanRgb.b * 1.2, normalizedLand)
-            }
-
-            if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
-                r = lerp(r, cloudsRgb.r, cloudAlpha * 0.85)
-                g = lerp(g, cloudsRgb.g, cloudAlpha * 0.85)
-                b = lerp(b, cloudsRgb.b, cloudAlpha * 0.85)
-            }
-
-            const latitude = Math.abs(y / size - 0.5) * 2
-            if(latitude > 0.78) {
-                const polarAlpha = (latitude - 0.78) / 0.22
-                r = lerp(r, polesRgb.r, polarAlpha * 0.85)
-                g = lerp(g, polesRgb.g, polarAlpha * 0.85)
-                b = lerp(b, polesRgb.b, polarAlpha * 0.85)
-            }
-
-            const idx = (y * size + x) * 4
-            data[idx] = clamp(Math.round(r), 0, 255)
-            data[idx + 1] = clamp(Math.round(g), 0, 255)
-            data[idx + 2] = clamp(Math.round(b), 0, 255)
-            data[idx + 3] = 255
-        }
-    }
-
-    ctx.putImageData(imageData, 0, 0)
-
-    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
-    const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
-    atmGradient.addColorStop(0, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.15)`)
-    ctx.fillStyle = atmGradient
-    ctx.fillRect(0, 0, size, size)
-
-    return canvas
-}
 
 const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: string }> = {
     jupiter: {
@@ -397,106 +279,194 @@ const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: str
     }
 }
 
-export function createGasGiantTexture(baseColor: string, archetype: string = "jupiter", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
+export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const epsilon = 0.04
+    const strength = 0.04
 
-    ctx.clearRect(0, 0, size, size)
+    const raw = new Float32Array(size * size * 3)
 
-    const palette = GAS_GIANT_PALETTES[archetype] || GAS_GIANT_PALETTES.jupiter
-    const base = hexToRgb(baseColor)
-
-    const seed = seedFrom(baseColor, archetype, seedKey)
-    const perm = buildPerm(seed)
-
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
-
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
-
-            const latitude = sy
-            const bandNoise = sampleFbm3d(sx * 2.5 + 3.7, sy * 1.8 + 1.3, sz * 2.5 + 7.1, perm, 0.35, 4)
-            const warpedLatitude = latitude + bandNoise * 0.25
-            const rawIndex = ((warpedLatitude + 1) / 2) * palette.bands.length
-            const bandIndex = Math.max(0, Math.min(Math.floor(rawIndex), palette.bands.length - 1))
-            const bandFrac = rawIndex - bandIndex
-            const bandA = palette.bands[bandIndex]
-            const bandB = palette.bands[Math.min(bandIndex + 1, palette.bands.length - 1)]
-
-            const [colorA, colorB] = [bandA[0], bandB[0]]
-            const rgbA = tintColor(hexToRgb(colorA), base, 0.25)
-            const rgbB = tintColor(hexToRgb(colorB), base, 0.25)
-
-            const bandT = (Math.sin(bandFrac * Math.PI) * 0.5 + 0.5)
-            const r = lerp(rgbA.r, rgbB.r, bandT)
-            const g = lerp(rgbA.g, rgbB.g, bandT)
-            const b = lerp(rgbA.b, rgbB.b, bandT)
-
-            const stormNoise = sampleFbm3d(sx * 3.0 + 20, sy * 3.0 + 20, sz * 3.0 + 20, perm, 0.4, 3)
-            const stormMask = Math.max(0, stormNoise - 0.35) / 0.65
-            const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
-
-            const idx = (y * size + x) * 4
-            data[idx] = clamp(Math.round(lerp(r, stormRgb.r, stormMask * 0.6)), 0, 255)
-            data[idx + 1] = clamp(Math.round(lerp(g, stormRgb.g, stormMask * 0.6)), 0, 255)
-            data[idx + 2] = clamp(Math.round(lerp(b, stormRgb.b, stormMask * 0.6)), 0, 255)
-            data[idx + 3] = 255
+    const { canvas, ctx, data, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, _data, perm) => {
+        let tx, ty, tz
+        if(Math.abs(sy) < 0.999) {
+            tx = sz
+            ty = 0
+            tz = -sx
+        } else {
+            tx = 0
+            ty = 0
+            tz = sy > 0 ? -1 : 1
         }
+        const tLen = Math.sqrt(tx * tx + ty * ty + tz * tz)
+        tx /= tLen
+        ty /= tLen
+        tz /= tLen
+
+        const bx = sy * tz - sz * ty
+        const by = sz * tx - sx * tz
+        const bz = sx * ty - sy * tx
+        const bLen = Math.sqrt(bx * bx + by * by + bz * bz)
+        const nbx = bx / bLen
+        const nby = by / bLen
+        const nbz = bz / bLen
+
+        const h = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+        const hT = sampleFbm3d((sx + tx * epsilon) * noiseScale, (sy + ty * epsilon) * noiseScale, (sz + tz * epsilon) * noiseScale, perm, 0.4, 5)
+        const hB = sampleFbm3d((sx + nbx * epsilon) * noiseScale, (sy + nby * epsilon) * noiseScale, (sz + nbz * epsilon) * noiseScale, perm, 0.4, 5)
+
+        const dhDT = (hT - h) / epsilon
+        const dhDB = (hB - h) / epsilon
+
+        let nnx = -dhDT * strength
+        let nny = -dhDB * strength
+        let nnz = 1.0
+        const nLen = Math.sqrt(nnx * nnx + nny * nny + nnz * nnz)
+        nnx /= nLen
+        nny /= nLen
+        nnz /= nLen
+
+        const idx = (y * size + x) * 3
+        raw[idx] = nnx
+        raw[idx + 1] = nny
+        raw[idx + 2] = nnz
+    })
+
+    const blurred = boxBlurNormalMap(raw, size, size, 1)
+
+    for(let i = 0; i < size * size; i++) {
+        const idx = i * 4
+        data[idx] = clamp(Math.round((blurred[i * 3] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 1] = clamp(Math.round((blurred[i * 3 + 1] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 2] = clamp(Math.round((blurred[i * 3 + 2] * 0.5 + 0.5) * 255), 0, 255)
+        data[idx + 3] = 255
     }
 
     ctx.putImageData(imageData, 0, 0)
 
+    return canvas
+}
+
+export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    if(GAS_GIANTS.has(archetype)) {
+        return createGasGiantTexture(baseColor, archetype, seedKey)
+    }
+
+    const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
+    const base = hexToRgb(baseColor)
+
+    const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
+    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.35)
+    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
+    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
+
+    const { canvas, ctx, imageData, } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+        const normalizedLand = (landMask + 1) / 2
+        const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
+        const normalizedCloud = (cloudNoise + 1) / 2
+
+        let r: number, g: number, b: number
+        if(normalizedLand > 0.4) {
+            r = lerp(landRgb.r * 0.7, landRgb.r * 1.3, normalizedLand)
+            g = lerp(landRgb.g * 0.7, landRgb.g * 1.3, normalizedLand)
+            b = lerp(landRgb.b * 0.7, landRgb.b * 1.3, normalizedLand)
+        } else {
+            r = lerp(oceanRgb.r * 0.8, oceanRgb.r * 1.2, normalizedLand)
+            g = lerp(oceanRgb.g * 0.8, oceanRgb.g * 1.2, normalizedLand)
+            b = lerp(oceanRgb.b * 0.8, oceanRgb.b * 1.2, normalizedLand)
+        }
+
+        if(normalizedCloud > 0.55) {
+            const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+            r = lerp(r, cloudsRgb.r, cloudAlpha * 0.85)
+            g = lerp(g, cloudsRgb.g, cloudAlpha * 0.85)
+            b = lerp(b, cloudsRgb.b, cloudAlpha * 0.85)
+        }
+
+        const latitude = Math.abs(y / size - 0.5) * 2
+        if(latitude > 0.78) {
+            const polarAlpha = (latitude - 0.78) / 0.22
+            r = lerp(r, polesRgb.r, polarAlpha * 0.85)
+            g = lerp(g, polesRgb.g, polarAlpha * 0.85)
+            b = lerp(b, polesRgb.b, polarAlpha * 0.85)
+        }
+
+        const idx = (y * size + x) * 4
+        data[idx] = clamp(Math.round(r), 0, 255)
+        data[idx + 1] = clamp(Math.round(g), 0, 255)
+        data[idx + 2] = clamp(Math.round(b), 0, 255)
+        data[idx + 3] = 255
+    })
+
+    ctx.putImageData(imageData, 0, 0)
+
+    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
+    const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
+    applyAtmosphereGradient(ctx, size, atmRgb, 0.15)
+
+    return canvas
+}
+
+export function createGasGiantTexture(baseColor: string, archetype: string = "jupiter", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const palette = GAS_GIANT_PALETTES[archetype] || GAS_GIANT_PALETTES.jupiter
+    const base = hexToRgb(baseColor)
+
+    const { canvas, ctx, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const latitude = sy
+        const bandNoise = sampleFbm3d(sx * 2.5 + 3.7, sy * 1.8 + 1.3, sz * 2.5 + 7.1, perm, 0.35, 4)
+        const warpedLatitude = latitude + bandNoise * 0.25
+        const rawIndex = ((warpedLatitude + 1) / 2) * palette.bands.length
+        const bandIndex = Math.max(0, Math.min(Math.floor(rawIndex), palette.bands.length - 1))
+        const bandFrac = rawIndex - bandIndex
+        const bandA = palette.bands[bandIndex]
+        const bandB = palette.bands[Math.min(bandIndex + 1, palette.bands.length - 1)]
+
+        const [colorA, colorB] = [bandA[0], bandB[0]]
+        const rgbA = tintColor(hexToRgb(colorA), base, 0.25)
+        const rgbB = tintColor(hexToRgb(colorB), base, 0.25)
+
+        const bandT = (Math.sin(bandFrac * Math.PI) * 0.5 + 0.5)
+        const r = lerp(rgbA.r, rgbB.r, bandT)
+        const g = lerp(rgbA.g, rgbB.g, bandT)
+        const b = lerp(rgbA.b, rgbB.b, bandT)
+
+        const stormNoise = sampleFbm3d(sx * 3.0 + 20, sy * 3.0 + 20, sz * 3.0 + 20, perm, 0.4, 3)
+        const stormMask = Math.max(0, stormNoise - 0.35) / 0.65
+        const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
+
+        const idx = (y * size + x) * 4
+        data[idx] = clamp(Math.round(lerp(r, stormRgb.r, stormMask * 0.6)), 0, 255)
+        data[idx + 1] = clamp(Math.round(lerp(g, stormRgb.g, stormMask * 0.6)), 0, 255)
+        data[idx + 2] = clamp(Math.round(lerp(b, stormRgb.b, stormMask * 0.6)), 0, 255)
+        data[idx + 3] = 255
+    })
+
+    ctx.putImageData(imageData, 0, 0)
+
     const atmRgb = tintColor(hexToRgb(palette.bands[0][0]), base, 0.1)
-    const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
-    atmGradient.addColorStop(0, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.1)`)
-    ctx.fillStyle = atmGradient
-    ctx.fillRect(0, 0, size, size)
+    applyAtmosphereGradient(ctx, size, atmRgb, 0.1)
 
     return canvas
 }
 
 export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
-
-    ctx.clearRect(0, 0, size, size)
-
-    const seedVal = seedFrom(baseColor, "star", seedKey)
-    const perm = buildPerm(seedVal)
     const base = hexToRgb(baseColor)
 
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
+    const { canvas, ctx, imageData, perm } = generateTexture(baseColor, "star", seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const fine = (sampleFbm3d(sx * noiseScale * 1.25, sy * noiseScale * 1.25, sz * noiseScale * 1.25, perm, 0.4, 6) + 1) / 2
+        const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
+        const bright = 0.25 + fine * 0.60 + coarse * 0.15
+        const brightness = Math.round(clamp(bright * 255, 0, 255))
 
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
+        const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
+        const g = Math.round(clamp(brightness * (base.g / 255), 0, 255))
+        const b = Math.round(clamp(brightness * (base.b / 255), 0, 255))
 
-            const fine = (sampleFbm3d(sx * noiseScale * 1.25, sy * noiseScale * 1.25, sz * noiseScale * 1.25, perm, 0.4, 6) + 1) / 2
-            const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
-            const bright = 0.25 + fine * 0.60 + coarse * 0.15
-            const brightness = Math.round(clamp(bright * 255, 0, 255))
-
-            const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
-            const g = Math.round(clamp(brightness * (base.g / 255), 0, 255))
-            const b = Math.round(clamp(brightness * (base.b / 255), 0, 255))
-
-            const idx = (y * size + x) * 4
-            data[idx] = r
-            data[idx + 1] = g
-            data[idx + 2] = b
-            data[idx + 3] = 255
-        }
-    }
+        const idx = (y * size + x) * 4
+        data[idx] = r
+        data[idx + 1] = g
+        data[idx + 2] = b
+        data[idx + 3] = 255
+    })
 
     ctx.putImageData(imageData, 0, 0)
 
@@ -530,55 +500,37 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
 }
 
 export function createRoughnessTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
+    const { canvas, ctx, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+        const normalizedLand = (landMask + 1) / 2
+        const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
+        const normalizedCloud = (cloudNoise + 1) / 2
 
-    ctx.clearRect(0, 0, size, size)
-
-    const seed = seedFrom(baseColor, archetype, seedKey)
-    const perm = buildPerm(seed)
-
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
-
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
-
-            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
-            const normalizedLand = (landMask + 1) / 2
-            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
-            const normalizedCloud = (cloudNoise + 1) / 2
-
-            let roughness: number
-            if(normalizedLand > 0.48) {
-                roughness = lerp(0.55, 0.85, normalizedLand)
-            } else {
-                roughness = lerp(0.08, 0.18, normalizedLand)
-            }
-
-            if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
-                roughness = lerp(roughness, 0.35, cloudAlpha * 0.7)
-            }
-
-            const latitude = Math.abs(y / size - 0.5) * 2
-            if(latitude > 0.78) {
-                const polarAlpha = (latitude - 0.78) / 0.22
-                roughness = lerp(roughness, 0.15, polarAlpha * 0.7)
-            }
-
-            const value = Math.round(clamp(roughness, 0, 1) * 255)
-            const idx = (y * size + x) * 4
-            data[idx] = value
-            data[idx + 1] = value
-            data[idx + 2] = value
-            data[idx + 3] = 255
+        let roughness: number
+        if(normalizedLand > 0.48) {
+            roughness = lerp(0.55, 0.85, normalizedLand)
+        } else {
+            roughness = lerp(0.08, 0.18, normalizedLand)
         }
-    }
+
+        if(normalizedCloud > 0.55) {
+            const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+            roughness = lerp(roughness, 0.35, cloudAlpha * 0.7)
+        }
+
+        const latitude = Math.abs(y / size - 0.5) * 2
+        if(latitude > 0.78) {
+            const polarAlpha = (latitude - 0.78) / 0.22
+            roughness = lerp(roughness, 0.15, polarAlpha * 0.7)
+        }
+
+        const value = Math.round(clamp(roughness, 0, 1) * 255)
+        const idx = (y * size + x) * 4
+        data[idx] = value
+        data[idx + 1] = value
+        data[idx + 2] = value
+        data[idx + 3] = 255
+    })
 
     ctx.putImageData(imageData, 0, 0)
 
@@ -586,43 +538,25 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
 }
 
 export function createCloudTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
-
-    ctx.clearRect(0, 0, size, size)
-
     const palette = PALETTES[archetype] || { clouds: "#ffffff" }
     const base = hexToRgb(baseColor)
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
 
-    const seed = seedFrom(baseColor, `${archetype}-clouds`, seedKey)
-    const perm = buildPerm(seed)
+    const { canvas, ctx, imageData } = generateTexture(baseColor, `${archetype}-clouds`, seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const cloudNoise = sampleFbm3d(sx * noiseScale * 0.8 + 20, sy * noiseScale * 0.8 + 20, sz * noiseScale * 0.8 + 20, perm, 0.35, 4)
+        const normalizedCloud = (cloudNoise + 1) / 2
 
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
-
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
-
-            const cloudNoise = sampleFbm3d(sx * noiseScale * 0.8 + 20, sy * noiseScale * 0.8 + 20, sz * noiseScale * 0.8 + 20, perm, 0.35, 4)
-            const normalizedCloud = (cloudNoise + 1) / 2
-
-            let alpha = 0
-            if(normalizedCloud > 0.4) {
-                alpha = Math.min(1, (normalizedCloud - 0.45) * 4)
-            }
-
-            const idx = (y * size + x) * 4
-            data[idx] = cloudsRgb.r
-            data[idx + 1] = cloudsRgb.g
-            data[idx + 2] = cloudsRgb.b
-            data[idx + 3] = Math.round(clamp(alpha * 255, 0, 255))
+        let alpha = 0
+        if(normalizedCloud > 0.4) {
+            alpha = Math.min(1, (normalizedCloud - 0.45) * 4)
         }
-    }
+
+        const idx = (y * size + x) * 4
+        data[idx] = cloudsRgb.r
+        data[idx + 1] = cloudsRgb.g
+        data[idx + 2] = cloudsRgb.b
+        data[idx + 3] = Math.round(clamp(alpha * 255, 0, 255))
+    })
 
     ctx.putImageData(imageData, 0, 0)
 
@@ -630,11 +564,6 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
 }
 
 export function createNightTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const canvas = createCanvas(size, size)
-    const ctx = canvas.getContext("2d")!
-
-    ctx.clearRect(0, 0, size, size)
-
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 
@@ -643,85 +572,68 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
     const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
 
-    const seed = seedFrom(baseColor, archetype, seedKey)
-    const perm = buildPerm(seed)
+    const { canvas, ctx, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
+        const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+        const normalizedLand = (landMask + 1) / 2
+        const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
+        const normalizedCloud = (cloudNoise + 1) / 2
 
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
+        let r: number, g: number, b: number
+        if(normalizedLand > 0.48) {
+            r = landRgb.r * 0.04
+            g = landRgb.g * 0.04
+            b = landRgb.b * 0.04
+        } else {
+            r = oceanRgb.r * 0.02
+            g = oceanRgb.g * 0.02
+            b = oceanRgb.b * 0.02
+        }
 
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
-            const [sx, sy, sz] = uvToSpherePoint(u, v)
+        if(normalizedCloud > 0.55) {
+            const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+            r = lerp(r, Math.round(cloudsRgb.r * 0.08), cloudAlpha * 0.85)
+            g = lerp(g, Math.round(cloudsRgb.g * 0.08), cloudAlpha * 0.85)
+            b = lerp(b, Math.round(cloudsRgb.b * 0.08), cloudAlpha * 0.85)
+        }
 
-            const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
-            const normalizedLand = (landMask + 1) / 2
-            const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
-            const normalizedCloud = (cloudNoise + 1) / 2
-
-            let r: number, g: number, b: number
-            if(normalizedLand > 0.48) {
-                r = landRgb.r * 0.04
-                g = landRgb.g * 0.04
-                b = landRgb.b * 0.04
-            } else {
-                r = oceanRgb.r * 0.02
-                g = oceanRgb.g * 0.02
-                b = oceanRgb.b * 0.02
-            }
-
-            if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
-                r = lerp(r, Math.round(cloudsRgb.r * 0.08), cloudAlpha * 0.85)
-                g = lerp(g, Math.round(cloudsRgb.g * 0.08), cloudAlpha * 0.85)
-                b = lerp(b, Math.round(cloudsRgb.b * 0.08), cloudAlpha * 0.85)
-            }
-
-            if(normalizedLand > 0.48) {
-                const cityNoise = sampleFbm3d(sx * noiseScale * 3 + 50, sy * noiseScale * 3 + 50, sz * noiseScale * 3 + 50, perm, 0.35, 3)
-                const normalizedCity = (cityNoise + 1) / 2
-                if(normalizedCity > 0.62) {
-                    const intensity = (normalizedCity - 0.62) / 0.38
-                    const warmth = Math.random()
-                    if(warmth > 0.5) {
-                        r = lerp(r, 255, intensity)
-                        g = lerp(g, 180, intensity)
-                        b = lerp(b, 80, intensity)
-                    } else {
-                        r = lerp(r, 255, intensity)
-                        g = lerp(g, 240, intensity)
-                        b = lerp(b, 200, intensity)
-                    }
+        if(normalizedLand > 0.48) {
+            const cityNoise = sampleFbm3d(sx * noiseScale * 3 + 50, sy * noiseScale * 3 + 50, sz * noiseScale * 3 + 50, perm, 0.35, 3)
+            const normalizedCity = (cityNoise + 1) / 2
+            if(normalizedCity > 0.62) {
+                const intensity = (normalizedCity - 0.62) / 0.38
+                const warmth = Math.random()
+                if(warmth > 0.5) {
+                    r = lerp(r, 255, intensity)
+                    g = lerp(g, 180, intensity)
+                    b = lerp(b, 80, intensity)
+                } else {
+                    r = lerp(r, 255, intensity)
+                    g = lerp(g, 240, intensity)
+                    b = lerp(b, 200, intensity)
                 }
             }
-
-            const latitude = Math.abs(y / size - 0.5) * 2
-            if(latitude > 0.78) {
-                const polarAlpha = (latitude - 0.78) / 0.22
-                r = lerp(r, Math.round(polesRgb.r * 0.1), polarAlpha * 0.85)
-                g = lerp(g, Math.round(polesRgb.g * 0.1), polarAlpha * 0.85)
-                b = lerp(b, Math.round(polesRgb.b * 0.1), polarAlpha * 0.85)
-            }
-
-            const idx = (y * size + x) * 4
-            data[idx] = clamp(Math.round(r), 0, 255)
-            data[idx + 1] = clamp(Math.round(g), 0, 255)
-            data[idx + 2] = clamp(Math.round(b), 0, 255)
-            data[idx + 3] = 255
         }
-    }
+
+        const latitude = Math.abs(y / size - 0.5) * 2
+        if(latitude > 0.78) {
+            const polarAlpha = (latitude - 0.78) / 0.22
+            r = lerp(r, Math.round(polesRgb.r * 0.1), polarAlpha * 0.85)
+            g = lerp(g, Math.round(polesRgb.g * 0.1), polarAlpha * 0.85)
+            b = lerp(b, Math.round(polesRgb.b * 0.1), polarAlpha * 0.85)
+        }
+
+        const idx = (y * size + x) * 4
+        data[idx] = clamp(Math.round(r), 0, 255)
+        data[idx + 1] = clamp(Math.round(g), 0, 255)
+        data[idx + 2] = clamp(Math.round(b), 0, 255)
+        data[idx + 3] = 255
+    })
 
     ctx.putImageData(imageData, 0, 0)
 
     const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
     const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
-    atmGradient.addColorStop(0, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
-    atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.1)`)
-    ctx.fillStyle = atmGradient
-    ctx.fillRect(0, 0, size, size)
+    applyAtmosphereGradient(ctx, size, atmRgb, 0.1)
 
     return canvas
 }

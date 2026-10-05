@@ -16,7 +16,6 @@ import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { LabelComponent } from "@/engine/components/label"
-import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
 import { SizeComponent } from "@engine/components/sizeComponent"
@@ -35,7 +34,6 @@ export function createMarker({
 }: MapMarker) {
     const marker = applyComponents(createEntity(name),
         new PositionComponent(0, 0),
-        new ThicknessComponent(1),
         new ColorComponent(color, "", emitLight)
     )
 

@@ -4,7 +4,6 @@ import { OrbitComponent } from "@engine/components/orbitComponent"
 import { PositionComponent } from "@/engine/components/position"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
-import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { TWO_PI, UNIVERSE_SCALE } from "../constants"
 import { angularSpeed } from "../utils/orbital"
 import asteroids1 from "../../components/icons/asteroid1.png"
@@ -164,7 +163,6 @@ export async function createAsteroidBelt({
             new PositionComponent(0, 0),
             new SizeComponent(size, size),
             textureComponent,
-            new ThicknessComponent(1)
         )
 
         engine.addEntity(asteroid, parent)

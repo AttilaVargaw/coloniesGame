@@ -27,7 +27,6 @@ import { angularSpeed } from "../utils/orbital"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
-import { ThicknessComponent } from "@engine/components/thicknessComponent"
 import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
@@ -51,15 +50,6 @@ export function terminateTextureWorkerPool(): void {
     if(textureWorkerPool) {
         textureWorkerPool.terminate()
         textureWorkerPool = null
-    }
-}
-
-let textureGenerationCount = 0
-const TEXTURE_YIELD_INTERVAL = 5
-
-async function maybeYieldAfterTexture() {
-    if(++textureGenerationCount % TEXTURE_YIELD_INTERVAL === 0) {
-        await new Promise(r => setTimeout(r, 0))
     }
 }
 
@@ -195,7 +185,6 @@ function createRings(
             .addComponent(new PositionComponent(0, 0))
             .addComponent(new RadiusComponent(outerRadius))
             .addComponent(new ColorComponent("", color))
-            .addComponent(new ThicknessComponent(5))
         engine.addEntity(ringEntity, body)
     }
 }
@@ -261,7 +250,6 @@ export async function createBody({
             body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
         }
-        await maybeYieldAfterTexture()
     }
 
     if(name !== "root") {
@@ -284,13 +272,21 @@ export async function createBody({
 
     engine.addEntity(body, parent)
 
-    if(systems) await createSystems(systems, body, engine, mass)
-    if(vessels) createVessels(vessels, body, engine, mass)
+    if(systems) {
+        await createSystems(systems, body, engine, mass)
+    }
+    if(vessels) {
+        createVessels(vessels, body, engine, mass)
+    }
 
     applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body))
 
-    if(rings?.length) createRings(rings, body, engine)
-    if(asteroidBelts?.length) await createAsteroidBelts(asteroidBelts, body, engine, mass)
+    if(rings?.length) {
+        createRings(rings, body, engine)
+    }
+    if(asteroidBelts?.length) {
+        await createAsteroidBelts(asteroidBelts, body, engine, mass)
+    }
 
     return body
 }

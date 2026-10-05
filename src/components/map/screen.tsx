@@ -19,18 +19,6 @@ function toPointerData(event: MouseEvent<HTMLCanvasElement>): PointerEventData {
     }
 }
 
-interface RenderingContextSettings {
-    alpha: boolean
-    desynchronized: boolean
-    colorSpace: string
-}
-
-export const renderingContextSettings: RenderingContextSettings = {
-    alpha: false,
-    desynchronized: true,
-    colorSpace: "srgb",
-} as const
-
 interface ScreenProps {
     onClick: (event: ClickEventData) => void,
     onMouseMove: (event: MousemoveEvent) => void,

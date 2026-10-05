@@ -1,6 +1,6 @@
 import { Goods } from "./Goods";
 
-export interface QolLevel {
+interface QolLevel {
     id: number
     cumulativeData: Record<keyof Goods, number>
 }
@@ -104,7 +104,7 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
 
     const cumulative = {} as Record<keyof Goods, number>
     return entries.map(entry => {
-        for (const key in entry.data) {
+        for(const key in entry.data) {
             cumulative[key as keyof Goods] = (cumulative[key as keyof Goods] ?? 0) + entry.data[key as keyof Goods]
         }
         return {
