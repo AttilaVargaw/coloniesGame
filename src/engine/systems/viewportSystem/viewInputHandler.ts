@@ -68,7 +68,7 @@ export class ViewportInputHandler {
     }
 
     private static applyOrbitRotation(camera: Camera, dx: number, dy: number) {
-        camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
+        camera.yaw += dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
         camera.pitch = Math.max(0.05, Math.min(Math.PI / 2, camera.pitch - dy * ViewportInputHandler.MOUSE_ROTATE_SPEED))
 
         camera.invalidateViewBasis()
@@ -83,7 +83,7 @@ export class ViewportInputHandler {
         if(this.heldKeys.has("a")) panRight -= 1
 
         if(panForward || panRight) {
-            const { rx, ry, rz, fx, fy, fz } = camera.viewBasis
+            const { rx, rz, fx, fz } = camera.viewBasis
             const targetSpeed = ViewportInputHandler.KEY_PAN_SPEED * camera.distance
             const targetVx = (panForward * fx + panRight * rx) * targetSpeed
             const targetVz = (panForward * fz + panRight * rz) * targetSpeed
@@ -227,7 +227,7 @@ export class ViewportInputHandler {
             y: event.clientY - rect.top
         }
 
-        this.wheelZoomAccum += event.deltaY * 0.5
+        this.wheelZoomAccum += event.deltaY * 0.5
     }
 
     private mousedownArray: Queue<MousedownEvent> | null = null

@@ -9,6 +9,8 @@ import { precomputeOrbitalTrig } from "../../../orbitSystem/orbitalTrig"
 import { Entity } from "@/engine/entities/entity"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
+import type { ProjectedPoint } from "@/lib/camera"
+import type { Vector3 } from "@/lib/Vector3"
 
 export class WebGLOrbitNode extends RenderableNode {
     constructor(
@@ -75,7 +77,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.disable(gl.DEPTH_TEST)
 
-        for(const node of this.nodes) {
+        for(const { node } of this.getProjectedCacheEntries()) {
             if(node.orbit.hideOrbitInDebugDrawing) {
                 continue
             }
@@ -120,10 +122,10 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 const ry = x * sinA + y * cosA
                 const x1 = rx * cosL - ry * cosI * sinL
                 const y1 = rx * sinL + ry * cosI * cosL
-                const projected = camera.project(cx + x1, cy + ry * sinI, cz + y1)
-                if(projected) {
-                    points[i * 2] = projected.x
-                    points[i * 2 + 1] = projected.y
+                const projectedPoint = camera.project(cx + x1, cy + ry * sinI, cz + y1)
+                if(projectedPoint) {
+                    points[i * 2] = projectedPoint.x
+                    points[i * 2 + 1] = projectedPoint.y
                 }
             }
 
@@ -163,8 +165,55 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
         return 0
     }
 
-    protected shouldCullNode(_node: WebGLOrbitNode, _projected: any, _worldPos: any): boolean {
-        return false
+    protected shouldCullNode(node: WebGLOrbitNode, _projected: ProjectedPoint, _worldPos: Vector3): boolean {
+        if(!this.engine || !this.viewportSystem.camera) {
+            return false
+        }
+
+        const sceneNode = this.engine.getSceneNode(node.entity)
+        const parentEntity = sceneNode?.parent?.entity
+        if(!parentEntity) {
+            return true
+        }
+
+        const [cx, cy, cz] = getAbsolute(parentEntity, this.engine)
+        const orbit = node.orbit
+        const camera = this.viewportSystem.camera
+        const cssWidth = camera.cssWidth
+        const cssHeight = camera.cssHeight
+
+        const center = camera.project(cx, cy, cz)
+        if(!center) {
+            return true
+        }
+
+        const { cosI, sinI, cosA, sinA, cosL, sinL } = precomputeOrbitalTrig(orbit)
+        const b = orbit.semiMinorAxis
+        const focusOffset = orbit.radius * orbit.eccentricity
+
+        const testAngles = [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2]
+        for(const angle of testAngles) {
+            const x = orbit.radius * Math.cos(angle) - focusOffset
+            const y = b * Math.sin(angle)
+            const rx = x * cosA - y * sinA
+            const ry = x * sinA + y * cosA
+            const x1 = rx * cosL - ry * cosI * sinL
+            const y1 = rx * sinL + ry * cosI * cosL
+            const projected = camera.project(cx + x1, cy + ry * sinI, cz + y1)
+            if(projected) {
+                const margin = 10
+                if(
+                    projected.x >= -margin &&
+                    projected.x <= cssWidth + margin &&
+                    projected.y >= -margin &&
+                    projected.y <= cssHeight + margin
+                ) {
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 
     protected shouldSkipProjection(_node: WebGLOrbitNode, _cameraDistance: number, _cameraScale: number): boolean {

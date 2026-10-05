@@ -131,9 +131,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             if(starEntity) {
                 const starPos = this.getWorldPosition2(starEntity)
                 const lightDirRaw: Vec3 = [
-                    starPos[0] - worldPos[0],
-                    starPos[1] - worldPos[1],
-                    starPos[2] - worldPos[2],
+                    worldPos[0] - starPos[0],
+                    worldPos[1] - starPos[1],
+                    worldPos[2] - starPos[2],
                 ]
                 const lightDirLength = Math.hypot(lightDirRaw[0], lightDirRaw[1], lightDirRaw[2])
                 lightDir = lightDirLength > 0
