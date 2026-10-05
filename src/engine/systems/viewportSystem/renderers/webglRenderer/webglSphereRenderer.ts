@@ -154,7 +154,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             const normalMatrix = mat3.create()
             mat3.normalFromMat4(normalMatrix, model)
 
-
             const poolOffset = this.pendingInstances.length * 43
             if(poolOffset + 43 > this.sphereInstancePool!.length) {
                 const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 43 + this.MAX_SPHERE_INSTANCES * 43)

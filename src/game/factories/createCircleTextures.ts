@@ -283,7 +283,13 @@ function boxBlurNormalMap(src: Float32Array, width: number, height: number, radi
     return out
 }
 
+const GAS_GIANTS = new Set(["jupiter", "saturn", "uranus", "neptune"])
+
 export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    if(GAS_GIANTS.has(archetype)) {
+        return createGasGiantTexture(baseColor, archetype, seedKey)
+    }
+
     const canvas = createCanvas(size, size)
     const ctx = canvas.getContext("2d")!
 
@@ -327,10 +333,10 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             }
 
             if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
-                r = lerp(r, cloudsRgb.r, cloudAlpha * 0.7)
-                g = lerp(g, cloudsRgb.g, cloudAlpha * 0.7)
-                b = lerp(b, cloudsRgb.b, cloudAlpha * 0.7)
+                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+                r = lerp(r, cloudsRgb.r, cloudAlpha * 0.85)
+                g = lerp(g, cloudsRgb.g, cloudAlpha * 0.85)
+                b = lerp(b, cloudsRgb.b, cloudAlpha * 0.85)
             }
 
             const latitude = Math.abs(y / size - 0.5) * 2
@@ -357,6 +363,90 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     atmGradient.addColorStop(0, "rgba(0,0,0,0)")
     atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
     atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.15)`)
+    ctx.fillStyle = atmGradient
+    ctx.fillRect(0, 0, size, size)
+
+    return canvas
+}
+
+const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: string }> = {
+    jupiter: {
+        bands: [["#c9a06c", "#a67c52"], ["#e8d4b0", "#d4bc7e"], ["#8b6e4e", "#6b4e30"], ["#f0e0c0", "#dcc8a0"], ["#a08060", "#785838"]],
+        storm: "#e8a878"
+    },
+    saturn: {
+        bands: [["#f0e4b8", "#d4bc7e"], ["#e8d8b0", "#c4a860"], ["#f8f0d8", "#e0d0a0"], ["#d8c898", "#b8a470"], ["#ece0c0", "#d0c098"]],
+        storm: "#f8ecd0"
+    },
+    uranus: {
+        bands: [["#a8e8e8", "#7ec8c8"], ["#c8f4f4", "#a0dcdc"], ["#88d8d8", "#68b8b8"], ["#b8ecec", "#98d4d4"], ["#78c4c4", "#58a4a4"]],
+        storm: "#d0f8f8"
+    },
+    neptune: {
+        bands: [["#5a90d0", "#3a6cb0"], ["#4a7cc0", "#2a5490"], ["#6aa0e0", "#4a78b8"], ["#3870a8", "#184880"], ["#5080c8", "#305898"]],
+        storm: "#80b8ff"
+    }
+}
+
+export function createGasGiantTexture(baseColor: string, archetype: string = "jupiter", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const canvas = createCanvas(size, size)
+    const ctx = canvas.getContext("2d")!
+
+    ctx.clearRect(0, 0, size, size)
+
+    const palette = GAS_GIANT_PALETTES[archetype] || GAS_GIANT_PALETTES.jupiter
+    const base = hexToRgb(baseColor)
+
+    const seed = seedFrom(baseColor, archetype, seedKey)
+    const perm = buildPerm(seed)
+
+    const imageData = ctx.createImageData(size, size)
+    const data = imageData.data
+
+    for(let y = 0; y < size; y++) {
+        for(let x = 0; x < size; x++) {
+            const u = x / size
+            const v = y / size
+
+            const [sx, sy, sz] = uvToSpherePoint(u, v)
+
+            const latitude = sy
+            const bandNoise = sampleFbm3d(sx * 2.5 + 3.7, sy * 1.8 + 1.3, sz * 2.5 + 7.1, perm, 0.35, 4)
+            const warpedLatitude = latitude + bandNoise * 0.25
+            const rawIndex = ((warpedLatitude + 1) / 2) * palette.bands.length
+            const bandIndex = Math.max(0, Math.min(Math.floor(rawIndex), palette.bands.length - 1))
+            const bandFrac = rawIndex - bandIndex
+            const bandA = palette.bands[bandIndex]
+            const bandB = palette.bands[Math.min(bandIndex + 1, palette.bands.length - 1)]
+
+            const [colorA, colorB] = [bandA[0], bandB[0]]
+            const rgbA = tintColor(hexToRgb(colorA), base, 0.25)
+            const rgbB = tintColor(hexToRgb(colorB), base, 0.25)
+
+            const bandT = (Math.sin(bandFrac * Math.PI) * 0.5 + 0.5)
+            const r = lerp(rgbA.r, rgbB.r, bandT)
+            const g = lerp(rgbA.g, rgbB.g, bandT)
+            const b = lerp(rgbA.b, rgbB.b, bandT)
+
+            const stormNoise = sampleFbm3d(sx * 3.0 + 20, sy * 3.0 + 20, sz * 3.0 + 20, perm, 0.4, 3)
+            const stormMask = Math.max(0, stormNoise - 0.35) / 0.65
+            const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
+
+            const idx = (y * size + x) * 4
+            data[idx] = clamp(Math.round(lerp(r, stormRgb.r, stormMask * 0.6)), 0, 255)
+            data[idx + 1] = clamp(Math.round(lerp(g, stormRgb.g, stormMask * 0.6)), 0, 255)
+            data[idx + 2] = clamp(Math.round(lerp(b, stormRgb.b, stormMask * 0.6)), 0, 255)
+            data[idx + 3] = 255
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    const atmRgb = tintColor(hexToRgb(palette.bands[0][0]), base, 0.1)
+    const atmGradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
+    atmGradient.addColorStop(0, "rgba(0,0,0,0)")
+    atmGradient.addColorStop(0.85, "rgba(0,0,0,0)")
+    atmGradient.addColorStop(1, `rgba(${atmRgb.r},${atmRgb.g},${atmRgb.b},0.1)`)
     ctx.fillStyle = atmGradient
     ctx.fillRect(0, 0, size, size)
 
@@ -462,8 +552,8 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
             }
 
             if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
-                roughness = lerp(roughness, 0.35, cloudAlpha * 0.6)
+                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+                roughness = lerp(roughness, 0.35, cloudAlpha * 0.7)
             }
 
             const latitude = Math.abs(y / size - 0.5) * 2
@@ -514,14 +604,14 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
 
             let alpha = 0
             if(normalizedCloud > 0.4) {
-                alpha = Math.min(1, (normalizedCloud - 0.48) * 3.5)
+                alpha = Math.min(1, (normalizedCloud - 0.45) * 4)
             }
 
             const idx = (y * size + x) * 4
             data[idx] = cloudsRgb.r
             data[idx + 1] = cloudsRgb.g
             data[idx + 2] = cloudsRgb.b
-            data[idx + 3] = Math.round(clamp(alpha * 230, 0, 255))
+            data[idx + 3] = Math.round(clamp(alpha * 255, 0, 255))
         }
     }
 
@@ -573,10 +663,10 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             }
 
             if(normalizedCloud > 0.55) {
-                const cloudAlpha = Math.min(1, (normalizedCloud - 0.55) * 3)
-                r = lerp(r, Math.round(cloudsRgb.r * 0.08), cloudAlpha * 0.7)
-                g = lerp(g, Math.round(cloudsRgb.g * 0.08), cloudAlpha * 0.7)
-                b = lerp(b, Math.round(cloudsRgb.b * 0.08), cloudAlpha * 0.7)
+                const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
+                r = lerp(r, Math.round(cloudsRgb.r * 0.08), cloudAlpha * 0.85)
+                g = lerp(g, Math.round(cloudsRgb.g * 0.08), cloudAlpha * 0.85)
+                b = lerp(b, Math.round(cloudsRgb.b * 0.08), cloudAlpha * 0.85)
             }
 
             if(normalizedLand > 0.48) {

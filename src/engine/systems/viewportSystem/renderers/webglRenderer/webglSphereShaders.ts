@@ -365,7 +365,7 @@ void main() {
             float cloudAlpha = texture(uCloudTexture, cloudUV).a;
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
-            color = mix(color, cloudColor, cloudAlpha * 1.1 * cosTheta);
+            color = mix(color, cloudColor, cloudAlpha * 1.5 * max(cosTheta, 0.15));
         }
 
         color = color / (color + vec3(1.0));
