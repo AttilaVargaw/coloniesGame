@@ -6,6 +6,11 @@ function clamp(v: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, v))
 }
 
+function smoothstep(edge0: number, edge1: number, x: number): number {
+    const t = clamp((x - edge0) / (edge1 - edge0), 0, 1)
+    return t * t * (3 - 2 * t)
+}
+
 function createCanvas(width: number, height: number): HTMLCanvasElement | OffscreenCanvas {
     if(typeof document !== "undefined") {
         const canvas = document.createElement("canvas")
@@ -369,16 +374,14 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
         const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
         const normalizedCloud = (cloudNoise + 1) / 2
 
-        let r: number, g: number, b: number
-        if(normalizedLand > 0.55) {
-            r = lerp(landRgb.r * 0.5, landRgb.r * 1.5, normalizedLand)
-            g = lerp(landRgb.g * 0.5, landRgb.g * 1.5, normalizedLand)
-            b = lerp(landRgb.b * 0.5, landRgb.b * 1.5, normalizedLand)
-        } else {
-            r = lerp(oceanRgb.r * 0.6, oceanRgb.r * 1.4, normalizedLand)
-            g = lerp(oceanRgb.g * 0.6, oceanRgb.g * 1.4, normalizedLand)
-            b = lerp(oceanRgb.b * 0.6, oceanRgb.b * 1.4, normalizedLand)
-        }
+        const landFactor = smoothstep(0.52, 0.58, normalizedLand)
+        const landR = lerp(oceanRgb.r * 0.6, landRgb.r * 0.5, landFactor)
+        const landG = lerp(oceanRgb.g * 0.6, landRgb.g * 0.5, landFactor)
+        const landB = lerp(oceanRgb.b * 0.6, landRgb.b * 0.5, landFactor)
+        const landContrast = lerp(0.6, 1.4, landFactor)
+        let r = clamp(lerp(landR * 0.6, landR * 1.5, landContrast), 0, 255)
+        let g = clamp(lerp(landG * 0.6, landG * 1.5, landContrast), 0, 255)
+        let b = clamp(lerp(landB * 0.6, landB * 1.5, landContrast), 0, 255)
 
         if(normalizedCloud > 0.55) {
             const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
