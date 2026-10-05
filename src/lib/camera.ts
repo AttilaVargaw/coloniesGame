@@ -20,7 +20,7 @@ interface CameraSettings {
     minHeightAboveTarget?: number
 }
 
-type ViewBase = {
+interface ViewBasis {
     fx: number
     fy: number
     fz: number
@@ -59,6 +59,10 @@ export default class Camera {
         cssHeight: number
     }
 
+    private viewMatrix = mat4.create()
+    private viewBasisCache: ViewBasis | null = null
+    private viewBasisDirty = true
+
     constructor(
         settings: CameraSettings = {},
         public context: CanvasRenderingContext2D,
@@ -83,25 +87,16 @@ export default class Camera {
             cssWidth: 0,
             cssHeight: 0,
         }
-        this.init()
-    }
-
-    private init() {
         this.updateViewport()
     }
 
-    private viewBasisCache: ViewBase | null = null
-
-    private viewBasisDirty = true
-
-    private viewMatrix = mat4.create()
-
-    private markViewDirty() {
+    private invalidateView() {
         this.viewBasisDirty = true
+        this.updateViewport()
     }
 
-    private ensureViewBasis() {
-        if(!this.viewBasisDirty && this.viewBasisCache) {
+    private ensureViewBasis(): ViewBasis {
+        if (!this.viewBasisDirty && this.viewBasisCache) {
             return this.viewBasisCache
         }
 
@@ -113,52 +108,46 @@ export default class Camera {
 
         mat4.lookAt(this.viewMatrix, camPos, this.lookAt, [0, 1, 0])
 
-        const fx = -this.viewMatrix[2], fy = -this.viewMatrix[6], fz = -this.viewMatrix[10]
-        const rx = this.viewMatrix[0], ry = this.viewMatrix[4], rz = this.viewMatrix[8]
-        const ux = this.viewMatrix[1], uy = this.viewMatrix[5], uz = this.viewMatrix[9]
-
-        this.viewBasisCache = { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX: camPos[0], camY: camPos[1], camZ: camPos[2] }
+        this.viewBasisCache = {
+            fx: -this.viewMatrix[2],
+            fy: -this.viewMatrix[6],
+            fz: -this.viewMatrix[10],
+            rx: this.viewMatrix[0],
+            ry: this.viewMatrix[4],
+            rz: this.viewMatrix[8],
+            ux: this.viewMatrix[1],
+            uy: this.viewMatrix[5],
+            uz: this.viewMatrix[9],
+            camX: camPos[0],
+            camY: camPos[1],
+            camZ: camPos[2],
+        }
         this.viewBasisDirty = false
-
         return this.viewBasisCache
-    }
-
-    private computeViewBasis() {
-        return this.ensureViewBasis()
     }
 
     begin() {
         this.context.save()
-
-        this.applyScale()
-        this.applyTranslation()
+        this.context.scale(this.viewport.scale[0], this.viewport.scale[1])
+        this.context.translate(-this.viewport.left, -this.viewport.top)
     }
 
     end() {
         this.context.restore()
     }
 
-    private applyScale() {
-        this.context.scale(this.viewport.scale[0], this.viewport.scale[1])
-    }
-
-    private applyTranslation() {
-        this.context.translate(-this.viewport.left, -this.viewport.top)
-    }
-
     public updateViewport() {
         this.aspectRatio = this.context.canvas.width / this.context.canvas.height
         this.viewport.width = this.distance * Math.tan(this.fieldOfView)
         this.viewport.height = this.viewport.width / this.aspectRatio
-        this.viewport.left = this.lookAt[0] - (this.viewport.width / 2.0)
-        this.viewport.top = this.lookAt[1] - (this.viewport.height / 2.0)
+        this.viewport.left = this.lookAt[0] - this.viewport.width / 2
+        this.viewport.top = this.lookAt[1] - this.viewport.height / 2
         this.viewport.right = this.viewport.left + this.viewport.width
         this.viewport.bottom = this.viewport.top + this.viewport.height
         this.viewport.scale[0] = this.context.canvas.width / this.viewport.width
         this.viewport.scale[1] = this.context.canvas.height / this.viewport.height
         this.viewport.cssWidth = this.context.canvas.clientWidth || this.context.canvas.width
         this.viewport.cssHeight = this.context.canvas.clientHeight || this.context.canvas.height
-        this.markViewDirty()
     }
 
     public get cssWidth(): number {
@@ -175,26 +164,23 @@ export default class Camera {
     }
 
     public get viewBasis() {
-        return this.computeViewBasis()
+        return this.ensureViewBasis()
     }
 
     public zoomTo(z: number) {
         const effectiveMin = this.minHeightAboveTarget / Math.sin(this.pitch)
         this.targetDistance = Math.min(this.maxDistance, Math.max(effectiveMin, z))
-        this.updateViewport()
-        this.markViewDirty()
+        this.invalidateView()
     }
 
     public updateSmoothZoom(dt: number) {
-        if(Math.abs(this.distance - this.targetDistance) > 0.01) {
+        if (Math.abs(this.distance - this.targetDistance) > 0.01) {
             const t = 1 - Math.pow(0.02, dt / 16.667)
             this.distance += (this.targetDistance - this.distance) * t
-            this.updateViewport()
-            this.markViewDirty()
-        } else if(this.distance !== this.targetDistance) {
+            this.invalidateView()
+        } else if (this.distance !== this.targetDistance) {
             this.distance = this.targetDistance
-            this.updateViewport()
-            this.markViewDirty()
+            this.invalidateView()
         }
     }
 
@@ -202,11 +188,9 @@ export default class Camera {
         const before = this.screenToWorld(screenX, screenY)
         this.zoomTo(z)
         const after = this.screenToWorld(screenX, screenY)
-        this.moveTo(
-            this.lookAt[0] + (before.x - after.x),
-            this.lookAt[1] + (before.y - after.y),
-            this.lookAt[2]
-        )
+        this.lookAt[0] += before.x - after.x
+        this.lookAt[1] += before.y - after.y
+        this.invalidateView()
     }
 
     public zoomBy(factor: number, screenX: number, screenY: number) {
@@ -218,23 +202,21 @@ export default class Camera {
         const worldDeltaRight = (dxPixels / f) * this.distance
         const worldDeltaForward = (-dyPixels / f) * this.distance
         const { fx, fy, fz, rx, ry, rz } = this.viewBasis
-        this.moveTo(
-            this.lookAt[0] + worldDeltaRight * rx + worldDeltaForward * fx,
-            this.lookAt[1] + worldDeltaRight * ry + worldDeltaForward * fy,
-            this.lookAt[2] + worldDeltaRight * rz + worldDeltaForward * fz,
-        )
+        this.lookAt[0] += worldDeltaRight * rx + worldDeltaForward * fx
+        this.lookAt[1] += worldDeltaRight * ry + worldDeltaForward * fy
+        this.lookAt[2] += worldDeltaRight * rz + worldDeltaForward * fz
+        this.invalidateView()
     }
 
-    moveTo(x: number, y: number, z: number) {
+    public moveTo(x: number, y: number, z: number) {
         this.lookAt[0] = x
         this.lookAt[1] = y
         this.lookAt[2] = z
-        this.updateViewport()
-        this.markViewDirty()
+        this.invalidateView()
     }
 
     public invalidateViewBasis() {
-        this.markViewDirty()
+        this.viewBasisDirty = true
     }
 
     public get visibleBounds() {
@@ -258,7 +240,7 @@ export default class Camera {
 
     public worldToScreen(x: number, y: number, z = 0, obj: { x: number; y: number } = { x: 0, y: 0 }) {
         const projected = this.project(x, y, z)
-        if(projected) {
+        if (projected) {
             obj.x = projected.x
             obj.y = projected.y
         }
@@ -266,15 +248,14 @@ export default class Camera {
     }
 
     public getBasisVectors(): { right: vec3; up: vec3 } {
-        const { rx, ry, rz, ux, uy, uz } = this.computeViewBasis()
-
+        const { rx, ry, rz, ux, uy, uz } = this.viewBasis
         return {
             right: [rx, ry, rz],
             up: [ux, uy, uz],
         }
     }
 
- project(wx: number, wy: number, wz: number): ProjectedPoint | null {
+    project(wx: number, wy: number, wz: number): ProjectedPoint | null {
         const { fx, fy, fz, rx, ry, rz, ux, uy, uz, camX, camY, camZ } = this.viewBasis
 
         const vx = wx - camX
@@ -285,7 +266,7 @@ export default class Camera {
         const y = vx * ux + vy * uy + vz * uz
         const z = vx * fx + vy * fy + vz * fz
 
-        if(z <= 0.01) {
+        if (z <= 0.01) {
             return null
         }
 

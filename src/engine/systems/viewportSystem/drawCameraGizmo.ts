@@ -20,7 +20,7 @@ export function drawCameraGizmo(ctx: CanvasRenderingContext2D, camera: Camera) {
     ctx.arc(cx, cy, size, 0, TWO_PI);
     ctx.stroke();
 
-    const { rx, ry, rz, ux, uy, uz, fx, fy, fz } = camera.viewBasis;
+    const { rx, rz, ux, uz, fx, fz } = camera.viewBasis;
 
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
