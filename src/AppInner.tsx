@@ -56,5 +56,5 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
           }} />
       </div>
     </div>
-  </>;
+  </>
 }

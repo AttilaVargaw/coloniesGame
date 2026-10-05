@@ -647,6 +647,16 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const showCheckerPattern = this.engine?.getDebugManager().debugflags.showCheckerPattern
         if(showCheckerPattern !== undefined && showCheckerPattern !== this._lastShowCheckerPattern) {
             this._lastShowCheckerPattern = showCheckerPattern
+
+            const gl = this.gl
+            if(gl) {
+                this.atlas?.dispose(gl)
+                this.nightAtlas?.dispose(gl)
+                this.roughnessAtlas?.dispose(gl)
+                this.cloudAtlas?.dispose(gl)
+                this.normalAtlas?.dispose(gl)
+            }
+
             this.atlas = new WebGLTextureAtlas()
             this.nightAtlas = new WebGLTextureAtlas()
             this.roughnessAtlas = new WebGLTextureAtlas()

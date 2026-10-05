@@ -47,7 +47,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 } as const satisfies Record<string, Palette>
 
-const size = 384 
+const size = 384
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
@@ -126,11 +126,20 @@ function sampleFbm3d(x: number, y: number, z: number, perm: number[], warp = 0.3
 
 function seedFrom(base: string, archetype: string, extra?: string): number {
     let h = 0
-    for(let i = 0; i < base.length; i++) h = ((h << 5) - h + base.charCodeAt(i)) | 0
-    for(let i = 0; i < archetype.length; i++) h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
-    if(extra) {
-        for(let i = 0; i < extra.length; i++) h = ((h << 5) - h + extra.charCodeAt(i)) | 0
+    for(let i = 0; i < base.length; i++) {
+        h = ((h << 5) - h + base.charCodeAt(i)) | 0
+
     }
+    for(let i = 0; i < archetype.length; i++) {
+        h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
+
+    }
+    if(extra) {
+        for(let i = 0; i < extra.length; i++) {
+            h = ((h << 5) - h + extra.charCodeAt(i)) | 0
+        }
+    }
+
     return Math.abs(h) || 1
 }
 

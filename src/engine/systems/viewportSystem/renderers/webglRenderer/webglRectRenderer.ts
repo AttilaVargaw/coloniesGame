@@ -385,7 +385,10 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         if(this.gl) {
             if(this.quadBuffer) this.gl.deleteBuffer(this.quadBuffer)
             if(this.quadIndexBuffer) this.gl.deleteBuffer(this.quadIndexBuffer)
+            if(this.atlas) this.atlas.dispose(this.gl)
         }
+        this.parseColorCache.clear()
+        this.textureCache.clear()
         return super.removeFromEngine()
     }
 

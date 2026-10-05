@@ -2,11 +2,15 @@
 import { getPlatform } from "@/engine/lib/platform"
 
 function ensureCanvas(canvas: HTMLCanvasElement | null, width: number, height: number): HTMLCanvasElement {
-    if(!canvas || canvas.width !== width || canvas.height !== height) {
+    if(!canvas) {
         const c = getPlatform().createCanvas()
         c.width = width
         c.height = height
         return c
+    }
+    if(canvas.width !== width || canvas.height !== height) {
+        canvas.width = width
+        canvas.height = height
     }
     return canvas
 }

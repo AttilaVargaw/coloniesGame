@@ -68,6 +68,10 @@ class AtlasPage {
             return this.texture
         }
 
+        if(this.texture) {
+            gl.deleteTexture(this.texture)
+        }
+
         const texture = gl.createTexture()!
         gl.bindTexture(gl.TEXTURE_2D, texture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas)
@@ -80,6 +84,12 @@ class AtlasPage {
         this.texture = texture
         this.dirty = false
         return texture
+    }
+
+    dispose(gl: WebGL2RenderingContext): void {
+        if(this.texture) {
+            gl.deleteTexture(this.texture)
+        }
     }
 }
 
@@ -149,6 +159,14 @@ export class WebGLTextureAtlas {
         const textures = this.pages.map(page => page.getTexture(gl))
         this.cachedTextures = textures
         return textures
+    }
+
+    dispose(gl: WebGL2RenderingContext): void {
+        for(const page of this.pages) {
+            page.dispose(gl)
+        }
+        this.cachedTextures = null
+        this.entries.clear()
     }
 
     getEntry(key: string): AtlasEntry | undefined {

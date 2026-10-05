@@ -33,15 +33,13 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { TextureWorkerPool } from "../systems/textureWorkerPool"
 
-//Z is up, change it!
-
 let textureWorkerPool: TextureWorkerPool | null = null
 
 function getTextureWorkerPool(): TextureWorkerPool {
     if(!textureWorkerPool) {
         textureWorkerPool = new TextureWorkerPool({
             workerCount: Math.min(navigator.hardwareConcurrency || 4, 8),
-            onResult: () => {},
+            onResult: () => { },
             onError: (message) => console.error("Texture worker error:", message),
         })
         textureWorkerPool.start()
@@ -49,11 +47,18 @@ function getTextureWorkerPool(): TextureWorkerPool {
     return textureWorkerPool
 }
 
+export function terminateTextureWorkerPool(): void {
+    if(textureWorkerPool) {
+        textureWorkerPool.terminate()
+        textureWorkerPool = null
+    }
+}
+
 let textureGenerationCount = 0
 const TEXTURE_YIELD_INTERVAL = 5
 
 async function maybeYieldAfterTexture() {
-    if (++textureGenerationCount % TEXTURE_YIELD_INTERVAL === 0) {
+    if(++textureGenerationCount % TEXTURE_YIELD_INTERVAL === 0) {
         await new Promise(r => setTimeout(r, 0))
     }
 }
@@ -239,7 +244,7 @@ export async function createBody({
 
     if(!buildable && typeof document !== "undefined") {
         const pool = getTextureWorkerPool()
-        
+
         if(archetype === "sol") {
             const dayBitmap = await pool.generate("star", marker.color, undefined, name)
             body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
@@ -249,10 +254,10 @@ export async function createBody({
                 pool.generate("roughness", marker.color, archetype, name),
                 pool.generate("normal", marker.color, archetype, name),
             ])
-            
+
             const nightBitmap = population !== undefined ? await pool.generate("night", marker.color, archetype, name) : undefined
             const cloudBitmap = population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
-            
+
             body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
         }

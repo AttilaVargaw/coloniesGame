@@ -9,7 +9,7 @@ import { ColonySummary } from "./colonySummary";
 export type DialogPage = "summary" | "population" | "warehouse" | "industry";
 
 export function DialogInner({ industry, page, entity }: { industry: IndustryComponent | null, page: DialogPage, entity?: Entity }): ReactNode {
-    if(!industry) return <></>;
+    if(!industry) return <></>
 
     switch(page) {
         case "summary":
@@ -21,6 +21,6 @@ export function DialogInner({ industry, page, entity }: { industry: IndustryComp
         case "industry":
             return <IndustryBreakdown industry={industry} entity={entity!} />;
         default:
-            return <></>;
+            return <></>
     }
 }

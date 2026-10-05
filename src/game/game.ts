@@ -23,10 +23,12 @@ import { DebugSystem } from "./systems/debugSystem"
 import { SpinSystem } from "./systems/spinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
+import { terminateTextureWorkerPool } from "./factories/createBody"
 
 export class Game {
     readonly engine: World
     private gameLoopId?: number
+    private dayPassedTimeout?: number
 
     private constructor(public map: BodyBlueprint) {
         this.engine = new World()
@@ -73,7 +75,7 @@ export class Game {
         const cameraFollowSystem = this.engine.getSystem(CameraFollowSystem)
         this.engine.getSystem(ViewportSystem).init(cameraFollowSystem)
 
-        setTimeout(() => {
+        this.dayPassedTimeout = setTimeout(() => {
             this.engine.dispatchEvent(new DayPassedEvent())
         }, 100);
 
@@ -120,10 +122,14 @@ export class Game {
     }
 
     destruct(): void {
+        terminateTextureWorkerPool()
         this.engine.destruct()
 
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)
+        }
+        if(this.dayPassedTimeout !== undefined) {
+            clearTimeout(this.dayPassedTimeout)
         }
     }
 

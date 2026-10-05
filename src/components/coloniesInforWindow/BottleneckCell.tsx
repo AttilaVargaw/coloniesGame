@@ -7,7 +7,7 @@ import { isPopulationReq } from "./IndustryBreakdown";
 
 export function BottleneckCell({ bottleneck, bottleneckRatio }: { bottleneck: keyof Population | keyof Goods | null; bottleneckRatio: number; }) {
     if(!bottleneck) {
-        return <span className="text-green-400 text-xs">—</span>;
+        return <span className="text-green-400 text-xs">—</span>
     }
 
     return (

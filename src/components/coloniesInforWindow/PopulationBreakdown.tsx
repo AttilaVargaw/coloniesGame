@@ -6,7 +6,7 @@ import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationI
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 import { Goods } from "@/game/data/Goods";
 
-export function PopulationBreakdown({ industry }: { industry: IndustryComponent; }) {
+export function PopulationBreakdown({ industry: { population, populationProfits, populationRequirements, workingWorkers, goods } }: { industry: IndustryComponent; }) {
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-sm mt-4">
@@ -24,12 +24,11 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.entries((industry.population)).map(([key, value]) => {
-                        const { number, populationChange } = value
+                    {Object.entries((population)).map(([key, { number, populationChange, qol }]) => {
                         const income = (baseSalaries[key as keyof Population] || 0) * number;
-                        const net = industry.populationProfits[key as keyof Population] ?? 0;
+                        const net = populationProfits[key as keyof Population] ?? 0;
                         const expenses = income - net;
-                        const requirements = industry.populationRequirements?.[key as keyof Population] || {};
+                        const requirements = populationRequirements?.[key as keyof Population] || {};
                         const reqEntries = Object.entries(requirements) as [keyof Goods, number][];
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
@@ -46,19 +45,19 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                 </Tooltip>
                             </td>
                             <td className="p-2 text-right">{convertToReadable(number)}</td>
-                            <td className="p-2 text-right">{convertToReadable(industry.workingWorkers[key as keyof Population].number || 0)}</td>
+                            <td className="p-2 text-right">{convertToReadable(workingWorkers[key as keyof Population].number || 0)}</td>
                             <td className="p-2 text-right">{convertToReadable(populationChange)}</td>
                             <td className="p-2 text-right">{convertToReadable(Math.round(income))}</td>
                             <td className="p-2 text-right">{convertToReadable(Math.round(expenses))}</td>
                             <td className="p-2 text-right">{convertToReadable(net)}</td>
-                            <td className="p-2 text-right">{value.qol.toFixed(1)}</td>
+                            <td className="p-2 text-right">{qol.toFixed(1)}</td>
                             <td className="p-2 text-left">
                                 {reqEntries.length === 0 ? (
                                     <span className="text-muted-foreground text-xs">—</span>
                                 ) : (
                                     <div className="text-xs space-y-0.5">
                                         {reqEntries.map(([good, req]) => {
-                                            const available = industry.goods[good as keyof typeof industry.goods] ?? 0;
+                                            const available = goods[good as keyof typeof goods] ?? 0;
                                             const isFilled = available >= req;
                                             const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
                                             return (
@@ -80,7 +79,7 @@ export function PopulationBreakdown({ industry }: { industry: IndustryComponent;
                                     </div>
                                 )}
                             </td>
-                        </tr>;
+                        </tr>
                     })}
                 </tbody>
             </table>
