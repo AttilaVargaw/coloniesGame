@@ -63,7 +63,7 @@ export class SceneNode {
         const position = this.entity.getComponent(PositionComponent)
 
         if(!position) {
-            return [0, 0, 0]
+            return vec3.fromValues(0, 0, 0)
         }
 
         if(!this._parent) {

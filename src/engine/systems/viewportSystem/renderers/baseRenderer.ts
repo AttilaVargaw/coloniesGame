@@ -5,7 +5,7 @@ import { Entity } from "@/engine/entities/entity";
 import { PositionComponent } from "@/engine/components/position";
 import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
-import type { vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 
 export abstract class BaseRenderer<N extends RenderableNode> {
     protected nodes: N[] = []
@@ -152,7 +152,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         const sceneNode = this.engine?.getSceneNode(node.entity)
         if(!sceneNode) {
             const pos = node.entity.getComponent(PositionComponent)
-            return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
+            return pos ? pos.getVector() : vec3.fromValues(0, 0, 0)
         }
         return sceneNode.getWorldPosition()
     }

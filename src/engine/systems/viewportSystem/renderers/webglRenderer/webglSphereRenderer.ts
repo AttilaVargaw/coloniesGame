@@ -132,7 +132,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 const lightDirLength = vec3.length(lightDirRaw)
                 lightDir = lightDirLength > 0
                     ? vec3.normalize(vec3.create(), lightDirRaw)
-                    : [0, 1, 0]
+                    : vec3.fromValues(0, 1, 0)
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {

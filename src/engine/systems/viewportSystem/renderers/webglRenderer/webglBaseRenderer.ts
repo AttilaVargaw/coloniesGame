@@ -82,6 +82,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
             return sceneNode.getWorldPosition()
         }
         const pos = entity.getComponent(PositionComponent)
-        return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
+        return pos ? pos.getVector() : [0, 0, 0]
     }
 }
