@@ -197,8 +197,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         }
 
         const { fx, fy, fz } = camera.viewBasis
-        const [camX, camY, camZ] = camera.cameraPosition
-        mat4.lookAt(this.view, [camX, camY, camZ], [camX + fx, camY + fy, camZ + fz], [0, 1, 0])
+        const cam = camera.cameraPosition
+        mat4.lookAt(this.view, cam, [cam[0] + fx, cam[1] + fy, cam[2] + fz], [0, 1, 0])
 
         const aspectRatio = camera.context.canvas.width / camera.context.canvas.height
         mat4.perspective(this.projection, camera.fieldOfView, aspectRatio, camera.minDistance * 0.1, camera.maxDistance * 2)
