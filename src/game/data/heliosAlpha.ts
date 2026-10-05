@@ -24,7 +24,7 @@ export const solarisAlpha = {
         bodies: [{
             marker: { color: "#928262", radius: 40, label: "Zeus" },
             name: "Zeus",
-            archetype: "venus",
+            archetype: "jupiter",
             orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007, inclination: 0.05 },
             systems: [{
                 orbit: { radius: 0.1, angle: 0 },
