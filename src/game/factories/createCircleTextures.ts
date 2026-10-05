@@ -47,7 +47,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 } as const satisfies Record<string, Palette>
 
-const size = 384
+const size = 512
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
@@ -151,6 +151,11 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
     const x = cosTheta * Math.cos(phi)
     const z = cosTheta * Math.sin(phi)
     return [x, y, z]
+}
+
+function powBandTransition(t: number): number {
+    const shaped = Math.sin(t * Math.PI)
+    return shaped * shaped
 }
 
 const noiseScale = 4
@@ -281,7 +286,7 @@ const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: str
 
 export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const epsilon = 0.04
-    const strength = 0.04
+    const strength = 0.15
 
     const raw = new Float32Array(size * size * 3)
 
@@ -353,10 +358,10 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 
-    const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
-    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.35)
-    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
-    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
+    const landRgb = tintColor(hexToRgb(palette.land), base, 0.15)
+    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.15)
+    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.1)
+    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.1)
 
     const { canvas, ctx, imageData, } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
         const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
@@ -365,14 +370,14 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
         const normalizedCloud = (cloudNoise + 1) / 2
 
         let r: number, g: number, b: number
-        if(normalizedLand > 0.4) {
-            r = lerp(landRgb.r * 0.7, landRgb.r * 1.3, normalizedLand)
-            g = lerp(landRgb.g * 0.7, landRgb.g * 1.3, normalizedLand)
-            b = lerp(landRgb.b * 0.7, landRgb.b * 1.3, normalizedLand)
+        if(normalizedLand > 0.55) {
+            r = lerp(landRgb.r * 0.5, landRgb.r * 1.5, normalizedLand)
+            g = lerp(landRgb.g * 0.5, landRgb.g * 1.5, normalizedLand)
+            b = lerp(landRgb.b * 0.5, landRgb.b * 1.5, normalizedLand)
         } else {
-            r = lerp(oceanRgb.r * 0.8, oceanRgb.r * 1.2, normalizedLand)
-            g = lerp(oceanRgb.g * 0.8, oceanRgb.g * 1.2, normalizedLand)
-            b = lerp(oceanRgb.b * 0.8, oceanRgb.b * 1.2, normalizedLand)
+            r = lerp(oceanRgb.r * 0.6, oceanRgb.r * 1.4, normalizedLand)
+            g = lerp(oceanRgb.g * 0.6, oceanRgb.g * 1.4, normalizedLand)
+            b = lerp(oceanRgb.b * 0.6, oceanRgb.b * 1.4, normalizedLand)
         }
 
         if(normalizedCloud > 0.55) {
@@ -424,7 +429,7 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
         const rgbA = tintColor(hexToRgb(colorA), base, 0.25)
         const rgbB = tintColor(hexToRgb(colorB), base, 0.25)
 
-        const bandT = (Math.sin(bandFrac * Math.PI) * 0.5 + 0.5)
+        const bandT = powBandTransition(bandFrac)
         const r = lerp(rgbA.r, rgbB.r, bandT)
         const g = lerp(rgbA.g, rgbB.g, bandT)
         const b = lerp(rgbA.b, rgbB.b, bandT)
@@ -508,20 +513,20 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
 
         let roughness: number
         if(normalizedLand > 0.48) {
-            roughness = lerp(0.55, 0.85, normalizedLand)
+            roughness = lerp(0.55, 0.88, normalizedLand)
         } else {
-            roughness = lerp(0.08, 0.18, normalizedLand)
+            roughness = lerp(0.02, 0.12, normalizedLand)
         }
 
         if(normalizedCloud > 0.55) {
             const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
-            roughness = lerp(roughness, 0.35, cloudAlpha * 0.7)
+            roughness = lerp(roughness, 0.25, cloudAlpha * 0.7)
         }
 
         const latitude = Math.abs(y / size - 0.5) * 2
         if(latitude > 0.78) {
             const polarAlpha = (latitude - 0.78) / 0.22
-            roughness = lerp(roughness, 0.15, polarAlpha * 0.7)
+            roughness = lerp(roughness, 0.08, polarAlpha * 0.7)
         }
 
         const value = Math.round(clamp(roughness, 0, 1) * 255)
@@ -599,17 +604,17 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
         if(normalizedLand > 0.48) {
             const cityNoise = sampleFbm3d(sx * noiseScale * 3 + 50, sy * noiseScale * 3 + 50, sz * noiseScale * 3 + 50, perm, 0.35, 3)
             const normalizedCity = (cityNoise + 1) / 2
-            if(normalizedCity > 0.62) {
-                const intensity = (normalizedCity - 0.62) / 0.38
+            if(normalizedCity > 0.55) {
+                const intensity = (normalizedCity - 0.55) / 0.45
                 const warmth = Math.random()
                 if(warmth > 0.5) {
-                    r = lerp(r, 255, intensity)
-                    g = lerp(g, 180, intensity)
-                    b = lerp(b, 80, intensity)
+                    r = lerp(r, 255, intensity * 0.9)
+                    g = lerp(g, 200, intensity * 0.9)
+                    b = lerp(b, 100, intensity * 0.9)
                 } else {
-                    r = lerp(r, 255, intensity)
-                    g = lerp(g, 240, intensity)
-                    b = lerp(b, 200, intensity)
+                    r = lerp(r, 255, intensity * 0.9)
+                    g = lerp(g, 240, intensity * 0.9)
+                    b = lerp(b, 220, intensity * 0.9)
                 }
             }
         }

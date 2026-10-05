@@ -329,17 +329,17 @@ void main() {
     mat3 tBN = mat3(T, B, geometricNormal);
     vec3 mappedNormal = normalize(tBN * (texture(uNormalMap, texCoord).rgb * 2.0 - 1.0));
     float NdotL = dot(geometricNormal, vLightDir);
-    float cosTheta = smoothstep(-0.05, 0.05, NdotL);
-    vec3 normal = normalize(mix(geometricNormal, mappedNormal, cosTheta));
+    float normalBlend = smoothstep(-0.3, 0.3, NdotL);
+    vec3 normal = normalize(mix(geometricNormal, mappedNormal, normalBlend));
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
     float NdotV = abs(dot(normal, viewDir));
 
-    float fresnel = pow(1.0 - NdotV, 3.0) * 0.25;
+    float fresnel = pow(1.0 - NdotV, 3.0) * 0.35;
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
-    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.3;
+    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.4;
     float roughness = texture(uRoughness, roughnessTexCoord).r;
-    vec3 rim = vLightColor * fresnel * dayColor * cosTheta;
+    vec3 rim = vLightColor * fresnel * dayColor;
 
     if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
@@ -347,33 +347,33 @@ void main() {
         color = pow(color, vec3(1.0 / 2.2));
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float diff = cosTheta;
+        float diff = max(0.0, NdotL) * 0.7 + 0.3;
 
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);
-        float specPower = mix(8.0, 128.0, 1.0 - roughness);
-        vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.5 + 0.5 * (1.0 - roughness));
+        float specPower = mix(6.0, 180.0, 1.0 - roughness);
+        vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.6 + 0.4 * (1.0 - roughness));
 
-        vec3 lit = dayColor * vLightColor * diff + specular * cosTheta;
-        vec3 ambient = dayColor * uAmbientColor;
+        vec3 lit = dayColor * vLightColor * diff + specular * max(NdotL, 0.0);
+        vec3 ambient = dayColor * uAmbientColor * 0.6;
 
         vec3 color = mix(ambient + rim, lit + rim, diff);
-        color = mix(color, nightColor, 1.0 - diff);
+        color = mix(color, nightColor, smoothstep(-0.1, -0.3, NdotL));
 
         if(vCloudPage > -0.5) {
             vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
             float cloudAlpha = texture(uCloudTexture, cloudUV).a;
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
-            color = mix(color, cloudColor, cloudAlpha * 1.5 * max(cosTheta, 0.15));
+            color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
         }
 
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0 / 2.2));
 
-        float atmosphere = pow(1.0 - NdotV, 4.0) * 0.25;
-        vec3 atmColor = mix(vec3(0.3, 0.6, 1.0), uPaletteColor, 0.5);
-        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive) * cosTheta, 1.0);
+        float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
+        vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
+        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0), 1.0);
         fragColor = vec4(mix(fragColor.rgb, fragColor.rgb * uTintColor, uTintAlpha), 1.0);
     }
 }`;
