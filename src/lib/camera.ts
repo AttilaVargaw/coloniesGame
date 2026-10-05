@@ -144,8 +144,8 @@ export default class Camera {
         this.viewport.top = this.lookAt[1] - this.viewport.height / 2
         this.viewport.right = this.viewport.left + this.viewport.width
         this.viewport.bottom = this.viewport.top + this.viewport.height
-        this.viewport.scale[0] = this.context.canvas.width / this.viewport.width
-        this.viewport.scale[1] = this.context.canvas.height / this.viewport.height
+        this.viewport.scale[0] = this.viewport.cssWidth / this.viewport.width
+        this.viewport.scale[1] = this.viewport.cssHeight / this.viewport.height
         this.viewport.cssWidth = this.context.canvas.clientWidth || this.context.canvas.width
         this.viewport.cssHeight = this.context.canvas.clientHeight || this.context.canvas.height
     }

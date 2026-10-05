@@ -1,6 +1,4 @@
 
-import { Entity } from "@/engine/entities/entity";
-import { PositionComponent } from "@/engine/components/position";
 import { BaseRenderer } from "../baseRenderer";
 import { RenderableNode } from "../renderableNode";
 
@@ -74,14 +72,5 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
             }
         }
         return super.removeFromEngine()
-    }
-
-    protected getWorldPosition2(entity: Entity) {
-        const sceneNode = this.engine?.getSceneNode(entity)
-        if(sceneNode) {
-            return sceneNode.getWorldPosition()
-        }
-        const pos = entity.getComponent(PositionComponent)
-        return pos ? pos.getVector() : [0, 0, 0]
     }
 }

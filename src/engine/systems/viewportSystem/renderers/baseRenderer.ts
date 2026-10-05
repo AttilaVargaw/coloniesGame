@@ -2,10 +2,10 @@ import type { Engine } from "@/engine/core/engine";
 import { ViewportSystem } from "../viewportSystem";
 import { RenderableNode } from "./renderableNode";
 import { Entity } from "@/engine/entities/entity";
-import { PositionComponent } from "@/engine/components/position";
 import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
 import { vec3 } from "gl-matrix";
+import { getAbsolute } from "@/engine/lib/getAbsolute";
 
 export abstract class BaseRenderer<N extends RenderableNode> {
     protected nodes: N[] = []
@@ -64,8 +64,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
 
     projectNodes(): void {
         const { camera } = this.viewportSystem
-        if(!camera) {
-            console.warn('[BaseRenderer]', this.constructor.name, 'no camera')
+        if(!camera || !this.engine) {
             return
         }
 
@@ -84,7 +83,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
                 continue
             }
 
-            const worldPos = this.getWorldPosition(node)
+            const worldPos = getAbsolute(node.entity, this.engine)
             const projected = camera.project(worldPos)
             if(!projected) {
                 this.debugCulledCount++
@@ -148,12 +147,4 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         return entry
     }
 
-    protected getWorldPosition(node: N): vec3 {
-        const sceneNode = this.engine?.getSceneNode(node.entity)
-        if(!sceneNode) {
-            const pos = node.entity.getComponent(PositionComponent)
-            return pos ? pos.getVector() : vec3.fromValues(0, 0, 0)
-        }
-        return sceneNode.getWorldPosition()
-    }
 }

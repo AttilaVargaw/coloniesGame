@@ -10,6 +10,7 @@ import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { getPlatform } from "@/engine/lib/platform"
 import { Entity } from "@/engine/entities/entity"
+import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
@@ -127,7 +128,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             let starColor = vec3.fromValues(1.0, 1.0, 1.0)
 
             if(starEntity) {
-                const lightDirRaw: vec3 = vec3.sub(vec3.create(), this.getWorldPosition2(starEntity), worldPos)
+                const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
 
                 const lightDirLength = vec3.length(lightDirRaw)
                 lightDir = lightDirLength > 0
