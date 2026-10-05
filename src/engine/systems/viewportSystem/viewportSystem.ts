@@ -48,6 +48,10 @@ export class ViewportSystem extends System {
         return this.webglRenderManager
     }
 
+    get pointer() {
+        return this.inputHandler.pointer
+    }
+
     consumeDragMoved() {
         return this.inputHandler.consumeDragMoved()
     }

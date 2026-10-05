@@ -363,8 +363,13 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 
-    const landRgb = tintColor(hexToRgb(palette.land), base, 0.15)
-    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.15)
+    const landRgb = tintColor(hexToRgb(palette.land), base, 0.18)
+    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.05)
+    const deepOceanRgb = {
+        r: clamp(oceanRgb.r * 0.65, 0, 255),
+        g: clamp(oceanRgb.g * 0.65, 0, 255),
+        b: clamp(oceanRgb.b * 1.25, 0, 255),
+    }
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.1)
     const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.1)
 
@@ -374,14 +379,14 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
         const cloudNoise = sampleFbm3d(sx * noiseScale * 1.5 + 10, sy * noiseScale * 1.5 + 10, sz * noiseScale * 1.5 + 10, perm, 0.3, 4)
         const normalizedCloud = (cloudNoise + 1) / 2
 
-        const landFactor = smoothstep(0.52, 0.58, normalizedLand)
-        const landR = lerp(oceanRgb.r * 0.6, landRgb.r * 0.5, landFactor)
-        const landG = lerp(oceanRgb.g * 0.6, landRgb.g * 0.5, landFactor)
-        const landB = lerp(oceanRgb.b * 0.6, landRgb.b * 0.5, landFactor)
-        const landContrast = lerp(0.6, 1.4, landFactor)
-        let r = clamp(lerp(landR * 0.6, landR * 1.5, landContrast), 0, 255)
-        let g = clamp(lerp(landG * 0.6, landG * 1.5, landContrast), 0, 255)
-        let b = clamp(lerp(landB * 0.6, landB * 1.5, landContrast), 0, 255)
+        const landFactor = smoothstep(0.55, 0.68, normalizedLand)
+        const baseR = lerp(deepOceanRgb.r, landRgb.r, landFactor)
+        const baseG = lerp(deepOceanRgb.g, landRgb.g, landFactor)
+        const baseB = lerp(deepOceanRgb.b, landRgb.b, landFactor)
+        const contrast = lerp(0.75, 1.45, landFactor)
+        let r = clamp(lerp(baseR * 0.55, baseR * 1.55, contrast), 0, 255)
+        let g = clamp(lerp(baseG * 0.55, baseG * 1.55, contrast), 0, 255)
+        let b = clamp(lerp(baseB * 0.55, baseB * 1.55, contrast), 0, 255)
 
         if(normalizedCloud > 0.55) {
             const cloudAlpha = Math.min(1, (normalizedCloud - 0.52) * 3.5)
@@ -459,10 +464,15 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
 export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const base = hexToRgb(baseColor)
 
-    const { canvas, ctx, imageData, perm } = generateTexture(baseColor, "star", seedKey, (x, y, sx, sy, sz, data, perm) => {
+    const { canvas, ctx, imageData } = generateTexture(baseColor, "star", seedKey, (x, y, sx, sy, sz, data, perm) => {
         const fine = (sampleFbm3d(sx * noiseScale * 1.25, sy * noiseScale * 1.25, sz * noiseScale * 1.25, perm, 0.4, 6) + 1) / 2
         const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
-        const bright = 0.25 + fine * 0.60 + coarse * 0.15
+
+        const v = y / size
+        const radialFalloff = 1.0 - Math.abs(v - 0.5) * 2.0
+        const sharpFalloff = Math.pow(radialFalloff, 1.6)
+
+        const bright = 0.15 + fine * 0.55 + coarse * 0.15 + sharpFalloff * 0.35
         const brightness = Math.round(clamp(bright * 255, 0, 255))
 
         const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
@@ -479,30 +489,15 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
     ctx.putImageData(imageData, 0, 0)
 
     const radialGradient = ctx.createRadialGradient(
-        size / 2, size / 2, size * 0.15,
-        size / 2, size / 2, size * 0.5
+        size / 2, size / 2, size * 0.05,
+        size / 2, size / 2, size * 0.45
     )
-    radialGradient.addColorStop(0, "rgba(255,255,255,0.35)")
+    radialGradient.addColorStop(0, "rgba(255,255,255,0.8)")
+    radialGradient.addColorStop(0.25, "rgba(255,255,255,0.35)")
     radialGradient.addColorStop(0.6, "rgba(255,255,255,0.05)")
-    radialGradient.addColorStop(1, "rgba(0,0,0,0.25)")
+    radialGradient.addColorStop(1, "rgba(0,0,0,0.55)")
     ctx.fillStyle = radialGradient
     ctx.fillRect(0, 0, size, size)
-
-    for(let i = 0; i < 60; i++) {
-        const spotU = (perlin3d(i * 1.7, 42.1, 13.7, perm) + 1) / 2
-        const spotV = (perlin3d(42.1, i * 1.7, 13.7, perm) + 1) / 2
-        const x = spotU * size
-        const y = spotV * size
-        const r = (perlin3d(13.7, 42.1, i * 1.7, perm) + 1) / 2 * 20 + 5
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, r)
-        gradient.addColorStop(0, "rgba(255,255,255,0.9)")
-        gradient.addColorStop(0.3, "rgba(255,255,255,0.35)")
-        gradient.addColorStop(1, "rgba(255,255,255,0)")
-        ctx.fillStyle = gradient
-        ctx.beginPath()
-        ctx.arc(x, y, r, 0, Math.PI * 2)
-        ctx.fill()
-    }
 
     return canvas
 }

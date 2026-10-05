@@ -15,7 +15,6 @@ import { TargetSystem } from "@game/systems/targetSystem";
 export class PointerInteractionSystem extends System {
     private clickableNodes: ClickableNode[] = []
     private hoverableNodes: HoverableNode[] = []
-
     private hoveredProjected: { x: number, y: number, radius: number } | null = null
 
     constructor(private readonly viewportSystem: ViewportSystem) {
@@ -105,10 +104,8 @@ export class PointerInteractionSystem extends System {
         }
     }
 
-    private doHover(data: PointerEventData): void {
-        if(!this.engine || !this.viewportSystem.camera) return
-
-        if(this.viewportSystem.isDragging) {
+    private doHover(data: { x: number, y: number }): void {
+        if(!this.engine || !this.viewportSystem.camera || this.viewportSystem.isDragging) {
             return
         }
 
@@ -196,15 +193,17 @@ export class PointerInteractionSystem extends System {
     }
 
     update(_dt: number): void {
-        if(!this.engine) return
+        if(!this.engine) {
+            return
+        }
 
         const clickQueue = this.engine.getEvents(ClickEventData)
         const mouseMovedQueue = this.engine.getEvents(MousemoveEvent)
+        const pointer = this.viewportSystem.pointer
+
+        this.doHover(pointer)
 
         if(mouseMovedQueue?.length) {
-            for(const { data } of mouseMovedQueue) {
-                this.doHover(data)
-            }
             mouseMovedQueue.clear()
         }
 

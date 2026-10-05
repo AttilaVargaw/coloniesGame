@@ -17,9 +17,9 @@ export class ViewportInputHandler {
     private _isDragging = false
     private _isZooming = false
     private dragButton: number | null = null
-    private lastPointer: { x: number, y: number } | null = null
+    private _lastPointer: { x: number, y: number } | null = null
     private dragMoved = false
-    private pointer: { x: number, y: number } = { x: 0, y: 0 }
+    private _pointer: { x: number, y: number } = { x: 0, y: 0 }
     private wheelZoomAccum = 0
     private lastWheelScreen = { x: 0, y: 0 }
 
@@ -29,6 +29,10 @@ export class ViewportInputHandler {
     private rotationVelocityY = 0
     private wasRotatingWithoutTarget = false
     private panVelocity: vec3 = [0, 0, 0]
+
+    get pointer() {
+        return this._pointer
+    }
 
     constructor(private readonly viewportSystem: ViewportSystem, private readonly cameraFollowSystem?: CameraFollowTarget) { }
 
@@ -94,10 +98,10 @@ export class ViewportInputHandler {
 
         if(this.heldKeys.has("-") || this.heldKeys.has("=")) {
             this._isZooming = true
-            camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
+            camera.zoomBy(Math.pow(ViewportInputHandler.ZOOM_SPEED, dt), this._pointer.x, this._pointer.y)
         } else if(this.heldKeys.has("+") || this.heldKeys.has("_")) {
             this._isZooming = true
-            camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this.pointer.x, this.pointer.y)
+            camera.zoomBy(Math.pow(1 / ViewportInputHandler.ZOOM_SPEED, dt), this._pointer.x, this._pointer.y)
         }
     }
 
@@ -118,7 +122,7 @@ export class ViewportInputHandler {
         if(this._isDragging || !this.viewportSystem) return
 
         const bounds = camera.visibleBounds
-        const { x, y } = this.pointer
+        const { x, y } = this._pointer
         const threshold = ViewportInputHandler.EDGE_PAN_THRESHOLD
         const step = (dt / 1000) * ViewportInputHandler.EDGE_PAN_SPEED
 
@@ -260,7 +264,7 @@ export class ViewportInputHandler {
 
     private updatePointerPosition() {
         for(const { data } of this.mouseMovedArray!) {
-            this.pointer = { x: data.x, y: data.y }
+            this._pointer = { x: data.x, y: data.y }
         }
     }
 
@@ -270,7 +274,7 @@ export class ViewportInputHandler {
             if(button === 2 || button === 1) {
                 this._isDragging = true
                 this.dragButton = button
-                this.lastPointer = { x: data.x, y: data.y }
+                this._lastPointer = { x: data.x, y: data.y }
                 this.dragMoved = false
                 this.rotationVelocityX = 0
                 this.rotationVelocityY = 0
@@ -282,11 +286,11 @@ export class ViewportInputHandler {
     }
 
     private handleDragMove(camera: Camera) {
-        if(!this._isDragging || !this.lastPointer || this.dragButton === null) return
+        if(!this._isDragging || !this._lastPointer || this.dragButton === null) return
 
         for(const { data } of this.mouseMovedArray!) {
-            const dx = data.x - this.lastPointer.x
-            const dy = data.y - this.lastPointer.y
+            const dx = data.x - this._lastPointer.x
+            const dy = data.y - this._lastPointer.y
             if(dx || dy) {
                 if(this.dragButton === 2) {
                     camera.panByPixels(dx, dy)
@@ -306,7 +310,7 @@ export class ViewportInputHandler {
                 if(Math.abs(dx) > ViewportInputHandler.DRAG_THRESHOLD || Math.abs(dy) > ViewportInputHandler.DRAG_THRESHOLD) {
                     this.dragMoved = true
                 }
-                this.lastPointer = { x: data.x, y: data.y }
+                this._lastPointer = { x: data.x, y: data.y }
             }
         }
     }
@@ -322,7 +326,7 @@ export class ViewportInputHandler {
         if(released) {
             this._isDragging = false
             this.dragButton = null
-            this.lastPointer = null
+            this._lastPointer = null
             this.dragMoved = false
             getPlatform().document.body.style.cursor = "default"
         }

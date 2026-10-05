@@ -7,7 +7,7 @@ export function getAbsolute(entity: Entity, engine: Engine): vec3 {
     const sceneNode = engine.getSceneNode(entity)
     if(!sceneNode) {
         const pos = entity.getComponent(PositionComponent)
-        return pos ? [pos.x, pos.y, pos.z] : [0, 0, 0]
+        return pos?.getVector() ?? [0, 0, 0]
     }
     return sceneNode.getWorldPosition()
 }
