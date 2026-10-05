@@ -1,6 +1,6 @@
 import { Entity } from "./entity"
 import { PositionComponent } from "../components/position"
-import type { vec3 } from "gl-matrix"
+import { vec3 } from "gl-matrix"
 
 export class SceneNode {
     readonly entityId: string
@@ -67,11 +67,11 @@ export class SceneNode {
         }
 
         if(!this._parent) {
-            return [position.x, position.y, position.z]
+            return position.getVector()
         }
 
-        const [parentX, parentY, parentZ] = this._parent.getWorldPosition()
-        return [parentX + position.x, parentY + position.y, parentZ + position.z]
+        const parentPos = this._parent.getWorldPosition()
+        return vec3.add([0, 0, 0], parentPos, position.getVector())
     }
 
     // Thx ai, why entity[]?

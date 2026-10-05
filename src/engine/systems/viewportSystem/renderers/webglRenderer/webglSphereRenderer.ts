@@ -123,8 +123,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
-            let lightDir = [0, 1, 0] as vec3
-            let starColor = [1.0, 1.0, 1.0] as vec3
+            let lightDir = [0, 1, 0]
+            let starColor = [1.0, 1.0, 1.0]
 
             if(starEntity) {
                 const starPos = this.getWorldPosition2(starEntity)
