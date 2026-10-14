@@ -150,8 +150,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         for(const { node, projected } of this.getProjectedCacheEntries()) {
             const { worldPos } = this.getProjected(node)
             const scale = projected.scale
-            const screenWidth = node.size.width * scale
-            const screenHeight = node.size.height * scale
+            const rawScreenWidth = node.size.width * scale
+            const rawScreenHeight = node.size.height * scale
+            const minSize = node.size.minSize 
+            const maxRawScreenSize = Math.max(rawScreenWidth, rawScreenHeight)
+            const scaleUp = minSize && maxRawScreenSize < minSize ? minSize / maxRawScreenSize : 1
+            const screenWidth = rawScreenWidth * scaleUp
+            const screenHeight = rawScreenHeight * scaleUp
 
             if(
                 projected.x + screenWidth / 2 < 0 ||

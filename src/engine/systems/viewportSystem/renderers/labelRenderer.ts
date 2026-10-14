@@ -8,6 +8,7 @@ import { ProjectedPoint } from "@/lib/camera";
 import type { vec3 } from "gl-matrix";
 
 const MAX_LABEL_SCREEN_SIZE = 48;
+const MIN_LABEL_SCREEN_SIZE = 12;
 
 export class LabelRenderer extends BaseRenderer<LabelNode> {
     beginFrame(): void {
@@ -35,7 +36,7 @@ export class LabelRenderer extends BaseRenderer<LabelNode> {
         for(const { node, projected } of this.getProjectedCacheEntries()) {
             context.save()
             node.setColor(context);
-            const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, node.label.size * projected.scale)
+            const screenSize = Math.min(MAX_LABEL_SCREEN_SIZE, Math.max(MIN_LABEL_SCREEN_SIZE, node.label.size * projected.scale))
             const offsetX = (node.label.offset.x || 0) * projected.scale
             const offsetY = (node.label.offset.y || 0) * projected.scale
 

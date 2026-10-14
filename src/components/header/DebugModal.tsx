@@ -30,7 +30,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showCheckerPattern", label: "Show Checker Pattern" },
     { flag: "showFrameTime", label: "Show Frame Time" },
     { flag: "showClickBoxes", label: "Show Click Boxes" },
-]
+] as const
 
 const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
     brightness: 0.3,
@@ -38,7 +38,7 @@ const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
     iterations: 3,
     alpha: 0.25,
     threshold: 0.4,
-}
+} as const
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)

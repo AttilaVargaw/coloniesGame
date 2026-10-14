@@ -38,7 +38,7 @@ export function createMarker({
     )
 
     if(texture) {
-        marker.addComponent(new SizeComponent(radius * 2, radius * 2))
+        marker.addComponent(new SizeComponent(radius * 2, radius * 2, 12))
         marker.addComponent(new TextureComponent({ src: texture, id: name }))
     } else {
         marker.addComponent(new RadiusComponent(radius))
@@ -94,7 +94,6 @@ export function createVessel(
         //new TargetableComponent(),
         new SizeComponent(20, 20),
         new TextureComponent({ src: battlestarDradisUrl, id: "BSDradis" }),
-        //new HoverableComponent("pointer", { width: radius, height: radius }),
         new OrbitComponent(parent.id, orbitRadius * UNIVERSE_SCALE, angularSpeed(orbitRadius * UNIVERSE_SCALE, parentMass), orbitAngle, 0, orbitInclination, periapsis ?? 0, ascendingNode ?? 0)
     )
 

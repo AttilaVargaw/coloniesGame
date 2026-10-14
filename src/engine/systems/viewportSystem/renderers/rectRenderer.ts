@@ -9,6 +9,7 @@ import { ProjectedPoint } from "@/lib/camera";
 import { AsteroidBeltComponent } from "@/engine/components/asteroidBeltComponent";
 import type { vec3 } from "gl-matrix";
 
+//Legacy, not used anymore
 export class RectRenderer extends BaseRenderer<RectNode> {
     beginFrame(): void {
     }
@@ -17,6 +18,7 @@ export class RectRenderer extends BaseRenderer<RectNode> {
     drawNodes(_ctx: CanvasRenderingContext2D): void {
     }
     private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>();
+    private readonly MIN_ICON_SCREEN_SIZE = 12
 
     constructor(viewportSystem: ViewportSystem) {
         super(viewportSystem,
@@ -115,8 +117,12 @@ export class RectRenderer extends BaseRenderer<RectNode> {
             const { projected } = this.getProjected(rect)
             const context = ctx ?? this.viewportSystem.camera.context;
 
-            const screenWidth = rect.size.width * projected.scale
-            const screenHeight = rect.size.height * projected.scale
+            const rawScreenWidth = rect.size.width * projected.scale
+            const rawScreenHeight = rect.size.height * projected.scale
+            const maxRawScreenSize = Math.max(rawScreenWidth, rawScreenHeight)
+            const scaleUp = maxRawScreenSize < this.MIN_ICON_SCREEN_SIZE ? this.MIN_ICON_SCREEN_SIZE / maxRawScreenSize : 1
+            const screenWidth = rawScreenWidth * scaleUp
+            const screenHeight = rawScreenHeight * scaleUp
             const x = projected.x - screenWidth / 2
             const y = projected.y - screenHeight / 2
 
