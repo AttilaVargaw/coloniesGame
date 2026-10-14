@@ -27,16 +27,16 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private quadIndexBuffer: WebGLBuffer | null = null
     private quadIndexCount = 0
     private atlas!: WebGLTextureAtlas
-    private atlasKeyMap = new WeakMap<object, string>()
+    private readonly atlasKeyMap = new WeakMap<object, string>()
     private nextTextureKey = 0
-    private textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
+    private readonly textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
     private projection = mat4.create()
     private readonly MAX_RECT_INSTANCES = 256
     private rectInstancePool: Float32Array | null = null
     private rectBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
-    private groupsMap = new Map<number, Array<{ depth: number; offset: number }>>()
-    private parseColorCache = new Map<string, [number, number, number]>()
+    private readonly pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
+    private readonly groupsMap = new Map<number, Array<{ depth: number; offset: number }>>()
+    private readonly parseColorCache = new Map<string, [number, number, number]>()
 
     beginFrame(): void {
         this.pendingInstances.length = 0

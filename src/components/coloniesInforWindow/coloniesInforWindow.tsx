@@ -64,7 +64,7 @@ export function ColoniesInforWindow() {
                     height: "2em",
                     justifyContent: "space-between",
                     width: "100%"
-                }} value={page} onValueChange={(value: DialogPage) => setPage((prev) => value || prev)} type="single">
+                }} value={page} onValueChange={(value: string) => setPage((prev) => value as DialogPage || prev)} type="single">
                     <ToggleGroupItem value="summary">Summary</ToggleGroupItem>
                     <ToggleGroupItem value="population">Population</ToggleGroupItem>
                     <ToggleGroupItem value="warehouse">Warehouse</ToggleGroupItem>
