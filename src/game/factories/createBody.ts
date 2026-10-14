@@ -6,7 +6,8 @@ import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import buildableSite from "../../components/icons/buildable.svg"
 import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype, soiRatios } from "./helpers"
-import { createMarker, createVessel } from "./createSpaceship"
+import { createMarker } from "./createMarker"
+import { createVessel } from "./createSpaceship"
 import { createBarycentre } from "./createBarycentre"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
@@ -26,9 +27,10 @@ import { RotationComponent } from "@/game/components/rotationComponent"
 import { angularSpeed } from "../utils/orbital"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
-import { ColorComponent } from "@/engine/components/colorComponent"
+import { ColorComponent } from "@engine/components/colorComponent"
 import { MassComponent } from "@engine/components/massComponent"
-import { TextureComponent } from "@/engine/components/textureComponent"
+import { TextureComponent } from "@engine/components/textureComponent"
+import { SizeComponent } from "@engine/components/sizeComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { TextureWorkerPool } from "../systems/textureWorkerPool"
 
@@ -230,6 +232,11 @@ export async function createBody({
         : marker
 
     const body = createMarker({ name: name === "root" ? undefined : name, ...markerInput })
+
+    if(buildable && markerInput.texture) {
+        body.addComponent(new SizeComponent(marker.radius * 2, marker.radius * 2, 12))
+        body.addComponent(new TextureComponent({ src: markerInput.texture, id: name }))
+    }
 
     if(!buildable && typeof document !== "undefined") {
         const pool = getTextureWorkerPool()

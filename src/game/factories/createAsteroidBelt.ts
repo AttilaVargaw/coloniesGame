@@ -14,7 +14,7 @@ import asteroids5 from "../../components/icons/asteroid5.png"
 import asteroids6 from "../../components/icons/asteroid6.png"
 import dust1 from "../../components/icons/dust1.png"
 import { applyComponents, calculateSoi, createAttractorClickHandler } from "./helpers"
-import { createMarker } from "./createSpaceship"
+import { createMarker } from "./createMarker"
 import { RotationComponent } from "../components/rotationComponent"
 import { generateRandomNumber } from "../../lib/generateRandomNumber"
 import buildableSite from "../../components/icons/buildable.svg"
@@ -215,10 +215,12 @@ export async function createAsteroidBelt({
 
         const site = createMarker({
             color: "yellow",
-            texture: buildableSite,
             radius: MINING_SITE_RADIUS,
             label: `${name} Mining Site ${i + 1}`,
         })
+
+        site.addComponent(new SizeComponent(MINING_SITE_RADIUS * 2, MINING_SITE_RADIUS * 2, 12))
+        site.addComponent(new TextureComponent({ src: buildableSite, id: `${name} Mining Site ${i + 1}` }))
 
         applyComponents(site,
             new OrbitComponent(

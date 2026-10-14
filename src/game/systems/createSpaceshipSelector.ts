@@ -1,5 +1,5 @@
 import { SHIP_RADIUS } from "../constants";
-import { createMarker } from "../factories/createSpaceship";
+import { createMarker } from "../factories/createMarker";
 
 export function createSpaceshipSelector(color: string) {
     return createMarker({ color, radius: SHIP_RADIUS * 2, offset: { x: 0, y: 0, z: -1 } });

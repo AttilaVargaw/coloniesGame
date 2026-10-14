@@ -2,7 +2,6 @@ import { Engine } from "@/engine/core/engine"
 import { ClickableComponent } from "@engine/components/clickableComponent"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { PositionComponent, WorldPosition } from "@engine/components/position"
-import { RadiusComponent } from "@engine/components/radiusComponent"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "../components/vessel"
 import { applyComponents, descartesToPolar, createShipClickHandler } from "./helpers"
@@ -12,7 +11,6 @@ import { SHIP_RADIUS, TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } 
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { angularSpeed } from "../utils/orbital"
 import { VesselBlueprint } from "../data/VesselBlueprint"
-import { MapMarker } from "../data/MapMarker"
 import { Entity } from "@engine/entities/entity"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { LabelComponent } from "@/engine/components/label"
@@ -20,36 +18,7 @@ import { TextureComponent } from "@/engine/components/textureComponent"
 import battlestarDradisUrl from "@/components/icons/battlestarDradis.svg"
 import { SizeComponent } from "@engine/components/sizeComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-
-export function createMarker({
-    offset,
-    color,
-    radius,
-    label,
-    labelColor = "red",
-    textSize = 18,
-    name,
-    texture,
-    emitLight
-}: MapMarker) {
-    const marker = applyComponents(createEntity(name),
-        new PositionComponent(0, 0),
-        new ColorComponent(color, "", emitLight)
-    )
-
-    if(texture) {
-        marker.addComponent(new SizeComponent(radius * 2, radius * 2, 12))
-        marker.addComponent(new TextureComponent({ src: texture, id: name }))
-    } else {
-        marker.addComponent(new RadiusComponent(radius))
-    }
-
-    if(label) {
-        marker.addComponent(new LabelComponent(label, textSize, offset ?? { x: radius * 2 + 10, y: 0, z: 0 } as WorldPosition, labelColor))
-    }
-
-    return marker
-}
+import { createMarker } from "./createMarker"
 
 export function createSpaceship(engine: Engine, { name }: { name: string }) {
     const ship = createMarker({
