@@ -89,15 +89,6 @@ async function ensurePreloadedTextures() {
     }
 }
 
-let asteroidBeltEntityCount = 0
-const ASTEROID_BELT_YIELD_INTERVAL = 50
-
-function maybeYieldAfterAsteroidEntity() {
-    if (++asteroidBeltEntityCount % ASTEROID_BELT_YIELD_INTERVAL === 0) {
-        // yield to event loop - no-op in sync context but kept for future
-    }
-}
-
 export async function createAsteroidBelt({
     innerRadius,
     outerRadius,
@@ -198,7 +189,6 @@ export async function createAsteroidBelt({
         )
 
         engine.addEntity(dust, parent)
-        // await maybeYieldAfterAsteroidEntity()
     }
 
     const siteCount = Math.max(6, Math.floor(beltArea * MINING_SITE_AREA_DENSITY))
