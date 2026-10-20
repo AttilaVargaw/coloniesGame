@@ -137,7 +137,6 @@ function seedFrom(base: string, archetype: string, extra?: string): number {
     }
     for(let i = 0; i < archetype.length; i++) {
         h = ((h << 5) - h + archetype.charCodeAt(i)) | 0
-
     }
     if(extra) {
         for(let i = 0; i < extra.length; i++) {
@@ -210,7 +209,8 @@ function applyAtmosphereGradient(
     rgb: { r: number; g: number; b: number },
     alpha: number
 ): void {
-    const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.42, size / 2, size / 2, size * 0.5)
+    const halfSize = size / 2
+    const gradient = ctx.createRadialGradient(halfSize, halfSize, size * 0.42, halfSize, halfSize, halfSize)
     gradient.addColorStop(0, "rgba(0,0,0,0)")
     gradient.addColorStop(0.85, "rgba(0,0,0,0)")
     gradient.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`)

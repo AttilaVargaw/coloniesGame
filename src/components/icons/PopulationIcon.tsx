@@ -1,5 +1,5 @@
 import { Population } from "@/game/data/Population";
-import { cn } from "@/lib/utils"
+import { cn } from "cn";
 import { Beaker, BookOpen, Church, Cog, HardHat, HeartPulse, House, Pencil, Siren, Tractor, CoffeeIcon } from "lucide-react";
 
 function createIcon(Icon: (props: { className?: string }) => React.ReactNode) {

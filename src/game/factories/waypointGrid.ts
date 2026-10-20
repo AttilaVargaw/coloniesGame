@@ -15,7 +15,7 @@ export const DEFAULT_RINGS: Ring[] = [
     { radius: 1500, waypointCount: 60, spread: TWO_PI },
     { radius: 2100, waypointCount: 72, spread: TWO_PI },
     { radius: 2800, waypointCount: 84, spread: TWO_PI },
-]
+] as const
 
 export class WaypointGrid {
     readonly starId: string

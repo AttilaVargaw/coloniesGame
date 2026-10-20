@@ -1,10 +1,3 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-}
-
 export function sumValues(o: { [key: string]: number }) {
     return Object.values(o).reduce((acc, value) => acc + value, 0)
 }

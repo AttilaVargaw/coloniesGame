@@ -1,6 +1,6 @@
 {
   "threshold": 10,
   "reporters": ["console", "json"],
-  "ignore": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+  "ignore": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/*.svg" ],
   "languages": ["javascript", "typescript", "typescriptreact"]
 }
