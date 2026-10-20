@@ -52,7 +52,7 @@ const PALETTES: Record<string, Palette> = {
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 } as const satisfies Record<string, Palette>
 
-const size = 512
+const textureSize = 512
 
 function fade(t: number): number {
     return t * t * t * (t * (t * 6 - 15) + 10)
@@ -181,26 +181,26 @@ function generateTexture(
     seedKey: string | undefined,
     processPixel: PixelProcessor
 ): TextureResult {
-    const canvas = createCanvas(size, size)
+    const canvas = createCanvas(textureSize, textureSize)
     const ctx = canvas.getContext("2d")!
-    ctx.clearRect(0, 0, size, size)
+    ctx.clearRect(0, 0, textureSize, textureSize)
 
     const seed = seedFrom(baseColor, seedArchetype, seedKey)
     const perm = buildPerm(seed)
 
-    const imageData = ctx.createImageData(size, size)
+    const imageData = ctx.createImageData(textureSize, textureSize)
     const data = imageData.data
 
-    for(let y = 0; y < size; y++) {
-        for(let x = 0; x < size; x++) {
-            const u = x / size
-            const v = y / size
+    for(let y = 0; y < textureSize; y++) {
+        for(let x = 0; x < textureSize; x++) {
+            const u = x / textureSize
+            const v = y / textureSize
             const [sx, sy, sz] = uvToSpherePoint(u, v)
             processPixel(x, y, sx, sy, sz, data, perm)
         }
     }
 
-    return { canvas, ctx, data, imageData, size, perm }
+    return { canvas, ctx, data, imageData, size: textureSize, perm }
 }
 
 function applyAtmosphereGradient(
@@ -293,7 +293,7 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
     const epsilon = 0.04
     const strength = 0.15
 
-    const raw = new Float32Array(size * size * 3)
+    const raw = new Float32Array(textureSize * textureSize * 3)
 
     const { canvas, ctx, data, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, _data, perm) => {
         let tx, ty, tz
@@ -334,15 +334,15 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
         nny /= nLen
         nnz /= nLen
 
-        const idx = (y * size + x) * 3
+        const idx = (y * textureSize + x) * 3
         raw[idx] = nnx
         raw[idx + 1] = nny
         raw[idx + 2] = nnz
     })
 
-    const blurred = boxBlurNormalMap(raw, size, size, 1)
+    const blurred = boxBlurNormalMap(raw, textureSize, textureSize, 1)
 
-    for(let i = 0; i < size * size; i++) {
+    for(let i = 0; i < textureSize * textureSize; i++) {
         const idx = i * 4
         data[idx] = clamp(Math.round((blurred[i * 3] * 0.5 + 0.5) * 255), 0, 255)
         data[idx + 1] = clamp(Math.round((blurred[i * 3 + 1] * 0.5 + 0.5) * 255), 0, 255)
@@ -395,7 +395,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             b = lerp(b, cloudsRgb.b, cloudAlpha * 0.85)
         }
 
-        const latitude = Math.abs(y / size - 0.5) * 2
+        const latitude = Math.abs(y / textureSize - 0.5) * 2
         if(latitude > 0.78) {
             const polarAlpha = (latitude - 0.78) / 0.22
             r = lerp(r, polesRgb.r, polarAlpha * 0.85)
@@ -403,7 +403,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
             b = lerp(b, polesRgb.b, polarAlpha * 0.85)
         }
 
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = clamp(Math.round(r), 0, 255)
         data[idx + 1] = clamp(Math.round(g), 0, 255)
         data[idx + 2] = clamp(Math.round(b), 0, 255)
@@ -414,7 +414,7 @@ export function createPlanetTexture(baseColor: string, archetype: string = "eart
 
     const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
     const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    applyAtmosphereGradient(ctx, size, atmRgb, 0.15)
+    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.15)
 
     return canvas
 }
@@ -446,7 +446,7 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
         const stormMask = Math.max(0, stormNoise - 0.35) / 0.65
         const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
 
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = clamp(Math.round(lerp(r, stormRgb.r, stormMask * 0.6)), 0, 255)
         data[idx + 1] = clamp(Math.round(lerp(g, stormRgb.g, stormMask * 0.6)), 0, 255)
         data[idx + 2] = clamp(Math.round(lerp(b, stormRgb.b, stormMask * 0.6)), 0, 255)
@@ -456,7 +456,7 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
     ctx.putImageData(imageData, 0, 0)
 
     const atmRgb = tintColor(hexToRgb(palette.bands[0][0]), base, 0.1)
-    applyAtmosphereGradient(ctx, size, atmRgb, 0.1)
+    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.1)
 
     return canvas
 }
@@ -468,7 +468,7 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
         const fine = (sampleFbm3d(sx * noiseScale * 1.25, sy * noiseScale * 1.25, sz * noiseScale * 1.25, perm, 0.4, 6) + 1) / 2
         const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
 
-        const v = y / size
+        const v = y / textureSize
         const radialFalloff = 1.0 - Math.abs(v - 0.5) * 2.0
         const sharpFalloff = Math.pow(radialFalloff, 1.6)
 
@@ -479,7 +479,7 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
         const g = Math.round(clamp(brightness * (base.g / 255), 0, 255))
         const b = Math.round(clamp(brightness * (base.b / 255), 0, 255))
 
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = r
         data[idx + 1] = g
         data[idx + 2] = b
@@ -489,15 +489,15 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
     ctx.putImageData(imageData, 0, 0)
 
     const radialGradient = ctx.createRadialGradient(
-        size / 2, size / 2, size * 0.05,
-        size / 2, size / 2, size * 0.45
+        textureSize / 2, textureSize / 2, textureSize * 0.05,
+        textureSize / 2, textureSize / 2, textureSize * 0.45
     )
     radialGradient.addColorStop(0, "rgba(255,255,255,0.8)")
     radialGradient.addColorStop(0.25, "rgba(255,255,255,0.35)")
     radialGradient.addColorStop(0.6, "rgba(255,255,255,0.05)")
     radialGradient.addColorStop(1, "rgba(0,0,0,0.55)")
     ctx.fillStyle = radialGradient
-    ctx.fillRect(0, 0, size, size)
+    ctx.fillRect(0, 0, textureSize, textureSize)
 
     return canvas
 }
@@ -521,14 +521,14 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
             roughness = lerp(roughness, 0.25, cloudAlpha * 0.7)
         }
 
-        const latitude = Math.abs(y / size - 0.5) * 2
+        const latitude = Math.abs(y / textureSize - 0.5) * 2
         if(latitude > 0.78) {
             const polarAlpha = (latitude - 0.78) / 0.22
             roughness = lerp(roughness, 0.08, polarAlpha * 0.7)
         }
 
         const value = Math.round(clamp(roughness, 0, 1) * 255)
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = value
         data[idx + 1] = value
         data[idx + 2] = value
@@ -554,7 +554,7 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
             alpha = Math.min(1, (normalizedCloud - 0.45) * 4)
         }
 
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = cloudsRgb.r
         data[idx + 1] = cloudsRgb.g
         data[idx + 2] = cloudsRgb.b
@@ -617,7 +617,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             }
         }
 
-        const latitude = Math.abs(y / size - 0.5) * 2
+        const latitude = Math.abs(y / textureSize - 0.5) * 2
         if(latitude > 0.78) {
             const polarAlpha = (latitude - 0.78) / 0.22
             r = lerp(r, Math.round(polesRgb.r * 0.1), polarAlpha * 0.85)
@@ -625,7 +625,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
             b = lerp(b, Math.round(polesRgb.b * 0.1), polarAlpha * 0.85)
         }
 
-        const idx = (y * size + x) * 4
+        const idx = (y * textureSize + x) * 4
         data[idx] = clamp(Math.round(r), 0, 255)
         data[idx + 1] = clamp(Math.round(g), 0, 255)
         data[idx + 2] = clamp(Math.round(b), 0, 255)
@@ -636,7 +636,7 @@ export function createNightTexture(baseColor: string, archetype: string = "earth
 
     const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
     const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    applyAtmosphereGradient(ctx, size, atmRgb, 0.1)
+    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.1)
 
     return canvas
 }
