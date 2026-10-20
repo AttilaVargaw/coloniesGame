@@ -306,9 +306,16 @@ function executeSectors(
                 marketConstraint = Math.min(marketConstraint, workerMarketRatios[key as keyof Population] ?? 1);
             }
         }
+        const sectorConfig = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
+        const nonEssentialGoods = new Set<keyof Goods>((sectorConfig?.nonEssentialGoods || sectorConfig?.optionalGoods || []) as (keyof Goods)[]);
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             if(value > 0) {
-                marketConstraint = Math.min(marketConstraint, goodsMarketRatios[key as keyof Goods] ?? 1);
+                const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
+                if (nonEssentialGoods.has(key as keyof Goods)) {
+                    marketConstraint = Math.min(marketConstraint, 0.25 + 0.75 * ratio);
+                } else {
+                    marketConstraint = Math.min(marketConstraint, ratio);
+                }
             }
         }
 
@@ -317,10 +324,9 @@ function executeSectors(
         const budgetRatio = bid.inputCost + bid.laborCost > 0 ? Math.min(1, Math.max(0, clampedWealth / (bid.inputCost + bid.laborCost))) : 1;
         const actualScale = Math.min(budgetRatio, marketConstraint);
 
-        const config = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
-        const capitalGoods = config?.capitalGoods || {};
-        const capitalEfficiency = config?.capitalEfficiency || 0;
-        const capitalEfficiencyDecay = config?.capitalEfficiencyDecay || 0;
+        const capitalGoods = sectorConfig?.capitalGoods || {};
+        const capitalEfficiency = sectorConfig?.capitalEfficiency || 0;
+        const capitalEfficiencyDecay = sectorConfig?.capitalEfficiencyDecay || 0;
         const startCapital = currentSectorCapital[bid.name as keyof IndustrialSectors] || 0;
         const effectiveCapitalEfficiency = capitalEfficiency / (1 + (bid.level - 1) * capitalEfficiencyDecay);
         const rawMultiplier = startCapital * effectiveCapitalEfficiency;

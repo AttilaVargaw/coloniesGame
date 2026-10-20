@@ -13,6 +13,7 @@ import type { EventBase } from "../lib/events"
 import type { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
 import { CanvasManager } from "../systems/canvasManager"
+import { EntityComponent } from "../entities/entityComponent"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -106,7 +107,7 @@ export class World implements Engine {
 
     registerNodeType<T extends EntityNode>(
         nodeName: EntityNodeConstructor<T>,
-        keys: Set<new (...args: any[]) => import("../entities/entityComponent").EntityComponent>,
+        keys: Set<new (...args: any[]) => EntityComponent>,
         converter: (entity: Entity) => T): this {
         this.nodeManager.registerNodeType(nodeName, keys, converter)
         return this
@@ -170,13 +171,5 @@ export class World implements Engine {
 
     getDebugManager() {
         return this.debugManager
-    }
-
-    *getEntitiesWith<T extends import("../entities/entityComponent").EntityComponent>(component: new (...args: any[]) => T): IterableIterator<Entity> {
-        for (const entity of this.entityRegistry.getAllEntities()) {
-            if (entity.getComponent(component)) {
-                yield entity
-            }
-        }
     }
 }

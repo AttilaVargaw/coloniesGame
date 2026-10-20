@@ -2,6 +2,7 @@ import { PlanetArchetype } from "../factories/helpers";
 import { VesselBlueprint } from "./VesselBlueprint";
 import { OrbitalBlueprint } from "./OrbitalBlueprint";
 import { MapMarker } from "./MapMarker";
+import { IndustrialSectors } from "../components/Factories";
 
 export type BodyBlueprint = Readonly<{
     buildable?: boolean;
@@ -19,8 +20,8 @@ export type BodyBlueprint = Readonly<{
     systems?: { bodies: BodyBlueprint[]; satellites?: BodyBlueprint[]; orbit?: OrbitalBlueprint; angle?: number }[];
     rings?: { innerRadius: number; outerRadius: number; color: string }[];
     asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, name: string }[];
-    starterIndustries?: Partial<import("../components/Factories").IndustrialSectors>;
-    industryOverrides?: Partial<import("../components/Factories").IndustrialSectors>;
-    industries?: Partial<import("../components/Factories").IndustrialSectors>;
+    starterIndustries?: Partial<IndustrialSectors>;
+    industryOverrides?: Partial<IndustrialSectors>;
+    industries?: Partial<IndustrialSectors>;
 }>
 
