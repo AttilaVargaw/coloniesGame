@@ -48,7 +48,7 @@ export function ColoniesInforWindow() {
     const [page, setPage] = useState<DialogPage>("population")
 
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
-        <DialogContent className="bg-[#1c1c1c] text-popover-foreground min-w-4xl">
+        <DialogContent className="bg-[#1c1c1c] text-white min-w-4xl">
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>
             </DialogHeader>
@@ -69,6 +69,7 @@ export function ColoniesInforWindow() {
                     <ToggleGroupItem value="population">Population</ToggleGroupItem>
                     <ToggleGroupItem value="warehouse">Warehouse</ToggleGroupItem>
                     <ToggleGroupItem value="industry">Industry</ToggleGroupItem>
+                    <ToggleGroupItem value="trade">Trade</ToggleGroupItem>
                 </ToggleGroup>
             </DialogFooter>
         </DialogContent>

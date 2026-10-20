@@ -5,8 +5,9 @@ import { IndustryBreakdown } from "./IndustryBreakdown";
 import { PopulationBreakdown } from "./PopulationBreakdown";
 import { WarehouseBreakdown } from "./WarehouseBreakdown";
 import { ColonySummary } from "./colonySummary";
+import { TradeBreakdown } from "./tradeBreakdown";
 
-export type DialogPage = "summary" | "population" | "warehouse" | "industry";
+export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade";
 
 export function DialogInner({ industry, page, entity }: { industry: IndustryComponent | null, page: DialogPage, entity?: Entity }): ReactNode {
     if(!industry) return <></>
@@ -20,6 +21,8 @@ export function DialogInner({ industry, page, entity }: { industry: IndustryComp
             return <WarehouseBreakdown industry={industry} />;
         case "industry":
             return <IndustryBreakdown industry={industry} entity={entity!} />;
+        case "trade":
+            return <TradeBreakdown entity={entity!} />;
         default:
             return <></>
     }
