@@ -70,6 +70,28 @@ export type Goods = {
     militaryVehicles: number
 }
 
+export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
+    "services",
+    "faith",
+    "lawEnforcement",
+    "healthcare",
+    "education",
+    "governance",
+    "environmentFactor",
+    "defense",
+    "retail",
+    "entertainment",
+    "itServices",
+    "post",
+    "monetaryServices",
+    "airMobility",
+    "automotiveMobility",
+    "railroadMobility",
+    "shipMobility",
+    "tourism",
+    "electricity",
+]);
+
 export const basePrices = {
     food: 10,
     luxuryFood: 60,

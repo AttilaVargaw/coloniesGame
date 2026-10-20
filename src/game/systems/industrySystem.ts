@@ -3,34 +3,12 @@ import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
-import { Goods } from "../data/Goods";
+import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
 import { IndustryWorkerPool } from "./industryWorkerPool";
-
-const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
-    "services",
-    "faith",
-    "lawEnforcement",
-    "healthcare",
-    "education",
-    "governance",
-    "environmentFactor",
-    "defense",
-    "retail",
-    "entertainment",
-    "itServices",
-    "post",
-    "monetaryServices",
-    "airMobility",
-    "automotiveMobility",
-    "electricity",
-    "railroadMobility",
-    "shipMobility",
-    "tourism"
-]);
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function

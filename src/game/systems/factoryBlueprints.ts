@@ -23,7 +23,7 @@ const workerReqTechnical = { worker: 84, scientist: 5, clerks: 5, engineer: 5, h
 const workerReqMaritime = { worker: 89, engineer: 5, clerks: 5, healtcarePersonal: 1 } as const
 const goodsReqHeavyVehicle = { environmentFactor: 2, paper: 1, machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 } as const
 const goodsReqSpaceShipyard = { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 } as const
-const usualNonEssentialGoods: ReadonlyArray<keyof Goods> = ["electronics", "governance", "paper", "water", "vehicles", "electricity", "services", "environmentFactor"] as const
+const usualNonEssentialGoods: ReadonlyArray<keyof Goods> = ["electronics", "governance", "paper", "water", "vehicles", "electricity", "services", "environmentFactor", "retail", "itServices"] as const
 
 export const industrySectorBlueprints = new Map<keyof IndustrialSectors, FactoryBlueprint>([
     ["mine", {
@@ -53,7 +53,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             paper: 1, vehicles: 0.1, ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, environmentFactor: 100 },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        nonEssentialGoods: new Set([...usualNonEssentialGoods, "ammunition", "chemicals"]),
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
@@ -100,7 +100,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         },
         workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { water: 1500 },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
     })],
     ["powerPlant", ({
         name: "powerPlant", goodsRequirements: {

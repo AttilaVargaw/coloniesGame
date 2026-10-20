@@ -104,7 +104,7 @@ function createInteractionComponents(
             new IndustryComponent(
                 {
                     ...createStarterIndustry(population),
-                    ...((blueprint?.starterIndustries ?? blueprint?.industryOverrides ?? blueprint?.industries) ?? {}),
+                    ...(blueprint?.starterIndustries ?? {}),
                 } as any,
                 createStarterWarehouse(population),
                 createStarterPopulation(population),

@@ -10,10 +10,10 @@ import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 
 const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
-const MIN_TRADE_AMOUNT = 10;
-const MAX_AUTO_ROUTES_PER_SETTLEMENT = 5;
-const SURPLUS_THRESHOLD_MULTIPLIER = 8;
-const DEFICIT_THRESHOLD_MULTIPLIER = 3;
+const MIN_TRADE_AMOUNT = 1;
+const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
+const SURPLUS_THRESHOLD_MULTIPLIER = 2;
+const DEFICIT_THRESHOLD_MULTIPLIER = 1.5;
 const MAX_ROUTE_SPEED = 2;
 const MIGRATION_SURPLUS_FACTOR = 1.5;
 const MIGRATION_DEFICIT_FACTOR = 0.75;
@@ -135,7 +135,15 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                     if (tradeValue < MIN_TRADE_AMOUNT) continue;
                     if (distance > travelDays * 10) continue;
 
-                    const amount = Math.min(tradeValue, exporter.goods[key as keyof Goods] ?? 0);
+                    const amountNeeded = Math.max(1, Math.floor(((importer.goods[key as keyof Goods] ?? 0) < (Math.max(Object.values(importer.population).reduce((sum, c) => sum + c.number, 0) * DEFICIT_THRESHOLD_MULTIPLIER, totalPopulation * 0.1)) ? (Math.max(Object.values(importer.population).reduce((sum, c) => sum + c.number, 0) * DEFICIT_THRESHOLD_MULTIPLIER, totalPopulation * 0.1)) - (importer.goods[key as keyof Goods] ?? 0) : 0) * 1.2));
+                    const amount = Math.min(
+                        exporter.amount - MIN_TRADE_AMOUNT,
+                        amountNeeded,
+                        Math.max(MIN_TRADE_AMOUNT, Math.floor(exporter.amount * 0.25))
+                    );
+
+                    if (amount < MIN_TRADE_AMOUNT) continue;
+                    if (distance > travelDays * 20) continue;
 
                     this.engine?.addCommand(
                         new CreateTradeRouteCommand(

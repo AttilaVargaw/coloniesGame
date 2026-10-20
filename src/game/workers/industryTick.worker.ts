@@ -2,7 +2,7 @@ import { getSectorOutputLevel, industrySectorBlueprints, } from "../systems/fact
 import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
 import { applyIndustryUpgrades } from "../systems/applyIndustryUpgrades";
 import { baseSalaries, getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
-import { getPrices, Goods } from "../data/Goods";
+import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { populationGrowth } from "../data/populationHelpers";
@@ -455,11 +455,11 @@ function finalizeGoods(
         const goodKey = key as keyof Goods;
         const delta = goodsChange[goodKey] || 0;
 
-        // if(NON_CUMULATING_GOODS.has(goodKey)) {
-        finalGoods[goodKey] = Math.max(0, delta);
-        // } else {
-        //     finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) + delta);
-        // }
+        if(NON_CUMULATING_GOODS.has(goodKey)) {
+            finalGoods[goodKey] = Math.max(0, delta);
+        } else {
+            finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) + delta);
+        }
     }
 
     return finalGoods;
