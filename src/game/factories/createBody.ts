@@ -91,14 +91,14 @@ function createInteractionComponents(
     if(population !== undefined) {
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
-                label: "Info2",
-                id: "info2",
-                onClick: () => console.log("info2")
+                label: "Info",
+                id: "info",
+                onClick: () => console.log("info")
             },
             {
-                label: "View2",
-                id: "view2",
-                onClick: () => console.log("view2")
+                label: "View",
+                id: "view",
+                onClick: () => console.log("view")
             }]),
             new IndustryComponent(
                 createStarterIndustry(population),

@@ -84,7 +84,7 @@ export class TextureWorkerPool {
         for(const worker of this.workers) {
             worker.terminate()
         }
-        this.workers = []
+        this.workers.length = 0 
         this.pending.clear()
     }
 }

@@ -84,7 +84,7 @@ export class IndustryWorkerPool {
         for (const worker of this.workers) {
             worker.terminate();
         }
-        this.workers = [];
+        this.workers.length = 0;
         this.started = false;
     }
 }

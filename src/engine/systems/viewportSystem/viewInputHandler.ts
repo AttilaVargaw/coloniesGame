@@ -293,7 +293,7 @@ export class ViewportInputHandler {
             const dy = data.y - this._lastPointer.y
             if(dx || dy) {
                 if(this.dragButton === 2) {
-                    camera.panByPixels(dx, dy)
+                    // camera.panByPixels(dx, dy)
                 } else if(this.dragButton === 1) {
                     if(this.hasFollowTarget) {
                         camera.yaw -= dx * ViewportInputHandler.MOUSE_ROTATE_SPEED
