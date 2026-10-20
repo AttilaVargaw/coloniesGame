@@ -29,7 +29,20 @@ export const solarisBeta = {
                 marker: { color: "#4d5c6d", radius: 10, label: "Virgon" },
                 archetype: "kobol",
                 orbit: { radius: 0 },
-                name: "Virgon"
+                name: "Virgon",
+                starterIndustries: {
+                    government: 430_000_000,
+                    bank: 430_000_000,
+                    lawEnforcement: 215_000_000,
+                    informationTechnology: 215_000_000,
+                    services: 258_000_000,
+                    education: 38_700_000,
+                    healthcare: 172_000_000,
+                    consumerFactory: 344_000_000,
+                    electronics: 215_000_000,
+                    construction: 25_800_000,
+                    retail: 215_000_000,
+                }
             },
             {
                 population: 100_000,
@@ -44,7 +57,21 @@ export const solarisBeta = {
     {
         bodies: [{
             population: 260000000,
-            marker: { color: "#829873", radius: 10, label: "Leonis" }, archetype: "kobol", orbit: { radius: 0.95 * SOLAR_UNIT, inclination: 0 }, name: "Leonis"
+            marker: { color: "#829873", radius: 10, label: "Leonis" }, archetype: "kobol", orbit: { radius: 0.95 * SOLAR_UNIT, inclination: 0 }, name: "Leonis",
+            starterIndustries: {
+                tourism: 21_840_000,
+                entertainmentIndustry: 13_000_000,
+                foodFactory: 15_600_000,
+                luxuryFood: 13_000_000,
+                services: 15_600_000,
+                education: 2_340_000,
+                bank: 26_000_000,
+                government: 26_000_000,
+                retail: 13_000_000,
+                construction: 1_560_000,
+                healthcare: 10_400_000,
+                farm: 2_288_000,
+            }
         }],
     },
     {

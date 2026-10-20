@@ -15,11 +15,44 @@ export const heliosDelta = {
             archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
             name: "Canceron",
             population: 6_700_000_000,
+            starterIndustries: {
+                farm: 58_960_000,
+                foodFactory: 402_000_000,
+                luxuryFood: 335_000_000,
+                mine: 33_500_000,
+                metalFactory: 35_250_000,
+                oilRig: 18_760_000,
+                powerPlant: 26_800_000,
+                consumerFactory: 536_000_000,
+                furnitureFactory: 335_000_000,
+                clothing: 670_000_000,
+                services: 402_000_000,
+                retail: 335_000_000,
+                bank: 670_000_000,
+                government: 670_000_000,
+                construction: 40_200_000,
+                lawEnforcement: 335_000_000,
+                healthcare: 268_000_000,
+                education: 60_300_000,
+            }
         }],
     }, {
         bodies: [{
             marker: { color: "#849cbe", radius: 10, label: "Aquaria" },
-            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.35, inclination: 0.4 }, name: "Aquaria", population: 25_000
+            archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.35, inclination: 0.4 }, name: "Aquaria", population: 25_000,
+            starterIndustries: {
+                fishery: 150,
+                foodFactory: 1500,
+                waterTreatment: 125,
+                powerPlant: 100,
+                services: 1500,
+                healthcare: 1000,
+                education: 225,
+                retail: 1250,
+                tourism: 2100,
+                government: 2500,
+                construction: 150,
+            }
         }],
     }, {
         bodies: [{
@@ -29,7 +62,24 @@ export const heliosDelta = {
                 angle: 0,
                 eccentricity: 0.007,
                 inclination: 0
-            }, name: "Aerilon", population: 1_200_000_000
+            }, name: "Aerilon", population: 1_200_000_000,
+            starterIndustries: {
+                farm: 10_560_000,
+                foodFactory: 72_000,
+                luxuryFood: 60_000,
+                forestry: 31_200,
+                lumberMill: 7_680,
+                constructionMaterials: 1_200,
+                mine: 6_000,
+                metalFactory: 6_312,
+                machineryFactory: 4_800,
+                waterTreatment: 6_000,
+                powerPlant: 4_800,
+                services: 72_000,
+                retail: 60_000,
+                education: 10_800,
+                healthcare: 48_000,
+            }
         }],
     }, {
         bodies: [{

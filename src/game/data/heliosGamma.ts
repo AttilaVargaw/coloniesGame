@@ -23,6 +23,20 @@ export const heliosGamma = {
             name: "Scorpia",
             archetype: "kobol",
             population: 450000000,
+            starterIndustries: {
+                tourism: 37_800_000,
+                foodFactory: 27_000_000,
+                luxuryFood: 22_500_000,
+                services: 27_000_000,
+                retail: 22_500_000,
+                entertainmentIndustry: 22_500_000,
+                construction: 2_700_000,
+                healthcare: 18_000_000,
+                education: 4_050_000,
+                mine: 2_250_000,
+                spaceShips: 22_500_000,
+                shipInfrastructure: 1_800_000,
+            }
         }],
     }, {
         bodies: [{
@@ -31,6 +45,19 @@ export const heliosGamma = {
             archetype: "kobol",
             orbit: { radius: SOLAR_UNIT * 1.1, eccentricity: 0.1, inclination: 0 },
             population: 1700000000,
+            starterIndustries: {
+                farm: 14_960_000,
+                foodFactory: 102_000_000,
+                services: 102_000_000,
+                healthcare: 68_000_000,
+                construction: 10_200_000,
+                waterTreatment: 8_500_000,
+                education: 15_300_000,
+                alternativeMedicine: 13_600_000,
+                religion: 51_000_000,
+                retail: 85_000_000,
+                government: 170_000_000,
+            }
         }],
     }, {
         orbit: { radius: SOLAR_UNIT * 0.95, eccentricity: 0.1, inclination: 0.3 },
@@ -40,6 +67,16 @@ export const heliosGamma = {
             name: "Libran",
             archetype: "kobol",
             population: 2100000,
+            starterIndustries: {
+                government: 210_000,
+                lawEnforcement: 105_000,
+                services: 126_000,
+                education: 18_900,
+                healthcare: 84_000,
+                environmentControl: 10_500,
+                construction: 12_600,
+                foodFactory: 126_000,
+            }
         },
         {
             archetype: "luna",
