@@ -35,7 +35,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     lawEnforcement: 0.00005,
     chemical: 0.000004,
     recycling: 0.000002,
-    government: 0.0001,
+    government: 0.00001,
     automotive: 0.0001,
     electronics: 0.00005,
     luxuryFurnitureFactory: 0.00005,

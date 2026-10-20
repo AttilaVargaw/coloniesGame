@@ -6,10 +6,31 @@ import { Engine } from "@/engine/core/engine";
 import { Goods } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
-import type { IndustryTickInput } from "../workers/IndustryTickInput";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
 import { IndustryWorkerPool } from "./industryWorkerPool";
+
+const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
+    "services",
+    "faith",
+    "lawEnforcement",
+    "healthcare",
+    "education",
+    "governance",
+    "environmentFactor",
+    "defense",
+    "retail",
+    "entertainment",
+    "itServices",
+    "post",
+    "monetaryServices",
+    "airMobility",
+    "automotiveMobility",
+    "electricity",
+    "railroadMobility",
+    "shipMobility",
+    "tourism"
+]);
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -38,7 +59,9 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
         for(const { entity, industry } of this.nodes) {
             const patch = patchesMap.get(entity.id);
-            if(!patch) continue;
+            if(!patch) {
+                continue
+            }
 
             applyPatch(industry, patch);
             this.engine?.reindexEntity(entity);
@@ -68,7 +91,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 if(!entity) continue;
 
                 const { settlementType, allowedSectors } = entity.industry;
-                if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.includes(cmd.sectorName)) {
+                if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.has(cmd.sectorName)) {
                     continue;
                 }
 
@@ -78,21 +101,18 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             commands.clear();
         }
 
-        const industries: IndustryTickInput[] = [];
-        for(const { entity, industry } of this.nodes) {
-            industries.push({
-                entityId: entity.id,
-                sectors: industry.sectors,
-                goods: industry.goods,
-                population: industry.population,
-                sectorWealth: industry.sectorWealth,
-                sectorCapital: industry.sectorCapital,
-                upgradeSectors: upgradeSectors[entity.id],
-                autoUpgradeSectors: autoUpgradeSectors[entity.id],
-                settlementType: industry.settlementType,
-                allowedSectors: industry.allowedSectors,
-            });
-        }
+        const industries = this.nodes.map(({ entity, industry }) => ({
+            entityId: entity.id,
+            sectors: industry.sectors,
+            goods: industry.goods,
+            population: industry.population,
+            sectorWealth: industry.sectorWealth,
+            sectorCapital: industry.sectorCapital,
+            upgradeSectors: upgradeSectors[entity.id],
+            autoUpgradeSectors: autoUpgradeSectors[entity.id],
+            settlementType: industry.settlementType,
+            allowedSectors: [...industry.allowedSectors]
+        }));
 
         this.workerPool?.tick(industries);
     };
@@ -123,6 +143,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 }
 
 function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
+    for(const key in patch.goods) {
+        if(!NON_CUMULATING_GOODS.has(key as keyof Goods)) {
+            continue
+        }
+
+        patch.goods[key as keyof Goods] = (patch.goodsProduction?.[key as keyof Goods] || 0) - (patch.goodsRequirements?.[key as keyof Goods] || 0)
+    }
+
     mergeRecord(industry.goods, patch.goods)
     mergeRecord(industry.goodsRequirements, patch.goodsRequirements)
     mergeRecord(industry.goodsProduction, patch.goodsProduction)
@@ -146,7 +174,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
 
 function mergeRecord<T extends Record<string, any>>(
     target: T,
-    patch: Partial<T> | undefined
+    patch?: Partial<T>
 ) {
     if(!patch) return
     for(const key in patch) {
@@ -156,7 +184,7 @@ function mergeRecord<T extends Record<string, any>>(
 
 function mergeWorkerRecord(
     target: Record<keyof Population, PopulationBreakdown>,
-    patch: Partial<Record<keyof Population, Partial<PopulationBreakdown>>> | undefined
+    patch?: Partial<Record<keyof Population, Partial<PopulationBreakdown>>>
 ) {
     if(!patch) return
     for(const key in patch) {
@@ -202,7 +230,9 @@ function applySectorResultsPatch(
     industry: IndustryComponent,
     results: { changed: Record<string, SectorResult>; removed: string[] } | undefined
 ) {
-    if(!results) return
+    if(!results) {
+        return
+    }
 
     for(const [name, sector] of Object.entries(results.changed)) {
         industry.sectorResults[name] = sector

@@ -223,7 +223,7 @@ export class ViewportSystem extends System {
 
         this.camera = new Camera({
             initialPosition: [
-                -5357.8, 4398.6, 600
+                -6066.5, 869, 2963.6, 600
             ],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,
@@ -231,8 +231,8 @@ export class ViewportSystem extends System {
             scaleY: 1.0,
             minDistance: CAMERA_MIN_DISTANCE,
             maxDistance: CAMERA_MAX_DISTANCE,
-            yaw: 0,
-            pitch: Math.PI / 3,
+            yaw: -3.16,
+            pitch: 0.71,
         }, engine.getCanvas("2d").getContext("2d")!)
 
         this.debugRenderer = new DebugRenderer(this)

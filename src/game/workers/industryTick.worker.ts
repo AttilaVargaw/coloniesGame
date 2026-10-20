@@ -181,7 +181,7 @@ const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
 const maxDailyChangeSmoothing = 0.001
 
-const alwaysWorking = new Set<keyof Population>(["stayAtHome"] as const);
+const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"] as const);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 const extraRequirements = {
@@ -444,8 +444,16 @@ function finalizeGoods(
     goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (currentGoods.waste || 0));
 
     const finalGoods = { ...currentGoods } as Goods;
+
     for(const key in goodsChange) {
-        finalGoods[key as keyof Goods] = Math.max(0, (finalGoods[key as keyof Goods] ?? 0) + goodsChange[key as keyof Goods]);
+        const goodKey = key as keyof Goods;
+        const delta = goodsChange[goodKey] || 0;
+
+        // if(NON_CUMULATING_GOODS.has(goodKey)) {
+        finalGoods[goodKey] = Math.max(0, delta);
+        // } else {
+        //     finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) + delta);
+        // }
     }
 
     return finalGoods;

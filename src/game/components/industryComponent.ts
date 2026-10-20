@@ -25,6 +25,7 @@ export class IndustryComponent extends EntityComponent {
     public sectorUtilization: Record<keyof IndustrialSectors, number>
     public sectorResults: Record<string, SectorResult>
     public populationRequirements: Record<keyof Population, Partial<Record<keyof Goods, number>>>
+    public allowedSectors: Set<keyof IndustrialSectors>
 
     constructor(
         public sectors: IndustrialSectors,
@@ -32,10 +33,11 @@ export class IndustryComponent extends EntityComponent {
         public readonly population: Population,
         public colonyType: ColonyType,
         public settlementType: SettlementType = "colony",
-        public allowedSectors: (keyof IndustrialSectors)[] | undefined = undefined,
+        allowedSectors: (keyof IndustrialSectors)[] | undefined = undefined,
     ) {
         super()
 
+        this.allowedSectors = new Set(allowedSectors)
         this.goodsChange = createStarterWarehouse(0)
         this.populationChange = createStarterPopulation(0)
         this.goodsRequirements = createStarterWarehouse(0)

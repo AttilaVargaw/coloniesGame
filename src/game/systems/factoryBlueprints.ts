@@ -16,11 +16,11 @@ type FactoryBlueprint = {
     capitalEfficiencyDecay?: number
 }
 
-const workerReqStandard = { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }
-const workerReqTechnical = { worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 }
-const workerReqMaritime = { worker: 89, engineer: 5, clerks: 5, healtcarePersonal: 1 }
-const goodsReqHeavyVehicle = { environmentFactor: 2, paper: 1, machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 }
-const goodsReqSpaceShipyard = { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 }
+const workerReqStandard = { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 } as const
+const workerReqTechnical = { worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 } as const
+const workerReqMaritime = { worker: 89, engineer: 5, clerks: 5, healtcarePersonal: 1 } as const
+const goodsReqHeavyVehicle = { environmentFactor: 2, paper: 1, machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 } as const
+const goodsReqSpaceShipyard = { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 } as const
 
 export const industrySectorBlueprints = new Map<keyof IndustrialSectors, FactoryBlueprint>([
     ["mine", {
@@ -44,8 +44,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["forestry", ({
         name: "forestry", goodsRequirements: {
-            paper: 1, environmentFactor: 1, vehicles: 0.1, ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1
-        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, },
+            paper: 1, vehicles: 0.1, ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1
+        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, environmentFactor: 100 },
         efficiencyBonus: 0.01
     })],
     ["farm", ({
