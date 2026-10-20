@@ -11,6 +11,7 @@ import { PositionComponent } from "@engine/components/position";
 import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph";
 import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
 import { createEntity } from "@/engine/lib/entityRegistry";
+import { terminateTextureWorkerPool } from "../factories/textureWorkerPool";
 
 export function findPath(start: Entity, end: Entity): Entity[] {
     const startPath = start.getComponent(PathComponent)
@@ -141,6 +142,7 @@ export class MapSystem extends SystemWithNodes<PathNode> {
         if(!this.engine) return this
 
         await init(this.engine)
+        terminateTextureWorkerPool()
 
         return this
     }

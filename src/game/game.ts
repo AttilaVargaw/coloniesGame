@@ -23,7 +23,7 @@ import { DebugSystem } from "./systems/debugSystem"
 import { SpinSystem } from "./systems/spinSystem"
 import { DayPassedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { terminateTextureWorkerPool } from "./factories/createBody"
+import { terminateTextureWorkerPool } from "./factories/textureWorkerPool"
 
 export class Game {
     readonly engine: World
@@ -114,9 +114,12 @@ export class Game {
 
     static async create(map: BodyBlueprint) {
         const game = new Game(map)
-        game.engine.getSystem(MapSystem).init().catch(console.error).then(() => {
-            game.engine.getSystem(MapSystem).rebuildGraph()
-        })
+        const mapSystem = game.engine.getSystem(MapSystem)
+
+        mapSystem
+            .init()
+            .catch(console.error)
+            .then(mapSystem.rebuildGraph)
 
         return game
     }

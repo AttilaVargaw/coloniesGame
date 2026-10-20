@@ -32,28 +32,7 @@ import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@engine/components/textureComponent"
 import { SizeComponent } from "@engine/components/sizeComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
-import { TextureWorkerPool } from "../systems/textureWorkerPool"
-
-let textureWorkerPool: TextureWorkerPool | null = null
-
-function getTextureWorkerPool(): TextureWorkerPool {
-    if(!textureWorkerPool) {
-        textureWorkerPool = new TextureWorkerPool({
-            workerCount: Math.min(navigator.hardwareConcurrency || 4, 8),
-            onResult: () => { },
-            onError: (message) => console.error("Texture worker error:", message),
-        })
-        textureWorkerPool.start()
-    }
-    return textureWorkerPool
-}
-
-export function terminateTextureWorkerPool(): void {
-    if(textureWorkerPool) {
-        textureWorkerPool.terminate()
-        textureWorkerPool = null
-    }
-}
+import { getTextureWorkerPool } from "./textureWorkerPool"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
     if(blueprint.mass !== undefined) return blueprint.mass
@@ -151,10 +130,10 @@ async function createSystems(
         if(!bodies) continue
 
         if(bodies.length === 1) {
-            const createdBody = await createBody(bodies[0], body, engine, mass)
+                const createdBody = await createBody(bodies[0], body, engine, mass)
 
             satellites?.forEach(sat => {
-                createBody(sat, createdBody, engine, resolveMass(bodies[0]))
+                    createBody(sat, createdBody, engine, resolveMass(bodies[0]))
             })
         } else {
             if(!orbit) {
