@@ -122,19 +122,19 @@ async function createSystems(
     engine: Engine,
     mass: number
 ): Promise<void> {
-    for(const entry of systems) {
-        if(!entry) continue
+    await Promise.all(systems.map(async entry => {
+        if(!entry) return
 
         const { bodies, satellites, orbit, angle: angle2 } = entry
 
-        if(!bodies) continue
+        if(!bodies) return
 
         if(bodies.length === 1) {
-                const createdBody = await createBody(bodies[0], body, engine, mass)
+            const createdBody = await createBody(bodies[0], body, engine, mass)
 
-            satellites?.forEach(sat => {
-                    createBody(sat, createdBody, engine, resolveMass(bodies[0]))
-            })
+            if(satellites?.length) {
+                await Promise.all(satellites.map(sat => createBody(sat, createdBody, engine, resolveMass(bodies[0]))))
+            }
         } else {
             if(!orbit) {
                 throw new Error("orbit required for multi-body system")
@@ -142,7 +142,7 @@ async function createSystems(
 
             await createBarycentre(engine, body, bodies, orbit, satellites, angle2, mass)
         }
-    }
+    }))
 }
 
 function createVessels(
@@ -258,8 +258,9 @@ export async function createBody({
 
     engine.addEntity(body, parent)
 
+    const tasks: Promise<void>[] = []
     if(systems) {
-        await createSystems(systems, body, engine, mass)
+        tasks.push(createSystems(systems, body, engine, mass))
     }
     if(vessels) {
         createVessels(vessels, body, engine, mass)
@@ -271,8 +272,10 @@ export async function createBody({
         createRings(rings, body, engine)
     }
     if(asteroidBelts?.length) {
-        await createAsteroidBelts(asteroidBelts, body, engine, mass)
+        tasks.push(createAsteroidBelts(asteroidBelts, body, engine, mass))
     }
+
+    await Promise.all(tasks)
 
     return body
 }
