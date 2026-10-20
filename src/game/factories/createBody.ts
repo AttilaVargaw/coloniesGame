@@ -82,7 +82,8 @@ function createInteractionComponents(
     clickSize: number,
     clickSquare: { width: number; height: number },
     engine: Engine,
-    body: Entity
+    body: Entity,
+    blueprint?: BodyBlueprint
 ): EntityComponent[] {
     const components: EntityComponent[] = [
         new SelectableComponent(clickSize, "red"),
@@ -101,7 +102,10 @@ function createInteractionComponents(
                 onClick: () => console.log("view")
             }]),
             new IndustryComponent(
-                createStarterIndustry(population),
+                {
+                    ...createStarterIndustry(population),
+                    ...((blueprint?.starterIndustries ?? blueprint?.industryOverrides ?? blueprint?.industries) ?? {}),
+                } as any,
                 createStarterWarehouse(population),
                 createStarterPopulation(population),
                 "standard"
@@ -266,7 +270,7 @@ export async function createBody({
         createVessels(vessels, body, engine, mass)
     }
 
-    applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body))
+    applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any))
 
     if(rings?.length) {
         createRings(rings, body, engine)

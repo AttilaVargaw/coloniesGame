@@ -19,4 +19,8 @@ export type BodyBlueprint = Readonly<{
     systems?: { bodies: BodyBlueprint[]; satellites?: BodyBlueprint[]; orbit?: OrbitalBlueprint; angle?: number }[];
     rings?: { innerRadius: number; outerRadius: number; color: string }[];
     asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, name: string }[];
+    starterIndustries?: Partial<import("../components/Factories").IndustrialSectors>;
+    industryOverrides?: Partial<import("../components/Factories").IndustrialSectors>;
+    industries?: Partial<import("../components/Factories").IndustrialSectors>;
 }>
+
