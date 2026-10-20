@@ -24,12 +24,12 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
     private cancelTradeRouteCommands: Queue<CancelTradeRouteCommand> | null = null
 
     update(_dt: number): void {
-        this.tradeRouteCancelledEvents?.clear()
-        this.tradeRouteCompletedEvents?.clear()
-        this.tradeRouteCreatedEvents?.clear()
+        // this.tradeRouteCancelledEvents?.clear()
+        // this.tradeRouteCompletedEvents?.clear()
+        // this.tradeRouteCreatedEvents?.clear()
 
-        this.createTradeRouteCommands?.clear()
-        this.cancelTradeRouteCommands?.clear()
+        // this.createTradeRouteCommands?.clear()
+        // this.cancelTradeRouteCommands?.clear()
     }
 
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -83,18 +83,17 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
     }
 
     private onDayPassed = () => {
-        const createCommands = this.engine?.getCommands(CreateTradeRouteCommand);
-        if(createCommands) {
-            for(const cmd of [...createCommands]) {
-                this.handleCreateTradeRoute(cmd);
-            }
+        if(!this.createTradeRouteCommands || !this.cancelTradeRouteCommands) {
+            return
         }
 
-        const cancelCommands = this.engine?.getCommands(CancelTradeRouteCommand);
-        if(cancelCommands) {
-            for(const cmd of [...cancelCommands]) {
-                this.handleCancelTradeRoute(cmd);
-            }
+        for(const cmd of this.createTradeRouteCommands) {
+            this.handleCreateTradeRoute(cmd);
+        }
+
+
+        for(const cmd of this.cancelTradeRouteCommands) {
+            this.handleCancelTradeRoute(cmd);
         }
 
         const routesToRemove: TradeRouteNode[] = [];
@@ -111,6 +110,13 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
         for(const node of routesToRemove) {
             this.engine?.removeEntity(node.entity);
         }
+
+        this.tradeRouteCancelledEvents?.clear()
+        this.tradeRouteCompletedEvents?.clear()
+        this.tradeRouteCreatedEvents?.clear()
+
+        this.createTradeRouteCommands.clear()
+        this.cancelTradeRouteCommands.clear()
     };
 
     private handleCreateTradeRoute(command: CreateTradeRouteCommand) {

@@ -1,7 +1,7 @@
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
-import { DayPassedEvent } from "@/engine/lib/events";
+import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
 import { basePrices, Goods } from "../data/Goods";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
@@ -12,11 +12,19 @@ import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRoute
 const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
 const MIN_TRADE_AMOUNT = 1;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
-const SURPLUS_THRESHOLD_MULTIPLIER = 2;
-const DEFICIT_THRESHOLD_MULTIPLIER = 1.5;
-const MAX_ROUTE_SPEED = 2;
+const MAX_ROUTE_SPEED = 20;
 const MIGRATION_SURPLUS_FACTOR = 1.5;
 const MIGRATION_DEFICIT_FACTOR = 0.75;
+
+type Settlement = {
+    entityId: string;
+    position: { x: number; y: number };
+    goods: Goods;
+    goodsProduction: Partial<Goods>;
+    goodsRequirements: Partial<Goods>;
+    population: Population;
+    routeCount: number;
+};
 
 export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -25,6 +33,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
     removeFromEngine(): this {
         this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
+        this.engine?.unsubscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
         super.removeFromEngine();
         return this;
     }
@@ -32,18 +41,21 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine);
         engine.subscribe(DayPassedEvent, this.onDayPassed);
+        engine.subscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }
 
     private onDayPassed = () => {
-        const settlements: Array<{
-            entityId: string;
-            position: { x: number; y: number };
-            goods: Goods;
-            population: Population;
-            routeCount: number;
-        }> = [];
+        this.evaluate();
+    };
+
+    private onIndustryUpdated = () => {
+        this.evaluate();
+    };
+
+    private evaluate = () => {
+        const settlements: Settlement[] = [];
 
         for (const { entity, industry } of this.nodes) {
             const pos = entity.getComponent(PositionComponent);
@@ -54,8 +66,10 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             settlements.push({
                 entityId: entity.id,
                 position: { x: pos.x, y: pos.y },
-                goods: { ...industry.goods },
-                population: { ...industry.population },
+                goods: industry.goods,
+                goodsProduction: industry.goodsProduction,
+                goodsRequirements: industry.goodsRequirements,
+                population: industry.population,
                 routeCount,
             });
         }
@@ -77,43 +91,25 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     }
 
     private evaluateTradeOpportunities(
-        settlements: Array<{
-            entityId: string;
-            position: { x: number; y: number };
-            goods: Goods;
-            population: Population;
-            routeCount: number;
-        }>
+        settlements: Settlement[]
     ) {
         if (settlements.length < 2) return;
 
-        const totalPopulation = settlements.reduce(
-            (sum, s) => sum + Object.values(s.population).reduce((p, c) => p + c.number, 0),
-            0
-        );
-
         for (const key of ALL_GOODS) {
             const scored = settlements.map(s => {
-                const pop = Object.values(s.population).reduce((sum, c) => sum + c.number, 0);
-                const baseline = Math.max(pop * SURPLUS_THRESHOLD_MULTIPLIER, totalPopulation * 0.5);
-                const deficitLine = Math.max(pop * DEFICIT_THRESHOLD_MULTIPLIER, totalPopulation * 0.1);
-                const amount = s.goods[key] ?? 0;
+                const production = s.goodsProduction[key as keyof Goods] ?? 0;
+                const requirements = s.goodsRequirements[key as keyof Goods] ?? 0;
+                const net = production - requirements;
+                const stock = s.goods[key] ?? 0;
 
-                let score = 0;
-                if (amount > baseline) {
-                    score = (amount - baseline) / baseline;
-                } else if (amount < deficitLine) {
-                    score = -((deficitLine - amount) / deficitLine);
-                }
-
-                return { ...s, goodKey: key, score, amount };
+                return { ...s, goodKey: key, net, stock };
             });
 
-            const exporters = scored.filter(s => s.score > 0 && s.amount >= MIN_TRADE_AMOUNT);
-            const importers = scored.filter(s => s.score < 0);
+            const exporters = scored.filter(s => s.net > MIN_TRADE_AMOUNT && s.stock >= MIN_TRADE_AMOUNT);
+            const importers = scored.filter(s => s.net < -MIN_TRADE_AMOUNT);
 
-            exporters.sort((a, b) => b.score - a.score);
-            importers.sort((a, b) => a.score - b.score);
+            exporters.sort((a, b) => b.net - a.net);
+            importers.sort((a, b) => a.net - b.net);
 
             for (const exporter of exporters) {
                 if (exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
@@ -127,23 +123,17 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                     );
 
                     const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
-                    const tradeValue = Math.min(
-                        exporter.amount - MIN_TRADE_AMOUNT,
-                        Math.max(0, -importer.score * (importer.goods[key as keyof Goods] ?? 0) + MIN_TRADE_AMOUNT)
-                    );
+                    if (distance > travelDays * 20) continue;
 
-                    if (tradeValue < MIN_TRADE_AMOUNT) continue;
-                    if (distance > travelDays * 10) continue;
-
-                    const amountNeeded = Math.max(1, Math.floor(((importer.goods[key as keyof Goods] ?? 0) < (Math.max(Object.values(importer.population).reduce((sum, c) => sum + c.number, 0) * DEFICIT_THRESHOLD_MULTIPLIER, totalPopulation * 0.1)) ? (Math.max(Object.values(importer.population).reduce((sum, c) => sum + c.number, 0) * DEFICIT_THRESHOLD_MULTIPLIER, totalPopulation * 0.1)) - (importer.goods[key as keyof Goods] ?? 0) : 0) * 1.2));
+                    const amountNeeded = Math.max(1, Math.floor(-importer.net * 1.2));
                     const amount = Math.min(
-                        exporter.amount - MIN_TRADE_AMOUNT,
+                        Math.floor(exporter.net) - MIN_TRADE_AMOUNT,
+                        Math.floor(exporter.stock) - MIN_TRADE_AMOUNT,
                         amountNeeded,
-                        Math.max(MIN_TRADE_AMOUNT, Math.floor(exporter.amount * 0.25))
+                        Math.max(MIN_TRADE_AMOUNT, Math.floor(exporter.stock * 0.25))
                     );
 
                     if (amount < MIN_TRADE_AMOUNT) continue;
-                    if (distance > travelDays * 20) continue;
 
                     this.engine?.addCommand(
                         new CreateTradeRouteCommand(
@@ -164,13 +154,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     }
 
     private evaluateMigrationOpportunities(
-        settlements: Array<{
-            entityId: string;
-            position: { x: number; y: number };
-            goods: Goods;
-            population: Population;
-            routeCount: number;
-        }>
+        settlements: Settlement[]
     ) {
         if (settlements.length < 2) return;
 

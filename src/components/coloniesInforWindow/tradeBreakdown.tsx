@@ -29,20 +29,21 @@ export function TradeBreakdown({ entity }: { entity?: Entity }) {
 
     const collectRoutes = useCallback(() => {
         if(!engine || !entity) return;
-        const allRoutes: TradeRouteInfo[] = [];
-        for(const { tradeRoute, entity } of engine.getNodeList(TradeRouteNode)) {
-            if(tradeRoute.sourceEntityId === entity.id || tradeRoute.destinationEntityId === entity.id) {
-                allRoutes.push({
-                    routeEntityId: entity.id,
-                    sourceEntityId: tradeRoute.sourceEntityId,
-                    destinationEntityId: tradeRoute.destinationEntityId,
-                    goods: tradeRoute.goods,
-                    travelDaysRemaining: tradeRoute.travelDaysRemaining,
-                    totalTravelDays: tradeRoute.totalTravelDays,
-                    speed: tradeRoute.speed,
-                });
-            }
-        }
+
+        const allRoutes = engine.getNodeList(TradeRouteNode).filter(({ tradeRoute: { sourceEntityId, destinationEntityId } }) =>
+            sourceEntityId === entity.id || destinationEntityId === entity.id
+        ).map(({ entity, tradeRoute }) => {
+            return ({
+                routeEntityId: entity.id,
+                sourceEntityId: tradeRoute.sourceEntityId,
+                destinationEntityId: tradeRoute.destinationEntityId,
+                goods: tradeRoute.goods,
+                travelDaysRemaining: tradeRoute.travelDaysRemaining,
+                totalTravelDays: tradeRoute.totalTravelDays,
+                speed: tradeRoute.speed,
+            })
+        })
+
         setRoutes(allRoutes);
     }, [engine, entity]);
 
