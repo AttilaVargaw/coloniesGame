@@ -95,4 +95,4 @@ export const heliosGamma = {
             ]
         }],
     }],
-} as const satisfies BodyBlueprint;
+} as Readonly<BodyBlueprint>

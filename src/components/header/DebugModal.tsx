@@ -32,7 +32,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showClickBoxes", label: "Show Click Boxes" },
 ] as const
 
-const DEFAULT_BLOOM_SETTINGS: BloomSettings = {
+const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
     brightness: 0.3,
     contrast: 2,
     iterations: 3,

@@ -1,3 +1,5 @@
+import { PlanetArchetype } from "./helpers"
+
 function lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t
 }
@@ -39,7 +41,7 @@ function tintColor(rgb: { r: number; g: number; b: number }, base: { r: number; 
 
 type Palette = { land: string; ocean: string; clouds: string; poles: string; atmosphere?: string }
 
-const PALETTES: Record<string, Palette> = {
+const PALETTES = {
     earth: { land: "#3a7d44", ocean: "#1a4b8c", clouds: "#ffffff", poles: "#e8f0f8" },
     kobol: { land: "#4a7c3f", ocean: "#1e5c8a", clouds: "#f0f4f8", poles: "#d8e8ec" },
     mercury: { land: "#8c7e6e", ocean: "#6b5e4e", clouds: "#a09585", poles: "#c8bfb0" },
@@ -50,7 +52,7 @@ const PALETTES: Record<string, Palette> = {
     uranus: { land: "#7ec8c8", ocean: "#5aa8a8", clouds: "#b8e8e8", poles: "#d8f4f4" },
     neptune: { land: "#3a6cb0", ocean: "#1e4a80", clouds: "#6090d0", poles: "#c0d8f8" },
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
-} as const satisfies Record<string, Palette>
+} as Readonly<Record<PlanetArchetype, Palette>>
 
 const textureSize = 512
 
@@ -355,7 +357,7 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
-export function createPlanetTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+export function createPlanetTexture(baseColor: string, archetype: PlanetArchetype = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     if(GAS_GIANTS.has(archetype)) {
         return createGasGiantTexture(baseColor, archetype, seedKey)
     }
@@ -540,7 +542,7 @@ export function createRoughnessTexture(baseColor: string, archetype: string = "e
     return canvas
 }
 
-export function createCloudTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+export function createCloudTexture(baseColor: string, archetype: PlanetArchetype = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const palette = PALETTES[archetype] || { clouds: "#ffffff" }
     const base = hexToRgb(baseColor)
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
@@ -566,7 +568,7 @@ export function createCloudTexture(baseColor: string, archetype: string = "earth
     return canvas
 }
 
-export function createNightTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+export function createNightTexture(baseColor: string, archetype: PlanetArchetype = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
     const base = hexToRgb(baseColor)
 

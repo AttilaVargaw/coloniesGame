@@ -181,7 +181,7 @@ const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
 const maxDailyChangeSmoothing = 0.001
 
-const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"] as const);
+const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 const extraRequirements = {

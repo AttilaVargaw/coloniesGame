@@ -1,4 +1,5 @@
 import { createPlanetTexture, createStarTexture, createNormalTexture, createRoughnessTexture, createCloudTexture, createNightTexture } from "../factories/createCircleTextures"
+import { PlanetArchetype } from "../factories/helpers"
 
 type TextureType = "planet" | "star" | "normal" | "roughness" | "cloud" | "night"
 
@@ -6,14 +7,12 @@ interface TextureRequest {
     type: "texture"
     textureType: TextureType
     baseColor: string
-    archetype?: string
+    archetype?: PlanetArchetype
     seedKey?: string
     id: number
 }
 
-self.onmessage = async (event: MessageEvent<TextureRequest>) => {
-    const { textureType, baseColor, archetype, seedKey } = event.data
-    
+self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, id } }: MessageEvent<TextureRequest>) => {
     let canvas: HTMLCanvasElement | OffscreenCanvas
     switch(textureType) {
         case "planet":
@@ -39,5 +38,5 @@ self.onmessage = async (event: MessageEvent<TextureRequest>) => {
     }
 
     const bitmap = await createImageBitmap(canvas)
-    self.postMessage({ type: "result", id: event.data.id, bitmap })
+    self.postMessage({ type: "result", id, bitmap })
 }

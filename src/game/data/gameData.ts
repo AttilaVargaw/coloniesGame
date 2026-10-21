@@ -146,4 +146,4 @@ export const MapCreationData = {
             inclination: 0
         },
     }]
-} as const satisfies BodyBlueprint
+} as Readonly<BodyBlueprint>

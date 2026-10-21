@@ -7,7 +7,7 @@ export interface Ring {
     spread: number
 }
 
-export const DEFAULT_RINGS: Ring[] = [
+export const DEFAULT_RINGS: ReadonlyArray<Ring> = [
     { radius: 100, waypointCount: 12, spread: TWO_PI },
     { radius: 300, waypointCount: 24, spread: TWO_PI },
     { radius: 600, waypointCount: 36, spread: TWO_PI },
@@ -15,16 +15,16 @@ export const DEFAULT_RINGS: Ring[] = [
     { radius: 1500, waypointCount: 60, spread: TWO_PI },
     { radius: 2100, waypointCount: 72, spread: TWO_PI },
     { radius: 2800, waypointCount: 84, spread: TWO_PI },
-] as const
+]
 
 export class WaypointGrid {
     readonly starId: string
     readonly starEntity: Entity
-    readonly rings: Ring[]
+    readonly rings: ReadonlyArray<Ring>
     readonly waypoints: Map<string, Entity> = new Map()
     readonly attractors: Map<string, Entity> = new Map()
 
-    constructor(starId: string, starEntity: Entity, rings: Ring[] = DEFAULT_RINGS) {
+    constructor(starId: string, starEntity: Entity, rings = DEFAULT_RINGS) {
         this.starId = starId
         this.starEntity = starEntity
         this.rings = rings

@@ -111,4 +111,4 @@ export const heliosDelta = {
             { marker: { color: "#7f9894", radius: 5, label: "Kronos" }, orbit: { radius: 3.1 * LUNAR_UNIT, angle: 0, eccentricity: 0.4 }, name: "Kronos", archetype: "luna" }
         ],
     }],
-} as const satisfies BodyBlueprint;
+} as Readonly<BodyBlueprint> 
