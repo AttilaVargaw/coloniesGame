@@ -3,7 +3,7 @@ import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
-import { basePrices, Goods } from "../data/Goods";
+import { basePrices, Goods, physicalGoods } from "../data/Goods";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
@@ -57,9 +57,9 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     private evaluate = () => {
         const settlements: Settlement[] = [];
 
-        for (const { entity, industry } of this.nodes) {
+        for(const { entity, industry } of this.nodes) {
             const pos = entity.getComponent(PositionComponent);
-            if (!pos) continue;
+            if(!pos) continue;
 
             const routeCount = this.countActiveRoutes(entity.id);
 
@@ -79,11 +79,11 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     };
 
     private countActiveRoutes(entityId: string): number {
-        if (!this.engine) return 0;
+        if(!this.engine) return 0;
         let count = 0;
-        for (const entity of this.engine.getAllEntities()) {
+        for(const entity of this.engine.getAllEntities()) {
             const route = entity.getComponent(TradeRouteComponent);
-            if (route && route.sourceEntityId === entityId) {
+            if(route && route.sourceEntityId === entityId) {
                 count++;
             }
         }
@@ -93,9 +93,9 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     private evaluateTradeOpportunities(
         settlements: Settlement[]
     ) {
-        if (settlements.length < 2) return;
+        if(settlements.length < 2) return;
 
-        for (const key of ALL_GOODS) {
+        for(const key of physicalGoods) {
             const scored = settlements.map(s => {
                 const production = s.goodsProduction[key as keyof Goods] ?? 0;
                 const requirements = s.goodsRequirements[key as keyof Goods] ?? 0;
@@ -111,11 +111,11 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             exporters.sort((a, b) => b.net - a.net);
             importers.sort((a, b) => a.net - b.net);
 
-            for (const exporter of exporters) {
-                if (exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+            for(const exporter of exporters) {
+                if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
-                for (const importer of importers) {
-                    if (importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+                for(const importer of importers) {
+                    if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
                     const distance = Math.hypot(
                         importer.position.x - exporter.position.x,
@@ -123,7 +123,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                     );
 
                     const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
-                    if (distance > travelDays * 20) continue;
+                    if(distance > travelDays * 20) continue;
 
                     const amountNeeded = Math.max(1, Math.floor(-importer.net * 1.2));
                     const amount = Math.min(
@@ -133,7 +133,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                         Math.max(MIN_TRADE_AMOUNT, Math.floor(exporter.stock * 0.25))
                     );
 
-                    if (amount < MIN_TRADE_AMOUNT) continue;
+                    if(amount < MIN_TRADE_AMOUNT) continue;
 
                     this.engine?.addCommand(
                         new CreateTradeRouteCommand(
@@ -147,7 +147,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                     exporter.routeCount++;
                     importer.routeCount++;
 
-                    if (exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
+                    if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
                 }
             }
         }
@@ -156,7 +156,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     private evaluateMigrationOpportunities(
         settlements: Settlement[]
     ) {
-        if (settlements.length < 2) return;
+        if(settlements.length < 2) return;
 
         const populations = settlements.map(s => ({
             entityId: s.entityId,
@@ -174,18 +174,18 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         surplus.sort((a, b) => b.totalPop - a.totalPop);
         deficit.sort((a, b) => a.totalPop - b.totalPop);
 
-        for (const source of surplus) {
-            if (source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+        for(const source of surplus) {
+            if(source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
-            for (const dest of deficit) {
-                if (dest.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+            for(const dest of deficit) {
+                if(dest.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
                 const distance = Math.hypot(dest.position.x - source.position.x, dest.position.y - source.position.y);
                 const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
                 const workerCount = Math.min(source.freeWorkers, Math.max(1, Math.floor(source.freeWorkers * 0.1)));
 
-                if (workerCount <= 0) continue;
-                if (distance > travelDays * 10) continue;
+                if(workerCount <= 0) continue;
+                if(distance > travelDays * 10) continue;
 
                 this.engine?.addCommand(
                     new CreateMigrationRouteCommand(
@@ -199,7 +199,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 source.routeCount++;
                 dest.routeCount++;
 
-                if (source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
+                if(source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
             }
         }
     }

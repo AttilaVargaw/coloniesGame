@@ -103,6 +103,7 @@ export const solarisAlpha = {
                 powerPlant: 19_600_0,
                 religion: 400_000,
                 waterTreatment: 500_000,
+                postalServices: 500_000
             },
             vessels: [
                 { marker: { color: "white", radius: 4, label: "Battlestar\nMinerva", }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }

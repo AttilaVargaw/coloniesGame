@@ -68,6 +68,7 @@ export function ColoniesInforWindow() {
                     <ToggleGroupItem value="summary">Summary</ToggleGroupItem>
                     <ToggleGroupItem value="population">Population</ToggleGroupItem>
                     <ToggleGroupItem value="warehouse">Warehouse</ToggleGroupItem>
+                    <ToggleGroupItem value="services">Services</ToggleGroupItem>
                     <ToggleGroupItem value="industry">Industry</ToggleGroupItem>
                     <ToggleGroupItem value="trade">Trade</ToggleGroupItem>
                 </ToggleGroup>

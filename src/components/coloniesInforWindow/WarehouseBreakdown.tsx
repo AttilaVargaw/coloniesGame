@@ -1,11 +1,11 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Goods } from "@/game/data/Goods";
+import { Goods, physicalGoods, services } from "@/game/data/Goods";
 import { convertToReadable } from "@/lib/utils";
 import { colorBySign } from "./colorBySign";
 import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 
-export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRequirements } }: { industry: IndustryComponent; }) {
+export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRequirements }, showPhysical }: { industry: IndustryComponent; showPhysical?: boolean }) {
     return (
         <table className="w-full text-sm">
             <thead>
@@ -18,7 +18,14 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                 </tr>
             </thead>
             <tbody>
-                {(Object.entries(goods) as [keyof Goods, number][]).map(([key, value]) => {
+                {(Object.entries(goods) as [keyof Goods, number][]).filter(([key]) => {
+                    if(showPhysical) {
+                        return physicalGoods.has(key);
+                    }
+                    else {
+                        return services.has(key);
+                    }
+                }).map(([key, value]) => {
                     const addition = goodsProduction[key] || 0;
                     const used = goodsRequirements[key] || 0;
 
