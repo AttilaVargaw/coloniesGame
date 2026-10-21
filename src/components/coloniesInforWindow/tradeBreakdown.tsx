@@ -68,7 +68,7 @@ export function TradeBreakdown({ entity }: { entity?: Entity }) {
     }, [engine]);
 
     if(!entity || routes.length === 0) {
-        return <div className="p-4 text-sm text-muted-foreground">No active trade routes</div>;
+        return <div className="p-4 text-sm text-muted-foreground">No active shipments</div>;
     }
 
     return (
