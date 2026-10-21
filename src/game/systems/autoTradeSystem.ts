@@ -1,7 +1,7 @@
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
-import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
+import { IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
 import { Goods, physicalGoods } from "../data/Goods";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
@@ -31,7 +31,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     }
 
     removeFromEngine(): this {
-        this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
         this.engine?.unsubscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
         super.removeFromEngine();
         return this;
@@ -39,15 +38,10 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
     addToEngine(engine: Engine): this {
         super.addToEngine(engine);
-        engine.subscribe(DayPassedEvent, this.onDayPassed);
         engine.subscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }
-
-    private onDayPassed = () => {
-        this.evaluate();
-    };
 
     private onIndustryUpdated = () => {
         this.evaluate();
@@ -89,13 +83,12 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         return count;
     }
 
-    private hasActiveRoute(sourceId: string, destId: string, goodKey: keyof Goods): boolean {
+    private hasActiveRoute(sourceId: string, destId: string): boolean {
         if(!this.engine) return false;
         for(const entity of this.engine.getAllEntities()) {
             const route = entity.getComponent(TradeRouteComponent);
             if(!route) continue;
-            if(route.sourceEntityId !== sourceId || route.destinationEntityId !== destId) continue;
-            if(goodKey in route.goods) return true;
+            if(route.sourceEntityId === sourceId && route.destinationEntityId === destId) return true;
         }
         return false;
     }
@@ -105,63 +98,85 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     ) {
         if(settlements.length < 2) return;
 
+        const scored = settlements.map(s => {
+            const goodsInfo: Record<keyof Goods, { net: number; stock: number; requirements: number }> = {} as any;
+            for(const key of physicalGoods) {
+                const production = s.goodsProduction[key] ?? 0;
+                const requirements = s.goodsRequirements[key] ?? 0;
+                goodsInfo[key] = {
+                    net: production - requirements,
+                    stock: s.goods[key] ?? 0,
+                    requirements,
+                };
+            }
+            return { ...s, goodsInfo };
+        });
+
+        // Batch all tradeable goods per (source, dest) pair into a single route
+        const pairRoutes = new Map<string, { source: Settlement; importer: Settlement; goods: Partial<Goods> }>();
+
+        for(const exporter of scored) {
+            if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+
+            for(const importer of scored) {
+                if(importer === exporter) continue;
+                if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+
+                const distance = Math.hypot(
+                    importer.position.x - exporter.position.x,
+                    importer.position.y - exporter.position.y
+                );
+                const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
+                if(distance > travelDays * 20) continue;
+                if(this.hasActiveRoute(exporter.entityId, importer.entityId)) continue;
+
+                const batch: Partial<Goods> = {};
+                let hasAny = false;
+
         for(const key of physicalGoods) {
-            const scored = settlements.map(s => {
-                const production = s.goodsProduction[key as keyof Goods] ?? 0;
-                const requirements = s.goodsRequirements[key as keyof Goods] ?? 0;
-                const net = production - requirements;
-                const stock = s.goods[key] ?? 0;
+            const info = exporter.goodsInfo[key];
+            const impInfo = importer.goodsInfo[key];
 
-                return { ...s, goodKey: key, net, stock, requirements };
-            });
+            if(info.net > MIN_TRADE_AMOUNT && info.stock >= MIN_TRADE_AMOUNT &&
+               impInfo.net < -MIN_TRADE_AMOUNT) {
 
-            const exporters = scored.filter(s => s.net > MIN_TRADE_AMOUNT && s.stock >= MIN_TRADE_AMOUNT);
-            const importers = scored.filter(s => s.net < -MIN_TRADE_AMOUNT && s.stock < s.requirements * 0.5);
+                        const amountNeeded = Math.max(1, Math.floor(-impInfo.net * 1.2));
+                        const amount = Math.min(
+                            Math.floor(info.net) - MIN_TRADE_AMOUNT,
+                            Math.floor(info.stock) - MIN_TRADE_AMOUNT,
+                            amountNeeded,
+                            Math.max(MIN_TRADE_AMOUNT, Math.floor(info.stock * 0.25))
+                        );
 
-            exporters.sort((a, b) => b.net - a.net);
-            importers.sort((a, b) => a.net - b.net);
+                        if(amount >= MIN_TRADE_AMOUNT) {
+                            batch[key] = Math.floor(amount);
+                            hasAny = true;
+                        }
+                    }
+                }
 
-            for(const exporter of exporters) {
-                if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
-
-                for(const importer of importers) {
-                    if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
-
-                    const distance = Math.hypot(
-                        importer.position.x - exporter.position.x,
-                        importer.position.y - exporter.position.y
-                    );
-
-                    const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
-                    if(distance > travelDays * 20) continue;
-
-                    const amountNeeded = Math.max(1, Math.floor(-importer.net * 1.2));
-                    const amount = Math.min(
-                        Math.floor(exporter.net) - MIN_TRADE_AMOUNT,
-                        Math.floor(exporter.stock) - MIN_TRADE_AMOUNT,
-                        amountNeeded,
-                        Math.max(MIN_TRADE_AMOUNT, Math.floor(exporter.stock * 0.25))
-                    );
-
-                    if(amount < MIN_TRADE_AMOUNT) continue;
-
-                    if(this.hasActiveRoute(exporter.entityId, importer.entityId, key as keyof Goods)) continue;
-
-                    this.engine?.addCommand(
-                        new CreateTradeRouteCommand(
-                            exporter.entityId,
-                            importer.entityId,
-                            { [key]: Math.floor(amount) },
-                            MAX_ROUTE_SPEED
-                        )
-                    );
-
-                    exporter.routeCount++;
-                    importer.routeCount++;
-
-                    if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
+                if(hasAny) {
+                    const routeKey = `${exporter.entityId}->${importer.entityId}`;
+                    pairRoutes.set(routeKey, { source: exporter, importer, goods: batch });
                 }
             }
+        }
+
+        for(const { source, importer, goods } of pairRoutes.values()) {
+            if(source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
+            if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+
+            this.engine?.addCommand(
+                new CreateTradeRouteCommand(
+                    source.entityId,
+                    importer.entityId,
+                    goods,
+                    MAX_ROUTE_SPEED
+                )
+            );
+
+            source.routeCount++;
+            importer.routeCount++;
         }
     }
 
