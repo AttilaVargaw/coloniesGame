@@ -66,14 +66,14 @@ const PER_CAPITA_SECTOR_RATIOS = {
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 export function createStarterIndustry(population: number): Set<keyof IndustrialSectors> {
-    const activeSectors = new Set<keyof IndustrialSectors>();
+    const sectors: Set<keyof IndustrialSectors> = new Set();
 
     for(const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
         const scaled = population * PER_CAPITA_SECTOR_RATIOS[key];
         if(scaled > 0) {
-            activeSectors.add(key);
+            sectors.add(key);
         }
     }
 
-    return activeSectors;
+    return sectors;
 }

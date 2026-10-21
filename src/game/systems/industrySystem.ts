@@ -53,10 +53,12 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         const industries = this.nodes.map(({ entity, industry }) => {
             const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
+            const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
 
             for(const sectorKey of industry.activeSectors) {
                 techMultipliers[sectorKey] = industry.techMultipliers[sectorKey] ?? 1;
                 laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
+                capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
             }
 
             return {
@@ -66,6 +68,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 population: industry.population,
                 techMultipliers,
                 laborAssigned,
+                capitalStock,
                 settlementType: industry.settlementType,
                 allowedSectors: [...industry.activeSectors]
             };
@@ -112,6 +115,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     mergeRecord(industry.sectorProfits, patch.sectorProfits)
     mergeRecord(industry.populationProfits, patch.populationProfits)
     mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
+    mergeRecord(industry.capitalStock, patch.capitalStock)
 
     mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
     mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)

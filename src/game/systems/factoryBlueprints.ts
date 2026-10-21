@@ -37,7 +37,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.08,
-        nonEssentialGoods: new Set([]),
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
     }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {

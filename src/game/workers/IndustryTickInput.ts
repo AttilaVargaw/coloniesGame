@@ -11,6 +11,7 @@ export interface IndustryTickInput {
     population: Population;
     techMultipliers: Record<keyof IndustrialSectors, number>;
     laborAssigned: Record<keyof IndustrialSectors, number>;
+    capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }

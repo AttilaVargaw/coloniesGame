@@ -14,7 +14,7 @@ import { SectorExecutionResult } from "./SectorExecutionResult";
 
 const lastResults = new Map<string, IndustryTickResult>();
 
-function shallowDiff<T extends Record<string, number>>(oldObj: T | undefined, newObj: T): Partial<T> | null {
+function shallowDiff<T extends Record<string, any>>(oldObj: T | undefined, newObj: T): Partial<T> | null {
     if(!oldObj) return newObj;
     const changed: Partial<T> = {};
     let hasChanged = false;
@@ -157,6 +157,9 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const sectorUtilDiff = shallowDiff(last?.sectorUtilization, result.sectorUtilization);
     if(sectorUtilDiff) { patch.sectorUtilization = sectorUtilDiff; hasChanged = true; }
 
+    const capitalStockDiff = shallowDiff(last?.capitalStock, result.capitalStock);
+    if(capitalStockDiff) { patch.capitalStock = capitalStockDiff; hasChanged = true; }
+
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
 
@@ -187,11 +190,22 @@ function buildSectorBid(
     prices: Record<keyof Goods, number>,
     techMultiplier: number,
     laborAssigned: number,
+    capitalStock: Partial<Goods>,
 ): SectorBid | null {
     const config = industrySectorBlueprints.get(name);
     if(!config) return null;
 
-    const outputLevel = techMultiplier;
+    const capitalGoods = config.capitalGoods || {};
+
+    // Capital bonus: each unit of capital stock adds capitalEfficiency to output multiplier.
+    // Empty stock => bonus of 1 (normal production at techMultiplier).
+    let capitalBonus = 1;
+    for(const goodKey of Object.keys(capitalGoods)) {
+        const stock = capitalStock[goodKey as keyof Goods] ?? 0;
+        capitalBonus += stock * (config.capitalEfficiency ?? 0);
+    }
+
+    const outputLevel = techMultiplier * capitalBonus;
     const inputLevel = 1;
 
     const workerRequirement = config.workerRequirement || {};
@@ -445,7 +459,7 @@ function processIndustry(
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
-    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, settlementType, allowedSectors } = industry;
+    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, capitalStock, settlementType, allowedSectors } = industry;
 
     const memory = priceMemory.get(entityId) || {};
     const prices = getPrices(goods, memory);
@@ -518,8 +532,9 @@ function processIndustry(
 
         const techMultiplier = techMultipliers[name] ?? 1;
         const laborAssignedVal = laborAssigned[name] ?? 0;
+        const capitalStockVal = capitalStock[name] ?? {};
 
-        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal);
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal);
         if(bid) {
             sectorBids.push(bid);
         }
@@ -557,6 +572,47 @@ function processIndustry(
         };
     }
 
+    const newCapitalStock: Record<string, Partial<Goods>> = {};
+    for(const name of activeSectors) {
+        const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
+        const currentStock = { ...(capitalStock[name] ?? {}) } as Partial<Goods>;
+
+        if(!config?.capitalGoods) {
+            newCapitalStock[name] = currentStock;
+            continue;
+        }
+
+        const sectorResult = sectorResults[name];
+        if(sectorResult) {
+            const totalProduction = Object.values(sectorResult.producedGoods).reduce((sum, v) => sum + v, 0);
+
+            // Wear & tear: consume capital goods proportional to production
+            for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+                const consumed = (rate as number) * totalProduction;
+                currentStock[goodKey as keyof Goods] = Math.max(0, (currentStock[goodKey as keyof Goods] ?? 0) - consumed);
+            }
+
+            // Decay: natural deterioration of capital stock
+            const decay = config.capitalEfficiencyDecay ?? 0;
+            if(decay > 0) {
+                for(const goodKey of Object.keys(currentStock)) {
+                    currentStock[goodKey as keyof Goods] = Math.max(0, (currentStock[goodKey as keyof Goods] ?? 0) * (1 - decay));
+                }
+            }
+
+            // Reinvestment: convert portion of production back into capital goods
+            const reinvestmentRate = config.capitalEfficiency ?? 0;
+            if(reinvestmentRate > 0 && totalProduction > 0) {
+                for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+                    const added = reinvestmentRate * totalProduction * (rate as number);
+                    currentStock[goodKey as keyof Goods] = (currentStock[goodKey as keyof Goods] ?? 0) + added;
+                }
+            }
+        }
+
+        newCapitalStock[name] = currentStock;
+    }
+
     const finalGoods = finalizeGoods(currentGoods, sumGoodsProduction, sumGoodsRequirements, populationConsumption, population);
 
     const result: IndustryTickResult = {
@@ -571,6 +627,7 @@ function processIndustry(
         populationProfits,
         sectorUtilization,
         sectorResults,
+        capitalStock: newCapitalStock,
         settlementType,
         allowedSectors,
     };
