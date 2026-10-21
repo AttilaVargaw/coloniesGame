@@ -7,6 +7,7 @@ import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
+import { SOLAR_UNIT } from "@/game/constants"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { getPlatform } from "@/engine/lib/platform"
 import { Entity } from "@/engine/entities/entity"
@@ -135,10 +136,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                     ? vec3.normalize(vec3.create(), lightDirRaw)
                     : vec3.fromValues(0, 1, 0)
 
+                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 40
+
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {
                     const parsed = hexToRgb(starColorComponent.fill)
-                    starColor = [parsed.r / 255, parsed.g / 255, parsed.b / 255]
+                    starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
                 }
             }
 
