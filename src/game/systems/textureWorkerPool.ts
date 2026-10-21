@@ -1,3 +1,5 @@
+import { getCachedTexture, setCachedTexture } from "../factories/textureCache";
+
 export interface TextureWorkerMessage {
     type: "texture"
     textureType: "planet" | "star" | "normal" | "roughness" | "cloud" | "night"
@@ -48,14 +50,17 @@ export class TextureWorkerPool {
         }
     }
 
-    generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string): Promise<ImageBitmap> {
+    async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string): Promise<ImageBitmap> {
+        const cached = await getCachedTexture(textureType, baseColor, archetype ?? undefined, seedKey ?? undefined)
+        if(cached) return cached
+
         if(!this.workers.length) this.start()
 
         const id = this.nextId++
-        
-        return new Promise((resolve, reject) => {
+
+        const bitmap = await new Promise<ImageBitmap>((resolve, reject) => {
             this.pending.set(id, { resolve, reject })
-            
+
             const workerIndex = id % this.workers.length
             this.workers[workerIndex].postMessage({
                 type: "texture",
@@ -66,6 +71,10 @@ export class TextureWorkerPool {
                 id,
             })
         })
+
+        setCachedTexture(textureType, baseColor, archetype ?? undefined, seedKey ?? undefined, bitmap)
+
+        return bitmap
     }
 
     private handleMessage(event: MessageEvent<TextureWorkerResult>) {
