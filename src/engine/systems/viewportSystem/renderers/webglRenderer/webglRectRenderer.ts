@@ -1,6 +1,6 @@
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
-import { TextureComponent } from "@/engine/components/textureComponent"
+import { TextureComponent, TextureSource } from "@/engine/components/textureComponent"
 import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
 import { createRectShaderProgram, type RectShaderProgram } from "./webglRectShaders"
 import { WebGLTextureAtlas, type AtlasEntry, createCheckerPatternCanvas } from "./webglTextureAtlas"
@@ -29,7 +29,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private atlas!: WebGLTextureAtlas
     private readonly atlasKeyMap = new WeakMap<object, string>()
     private nextTextureKey = 0
-    private readonly textureCache = new Map<string, HTMLImageElement | HTMLCanvasElement | ImageBitmap>()
+    private readonly textureCache = new Map<string, TextureSource>()
     private projection = mat4.create()
     private readonly MAX_RECT_INSTANCES = 256
     private rectInstancePool: Float32Array | null = null
@@ -140,19 +140,20 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     }
 
     drawNodes(): void {
-        if(!this.engine || !this.glContext || !this.shader || !this.viewportSystem.camera) {
+        if(!this.engine || !this.glContext || !this.shader || !this.viewportSystem.camera || !this.gl) {
             return
         }
 
         const { camera } = this.viewportSystem
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+        const gl = this.gl
 
         for(const { node, projected } of this.getProjectedCacheEntries()) {
             const { worldPos } = this.getProjected(node)
             const scale = projected.scale
             const rawScreenWidth = node.size.width * scale
             const rawScreenHeight = node.size.height * scale
-            const minSize = node.size.minSize 
+            const minSize = node.size.minSize
             const maxRawScreenSize = Math.max(rawScreenWidth, rawScreenHeight)
             const scaleUp = minSize && maxRawScreenSize < minSize ? minSize / maxRawScreenSize : 1
             const screenWidth = rawScreenWidth * scaleUp
@@ -221,13 +222,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
                 offset: poolOffset
             })
         }
-
-        if(!this.gl || !this.shader) {
-            this.endFrameFallback()
-            return
-        }
-
-        const gl = this.gl!
 
         this.resetGLState(gl)
 
@@ -348,6 +342,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.vertexAttribDivisor(this.shader.attribs.instanceTintColor, 0)
         gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 0)
     }
+
     protected getCullMargin(node: RectNode): number {
         return Math.max(node.size.width, node.size.height) / 2
     }
@@ -397,7 +392,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return super.removeFromEngine()
     }
 
-    private resolveTexture(texture: TextureComponent | undefined): HTMLImageElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas | undefined {
+    private resolveTexture(texture: TextureComponent | undefined): TextureSource | undefined {
         if(!texture) {
             return undefined
         }

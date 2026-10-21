@@ -90,11 +90,13 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
         for(const cmd of this.createTradeRouteCommands) {
             this.handleCreateTradeRoute(cmd);
         }
+        this.createTradeRouteCommands.clear();
 
 
         for(const cmd of this.cancelTradeRouteCommands) {
             this.handleCancelTradeRoute(cmd);
         }
+        this.cancelTradeRouteCommands.clear();
 
         const routesToRemove: TradeRouteNode[] = [];
 

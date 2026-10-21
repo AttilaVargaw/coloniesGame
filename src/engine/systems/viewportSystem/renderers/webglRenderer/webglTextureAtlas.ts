@@ -2,6 +2,7 @@ const ATLAS_SIZE = 1024
 const CELL_SIZE = 128
 const BORDER = 1
 
+import { TextureSource } from "@/engine/components/textureComponent"
 import { getPlatform } from "@/engine/lib/platform"
 
 export { createCheckerPatternCanvas } from "./createCheckerPattern"
@@ -24,7 +25,7 @@ class AtlasPage {
         this.canvas.height = size
     }
 
-    addTexture(_key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas, index: number): { u0: number; v0: number; u1: number; v1: number } {
+    addTexture(_key: string, source: TextureSource, index: number): { u0: number; v0: number; u1: number; v1: number } {
         const cols = this.size / this.cellSize
         const col = index % cols
         const row = Math.floor(index / cols)
@@ -102,7 +103,7 @@ export class WebGLTextureAtlas {
         this.pages.push(new AtlasPage(atlasSize, cellSize))
     }
 
-    addTexture(key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas): AtlasEntry {
+    addTexture(key: string, source: TextureSource): AtlasEntry {
         if(!(
             source instanceof HTMLCanvasElement ||
             source instanceof HTMLImageElement ||
@@ -144,7 +145,7 @@ export class WebGLTextureAtlas {
         return { ...uv, page: pageIndex }
     }
 
-    getOrCreateEntry(key: string, source: HTMLCanvasElement | HTMLImageElement | ImageBitmap | OffscreenCanvas): AtlasEntry {
+    getOrCreateEntry(key: string, source: TextureSource): AtlasEntry {
         const existing = this.entries.get(key)
         if(existing) {
             return { ...existing.entry, page: existing.page }

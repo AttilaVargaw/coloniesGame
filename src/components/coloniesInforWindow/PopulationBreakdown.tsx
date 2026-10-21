@@ -24,11 +24,11 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.entries((population)).map(([key, { number, populationChange, qol }]) => {
-                        const income = (baseSalaries[key as keyof Population] || 0) * number;
-                        const net = populationProfits[key as keyof Population] ?? 0;
+                    {(Object.entries((population)) as [keyof Population, Population[keyof Population]][]).map(([key, { number, populationChange, qol }]) => {
+                        const income = (baseSalaries[key] || 0) * number;
+                        const net = populationProfits[key] ?? 0;
                         const expenses = income - net;
-                        const requirements = populationRequirements?.[key as keyof Population] || {};
+                        const requirements = populationRequirements?.[key] || {};
                         const reqEntries = Object.entries(requirements) as [keyof Goods, number][];
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
@@ -36,7 +36,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <span className="inline-flex items-center">
-                                            <PopulationIcon name={key as keyof Population} />
+                                            <PopulationIcon name={key} />
                                         </span>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -45,7 +45,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                 </Tooltip>
                             </td>
                             <td className="p-2 text-right">{convertToReadable(number)}</td>
-                            <td className="p-2 text-right">{convertToReadable(workingWorkers[key as keyof Population].number || 0)}</td>
+                            <td className="p-2 text-right">{convertToReadable(workingWorkers[key].number || 0)}</td>
                             <td className="p-2 text-right">{convertToReadable(populationChange)}</td>
                             <td className="p-2 text-right">{convertToReadable(Math.round(income))}</td>
                             <td className="p-2 text-right">{convertToReadable(Math.round(expenses))}</td>
@@ -57,7 +57,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                 ) : (
                                     <div className="text-xs space-y-0.5">
                                         {reqEntries.map(([good, req]) => {
-                                            const available = goods[good as keyof typeof goods] ?? 0;
+                                            const available = goods[good] ?? 0;
                                             const isFilled = available >= req;
                                             const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
                                             return (

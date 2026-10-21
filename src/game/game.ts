@@ -21,7 +21,7 @@ import { OrbitSelectionSystem } from "./systems/orbitSelectionSystem"
 import { CameraFollowSystem } from "./systems/cameraFollowSystem"
 import { DebugSystem } from "./systems/debugSystem"
 import { SpinSystem } from "./systems/spinSystem"
-import { DayPassedEvent, } from "@/engine/lib/events"
+import { DayPassedEvent, EntityRemovedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { terminateTextureWorkerPool } from "./factories/textureWorkerPool"
 
@@ -102,6 +102,7 @@ export class Game {
             previousTime = time
 
             this.engine.update(Math.min(500, dt))
+            this.engine.getCommands(EntityRemovedEvent)?.clear()
 
             if(firstUpdate) {
                 firstUpdate = false

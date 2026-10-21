@@ -3,13 +3,12 @@ import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
-import { basePrices, Goods, physicalGoods } from "../data/Goods";
+import { Goods, physicalGoods } from "../data/Goods";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 
-const ALL_GOODS = Object.keys(basePrices) as (keyof Goods)[];
 const MIN_TRADE_AMOUNT = 1;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
 const MAX_ROUTE_SPEED = 20;
@@ -90,6 +89,17 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         return count;
     }
 
+    private hasActiveRoute(sourceId: string, destId: string, goodKey: keyof Goods): boolean {
+        if(!this.engine) return false;
+        for(const entity of this.engine.getAllEntities()) {
+            const route = entity.getComponent(TradeRouteComponent);
+            if(!route) continue;
+            if(route.sourceEntityId !== sourceId || route.destinationEntityId !== destId) continue;
+            if(goodKey in route.goods) return true;
+        }
+        return false;
+    }
+
     private evaluateTradeOpportunities(
         settlements: Settlement[]
     ) {
@@ -102,11 +112,11 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 const net = production - requirements;
                 const stock = s.goods[key] ?? 0;
 
-                return { ...s, goodKey: key, net, stock };
+                return { ...s, goodKey: key, net, stock, requirements };
             });
 
             const exporters = scored.filter(s => s.net > MIN_TRADE_AMOUNT && s.stock >= MIN_TRADE_AMOUNT);
-            const importers = scored.filter(s => s.net < -MIN_TRADE_AMOUNT);
+            const importers = scored.filter(s => s.net < -MIN_TRADE_AMOUNT && s.stock < s.requirements * 0.5);
 
             exporters.sort((a, b) => b.net - a.net);
             importers.sort((a, b) => a.net - b.net);
@@ -134,6 +144,8 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                     );
 
                     if(amount < MIN_TRADE_AMOUNT) continue;
+
+                    if(this.hasActiveRoute(exporter.entityId, importer.entityId, key as keyof Goods)) continue;
 
                     this.engine?.addCommand(
                         new CreateTradeRouteCommand(

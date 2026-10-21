@@ -311,7 +311,7 @@ function executeSectors(
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             if(value > 0) {
                 const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
-                if (nonEssentialGoods.has(key as keyof Goods)) {
+                if(nonEssentialGoods.has(key as keyof Goods)) {
                     marketConstraint = Math.min(marketConstraint, 0.25 + 0.75 * ratio);
                 } else {
                     marketConstraint = Math.min(marketConstraint, ratio);

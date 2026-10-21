@@ -188,7 +188,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             })
         }
 
-        const gl = this.gl!
+        const gl = this.gl
 
         this.resetGLState(gl)
 
@@ -783,7 +783,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
         if(!this.engine) return undefined
 
+        if(planetEntity.getComponent(ColorComponent)?.emitLight) {
+            return
+        }
+
         let current: Entity | undefined = planetEntity
+
         while(current) {
             const sceneNode = this.engine.getSceneNode(current)
             if(sceneNode?.parent) {
@@ -798,7 +803,21 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             }
         }
 
-        return undefined
+        //@ts-ignore
+        const stars = this.engine.getNodeList(WebGLSphereRenderer).filter(n => n.color.emitLight)
+
+        const closestStar = stars.reduce((result, star) => {
+            const node = this.engine!.getSceneNode(star.entity)!
+
+            if(vec3.squaredDistance(node.getWorldPosition(), planetEntity.getComponent(PositionComponent)!.getVector())
+                < vec3.squaredDistance(node.getWorldPosition(), result.entity.getComponent(PositionComponent)!.getVector())) {
+                return star
+            } else {
+                return result
+            }
+        }, stars[0])
+
+        return closestStar.entity
     }
 
     constructor(viewport: ViewportSystem) {

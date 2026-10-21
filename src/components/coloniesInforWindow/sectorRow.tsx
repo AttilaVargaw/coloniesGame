@@ -67,18 +67,18 @@ export function SectorRow({
         };
 
         if(config?.goodsRequirements) {
-            Object.entries(config.goodsRequirements).forEach(([good, req]) => {
-                const scaledReq = (req as number) * inputLevel;
-                const consumed = industry.goods[good as keyof Goods] ?? 0;
-                addReq(good as keyof Goods, scaledReq, consumed);
+            (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
+                const scaledReq = req * inputLevel;
+                const consumed = industry.goods[good] ?? 0;
+                addReq(good, scaledReq, consumed);
             });
         }
 
         if(config?.workerRequirement) {
-            Object.entries(config.workerRequirement).forEach(([worker, req]) => {
+            (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
                 const scaledReq = (req as number) * inputLevel;
-                const employed = isStopped ? (industry.population[worker as keyof Population].number ?? 0) : (sectorResult?.workersEmployed?.[worker as keyof Population] ?? 0);
-                addReq(worker as keyof Population, scaledReq, employed);
+                const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
+                addReq(worker, scaledReq, employed);
             });
         }
 
