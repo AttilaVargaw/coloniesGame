@@ -20,13 +20,9 @@ export interface IndustryTickResult {
     }>;
     goods: Goods;
     sectorProfits: Record<string, number>;
-    sectorMaintenance: Record<string, number>;
     populationProfits: Record<string, number>;
     sectorUtilization: Record<string, number>;
     sectorResults: Record<string, SectorResult>;
-    sectors: IndustrialSectors;
-    sectorWealth: Record<keyof IndustrialSectors, number>;
-    sectorCapital: Record<keyof IndustrialSectors, number>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }

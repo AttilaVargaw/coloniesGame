@@ -18,6 +18,7 @@ import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { JumpNodeComponent } from "../components/jumpGraph"
 import { IndustryComponent, SettlementType } from "../components/industryComponent"
+import type { IndustrialSectors } from "../components/Factories"
 import { BuildableComponent } from "../components/buildableComponent"
 import { TargetableComponent } from "@engine/components/targetableComponent"
 import { SelectableComponent } from "@engine/components/SelectableComponent"
@@ -90,6 +91,13 @@ function createInteractionComponents(
     ]
 
     if(population !== undefined) {
+        const starterSectors = createStarterIndustry(population);
+        if(blueprint?.starterIndustries) {
+            for(const key of Object.keys(blueprint.starterIndustries) as (keyof IndustrialSectors)[]) {
+                starterSectors.add(key);
+            }
+        }
+
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
                 label: "Info",
@@ -102,10 +110,7 @@ function createInteractionComponents(
                 onClick: () => console.log("view")
             }]),
             new IndustryComponent(
-                {
-                    ...createStarterIndustry(population),
-                    ...(blueprint?.starterIndustries ?? {}),
-                } as any,
+                starterSectors,
                 createStarterWarehouse(population),
                 createStarterPopulation(population),
                 "standard"

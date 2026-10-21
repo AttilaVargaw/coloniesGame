@@ -23,7 +23,7 @@ export function DialogInner({ industry, entity }: { industry: IndustryComponent,
             <WarehouseBreakdown showPhysical industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="industry">
-            <IndustryBreakdown industry={industry} entity={entity!} />
+            <IndustryBreakdown industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="trade">
             <TradeBreakdown entity={entity!} />

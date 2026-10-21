@@ -1,12 +1,11 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
-import { IndustrialSectors } from "./Factories";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
-import { createStarterSectorWealth, createStarterSectorCapital } from "../factories/createStarterIndustry";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { ColonyType } from "../constants";
+import type { IndustrialSectors } from "./Factories";
 
 export type SettlementType = "colony" | "outpost" | "hydrocarbonRefinery";
 
@@ -17,48 +16,49 @@ export class IndustryComponent extends EntityComponent {
     public goodsProduction: Partial<Goods>
     public workingWorkers: Population
     public freeWorkers: Population
-    public sectorWealth: Record<keyof IndustrialSectors, number>
-    public sectorCapital: Record<keyof IndustrialSectors, number>
-    public sectorProfits: Record<keyof IndustrialSectors, number>
-    public populationProfits: Record<keyof Population, number>
-    public autoUpgradeSectors: Partial<Record<keyof IndustrialSectors, boolean>>
     public sectorUtilization: Record<keyof IndustrialSectors, number>
     public sectorResults: Record<string, SectorResult>
+    public sectorProfits: Record<keyof IndustrialSectors, number>
+    public populationProfits: Record<keyof Population, number>
     public populationRequirements: Record<keyof Population, Partial<Record<keyof Goods, number>>>
-    public allowedSectors: Set<keyof IndustrialSectors>
+    public techMultipliers: Record<keyof IndustrialSectors, number>
+    public laborAssigned: Record<keyof IndustrialSectors, number>
+    public activeSectors: Set<keyof IndustrialSectors>
 
     constructor(
-        public sectors: IndustrialSectors,
+        public activeSectorKeys: Set<keyof IndustrialSectors>,
         public readonly goods: Goods,
         public readonly population: Population,
         public colonyType: ColonyType,
         public settlementType: SettlementType = "colony",
-        allowedSectors: (keyof IndustrialSectors)[] | undefined = undefined,
     ) {
         super()
 
-        this.allowedSectors = new Set(allowedSectors)
+        this.activeSectors = activeSectorKeys
         this.goodsChange = createStarterWarehouse(0)
         this.populationChange = createStarterPopulation(0)
         this.goodsRequirements = createStarterWarehouse(0)
         this.goodsProduction = createStarterWarehouse(0)
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)
-        this.sectorWealth = createStarterSectorWealth(sectors)
-        this.sectorCapital = createStarterSectorCapital(sectors)
+        this.sectorUtilization = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.sectorResults = {};
         this.sectorProfits = Object.fromEntries(
-            Object.keys(sectors).map(key => [key, 0])
+            Array.from(activeSectorKeys).map(key => [key, 0])
         ) as Record<keyof IndustrialSectors, number>;
         this.populationProfits = Object.fromEntries(
             Object.keys(population).map(key => [key, 0])
         ) as Record<keyof Population, number>;
-        this.autoUpgradeSectors = {}
-        this.sectorUtilization = Object.fromEntries(
-            Object.keys(sectors).map(key => [key, 0])
-        ) as Record<keyof IndustrialSectors, number>;
-        this.sectorResults = {};
         this.populationRequirements = Object.fromEntries(
             Object.keys(population).map(key => [key, {}])
         ) as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
+        this.techMultipliers = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 1])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.laborAssigned = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
     }
 }

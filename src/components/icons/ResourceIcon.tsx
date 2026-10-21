@@ -106,7 +106,6 @@ export function ResourceIcon({ name, className }: { name: keyof Goods; className
 
     if(!IconComponent) {
         return name
-
     }
     return <IconComponent className={className} strokeWidth={1.5} size={16} />
 }

@@ -1,6 +1,4 @@
-import { getSectorOutputLevel, industrySectorBlueprints, } from "../systems/factoryBlueprints";
-import { sectorUpgradeCosts } from "../systems/sectorUpgradeCosts";
-import { applyIndustryUpgrades } from "../systems/applyIndustryUpgrades";
+import { industrySectorBlueprints } from "../systems/factoryBlueprints";
 import { baseSalaries, getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
 import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
@@ -162,15 +160,6 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
 
-    const sectorsDiff = shallowDiff(last?.sectors, result.sectors);
-    if(sectorsDiff) { patch.sectors = sectorsDiff; hasChanged = true; }
-
-    const sectorWealthDiff = shallowDiff(last?.sectorWealth, result.sectorWealth);
-    if(sectorWealthDiff) { patch.sectorWealth = sectorWealthDiff; hasChanged = true; }
-
-    const sectorCapitalDiff = shallowDiff(last?.sectorCapital, result.sectorCapital);
-    if(sectorCapitalDiff) { patch.sectorCapital = sectorCapitalDiff; hasChanged = true; }
-
     return hasChanged ? patch : null;
 }
 
@@ -195,22 +184,19 @@ const extraRequirements = {
 
 function buildSectorBid(
     name: keyof IndustrialSectors,
-    level: number,
     prices: Record<keyof Goods, number>,
-    sectorWealth: Record<keyof IndustrialSectors, number>
+    techMultiplier: number,
+    laborAssigned: number,
 ): SectorBid | null {
     const config = industrySectorBlueprints.get(name);
     if(!config) return null;
 
-    const outputLevel = getSectorOutputLevel(name, level);
-    const inputLevel = level;
+    const outputLevel = techMultiplier;
+    const inputLevel = 1;
 
     const workerRequirement = config.workerRequirement || {};
     const goodsRequirements = config.goodsRequirements || {};
     const goodsProduction = config.goodsProduction || {};
-
-    const maintenanceCost = Math.round((sectorUpgradeCosts[name] || 10) * level * 0.1);
-    const clampedWealth = Math.max(0, (sectorWealth[name] ?? 0) - maintenanceCost);
 
     const inputCost = Object.entries(goodsRequirements).reduce((sum, [key, value]) => {
         return sum + (value as number) * prices[key as keyof Goods];
@@ -220,18 +206,35 @@ function buildSectorBid(
         return sum + (value as number) * baseSalaries[key as keyof Population];
     }, 0);
 
-    const costPerUnit = (inputCost + laborCost) * inputLevel;
-    const budgetRatio = costPerUnit > 0 ? Math.min(1, Math.max(0, clampedWealth / costPerUnit)) : 1;
+    const costPerUnit = inputCost + laborCost;
+    const budgetRatio = costPerUnit > 0 ? Math.min(1, Math.max(0, 1)) : 1;
+
+    // Apply laborAssigned as a hard cap on worker demand
+    const idealWorkerDemand = Object.fromEntries(
+        Object.entries(workerRequirement).map(([k, v]) => [k, (v as number) * inputLevel])
+    ) as Partial<Record<keyof Population, number>>;
+
+    // If laborAssigned is set, scale worker demand down proportionally
+    let totalWorkerDemand = 0;
+    for(const v of Object.values(idealWorkerDemand)) {
+        totalWorkerDemand += v as number;
+    }
+    let laborScale = 1;
+    if(laborAssigned > 0 && totalWorkerDemand > 0) {
+        laborScale = Math.min(1, laborAssigned / totalWorkerDemand);
+    }
+
+    const scaledWorkerDemand = Object.fromEntries(
+        Object.entries(idealWorkerDemand).map(([k, v]) => [k, (v as number) * laborScale])
+    ) as Partial<Record<keyof Population, number>>;
 
     return {
         name: name as string,
-        level,
+        level: 1,
         budgetRatio,
         inputCost: inputCost * inputLevel,
         laborCost: laborCost * inputLevel,
-        idealWorkerDemand: Object.fromEntries(
-            Object.entries(workerRequirement).map(([k, v]) => [k, (v as number) * inputLevel])
-        ) as Partial<Record<keyof Population, number>>,
+        idealWorkerDemand: scaledWorkerDemand,
         idealGoodsDemand: Object.fromEntries(
             Object.entries(goodsRequirements).map(([k, v]) => [k, (v as number) * inputLevel])
         ) as Partial<Record<keyof Goods, number>>,
@@ -281,8 +284,6 @@ function executeSectors(
     goodsMarketRatios: Record<keyof Goods, number>,
     population: Population,
     goods: Goods,
-    sectorWealth: Record<keyof IndustrialSectors, number>,
-    currentSectorCapital: Record<keyof IndustrialSectors, number>,
     prices: Record<keyof Goods, number>
 ): SectorExecutionResult {
     const sumGoodsRequirements = createStarterWarehouse(0);
@@ -293,13 +294,9 @@ function executeSectors(
 
     const sectorResults: Record<string, SectorResult> = {};
     const sectorProfits: Record<string, number> = {};
-    const sectorMaintenance: Record<string, number> = {};
     const sectorUtilization: Record<string, number> = {};
 
     for(const bid of sectorBids) {
-        const maintenanceCost = Math.round((sectorUpgradeCosts[bid.name as keyof IndustrialSectors] || 10) * bid.level * 0.1);
-        sectorMaintenance[bid.name] = maintenanceCost;
-
         let marketConstraint = 1;
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
             if(value > 0) {
@@ -319,23 +316,10 @@ function executeSectors(
             }
         }
 
-        const wealth = (sectorWealth[bid.name as keyof IndustrialSectors] ?? 0) - maintenanceCost;
-        const clampedWealth = Math.max(0, wealth);
-        const budgetRatio = bid.inputCost + bid.laborCost > 0 ? Math.min(1, Math.max(0, clampedWealth / (bid.inputCost + bid.laborCost))) : 1;
+        const budgetRatio = bid.inputCost + bid.laborCost > 0 ? Math.min(1, Math.max(0, 1)) : 1;
         const actualScale = Math.min(budgetRatio, marketConstraint);
 
-        const capitalGoods = sectorConfig?.capitalGoods || {};
-        const capitalEfficiency = sectorConfig?.capitalEfficiency || 0;
-        const capitalEfficiencyDecay = sectorConfig?.capitalEfficiencyDecay || 0;
-        const startCapital = currentSectorCapital[bid.name as keyof IndustrialSectors] || 0;
-        const effectiveCapitalEfficiency = capitalEfficiency / (1 + (bid.level - 1) * capitalEfficiencyDecay);
-        const rawMultiplier = startCapital * effectiveCapitalEfficiency;
-        const capitalMultiplier = 1 + rawMultiplier / (1 + rawMultiplier * 0.1);
-
         if(actualScale <= 0) {
-            const capitalFormed = 0;
-            const depreciation = startCapital * 0.001;
-            currentSectorCapital[bid.name as keyof IndustrialSectors] = Math.max(0, startCapital + capitalFormed - depreciation);
             sectorResults[bid.name] = {
                 name: bid.name,
                 consumedGoods: {},
@@ -373,7 +357,7 @@ function executeSectors(
 
         const producedGoods: Partial<Goods> = {};
         for(const [key, value] of Object.entries(bid.idealGoodsProduction)) {
-            const produced = value * actualScale * capitalMultiplier;
+            const produced = value * actualScale;
             producedGoods[key as keyof Goods] = produced;
             remainingGoods[key as keyof Goods] += produced;
             sumGoodsProduction[key as keyof Goods] = (sumGoodsProduction[key as keyof Goods] ?? 0) + produced;
@@ -400,26 +384,17 @@ function executeSectors(
         };
         sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
         sectorUtilization[bid.name] = actualScale;
-
-        const capitalFormed = Object.entries(capitalGoods).reduce((sum, [good, ratio]) => {
-            const consumed = (bid.idealGoodsDemand[good as keyof Goods] || 0) * actualScale;
-            return sum + consumed * (ratio as number);
-        }, 0);
-        const depreciation = startCapital * 0.001;
-        currentSectorCapital[bid.name as keyof IndustrialSectors] = Math.max(0, startCapital + capitalFormed - depreciation);
     }
 
     return {
         sectorResults,
         sectorProfits,
-        sectorMaintenance,
         sectorUtilization,
         workingWorkers,
         remainingWorkers,
         remainingGoods,
         sumGoodsRequirements,
         sumGoodsProduction,
-        currentSectorCapital,
     };
 }
 
@@ -470,17 +445,14 @@ function processIndustry(
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
-    const { entityId, goods, population, sectorWealth, sectors, sectorCapital, upgradeSectors, autoUpgradeSectors, settlementType, allowedSectors } = industry;
+    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, settlementType, allowedSectors } = industry;
 
     const memory = priceMemory.get(entityId) || {};
     const prices = getPrices(goods, memory);
     priceMemory.set(entityId, memory);
 
     const currentGoods: Goods = { ...goods };
-    const currentSectorWealth: Record<keyof IndustrialSectors, number> = { ...sectorWealth };
-    const currentSectors = { ...sectors } as Record<keyof IndustrialSectors, number>;
-    const currentSectorCapital: Record<keyof IndustrialSectors, number> = { ...sectorCapital };
-    const allowedSectorsSet = new Set(allowedSectors ?? Object.keys(sectors) as (keyof IndustrialSectors)[]);
+    const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
     const populationConsumption = {} as Partial<Goods>;
     const populationUpdates: IndustryTickResult["populationUpdates"] = {};
@@ -539,12 +511,15 @@ function processIndustry(
     }
 
     const sectorBids: SectorBid[] = [];
-    for(const [name, level] of Object.entries(currentSectors) as [keyof IndustrialSectors, number][]) {
+    for(const name of activeSectors) {
         if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
             continue;
         }
 
-        const bid = buildSectorBid(name, level, prices, currentSectorWealth);
+        const techMultiplier = techMultipliers[name] ?? 1;
+        const laborAssignedVal = laborAssigned[name] ?? 0;
+
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal);
         if(bid) {
             sectorBids.push(bid);
         }
@@ -555,22 +530,17 @@ function processIndustry(
     const {
         sectorResults,
         sectorProfits,
-        sectorMaintenance,
         sectorUtilization,
         workingWorkers,
         remainingWorkers,
-        // remainingGoods,
         sumGoodsRequirements,
         sumGoodsProduction,
-        currentSectorCapital: updatedSectorCapital,
     } = executeSectors(
         sectorBids,
         workerMarketRatios,
         goodsMarketRatios,
         population,
         goods,
-        currentSectorWealth,
-        currentSectorCapital,
         prices
     );
 
@@ -589,17 +559,6 @@ function processIndustry(
 
     const finalGoods = finalizeGoods(currentGoods, sumGoodsProduction, sumGoodsRequirements, populationConsumption, population);
 
-    const { sectors: finalSectors, sectorWealth: finalSectorWealth } = applyIndustryUpgrades({
-        sectors: currentSectors,
-        sectorWealth: currentSectorWealth,
-        sectorProfits,
-        sectorMaintenance,
-        upgradeSectors,
-        autoUpgradeSectors,
-        settlementType,
-        allowedSectors: allowedSectorsSet ? Array.from(allowedSectorsSet) : undefined,
-    });
-
     const result: IndustryTickResult = {
         entityId,
         goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption },
@@ -609,13 +568,9 @@ function processIndustry(
         populationUpdates,
         goods: finalGoods,
         sectorProfits,
-        sectorMaintenance,
         populationProfits,
         sectorUtilization,
         sectorResults,
-        sectors: finalSectors,
-        sectorWealth: finalSectorWealth,
-        sectorCapital: updatedSectorCapital,
         settlementType,
         allowedSectors,
     };

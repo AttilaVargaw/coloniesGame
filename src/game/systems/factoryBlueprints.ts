@@ -10,7 +10,6 @@ type FactoryBlueprint = {
     workerRequirement: Partial<Record<keyof Population, number>>,
     goodsProduction: Partial<Goods>,
     efficiencyBonus?: number
-    outputLevelModifier?: (lvl: number) => number
     capitalGoods?: Partial<Record<keyof Goods, number>>
     capitalEfficiency?: number
     capitalEfficiencyDecay?: number
@@ -603,19 +602,3 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         nonEssentialGoods: new Set(["paper", "governance"])
     }]
 ])
-
-export function getSectorOutputLevel(name: keyof IndustrialSectors, level: number): number {
-    const config = industrySectorBlueprints.get(name)
-
-    if(!config) { return level; }
-
-    if(config.outputLevelModifier) {
-        return config.outputLevelModifier(level);
-    }
-
-    if(config.efficiencyBonus && config.efficiencyBonus > 0) {
-        return level * (1 + config.efficiencyBonus * (level - 1));
-
-    }
-    return level;
-}

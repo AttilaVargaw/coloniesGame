@@ -7,8 +7,8 @@ import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
-import { UpgradeSectorCommand } from "../commands/UpgradeSectorCommand";
 import { IndustryWorkerPool } from "./industryWorkerPool";
+import type { IndustrialSectors } from "../components/Factories";
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -50,47 +50,26 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     private onDayPassed = () => {
         this.ensureWorkerPool();
 
-        const upgradeSectors: Record<string, string[]> = {};
-        const autoUpgradeSectors: Record<string, Record<string, boolean>> = {};
+        const industries = this.nodes.map(({ entity, industry }) => {
+            const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
+            const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 
-        for(const { entity, industry } of this.nodes) {
-            upgradeSectors[entity.id] = [];
-            autoUpgradeSectors[entity.id] = { ...industry.autoUpgradeSectors };
-        }
-
-        const commands = this.engine?.getCommands(UpgradeSectorCommand);
-
-        if(commands) {
-            for(const cmd of [...commands]) {
-                const list = upgradeSectors[cmd.entityId];
-                if(!list) continue;
-
-                const entity = this.nodes.find(n => n.entity.id === cmd.entityId);
-                if(!entity) continue;
-
-                const { settlementType, allowedSectors } = entity.industry;
-                if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && allowedSectors && !allowedSectors.has(cmd.sectorName)) {
-                    continue;
-                }
-
-                list.push(cmd.sectorName);
+            for(const sectorKey of industry.activeSectors) {
+                techMultipliers[sectorKey] = industry.techMultipliers[sectorKey] ?? 1;
+                laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
             }
 
-            commands.clear();
-        }
-
-        const industries = this.nodes.map(({ entity, industry }) => ({
-            entityId: entity.id,
-            sectors: industry.sectors,
-            goods: industry.goods,
-            population: industry.population,
-            sectorWealth: industry.sectorWealth,
-            sectorCapital: industry.sectorCapital,
-            upgradeSectors: upgradeSectors[entity.id],
-            autoUpgradeSectors: autoUpgradeSectors[entity.id],
-            settlementType: industry.settlementType,
-            allowedSectors: [...industry.allowedSectors]
-        }));
+            return {
+                entityId: entity.id,
+                activeSectors: industry.activeSectors,
+                goods: industry.goods,
+                population: industry.population,
+                techMultipliers,
+                laborAssigned,
+                settlementType: industry.settlementType,
+                allowedSectors: [...industry.activeSectors]
+            };
+        });
 
         this.workerPool?.tick(industries);
     };
@@ -102,7 +81,6 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         }
         this.engine?.unregisterNodeType(IndustryNode);
         this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
-        this.engine?.removeCommandQueue(UpgradeSectorCommand);
         super.removeFromEngine();
         return this;
     }
@@ -114,7 +92,6 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             new Set([IndustryComponent]),
             (entity) => new IndustryNode(entity.getComponent(IndustryComponent)!, entity)
         ).subscribe(DayPassedEvent, this.onDayPassed);
-        engine.registerCommandQueue(UpgradeSectorCommand);
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }
@@ -135,8 +112,6 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     mergeRecord(industry.sectorProfits, patch.sectorProfits)
     mergeRecord(industry.populationProfits, patch.populationProfits)
     mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
-    mergeRecord(industry.sectorWealth, patch.sectorWealth)
-    mergeRecord(industry.sectorCapital, patch.sectorCapital)
 
     mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
     mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)
@@ -144,10 +119,6 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     applyPopulationPatch(industry, patch.populationUpdates)
 
     applySectorResultsPatch(industry, patch.sectorResults)
-
-    if(patch.sectors) {
-        industry.sectors = { ...industry.sectors, ...patch.sectors }
-    }
 }
 
 function mergeRecord<T extends Record<string, any>>(

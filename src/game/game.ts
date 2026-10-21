@@ -8,6 +8,8 @@ import { IndustrySystem } from "@game/systems/industrySystem"
 import { TradeSystem } from "@game/systems/tradeSystem"
 import { AutoTradeSystem } from "@game/systems/autoTradeSystem"
 import { MigrationSystem } from "@game/systems/migrationSystem"
+import { TechSystem } from "@game/systems/TechSystem"
+import { TechAdoptionSystem } from "@game/systems/TechAdoptionSystem"
 import { MapSystem } from "@game/systems/mapSystem"
 import { MoveSystem } from "@game/systems/moveSystem"
 import { SelectionManager } from "@game/systems/selectionSystem"
@@ -38,6 +40,8 @@ export class Game {
             .addSystem(TradeSystem)
             .addSystem(AutoTradeSystem)
             .addSystem(MigrationSystem)
+            .addSystem(TechSystem)
+            .addSystem(TechAdoptionSystem)
             .addSystem(DateSystem)
             .addSystem(TimeScaleSystem)
             .addSystem(OrbitSystem)

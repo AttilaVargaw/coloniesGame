@@ -6,13 +6,11 @@ import { Population } from "../data/Population";
 
 export interface IndustryTickInput {
     entityId: string;
-    sectors: IndustrialSectors;
+    activeSectors: Set<keyof IndustrialSectors>;
     goods: Goods;
     population: Population;
-    sectorWealth: Record<keyof IndustrialSectors, number>;
-    sectorCapital: Record<keyof IndustrialSectors, number>;
-    upgradeSectors: string[];
-    autoUpgradeSectors: Record<string, boolean>;
+    techMultipliers: Record<keyof IndustrialSectors, number>;
+    laborAssigned: Record<keyof IndustrialSectors, number>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }

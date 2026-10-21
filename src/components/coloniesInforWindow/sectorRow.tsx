@@ -2,42 +2,27 @@ import { IndustrialSectors } from "@/game/components/Factories";
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Goods } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
-import { getSectorOutputLevel, industrySectorBlueprints } from "@/game/systems/factoryBlueprints";
-import { sectorUpgradeCosts } from "@/game/systems/sectorUpgradeCosts";
+import { industrySectorBlueprints } from "@/game/systems/factoryBlueprints";
 import { convertToReadable } from "@/lib/utils";
 import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
-import { Toggle } from "../ui/toggle";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
 
 export function SectorRow({
     rowKey,
     sectorKey,
-    value,
     industry,
-    onUpgrade,
-    autoUpgrade,
-    onToggleAutoUpgrade,
 }: {
     rowKey: string;
     sectorKey: keyof IndustrialSectors;
-    value: number;
     industry: IndustryComponent;
-    onUpgrade: (sectorKey: keyof IndustrialSectors) => void;
-    autoUpgrade: Partial<Record<keyof IndustrialSectors, boolean>>;
-    onToggleAutoUpgrade: (sectorKey: keyof IndustrialSectors) => void;
 }) {
     const profit = industry.sectorProfits[sectorKey] ?? 0;
-    const wealth = industry.sectorWealth[sectorKey] ?? 0;
-    const upgradeCost = Math.round(sectorUpgradeCosts[sectorKey] * value);
-    const canUpgrade = wealth >= upgradeCost;
-    const outputLevel = getSectorOutputLevel(sectorKey, value);
-    const efficiency = value > 0 ? ((outputLevel / value) * 100) : 100;
     const utilization = industry.sectorUtilization[sectorKey] ?? 0;
+    const techMultiplier = industry.techMultipliers[sectorKey] ?? 1;
 
     const config = industrySectorBlueprints.get(sectorKey);
-    const inputLevel = value;
     const sectorResult = industry.sectorResults?.[sectorKey];
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
@@ -69,7 +54,7 @@ export function SectorRow({
 
         if(config?.goodsRequirements) {
             (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
-                const scaledReq = req * inputLevel;
+                const scaledReq = req * techMultiplier;
                 const consumed = industry.goods[good] ?? 0;
                 addReq(good, scaledReq, consumed);
             });
@@ -77,14 +62,14 @@ export function SectorRow({
 
         if(config?.workerRequirement) {
             (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const scaledReq = (req as number) * inputLevel;
+                const scaledReq = (req as number) * techMultiplier;
                 const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
                 addReq(worker, scaledReq, employed);
             });
         }
 
         return { items, bottleneck, bottleneckRatio };
-    }, [config, inputLevel, industry.goods, industry.population, sectorResult, hasData, isStopped]);
+    }, [config, techMultiplier, industry.goods, industry.population, sectorResult, hasData, isStopped]);
 
     return (
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
@@ -93,13 +78,12 @@ export function SectorRow({
                     <SectorIcon name={sectorKey} /> {sectorKey}
                 </span>
             </td>
-            <td className="p-2 text-center">{convertToReadable(value)}</td>
+            <td className="p-2 text-center">{techMultiplier.toFixed(2)}</td>
             <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
-            <td className="p-2 text-center">{efficiency.toFixed(0)}%</td>
+            <td className="p-2 text-center">100%</td>
             <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {convertToReadable(Math.round(profit))}
             </td>
-            <td className="p-2 text-center">{convertToReadable(Math.round(wealth))}</td>
             <td className="p-2 text-center">
                 <BottleneckCell bottleneck={reqs.bottleneck} bottleneckRatio={reqs.bottleneckRatio} />
             </td>
@@ -110,23 +94,6 @@ export function SectorRow({
                     ))}
                 </div>
             </td>
-            {/* <td className="p-2 text-center">
-                <button
-                    onClick={() => onUpgrade(sectorKey)}
-                    disabled={!canUpgrade}
-                    className={`px-2 py-1 rounded text-xs ${canUpgrade ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-600 cursor-not-allowed opacity-50'}`}
-                >
-                    {upgradeCost}
-                </button>
-            </td>
-            <td className="p-2 text-center">
-                <Toggle
-                    pressed={!!autoUpgrade[sectorKey]}
-                    onPressedChange={() => onToggleAutoUpgrade(sectorKey)}
-                    size="sm"
-                    variant="outline"
-                />
-            </td> */}
         </tr>
     );
 }

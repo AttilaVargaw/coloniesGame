@@ -21,9 +21,10 @@ export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
     private cancelMigrationRouteCommands: Queue<CancelMigrationRouteCommand> | null = null
 
     update(_dt: number): void {
-        this.migrationRouteCancelledEvents?.clear()
-        this.migrationRouteCompletedEvents?.clear()
-        this.migrationRouteCreatedEvents?.clear()
+        // Event queues are cleared in onDayPassed after processing
+        // this.migrationRouteCancelledEvents?.clear()
+        // this.migrationRouteCompletedEvents?.clear()
+        // this.migrationRouteCreatedEvents?.clear()
 
         this.createMigrationRouteCommands?.clear()
         this.cancelMigrationRouteCommands?.clear()

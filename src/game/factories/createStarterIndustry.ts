@@ -1,4 +1,4 @@
-import { IndustrialSectors } from "../components/Factories";
+import type { IndustrialSectors } from "../components/Factories";
 
 const PER_CAPITA_SECTOR_RATIOS = {
     mine: 0.000001,
@@ -65,30 +65,15 @@ const PER_CAPITA_SECTOR_RATIOS = {
     spaceGoodsTransport: 0.000002,
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
-const MIN_SECTOR_LEVEL = 0;
-
-export function createStarterIndustry(population: number) {
-    const sectors = {} as Record<keyof IndustrialSectors, number>;
+export function createStarterIndustry(population: number): Set<keyof IndustrialSectors> {
+    const activeSectors = new Set<keyof IndustrialSectors>();
 
     for(const key of Object.keys(PER_CAPITA_SECTOR_RATIOS) as (keyof IndustrialSectors)[]) {
         const scaled = population * PER_CAPITA_SECTOR_RATIOS[key];
-        sectors[key] = Math.max(MIN_SECTOR_LEVEL, Math.round(scaled));
+        if(scaled > 0) {
+            activeSectors.add(key);
+        }
     }
 
-    return sectors as IndustrialSectors;
-}
-
-export function createStarterSectorCapital(sectors: IndustrialSectors): Record<keyof IndustrialSectors, number> {
-    return Object.fromEntries(
-        Object.keys(sectors).map(key => [key, 0])
-    ) as Record<keyof IndustrialSectors, number>;
-}
-
-export function createStarterSectorWealth(sectors: IndustrialSectors): Record<keyof IndustrialSectors, number> {
-    const baseWealth = 100_00_000;
-    const wealthPerLevel = 5000;
-
-    return Object.fromEntries(
-        Object.keys(sectors).map(key => [key, baseWealth + wealthPerLevel * sectors[key as keyof IndustrialSectors]])
-    ) as Record<keyof IndustrialSectors, number>;
+    return activeSectors;
 }
