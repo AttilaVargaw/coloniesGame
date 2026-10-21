@@ -10,7 +10,7 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
         <table className="w-full text-sm">
             <thead>
                 <tr className="border-b border-muted">
-                    <th className="text-left p-2 font-medium">Good</th>
+                    <th className="text-left p-2 font-medium">{showPhysical ? "Good" : "Service"}</th>
                     <th className="text-right p-2 font-medium">Stock</th>
                     <th className="text-center p-2 font-medium">Net</th>
                     <th className="text-center p-2 font-medium">Production</th>
@@ -27,16 +27,20 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
                             <td className="p-2">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="inline-flex items-center">
-                                            <ResourceIcon name={key} />
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <span>{RESOURCE_NAMES[key] || key}</span>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <span style={{ display: "flex", gap: "1em" }}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center">
+                                                <ResourceIcon name={key} />
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <span>{RESOURCE_NAMES[key] || key}</span>
+                                        </TooltipContent>
+                                    </Tooltip>
+
+                                    {RESOURCE_NAMES[key] || key}
+                                </span>
                             </td>
                             <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
                             <td className="p-2 text-center">{colorBySign(addition - used)}</td>

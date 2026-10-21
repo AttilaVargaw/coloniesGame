@@ -6,26 +6,34 @@ import { PopulationBreakdown } from "./PopulationBreakdown";
 import { WarehouseBreakdown } from "./WarehouseBreakdown";
 import { ColonySummary } from "./colonySummary";
 import { TradeBreakdown } from "./tradeBreakdown";
+import { MigrationBreakdown } from "./migrationBreakdown";
+import { TabsContent } from "../ui/tabs";
 
-export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "services";
+export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "services" | "migration";
 
-export function DialogInner({ industry, page, entity }: { industry: IndustryComponent | null, page: DialogPage, entity?: Entity }): ReactNode {
-    if(!industry) return <></>
-
-    switch(page) {
-        case "summary":
-            return <ColonySummary industry={industry} />;
-        case "population":
-            return <PopulationBreakdown industry={industry} />;
-        case "warehouse":
-            return <WarehouseBreakdown showPhysical industry={industry} />;
-        case "industry":
-            return <IndustryBreakdown industry={industry} entity={entity!} />;
-        case "trade":
-            return <TradeBreakdown entity={entity!} />;
-        case "services":
-            return <WarehouseBreakdown industry={industry} />;
-        default:
-            return <></>
-    }
+export function DialogInner({ industry, entity }: { industry: IndustryComponent, page: DialogPage, entity?: Entity }): ReactNode {
+    return <>
+        <TabsContent style={{ overflowY: "auto", }} value="summary">
+            <ColonySummary industry={industry} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="population">
+            <PopulationBreakdown industry={industry} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="warehouse">
+            <WarehouseBreakdown showPhysical industry={industry} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="industry">
+            <IndustryBreakdown industry={industry} entity={entity!} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="trade">
+            <TradeBreakdown entity={entity!} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="services">
+            <WarehouseBreakdown industry={industry} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="migration">
+            <MigrationBreakdown entity={entity!} />
+        </TabsContent>
+    </>
 }
+

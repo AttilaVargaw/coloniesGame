@@ -10,6 +10,7 @@ import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/e
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
 import { ToggleGroup, ToggleGroupItem, } from "../ui/toggle-group";
 import { DialogInner, DialogPage } from "./DialogInner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
@@ -54,25 +55,30 @@ export function ColoniesInforWindow() {
             </DialogHeader>
             <div style={{
                 height: "75vh",
-                overflowY: "auto",
             }}>
                 {info && <PatronGoodInfo info={info} />}
-                <DialogInner industry={industry} page={page} entity={currentColony} />
+                <Tabs defaultValue="overview" >
+                    <TabsList style={{
+                        height: "2em",
+                        width: "100%"
+                    }} >
+                        <TabsTrigger value="summary">Summary</TabsTrigger>
+                        <TabsTrigger value="population">Population</TabsTrigger>
+                        <TabsTrigger value="warehouse">Warehouse</TabsTrigger>
+                        <TabsTrigger value="services">Services</TabsTrigger>
+                        <TabsTrigger value="industry">Industry</TabsTrigger>
+                        <TabsTrigger value="trade">Trade</TabsTrigger>
+                        <TabsTrigger value="migration">Migration</TabsTrigger>
+                    </TabsList>
+                    <div style={{
+                        height: "calc(75vh - 2em)",
+                        overflowY: "auto",
+                        padding: "1em",
+                    }}>
+                        {industry && <DialogInner industry={industry} page={page} entity={currentColony} />}
+                    </div>
+                </Tabs>
             </div>
-            <DialogFooter>
-                <ToggleGroup style={{
-                    height: "2em",
-                    justifyContent: "space-between",
-                    width: "100%"
-                }} value={page} onValueChange={(value: string) => setPage((prev) => value as DialogPage || prev)} type="single">
-                    <ToggleGroupItem value="summary">Summary</ToggleGroupItem>
-                    <ToggleGroupItem value="population">Population</ToggleGroupItem>
-                    <ToggleGroupItem value="warehouse">Warehouse</ToggleGroupItem>
-                    <ToggleGroupItem value="services">Services</ToggleGroupItem>
-                    <ToggleGroupItem value="industry">Industry</ToggleGroupItem>
-                    <ToggleGroupItem value="trade">Trade</ToggleGroupItem>
-                </ToggleGroup>
-            </DialogFooter>
         </DialogContent>
     </Dialog >
 }

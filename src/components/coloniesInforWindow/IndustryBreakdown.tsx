@@ -43,8 +43,8 @@ export function IndustryBreakdown({ industry, entity }: { industry: IndustryComp
                         <th className="text-center p-2 font-medium">Wealth</th>
                         <th className="text-center p-2 font-medium">Bottleneck</th>
                         <th className="text-left p-2 font-medium">Requirements</th>
-                        <th className="text-center p-2 font-medium">Upgrade</th>
-                        <th className="text-center p-2 font-medium">Auto</th>
+                        {/* <th className="text-center p-2 font-medium">Upgrade</th>
+                        <th className="text-center p-2 font-medium">Auto</th> */}
                     </tr>
                 </thead>
                 <tbody>

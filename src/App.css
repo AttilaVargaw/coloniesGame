@@ -13,6 +13,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.container {
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  /* Firefox, Safari 18.2+, Chromium 121+ */
+}
+
+::-webkit-scrollbar {
+  display: none;
+  /* Older Safari and Chromium */
+}
+
 .logo.vite:hover {
   filter: drop-shadow(0 0 2em #747bff);
 }
@@ -20,6 +32,7 @@
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafb);
 }
+
 :root {
   overscroll-behavior: none;
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -129,6 +142,7 @@ button {
 button:hover {
   border-color: #396cd8;
 }
+
 button:active {
   border-color: #396cd8;
   background-color: #e8e8e8;
@@ -158,6 +172,7 @@ button {
     color: #ffffff;
     background-color: #0f0f0f98;
   }
+
   button:active {
     background-color: #0f0f0f69;
   }
@@ -244,9 +259,11 @@ button {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }

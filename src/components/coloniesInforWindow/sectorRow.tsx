@@ -105,7 +105,7 @@ export function SectorRow({
                     ))}
                 </div>
             </td>
-            <td className="p-2 text-center">
+            {/* <td className="p-2 text-center">
                 <button
                     onClick={() => onUpgrade(sectorKey)}
                     disabled={!canUpgrade}
@@ -121,7 +121,7 @@ export function SectorRow({
                     size="sm"
                     variant="outline"
                 />
-            </td>
+            </td> */}
         </tr>
     );
 }

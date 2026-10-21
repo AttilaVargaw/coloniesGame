@@ -33,16 +33,19 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
                             <td className="p-2">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="inline-flex items-center">
-                                            <PopulationIcon name={key} />
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <span>{POPULATION_NAMES[key] || key}</span>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <span style={{display: "flex", gap: "1em"}}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center">
+                                                <PopulationIcon name={key} />
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <span>{POPULATION_NAMES[key] || key}</span>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    {POPULATION_NAMES[key] || key}
+                                </span>
                             </td>
                             <td className="p-2 text-right">{convertToReadable(number)}</td>
                             <td className="p-2 text-right">{convertToReadable(workingWorkers[key].number || 0)}</td>
