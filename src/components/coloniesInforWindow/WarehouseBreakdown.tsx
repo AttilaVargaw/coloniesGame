@@ -26,21 +26,9 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                         const used = goodsRequirements[key] || 0;
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
-                            <td className="p-2">
-                                <span style={{ display: "flex", gap: "1em" }}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="inline-flex items-center">
-                                                <ResourceIcon name={key} />
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <span>{RESOURCE_NAMES[key] || key}</span>
-                                        </TooltipContent>
-                                    </Tooltip>
-
-                                    {RESOURCE_NAMES[key] || key}
-                                </span>
+                            <td className="p-2" style={{ display: "flex", gap: "1em" }}>
+                                <ResourceIcon name={key} />
+                                {RESOURCE_NAMES[key] || key}
                             </td>
                             <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
                             <td className="p-2 text-center">{colorBySign(addition - used)}</td>

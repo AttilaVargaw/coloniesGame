@@ -8,6 +8,7 @@ import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand"
 import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
+import { TradeRouteNode } from "./TradeRouteNode";
 
 const MIN_TRADE_AMOUNT = 1;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
@@ -24,6 +25,8 @@ type Settlement = {
     population: Population;
     routeCount: number;
 };
+
+const exportableGoods = new Set<keyof Goods>([...physicalGoods, "tourism"]);
 
 export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -74,9 +77,8 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     private countActiveRoutes(entityId: string): number {
         if(!this.engine) return 0;
         let count = 0;
-        for(const entity of this.engine.getAllEntities()) {
-            const route = entity.getComponent(TradeRouteComponent);
-            if(route && route.sourceEntityId === entityId) {
+        for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
+            if(tradeRoute.sourceEntityId === entityId) {
                 count++;
             }
         }
@@ -85,10 +87,8 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
     private hasActiveRoute(sourceId: string, destId: string): boolean {
         if(!this.engine) return false;
-        for(const entity of this.engine.getAllEntities()) {
-            const route = entity.getComponent(TradeRouteComponent);
-            if(!route) continue;
-            if(route.sourceEntityId === sourceId && route.destinationEntityId === destId) return true;
+        for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
+            if(tradeRoute.sourceEntityId === sourceId && tradeRoute.destinationEntityId === destId) return true;
         }
         return false;
     }
@@ -100,7 +100,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
         const scored = settlements.map(s => {
             const goodsInfo: Record<keyof Goods, { net: number; stock: number; requirements: number }> = {} as any;
-            for(const key of physicalGoods) {
+            for(const key of exportableGoods) {
                 const production = s.goodsProduction[key] ?? 0;
                 const requirements = s.goodsRequirements[key] ?? 0;
                 goodsInfo[key] = {
@@ -133,12 +133,12 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 const batch: Partial<Goods> = {};
                 let hasAny = false;
 
-        for(const key of physicalGoods) {
-            const info = exporter.goodsInfo[key];
-            const impInfo = importer.goodsInfo[key];
+                for(const key of exportableGoods) {
+                    const info = exporter.goodsInfo[key];
+                    const impInfo = importer.goodsInfo[key];
 
-            if(info.net > MIN_TRADE_AMOUNT && info.stock >= MIN_TRADE_AMOUNT &&
-               impInfo.net < -MIN_TRADE_AMOUNT) {
+                    if(info.net > MIN_TRADE_AMOUNT && info.stock >= MIN_TRADE_AMOUNT &&
+                        impInfo.net < -MIN_TRADE_AMOUNT) {
 
                         const amountNeeded = Math.max(1, Math.floor(-impInfo.net * 1.2));
                         const amount = Math.min(

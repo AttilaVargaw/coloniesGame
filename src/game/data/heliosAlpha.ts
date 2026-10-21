@@ -92,7 +92,7 @@ export const solarisAlpha = {
                 // services: 294_000_000,
                 // education: 44_100_000,
                 entertainmentIndustry: 245_000_0,
-                electronics: 245_000_00,
+                electronics: 245_000,
                 machineryFactory: 24_500_00,
                 consumerFactory: 500_000,
                 healthcare: 196_000_0,

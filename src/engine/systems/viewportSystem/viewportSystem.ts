@@ -15,6 +15,7 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
 import { DebugRenderer } from "./renderers/debugRenderer";
 import { PointerInteractionSystem } from "../pointerInteractionSystem";
+import { WebGLSphereNode, WebGLSphereRenderer } from "./renderers/webglRenderer/webglSphereRenderer";
 
 export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
@@ -70,14 +71,11 @@ export class ViewportSystem extends System {
         const centerX = camera.cssWidth / 2
         const centerY = camera.cssHeight / 2
 
-        const allEntities = this.engine.getAllEntities()
-
         ctx.save()
         ctx.globalCompositeOperation = "screen"
 
-        for(const entity of allEntities) {
-            const color = entity.getComponent(ColorComponent)
-            const radius = entity.getComponent(RadiusComponent)
+        //@ts-ignore
+        for(const { color, radius, entity } of this.engine.getNodeList(WebGLSphereRenderer)) {
 
             if(!color?.emitLight || !radius || radius.radius < 10) continue
 

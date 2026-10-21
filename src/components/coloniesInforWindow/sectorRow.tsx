@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { Toggle } from "../ui/toggle";
 import { RequirementItem } from "./requirementItem";
+import { SectorIcon } from "../icons/SectorIcon";
 
 export function SectorRow({
     rowKey,
@@ -87,7 +88,11 @@ export function SectorRow({
 
     return (
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
-            <td className="p-2 capitalize">{sectorKey}</td>
+            <td className="p-2 capitalize">
+                <span style={{ display: "flex", gap: "1em" }}>
+                    <SectorIcon name={sectorKey} /> {sectorKey}
+                </span>
+            </td>
             <td className="p-2 text-center">{convertToReadable(value)}</td>
             <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
             <td className="p-2 text-center">{efficiency.toFixed(0)}%</td>

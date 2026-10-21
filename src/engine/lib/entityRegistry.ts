@@ -80,7 +80,8 @@ export class EntityRegistry {
         entity.onComponentChanged = undefined
         this.nodes.removeEntityFromNodes(entity)
 
-        this.events.dispatchEvent(new EntityRemovedEvent(entity))
+        //Nothing uses this yet
+        //this.events.dispatchEvent(new EntityRemovedEvent(entity))
 
         return this
     }

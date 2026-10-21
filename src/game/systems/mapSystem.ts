@@ -8,7 +8,7 @@ import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { PositionComponent } from "@engine/components/position";
-import { JumpNodeComponent, JumpGraphComponent } from "@game/components/jumpGraph";
+import { JumpGraphComponent, JumpNode, JumpNodeComponent } from "@game/components/jumpGraph";
 import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
 import { createEntity } from "@/engine/lib/entityRegistry";
 import { terminateTextureWorkerPool } from "../factories/textureWorkerPool";
@@ -47,6 +47,12 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: PathNode, _dT?: number): void {
+    }
+
+    protected registerNodes(engine: Engine) {
+        engine.registerNodeType(JumpNode, new Set([JumpNodeComponent]), (entity) => new JumpNode(entity))
+
+        return this
     }
 
     removeFromEngine() {
@@ -187,13 +193,11 @@ export class MapSystem extends SystemWithNodes<PathNode> {
 
     private collectJumpNodes(): { entity: Entity; x: number, y: number }[] {
         if(!this.engine) return []
-        const allEntities = this.engine.getAllEntities()
         const jumpNodes: { entity: Entity; x: number, y: number }[] = []
 
-        for(const entity of allEntities) {
-            const jumpNode = entity.getComponent(JumpNodeComponent)
+        for(const { entity } of this.engine.getNodeList(JumpNode)) {
             const pos = this.getWorldPosition(entity)
-            if(jumpNode && pos) {
+            if(pos) {
                 jumpNodes.push({ entity, ...pos })
             }
         }

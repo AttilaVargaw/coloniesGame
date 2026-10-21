@@ -1,5 +1,5 @@
 import { Goods } from "@/game/data/Goods";
-import { Beer, BrickWall, Clapperboard, Mail, Martini, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
+import { Atom, Beer, BrickWall, Clapperboard, Coffee, Cuboid, Mail, Martini, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
@@ -36,20 +36,22 @@ import {
     Building2,
     Recycle,
     Landmark,
-
+    Palmtree,
 } from "lucide-react"
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
+
+import { FaPray } from "react-icons/fa";
 
 const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     food: Cookie,
     alcoholDrinks: Beer,
-    stimulantDrinks: Martini,
+    stimulantDrinks: Coffee,
     entertainment: Clapperboard,
     itServices: MonitorSmartphone,
     education: School,
     retail: ShoppingCart,
     luxuryFood: Grape,
-    tourism: Plane,
+    tourism: Palmtree,
     consumerGoods: Boxes,
     water: Droplets,
     electricity: Zap,
@@ -59,8 +61,8 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     agriculturalGoods: Wheat,
     // dividents: TrendingUp,
     tylium: Diamond,
-    metals: BarChart3,
-    uranium: Siren,
+    metals: Cuboid,
+    uranium: Atom,
     machinery: Cog,
     medicine: Pill,
     wood: TreePine,
@@ -74,7 +76,7 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     vehicles: Car,
     electronics: Cpu,
     environmentFactor: Leaf,
-    faith: Church,
+    faith: FaPray,
     lawEnforcement: Shield,
     healthcare: HeartPulse,
     chemicals: TestTubes,

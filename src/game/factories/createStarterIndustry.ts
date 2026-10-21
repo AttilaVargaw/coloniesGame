@@ -1,9 +1,9 @@
 import { IndustrialSectors } from "../components/Factories";
 
 const PER_CAPITA_SECTOR_RATIOS = {
-    mine: 0.000005,
+    mine: 0.000001,
     oilRig: 0.0000028,
-    forestry: 0.000026,
+    forestry: 0.000006,
     farm: 0.0000088,
     fishery: 0.000006,
     foodFactory: 0.00006,
