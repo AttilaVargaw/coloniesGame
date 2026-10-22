@@ -1,10 +1,10 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Population, baseSalaries } from "@/game/data/Population";
 import { convertToReadable } from "@/lib/utils";
-import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
 import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationIcon";
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 import { Goods } from "@/game/data/Goods";
+import { RequirementItem } from "./requirementItem";
 
 export function PopulationBreakdown({ industry: { population, populationProfits, populationRequirements, workingWorkers, goods } }: { industry: IndustryComponent; }) {
     return (
@@ -33,7 +33,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
 
                         return <tr key={key} className="border-b border-muted/50 last:border-0">
                             <td className="p-2">
-                                <span style={{display: "flex", gap: "1em"}}>
+                                <span style={{ display: "flex", gap: "1em" }}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex items-center">
@@ -58,25 +58,11 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                 {reqEntries.length === 0 ? (
                                     <span className="text-muted-foreground text-xs">—</span>
                                 ) : (
-                                    <div className="text-xs space-y-0.5">
+                                    <div className="text-xs space-y-0.5" style={{ display: "flex", flexFlow: "wrap", gap: "1em" }}>
                                         {reqEntries.map(([good, req]) => {
                                             const available = goods[good] ?? 0;
-                                            const isFilled = available >= req;
-                                            const colorClass = isFilled ? 'text-green-400' : 'text-red-400';
                                             return (
-                                                <div key={good} className={`items-center gap-1 ${colorClass}`}>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <div className="inline-flex items-center">
-                                                                <ResourceIcon name={good} />
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <span>{RESOURCE_NAMES[good] || good}</span>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                    {convertToReadable(Math.round(req))}
-                                                </div>
+                                                <RequirementItem key={good} hasData actual={available} name={good} scaledReq={req} />
                                             );
                                         })}
                                     </div>

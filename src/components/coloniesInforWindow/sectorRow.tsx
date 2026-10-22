@@ -126,7 +126,7 @@ export function SectorRow({
                                 );
                             }).concat(
                                 <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                    <RequirementItem actual={industry.money[sectorKey]} hasData={false} name="money" scaledReq={industry.money[sectorKey]} />
+                                    <RequirementItem actual={industry.money[sectorKey]} name="money" scaledReq={industry.money[sectorKey]} />
                                 </div>
                             )
                         })()

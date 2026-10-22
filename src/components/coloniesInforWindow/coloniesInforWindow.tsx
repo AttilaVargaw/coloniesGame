@@ -46,8 +46,6 @@ export function ColoniesInforWindow() {
     const name = currentColony?.getComponent(LabelComponent)
     const info = currentColony?.getComponent(InfoComponent)
 
-    const [page, setPage] = useState<DialogPage>("population")
-
     return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
         <DialogContent className="bg-[#1c1c1c] text-white min-w-4xl">
             <DialogHeader>
@@ -75,7 +73,7 @@ export function ColoniesInforWindow() {
                         overflowY: "auto",
                         padding: "1em",
                     }}>
-                        {industry && <DialogInner industry={industry} page={page} entity={currentColony} />}
+                        {industry && <DialogInner industry={industry} />}
                     </div>
                 </Tabs>
             </div>

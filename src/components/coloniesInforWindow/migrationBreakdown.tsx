@@ -1,4 +1,3 @@
-import { Entity } from "@/engine/entities/entity";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { LabelComponent } from "@engine/components/label";
 import { useGameEvent } from "@/hooks/useGameEvent";
@@ -8,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { convertToReadable } from "@/lib/utils";
 import { CancelMigrationRouteCommand } from "@game/commands/cancelMigrationRouteCommand";
 import { MigrationRouteNode } from "@/game/systems/MigrationRouteNode";
+import { IndustryComponent } from "@/game/components/industryComponent";
 
 type MigrationRouteInfo = {
     routeEntityId: string;
@@ -19,7 +19,7 @@ type MigrationRouteInfo = {
     speed: number;
 };
 
-export function MigrationBreakdown({ entity }: { entity?: Entity }) {
+export function MigrationBreakdown({ industry: { entity } }: { industry: IndustryComponent }) {
     const engine = useGameEngine();
     const [routes, setRoutes] = useState<MigrationRouteInfo[]>([]);
 

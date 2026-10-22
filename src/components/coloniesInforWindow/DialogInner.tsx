@@ -11,7 +11,7 @@ import { TabsContent } from "../ui/tabs";
 
 export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "services" | "migration";
 
-export function DialogInner({ industry, entity }: { industry: IndustryComponent, page: DialogPage, entity?: Entity }): ReactNode {
+export function DialogInner({ industry }: { industry: IndustryComponent }): ReactNode {
     return <>
         <TabsContent style={{ overflowY: "auto", }} value="summary">
             <ColonySummary industry={industry} />
@@ -26,13 +26,13 @@ export function DialogInner({ industry, entity }: { industry: IndustryComponent,
             <IndustryBreakdown industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="trade">
-            <TradeBreakdown entity={entity!} />
+            <TradeBreakdown industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="services">
             <WarehouseBreakdown industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="migration">
-            <MigrationBreakdown entity={entity!} />
+            <MigrationBreakdown industry={industry} />
         </TabsContent>
     </>
 }

@@ -1,6 +1,4 @@
-import { Entity } from "@/engine/entities/entity";
 import { useGameEngine } from "@/hooks/useGameContext";
-import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { LabelComponent } from "@engine/components/label";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent } from "@/engine/lib/events";
@@ -12,6 +10,7 @@ import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip
 import { convertToReadable } from "@/lib/utils";
 import { CancelTradeRouteCommand } from "@game/commands/cancelTradeRouteCommand";
 import { TradeRouteNode } from "@/game/systems/TradeRouteNode";
+import { IndustryComponent } from "@/game/components/industryComponent";
 
 type TradeRouteInfo = {
     routeEntityId: string;
@@ -23,7 +22,7 @@ type TradeRouteInfo = {
     speed: number;
 };
 
-export function TradeBreakdown({ entity }: { entity?: Entity }) {
+export function TradeBreakdown({ industry: { entity } }: { industry: IndustryComponent }) {
     const engine = useGameEngine();
     const [routes, setRoutes] = useState<TradeRouteInfo[]>([]);
 
