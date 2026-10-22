@@ -5,6 +5,7 @@ import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
+import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { IndustryWorkerPool } from "./industryWorkerPool";
@@ -55,11 +56,13 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
             const money = industry.money;
+            const sectorGoods: Record<keyof IndustrialSectors, Goods> = {} as Record<keyof IndustrialSectors, Goods>;
 
             for(const sectorKey of industry.activeSectors) {
                 techMultipliers[sectorKey] = industry.techMultipliers[sectorKey] ?? 1;
                 laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
+                sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
             }
 
             return {
@@ -71,6 +74,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 laborAssigned,
                 capitalStock,
                 money,
+                sectorGoods,
                 settlementType: industry.settlementType,
                 allowedSectors: [...industry.activeSectors]
             };
@@ -121,6 +125,11 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     if(patch.money) {
         for(const [key, value] of Object.entries(patch.money)) {
             industry.money[key as keyof IndustrialSectors] = value;
+        }
+    }
+    if(patch.sectorGoods) {
+        for(const [key, goods] of Object.entries(patch.sectorGoods)) {
+            industry.sectorGoods[key as keyof IndustrialSectors] = goods;
         }
     }
 

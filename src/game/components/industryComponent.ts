@@ -26,6 +26,7 @@ export class IndustryComponent extends EntityComponent {
     public activeSectors: Set<keyof IndustrialSectors>
     public capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>
     public money: Record<keyof IndustrialSectors, number>
+    public sectorGoods: Record<keyof IndustrialSectors, Goods>
 
     constructor(
         public activeSectorKeys: Set<keyof IndustrialSectors>,
@@ -70,5 +71,8 @@ export class IndustryComponent extends EntityComponent {
         this.money = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, starterMoney[key] ?? 0])
         ) as Record<keyof IndustrialSectors, number>;
+        this.sectorGoods = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, createStarterWarehouse(0)])
+        ) as Record<keyof IndustrialSectors, Goods>;
     }
 }

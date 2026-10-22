@@ -9,7 +9,7 @@ export interface SectorExecutionResult {
     sectorUtilization: Record<string, number>;
     workingWorkers: Record<keyof Population, PopulationBreakdown>;
     remainingWorkers: Record<keyof Population, PopulationBreakdown>;
-    remainingGoods: Goods;
+    sectorGoods: Record<keyof IndustrialSectors, Goods>;
     sumGoodsRequirements: Goods;
     sumGoodsProduction: Goods;
 }

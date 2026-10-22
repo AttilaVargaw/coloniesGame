@@ -55,7 +55,7 @@ export function SectorRow({
         if(config?.goodsRequirements) {
             (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
                 const scaledReq = req * techMultiplier;
-                const consumed = industry.goods[good] ?? 0;
+                const consumed = industry.sectorGoods[sectorKey]?.[good] ?? 0;
                 addReq(good, scaledReq, consumed);
             });
         }
@@ -69,7 +69,7 @@ export function SectorRow({
         }
 
         return { items, bottleneck, bottleneckRatio };
-    }, [config, techMultiplier, industry.goods, industry.population, sectorResult, hasData, isStopped]);
+    }, [config, techMultiplier, sectorKey, industry.sectorGoods, industry.population, sectorResult, hasData, isStopped]);
 
     return (
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
@@ -99,13 +99,18 @@ export function SectorRow({
                     {
                         (() => {
                             const stock = industry.capitalStock[sectorKey] ?? {};
-                            const entries = Object.entries(stock) as [keyof Goods, number][];
+                            const sectorInv = industry.sectorGoods[sectorKey] ?? {};
+                            const allGoods = new Set([...Object.keys(stock), ...Object.keys(sectorInv)]) as Set<keyof Goods>;
+                            const money = industry.money[sectorKey];
 
-                            return entries.map(([good, amount]) =>
-                                <div key={good}>
-                                    <RequirementItem actual={amount} hasData name={good} scaledReq={amount} />
-                                </div>).concat(<div key="money">
-                                    <RequirementItem actual={industry.money[sectorKey]} hasData name="money" scaledReq={industry.money[sectorKey]} />
+                            return [...allGoods].map((good) =>
+                                <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+                                    <RequirementItem actual={sectorInv[good] ?? 0} hasData name={good} scaledReq={sectorInv[good] ?? 0} />
+                                    {stock[good] !== undefined && (
+                                        <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(stock[good]! * 100) / 100)} cap)</span>
+                                    )}
+                                </div>).concat(<div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center", marginTop: "0.25em" }}>
+                                    <span className="font-mono text-xs">💰 {convertToReadable(Math.round(money))}</span>
                                 </div>)
                         })()
                     }
