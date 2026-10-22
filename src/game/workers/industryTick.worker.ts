@@ -171,10 +171,11 @@ const wealthSmoothing = 0.5;
 const expectedQolSmoothing = 0.03;
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
-const maxDailyChangeSmoothing = 0.001
+const maxDailyChangeSmoothing = 0.001;
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
+const EMPTY_WAREHOUSE = createStarterWarehouse(0);
 
 const extraRequirements = {
     student: {
@@ -308,10 +309,13 @@ function executeSectors(
     inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
     prices: Record<keyof Goods, number>
 ): SectorExecutionResult {
-    const sumGoodsRequirements = createStarterWarehouse(0);
-    const sumGoodsProduction = createStarterWarehouse(0);
+    const sumGoodsRequirements = { ...EMPTY_WAREHOUSE };
+    const sumGoodsProduction = { ...EMPTY_WAREHOUSE };
     const workingWorkers = createStarterPopulation(0);
-    const remainingWorkers = structuredClone(population);
+    const remainingWorkers: Record<keyof Population, PopulationBreakdown> = { ...createStarterPopulation(0) };
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        remainingWorkers[key] = { ...population[key] };
+    }
 
     const sectorResults: Record<string, SectorResult> = {};
     const sectorProfits: Record<string, number> = {};
@@ -375,7 +379,7 @@ function executeSectors(
             };
         }
 
-        const sectorInventory = { ...(sectorGoods[bid.name as keyof IndustrialSectors] ?? createStarterWarehouse(0)) };
+        const sectorInventory = { ...(sectorGoods[bid.name as keyof IndustrialSectors] ?? EMPTY_WAREHOUSE) };
         const consumedGoods: Partial<Goods> = {};
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             const consumed = value * actualScale;
@@ -436,35 +440,32 @@ function finalizeGoods(
     populationConsumption: Partial<Goods>,
     population: Population
 ): Goods {
-    const goodsRequirements = { ...sumGoodsRequirements };
-    for(const key in populationConsumption) {
-        goodsRequirements[key as keyof Goods] = (goodsRequirements[key as keyof Goods] ?? 0) + (populationConsumption[key as keyof Goods] ?? 0);
+    const finalGoods = { ...currentGoods } as Goods;
+
+    for(const key in sumGoodsProduction) {
+        const goodKey = key as keyof Goods;
+        finalGoods[goodKey] = (finalGoods[goodKey] ?? 0) + (sumGoodsProduction[goodKey] ?? 0);
     }
 
-    const goodsProduction = { ...sumGoodsProduction };
-    const goodsChange = Object.entries({ ...sumGoodsProduction, ...goodsRequirements }).reduce(
-        (acc, [key]) => {
-            acc[key as keyof Goods] = (goodsProduction[key as keyof Goods] ?? 0) - (goodsRequirements[key as keyof Goods] ?? 0);
-            return acc;
-        },
-        createStarterWarehouse(0)
-    );
+    for(const key in sumGoodsRequirements) {
+        const goodKey = key as keyof Goods;
+        finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) - (sumGoodsRequirements[goodKey] ?? 0));
+    }
+
+    for(const key in populationConsumption) {
+        const goodKey = key as keyof Goods;
+        finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) - (populationConsumption[goodKey] ?? 0));
+    }
 
     const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
     const populationWaste = totalPopulation * wastePerPerson;
 
-    goodsChange.waste = Math.max(0, (goodsChange.waste || 0) + populationWaste - wasteDecayRate * (currentGoods.waste || 0));
+    finalGoods.waste = Math.max(0, (finalGoods.waste || 0) + populationWaste - wasteDecayRate * (currentGoods.waste || 0));
 
-    const finalGoods = { ...currentGoods } as Goods;
-
-    for(const key in goodsChange) {
+    for(const key in finalGoods) {
         const goodKey = key as keyof Goods;
-        const delta = goodsChange[goodKey] || 0;
-
         if(NON_CUMULATING_GOODS.has(goodKey)) {
-            finalGoods[goodKey] = Math.max(0, delta);
-        } else {
-            finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) + delta);
+            finalGoods[goodKey] = Math.max(0, finalGoods[goodKey] ?? 0);
         }
     }
 
@@ -570,7 +571,7 @@ function processIndustry(
         const config = industrySectorBlueprints.get(sectorName);
         if(!config?.goodsRequirements) continue;
 
-        const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
+        const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? EMPTY_WAREHOUSE) };
         let sectorMoney = newMoney[sectorName] ?? 0;
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
@@ -632,7 +633,7 @@ function processIndustry(
 
     // Move goods between sectors and colony pool:
     // Sectors SELL produced output to colony, BUY consumed inputs from colony
-    const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
+    const colonyGoodsDelta: Partial<Goods> = { ...EMPTY_WAREHOUSE };
 
     // Deduct goods sectors bought from colony pool for inputs
     for(const goodKey of Object.keys(goods)) {
@@ -656,7 +657,7 @@ function processIndustry(
                     colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + sell;
                 }
                 // Keep buffer in sector inventory
-                const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                const sectorInv = { ...(updatedSectorGoods[name] ?? EMPTY_WAREHOUSE) };
                 sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + keep;
                 updatedSectorGoods[name] = sectorInv;
             }
@@ -667,7 +668,7 @@ function processIndustry(
     }
 
     // Capital replenishment: sectors buy replacement capital goods from colony pool
-    const capitalReplenishmentDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
+    const capitalReplenishmentDelta: Partial<Goods> = { ...EMPTY_WAREHOUSE };
     const newCapitalStock: Record<string, Partial<Goods>> = {};
     for(const name of activeSectors) {
         const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
@@ -740,8 +741,8 @@ function processIndustry(
     }
 
     // Apply colony goods changes: split delta into production (sell to colony) and requirements (buy from colony)
-    const colonyGoodsProduction = createStarterWarehouse(0);
-    const colonyGoodsRequirements = createStarterWarehouse(0);
+    const colonyGoodsProduction = { ...EMPTY_WAREHOUSE };
+    const colonyGoodsRequirements = { ...EMPTY_WAREHOUSE };
     for(const [key, value] of Object.entries(colonyGoodsDelta)) {
         if(value > 0) {
             colonyGoodsProduction[key as keyof Goods] = value;
