@@ -16,7 +16,7 @@ export function RequirementItem({ name, scaledReq, actual, hasData }: { name: ke
         if(name === "money") {
             return <CircleDollarSign className="w-4 h-4" strokeWidth={1.5} />
         } else {
-            return isPopulationReq(name) ? <PopulationIcon name={name} /> : <ResourceIcon name={name as keyof Goods} />
+            return isPopulationReq(name) ? <PopulationIcon name={name} /> : <ResourceIcon name={name} />
         }
     }, [name])
 

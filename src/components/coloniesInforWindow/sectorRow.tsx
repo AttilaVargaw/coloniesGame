@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
+import { BsHexagon } from "react-icons/bs";
 
 export function SectorRow({
     rowKey,
@@ -100,18 +101,34 @@ export function SectorRow({
                         (() => {
                             const stock = industry.capitalStock[sectorKey] ?? {};
                             const sectorInv = industry.sectorGoods[sectorKey] ?? {};
-                            const allGoods = new Set([...Object.keys(stock), ...Object.keys(sectorInv)]) as Set<keyof Goods>;
                             const money = industry.money[sectorKey];
 
-                            return [...allGoods].map((good) =>
-                                <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                    <RequirementItem actual={sectorInv[good] ?? 0} hasData name={good} scaledReq={sectorInv[good] ?? 0} />
-                                    {stock[good] !== undefined && (
-                                        <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(stock[good]! * 100) / 100)} cap)</span>
-                                    )}
-                                </div>).concat(<div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center", marginTop: "0.25em" }}>
-                                    <span className="font-mono text-xs">💰 {convertToReadable(Math.round(money))}</span>
-                                </div>)
+                            // Only show goods relevant to this sector: capital goods + inputs/outputs
+                            const relevantGoods =
+                                new Set([
+                                    ...Object.keys(config?.capitalGoods ?? {}),
+                                    ...Object.keys(config?.goodsRequirements ?? {}),
+                                    ...Object.keys(config?.goodsProduction ?? {}),
+                                    ...Object.keys(sectorInv)
+                                ]) as Set<keyof Goods>
+
+                            return [...relevantGoods].map((good) => {
+                                const amount = sectorInv[good] ?? 0;
+                                const cap = stock[good];
+                                if(amount === 0 && (!cap || cap <= 0)) return null;
+                                return (
+                                    <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+                                        <RequirementItem actual={amount} hasData name={good} scaledReq={amount} />
+                                        {cap !== undefined && cap > 0 && amount === 0 && (
+                                            <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(cap * 100) / 100)} cap)</span>
+                                        )}
+                                    </div>
+                                );
+                            }).concat(
+                                <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+                                    <RequirementItem actual={industry.money[sectorKey]} hasData={false} name="money" scaledReq={industry.money[sectorKey]} />
+                                </div>
+                            )
                         })()
                     }
                 </div>
