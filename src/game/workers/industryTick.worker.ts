@@ -197,14 +197,19 @@ function buildSectorBid(
 
     const capitalGoods = config.capitalGoods || {};
 
-    // Capital adequacy: how much capital stock is available relative to consumption rate.
-    // 1.0 = full capacity, 0.0 = no capital, output halts.
+    // Capital adequacy: capital stock relative to reference consumption.
+    // 0 stock = 0 production, reference stock = 1.0x production,
+    // excess capital increases max production with diminishing returns.
     let capitalAdequacy = 1;
     for(const goodKey of Object.keys(capitalGoods)) {
         const stock = capitalStock[goodKey as keyof Goods] ?? 0;
         const rate = capitalGoods[goodKey as keyof Goods] as number;
-        const referenceConsumption = rate * 100; // reference production scale per tick
-        const adequacy = referenceConsumption > 0 ? Math.min(1, stock / referenceConsumption) : 1;
+        const referenceConsumption = rate * 100;
+        if(referenceConsumption <= 0) continue;
+
+        const ratio = stock / referenceConsumption;
+        // Below target: linear scaling. Above target: diminishing log2 returns.
+        const adequacy = ratio >= 1 ? 1 + Math.log2(ratio) : ratio;
         capitalAdequacy = Math.min(capitalAdequacy, adequacy);
     }
 
