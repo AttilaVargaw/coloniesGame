@@ -575,11 +575,11 @@ function processIndustry(
         };
     }
 
-    let money = startingMoney;
+    const newMoney: Record<string, number> = { ...startingMoney };
 
-    // Accumulate sector profits into colony money
-    for(const profit of Object.values(sectorProfits)) {
-        money += profit;
+    // Accumulate sector profits into per-sector money pools
+    for(const [sectorName, profit] of Object.entries(sectorProfits)) {
+        newMoney[sectorName] = (newMoney[sectorName] ?? 0) + profit;
     }
 
     const newCapitalStock: Record<string, Partial<Goods>> = {};
@@ -612,11 +612,11 @@ function processIndustry(
                 }
             }
 
-            // Replenish capital stock from colony goods pool, paid with money
+            // Replenish capital stock from colony goods pool, paid with sector's own money
             for(const [goodKey, amount] of Object.entries(wear)) {
                 const cost = amount * (prices[goodKey as keyof Goods] ?? 0);
-                if(money >= cost && amount > 0) {
-                    money -= cost;
+                if(newMoney[name] >= cost && amount > 0) {
+                    newMoney[name] -= cost;
                     sumGoodsRequirements[goodKey as keyof Goods] = (sumGoodsRequirements[goodKey as keyof Goods] ?? 0) + amount;
                     currentStock[goodKey as keyof Goods] = (currentStock[goodKey as keyof Goods] ?? 0) + amount;
                 }
@@ -641,7 +641,7 @@ function processIndustry(
         sectorUtilization,
         sectorResults,
         capitalStock: newCapitalStock,
-        money,
+        money: newMoney,
         settlementType,
         allowedSectors,
     };

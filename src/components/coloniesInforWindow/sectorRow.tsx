@@ -104,6 +104,8 @@ export function SectorRow({
                             return entries.map(([good, amount]) =>
                                 <div key={good}>
                                     <RequirementItem actual={amount} hasData name={good} scaledReq={amount} />
+                                </div>).concat(<div key="money">
+                                    <RequirementItem actual={industry.money[sectorKey]} hasData name="money" scaledReq={industry.money[sectorKey]} />
                                 </div>)
                         })()
                     }

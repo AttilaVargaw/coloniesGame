@@ -5,7 +5,7 @@ import type { Population } from "@/game/data/Population";
 import { POPULATION_NAMES } from "@/components/icons/PopulationIcon";
 import { SectorRow } from "./sectorRow";
 
-export function isPopulationReq(name: keyof Population | keyof Goods): name is keyof Population {
+export function isPopulationReq(name: keyof Population | keyof Goods | "money"): name is keyof Population {
     return name in POPULATION_NAMES;
 }
 

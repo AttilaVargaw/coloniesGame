@@ -14,14 +14,14 @@ export interface Engine {
     removeEntity(entity: Entity): void;
     reindexEntity(entity: Entity): this;
     dispatchEvent(event: EventBase): this;
-    getSceneNode(entity: Entity): SceneNode | undefined;
+    getSceneNode(entity: Entity): SceneNode | void;
     subscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this;
     unsubscribe<T extends EventBase>(event: new (...args: any[]) => T, callback: (data: T["data"]) => void): this;
     registerNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>, keys: Set<new (...args: any[]) => EntityComponent>, converter: (entity: Entity) => T): this;
     unregisterNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>): void;
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>): T[];
     getAllEntities(): Entity[];
-    getEntityById(id: string): Entity | undefined;
+    getEntityById(id: string): Entity | void;
     addCommand(command: CommandBase): void;
     getCommands<T extends CommandBase>(command: new (...args: any[]) => T): Queue<T>;
     registerCommandQueue(command: new (...args: any[]) => CommandBase): this;

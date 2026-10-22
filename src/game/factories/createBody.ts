@@ -101,6 +101,7 @@ function createInteractionComponents(
         }
 
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {};
+        const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {};
         for(const sector of starterSectors) {
             const config = industrySectorBlueprints.get(sector);
             if(config?.capitalGoods) {
@@ -109,6 +110,7 @@ function createInteractionComponents(
                     starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 10));
                 }
             }
+            starterMoney[sector] = Math.max(500, population * 2);
         }
 
         components.push(
@@ -128,7 +130,7 @@ function createInteractionComponents(
                 createStarterPopulation(population),
                 "standard",
                 "colony",
-                Math.max(1000, population * 5),
+                starterMoney as Record<keyof IndustrialSectors, number>,
                 starterCapitalStock
             )
         )

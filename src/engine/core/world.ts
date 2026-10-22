@@ -44,7 +44,7 @@ export class World implements Engine {
         }
     }
 
-    getEntityById(id: string): Entity | undefined {
+    getEntityById(id: string): Entity | void {
         return this.entityRegistry.getEntityById(id)
     }
 

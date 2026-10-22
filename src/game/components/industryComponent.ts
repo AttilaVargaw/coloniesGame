@@ -25,7 +25,7 @@ export class IndustryComponent extends EntityComponent {
     public laborAssigned: Record<keyof IndustrialSectors, number>
     public activeSectors: Set<keyof IndustrialSectors>
     public capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>
-    public money: number
+    public money: Record<keyof IndustrialSectors, number>
 
     constructor(
         public activeSectorKeys: Set<keyof IndustrialSectors>,
@@ -33,7 +33,7 @@ export class IndustryComponent extends EntityComponent {
         public readonly population: Population,
         public colonyType: ColonyType,
         public settlementType: SettlementType = "colony",
-        public starterMoney: number = 0,
+        public starterMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>,
         public starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {},
     ) {
         super()
@@ -67,6 +67,8 @@ export class IndustryComponent extends EntityComponent {
         this.capitalStock = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, starterCapitalStock[key] ?? {}])
         ) as Record<keyof IndustrialSectors, Partial<Goods>>;
-        this.money = starterMoney;
+        this.money = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, starterMoney[key] ?? 0])
+        ) as Record<keyof IndustrialSectors, number>;
     }
 }
