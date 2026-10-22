@@ -80,6 +80,10 @@ export function ColonySummary({ industry, info }: { industry: IndustryComponent;
                             <td className="p-2">Patron God: { }</td>
                             <td className="p-2 text-right">{colorBySign(totalNet)}</td>
                         </tr>}
+                        <tr className="border-b border-muted/50">
+                            <td className="p-2">Money</td>
+                            <td className="p-2 text-right">{convertToReadable(Math.round(industry.money))}</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

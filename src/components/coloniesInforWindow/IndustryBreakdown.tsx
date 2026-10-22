@@ -22,6 +22,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                         <th className="text-center p-2 font-medium">Profit</th>
                         <th className="text-center p-2 font-medium">Bottleneck</th>
                         <th className="text-left p-2 font-medium">Requirements</th>
+                        <th className="text-left p-2 font-medium">Stock</th>
                     </tr>
                 </thead>
                 <tbody>

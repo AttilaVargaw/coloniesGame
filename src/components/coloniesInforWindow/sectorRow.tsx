@@ -94,6 +94,21 @@ export function SectorRow({
                     ))}
                 </div>
             </td>
+            <td className="p-2 text-left">
+                <div className="text-xs space-y-0.5">
+                    {
+                        (() => {
+                            const stock = industry.capitalStock[sectorKey] ?? {};
+                            const entries = Object.entries(stock) as [keyof Goods, number][];
+
+                            return entries.map(([good, amount]) =>
+                                <div key={good}>
+                                    <RequirementItem actual={amount} hasData name={good} scaledReq={amount} />
+                                </div>)
+                        })()
+                    }
+                </div>
+            </td>
         </tr>
     );
 }
