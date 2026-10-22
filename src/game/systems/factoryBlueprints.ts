@@ -20,8 +20,8 @@ type FactoryBlueprint = {
 const workerReqStandard = { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 } as const
 const workerReqTechnical = { worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 } as const
 const workerReqMaritime = { worker: 89, engineer: 5, clerks: 5, healtcarePersonal: 1 } as const
-const goodsReqHeavyVehicle = { environmentFactor: 2, paper: 1, machinery: 8, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10 } as const
-const goodsReqSpaceShipyard = { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 16, machinery: 14, electricity: 28, buildings: 8, governance: 2, electronics: 1 } as const
+const goodsReqHeavyVehicle = { environmentFactor: 2, paper: 1, oil: 6, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1 } as const
+const goodsReqSpaceShipyard = { paper: 1, environmentFactor: 2, vehicles: 0.1, electricity: 28, buildings: 8, governance: 2, electronics: 1 } as const
 const usualNonEssentialGoods: ReadonlyArray<keyof Goods> = ["electronics", "governance", "paper", "water", "vehicles", "electricity", "services", "environmentFactor", "retail", "itServices"] as const
 
 export const industrySectorBlueprints = new Map<keyof IndustrialSectors, FactoryBlueprint>([
@@ -29,108 +29,107 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         name: "mine",
         goodsRequirements: {
             paper: 1,
-            machinery: 8, electricity: 5, buildings: 4, governance: 2, electronics: 1, vehicles: 0.1, environmentFactor: 2
+            electricity: 5, governance: 2, environmentFactor: 2
         },
         workerRequirement: workerReqStandard,
         goodsProduction: { ore: 100, waste: 2 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.05 },
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
     }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
-            paper: 1, environmentFactor: 2, vehicles: 0.1, machinery: 8, electricity: 1, buildings: 4, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 2, electricity: 1, governance: 2
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { oil: 80, waste: 2 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
 
     })],
     ["forestry", ({
         name: "forestry", goodsRequirements: {
-            paper: 1, vehicles: 0.1, ammunition: 1, chemicals: 3, buildings: 3, governance: 2, electronics: 1
-        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { wood: 180, agriculturalGoods: 20, environmentFactor: 100 },
+            paper: 1, ammunition: 1, chemicals: 3, governance: 2
+        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 },
+        goodsProduction: { wood: 180, agriculturalGoods: 20, environmentFactor: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { electronics: 0.01, buildings: 0.01, vehicles: 0.1 },
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "ammunition", "chemicals"]),
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
-            paper: 1, environmentFactor: 2, vehicles: 0.1, machinery: 5, water: 4, chemicals: 8, buildings: 4, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 2, water: 4, chemicals: 8, governance: 2,
         }, workerRequirement: {
             farmer: 90, clerks: 5, engineer: 5, healtcarePersonal: 1
         }, goodsProduction: { agriculturalGoods: 100, },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["chemicals", "electronics", "paper"]),
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, vehicles: 0.1 },
     })],
     ["fishery", {
         name: "fishery", goodsRequirements: {
             paper: 1,
-            vehicles: 0.05,
-            machinery: 3,
-            buildings: 3,
             governance: 2,
-            electronics: 1,
-            ships: 0.5,
             environmentFactor: 2,
-        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { agriculturalGoods: 100 },
+        },
+        workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 },
+        goodsProduction: { agriculturalGoods: 100 },
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, ships: 0.01 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
     }],
     ["foodFactory", ({
         name: "foodFactory",
-        goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, agriculturalGoods: 20, machinery: 8, buildings: 3, governance: 2, electronics: 1, retail: 20 },
+        goodsRequirements: { paper: 1, environmentFactor: 2, agriculturalGoods: 20, governance: 2, retail: 20 },
         workerRequirement: workerReqStandard,
         goodsProduction: { food: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["luxuryFood", ({
         name: "luxuryFood",
-        goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, machinery: 6, electricity: 18, buildings: 3, governance: 2, electronics: 1, retail: 20 },
+        goodsRequirements: { paper: 1, environmentFactor: 2, electricity: 18, governance: 2, retail: 20 },
         workerRequirement: workerReqStandard,
         goodsProduction: { luxuryFood: 22, },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, ships: 0.01 },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["waterTreatment", ({
         name: "waterTreatment", goodsRequirements: {
-            paper: 1, environmentFactor: 2, vehicles: 0.1, electricity: 20, machinery: 12, chemicals: 8, buildings: 6, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 2, electricity: 20, chemicals: 8, governance: 2
         },
         workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { water: 1500 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
     })],
     ["powerPlant", ({
         name: "powerPlant", goodsRequirements: {
             environmentFactor: 2,
             paper: 1,
-            vehicles: 0.1,
-            oil: 14, machinery: 6,
-            buildings: 3,
+            oil: 14,
             governance: 2,
-            electronics: 1
         },
         workerRequirement: {
             worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1
         }, goodsProduction: { electricity: 220, waste: 1 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
+        capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
     })],
     ["metalFactory", ({
         name: "metalFactory", goodsRequirements: {
             environmentFactor: 3,
-            vehicles: 0.1,
             paper: 1,
-            machinery: 8,
             electricity: 20,
             ore: 100,
-            buildings: 3,
             governance: 2,
-            electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { metals: 60, waste: 1 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, metals: 0.05 },
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(["paper", "governance"]),
@@ -138,16 +137,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     ["lumberMill", ({
         name: "lumberMill", goodsRequirements: {
             environmentFactor: 2,
-            vehicles: 0.1,
             wood: 30,
-            machinery: 6,
             paper: 1,
-            buildings: 3,
             governance: 2,
-            electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { lumber: 40 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.04 },
+        capitalGoods: { machinery: 0.04, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
@@ -156,10 +151,19 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         name: "machineryFactory", goodsRequirements: {
             environmentFactor: 2,
             paper: 1,
-            vehicles: 0.1, metals: 8, electricity: 15, buildings: 3, governance: 2, electronics: 1
-        }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { machinery: 40 },
+            metals: 8,
+            electricity: 15,
+            governance: 2
+        },
+        workerRequirement: {
+            worker: 89,
+            clerks: 5,
+            engineer: 5,
+            healtcarePersonal: 1
+        },
+        goodsProduction: { machinery: 40 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.1, metals: 0.05 },
+        capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(["paper", "governance"])
@@ -167,88 +171,113 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     ["medicineFactory", ({
         name: "medicineFactory", goodsRequirements: {
             environmentFactor: 2,
-            vehicles: 0.1, paper: 1, chemicals: 5, machinery: 6, electricity: 14, buildings: 3, governance: 2, electronics: 1
+            vehicles: 0.1, paper: 1, chemicals: 5, electricity: 14, governance: 2, electronics: 1
         }, workerRequirement: { worker: 85, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { medicine: 35 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06, buildings: 0.02 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["consumerFactory", ({
         name: "consumerFactory", goodsRequirements: {
             environmentFactor: 2,
-            vehicles: 0.1, paper: 1, chemicals: 6, machinery: 8, electricity: 22, buildings: 3, governance: 2, electronics: 1
+            vehicles: 0.1, paper: 1, chemicals: 6, electricity: 22, buildings: 3, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { consumerGoods: 20 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06 },
+        capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["luxuryFurnitureFactory", ({
-        name: "luxuryFurnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 50, vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { luxuryFurniture: 14 },
+        name: "luxuryFurnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 50, vehicles: 0.1, lumber: 10, chemicals: 4, electricity: 20, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { luxuryFurniture: 14 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06 },
+        capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["furnitureFactory", ({
-        name: "furnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 20, vehicles: 0.1, lumber: 10, chemicals: 4, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { furniture: 50 },
+        name: "furnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 20, vehicles: 0.1, lumber: 10, chemicals: 4, electricity: 20, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { furniture: 50 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.05 },
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["ammunitionFactory", ({
-        name: "ammunitionFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, vehicles: 0.1, metals: 8, chemicals: 5, machinery: 8, electricity: 20, buildings: 8, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ammunition: 100 },
+        name: "ammunitionFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, vehicles: 0.1, chemicals: 5, electricity: 20, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ammunition: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["weaponFactory", ({
-        name: "weaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, vehicles: 0.1, metals: 10, machinery: 6, electricity: 20, buildings: 3, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { weapons: 20 },
+        name: "weaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, vehicles: 0.1, electricity: 20, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { weapons: 20 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["nuclearWeaponFactory", ({
-        name: "nuclearWeaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, uranium: 5, machinery: 8, electricity: 28, buildings: 12, governance: 2, electronics: 1 }, workerRequirement: { worker: 85, clerks: 5, engineer: 5, scientist: 5, healtcarePersonal: 1 }, goodsProduction: { nuclearWeapons: 5 },
-        efficiencyBonus: 0.01
+        name: "nuclearWeaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, uranium: 5, electricity: 28, governance: 2, electronics: 1 }, workerRequirement: { worker: 85, clerks: 5, engineer: 5, scientist: 5, healtcarePersonal: 1 }, goodsProduction: { nuclearWeapons: 5 },
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["ordnanceFactory", ({
-        name: "ordnanceFactory", goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, metals: 12, chemicals: 6, machinery: 8, ammunition: 10, electricity: 24, buildings: 10, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ordnance: 30 },
+        name: "ordnanceFactory", goodsRequirements: { paper: 1, environmentFactor: 2, vehicles: 0.1, chemicals: 6, ammunition: 10, electricity: 24, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ordnance: 30 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["spaceInfrastructure", ({
         name: "spaceport", goodsRequirements: {
             vehicles: 0.1,
-            machinery: 8,
             furniture: 10,
             electricity: 25,
-            buildings: 8,
             governance: 2,
             paper: 1,
             electronics: 1,
             environmentFactor: 2,
         }, workerRequirement: { worker: 79, clerks: 5, engineer: 5, scientist: 10, healtcarePersonal: 1 }, goodsProduction: { spaceTransport: 5 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, electronics: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["spaceShips", ({
         name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
         workerRequirement: workerReqStandard,
         goodsProduction: { spaceTransport: 8 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.1, metals: 0.08, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["luxurySpaceShips", ({
         name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
         workerRequirement: workerReqStandard,
         goodsProduction: { spaceTransport: 8 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.1, metals: 0.08, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["orbitalFactory", ({
         name: "orbitalFactory", goodsRequirements: {
-            paper: 1, environmentFactor: 2, vehicles: 0.1, machinery: 12, electricity: 28, tylium: 5, buildings: 8, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 2, vehicles: 0.1, electricity: 28, tylium: 5, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { tylium: 12 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.1, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["construction", ({
         name: "construction", goodsRequirements: {
@@ -265,120 +294,164 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             environmentFactor: 3,
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { buildings: 80 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06, constructionMaterials: 0.03 },
+        capitalGoods: { machinery: 0.06, constructionMaterials: 0.03, buildings: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["services", ({
         name: "services", goodsRequirements: {
-            paper: 1, environmentFactor: 1, retail: 50, vehicles: 0.1, electricity: 22, furniture: 8, buildings: 3, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 1, retail: 50, vehicles: 0.1, electricity: 22, furniture: 8, governance: 2, electronics: 1
         }, workerRequirement: { healtcarePersonal: 1, serviceWorker: 94, clergy: 5 }, goodsProduction: { services: 65 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.01, furniture: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["tourism", ({
         name: "tourism", goodsRequirements: {
-            paper: 1, environmentFactor: 3, retail: 50, vehicles: 0.1, services: 12, luxuryFood: 6, luxuryFurniture: 8, buildings: 8, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 3, retail: 50, vehicles: 0.1, services: 12, luxuryFood: 6, luxuryFurniture: 8, governance: 2, electronics: 1
         }, workerRequirement: { worker: 20, clerks: 5, serviceWorker: 70, healtcarePersonal: 5 }, goodsProduction: { tourism: 12 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.02, luxuryFurniture: 0.01 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.06,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["education", ({
         name: "education", goodsRequirements: {
-            vehicles: 0.1, electricity: 10, services: 6, buildings: 2, governance: 2, electronics: 1, paper: 2, itServices: 1
+            vehicles: 0.1, electricity: 10, services: 6, governance: 2, electronics: 1, paper: 2, itServices: 1
         }, workerRequirement: { teacher: 89, clerks: 10, worker: 5, healtcarePersonal: 1 }, goodsProduction: { education: 300 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.02, electronics: 0.01 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.06,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["healthcare", ({
         name: "healthcare", goodsRequirements: {
-            paper: 1, retail: 20, vehicles: 0.1, medicine: 3, electricity: 8, buildings: 2, governance: 2, electronics: 1, itServices: 1
+            paper: 1, retail: 20, vehicles: 0.1, medicine: 3, electricity: 8, governance: 2, electronics: 1, itServices: 1
         }, workerRequirement: { healtcarePersonal: 90, clerks: 5, worker: 5 }, goodsProduction: { healthcare: 200 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.01, machinery: 0.02 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["environmentControl", ({
         name: "environmentControl",
         goodsRequirements: {
-            paper: 1, vehicles: 0.1, electricity: 14, medicine: 3, chemicals: 3, buildings: 6, governance: 2, electronics: 1
+            paper: 1, vehicles: 0.1, electricity: 14, medicine: 3, chemicals: 3, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { environmentFactor: 30 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.03, buildings: 0.02 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08
     })],
     ["chemical", ({
         name: "chemical", goodsRequirements: {
-            paper: 1, environmentFactor: 3, vehicles: 0.1, oil: 8, electricity: 15, buildings: 2, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 3, vehicles: 0.1, oil: 8, electricity: 15, governance: 2, electronics: 1
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { chemicals: 70, waste: 4 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
-            paper: 1, vehicles: 0.1, electricity: 14, services: 8, buildings: 2, governance: 2, electronics: 1, itServices: 1
+            paper: 1, vehicles: 0.1, electricity: 14, services: 8, governance: 2, electronics: 1, itServices: 1
         }, workerRequirement: { worker: 19, clerks: 80, healtcarePersonal: 1 }, goodsProduction: { monetaryServices: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.02, electronics: 0.01 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.06,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["religion", ({
         name: "religion",
         goodsRequirements: {
-            paper: 1, vehicles: 0.1, services: 12, buildings: 2, governance: 2, electronics: 1
+            paper: 1, vehicles: 0.1, services: 12, governance: 2, electronics: 1
         }, workerRequirement: { clergy: 89, clerks: 5, worker: 5, healtcarePersonal: 1 }, goodsProduction: { faith: 200 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.02 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.06,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["lawEnforcement", ({
         name: "lawEnforcement",
-        goodsRequirements: { paper: 1, vehicles: 0.1, electricity: 12, weapons: 3, buildings: 2, governance: 2, electronics: 1, itServices: 1 },
+        goodsRequirements: { paper: 1, vehicles: 0.1, electricity: 12, weapons: 3, governance: 2, electronics: 1, itServices: 1 },
         workerRequirement: { policeMen: 89, worker: 5, clerks: 5, healtcarePersonal: 1 }, goodsProduction: { lawEnforcement: 80 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["nuclearSector", ({
         name: "nuclearSector", goodsRequirements:
-            { vehicles: 0.1, ore: 20, paper: 1, machinery: 8, electricity: 10, buildings: 4, governance: 2, electronics: 1, environmentFactor: 1 },
+            { vehicles: 0.1, ore: 20, paper: 1, electricity: 10, buildings: 4, governance: 2, electronics: 1, environmentFactor: 1 },
         workerRequirement: { scientist: 5, worker: 69, clerks: 5, engineer: 20, healtcarePersonal: 1 },
         goodsProduction: { uranium: 10, waste: 3 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     })],
     ["nuclearEnergy", {
         name: "nuclearSector", goodsRequirements:
-            { vehicles: 0.1, ore: 20, paper: 1, machinery: 8, electricity: 10, buildings: 4, governance: 2, electronics: 1, environmentFactor: 2, uranium: 20 },
+            { vehicles: 0.1, ore: 20, paper: 1, electricity: 10, buildings: 4, governance: 2, electronics: 1, environmentFactor: 2, uranium: 20 },
         workerRequirement: {
             scientist: 5, worker: 69, clerks: 5, engineer: 20, healtcarePersonal: 1
         },
         goodsProduction: { waste: 3 },
-        efficiencyBonus: 0.01
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1
     }],
     ["greenEnergy", ({
         name: "greenEnergy", goodsRequirements: {
-            paper: 1, vehicles: 0.1, machinery: 6, buildings: 8, governance: 2, electronics: 1
+            paper: 1, vehicles: 0.1, buildings: 8, governance: 2, electronics: 1
         }, workerRequirement: {
             worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1
         }, goodsProduction: { electricity: 160 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06, buildings: 0.02 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["alternativeMedicine", ({
         name: "alternativeMedicine", goodsRequirements: {
-            paper: 1, environmentFactor: 1, retail: 20, vehicles: 0.1, agriculturalGoods: 25, buildings: 1, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 1, retail: 20, vehicles: 0.1, agriculturalGoods: 25, governance: 2, electronics: 1
         }, workerRequirement: { worker: 94, clerks: 5, healtcarePersonal: 1 }, goodsProduction: { healthcare: 120 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.02, buildings: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["recycling", ({
         name: "recycling",
-        goodsRequirements: { waste: 20, electricity: 4, paper: 1, buildings: 3, governance: 2, electronics: 1, vehicles: 0.1, environmentFactor: 2, },
+        goodsRequirements: { waste: 20, electricity: 4, paper: 1, governance: 2, electronics: 1, vehicles: 0.1, environmentFactor: 2, },
         workerRequirement: workerReqStandard,
         goodsProduction: { metals: 6, lumber: 4, water: 30, chemicals: 2, oil: 4 },
-        //outputLevelModifier: (level) => level * (1 + 0.08 * (level - 1))
+        capitalGoods: { machinery: 0.04, buildings: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["government", ({
         name: "government",
-        goodsRequirements: { vehicles: 0.1, paper: 1, services: 5, buildings: 2, electronics: 1, environmentFactor: 1, itServices: 1 },
+        goodsRequirements: { vehicles: 0.1, paper: 1, services: 5, electronics: 1, environmentFactor: 1, itServices: 1 },
         workerRequirement: { clerks: 79, worker: 20, healtcarePersonal: 1 },
         goodsProduction: { governance: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.01, electronics: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "itServices"])
     })],
     ["automotive", ({
@@ -387,14 +460,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             environmentFactor: 3,
             paper: 1,
             retail: 20,
-            machinery: 8,
             oil: 6,
             electricity: 15,
             buildings: 3,
             water: 2,
             governance: 2,
             electronics: 1,
-            metals: 10
         },
         workerRequirement: { worker: 89, scientist: 5, clerks: 5, healtcarePersonal: 1 },
         goodsProduction: { vehicles: 15, waste: 1 },
@@ -419,7 +490,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     ["electronics", ({
         name: "electronics",
         goodsRequirements: {
-            environmentFactor: 2, paper: 1, retail: 20, vehicles: 0.1, machinery: 6, chemicals: 5, electricity: 18, buildings: 3, governance: 2
+            environmentFactor: 2, paper: 1, retail: 20, vehicles: 0.1, chemicals: 5, electricity: 18, buildings: 3, governance: 2
         },
         workerRequirement: {
             worker: 84, scientist: 5, clerks: 5, engineer: 5, healtcarePersonal: 1
@@ -437,6 +508,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         workerRequirement: workerReqTechnical,
         goodsProduction: { railroadVehicles: 15, waste: 1 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["militaryVehicles", ({
@@ -444,44 +518,63 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsRequirements: goodsReqHeavyVehicle,
         workerRequirement: workerReqTechnical,
         goodsProduction: { militaryVehicles: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["railroadInfrastructure", ({
         name: "railroadInfrastructure",
         goodsRequirements: {
             retail: 1, environmentFactor: 2,
-            paper: 1, machinery: 1, oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1, railroadVehicles: 10
+            paper: 1, oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, railroadVehicles: 10
         },
         workerRequirement: { worker: 84, clerks: 5, serviceWorker: 5, engineer: 5, healtcarePersonal: 1 },
         goodsProduction: { railroadMobility: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["ships", ({
         name: "ships",
         goodsRequirements: goodsReqHeavyVehicle,
         workerRequirement: workerReqMaritime,
         goodsProduction: { ships: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["shipInfrastructure", ({
         name: "shipInfrastructure",
         goodsRequirements: {
             retail: 1, environmentFactor: 2, paper: 1,
-            machinery: 1, oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1, ships: 10
+            oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, ships: 10
         },
         workerRequirement: workerReqMaritime,
         goodsProduction: { shipMobility: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["luxuryShips", ({
         name: "luxuryShips",
         goodsRequirements: {
             environmentFactor: 2, paper: 1, retail: 20,
-            machinery: 8, oil: 10, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, metals: 10
+            oil: 10, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1
         },
         workerRequirement: workerReqMaritime,
         goodsProduction: { luxuryShips: 15, waste: 1 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["aircraft", ({
@@ -489,79 +582,120 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsRequirements: goodsReqHeavyVehicle,
         workerRequirement: workerReqMaritime,
         goodsProduction: { aircraft: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["aircraftInfrastructure", ({
         name: "aircraftInfrastructure",
-        goodsRequirements: { retail: 1, environmentFactor: 2, paper: 1, machinery: 1, oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, metals: 1, aircraft: 10 },
+        goodsRequirements: { retail: 1, environmentFactor: 2, paper: 1, oil: 50, electricity: 1, buildings: 10, governance: 2, electronics: 1, aircraft: 10 },
         workerRequirement: { worker: 84, engineer: 5, clerks: 5, serviceWorker: 5, healtcarePersonal: 1 },
         goodsProduction: { airMobility: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["clothing", ({
         name: "clothing",
-        goodsRequirements: { environmentFactor: 3, paper: 1, retail: 50, machinery: 8, chemicals: 2, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, agriculturalGoods: 10 },
+        goodsRequirements: { environmentFactor: 3, paper: 1, retail: 50, chemicals: 2, electricity: 15, buildings: 3, water: 2, governance: 2, electronics: 1, agriculturalGoods: 10 },
         workerRequirement: workerReqStandard,
         goodsProduction: { clothing: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.0006,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["constructionMaterials", ({
         name: "constructionMaterials",
-        goodsRequirements: { environmentFactor: 3, paper: 2, machinery: 8, oil: 2, electricity: 15, buildings: 3, water: 20, governance: 2, electronics: 1, lumber: 10, metals: 10 },
+        goodsRequirements: { environmentFactor: 3, paper: 2, oil: 2, electricity: 15, buildings: 3, water: 20, governance: 2, electronics: 1, lumber: 10 },
         workerRequirement: workerReqMaritime,
         goodsProduction: { constructionMaterials: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["paperFactory", ({
         name: "paperFactory",
-        goodsRequirements: { environmentFactor: 3, vehicles: 0.1, wood: 20, chemicals: 8, machinery: 6, electricity: 16, buildings: 3, governance: 2, electronics: 1 },
+        goodsRequirements: { environmentFactor: 3, vehicles: 0.1, wood: 20, chemicals: 8, electricity: 16, buildings: 3, governance: 2, electronics: 1 },
         workerRequirement: workerReqStandard,
         goodsProduction: { paper: 180 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.06, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["postalServices", ({
         name: "postalServices",
-        goodsRequirements: { environmentFactor: 2, retail: 50, electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10, aircraft: 1, railroadVehicles: 1 },
+        goodsRequirements: { environmentFactor: 2, retail: 50, electricity: 15, governance: 2, electronics: 1, paper: 10, aircraft: 1, railroadVehicles: 1 },
         workerRequirement: { worker: 79, clerks: 5, serviceWorker: 15, healtcarePersonal: 1 },
         goodsProduction: { post: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { vehicles: 0.05, machinery: 0.03, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["entertainmentIndustry", ({
         name: "entertainmentIndustry",
-        goodsRequirements: { environmentFactor: 2, retail: 50, electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        goodsRequirements: { environmentFactor: 2, retail: 50, electricity: 15, governance: 2, electronics: 1, paper: 10 },
         workerRequirement: { worker: 49, clerks: 5, engineer: 5, serviceWorker: 40, healtcarePersonal: 1 },
         goodsProduction: { entertainment: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(usualNonEssentialGoods)
+        efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.04, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["informationTechnology", ({
         name: "informationTechnology",
-        goodsRequirements: { retail: 10, environmentFactor: 2, electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        goodsRequirements: { retail: 10, environmentFactor: 2, electricity: 15, governance: 2, electronics: 1, paper: 10 },
         workerRequirement: { worker: 39, clerks: 5, engineer: 45, serviceWorker: 10, healtcarePersonal: 1 },
         goodsProduction: { itServices: 15, waste: 1 },
-        efficiencyBonus: 0.01, nonEssentialGoods: new Set(["paper", "governance"])
+        efficiencyBonus: 0.01,
+        capitalGoods: { electronics: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["alcoholicDrinkIndustry", ({
         name: "alcoholicDrinkIndustry",
-        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, governance: 2, electronics: 1, paper: 10 },
         workerRequirement: workerReqStandard,
         goodsProduction: { alcoholDrinks: 15, waste: 1 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["stimulantDrinkIndustry", ({
         name: "stimulantDrinkIndustry",
-        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, buildings: 3, governance: 2, electronics: 1, paper: 10 },
+        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, governance: 2, electronics: 1, paper: 10 },
         workerRequirement: workerReqStandard,
         goodsProduction: { stimulantDrinks: 15, waste: 1 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.08,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["retail", ({
         name: "retail",
-        goodsRequirements: { environmentFactor: 2, electricity: 15, buildings: 3, governance: 2, paper: 10 },
+        goodsRequirements: { environmentFactor: 2, electricity: 15, governance: 2, paper: 10 },
         workerRequirement: { worker: 34, clerks: 5, serviceWorker: 60, healtcarePersonal: 1 },
         goodsProduction: { waste: 1, retail: 100 },
         efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 0.01, electronics: 0.01 },
+        capitalEfficiency: 0.0005,
+        capitalEfficiencyDecay: 0.05,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["defense", ({
@@ -569,7 +703,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsRequirements: {
             militaryVehicles: 10,
             electricity: 15,
-            buildings: 3,
             governance: 2,
             electronics: 10,
             paper: 10,
@@ -580,6 +713,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         workerRequirement: { worker: 85, clerks: 5, healtcarePersonal: 5, engineer: 5 },
         goodsProduction: { defense: 150, waste: 1 },
         efficiencyBonus: 0.01,
+        capitalGoods: { machinery: 0.08, vehicles: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     }),],
     ["spaceGoodsTransport", {
@@ -587,7 +723,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsRequirements: {
             environmentFactor: 2,
             electricity: 15,
-            buildings: 3,
             governance: 2,
             electronics: 1,
             paper: 10
@@ -599,6 +734,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             healtcarePersonal: 1
         },
         goodsProduction: { waste: 1, retail: 100 },
+        capitalGoods: { vehicles: 0.05, machinery: 0.05, buildings: 0.01 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: new Set(["paper", "governance"])
     }]
 ])

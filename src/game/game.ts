@@ -64,11 +64,6 @@ export class Game {
             .addSystem(TargetSystem)
             .addSystem(PointerInteractionSystem, viewport)
             .addSystem(MapSystem)
-            .addSystem(OrbitSelectionSystem, viewport)
-            // .addSystem(ShapeRenderer, ViewportSystem)
-            // .addSystem(LabelRenderer, ViewportSystem)
-            // .addSystem(WebGLRectRenderer, ViewportSystem)
-            // .addSystem(WebGLSphereRenderer, ViewportSystem)
             .addSystem(CameraFollowSystem, viewport)
             .addSystem(DebugSystem)
             .addSystem(SpinSystem)
@@ -81,7 +76,7 @@ export class Game {
 
         this.dayPassedTimeout = setTimeout(() => {
             this.engine.dispatchEvent(new DayPassedEvent())
-        }, 100);
+        }, 2_500);
 
         let previousTime = 0.0
         let firstUpdate = true
