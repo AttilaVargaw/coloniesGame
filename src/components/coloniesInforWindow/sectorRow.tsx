@@ -103,30 +103,34 @@ export function SectorRow({
                             const sectorInv = industry.sectorGoods[sectorKey] ?? {};
                             const money = industry.money[sectorKey];
 
-                            // Only show goods relevant to this sector: capital goods + inputs/outputs
                             const relevantGoods =
                                 new Set([
                                     ...Object.keys(config?.capitalGoods ?? {}),
                                     ...Object.keys(config?.goodsRequirements ?? {}),
                                     ...Object.keys(config?.goodsProduction ?? {}),
-                                    ...Object.keys(sectorInv)
                                 ]) as Set<keyof Goods>
 
-                            return [...relevantGoods].map((good) => {
+                            return [...relevantGoods.values()].map((good) => {
+                                const isCapitalGood = config?.capitalGoods?.[good] !== undefined;
+                                const cap = stock[good] ?? 0;
                                 const amount = sectorInv[good] ?? 0;
-                                const cap = stock[good];
-                                if(amount === 0 && (!cap || cap <= 0)) return null;
+
+                                // Show capital stock as primary value for capital goods,
+                                // sector inventory for raw materials/products
+                                const primaryAmount = isCapitalGood ? cap : amount;
+                                const secondaryAmount = isCapitalGood ? amount : cap;
+
                                 return (
                                     <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                        <RequirementItem actual={amount} hasData name={good} scaledReq={amount} />
-                                        {cap !== undefined && cap > 0 && amount === 0 && (
-                                            <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(cap * 100) / 100)} cap)</span>
+                                        <RequirementItem actual={primaryAmount} hasData name={good} scaledReq={primaryAmount} />
+                                        {secondaryAmount > 0 && (
+                                            <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(secondaryAmount * 100) / 100)} {isCapitalGood ? "inv" : "cap"})</span>
                                         )}
                                     </div>
                                 );
                             }).concat(
                                 <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                    <RequirementItem actual={industry.money[sectorKey]} name="money" scaledReq={industry.money[sectorKey]} />
+                                    <RequirementItem actual={money} name="money" scaledReq={money} />
                                 </div>
                             )
                         })()

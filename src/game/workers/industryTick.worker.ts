@@ -209,7 +209,7 @@ function buildSectorBid(
     }
 
     const outputLevel = techMultiplier * capitalAdequacy;
-    const inputLevel = 1;
+    const inputLevel = capitalAdequacy;
 
     const workerRequirement = config.workerRequirement || {};
     const goodsRequirements = config.goodsRequirements || {};
@@ -553,6 +553,42 @@ function processIndustry(
 
     const { workerMarketRatios, goodsMarketRatios } = calculateMarketRatios(sectorBids, population, goods);
 
+    const newMoney: Record<string, number> = { ...startingMoney };
+
+    // Sectors buy input goods from colony pool using their own money
+    // Buy a 5-tick buffer so sectors hold visible inventory
+    const BUY_BUFFER_TICKS = 5;
+    const colonyGoodsAfterPurchase = { ...goods };
+    const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
+    for(const bid of sectorBids) {
+        const sectorName = bid.name as keyof IndustrialSectors;
+        const config = industrySectorBlueprints.get(sectorName);
+        if(!config?.goodsRequirements) continue;
+
+        const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
+        let sectorMoney = newMoney[sectorName] ?? 0;
+
+        for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
+            if(demandPerTick <= 0) continue;
+
+            const demand = demandPerTick * BUY_BUFFER_TICKS;
+            const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
+            const price = prices[goodKey as keyof Goods] ?? 0;
+            if(available <= 0 || price <= 0) continue;
+
+            const canAfford = Math.floor(sectorMoney / price);
+            const toBuy = Math.min(demand, available, canAfford);
+            if(toBuy <= 0) continue;
+
+            sectorMoney -= toBuy * price;
+            colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
+            sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + toBuy;
+        }
+
+        newMoney[sectorName] = sectorMoney;
+        updatedSectorGoodsBeforeExec[sectorName] = sectorInv;
+    }
+
     const {
         sectorResults,
         sectorProfits,
@@ -567,7 +603,7 @@ function processIndustry(
         workerMarketRatios,
         goodsMarketRatios,
         population,
-        sectorGoods,
+        updatedSectorGoodsBeforeExec,
         prices
     );
 
@@ -584,8 +620,6 @@ function processIndustry(
         };
     }
 
-    const newMoney: Record<string, number> = { ...startingMoney };
-
     // Sector profits (revenue - input costs - labor costs) go into per-sector money pools
     for(const [sectorName, profit] of Object.entries(sectorProfits)) {
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + profit;
@@ -595,30 +629,36 @@ function processIndustry(
     // Sectors SELL produced output to colony, BUY consumed inputs from colony
     const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
 
+    // Deduct goods sectors bought from colony pool for inputs
+    for(const goodKey of Object.keys(goods)) {
+        const bought = (goods[goodKey as keyof Goods] ?? 0) - (colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0);
+        if(bought > 0) {
+            colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) - bought;
+        }
+    }
+
     for(const name of activeSectors) {
         const sectorResult = sectorResults[name];
         if(!sectorResult || sectorResult.productionRatio <= 0) continue;
 
-        // Sector sells produced output to colony pool
+        // Sector sells part of produced output to colony, keeps rest as buffer
+        const KEEP_BUFFER_RATIO = 0.5;
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             if(amount > 0) {
-                colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
+                const keep = Math.floor(amount * KEEP_BUFFER_RATIO);
+                const sell = amount - keep;
+                if(sell > 0) {
+                    colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + sell;
+                }
+                // Keep buffer in sector inventory
+                const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + keep;
+                updatedSectorGoods[name] = sectorInv;
             }
         }
 
-        // Sector buys consumed inputs from colony pool
-        for(const [goodKey, amount] of Object.entries(sectorResult.consumedGoods)) {
-            if(amount > 0) {
-                colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) - amount;
-            }
-        }
-
-        // Sector keeps only minimal inventory - remove produced goods (sold to colony)
-        const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-        for(const [goodKey] of Object.entries(sectorResult.producedGoods)) {
-            delete sectorInv[goodKey as keyof Goods];
-        }
-        updatedSectorGoods[name] = sectorInv;
+        // Sector buys consumed inputs from colony pool (already deducted in buy step via colonyGoodsAfterPurchase)
+        // No additional deduction needed here
     }
 
     // Capital replenishment: sectors buy replacement capital goods from colony pool
@@ -663,6 +703,27 @@ function processIndustry(
                     currentStock[goodKey as keyof Goods] = (currentStock[goodKey as keyof Goods] ?? 0) + amount;
                 }
             }
+
+            // Invest: buy additional capital stock to raise capital adequacy toward 1.0
+            // Target stock per capital good = rate * 100 (reference production scale)
+            for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+                const targetStock = (rate as number) * 100;
+                const current = currentStock[goodKey as keyof Goods] ?? 0;
+                if(current >= targetStock) continue;
+
+                const needed = targetStock - current;
+                const cost = needed * (prices[goodKey as keyof Goods] ?? 0);
+                if(cost <= 0) continue;
+
+                const canAfford = Math.floor(newMoney[name] / cost);
+                if(canAfford <= 0) continue;
+
+                const toBuy = Math.min(needed, canAfford);
+                const buyCost = toBuy * (prices[goodKey as keyof Goods] ?? 0);
+                newMoney[name] -= buyCost;
+                capitalReplenishmentDelta[goodKey as keyof Goods] = (capitalReplenishmentDelta[goodKey as keyof Goods] ?? 0) - toBuy;
+                currentStock[goodKey as keyof Goods] = current + toBuy;
+            }
         }
 
         newCapitalStock[name] = currentStock;
@@ -673,12 +734,17 @@ function processIndustry(
         colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
     }
 
-    // Apply colony goods changes: production - consumption + population consumption + capital purchases
+    // Apply colony goods changes: split delta into production (sell to colony) and requirements (buy from colony)
     const colonyGoodsProduction = createStarterWarehouse(0);
+    const colonyGoodsRequirements = createStarterWarehouse(0);
     for(const [key, value] of Object.entries(colonyGoodsDelta)) {
-        colonyGoodsProduction[key as keyof Goods] = value;
+        if(value > 0) {
+            colonyGoodsProduction[key as keyof Goods] = value;
+        } else if(value < 0) {
+            colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
+        }
     }
-    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, createStarterWarehouse(0), populationConsumption, population);
+    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, populationConsumption, population);
 
     const result: IndustryTickResult = {
         entityId,
