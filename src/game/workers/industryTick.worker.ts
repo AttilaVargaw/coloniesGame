@@ -197,15 +197,18 @@ function buildSectorBid(
 
     const capitalGoods = config.capitalGoods || {};
 
-    // Capital bonus: each unit of capital stock adds capitalEfficiency to output multiplier.
-    // Empty stock => bonus of 1 (normal production at techMultiplier).
-    let capitalBonus = 1;
+    // Capital adequacy: how much capital stock is available relative to consumption rate.
+    // 1.0 = full capacity, 0.0 = no capital, output halts.
+    let capitalAdequacy = 1;
     for(const goodKey of Object.keys(capitalGoods)) {
         const stock = capitalStock[goodKey as keyof Goods] ?? 0;
-        capitalBonus += stock * (config.capitalEfficiency ?? 0);
+        const rate = capitalGoods[goodKey as keyof Goods] as number;
+        const referenceConsumption = rate * 100; // reference production scale per tick
+        const adequacy = referenceConsumption > 0 ? Math.min(1, stock / referenceConsumption) : 1;
+        capitalAdequacy = Math.min(capitalAdequacy, adequacy);
     }
 
-    const outputLevel = techMultiplier * capitalBonus;
+    const outputLevel = techMultiplier * capitalAdequacy;
     const inputLevel = 1;
 
     const workerRequirement = config.workerRequirement || {};
@@ -459,7 +462,7 @@ function processIndustry(
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
-    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, capitalStock, settlementType, allowedSectors } = industry;
+    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, capitalStock, money: startingMoney, settlementType, allowedSectors } = industry;
 
     const memory = priceMemory.get(entityId) || {};
     const prices = getPrices(goods, memory);
@@ -572,6 +575,13 @@ function processIndustry(
         };
     }
 
+    let money = startingMoney;
+
+    // Accumulate sector profits into colony money
+    for(const profit of Object.values(sectorProfits)) {
+        money += profit;
+    }
+
     const newCapitalStock: Record<string, Partial<Goods>> = {};
     for(const name of activeSectors) {
         const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
@@ -584,11 +594,13 @@ function processIndustry(
 
         const sectorResult = sectorResults[name];
         if(sectorResult) {
-            const totalProduction = Object.values(sectorResult.producedGoods).reduce((sum, v) => sum + v, 0);
+            const actualScale = sectorResult.productionRatio;
 
-            // Wear & tear: consume capital goods proportional to production
+            // Wear & tear: consume capital goods proportional to actual production
+            const wear: Partial<Goods> = {};
             for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                const consumed = (rate as number) * totalProduction;
+                const consumed = (rate as number) * actualScale;
+                wear[goodKey as keyof Goods] = consumed;
                 currentStock[goodKey as keyof Goods] = Math.max(0, (currentStock[goodKey as keyof Goods] ?? 0) - consumed);
             }
 
@@ -600,12 +612,13 @@ function processIndustry(
                 }
             }
 
-            // Reinvestment: convert portion of production back into capital goods
-            const reinvestmentRate = config.capitalEfficiency ?? 0;
-            if(reinvestmentRate > 0 && totalProduction > 0) {
-                for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    const added = reinvestmentRate * totalProduction * (rate as number);
-                    currentStock[goodKey as keyof Goods] = (currentStock[goodKey as keyof Goods] ?? 0) + added;
+            // Replenish capital stock from colony goods pool, paid with money
+            for(const [goodKey, amount] of Object.entries(wear)) {
+                const cost = amount * (prices[goodKey as keyof Goods] ?? 0);
+                if(money >= cost && amount > 0) {
+                    money -= cost;
+                    sumGoodsRequirements[goodKey as keyof Goods] = (sumGoodsRequirements[goodKey as keyof Goods] ?? 0) + amount;
+                    currentStock[goodKey as keyof Goods] = (currentStock[goodKey as keyof Goods] ?? 0) + amount;
                 }
             }
         }
@@ -628,6 +641,7 @@ function processIndustry(
         sectorUtilization,
         sectorResults,
         capitalStock: newCapitalStock,
+        money,
         settlementType,
         allowedSectors,
     };

@@ -12,6 +12,8 @@ import { createBarycentre } from "./createBarycentre"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
+import { industrySectorBlueprints } from "../systems/factoryBlueprints"
+import { Goods } from "../data/Goods"
 import { createAsteroidBelt } from "./createAsteroidBelt"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
@@ -98,6 +100,17 @@ function createInteractionComponents(
             }
         }
 
+        const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {};
+        for(const sector of starterSectors) {
+            const config = industrySectorBlueprints.get(sector);
+            if(config?.capitalGoods) {
+                starterCapitalStock[sector] = {};
+                for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 10));
+                }
+            }
+        }
+
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
                 label: "Info",
@@ -113,7 +126,10 @@ function createInteractionComponents(
                 starterSectors,
                 createStarterWarehouse(population),
                 createStarterPopulation(population),
-                "standard"
+                "standard",
+                "colony",
+                Math.max(1000, population * 5),
+                starterCapitalStock
             )
         )
     } else {

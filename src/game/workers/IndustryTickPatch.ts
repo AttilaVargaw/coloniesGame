@@ -23,6 +23,7 @@ export interface IndustryTickPatch {
     populationProfits?: Partial<Record<keyof Population, number>>;
     sectorUtilization?: Partial<Record<keyof IndustrialSectors, number>>;
     capitalStock?: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>;
+    money?: number;
     sectorResults?: {
         changed: Record<string, SectorResult>;
         removed: string[];

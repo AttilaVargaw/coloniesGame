@@ -12,6 +12,7 @@ export interface IndustryTickInput {
     techMultipliers: Record<keyof IndustrialSectors, number>;
     laborAssigned: Record<keyof IndustrialSectors, number>;
     capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>;
+    money: number;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }

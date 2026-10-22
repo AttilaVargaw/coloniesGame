@@ -54,6 +54,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
+            const money = industry.money;
 
             for(const sectorKey of industry.activeSectors) {
                 techMultipliers[sectorKey] = industry.techMultipliers[sectorKey] ?? 1;
@@ -69,6 +70,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 techMultipliers,
                 laborAssigned,
                 capitalStock,
+                money,
                 settlementType: industry.settlementType,
                 allowedSectors: [...industry.activeSectors]
             };
@@ -116,6 +118,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     mergeRecord(industry.populationProfits, patch.populationProfits)
     mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
     mergeRecord(industry.capitalStock, patch.capitalStock)
+    if(patch.money !== undefined) industry.money = patch.money;
 
     mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
     mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)

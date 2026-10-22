@@ -24,6 +24,7 @@ export interface IndustryTickResult {
     sectorUtilization: Record<string, number>;
     sectorResults: Record<string, SectorResult>;
     capitalStock: Record<string, Partial<Goods>>;
+    money: number;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
 }
