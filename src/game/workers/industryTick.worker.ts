@@ -178,7 +178,12 @@ const maxDailyChangeSmoothing = 0.001;
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
+const colonyWageMemory = new Map<string, Partial<Record<keyof Population, number>>>();
 const EMPTY_WAREHOUSE = createStarterWarehouse(0);
+
+const wageDamping = 0.3;
+const wageMinMultiplier = 0.5;
+const wageMaxMultiplier = 2.0;
 
 const extraRequirements = {
     student: {
@@ -195,6 +200,7 @@ function buildSectorBid(
     techMultiplier: number,
     laborAssigned: number,
     capitalStock: Partial<Goods>,
+    salaries: Record<keyof Population, number>,
 ): SectorBid | null {
     const config = industrySectorBlueprints.get(name);
     if(!config) return null;
@@ -232,7 +238,7 @@ function buildSectorBid(
     }, 0);
 
     const laborCost = Object.entries(workerRequirement).reduce((sum, [key, value]) => {
-        return sum + (value as number) * baseSalaries[key as keyof Population];
+        return sum + (value as number) * salaries[key as keyof Population];
     }, 0);
 
     const costPerUnit = inputCost + laborCost;
@@ -313,7 +319,8 @@ function executeSectors(
     goodsMarketRatios: Record<keyof Goods, number>,
     population: Population,
     inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
-    prices: Record<keyof Goods, number>
+    prices: Record<keyof Goods, number>,
+    salaries: Record<keyof Population, number>
 ): SectorExecutionResult {
     const sumGoodsRequirements = { ...EMPTY_WAREHOUSE };
     const sumGoodsProduction = { ...EMPTY_WAREHOUSE };
@@ -414,7 +421,7 @@ function executeSectors(
             return sum + (amount) * prices[key as keyof Goods];
         }, 0);
         const laborCosts = Object.entries(workersEmployed).reduce((sum, [key, amount]) => {
-            return sum + (amount) * baseSalaries[key as keyof Population];
+            return sum + (amount) * salaries[key as keyof Population];
         }, 0);
 
         sectorResults[bid.name] = {
@@ -492,6 +499,12 @@ function processIndustry(
     const prices = getPrices(goods, memory);
     priceMemory.set(entityId, memory);
 
+    const wageMemory = colonyWageMemory.get(entityId) || {};
+    const adjustedSalaries: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    for(const key of Object.keys(baseSalaries) as (keyof Population)[]) {
+        adjustedSalaries[key] = wageMemory[key] ?? baseSalaries[key];
+    }
+
     const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
     const populationConsumption = {} as Partial<Goods>;
@@ -500,7 +513,7 @@ function processIndustry(
 
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
         const { qol: targetQol } = getGoodRequirementsAndQoL(
-            baseSalaries[key],
+            adjustedSalaries[key],
             prices,
             pop
         );
@@ -522,7 +535,7 @@ function processIndustry(
                 (populationConsumption[it as keyof Goods] ?? 0);
         }
 
-        const income = baseSalaries[key] * pop.number;
+        const income = adjustedSalaries[key] * pop.number;
         const expenses = Object.entries(requirements).reduce((sum, [good, amount]) => {
             if(!amount) return sum;
             return sum + amount * prices[good as keyof Goods];
@@ -560,13 +573,31 @@ function processIndustry(
         const laborAssignedVal = laborAssigned[name] ?? 0;
         const capitalStockVal = capitalStock[name] ?? {};
 
-        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal);
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries);
         if(bid) {
             sectorBids.push(bid);
         }
     }
 
     const { workerMarketRatios, goodsMarketRatios } = calculateMarketRatios(sectorBids, population, goods);
+
+    // Update wage memory based on current worker market ratios
+    // Scarce workers (ratio < 1) → wages rise; abundant workers (ratio > 1) → wages fall
+    for(const [workerType, ratio] of Object.entries(workerMarketRatios)) {
+        const wt = workerType as keyof Population;
+        const currentWage = wageMemory[wt] ?? baseSalaries[wt];
+        let wageMultiplier = 1.0;
+        if(ratio > 0) {
+            wageMultiplier = 1.0 / ratio;
+        } else {
+            wageMultiplier = wageMaxMultiplier;
+        }
+        wageMultiplier = Math.max(wageMinMultiplier, Math.min(wageMaxMultiplier, wageMultiplier));
+        const targetWage = baseSalaries[wt] * wageMultiplier;
+        const dampedWage = currentWage + (targetWage - currentWage) * wageDamping;
+        wageMemory[wt] = dampedWage;
+    }
+    colonyWageMemory.set(entityId, wageMemory);
 
     const newMoney: Record<string, number> = { ...startingMoney };
 
@@ -619,7 +650,8 @@ function processIndustry(
         goodsMarketRatios,
         population,
         updatedSectorGoodsBeforeExec,
-        prices
+        prices,
+        adjustedSalaries
     );
 
     for(const key of alwaysWorking) {

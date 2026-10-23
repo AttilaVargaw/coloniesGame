@@ -229,8 +229,9 @@ export function getLowestGoodsRatio(
     )
 }
 
-const priceDamping = 0.4;
-const priceMaxDeviation = 0.25;
+const priceDamping = 0.3;
+const priceMinMultiplier = 0.1;
+const priceMaxMultiplier = 10;
 
 export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): Record<keyof Goods, number> {
     const prices = {} as Record<keyof Goods, number>;
@@ -241,25 +242,19 @@ export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, numb
         const baseline = Math.max(base * 10, 1);
         const stockRatio = stock / baseline;
 
+        // Continuous supply/demand curve: scarcity raises price, surplus lowers it
         let adjustment = 1.0;
-
-        if(stockRatio < 0.2) {
-            adjustment = 1.25;
+        if(stock > 0) {
+            adjustment = baseline / stock;
+        } else {
+            adjustment = priceMaxMultiplier;
         }
-        else if(stockRatio < 0.5) {
-            adjustment = 1.1;
-        }
-        else if(stockRatio > 4) {
-            adjustment = 0.9;
-        }
-        else if(stockRatio > 2) {
-            adjustment = 0.95;
-        }
+        adjustment = Math.max(priceMinMultiplier, Math.min(priceMaxMultiplier, adjustment));
 
         const currentPrice = memory[key] ?? base;
         const targetPrice = base * adjustment;
         const dampedPrice = currentPrice + (targetPrice - currentPrice) * priceDamping;
-        const clampedPrice = Math.max(base * (1 - priceMaxDeviation), Math.min(base * (1 + priceMaxDeviation), dampedPrice));
+        const clampedPrice = Math.max(base * priceMinMultiplier, Math.min(base * priceMaxMultiplier, dampedPrice));
         memory[key] = clampedPrice;
         prices[key] = clampedPrice;
     }
