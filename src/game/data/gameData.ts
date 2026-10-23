@@ -116,7 +116,8 @@ export const MapCreationData = {
         },
     }, {
         angle: -Math.PI / 2,
-        bodies: [heliosGamma,
+        bodies: [
+            heliosGamma,
             heliosDelta, {
                 archetype: "mars",
                 navigationalPoint: true,
@@ -145,5 +146,13 @@ export const MapCreationData = {
             radius: 300,
             inclination: 0
         },
+        satellites: [
+            {
+                marker: { color: "#ddd", radius: 8, label: "Djerba" },
+                archetype: "kobol",
+                orbit: { radius: 14 * SOLAR_UNIT, angle: 4.2, eccentricity: 0.015, inclination: 0.2 },
+                name: "Djerba"
+            }
+        ]
     }]
 } as Readonly<BodyBlueprint>
