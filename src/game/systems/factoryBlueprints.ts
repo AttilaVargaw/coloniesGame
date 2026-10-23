@@ -32,7 +32,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             electricity: 5, governance: 2, environmentFactor: 2
         },
         workerRequirement: workerReqStandard,
-        goodsProduction: { ore: 100, waste: 2 },
+        goodsProduction: { ore: 150, waste: 2 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, },
         capitalEfficiency: 0.0005,

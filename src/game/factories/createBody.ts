@@ -93,7 +93,7 @@ function createInteractionComponents(
     ]
 
     if(population !== undefined) {
-        const starterSectors = createStarterIndustry(population);
+        const starterSectors = createStarterIndustry(population * populationRatio);
         if(blueprint?.starterIndustries) {
             for(const key of Object.keys(blueprint.starterIndustries) as (keyof IndustrialSectors)[]) {
                 starterSectors.add(key);
@@ -107,10 +107,10 @@ function createInteractionComponents(
             if(config?.capitalGoods) {
                 starterCapitalStock[sector] = {};
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 10));
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 5));
                 }
             }
-            starterMoney[sector] = Math.max(500, population * 2);
+            starterMoney[sector] = Math.max(500, population);
         }
 
         components.push(
@@ -126,8 +126,8 @@ function createInteractionComponents(
             }]),
             new IndustryComponent(
                 starterSectors,
-                createStarterWarehouse(population),
-                createStarterPopulation(population),
+                createStarterWarehouse(population * populationRatio),
+                createStarterPopulation(population * populationRatio),
                 "standard",
                 "colony",
                 starterMoney as Record<keyof IndustrialSectors, number>,
@@ -214,6 +214,8 @@ async function createAsteroidBelts(
         })
     }
 }
+
+const populationRatio = 0.05
 
 export async function createBody({
     archetype,
