@@ -36,7 +36,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
     }],
     ["oilRig", ({
@@ -131,7 +131,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance"]),
     })],
     ["lumberMill", ({
@@ -144,7 +144,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.04, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["machineryFactory", ({
@@ -165,7 +165,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["medicineFactory", ({
@@ -176,7 +176,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.02 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["consumerFactory", ({
@@ -187,7 +187,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["luxuryFurnitureFactory", ({
@@ -195,7 +195,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["furnitureFactory", ({
@@ -203,7 +203,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["ammunitionFactory", ({
@@ -211,7 +211,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["weaponFactory", ({
@@ -219,7 +219,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["nuclearWeaponFactory", ({
@@ -234,7 +234,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["spaceInfrastructure", ({
@@ -296,7 +296,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, constructionMaterials: 0.03, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["services", ({
@@ -306,7 +306,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.01, furniture: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["tourism", ({
@@ -316,7 +316,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.02, luxuryFurniture: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.06,
+        capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["education", ({
@@ -326,7 +326,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.06,
+        capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["healthcare", ({
@@ -336,7 +336,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.01, machinery: 0.02 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["environmentControl", ({
@@ -365,7 +365,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.06,
+        capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["religion", ({
@@ -376,7 +376,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.02 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.06,
+        capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["lawEnforcement", ({
@@ -386,7 +386,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["nuclearSector", ({
@@ -420,7 +420,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.02 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["alternativeMedicine", ({
@@ -430,7 +430,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.02, buildings: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["recycling", ({
@@ -440,7 +440,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsProduction: { metals: 6, lumber: 4, water: 30, chemicals: 2, oil: 4 },
         capitalGoods: { machinery: 0.04, buildings: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["government", ({
@@ -451,7 +451,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "itServices"])
     })],
     ["automotive", ({
@@ -472,7 +472,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["automotiveInfrastructure", ({
@@ -499,7 +499,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, electronics: 0.05 },
         capitalEfficiency: 0.0012,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["railroadVehicles", ({
@@ -510,7 +510,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["militaryVehicles", ({
@@ -521,7 +521,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["railroadInfrastructure", ({
@@ -535,7 +535,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["ships", ({
@@ -546,7 +546,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["shipInfrastructure", ({
@@ -560,7 +560,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["luxuryShips", ({
@@ -574,7 +574,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["aircraft", ({
@@ -585,7 +585,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["aircraftInfrastructure", ({
@@ -596,7 +596,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["clothing", ({
@@ -607,7 +607,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["constructionMaterials", ({
@@ -618,7 +618,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["paperFactory", ({
@@ -629,7 +629,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["postalServices", ({
@@ -640,7 +640,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { vehicles: 0.05, machinery: 0.03, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["entertainmentIndustry", ({
@@ -651,7 +651,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.04, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["informationTechnology", ({
@@ -662,7 +662,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { electronics: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance"])
     })],
     ["alcoholicDrinkIndustry", ({
@@ -673,7 +673,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["stimulantDrinkIndustry", ({
@@ -684,7 +684,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.08,
+        capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["retail", ({
@@ -695,7 +695,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.05,
+        capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     })],
     ["defense", ({
@@ -715,7 +715,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, vehicles: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"])
     }),],
     ["spaceGoodsTransport", {
@@ -736,7 +736,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         goodsProduction: { waste: 1, retail: 100 },
         capitalGoods: { vehicles: 0.05, machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
+        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance"])
     }]
 ])

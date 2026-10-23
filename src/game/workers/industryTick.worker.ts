@@ -160,6 +160,9 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const capitalStockDiff = shallowDiff(last?.capitalStock, result.capitalStock);
     if(capitalStockDiff) { patch.capitalStock = capitalStockDiff; hasChanged = true; }
 
+    const sectorGoodsDiff = shallowDiff(last?.sectorGoods, result.sectorGoods);
+    if(sectorGoodsDiff) { patch.sectorGoods = sectorGoodsDiff; hasChanged = true; }
+
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
 
@@ -344,7 +347,10 @@ function executeSectors(
                 // Sector inventory constraint: can't consume more than available
                 const available = (sectorGoods[bid.name as keyof IndustrialSectors]?.[key as keyof Goods] ?? 0);
                 const maxScaleFromInventory = value > 0 ? available / value : 1;
-                marketConstraint = Math.min(marketConstraint, maxScaleFromInventory);
+                const inventoryConstraint = nonEssentialGoods.has(key as keyof Goods)
+                    ? Math.max(0.25, maxScaleFromInventory)
+                    : maxScaleFromInventory;
+                marketConstraint = Math.min(marketConstraint, inventoryConstraint);
             }
         }
 
@@ -693,14 +699,22 @@ function processIndustry(
 
             // Decay: natural deterioration of capital stock
             const decay = config.capitalEfficiencyDecay ?? 0;
+            const decayAmounts: Partial<Goods> = {};
             if(decay > 0) {
                 for(const goodKey of Object.keys(currentStock)) {
-                    currentStock[goodKey as keyof Goods] = Math.max(0, (currentStock[goodKey as keyof Goods] ?? 0) * (1 - decay));
+                    const stock = currentStock[goodKey as keyof Goods] ?? 0;
+                    const amount = stock * decay;
+                    decayAmounts[goodKey as keyof Goods] = amount;
+                    currentStock[goodKey as keyof Goods] = Math.max(0, stock - amount);
                 }
             }
 
-            // Replenish capital stock from colony pool, paid with sector's own money
-            for(const [goodKey, amount] of Object.entries(wear)) {
+            // Replenish wear + decay from colony pool, paid with sector's own money
+            const totalLoss: Partial<Goods> = { ...wear };
+            for(const [key, amount] of Object.entries(decayAmounts)) {
+                totalLoss[key as keyof Goods] = (totalLoss[key as keyof Goods] ?? 0) + amount;
+            }
+            for(const [goodKey, amount] of Object.entries(totalLoss)) {
                 if(amount <= 0) continue;
                 const cost = amount * (prices[goodKey as keyof Goods] ?? 0);
                 if(newMoney[name] >= cost) {
