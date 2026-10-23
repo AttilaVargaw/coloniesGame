@@ -258,15 +258,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1
     })],
-    ["luxurySpaceShips", ({
-        name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
-        workerRequirement: workerReqStandard,
-        goodsProduction: { spaceTransport: 8 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.1, metals: 0.08, buildings: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
-    })],
     ["orbitalFactory", ({
         name: "orbitalFactory", goodsRequirements: {
             paper: 1, environmentFactor: 2, electricity: 28, tylium: 5, governance: 2, electronics: 1
@@ -553,20 +544,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
-    })],
-    ["luxuryShips", ({
-        name: "luxuryShips",
-        goodsRequirements: {
-            environmentFactor: 2, paper: 1, retail: 20,
-            oil: 10, electricity: 15, water: 2, governance: 2, electronics: 1
-        },
-        workerRequirement: workerReqMaritime,
-        goodsProduction: { luxuryShips: 15, waste: 1 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["aircraft", ({

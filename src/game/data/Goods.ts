@@ -42,7 +42,6 @@ export type Goods = {
 
     railroadVehicles: number;
     ships: number;
-    luxuryShips: number;
     aircraft: number;
     clothing: number;
 
@@ -98,7 +97,6 @@ export const physicalGoods = new Set<keyof Goods>([
     "waste",
     "railroadVehicles",
     "ships",
-    "luxuryShips",
     "aircraft",
     "clothing",
     "paper",
@@ -192,7 +190,6 @@ export const basePrices = {
 
     aircraft: 1000,
     clothing: 100,
-    luxuryShips: 1200,
     ships: 100,
     railroadVehicles: 100,
     paper: 20,

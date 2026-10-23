@@ -81,17 +81,18 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             electronics: 2.0,
             clothing: 1,
             post: 1.5,
-            luxuryShips: 0.5,
             airMobility: 1,
             shipMobility: 1,
             railroadMobility: 1,
+            ships: 0.5,
             automotiveMobility: 1,
             alcoholDrinks: 1,
             stimulantDrinks: 1,
             entertainment: 2,
             itServices: 2,
             services: 5,
-            monetaryServices: 2
+            monetaryServices: 2,
+            spaceships: 0.5
         }
     } as const
 

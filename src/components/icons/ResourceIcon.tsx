@@ -81,7 +81,6 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     governance: Landmark,
     aircraft: Plane,
     clothing: Shirt,
-    luxuryShips: ShipWheel,
     paper: Newspaper,
     post: Mail,
     railroadVehicles: TrainIcon,
