@@ -12,6 +12,30 @@ const EMPTY_WAREHOUSE = createStarterWarehouse(0);
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 
+function applyGoodConstraint(
+    currentConstraint: number,
+    goodKey: keyof Goods,
+    demandPerTick: number,
+    goodsMarketRatios: Record<keyof Goods, number>,
+    sectorInventory: Goods,
+    isNonEssential: boolean
+): number {
+    // Market constraint from goods availability
+    const ratio = goodsMarketRatios[goodKey] ?? 1;
+    const marketConstraint = isNonEssential
+        ? Math.min(currentConstraint, 0.5 + 0.75 * ratio)
+        : Math.min(currentConstraint, ratio);
+
+    // Sector inventory constraint: can't consume more than available
+    const available = sectorInventory[goodKey] ?? 0;
+    const maxScaleFromInventory = demandPerTick > 0 ? available / demandPerTick : 1;
+    const inventoryConstraint = isNonEssential
+        ? Math.max(0.5, maxScaleFromInventory)
+        : maxScaleFromInventory;
+
+    return Math.min(marketConstraint, inventoryConstraint);
+}
+
 export function executeSectors(
     sectorBids: SectorBid[],
     workerMarketRatios: Record<keyof Population, number>,
@@ -46,20 +70,15 @@ export function executeSectors(
         const nonEssentialGoods = new Set<keyof Goods>((sectorConfig?.nonEssentialGoods || sectorConfig?.optionalGoods || []) as (keyof Goods)[]);
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             if(value > 0) {
-                const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
-                if(nonEssentialGoods.has(key as keyof Goods)) {
-                    marketConstraint = Math.min(marketConstraint, 0.25 + 0.75 * ratio);
-                } else {
-                    marketConstraint = Math.min(marketConstraint, ratio);
-                }
-
-                // Sector inventory constraint: can't consume more than available
-                const available = (sectorGoods[bid.name as keyof IndustrialSectors]?.[key as keyof Goods] ?? 0);
-                const maxScaleFromInventory = value > 0 ? available / value : 1;
-                const inventoryConstraint = nonEssentialGoods.has(key as keyof Goods)
-                    ? Math.max(0.25, maxScaleFromInventory)
-                    : maxScaleFromInventory;
-                marketConstraint = Math.min(marketConstraint, inventoryConstraint);
+                const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
+                marketConstraint = applyGoodConstraint(
+                    marketConstraint,
+                    key as keyof Goods,
+                    value,
+                    goodsMarketRatios,
+                    sectorGoods[bid.name as keyof IndustrialSectors],
+                    isNonEssential
+                );
             }
         }
 
