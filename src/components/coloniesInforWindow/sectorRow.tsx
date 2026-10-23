@@ -62,8 +62,9 @@ export function SectorRow({
         }
 
         if(config?.workerRequirement) {
+            const capitalAdequacy = sectorResult?.inputLevel ?? 1;
             (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const scaledReq = (req as number) * techMultiplier;
+                const scaledReq = (req as number) * techMultiplier * capitalAdequacy;
                 const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
                 addReq(worker, scaledReq, employed);
             });
