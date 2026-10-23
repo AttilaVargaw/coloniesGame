@@ -36,6 +36,10 @@ export class Entity {
     }
 
     addComponent(component: EntityComponent) {
+        const existing = this._component.get(component.constructor)
+        if(existing && existing !== component) {
+            existing?.dispose?.()
+        }
         this._component.set(component.constructor, component);
         component.entityId = this.id
         this._onComponentChanged?.(this)

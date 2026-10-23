@@ -269,6 +269,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private quadIndexCount = 0
     private _showBloom = false
 
+    private static readonly MAX_BLOOM_DIMENSION = 1024
+
     setShowBloom(value: boolean) {
         this._showBloom = value
     }
@@ -283,8 +285,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.bloomTexture = null
         }
 
-        const width = Math.max(1, Math.floor(gl.canvas.width / 2))
-        const height = Math.max(1, Math.floor(gl.canvas.height / 2))
+        const width = Math.min(
+            WebGLSphereRenderer.MAX_BLOOM_DIMENSION,
+            Math.max(1, Math.floor(gl.canvas.width / 2))
+        )
+        const height = Math.min(
+            WebGLSphereRenderer.MAX_BLOOM_DIMENSION,
+            Math.max(1, Math.floor(gl.canvas.height / 2))
+        )
         this.bloomWidth = width
         this.bloomHeight = height
 

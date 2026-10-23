@@ -15,7 +15,7 @@ export type TextureComponentOptions = {
     minimumScreenSize?: number;
     animationSpeed?: number;
     id?: string;
-};
+}
 
 export class TextureComponent extends EntityComponent {
     day?: TextureSource;
@@ -45,5 +45,15 @@ export class TextureComponent extends EntityComponent {
         this.minimumScreenSize = options.minimumScreenSize;
         this.animationSpeed = options.animationSpeed;
         this.id = options.id;
+    }
+
+    dispose(): void {
+        for(const key of ["day", "night", "roughness", "cloud", "normal"] as const) {
+            const source = this[key];
+            if(source instanceof ImageBitmap) {
+                source.close();
+            }
+            this[key] = undefined;
+        }
     }
 }

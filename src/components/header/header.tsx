@@ -30,7 +30,7 @@ export function Header() {
                 <ul className="flex space-x-4 items-center">
                     <li >
                         <button
-                            onClick={(event) => {
+                            onClick={() => {
                                 setSpeed(0)
                             }}
                             className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
@@ -41,7 +41,7 @@ export function Header() {
                     {SPEEDS.map(speed => (
                         <li key={speed}>
                             <button
-                                onClick={(event) => {
+                                onClick={() => {
                                     setSpeed(speed)
                                 }}
                                 className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"

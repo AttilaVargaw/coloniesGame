@@ -4,6 +4,8 @@ const STORE_NAME = "textures"
 
 let dbPromise: Promise<IDBDatabase> | null = null
 
+const memoryCache = new Map<string, ImageBitmap>()
+
 function isIndexedDBAvailable(): boolean {
     return typeof indexedDB !== "undefined" && typeof createImageBitmap !== "undefined"
 }
@@ -42,6 +44,11 @@ export async function getCachedTexture(
     archetype: string | undefined,
     seedKey: string | undefined
 ): Promise<ImageBitmap | null> {
+    const key = cacheKey(textureType, baseColor, archetype, seedKey)
+
+    const cached = memoryCache.get(key)
+    if(cached) return cached
+
     const db = await getDB()
     if(!db) return null
 
@@ -49,13 +56,15 @@ export async function getCachedTexture(
         const tx = db.transaction(STORE_NAME, "readonly")
         const store = tx.objectStore(STORE_NAME)
         const blob = await new Promise<Blob | null>((resolve, reject) => {
-            const req = store.get(cacheKey(textureType, baseColor, archetype, seedKey))
+            const req = store.get(key)
             req.onsuccess = () => resolve(req.result as Blob | null)
             req.onerror = () => reject(req.error)
         })
 
         if(!blob) return null
-        return createImageBitmap(blob)
+        const bitmap = await createImageBitmap(blob)
+        memoryCache.set(key, bitmap)
+        return bitmap
     } catch {
         return null
     }
@@ -68,6 +77,9 @@ export async function setCachedTexture(
     seedKey: string | undefined,
     bitmap: ImageBitmap
 ): Promise<void> {
+    const key = cacheKey(textureType, baseColor, archetype, seedKey)
+    memoryCache.set(key, bitmap)
+
     const db = await getDB()
     if(!db) return
 
@@ -83,7 +95,7 @@ export async function setCachedTexture(
         await new Promise<void>((resolve, reject) => {
             const req = store.put(
                 blob,
-                cacheKey(textureType, baseColor, archetype, seedKey)
+                key
             )
             req.onsuccess = () => resolve()
             req.onerror = () => reject(req.error)
@@ -91,4 +103,11 @@ export async function setCachedTexture(
     } catch {
         // Cache is optional — silently fail
     }
+}
+
+export function clearTextureCache(): void {
+    for(const bitmap of memoryCache.values()) {
+        bitmap.close()
+    }
+    memoryCache.clear()
 }

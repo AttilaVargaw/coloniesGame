@@ -58,6 +58,8 @@ export class EntityRegistry {
             return this
         }
 
+        this.disposeEntityComponents(entity)
+
         const sceneNode = this.getSceneNode(entity)
 
         if(sceneNode) {
@@ -69,6 +71,7 @@ export class EntityRegistry {
             for(const descendant of descendants) {
                 this.sceneNodes.delete(descendant.id)
                 this.entities.delete(descendant.id)
+                this.disposeEntityComponents(descendant)
                 descendant.onComponentChanged = undefined
                 this.nodes.removeEntityFromNodes(descendant)
             }
@@ -84,6 +87,14 @@ export class EntityRegistry {
         //this.events.dispatchEvent(new EntityRemovedEvent(entity))
 
         return this
+    }
+
+    private disposeEntityComponents(entity: Entity): void {
+        for(const component of entity.components.values()) {
+            if(typeof (component as { dispose?: () => void }).dispose === "function") {
+                (component as { dispose: () => void }).dispose()
+            }
+        }
     }
 
     getSceneNode(entity: Entity): SceneNode | undefined {

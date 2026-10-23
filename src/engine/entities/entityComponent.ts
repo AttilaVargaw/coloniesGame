@@ -8,4 +8,8 @@ export class EntityComponent {
         this.entity = entity
         this.entityId = entity?.id ?? ""
     }
+
+    dispose?(): void {
+        // no-op by default; subclasses holding GPU resources override
+    }
 }

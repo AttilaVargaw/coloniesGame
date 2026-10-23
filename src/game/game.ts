@@ -26,6 +26,7 @@ import { SpinSystem } from "./systems/spinSystem"
 import { DayPassedEvent, EntityRemovedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { terminateTextureWorkerPool } from "./factories/textureWorkerPool"
+import { clearTextureCache } from "./factories/textureCache"
 
 export class Game {
     readonly engine: World
@@ -126,6 +127,7 @@ export class Game {
 
     destruct(): void {
         terminateTextureWorkerPool()
+        clearTextureCache()
         this.engine.destruct()
 
         if(this.gameLoopId !== undefined) {
