@@ -515,8 +515,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const passes = Math.max(1, Math.round(settings.iterations))
         const intensity = settings.alpha
 
-        const bw = Math.max(1, Math.floor(gl.canvas.width / 2))
-        const bh = Math.max(1, Math.floor(gl.canvas.height / 2))
+        const bw = Math.min(WebGLSphereRenderer.MAX_BLOOM_DIMENSION, Math.max(1, Math.floor(gl.canvas.width / 2)))
+        const bh = Math.min(WebGLSphereRenderer.MAX_BLOOM_DIMENSION, Math.max(1, Math.floor(gl.canvas.height / 2)))
         if(bw !== this.bloomWidth || bh !== this.bloomHeight) {
             this.createBloomFramebuffer(gl)
             this.createBlurFramebuffers(gl)

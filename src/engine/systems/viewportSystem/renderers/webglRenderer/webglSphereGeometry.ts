@@ -26,10 +26,9 @@ function subdivide(
         const x = (vertices[i1 * 3] + vertices[i2 * 3]) / 2
         const y = (vertices[i1 * 3 + 1] + vertices[i2 * 3 + 1]) / 2
         const z = (vertices[i1 * 3 + 2] + vertices[i2 * 3 + 2]) / 2
-        const [nx, ny, nz] = normalize(x, y, z)
 
         const idx = vertices.length / 3
-        vertices.push(nx, ny, nz)
+        vertices.push(...normalize(x, y, z))
         midpointCache.set(key, idx)
         return idx
     }
