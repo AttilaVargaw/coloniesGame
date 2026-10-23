@@ -109,6 +109,9 @@ function processIndustry(
         populationProfits[key] = income - expenses;
     }
 
+    const last = results.get(entityId);
+    const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
+
     const sectorBids: SectorBid[] = [];
     for(const name of activeSectors) {
         if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
@@ -119,7 +122,7 @@ function processIndustry(
         const laborAssignedVal = laborAssigned[name] ?? 0;
         const capitalStockVal = capitalStock[name] ?? {};
 
-        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries);
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0);
         if(bid) {
             sectorBids.push(bid);
         }
@@ -273,7 +276,6 @@ function processIndustry(
         allowedSectors,
     };
 
-    const last = results.get(entityId);
     const patch = buildPatch(last, result);
     if(patch) {
         return patch;

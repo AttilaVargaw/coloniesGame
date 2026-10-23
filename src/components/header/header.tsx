@@ -31,7 +31,10 @@ export function Header() {
                     {SPEEDS.map(speed => (
                         <li key={speed}>
                             <button
-                                onClick={() => setSpeed(speed)}
+                                onClick={(event) => {
+                                    event.preventDefault()
+                                    setSpeed(speed)
+                                }}
                                 className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
                             >
                                 {speed}x

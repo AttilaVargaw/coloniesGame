@@ -4,6 +4,7 @@ import { Screen } from "./components/map/screen";
 import { ProductionBar } from "./components/productionBar/productionBar";
 import { Game } from "./game/game";
 import { CircularContextMenu } from "./components/ui/circularContextMenu";
+import { SelectionChangedEvent } from "./engine/lib/events";
 
 export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
   game: Game | null;
@@ -50,6 +51,7 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
           }}
           onClick={(data) => {
             game?.engine.dispatchEvent(data)
+            game?.engine.dispatchEvent(new SelectionChangedEvent({ type: "map", data: undefined }))
           }}
           onContextMenu={(data) => {
             game?.engine.dispatchEvent(data)

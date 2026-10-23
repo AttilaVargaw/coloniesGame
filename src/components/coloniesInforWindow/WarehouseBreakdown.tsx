@@ -1,16 +1,20 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Goods, physicalGoods, services } from "@/game/data/Goods";
+import { Goods, physicalGoods, services, getPrices } from "@/game/data/Goods";
 import { convertToReadable } from "@/lib/utils";
 import { colorBySign } from "./colorBySign";
 import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
-import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
+
+const warehousePriceMemory: Partial<Record<keyof Goods, number>> = {};
 
 export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRequirements }, showPhysical }: { industry: IndustryComponent; showPhysical?: boolean }) {
+    const prices = getPrices(goods, warehousePriceMemory);
+
     return (
         <table className="w-full text-sm">
             <thead>
                 <tr className="border-b border-muted">
                     <th className="text-left p-2 font-medium">{showPhysical ? "Good" : "Service"}</th>
+                    <th className="text-right p-2 font-medium">Price</th>
                     <th className="text-right p-2 font-medium">Stock</th>
                     <th className="text-center p-2 font-medium">Net</th>
                     <th className="text-center p-2 font-medium">Production</th>
@@ -31,6 +35,7 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                                 <ResourceIcon name={key} />
                                 {RESOURCE_NAMES[key] || key}
                             </td>
+                            <td className="p-2 text-right">{convertToReadable(prices[key] || 0)}</td>
                             <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
                             <td className="p-2 text-center">{colorBySign(addition - used)}</td>
                             <td className="p-2 text-center">{convertToReadable(addition)}</td>

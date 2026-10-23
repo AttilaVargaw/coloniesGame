@@ -1,6 +1,6 @@
 import { LabelComponent } from "@engine/components/label";
 import { Entity } from "@engine/entities/entity";
-import { DialogContent, DialogTitle, Dialog, DialogHeader, DialogFooter } from "../ui/dialog";
+import { DialogContent, DialogTitle, Dialog, DialogHeader } from "../ui/dialog";
 import { IndustryComponent } from "@game/components/industryComponent";
 import { InfoComponent } from "@engine/components/infoComponent";
 import { PatronGoodInfo } from "./patronGoodInfo";
@@ -8,9 +8,8 @@ import { useRef, useState, useCallback } from "react";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
-import { ToggleGroup, ToggleGroupItem, } from "../ui/toggle-group";
-import { DialogInner, DialogPage } from "./DialogInner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { DialogInner } from "./DialogInner";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
@@ -46,7 +45,7 @@ export function ColoniesInforWindow() {
     const name = currentColony?.getComponent(LabelComponent)
     const info = currentColony?.getComponent(InfoComponent)
 
-    return <Dialog modal={false} open={!!currentColony} onOpenChange={() => setCurrentColony(undefined)}>
+    return <Dialog modal={false} open={!!currentColony} >
         <DialogContent className="bg-[#1c1c1c] text-white min-w-4xl">
             <DialogHeader>
                 <DialogTitle>{name?.text}</DialogTitle>

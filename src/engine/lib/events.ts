@@ -24,7 +24,7 @@ export class EntityRemovedEvent extends EventBase<Entity> { }
 export class DayPassedEvent extends EventBase<void> { }
 export class HourPassedEvent extends EventBase<void> { }
 export class MonthPassedEvent extends EventBase<void> { }
-export class SelectionChangedEvent extends EventBase<{ data: Entity, type: string }> { }
+export class SelectionChangedEvent extends EventBase<{ data?: Entity, type: string }> { }
 export class IndustryUpdatedEvent extends EventBase<Entity> { }
 export class TargetChangedEvent extends EventBase<{ ship: Entity, target?: Entity }> { }
 export class ComponentRemovedEvent extends EventBase<unknown> { }

@@ -10,6 +10,8 @@ import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
 import { BsHexagon } from "react-icons/bs";
 
+//-386.8M	
+
 export function SectorRow({
     rowKey,
     sectorKey,

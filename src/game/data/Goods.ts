@@ -183,7 +183,7 @@ export const basePrices = {
 
     environmentFactor: 50,
     faith: 40,
-    lawEnforcement: 20,
+    lawEnforcement: 40,
     healthcare: 70,
     chemicals: 20,
     buildings: 20,
@@ -192,7 +192,7 @@ export const basePrices = {
 
     aircraft: 1000,
     clothing: 100,
-    luxuryShips: 1000,
+    luxuryShips: 1200,
     ships: 100,
     railroadVehicles: 100,
     paper: 20,

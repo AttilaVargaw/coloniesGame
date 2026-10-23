@@ -19,6 +19,7 @@ export function buildSectorBid(
     laborAssigned: number,
     capitalStock: Partial<Goods>,
     salaries: Record<keyof Population, number>,
+    previousProfit: number,
 ): SectorBid | null {
     const config = industrySectorBlueprints.get(name);
     if(!config) return null;
@@ -43,9 +44,6 @@ export function buildSectorBid(
     }
     if(!hasCapitalGoods) capitalAdequacy = 1;
 
-    const outputLevel = techMultiplier * capitalAdequacy;
-    const inputLevel = capitalAdequacy;
-
     const workerRequirement = config.workerRequirement || {};
     const goodsRequirements = config.goodsRequirements || {};
     const goodsProduction = config.goodsProduction || {};
@@ -60,6 +58,12 @@ export function buildSectorBid(
 
     const costPerUnit = inputCost + laborCost;
     const budgetRatio = costPerUnit > 0 ? Math.min(1, Math.max(0, 1)) : 1;
+
+    // Profitability-based scaling: unprofitable sectors reduce output next tick
+    const profitabilityFactor = previousProfit > 0 ? 1 : Math.max(0.1, 1 + previousProfit / Math.max(costPerUnit, 1));
+
+    const outputLevel = techMultiplier * capitalAdequacy * profitabilityFactor;
+    const inputLevel = capitalAdequacy * profitabilityFactor;
 
     // Apply laborAssigned as a hard cap on worker demand
     const idealWorkerDemand = scaleMap(workerRequirement as Record<string, number>, inputLevel);
