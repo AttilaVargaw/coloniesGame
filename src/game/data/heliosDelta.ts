@@ -70,7 +70,6 @@ export const heliosDelta = {
                 luxuryFood: 24_000_000,
                 forestry: 15_600_000,
                 lumberMill: 3_840_000,
-                constructionMaterials: 600_000,
                 mine: 3_000_000,
                 metalFactory: 2_526_000,
                 machineryFactory: 2_400_000,

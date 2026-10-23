@@ -45,7 +45,6 @@ export type Goods = {
     luxuryShips: number;
     aircraft: number;
     clothing: number;
-    constructionMaterials: number;
 
     post: number;
     paper: number;
@@ -102,7 +101,6 @@ export const physicalGoods = new Set<keyof Goods>([
     "luxuryShips",
     "aircraft",
     "clothing",
-    "constructionMaterials",
     "paper",
     "alcoholDrinks",
     "stimulantDrinks",
@@ -194,7 +192,6 @@ export const basePrices = {
 
     aircraft: 1000,
     clothing: 100,
-    constructionMaterials: 100,
     luxuryShips: 1000,
     ships: 100,
     railroadVehicles: 100,
@@ -240,7 +237,6 @@ export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, numb
         const stock = goods[key] || 0;
         const base = basePrices[key];
         const baseline = Math.max(base * 10, 1);
-        const stockRatio = stock / baseline;
 
         // Continuous supply/demand curve: scarcity raises price, surplus lowers it
         let adjustment = 1.0;

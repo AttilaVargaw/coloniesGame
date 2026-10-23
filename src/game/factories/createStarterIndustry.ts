@@ -42,7 +42,6 @@ const PER_CAPITA_SECTOR_RATIOS = {
     railroadVehicles: 0.000002,
     aircraft: 0.000002,
     clothing: 0.0001,
-    constructionMaterials: 0.000001,
     luxuryShips: 0.00001,
     ships: 0.000002,
     postalServices: 0.00005,

@@ -40,7 +40,6 @@ import {
     Rocket,
     Coffee,
     Satellite,
-    Church,
     Cog,
     Tractor
 } from "lucide-react";
@@ -56,7 +55,6 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     automotiveInfrastructure: Factory,
     chemical: FlaskConical,
     clothing: Shirt,
-    constructionMaterials: BrickWall,
     defense: Shield,
     luxuryShips: ShipWheel,
     militaryVehicles: InfantryFightingVehicle,

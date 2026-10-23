@@ -55,7 +55,6 @@ export const TECHS: Record<string, TechDefinition> = {
         cost: { researchPoints: 1200, days: 5 },
         prerequisites: ["advanced_metallurgy"],
         effects: [
-            { type: "sector_efficiency", sector: "constructionMaterials", multiplier: 1.3 },
             { type: "material_requirement", good: "metals", reduction: 0.1 },
         ],
         unlocks: ["automation"],

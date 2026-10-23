@@ -282,11 +282,13 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             paper: 1,
             electricity: 4,
             governance: 2,
-            constructionMaterials: 10,
             environmentFactor: 3,
+            water: 10,
+            lumber: 10,
+            metals: 10
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { buildings: 100 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06, constructionMaterials: 0.03, buildings: 0.01, electronics: 0.01 },
+        capitalGoods: { machinery: 0.06, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
@@ -599,17 +601,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
-    })],
-    ["constructionMaterials", ({
-        name: "constructionMaterials",
-        goodsRequirements: { environmentFactor: 3, paper: 2, oil: 2, electricity: 15, water: 20, governance: 2, electronics: 1, lumber: 10 },
-        workerRequirement: workerReqMaritime,
-        goodsProduction: { constructionMaterials: 15, waste: 1 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(usualNonEssentialGoods)
     })],
     ["paperFactory", ({

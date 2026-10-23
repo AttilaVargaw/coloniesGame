@@ -44,7 +44,6 @@ export type IndustrialSectors = Readonly<{
     railroadVehicles: number;
     aircraft: number;
     clothing: number;
-    constructionMaterials: number;
     luxuryShips: number;
     ships: number;
     postalServices: number;
