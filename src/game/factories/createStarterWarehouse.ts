@@ -24,7 +24,7 @@ export function createStarterWarehouse(population: number) {
         lumber: population,
         // dividents: 0,
         food: population * 5,
-        luxuryFood: population,
+        meat: population,
         luxuryFurniture: population,
         ordnance: 0,
         healthcare: population,

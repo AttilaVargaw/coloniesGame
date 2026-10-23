@@ -41,7 +41,8 @@ import {
     Coffee,
     Satellite,
     Cog,
-    Tractor
+    Tractor,
+    Ham
 } from "lucide-react";
 
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
@@ -88,7 +89,7 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     farm: Tractor,
     forestry: TreePine,
     services: UserGroupIcon,
-    luxuryFood: Vegan,
+    meat: Ham,
     retail: Shirt,
     foodFactory: Cookie,
     powerPlant: Zap,

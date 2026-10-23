@@ -3,7 +3,7 @@ import { getLowestRatio } from "../utils/getLowestRatio";
 
 export type Goods = {
     food: number;
-    luxuryFood: number;
+    meat: number;
     tourism: number;
     consumerGoods: number;
     water: number
@@ -72,7 +72,7 @@ export type Goods = {
 export const physicalGoods = new Set<keyof Goods>([
     "food",
     "ore",
-    "luxuryFood",
+    "meat",
     "consumerGoods",
     "water",
     "furniture",
@@ -153,7 +153,7 @@ export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
 
 export const basePrices = {
     food: 30,
-    luxuryFood: 60,
+    meat: 60,
     tourism: 300,
     consumerGoods: 100,
     water: 10,

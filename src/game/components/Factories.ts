@@ -6,7 +6,7 @@ export type IndustrialSectors = Readonly<{
     farm: number;
     fishery: number;
     foodFactory: number;
-    luxuryFood: number;
+    meat: number;
     waterTreatment: number;
     powerPlant: number;
     nuclearSector: number;

@@ -48,7 +48,7 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             services: 2,
             electricity: 1,
             food: 1,
-            luxuryFood: 0.2,
+            meat: 0.2,
             furniture: 1.5,
             healthcare: 1,
             vehicles: 0.5,
@@ -74,7 +74,7 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
         80: {
             faith: 1,
             tourism: 4,
-            luxuryFood: 1,
+            meat: 1,
             luxuryFurniture: 1,
             vehicles: 1,
             buildings: 0.015,

@@ -88,11 +88,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
-    ["luxuryFood", ({
-        name: "luxuryFood",
+    ["meat", ({
+        name: "meat",
         goodsRequirements: { paper: 1, environmentFactor: 2, electricity: 18, governance: 2, retail: 20 },
         workerRequirement: workerReqStandard,
-        goodsProduction: { luxuryFood: 22, },
+        goodsProduction: { meat: 22, },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, ships: 0.01 },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
@@ -305,7 +305,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
     })],
     ["tourism", ({
         name: "tourism", goodsRequirements: {
-            paper: 1, environmentFactor: 3, retail: 50, services: 12, luxuryFood: 6, luxuryFurniture: 8, governance: 2, electronics: 1
+            paper: 1, environmentFactor: 3, retail: 50, services: 12, meat: 6, luxuryFurniture: 8, governance: 2, electronics: 1
         }, workerRequirement: { worker: 20, clerks: 5, serviceWorker: 70, healtcarePersonal: 5 }, goodsProduction: { tourism: 12 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.02, luxuryFurniture: 0.01 },

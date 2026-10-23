@@ -1,5 +1,5 @@
 import { Goods } from "@/game/data/Goods";
-import { Atom, Beer, Clapperboard, Coffee, Cuboid, Mail, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
+import { Atom, Beer, Clapperboard, Coffee, Cuboid, Ham, Mail, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
@@ -37,6 +37,7 @@ import {
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 
 import { FaPray } from "react-icons/fa";
+import { GiMeat } from "react-icons/gi";
 
 const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     food: Cookie,
@@ -46,7 +47,7 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     itServices: MonitorSmartphone,
     education: School,
     retail: ShoppingCart,
-    luxuryFood: Grape,
+    meat: Ham,
     tourism: Palmtree,
     consumerGoods: Boxes,
     water: Droplets,
@@ -55,7 +56,6 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     luxuryFurniture: Sofa,
     services: Stethoscope,
     agriculturalGoods: Wheat,
-    // dividents: TrendingUp,
     tylium: Diamond,
     metals: Cuboid,
     uranium: Atom,

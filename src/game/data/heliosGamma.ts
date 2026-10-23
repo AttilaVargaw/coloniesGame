@@ -26,7 +26,7 @@ export const heliosGamma = {
             starterIndustries: {
                 tourism: 37_800_000,
                 foodFactory: 27_000_000,
-                luxuryFood: 22_500_000,
+                meat: 22_500_000,
                 // services: 27_000_000,
                 retail: 22_500_000,
                 entertainmentIndustry: 22_500_000,

@@ -64,7 +64,7 @@ export const solarisBeta = {
                 tourism: 21_840_000,
                 entertainmentIndustry: 13_000_000,
                 foodFactory: 15_600_000,
-                luxuryFood: 13_000_000,
+                meat: 13_000_000,
                 // services: 15_600_000,
                 // education: 2_340_000,
                 // bank: 26_000_000,

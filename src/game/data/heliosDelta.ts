@@ -18,7 +18,7 @@ export const heliosDelta = {
             starterIndustries: {
                 farm: 29_480_000,
                 foodFactory: 402_000_000,
-                luxuryFood: 335_000_000,
+                meat: 335_000_000,
                 mine: 67_000_000,
                 metalFactory: 70_500_000,
                 oilRig: 37_520_000,
@@ -67,7 +67,7 @@ export const heliosDelta = {
             starterIndustries: {
                 farm: 10_560_000,
                 foodFactory: 36_000_000,
-                luxuryFood: 24_000_000,
+                meat: 24_000_000,
                 forestry: 15_600_000,
                 lumberMill: 3_840_000,
                 mine: 3_000_000,

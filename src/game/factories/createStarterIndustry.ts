@@ -7,7 +7,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     farm: 0.0000088,
     fishery: 0.000006,
     foodFactory: 0.00006,
-    luxuryFood: 0.00005,
+    meat: 0.00005,
     waterTreatment: 0.000005,
     powerPlant: 0.000004,
     nuclearSector: 0.00001,
