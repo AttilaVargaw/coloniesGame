@@ -10,7 +10,7 @@ export interface IndustryTickResult {
     goodsProduction: Partial<Goods>;
     workingWorkers: Population;
     freeWorkers: Population;
-    populationUpdates: Record<string, {
+    populationUpdates: Record<keyof Population, {
         qol: number;
         expectedQol: number;
         populationChange: number;
