@@ -5,6 +5,7 @@ import { PopulationIcon, POPULATION_NAMES } from "@/components/icons/PopulationI
 import { TooltipTrigger, TooltipContent, Tooltip } from "@/components/ui/tooltip";
 import { Goods } from "@/game/data/Goods";
 import { RequirementItem } from "./requirementItem";
+import { RESOURCE_NAMES } from "../icons/ResourceIcon";
 
 export function PopulationBreakdown({ industry: { population, populationProfits, populationRequirements, workingWorkers, goods } }: { industry: IndustryComponent; }) {
     return (
@@ -24,7 +25,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                     </tr>
                 </thead>
                 <tbody>
-                    {(Object.entries((population)) as [keyof Population, Population[keyof Population]][]).map(([key, { number, populationChange, qol }]) => {
+                    {(Object.entries((population)) as [keyof Population, Population[keyof Population]][]).sort(([a], [b]) => POPULATION_NAMES[a].localeCompare(POPULATION_NAMES[b])).map(([key, { number, populationChange, qol }]) => {
                         const income = (baseSalaries[key] || 0) * number;
                         const net = populationProfits[key] ?? 0;
                         const expenses = income - net;
@@ -59,7 +60,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                     <span className="text-muted-foreground text-xs">—</span>
                                 ) : (
                                     <div className="text-xs space-y-0.5" style={{ display: "flex", flexFlow: "wrap", gap: "1em" }}>
-                                        {reqEntries.map(([good, req]) => {
+                                        {reqEntries.sort(([a], [b]) => RESOURCE_NAMES[a].localeCompare(RESOURCE_NAMES[b])).map(([good, req]) => {
                                             const available = goods[good] ?? 0;
                                             return (
                                                 <RequirementItem key={good} hasData actual={available} name={good} scaledReq={req} />

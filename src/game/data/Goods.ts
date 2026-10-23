@@ -154,12 +154,12 @@ export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
 ]);
 
 export const basePrices = {
-    food: 10,
+    food: 30,
     luxuryFood: 60,
     tourism: 300,
     consumerGoods: 100,
     water: 10,
-    electricity: 10,
+    electricity: 20,
     furniture: 10,
     luxuryFurniture: 120,
     services: 15,
@@ -171,7 +171,7 @@ export const basePrices = {
     uranium: 100,
     machinery: 50,
     medicine: 20,
-    wood: 10,
+    wood: 20,
     lumber: 30,
     oil: 100,
     spaceTransport: 2000,
@@ -184,13 +184,13 @@ export const basePrices = {
     electronics: 60,
 
     environmentFactor: 50,
-    faith: 20,
+    faith: 40,
     lawEnforcement: 20,
-    healthcare: 50,
+    healthcare: 70,
     chemicals: 20,
     buildings: 20,
     waste: 2,
-    governance: 20,
+    governance: 40,
 
     aircraft: 1000,
     clothing: 100,

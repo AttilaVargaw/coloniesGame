@@ -214,7 +214,7 @@ function buildSectorBid(
         if(referenceConsumption <= 0) continue;
 
         const ratio = stock / referenceConsumption;
-        // Below target: linear scaling. Above target: diminishing sqrt returns.
+        // Below target: linear scaling. Above target: diminishing log2 returns.
         const adequacy = ratio >= 1 ? 1 + Math.sqrt(ratio) : ratio;
         capitalAdequacy = Math.min(capitalAdequacy, adequacy);
     }

@@ -3,12 +3,15 @@ import { VesselBlueprint } from "./VesselBlueprint";
 import { OrbitalBlueprint } from "./OrbitalBlueprint";
 import { MapMarker } from "./MapMarker";
 import { IndustrialSectors } from "../components/Factories";
+import { Population } from "./Population";
 
 export type BodyBlueprint = Readonly<{
     buildable?: boolean;
     allowedSettlementTypes?: ("colony" | "outpost" | "hydrocarbonRefinery")[];
     navigationalPoint?: boolean
     population?: number;
+    populationRatio?: number;
+    occupationStarterRatio?: Partial<Record<keyof Population, number>>;
     name: string;
     radius?: number;
     archetype: PlanetArchetype;

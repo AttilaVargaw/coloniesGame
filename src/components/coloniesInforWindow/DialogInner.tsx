@@ -36,4 +36,3 @@ export function DialogInner({ industry }: { industry: IndustryComponent }): Reac
         </TabsContent>
     </>
 }
-

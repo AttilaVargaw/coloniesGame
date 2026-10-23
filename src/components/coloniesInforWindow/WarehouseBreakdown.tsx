@@ -21,6 +21,7 @@ export function WarehouseBreakdown({ industry: { goods, goodsProduction, goodsRe
                 {(Object.entries(goods) as [keyof Goods, number][])
                     .filter(([key]) =>
                         showPhysical ? physicalGoods.has(key) : services.has(key))
+                    .sort(([keyA], [keyB]) => RESOURCE_NAMES[keyA].localeCompare(RESOURCE_NAMES[keyB]))
                     .map(([key, value]) => {
                         const addition = goodsProduction[key] || 0;
                         const used = goodsRequirements[key] || 0;

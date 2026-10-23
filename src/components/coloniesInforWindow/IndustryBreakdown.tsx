@@ -5,7 +5,7 @@ import type { Population } from "@/game/data/Population";
 import { POPULATION_NAMES } from "@/components/icons/PopulationIcon";
 import { SectorRow } from "./sectorRow";
 
-export function isPopulationReq(name: keyof Population | keyof Goods | "money"): name is keyof Population {
+export function isPopulationReq(name: keyof Population | keyof Goods | "money"): name is keyof Population {
     return name in POPULATION_NAMES;
 }
 
@@ -26,7 +26,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                     </tr>
                 </thead>
                 <tbody>
-                    {Array.from(industry.activeSectors).map((key) => (
+                    {Array.from(industry.activeSectors).sort((a, b) => a.localeCompare(b)).map((key) => (
                         <SectorRow
                             key={key}
                             rowKey={key}

@@ -105,6 +105,19 @@ export const solarisAlpha = {
                 waterTreatment: 500_000,
                 postalServices: 500_000
             },
+            occupationStarterRatio: {
+                farmer: 1.5,
+                scientist: 1.8,
+                worker: 45.3,
+                healtcarePersonal: 5,
+                policeMen: 1,
+                teacher: 2,
+                serviceWorker: 8.4,
+                clergy: 2.0,
+                clerks: 9,
+                engineer: 4,
+                stayAtHome: 20
+            },
             vessels: [
                 { marker: { color: "white", radius: 4, label: "Battlestar\nMinerva", }, orbit: { radius: 10, angle: 2, eccentricity: 0.007 } }
             ],

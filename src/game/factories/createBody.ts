@@ -14,6 +14,7 @@ import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
 import { industrySectorBlueprints } from "../systems/factoryBlueprints"
 import { Goods } from "../data/Goods"
+import type { Population } from "../data/Population"
 import { createAsteroidBelt } from "./createAsteroidBelt"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
@@ -86,14 +87,24 @@ function createInteractionComponents(
     clickSquare: { width: number; height: number },
     engine: Engine,
     body: Entity,
-    blueprint?: BodyBlueprint
+    blueprint?: BodyBlueprint,
+    populationRatioOverride?: number,
+    occupationStarterRatioOverride?: Partial<Record<keyof Population, number>>
 ): EntityComponent[] {
+    if(occupationStarterRatioOverride) {
+        if(Object.values(occupationStarterRatioOverride).reduce((a, b) => a + b) !== 100) {
+            console.error("occupationStarterRatioOverride must sum to 100")
+        }
+    }
+
     const components: EntityComponent[] = [
         new SelectableComponent(clickSize, "red"),
     ]
 
+    const effectiveRatio = populationRatioOverride ?? populationRatio
+
     if(population !== undefined) {
-        const starterSectors = createStarterIndustry(population * populationRatio);
+        const starterSectors = createStarterIndustry(population * effectiveRatio);
         if(blueprint?.starterIndustries) {
             for(const key of Object.keys(blueprint.starterIndustries) as (keyof IndustrialSectors)[]) {
                 starterSectors.add(key);
@@ -126,8 +137,8 @@ function createInteractionComponents(
             }]),
             new IndustryComponent(
                 starterSectors,
-                createStarterWarehouse(population * populationRatio),
-                createStarterPopulation(population * populationRatio),
+                createStarterWarehouse(population * effectiveRatio),
+                createStarterPopulation(population * effectiveRatio, occupationStarterRatioOverride),
                 "standard",
                 "colony",
                 starterMoney as Record<keyof IndustrialSectors, number>,
@@ -230,6 +241,8 @@ export async function createBody({
     mass: explicitMass,
     buildable,
     allowedSettlementTypes,
+    populationRatio: blueprintPopulationRatio,
+    occupationStarterRatio: blueprintOccupationStarterRatio,
 }: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
     const angle = orbit.angle ?? generateRandomNumber(0, TWO_PI)
     const clickSize = marker.radius * 2
@@ -240,6 +253,8 @@ export async function createBody({
         : marker
 
     const body = createMarker({ name: name === "root" ? undefined : name, ...markerInput })
+
+    const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
 
     if(buildable && markerInput.texture) {
         body.addComponent(new SizeComponent(marker.radius * 2, marker.radius * 2, 12))
@@ -295,7 +310,7 @@ export async function createBody({
         createVessels(vessels, body, engine, mass)
     }
 
-    applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any))
+    applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any, effectivePopulationRatio, blueprintOccupationStarterRatio))
 
     if(rings?.length) {
         createRings(rings, body, engine)
