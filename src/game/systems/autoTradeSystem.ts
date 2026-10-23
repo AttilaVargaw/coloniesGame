@@ -1,7 +1,7 @@
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
-import { IndustryUpdatedEvent } from "@/engine/lib/events";
+import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
 import { Goods, physicalGoods } from "../data/Goods";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
@@ -29,12 +29,16 @@ type Settlement = {
 const exportableGoods = new Set<keyof Goods>([...physicalGoods, "tourism"]);
 
 export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
+    private dirty = false;
+    private flushScheduled = false;
+
     // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: IndustryNode, _dT?: number): void {
     }
 
     removeFromEngine(): this {
         this.engine?.unsubscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
+        this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
         super.removeFromEngine();
         return this;
     }
@@ -42,22 +46,50 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     addToEngine(engine: Engine): this {
         super.addToEngine(engine);
         engine.subscribe(IndustryUpdatedEvent, this.onIndustryUpdated);
+        engine.subscribe(DayPassedEvent, this.onDayPassed);
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }
 
     private onIndustryUpdated = () => {
-        this.evaluate();
+        this.dirty = true;
+        this.scheduleFlush();
+    };
+
+    private onDayPassed = () => {
+        this.dirty = true;
+        this.scheduleFlush();
+    };
+
+    private scheduleFlush = () => {
+        if(this.flushScheduled) return;
+        this.flushScheduled = true;
+        queueMicrotask(() => {
+            this.flushScheduled = false;
+            if(this.dirty) {
+                this.dirty = false;
+                this.evaluate();
+            }
+        });
     };
 
     private evaluate = () => {
+        // Build route-count and active-route lookups once (O(routes) total),
+        // instead of O(routes) per lookup inside the O(n²) settlement loops.
+        const routeCounts = new Map<string, number>();
+        const activeRoutes = new Set<string>();
+        if(this.engine) {
+            for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
+                routeCounts.set(tradeRoute.sourceEntityId, (routeCounts.get(tradeRoute.sourceEntityId) ?? 0) + 1);
+                activeRoutes.add(`${tradeRoute.sourceEntityId}->${tradeRoute.destinationEntityId}`);
+            }
+        }
+
         const settlements: Settlement[] = [];
 
         for(const { entity, industry } of this.nodes) {
             const pos = entity.getComponent(PositionComponent);
             if(!pos) continue;
-
-            const routeCount = this.countActiveRoutes(entity.id);
 
             settlements.push({
                 entityId: entity.id,
@@ -66,35 +98,17 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 goodsProduction: industry.goodsProduction,
                 goodsRequirements: industry.goodsRequirements,
                 population: industry.population,
-                routeCount,
+                routeCount: routeCounts.get(entity.id) ?? 0,
             });
         }
 
-        this.evaluateTradeOpportunities(settlements);
+        this.evaluateTradeOpportunities(settlements, activeRoutes);
         this.evaluateMigrationOpportunities(settlements);
     };
 
-    private countActiveRoutes(entityId: string): number {
-        if(!this.engine) return 0;
-        let count = 0;
-        for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
-            if(tradeRoute.sourceEntityId === entityId) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private hasActiveRoute(sourceId: string, destId: string): boolean {
-        if(!this.engine) return false;
-        for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
-            if(tradeRoute.sourceEntityId === sourceId && tradeRoute.destinationEntityId === destId) return true;
-        }
-        return false;
-    }
-
     private evaluateTradeOpportunities(
-        settlements: Settlement[]
+        settlements: Settlement[],
+        activeRoutes: Set<string>,
     ) {
         if(settlements.length < 2) return;
 
@@ -128,7 +142,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 );
                 const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
                 if(distance > travelDays * 20) continue;
-                if(this.hasActiveRoute(exporter.entityId, importer.entityId)) continue;
+                if(activeRoutes.has(`${exporter.entityId}->${importer.entityId}`)) continue;
 
                 const batch: Partial<Goods> = {};
                 let hasAny = false;
@@ -181,7 +195,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     }
 
     private evaluateMigrationOpportunities(
-        settlements: Settlement[]
+        settlements: Settlement[],
     ) {
         if(settlements.length < 2) return;
 

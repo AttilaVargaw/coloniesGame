@@ -1,142 +1,48 @@
-import { TradeRouteNode } from "@game/systems/TradeRouteNode";
-import { SystemWithNodes } from "@engine/systems/system";
-import { Engine } from "@/engine/core/engine";
-import { DayPassedEvent } from "@/engine/lib/events";
+import { RouteSystem } from "./RouteSystem";
+import { TradeRouteNode } from "./TradeRouteNode";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { IndustryComponent } from "@game/components/industryComponent";
-import { PositionComponent } from "@/engine/components/position";
 import { TradeRouteCreatedEvent, TradeRouteCompletedEvent, TradeRouteCancelledEvent } from "@game/events/tradeEvents";
 import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { CancelTradeRouteCommand } from "@game/commands/cancelTradeRouteCommand";
 import { Goods } from "@game/data/Goods";
-import { v4 as uuid } from "uuid";
-import { Queue } from "@/engine/lib/commandQueue";
-import { createEntity } from "@/engine/lib/entityRegistry";
+import { Entity } from "@/engine/entities/entity";
+import { CommandBase } from "@/engine/lib/CommandBase";
 
-const TRADE_SPEED = 0.5;
+export class TradeSystem extends RouteSystem<TradeRouteNode> {
+    protected readonly nodeConstructor = TradeRouteNode;
+    protected readonly componentConstructor = TradeRouteComponent;
 
-export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
-    private tradeRouteCreatedEvents: Queue<TradeRouteCreatedEvent> | null = null
-    private tradeRouteCompletedEvents: Queue<TradeRouteCompletedEvent> | null = null
-    private tradeRouteCancelledEvents: Queue<TradeRouteCancelledEvent> | null = null
+    protected readonly createdEventClass = TradeRouteCreatedEvent;
+    protected readonly completedEventClass = TradeRouteCompletedEvent;
+    protected readonly cancelledEventClass = TradeRouteCancelledEvent;
 
-    private createTradeRouteCommands: Queue<CreateTradeRouteCommand> | null = null
-    private cancelTradeRouteCommands: Queue<CancelTradeRouteCommand> | null = null
+    protected readonly createCommandClass = CreateTradeRouteCommand;
+    protected readonly cancelCommandClass = CancelTradeRouteCommand;
 
-    update(_dt: number): void {
-        // this.tradeRouteCancelledEvents?.clear()
-        // this.tradeRouteCompletedEvents?.clear()
-        // this.tradeRouteCreatedEvents?.clear()
-
-        // this.createTradeRouteCommands?.clear()
-        // this.cancelTradeRouteCommands?.clear()
+    protected getRouteComponent(node: TradeRouteNode): TradeRouteComponent {
+        return node.tradeRoute;
     }
 
-    // eslint-disable-next-line class-methods-use-this,no-empty-function
-    protected updateNode(_node: TradeRouteNode, _dT?: number): void {
+    protected createRouteComponent(
+        sourceEntityId: string,
+        destinationEntityId: string,
+        payload: unknown,
+        travelDays: number,
+        speed: number,
+    ): TradeRouteComponent {
+        const goods = payload as Partial<Goods>;
+        return new TradeRouteComponent(sourceEntityId, destinationEntityId, goods, travelDays, travelDays, speed);
     }
 
-    removeFromEngine(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine?.unregisterNodeType(TradeRouteNode);
-        this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
-        this.engine?.removeCommandQueue(CreateTradeRouteCommand);
-        this.engine?.removeCommandQueue(CancelTradeRouteCommand);
-        super.removeFromEngine();
-
-        this.tradeRouteCreatedEvents = null;
-        this.tradeRouteCompletedEvents = null;
-        this.tradeRouteCancelledEvents = null;
-
-        return this;
+    protected validateCreate(source: Entity): boolean {
+        return !!source.getComponent(IndustryComponent);
     }
 
-    addToEngine(engine: Engine): this {
-        super.addToEngine(engine);
-        engine.registerNodeType(
-            TradeRouteNode,
-            new Set([TradeRouteComponent]),
-            (entity) => new TradeRouteNode(entity.getComponent(TradeRouteComponent)!, entity)
-        );
-        engine.registerEventQueue(TradeRouteCreatedEvent);
-        engine.registerEventQueue(TradeRouteCompletedEvent);
-        engine.registerEventQueue(TradeRouteCancelledEvent);
-
-        engine.subscribe(DayPassedEvent, this.onDayPassed);
-
-        engine.registerCommandQueue(CreateTradeRouteCommand);
-        engine.registerCommandQueue(CancelTradeRouteCommand);
-
-        this.tradeRouteCreatedEvents = engine.getEvents(TradeRouteCreatedEvent);
-        this.tradeRouteCompletedEvents = engine.getEvents(TradeRouteCompletedEvent);
-        this.tradeRouteCancelledEvents = engine.getEvents(TradeRouteCancelledEvent);
-
-        this.createTradeRouteCommands = engine.getCommands(CreateTradeRouteCommand);
-        this.cancelTradeRouteCommands = engine.getCommands(CancelTradeRouteCommand);
-
-        this.nodes = engine.getNodeList(TradeRouteNode);
-
-        return this;
-    }
-
-    private onDayPassed = () => {
-        if(!this.createTradeRouteCommands || !this.cancelTradeRouteCommands) {
-            return
-        }
-
-        for(const cmd of this.createTradeRouteCommands) {
-            this.handleCreateTradeRoute(cmd);
-        }
-        this.createTradeRouteCommands.clear();
-
-
-        for(const cmd of this.cancelTradeRouteCommands) {
-            this.handleCancelTradeRoute(cmd);
-        }
-        this.cancelTradeRouteCommands.clear();
-
-        const routesToRemove: TradeRouteNode[] = [];
-
-        for(const node of this.nodes) {
-            node.tradeRoute.travelDaysRemaining -= 1;
-
-            if(node.tradeRoute.travelDaysRemaining <= 0) {
-                this.completeTradeRoute(node);
-                routesToRemove.push(node);
-            }
-        }
-
-        for(const node of routesToRemove) {
-            this.engine?.removeEntity(node.entity);
-        }
-
-        this.tradeRouteCancelledEvents?.clear()
-        this.tradeRouteCompletedEvents?.clear()
-        this.tradeRouteCreatedEvents?.clear()
-
-        this.createTradeRouteCommands.clear()
-        this.cancelTradeRouteCommands.clear()
-    };
-
-    private handleCreateTradeRoute(command: CreateTradeRouteCommand) {
-        const { sourceEntityId, destinationEntityId, goods, speed } = command;
-        const source = this.engine?.getEntityById(sourceEntityId);
-        const destination = this.engine?.getEntityById(destinationEntityId);
-
-        if(!source || !destination) return;
-
+    protected prepareSource(source: Entity, command: CommandBase): Partial<Goods> | null {
+        const { goods } = command as { goods: Partial<Goods>; speed?: number };
         const sourceIndustry = source.getComponent(IndustryComponent);
-        if(!sourceIndustry) return;
-
-        const sourcePos = source.getComponent(PositionComponent);
-        const destPos = destination.getComponent(PositionComponent);
-        if(!sourcePos || !destPos) return;
-
-        const distance = Math.hypot(destPos.x - sourcePos.x, destPos.y - sourcePos.y);
-        const travelDays = Math.max(1, Math.ceil(distance / (speed * TRADE_SPEED)));
+        if(!sourceIndustry) return null;
 
         const goodsToTransfer: Partial<Goods> = {};
         for(const key in goods) {
@@ -151,59 +57,27 @@ export class TradeSystem extends SystemWithNodes<TradeRouteNode> {
             }
         }
 
-        if(Object.keys(goodsToTransfer).length === 0) return;
-
-        const routeEntity = createEntity(uuid());
-        if(!routeEntity) return;
-
-        routeEntity.addComponent(new TradeRouteComponent(
-            sourceEntityId,
-            destinationEntityId,
-            goodsToTransfer,
-            travelDays,
-            travelDays,
-            speed
-        ));
-
-        this.engine?.addEntity(routeEntity);
-        this.engine?.dispatchEvent(new TradeRouteCreatedEvent({ routeEntityId: routeEntity.id }));
+        if(Object.keys(goodsToTransfer).length === 0) return null;
+        return goodsToTransfer;
     }
 
-    private handleCancelTradeRoute(command: CancelTradeRouteCommand) {
-        const routeEntity = this.engine?.getEntityById(command.routeEntityId);
-        if(!routeEntity) return;
+    protected refundSource(source: Entity, route: TradeRouteComponent): void {
+        const sourceIndustry = source.getComponent(IndustryComponent);
+        if(!sourceIndustry) return;
 
-        const route = routeEntity.getComponent(TradeRouteComponent);
-        if(!route) return;
-
-        const source = this.engine?.getEntityById(route.sourceEntityId);
-        if(source) {
-            const sourceIndustry = source.getComponent(IndustryComponent);
-            if(sourceIndustry) {
-                for(const key in route.goods) {
-                    const amount = route.goods[key as keyof Goods] ?? 0;
-                    sourceIndustry.goods[key as keyof Goods] = (sourceIndustry.goods[key as keyof Goods] ?? 0) + amount;
-                }
-            }
+        for(const key in route.goods) {
+            const amount = route.goods[key as keyof Goods] ?? 0;
+            sourceIndustry.goods[key as keyof Goods] = (sourceIndustry.goods[key as keyof Goods] ?? 0) + amount;
         }
-
-        this.engine?.removeEntity(routeEntity);
-        this.engine?.dispatchEvent(new TradeRouteCancelledEvent({ routeEntityId: command.routeEntityId }));
     }
 
-    private completeTradeRoute(node: TradeRouteNode) {
-        const { destinationEntityId, goods } = node.tradeRoute;
-        const destination = this.engine?.getEntityById(destinationEntityId);
-        if(!destination) return;
-
+    protected deliverDestination(destination: Entity, route: TradeRouteComponent): void {
         const destIndustry = destination.getComponent(IndustryComponent);
         if(!destIndustry) return;
 
-        for(const key in goods) {
-            const amount = goods[key as keyof Goods] ?? 0;
+        for(const key in route.goods) {
+            const amount = route.goods[key as keyof Goods] ?? 0;
             destIndustry.goods[key as keyof Goods] = (destIndustry.goods[key as keyof Goods] ?? 0) + amount;
         }
-
-        this.engine?.dispatchEvent(new TradeRouteCompletedEvent({ routeEntityId: node.entity.id }));
     }
 }

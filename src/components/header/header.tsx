@@ -28,11 +28,20 @@ export function Header() {
             <h1 className="text-2xl font-bold"></h1>
             <nav>
                 <ul className="flex space-x-4 items-center">
+                    <li >
+                        <button
+                            onClick={(event) => {
+                                setSpeed(0)
+                            }}
+                            className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
+                        >
+                            ||
+                        </button>
+                    </li>
                     {SPEEDS.map(speed => (
                         <li key={speed}>
                             <button
                                 onClick={(event) => {
-                                    event.preventDefault()
                                     setSpeed(speed)
                                 }}
                                 className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"

@@ -1,6 +1,6 @@
 import { IndustrialSectors } from "@/game/components/Factories";
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Goods } from "@/game/data/Goods";
+import { Goods, basePrices } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/factoryBlueprints";
 import { convertToReadable } from "@/lib/utils";
@@ -8,7 +8,6 @@ import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
-import { BsHexagon } from "react-icons/bs";
 
 //-386.8M	
 
@@ -27,6 +26,12 @@ export function SectorRow({
 
     const config = industrySectorBlueprints.get(sectorKey);
     const sectorResult = industry.sectorResults?.[sectorKey];
+    const revenue = sectorResult
+        ? Object.entries(sectorResult.producedGoods as Record<keyof Goods, number>).reduce((sum, [key, amount]) => {
+            return sum + (amount ?? 0) * (basePrices[key as keyof Goods] ?? 0);
+        }, 0)
+        : 0;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
 
@@ -87,6 +92,9 @@ export function SectorRow({
             <td className="p-2 text-center">100%</td>
             <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {convertToReadable(Math.round(profit))}
+            </td>
+            <td className={`p-2 text-center ${margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {hasData ? `${margin.toFixed(0)}%` : '—'}
             </td>
             <td className="p-2 text-center">
                 <BottleneckCell bottleneck={reqs.bottleneck} bottleneckRatio={reqs.bottleneckRatio} />

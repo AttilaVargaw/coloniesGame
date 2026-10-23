@@ -51,9 +51,11 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onCloseButtonClick,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  onCloseButtonClick?: React.MouseEventHandler<HTMLButtonElement>
 }) {
   return (
     <DialogPortal>
@@ -68,14 +70,13 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
+          <DialogPrimitive.Close onClick={onCloseButtonClick} data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
               className="absolute top-2 right-2"
               size="icon-sm"
             >
-              <XIcon
-              />
+              <XIcon />
               <span className="sr-only">Close</span>
             </Button>
           </DialogPrimitive.Close>

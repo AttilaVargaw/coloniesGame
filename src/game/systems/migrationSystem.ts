@@ -1,189 +1,74 @@
-import { MigrationRouteNode } from "@game/systems/MigrationRouteNode";
-import { SystemWithNodes } from "@engine/systems/system";
-import { Engine } from "@/engine/core/engine";
-import { DayPassedEvent } from "@/engine/lib/events";
+import { RouteSystem } from "./RouteSystem";
+import { MigrationRouteNode } from "./MigrationRouteNode";
 import { MigrationRouteComponent } from "@game/components/migrationRouteComponent";
 import { IndustryComponent } from "@game/components/industryComponent";
-import { PositionComponent } from "@/engine/components/position";
 import { MigrationRouteCreatedEvent, MigrationRouteCompletedEvent, MigrationRouteCancelledEvent } from "@game/events/migrationEvents";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 import { CancelMigrationRouteCommand } from "@game/commands/cancelMigrationRouteCommand";
-import { v4 as uuid } from "uuid";
-import { Queue } from "@/engine/lib/commandQueue";
-import { createEntity } from "@/engine/lib/entityRegistry";
+import { Entity } from "@/engine/entities/entity";
+import { CommandBase } from "@/engine/lib/CommandBase";
 
-export class MigrationSystem extends SystemWithNodes<MigrationRouteNode> {
-    private migrationRouteCreatedEvents: Queue<MigrationRouteCreatedEvent> | null = null
-    private migrationRouteCompletedEvents: Queue<MigrationRouteCompletedEvent> | null = null
-    private migrationRouteCancelledEvents: Queue<MigrationRouteCancelledEvent> | null = null
+export class MigrationSystem extends RouteSystem<MigrationRouteNode> {
+    protected readonly nodeConstructor = MigrationRouteNode;
+    protected readonly componentConstructor = MigrationRouteComponent;
 
-    private createMigrationRouteCommands: Queue<CreateMigrationRouteCommand> | null = null
-    private cancelMigrationRouteCommands: Queue<CancelMigrationRouteCommand> | null = null
+    protected readonly createdEventClass = MigrationRouteCreatedEvent;
+    protected readonly completedEventClass = MigrationRouteCompletedEvent;
+    protected readonly cancelledEventClass = MigrationRouteCancelledEvent;
 
-    update(_dt: number): void {
-        // Event queues are cleared in onDayPassed after processing
-        // this.migrationRouteCancelledEvents?.clear()
-        // this.migrationRouteCompletedEvents?.clear()
-        // this.migrationRouteCreatedEvents?.clear()
+    protected readonly createCommandClass = CreateMigrationRouteCommand;
+    protected readonly cancelCommandClass = CancelMigrationRouteCommand;
 
-        this.createMigrationRouteCommands?.clear()
-        this.cancelMigrationRouteCommands?.clear()
+    protected getRouteComponent(node: MigrationRouteNode): MigrationRouteComponent {
+        return node.migrationRoute;
     }
 
-    // eslint-disable-next-line class-methods-use-this,no-empty-function
-    protected updateNode(_node: MigrationRouteNode, _dT?: number): void {
+    protected createRouteComponent(
+        sourceEntityId: string,
+        destinationEntityId: string,
+        payload: unknown,
+        travelDays: number,
+        speed: number,
+    ): MigrationRouteComponent {
+        const workerCount = payload as number;
+        return new MigrationRouteComponent(sourceEntityId, destinationEntityId, workerCount, travelDays, travelDays, speed);
     }
 
-    removeFromEngine(): this {
-        if(!this.engine) {
-            return this
-        }
-
-        this.engine?.unregisterNodeType(MigrationRouteNode);
-        this.engine?.unsubscribe(DayPassedEvent, this.onDayPassed);
-        this.engine?.removeCommandQueue(CreateMigrationRouteCommand);
-        this.engine?.removeCommandQueue(CancelMigrationRouteCommand);
-        super.removeFromEngine();
-
-        this.migrationRouteCreatedEvents = null;
-        this.migrationRouteCompletedEvents = null;
-        this.migrationRouteCancelledEvents = null;
-
-        return this;
-    }
-
-    addToEngine(engine: Engine): this {
-        super.addToEngine(engine);
-        engine.registerNodeType(
-            MigrationRouteNode,
-            new Set([MigrationRouteComponent]),
-            (entity) => new MigrationRouteNode(entity.getComponent(MigrationRouteComponent)!, entity)
-        );
-        engine.registerEventQueue(MigrationRouteCreatedEvent);
-        engine.registerEventQueue(MigrationRouteCompletedEvent);
-        engine.registerEventQueue(MigrationRouteCancelledEvent);
-
-        engine.subscribe(DayPassedEvent, this.onDayPassed);
-
-        engine.registerCommandQueue(CreateMigrationRouteCommand);
-        engine.registerCommandQueue(CancelMigrationRouteCommand);
-
-        this.migrationRouteCreatedEvents = engine.getEvents(MigrationRouteCreatedEvent);
-        this.migrationRouteCompletedEvents = engine.getEvents(MigrationRouteCompletedEvent);
-        this.migrationRouteCancelledEvents = engine.getEvents(MigrationRouteCancelledEvent);
-
-        this.createMigrationRouteCommands = engine.getCommands(CreateMigrationRouteCommand);
-        this.cancelMigrationRouteCommands = engine.getCommands(CancelMigrationRouteCommand);
-
-        this.nodes = engine.getNodeList(MigrationRouteNode);
-
-        return this;
-    }
-
-    private onDayPassed = () => {
-        const createCommands = this.engine?.getCommands(CreateMigrationRouteCommand);
-        if(createCommands) {
-            for(const cmd of [...createCommands]) {
-                this.handleCreateMigrationRoute(cmd);
-            }
-        }
-
-        const cancelCommands = this.engine?.getCommands(CancelMigrationRouteCommand);
-        if(cancelCommands) {
-            for(const cmd of [...cancelCommands]) {
-                this.handleCancelMigrationRoute(cmd);
-            }
-        }
-
-        const routesToRemove: MigrationRouteNode[] = [];
-
-        for(const node of this.nodes) {
-            node.migrationRoute.travelDaysRemaining -= 1;
-
-            if(node.migrationRoute.travelDaysRemaining <= 0) {
-                this.completeMigrationRoute(node);
-                routesToRemove.push(node);
-            }
-        }
-
-        for(const node of routesToRemove) {
-            this.engine?.removeEntity(node.entity);
-        }
-    };
-
-    private handleCreateMigrationRoute(command: CreateMigrationRouteCommand) {
-        const { sourceEntityId, destinationEntityId, workerCount, speed } = command;
-        const source = this.engine?.getEntityById(sourceEntityId);
-        const destination = this.engine?.getEntityById(destinationEntityId);
-
-        if(!source || !destination) return;
-
+    protected validateCreate(source: Entity): boolean {
         const sourceIndustry = source.getComponent(IndustryComponent);
-        if(!sourceIndustry) return;
+        return !!sourceIndustry && sourceIndustry.freeWorkers.worker.number > 0;
+    }
 
-        const sourcePos = source.getComponent(PositionComponent);
-        const destPos = destination.getComponent(PositionComponent);
-        if(!sourcePos || !destPos) return;
-
-        const distance = Math.hypot(destPos.x - sourcePos.x, destPos.y - sourcePos.y);
-        const travelDays = Math.max(1, Math.ceil(distance / (speed * 0.5)));
+    protected prepareSource(source: Entity, command: CommandBase): number | null {
+        const { workerCount } = command as { workerCount: number; speed?: number };
+        const sourceIndustry = source.getComponent(IndustryComponent);
+        if(!sourceIndustry) return null;
 
         const actualWorkerCount = Math.min(workerCount, sourceIndustry.freeWorkers.worker.number);
-        if(actualWorkerCount <= 0) return;
+        if(actualWorkerCount <= 0) return null;
 
         sourceIndustry.freeWorkers.worker.number -= actualWorkerCount;
         sourceIndustry.population.worker.number -= actualWorkerCount;
         this.engine?.reindexEntity(source);
 
-        const routeEntity = createEntity(uuid());
-        if(!routeEntity) return;
-
-        routeEntity.addComponent(new MigrationRouteComponent(
-            sourceEntityId,
-            destinationEntityId,
-            actualWorkerCount,
-            travelDays,
-            travelDays,
-            speed
-        ));
-
-        this.engine?.addEntity(routeEntity);
-        this.engine?.dispatchEvent(new MigrationRouteCreatedEvent({ routeEntityId: routeEntity.id }));
+        return actualWorkerCount;
     }
 
-    private handleCancelMigrationRoute(command: CancelMigrationRouteCommand) {
-        const routeEntity = this.engine?.getEntityById(command.routeEntityId);
-        if(!routeEntity) return;
-
-        const route = routeEntity.getComponent(MigrationRouteComponent);
-        if(!route) return;
-
-        const source = this.engine?.getEntityById(route.sourceEntityId);
-        if(source) {
-            const sourceIndustry = source.getComponent(IndustryComponent);
-            if(sourceIndustry) {
-                sourceIndustry.freeWorkers.worker.number += route.workerCount;
-                sourceIndustry.population.worker.number += route.workerCount;
-                this.engine?.reindexEntity(source);
-            }
+    protected refundSource(source: Entity, route: MigrationRouteComponent): void {
+        const sourceIndustry = source.getComponent(IndustryComponent);
+        if(sourceIndustry) {
+            sourceIndustry.freeWorkers.worker.number += route.workerCount;
+            sourceIndustry.population.worker.number += route.workerCount;
+            this.engine?.reindexEntity(source);
         }
-
-        this.engine?.removeEntity(routeEntity);
-        this.engine?.dispatchEvent(new MigrationRouteCancelledEvent({ routeEntityId: command.routeEntityId }));
     }
 
-    private completeMigrationRoute(node: MigrationRouteNode) {
-        const { destinationEntityId, workerCount } = node.migrationRoute;
-        const destination = this.engine?.getEntityById(destinationEntityId);
-        if(!destination) return;
-
+    protected deliverDestination(destination: Entity, route: MigrationRouteComponent): void {
         const destIndustry = destination.getComponent(IndustryComponent);
-        if(!destIndustry) return;
-
-        destIndustry.freeWorkers.worker.number += workerCount;
-        destIndustry.population.worker.number += workerCount;
-        this.engine?.reindexEntity(destination);
-
-        this.engine?.dispatchEvent(new MigrationRouteCompletedEvent({ routeEntityId: node.entity.id }));
+        if(destIndustry) {
+            destIndustry.freeWorkers.worker.number += route.workerCount;
+            destIndustry.population.worker.number += route.workerCount;
+            this.engine?.reindexEntity(destination);
+        }
     }
 }
