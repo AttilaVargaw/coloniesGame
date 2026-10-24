@@ -1,6 +1,6 @@
 // import { IndustryReducerReturn, type IndustryReducer } from "./";
 // import type { IndustrialSectors } from "../components/Factories";
-import { IndustrialSectors } from "../components/Factories";
+import { industrialSectors, IndustrialSectors } from "../components/Factories";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 
@@ -317,8 +317,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
+            ["Fossil", {
+                desc: "Fossil",
             }]
         ])
     })],
@@ -409,19 +409,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { consumerGoods: 20 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.06, buildings: 0.01 },
-        capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"]),
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
-    ["luxuryFurnitureFactory", ({
-        name: "luxuryFurnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 50, lumber: 10, chemicals: 4, electricity: 20, governance: 2 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { luxuryFurniture: 14 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(["paper", "governance"]),
@@ -1008,38 +995,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             }], createFullyRobotized()
         ])
     })],
-    ["alcoholicDrinkIndustry", ({
-        name: "alcoholicDrinkIndustry",
-        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, governance: 2, paper: 10 },
-        workerRequirement: workerReqStandard,
-        goodsProduction: { alcoholDrinks: 100, waste: 1 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
-        capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
-    ["stimulantDrinkIndustry", ({
-        name: "stimulantDrinkIndustry",
-        goodsRequirements: { environmentFactor: 2, retail: 20, electricity: 15, governance: 2, paper: 10 },
-        workerRequirement: workerReqStandard,
-        goodsProduction: { stimulantDrinks: 100, waste: 1 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
-        capitalEfficiency: 0.0008,
-        capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
     ["retail", ({
         name: "retail",
         goodsRequirements: { environmentFactor: 2, electricity: 15, governance: 2, paper: 10 },
@@ -1108,3 +1063,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         ])
     }]
 ])
+
+
+// console.log([...industrialSectors].reduce((acc, [, value]) => {
+//     return acc + value.size
+// }, 0), industrySectorBlueprints.size)

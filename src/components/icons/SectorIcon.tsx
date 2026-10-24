@@ -1,7 +1,6 @@
 import { IndustrialSectors } from "@/game/components/Factories";
 import {
     BarChart3,
-    Beer,
     BrickWall,
     Car,
     CircleDollarSign,
@@ -37,12 +36,11 @@ import {
     FactoryIcon,
     VeganIcon,
     BriefcaseMedical,
-    Rocket,
-    Coffee,
     Satellite,
     Cog,
     Tractor,
-    Ham
+    Ham,
+    BottleWine
 } from "lucide-react";
 
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
@@ -65,12 +63,11 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     tourism: Plane,
     postalServices: Mail,
     waterTreatment: Droplets,
-    alcoholicDrinkIndustry: Beer,
     alternativeMedicine: Vegan,
     ammunitionFactory: GiRifle,
     bank: CircleDollarSign,
     furnitureFactory: Sofa,
-    luxuryFurnitureFactory: Sofa,
+    drinkIndustry: BottleWine,
     mine: Stone,
     paperFactory: Newspaper,
     construction: BrickWall,
@@ -100,12 +97,13 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     machineryFactory: Cog,
     medicineFactory: BriefcaseMedical,
     religion: GiGreekTemple,
-    stimulantDrinkIndustry: Coffee,
     weaponFactory: GiRifle,
     spaceInfrastructure: Satellite,
     orbitalFactory: Satellite,
     spaceGoodsTransport: Satellite
-}
+} as const
+
+// console.log("sectorsN", Object.keys(ICON_MAP).length)
 
 export function SectorIcon({ name, className }: { name: keyof IndustrialSectors; className?: string }) {
     const IconComponent = ICON_MAP[name]

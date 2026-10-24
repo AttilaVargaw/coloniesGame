@@ -220,6 +220,8 @@ export const godsCategories = new Map<string, Set<keyof Goods>>([
     ["mobility", new Set(["automotiveMobility", "railroadMobility", "shipMobility", "airMobility", "vehicles", "ships", "aircraft", "railroadVehicles", "spaceTransport"])]
 ])
 
+//console.log("goodsN", Object.keys(basePrices).length)
+
 if(Object.keys(basePrices).length !== [...godsCategories].reduce((acc, [_, set]) => acc + set.size, 0)) {
     console.error("Goods and basePrices must have the same keys", Object.keys(basePrices), [...godsCategories].reduce((acc, [_, set]) => acc + set.size, 0))
 }

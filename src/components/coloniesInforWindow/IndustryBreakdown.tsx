@@ -1,5 +1,5 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
-import type { IndustrialSectors } from "@/game/components/Factories";
+import { industrialSectors, type IndustrialSectors } from "@/game/components/Factories";
 import { godsCategories, type Goods } from "@/game/data/Goods";
 import type { Population } from "@/game/data/Population";
 import { POPULATION_NAMES } from "@/components/icons/PopulationIcon";
@@ -17,7 +17,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
     return (
         <div className="overflow-x-auto">
             <ToggleGroup onValueChange={setCategory} value={category} type="single" >
-                {[...godsCategories.keys()].map((key) => {
+                {[...industrialSectors.keys()].map((key) => {
                     return <ToggleGroupItem key={key} value={key}>{key}</ToggleGroupItem>
                 })}
             </ToggleGroup>
@@ -36,7 +36,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                     </tr>
                 </thead>
                 <tbody>
-                    {Array.from(industry.activeSectors).sort((a, b) => a.localeCompare(b)).map((key) => (
+                    {Array.from(industry.activeSectors.intersection(industrialSectors.get(category) ?? new Set())).sort((a, b) => a.localeCompare(b)).map((key) => (
                         <SectorRow
                             key={key}
                             rowKey={key}

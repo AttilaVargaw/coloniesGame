@@ -16,7 +16,6 @@ export type IndustrialSectors = Readonly<{
     medicineFactory: number;
     consumerFactory: number;
     furnitureFactory: number;
-    luxuryFurnitureFactory: number;
     ammunitionFactory: number;
     weaponFactory: number;
     spaceShips: number;
@@ -45,8 +44,7 @@ export type IndustrialSectors = Readonly<{
     paperFactory: number;
     entertainmentIndustry: number;
     informationTechnology: number;
-    alcoholicDrinkIndustry: number;
-    stimulantDrinkIndustry: number;
+    drinkIndustry: number;
     retail: number;
     railroadInfrastructure: number;
     shipInfrastructure: number;
@@ -55,6 +53,15 @@ export type IndustrialSectors = Readonly<{
     defense: number
     militaryVehicles: number
     spaceGoodsTransport: number
-}>;
+}>
+
+export const industrialSectors = new Map<string, Set<keyof IndustrialSectors>>([
+    ["rawMaterials", new Set(["farm", "forestry", "oilRig", "mine", "orbitalFactory", "waterTreatment", "powerPlant", "environmentControl", "fishery"])],
+    ["industrialMaterials", new Set(["construction", "chemical", "electronics", "lumberMill", "metalFactory", "medicineFactory", "paperFactory", "recycling", "machineryFactory"])],
+    ["consumerGoods", new Set(["consumerFactory", "furnitureFactory", "foodFactory", "meat", "drinkIndustry", "clothing", "alternativeMedicine"])],
+    ["services", new Set(["services", "government", "healthcare", "lawEnforcement", "tourism", "religion", "bank", "education", "entertainmentIndustry", "informationTechnology", "retail", "postalServices"])],
+    ["military", new Set(["nuclearSector", "ammunitionFactory", "weaponFactory", "militaryVehicles", "defense"])],
+    ["mobility", new Set(["spaceShips", "automotive", "railroadInfrastructure", "railroadVehicles", "aircraftInfrastructure", "ships", "automotiveInfrastructure", "aircraft", "spaceGoodsTransport", "spaceInfrastructure"])]
+])
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;
