@@ -411,12 +411,14 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             [PositionComponent, SizeComponent],
             (e) => {
                 const color = e.getComponent(ColorComponent) ?? new ColorComponent()
+                const texture = e.getComponent(TextureComponent)
+
                 return new RectNode(e, e.getComponent(PositionComponent)!,
                     e.getComponent(SizeComponent)!,
                     color,
-                    e.getComponent(TextureComponent),
-                    e.getComponent(TextureComponent)?.rotation ?? 0,
-                    color.emitLight,
+                    texture,
+                    texture?.rotation ?? 0,
+                    color.emitLight
                 )
             },
         )
