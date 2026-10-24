@@ -6,6 +6,8 @@ import { EntityComponent } from "@/engine/entities/entityComponent";
 import { ProjectedPoint } from "@/lib/camera";
 import { vec3 } from "gl-matrix";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
+import { ColorComponent } from "@/engine/components/colorComponent";
+import { PositionComponent } from "@/engine/components/position";
 
 export abstract class BaseRenderer<N extends RenderableNode> {
     protected nodes: N[] = []
@@ -35,6 +37,46 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         this.viewportSystem = viewportSystem
         this.components = components
         this.nodeFactory = nodeFactory
+    }
+
+    protected findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
+        if(!this.engine) return undefined
+
+        if(planetEntity.getComponent(ColorComponent)?.emitLight) {
+            return
+        }
+
+        let current: Entity | undefined = planetEntity
+
+        while(current) {
+            const sceneNode = this.engine.getSceneNode(current)
+            if(sceneNode?.parent) {
+                current = sceneNode.parent.entity
+            } else {
+                break
+            }
+
+            const color = current.getComponent(ColorComponent)
+            if(color?.emitLight) {
+                return current
+            }
+        }
+
+        //@ts-ignore
+        const stars = this.engine.getNodeList(WebGLSphereRenderer).filter(n => n.color.emitLight)
+
+        const closestStar = stars.reduce((result, star) => {
+            const node = this.engine!.getSceneNode(star.entity)!
+
+            if(vec3.squaredDistance(node.getWorldPosition(), planetEntity.getComponent(PositionComponent)!.getVector())
+                < vec3.squaredDistance(node.getWorldPosition(), result.entity.getComponent(PositionComponent)!.getVector())) {
+                return star
+            } else {
+                return result
+            }
+        }, stars[0])
+
+        return closestStar.entity
     }
 
     addToEngine(engine: Engine): this {

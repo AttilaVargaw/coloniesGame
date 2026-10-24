@@ -12,7 +12,8 @@ export class RectNode extends RenderableNode {
         public color: ColorComponent = new ColorComponent("red"),
         public texture: TextureComponent | undefined = undefined,
         public rotation: number = 0,
-        public emitLight: boolean = false) {
+        public emitLight: boolean = false,
+        public icon = false) {
         super(color, entity);
     }
 }

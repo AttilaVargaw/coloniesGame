@@ -112,22 +112,16 @@ export class WebglRenderManager {
         this.projectNodes()
 
         this.orbitRenderer.drawNodes()
-        if(hdrEnabled) {
-            // Everything renders into the same HDR depth buffer so spheres
-            // (drawn last) correctly occlude rects/orbits where they overlap,
-            // matching the LDR draw order: orbit → rect → sphere.
-            this.rectRenderer.drawNodes()
-            this.sphereRenderer.drawNodes()
+        this.rectRenderer.drawNodes()
+        this.sphereRenderer.drawNodes()
 
-            // Tone-map the HDR scene to the canvas. The fullscreen tone-map
-            // quad covers every pixel, so no clear is needed.
+        if(hdrEnabled) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, null)
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
             this.toneMapPass(gl)
-        } else {
-            this.rectRenderer.drawNodes()
-            this.sphereRenderer.drawNodes()
         }
+
+        this.rectRenderer.drawNodes()
 
         const { cssHeight, cssWidth } = this.viewport.camera!
 

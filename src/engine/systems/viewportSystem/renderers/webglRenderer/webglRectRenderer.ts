@@ -183,7 +183,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
                 continue
             }
 
-            const resolvedTexture = this.resolveTexture(node.texture)
+            const resolvedTexture = node.texture && this.resolveTexture(node.texture)
             let atlasEntry: AtlasEntry | undefined
 
             if(showCheckerPattern) {
@@ -202,16 +202,17 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             const fill = node.color.fill || "#ffffff"
             const [r, g, b] = this.parseColor(fill)
 
-            const starEntity = this.findClosestStarEntity(worldPos)
+            const starEntity = this.findStarEntityForPlanet(node.entity)
             let lightDir = vec3.fromValues(0, 1, 0)
             let starColor = vec3.fromValues(1.0, 1.0, 1.0)
+
             if(starEntity) {
                 const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
                 const lightDirLength = vec3.length(lightDirRaw)
                 lightDir = lightDirLength > 0
                     ? vec3.normalize(vec3.create(), lightDirRaw)
                     : vec3.fromValues(0, 1, 0)
-                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 40
+                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 500
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {
                     const parsed = hexToRgb(starColorComponent.fill)
@@ -418,7 +419,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
                     color,
                     texture,
                     texture?.rotation ?? 0,
-                    color.emitLight
+                    color.emitLight,
+                    !!texture?.svg
                 )
             },
         )
@@ -435,74 +437,34 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         return super.removeFromEngine()
     }
 
-    private resolveTexture(texture: TextureComponent | undefined): TextureSource | undefined {
-        if(!texture) {
-            return undefined
-        }
-
+    private resolveTexture(texture: TextureComponent): TextureSource {
         if(texture.day) {
             return texture.day
         }
 
-        let sourceKey: string | undefined
-        let sourceUri: string | undefined
+        const sourceUri = texture.svg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture.svg)}` : texture.src!
+        const cached = this.textureCache.get(sourceUri)
 
-        if(texture.svg) {
-            sourceKey = `svg:${texture.svg}`
-            sourceUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(texture.svg)}`
-        } else if(texture.src) {
-            sourceKey = `src:${texture.src}`
-            sourceUri = texture.src
-        }
-
-        if(!sourceKey || !sourceUri) {
-            return undefined
-        }
-
-        const cached = this.textureCache.get(sourceKey)
         if(cached) {
             return cached
         }
 
         const image = new Image()
         image.src = sourceUri
-        this.textureCache.set(sourceKey, image)
+        this.textureCache.set(sourceUri, image)
 
         if(image.complete) {
             return image
         }
 
         image.onload = () => {
-            this.textureCache.set(sourceKey, image)
+            this.textureCache.set(sourceUri, image)
         }
 
         image.onerror = () => {
-            this.textureCache.delete(sourceKey)
+            this.textureCache.delete(sourceUri)
         }
 
         return image
-    }
-
-    private findClosestStarEntity(worldPos: vec3): Entity | undefined {
-        if(!this.engine) return undefined
-
-        //@ts-ignore
-        const stars = this.engine.getNodeList(WebGLSphereRenderer).filter(n => n.color.emitLight)
-        if(stars.length === 0) return undefined
-
-        let closest: Entity | undefined = undefined
-        let closestDist = Infinity
-
-        for(const star of stars) {
-            const sceneNode = this.engine!.getSceneNode(star.entity)
-            if(!sceneNode) continue
-            const d = vec3.squaredDistance(sceneNode.getWorldPosition(), worldPos)
-            if(d < closestDist) {
-                closestDist = d
-                closest = star.entity
-            }
-        }
-
-        return closest
     }
 }
