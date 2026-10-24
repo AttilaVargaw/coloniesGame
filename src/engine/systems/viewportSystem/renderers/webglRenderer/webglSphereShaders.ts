@@ -387,6 +387,14 @@ void main() {
     if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
         if(uHdrMode > 0.5) {
+            // Stars are brighter than planets: scale into HDR range so the
+            // brightest core exceeds 1.0 and blooms, but keep most of the
+            // disk below ~1.0 so ACES tone mapping preserves surface detail
+            // (granulation + sunspots) instead of crushing it to white.
+            color *= 2.5;
+            // Bright atmospheric limb (chromosphere) at the edge
+            float limb = pow(1.0 - NdotV, 5.0) * 1.5;
+            color += vLightColor * limb;
             fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
             color = color / (color + vec3(1.0));

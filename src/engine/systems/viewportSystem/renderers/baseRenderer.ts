@@ -63,7 +63,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         }
 
         //@ts-ignore
-        const stars = this.engine.getNodeList(WebGLSphereRenderer).filter(n => n.color.emitLight)
+        const stars = this.engine.getNodeList(this.constructor).filter(n => n.color.emitLight)
 
         const closestStar = stars.reduce((result, star) => {
             const node = this.engine!.getSceneNode(star.entity)!
@@ -76,7 +76,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
             }
         }, stars[0])
 
-        return closestStar.entity
+        return closestStar?.entity ?? stars[0]
     }
 
     addToEngine(engine: Engine): this {
