@@ -10,7 +10,11 @@ import { ProjectedPoint } from "@/lib/camera"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 import { RectNode } from "../rectNode"
 import { ViewportSystem } from "../../viewportSystem"
+import { WebGLSphereRenderer } from "./webglSphereRenderer"
 import { mat4, vec3 } from "gl-matrix"
+import { SOLAR_UNIT } from "@/game/constants"
+import { getAbsolute } from "@/engine/lib/getAbsolute"
+import { Entity } from "@/engine/entities/entity"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -20,6 +24,13 @@ const QUAD_VERTICES = new Float32Array([
 ])
 
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+        : { r: 0.3, g: 0.6, b: 1.0 }
+}
 
 export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private shader: RectShaderProgram | null = null
@@ -46,11 +57,11 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private ensureRectCapacity(count: number): void {
         const needed = count * 17
         if(!this.rectInstancePool || this.rectInstancePool.length < needed) {
-            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 17)
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 23)
             this.rectInstancePool = new Float32Array(newSize)
         }
         if(!this.rectBatchBuffer || this.rectBatchBuffer.length < needed) {
-            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 17)
+            const newSize = Math.max(needed, this.MAX_RECT_INSTANCES * 23)
             this.rectBatchBuffer = new Float32Array(newSize)
         }
     }
@@ -65,8 +76,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.initBuffers()
         this.initInstanceBuffer()
 
-        this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 17)
-        this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 17)
+        this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 23)
+        this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 23)
 
         this.atlas = new WebGLTextureAtlas()
         const whiteCanvas = getPlatform().createCanvas()
@@ -191,11 +202,28 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             const fill = node.color.fill || "#ffffff"
             const [r, g, b] = this.parseColor(fill)
 
+            const starEntity = this.findClosestStarEntity(worldPos)
+            let lightDir = vec3.fromValues(0, 1, 0)
+            let starColor = vec3.fromValues(1.0, 1.0, 1.0)
+            if(starEntity) {
+                const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
+                const lightDirLength = vec3.length(lightDirRaw)
+                lightDir = lightDirLength > 0
+                    ? vec3.normalize(vec3.create(), lightDirRaw)
+                    : vec3.fromValues(0, 1, 0)
+                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 40
+                const starColorComponent = starEntity.getComponent(ColorComponent)
+                if(starColorComponent?.fill) {
+                    const parsed = hexToRgb(starColorComponent.fill)
+                    starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
+                }
+            }
+
             if(this.pendingInstances.length >= this.MAX_RECT_INSTANCES) {
                 this.ensureRectCapacity(this.pendingInstances.length + 1)
             }
 
-            const poolOffset = this.pendingInstances.length * 17
+            const poolOffset = this.pendingInstances.length * 23
             const pool = this.rectInstancePool!
             pool[poolOffset + 0] = projected.x
             pool[poolOffset + 1] = projected.y
@@ -215,6 +243,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             pool[poolOffset + 14] = tintG
             pool[poolOffset + 15] = tintB
             pool[poolOffset + 16] = node.texture?.tint ? 1.0 : 0.0
+            pool[poolOffset + 17] = lightDir[0]
+            pool[poolOffset + 18] = lightDir[1]
+            pool[poolOffset + 19] = lightDir[2]
+            pool[poolOffset + 20] = starColor[0]
+            pool[poolOffset + 21] = starColor[1]
+            pool[poolOffset + 22] = starColor[2]
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -233,6 +267,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         gl.useProgram(this.shader.program)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
+        gl.uniform3f(this.shader.uniforms.ambientColor, 0.03, 0.03, 0.05)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer)
         const stride = 4 * 4
@@ -243,7 +278,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
 
-        const instanceStride = 17 * 4
+        const instanceStride = 23 * 4
 
         const groups = this.groupsMap
         groups.clear()
@@ -271,14 +306,14 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         for(const [page, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const totalFloats = instances.length * 17
+            const totalFloats = instances.length * 23
             if(!this.rectBatchBuffer || this.rectBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 17)
+                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 23)
                 this.rectBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.rectBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 17), i * 17)
+                batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 23), i * 23)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -308,6 +343,12 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             gl.enableVertexAttribArray(this.shader.attribs.instanceTintAlpha)
             gl.vertexAttribPointer(this.shader.attribs.instanceTintAlpha, 1, gl.FLOAT, false, instanceStride, 16 * 4)
             gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
+            gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 17 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
+            gl.enableVertexAttribArray(this.shader.attribs.instanceLightColor)
+            gl.vertexAttribPointer(this.shader.attribs.instanceLightColor, 3, gl.FLOAT, false, instanceStride, 20 * 4)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceLightColor, 1)
 
             const texture = this.atlas.getTextures(gl)[page]
             gl.activeTexture(gl.TEXTURE0)
@@ -438,5 +479,28 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         }
 
         return image
+    }
+
+    private findClosestStarEntity(worldPos: vec3): Entity | undefined {
+        if(!this.engine) return undefined
+
+        //@ts-ignore
+        const stars = this.engine.getNodeList(WebGLSphereRenderer).filter(n => n.color.emitLight)
+        if(stars.length === 0) return undefined
+
+        let closest: Entity | undefined = undefined
+        let closestDist = Infinity
+
+        for(const star of stars) {
+            const sceneNode = this.engine!.getSceneNode(star.entity)
+            if(!sceneNode) continue
+            const d = vec3.squaredDistance(sceneNode.getWorldPosition(), worldPos)
+            if(d < closestDist) {
+                closestDist = d
+                closest = star.entity
+            }
+        }
+
+        return closest
     }
 }

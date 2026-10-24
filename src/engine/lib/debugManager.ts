@@ -6,7 +6,7 @@ export interface BloomSettings {
     threshold: number
 }
 
-export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showContrastSaturation" | "showCullingOverlay" | "showCheckerPattern" | "showFrameTime" | "showClickBoxes"
+export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showContrastSaturation" | "showCullingOverlay" | "showCheckerPattern" | "showFrameTime" | "showClickBoxes" | "showHDR"
 
 export class DebugManager {
     private readonly _flags: Record<DebugFlag, boolean> = {
@@ -23,13 +23,14 @@ export class DebugManager {
         showCheckerPattern: false,
         showFrameTime: false,
         showClickBoxes: false,
+        showHDR: true,
     }
 
     private _bloomSettings: BloomSettings = {
-        brightness: 0.3,
+        brightness: 3,
         contrast: 2,
         iterations: 3,
-        alpha: 0.25,
+        alpha: 1,
         threshold: 0.4,
     }
 

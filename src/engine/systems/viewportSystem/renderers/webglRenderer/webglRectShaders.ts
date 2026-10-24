@@ -12,14 +12,20 @@ in vec2 aInstanceTexScale;
 in vec4 aInstanceColor;
 in vec3 aInstanceTintColor;
 in float aInstanceTintAlpha;
+in vec3 aInstanceLightDir;
+in vec3 aInstanceLightColor;
 
 uniform mat4 uProjection;
 uniform sampler2D uTexture;
+uniform vec3 uAmbientColor;
 
 out vec2 vAtlasUV;
 out vec4 vColor;
 out vec3 vTintColor;
 out float vTintAlpha;
+out vec3 vLightDir;
+out vec3 vLightColor;
+out vec3 vAmbientColor;
 
 void main() {
     float cosR = cos(aInstanceRotation);
@@ -34,6 +40,9 @@ void main() {
     vColor = aInstanceColor;
     vTintColor = aInstanceTintColor;
     vTintAlpha = aInstanceTintAlpha;
+    vLightDir = aInstanceLightDir;
+    vLightColor = aInstanceLightColor;
+    vAmbientColor = uAmbientColor;
 }`;
 
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
@@ -43,6 +52,9 @@ in vec2 vAtlasUV;
 in vec4 vColor;
 in vec3 vTintColor;
 in float vTintAlpha;
+in vec3 vLightDir;
+in vec3 vLightColor;
+in vec3 vAmbientColor;
 
 uniform sampler2D uTexture;
 
@@ -52,7 +64,11 @@ void main() {
     vec4 texColor = texture(uTexture, vAtlasUV);
     vec3 tinted = texColor.rgb * vColor.rgb;
     tinted = mix(tinted, tinted * vTintColor, vTintAlpha);
-    fragColor = vec4(tinted, texColor.a * vColor.a);
+
+    float diff = max(0.0, dot(vec3(0.0, 0.0, 1.0), vLightDir)) * 0.7 + 0.3;
+    vec3 lit = tinted * vLightColor * diff + tinted * vAmbientColor * 0.6;
+
+    fragColor = vec4(lit, texColor.a * vColor.a);
 }`;
 
 export interface RectShaderProgram {
@@ -68,10 +84,13 @@ export interface RectShaderProgram {
         instanceColor: number;
         instanceTintColor: number;
         instanceTintAlpha: number;
+        instanceLightDir: number;
+        instanceLightColor: number;
     };
     uniforms: {
         projection: WebGLUniformLocation | null;
         texture: WebGLUniformLocation | null;
+        ambientColor: WebGLUniformLocation | null;
     };
 }
 
@@ -104,11 +123,14 @@ export function createRectShaderProgram(gl: WebGL2RenderingContext): RectShaderP
         instanceColor: gl.getAttribLocation(program, "aInstanceColor"),
         instanceTintColor: gl.getAttribLocation(program, "aInstanceTintColor"),
         instanceTintAlpha: gl.getAttribLocation(program, "aInstanceTintAlpha"),
+        instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
+        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
     };
 
     const uniforms = {
         projection: gl.getUniformLocation(program, "uProjection"),
         texture: gl.getUniformLocation(program, "uTexture"),
+        ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
     };
 
     return { program, attribs, uniforms };

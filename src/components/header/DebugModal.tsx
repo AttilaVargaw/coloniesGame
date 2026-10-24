@@ -23,6 +23,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showFpsCounter", label: "Show FPS Counter" },
     { flag: "showCameraTarget", label: "Show Camera Target" },
     { flag: "showBloom", label: "Show Bloom" },
+    { flag: "showHDR", label: "Show HDR" },
     { flag: "showColorGrading", label: "Show Color Grading" },
     { flag: "showVignette", label: "Show Vignette" },
     { flag: "showContrastSaturation", label: "Show Contrast Saturation" },
@@ -33,10 +34,10 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
 ] as const
 
 const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
-    brightness: 0.3,
+    brightness: 3,
     contrast: 2,
     iterations: 3,
-    alpha: 0.25,
+    alpha: 1,
     threshold: 0.4,
 } as const
 
@@ -56,6 +57,7 @@ export function DebugModal() {
         showCheckerPattern: false,
         showFrameTime: false,
         showClickBoxes: false,
+        showHDR: true,
     })
     const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()

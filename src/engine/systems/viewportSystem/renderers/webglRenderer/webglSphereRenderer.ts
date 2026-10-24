@@ -222,7 +222,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         if(!this.shader) return
 
-        this.renderPass(gl, this.shader, null, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
+        this.renderPass(gl, this.shader, this.hdrFramebuffer, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
         if(this._showBloom) {
             this.renderGpuBloom(gl, camera, sortedGroups)
         }
@@ -268,11 +268,21 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private quadIndexBuffer: WebGLBuffer | null = null
     private quadIndexCount = 0
     private _showBloom = false
+    private hdrEnabled = false
+    private hdrFramebuffer: WebGLFramebuffer | null = null
 
     private static readonly MAX_BLOOM_DIMENSION = 1024
 
     setShowBloom(value: boolean) {
         this._showBloom = value
+    }
+
+    setHdr(enabled: boolean) {
+        this.hdrEnabled = enabled
+    }
+
+    setHdrFramebuffer(framebuffer: WebGLFramebuffer | null) {
+        this.hdrFramebuffer = framebuffer
     }
 
     private createBloomFramebuffer(gl: WebGL2RenderingContext): void {
@@ -346,6 +356,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
         gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 0.3)
         gl.uniform1f(shader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.4)
+        gl.uniform1f(shader.uniforms.hdrMode, this.hdrEnabled ? 1.0 : 0.0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
         const stride = 6 * 4
@@ -540,8 +551,27 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         }
 
         gl.enable(gl.BLEND)
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-        this.renderBlurPass(gl, readTexture, null, [0.0, 0.0], this.bloomWidth, this.bloomHeight, intensity)
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.hdrFramebuffer ?? null)
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        if(this.blurShader && this.quadVao && this.quadIndexBuffer) {
+            gl.useProgram(this.blurShader.program)
+            gl.uniform2f(this.blurShader.uniforms.direction, 0.0, 0.0)
+            gl.uniform1f(this.blurShader.uniforms.intensity, intensity)
+            gl.activeTexture(gl.TEXTURE0)
+            gl.bindTexture(gl.TEXTURE_2D, readTexture)
+            gl.uniform1i(this.blurShader.uniforms.texture, 0)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVao)
+            gl.enableVertexAttribArray(this.blurShader.attribs.position)
+            gl.vertexAttribPointer(this.blurShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
+            gl.enableVertexAttribArray(this.blurShader.attribs.texCoord)
+            gl.vertexAttribPointer(this.blurShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+            gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
+            gl.disableVertexAttribArray(this.blurShader.attribs.position)
+            gl.disableVertexAttribArray(this.blurShader.attribs.texCoord)
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.disable(gl.BLEND)
     }
 

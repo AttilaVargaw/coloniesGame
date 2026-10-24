@@ -42,5 +42,6 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         ["time", "uTime"],
         ["bloomBrightness", "uBloomBrightness"],
         ["bloomThreshold", "uBloomThreshold"],
+        ["hdrMode", "uHdrMode"],
     ])
 }

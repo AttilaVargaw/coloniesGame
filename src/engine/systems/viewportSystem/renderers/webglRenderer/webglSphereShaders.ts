@@ -204,6 +204,38 @@ void main() {
     fragColor = color * uIntensity;
 }`;
 
+export const TONE_MAP_VERTEX_SHADER_SOURCE = `#version 300 es
+in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+void main() {
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}`;
+
+export const TONE_MAP_FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+in vec2 vTexCoord;
+uniform sampler2D uHdrTexture;
+uniform float uExposure;
+out vec4 fragColor;
+
+vec3 ACESFilm(vec3 x) {
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+void main() {
+    vec4 hdr = texture(uHdrTexture, vTexCoord);
+    vec3 color = ACESFilm(hdr.rgb * uExposure);
+    color = pow(color, vec3(1.0 / 2.2));
+    fragColor = vec4(color, hdr.a);
+}`;
+
 interface BlurAttribs {
     position: number;
     texCoord: number;
@@ -268,6 +300,16 @@ export function createBlurShaderProgram(gl: WebGL2RenderingContext): ShaderProgr
     ])
 }
 
+export function createToneMapShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
+    return buildShaderProgram(gl, TONE_MAP_VERTEX_SHADER_SOURCE, TONE_MAP_FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["texCoord", "aTexCoord"],
+    ], [
+        ["texture", "uHdrTexture"],
+        ["exposure", "uExposure"],
+    ])
+}
+
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
@@ -298,6 +340,7 @@ uniform vec3 uTintColor;
 uniform vec3 uPaletteColor;
 uniform float uTintAlpha;
 uniform float uTime;
+uniform float uHdrMode;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -343,9 +386,13 @@ void main() {
 
     if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
-        color = color / (color + vec3(1.0));
-        color = pow(color, vec3(1.0 / 2.2));
-        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
+        if(uHdrMode > 0.5) {
+            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
+        } else {
+            color = color / (color + vec3(1.0));
+            color = pow(color, vec3(1.0 / 2.2));
+            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
+        }
     } else {
         float diff = max(0.0, NdotL) * 0.7 + 0.3;
 
@@ -368,12 +415,19 @@ void main() {
             color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
         }
 
-        color = color / (color + vec3(1.0));
-        color = pow(color, vec3(1.0 / 2.2));
+        if(uHdrMode > 0.5) {
+            float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
+            vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
+            vec3 outColor = color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0);
+            fragColor = vec4(mix(outColor, outColor * uTintColor, uTintAlpha), 1.0);
+        } else {
+            color = color / (color + vec3(1.0));
+            color = pow(color, vec3(1.0 / 2.2));
 
-        float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
-        vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
-        fragColor = vec4(color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0), 1.0);
-        fragColor = vec4(mix(fragColor.rgb, fragColor.rgb * uTintColor, uTintAlpha), 1.0);
+            float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
+            vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
+            vec3 outColor = color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0);
+            fragColor = vec4(mix(outColor, outColor * uTintColor, uTintAlpha), 1.0);
+        }
     }
 }`;
