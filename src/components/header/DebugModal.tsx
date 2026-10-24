@@ -50,7 +50,7 @@ export function DebugModal() {
         showFpsCounter: true,
         showCameraTarget: false,
         showBloom: true,
-        showColorGrading: false,
+        showColorGrading: true,
         showVignette: false,
         showContrastSaturation: false,
         showCullingOverlay: false,

@@ -15,6 +15,65 @@ type FactoryBlueprint = {
     capitalEfficiencyDecay?: number
     nonEssentialGoods?: Set<keyof Goods>
     optionalGoods?: (keyof Goods)[]
+    productionMethods?: Map<string, ProductionMethod>
+}
+
+type ProductionMethod = {
+    goodsRequirements?: Partial<Goods>,
+    workerRequirement?: Partial<Record<keyof Population, number>>,
+    goodsProduction?: Partial<Goods>,
+    efficiencyBonus?: number
+    capitalGoods?: Partial<Record<keyof Goods, number>>
+    capitalEfficiency?: number
+    capitalEfficiencyDecay?: number
+    nonEssentialGoods?: Set<keyof Goods>
+    optionalGoods?: (keyof Goods)[]
+    desc?: string
+    prerequisites?: Set<string>
+}
+
+const basicProductionMethod = {
+    goodsRequirements: {},
+    workerRequirement: {},
+    goodsProduction: {},
+    efficiencyBonus: 0,
+    capitalGoods: {},
+    capitalEfficiency: 0,
+    capitalEfficiencyDecay: 0,
+    nonEssentialGoods: new Set<keyof Goods>(),
+    optionalGoods: [],
+}
+
+function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
+    return ["robotized", {
+        desc: descOverride || "The most complicated parts of the manufacturing processes are handled by highly specialized purpose built robots, the most complicated parts are still done by human workers",
+        goodsRequirements: {},
+        workerRequirement: {},
+        goodsProduction: {},
+        efficiencyBonus: 0,
+        capitalGoods: {},
+        capitalEfficiency: 0,
+        capitalEfficiencyDecay: 0,
+        nonEssentialGoods: new Set<keyof Goods>(),
+        optionalGoods: [],
+        prerequisites: new Set(["synteticLifeformUnit"])
+    }]
+}
+
+function createFullyRobotized(descOverride?: string): ["robotized", ProductionMethod] {
+    return ["robotized", {
+        desc: descOverride || "Very high performance equipment handled by a robotic workforce, only few human supervisors are needed",
+        goodsRequirements: {},
+        workerRequirement: {},
+        goodsProduction: {},
+        efficiencyBonus: 0,
+        capitalGoods: {},
+        capitalEfficiency: 0,
+        capitalEfficiencyDecay: 0,
+        nonEssentialGoods: new Set<keyof Goods>(),
+        optionalGoods: [],
+        prerequisites: new Set(["synteticLifeformUnit"])
+    }]
 }
 
 const workerReqStandard = { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 } as const
@@ -38,6 +97,55 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["dieselEngines", {
+                desc: "Traditional machinery powered by onsite diesel motors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: [],
+            }], ["nuclear", {
+                desc: "Laser mining lasers powered by onsite nuclear reactors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: [],
+            }],
+            ["tylium", {
+                desc: "Very high power mining lasers powered by onsite tylium reactors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: []
+            }],
+            ["robotized", {
+                desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: []
+            }]
+        ])
     }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
@@ -46,7 +154,55 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
-
+        productionMethods: new Map([
+            ["dieselEngines", {
+                desc: "Traditional machinery powered by onsite diesel motors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: [],
+            }], ["nuclear", {
+                desc: "Traditional machinery powered by onsite nuclear reactors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: [],
+            }],
+            ["tylium", {
+                desc: "Traditional machinery powered by powered by onsite tylium reactors",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: []
+            }],
+            ["robotized", {
+                desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed",
+                goodsRequirements: {},
+                workerRequirement: {},
+                goodsProduction: {},
+                efficiencyBonus: 0,
+                capitalGoods: {},
+                capitalEfficiency: 0,
+                capitalEfficiencyDecay: 0,
+                nonEssentialGoods: new Set<keyof Goods>(),
+                optionalGoods: []
+            }]
+        ])
     })],
     ["forestry", ({
         name: "forestry", goodsRequirements: {
@@ -56,6 +212,18 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { electronics: 0.01, buildings: 0.01, vehicles: 0.01 },
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "ammunition", "chemicals"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional"
+            }],
+            ["Forest reserve", {
+
+            }],
+            ["Industrial wood plantations", {
+
+            }],
+
+        ])
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
@@ -66,6 +234,14 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["chemicals", "electronics", "paper"]),
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, vehicles: 0.1 },
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }],
+            ["hydroponics", {
+                desc: "hydroponics",
+            }]
+        ])
     })],
     ["fishery", {
         name: "fishery", goodsRequirements: {
@@ -78,6 +254,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01, ships: 0.01 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     }],
     ["foodFactory", ({
         name: "foodFactory",
@@ -87,6 +268,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     })],
     ["meat", ({
         name: "meat",
@@ -96,6 +282,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     })],
     ["waterTreatment", ({
         name: "waterTreatment", goodsRequirements: {
@@ -105,6 +296,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     })],
     ["powerPlant", ({
         name: "powerPlant", goodsRequirements: {
@@ -119,6 +315,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         capitalGoods: { machinery: 0.05, electronics: 0.01, buildings: 0.01 },
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     })],
     ["metalFactory", ({
         name: "metalFactory", goodsRequirements: {
@@ -133,6 +334,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["lumberMill", ({
         name: "lumberMill", goodsRequirements: {
@@ -145,7 +351,13 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.04, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }],
+            createFullyRobotized()
+        ])
     })],
     ["machineryFactory", ({
         name: "machineryFactory", goodsRequirements: {
@@ -166,7 +378,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["medicineFactory", ({
         name: "medicineFactory", goodsRequirements: {
@@ -177,7 +394,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, buildings: 0.02 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["consumerFactory", ({
         name: "consumerFactory", goodsRequirements: {
@@ -188,7 +410,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, buildings: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["luxuryFurnitureFactory", ({
         name: "luxuryFurnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 50, lumber: 10, chemicals: 4, electricity: 20, governance: 2 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { luxuryFurniture: 14 },
@@ -196,7 +423,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["furnitureFactory", ({
         name: "furnitureFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 20, lumber: 10, chemicals: 4, electricity: 20, governance: 2 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { furniture: 50 },
@@ -204,7 +436,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["ammunitionFactory", ({
         name: "ammunitionFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, chemicals: 5, electricity: 20, governance: 2 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ammunition: 100 },
@@ -212,7 +449,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["weaponFactory", ({
         name: "weaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, retail: 10, electricity: 20, governance: 2 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { weapons: 100 },
@@ -220,14 +462,24 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["nuclearWeaponFactory", ({
         name: "nuclearWeaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, uranium: 5, electricity: 28, governance: 2, electronics: 1 }, workerRequirement: { worker: 85, clerks: 5, engineer: 5, scientist: 5, healtcarePersonal: 1 }, goodsProduction: { nuclearWeapons: 5 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["ordnanceFactory", ({
         name: "ordnanceFactory", goodsRequirements: { paper: 1, environmentFactor: 2, chemicals: 6, ammunition: 10, electricity: 24, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ordnance: 30 },
@@ -235,7 +487,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["spaceInfrastructure", ({
         name: "spaceport", goodsRequirements: {
@@ -247,7 +504,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, electronics: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("Space infrastructure handled by universal robots")
+        ])
     })],
     ["spaceShips", ({
         name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
@@ -256,7 +518,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.1, metals: 0.08, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["orbitalFactory", ({
         name: "orbitalFactory", goodsRequirements: {
@@ -265,7 +532,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.1, buildings: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1, productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["construction", ({
         name: "construction", goodsRequirements: {
@@ -281,7 +552,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["services", ({
         name: "services", goodsRequirements: {
@@ -291,7 +567,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.01, furniture: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["tourism", ({
         name: "tourism", goodsRequirements: {
@@ -301,7 +582,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.02, luxuryFurniture: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0006,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["education", ({
         name: "education", goodsRequirements: {
@@ -311,7 +597,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.02, electronics: 0.01, },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0006,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("All of the non teaching staff is replaced by robots, because teacher are still cheaper")
+        ])
     })],
     ["healthcare", ({
         name: "healthcare", goodsRequirements: {
@@ -321,7 +612,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.01, machinery: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["environmentControl", ({
         name: "environmentControl",
@@ -331,7 +627,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.03, buildings: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.08
+        capitalEfficiencyDecay: 0.08,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["chemical", ({
         name: "chemical", goodsRequirements: {
@@ -340,7 +641,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
@@ -350,7 +656,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0006,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["religion", ({
         name: "religion",
@@ -361,7 +672,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.02 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0006,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("Robot assistants, instead of employing deacons, who can clean and maintain the temples and assist the priests")
+        ])
     })],
     ["lawEnforcement", ({
         name: "lawEnforcement",
@@ -371,7 +687,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("The future of law enforcement is here!")
+        ])
     })],
     ["nuclearSector", ({
         name: "nuclearSector", goodsRequirements:
@@ -381,7 +702,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["nuclearEnergy", {
         name: "nuclearSector", goodsRequirements:
@@ -393,7 +719,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.08, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1
+        capitalEfficiencyDecay: 0.1,
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     }],
     ["greenEnergy", ({
         name: "greenEnergy", goodsRequirements: {
@@ -405,7 +736,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, buildings: 0.02, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["alternativeMedicine", ({
         name: "alternativeMedicine", goodsRequirements: {
@@ -415,7 +751,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.02, buildings: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }]
+        ])
     })],
     ["recycling", ({
         name: "recycling",
@@ -425,7 +766,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.04, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["government", ({
         name: "government",
@@ -436,7 +782,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set([...usualNonEssentialGoods, "itServices"])
+        nonEssentialGoods: new Set([...usualNonEssentialGoods, "itServices"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("A highly effective, AI powered automatic government")
+        ])
     })],
     ["automotive", ({
         name: "automotive",
@@ -456,7 +807,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["automotiveInfrastructure", ({
         name: "automotiveInfrastructure",
@@ -468,7 +824,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         },
         goodsProduction: { automotiveMobility: 15, waste: 1 },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["electronics", ({
         name: "electronics",
@@ -483,7 +844,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08 },
         capitalEfficiency: 0.0012,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["railroadVehicles", ({
         name: "railroadVehicles",
@@ -494,7 +860,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01, },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["militaryVehicles", ({
         name: "militaryVehicles",
@@ -505,7 +876,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["railroadInfrastructure", ({
         name: "railroadInfrastructure",
@@ -519,7 +895,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["ships", ({
         name: "ships",
@@ -530,7 +911,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["shipInfrastructure", ({
         name: "shipInfrastructure",
@@ -544,7 +930,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["aircraft", ({
         name: "aircraft",
@@ -555,7 +946,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["aircraftInfrastructure", ({
         name: "aircraftInfrastructure",
@@ -566,7 +962,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, metals: 0.02, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("With self driving planes.")
+        ])
     })],
     ["clothing", ({
         name: "clothing",
@@ -577,7 +978,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["paperFactory", ({
         name: "paperFactory",
@@ -588,7 +994,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.06, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["postalServices", ({
         name: "postalServices",
@@ -599,7 +1010,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { vehicles: 0.05, machinery: 0.03, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized("A fully robotized postal service is a system where automated sorting facilities, drones, and AI-driven logistics manage mail delivery without human intervention.")
+        ])
     })],
     ["entertainmentIndustry", ({
         name: "entertainmentIndustry",
@@ -610,7 +1026,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.04, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods)
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["informationTechnology", ({
         name: "informationTechnology",
@@ -621,7 +1042,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { electronics: 0.05, buildings: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["alcoholicDrinkIndustry", ({
         name: "alcoholicDrinkIndustry",
@@ -632,7 +1058,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"])
+        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["stimulantDrinkIndustry", ({
         name: "stimulantDrinkIndustry",
@@ -643,7 +1074,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"])
+        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["retail", ({
         name: "retail",
@@ -654,7 +1090,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"])
+        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }], createFullyRobotized()
+        ])
     })],
     ["defense", ({
         name: "retail",
@@ -673,7 +1114,13 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, vehicles: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"])
+        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }],
+            createFullyRobotized("A fully autonomus robot army, lead by powerful AIs, which can wage wars without any human intervention. May the Gods have mercy on -our- *their enemies.")
+        ])
     }),],
     ["spaceGoodsTransport", {
         name: "spaceGoodsTransport",
@@ -693,6 +1140,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { vehicles: 0.05, machinery: 0.05, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"])
+        nonEssentialGoods: new Set(["paper", "governance"]),
+        productionMethods: new Map([
+            ["traditional", {
+                desc: "Traditional",
+            }],
+            createFullyRobotized("A merchant marine which is fully automated by AI.")
+        ])
     }]
 ])

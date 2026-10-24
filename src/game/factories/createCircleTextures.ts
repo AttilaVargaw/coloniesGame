@@ -293,7 +293,7 @@ const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: str
 
 export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const epsilon = 0.04
-    const strength = 0.15
+    const strength = 0.1
 
     const raw = new Float32Array(textureSize * textureSize * 3)
 
