@@ -470,31 +470,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             }], createFullyRobotized()
         ])
     })],
-    ["nuclearWeaponFactory", ({
-        name: "nuclearWeaponFactory", goodsRequirements: { paper: 1, environmentFactor: 2, uranium: 5, electricity: 28, governance: 2, electronics: 1 }, workerRequirement: { worker: 85, clerks: 5, engineer: 5, scientist: 5, healtcarePersonal: 1 }, goodsProduction: { nuclearWeapons: 5 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, buildings: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
-    ["ordnanceFactory", ({
-        name: "ordnanceFactory", goodsRequirements: { paper: 1, environmentFactor: 2, chemicals: 6, ammunition: 10, electricity: 24, governance: 2, electronics: 1 }, workerRequirement: { worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1 }, goodsProduction: { ordnance: 30 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, metals: 0.05, buildings: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(usualNonEssentialGoods),
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
     ["spaceInfrastructure", ({
         name: "spaceport", goodsRequirements: {
             electricity: 25,
@@ -721,40 +696,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         capitalGoods: { machinery: 0.08, buildings: 0.01, electronics: 0.01 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    })],
-    ["nuclearEnergy", {
-        name: "nuclearSector", goodsRequirements:
-            { ore: 20, paper: 1, electricity: 10, governance: 2, environmentFactor: 2, uranium: 20 },
-        workerRequirement: {
-            scientist: 5, worker: 69, clerks: 5, engineer: 20, healtcarePersonal: 1
-        },
-        goodsProduction: { waste: 3 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.08, buildings: 0.01, electronics: 0.01 },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.1,
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
-        ])
-    }],
-    ["greenEnergy", ({
-        name: "greenEnergy", goodsRequirements: {
-            paper: 1, governance: 2
-        }, workerRequirement: {
-            worker: 89, clerks: 5, engineer: 5, healtcarePersonal: 1
-        }, goodsProduction: { electricity: 160 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.06, buildings: 0.02, electronics: 0.01 },
-        capitalEfficiency: 0.0006,
-        capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
             ["traditional", {
                 desc: "Traditional",

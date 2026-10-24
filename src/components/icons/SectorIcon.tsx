@@ -64,7 +64,6 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     shipInfrastructure: Ship,
     tourism: Plane,
     postalServices: Mail,
-    nuclearEnergy: Zap,
     waterTreatment: Droplets,
     alcoholicDrinkIndustry: Beer,
     alternativeMedicine: Vegan,
@@ -93,7 +92,6 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     foodFactory: Cookie,
     powerPlant: Zap,
     nuclearSector: Atom,
-    greenEnergy: Vegan,
     metalFactory: FactoryIcon,
     lumberMill: TreePine,
     environmentControl: VeganIcon,
@@ -101,12 +99,10 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     lawEnforcement: Shield,
     machineryFactory: Cog,
     medicineFactory: BriefcaseMedical,
-    ordnanceFactory: Rocket,
     religion: GiGreekTemple,
     stimulantDrinkIndustry: Coffee,
     weaponFactory: GiRifle,
     spaceInfrastructure: Satellite,
-    nuclearWeaponFactory: Atom,
     orbitalFactory: Satellite,
     spaceGoodsTransport: Satellite
 }

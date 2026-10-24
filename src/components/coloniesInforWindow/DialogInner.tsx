@@ -9,7 +9,7 @@ import { TradeBreakdown } from "./tradeBreakdown";
 import { MigrationBreakdown } from "./migrationBreakdown";
 import { TabsContent } from "../ui/tabs";
 
-export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "services" | "migration";
+export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
 
 export function DialogInner({ industry }: { industry: IndustryComponent }): ReactNode {
     return <>
@@ -27,9 +27,6 @@ export function DialogInner({ industry }: { industry: IndustryComponent }): Reac
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="trade">
             <TradeBreakdown industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="services">
-            <WarehouseBreakdown industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="migration">
             <MigrationBreakdown industry={industry} />

@@ -19,8 +19,6 @@ export type IndustrialSectors = Readonly<{
     luxuryFurnitureFactory: number;
     ammunitionFactory: number;
     weaponFactory: number;
-    nuclearWeaponFactory: number;
-    ordnanceFactory: number;
     spaceShips: number;
     spaceInfrastructure: number;
     orbitalFactory: number;
@@ -34,7 +32,6 @@ export type IndustrialSectors = Readonly<{
     bank: number;
     religion: number;
     lawEnforcement: number;
-    greenEnergy: number;
     alternativeMedicine: number;
     recycling: number;
     government: number;
@@ -55,7 +52,6 @@ export type IndustrialSectors = Readonly<{
     shipInfrastructure: number;
     aircraftInfrastructure: number;
     automotiveInfrastructure: number;
-    nuclearEnergy: number
     defense: number
     militaryVehicles: number
     spaceGoodsTransport: number

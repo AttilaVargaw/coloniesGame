@@ -65,7 +65,6 @@ export function ColoniesInforWindow() {
                         <TabsTrigger value="summary">Summary</TabsTrigger>
                         <TabsTrigger value="population">Population</TabsTrigger>
                         <TabsTrigger value="warehouse">Warehouse</TabsTrigger>
-                        <TabsTrigger value="services">Services</TabsTrigger>
                         <TabsTrigger value="industry">Industry</TabsTrigger>
                         <TabsTrigger value="trade">Trade</TabsTrigger>
                         <TabsTrigger value="migration">Migration</TabsTrigger>

@@ -211,6 +211,19 @@ export const basePrices = {
     militaryVehicles: 500
 } satisfies ReadonlyRecord<keyof Goods, number>
 
+export const godsCategories = new Map<string, Set<keyof Goods>>([
+    ["rawMaterials", new Set(["agriculturalGoods", "wood", "oil", "ore", "tylium", "water", "electricity", "uranium", "environmentFactor"])],
+    ["industrialMaterials", new Set(["buildings", "chemicals", "electronics", "lumber", "metals", "medicine", "paper", "waste", "machinery"])],
+    ["consumerGoods", new Set(["consumerGoods", "luxuryFurniture", "furniture", "food", "meat", "alcoholDrinks", "clothing", "stimulantDrinks"])],
+    ["services", new Set(["services", "governance", "healthcare", "lawEnforcement", "tourism", "faith", "monetaryServices", "education", "entertainment", "itServices", "retail", "post"])],
+    ["military", new Set(["ammunition", "weapons", "nuclearWeapons", "ordnance", "militaryVehicles", "defense"])],
+    ["mobility", new Set(["automotiveMobility", "railroadMobility", "shipMobility", "airMobility", "vehicles", "ships", "aircraft", "railroadVehicles", "spaceTransport"])]
+])
+
+if(Object.keys(basePrices).length !== [...godsCategories].reduce((acc, [_, set]) => acc + set.size, 0)) {
+    console.error("Goods and basePrices must have the same keys", Object.keys(basePrices), [...godsCategories].reduce((acc, [_, set]) => acc + set.size, 0))
+}
+
 export function getLowestGoodsRatio(
     requirements: Partial<Record<keyof Goods, number>>,
     available: Record<keyof Goods, number>, level: number, workerRatio: number
