@@ -231,7 +231,22 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        researchedText: "Unfortunately, we didn't found any proof of other subspecies of ours. The more interesting thing is that we found many traces of advanced technology, where they don't belong, such as hip prothesis in a 2000 years old skeleton"
+        researchedText: "Unfortunately, we didn't found any proof of other subspecies of ours. The more interesting thing is that we found many traces of advanced technology, where they don't belong, such as hip prothesis in a 2000 years old skeleton. But this still doesn't answer the question of our origins, because it's still possible that there was a previous civilization which collapsed."
+    },
+    originalScrolls: {
+        id: "originalScrolls",
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        name: "originalScrolls",
+        description: "Had you heard about the scandal on the inter colonial archeological conference? There was a guy who started talking about that the Sacred Scrolls are true and that we are the descendants of the 12 tribes of Kobol, sounds like a complete nonsense. But what's wrong with the guy that there is nothing wrong with him. He is not a religious weirdo, he's a well respected scientist with serious experience, but what he proposed was so unbelievable that everyone laughed at him. According to him, the diagrams in the scroll are real blueprints of real technology, but they become corrupted after they were copied so many times. Many of the poems are not poems, but real scientific texts that were mistranslated, then later priest decided to rewrite them as poems. According to him, if we could find the original scrolls, we could learn a lot of from them.",
+        cost: { researchPoints: 10000, days: 28 },
+        prerequisites: ["robotics"],
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+        ],
+        researchedText: "We have found a set of scrolls in a private collection, that according to carbon dating, are more than 2000 years old. The owner didn't want to sell them, but we managed to convince him by giving him an extremely generous offer. They were written in an unknown old gemenese dialect, but we think we can translate them. The diagrams look more like technical drawings than religious symbols, made by protractors, rulers and compasses. There are many already invented things in it, such as light bulbs, steam engines, airplanes, rocket engines. But there are many mysterius things in it, about that we have no clue. The strangest scroll contains more than 15000 digits of PI. We are currently scanning them and we are planning to release them as the new lost and found Scrolls of Technology. Many churches will rejoice this discovery, but many will be furious",
+        unlocks: [],
     },
     kobol: {
         id: "kobol",
@@ -249,7 +264,7 @@ export const TECHS: Record<string, TechDefinition> = {
         researchedText: "We found the oldest city on Gemenon, exactly where the scrolls of the exodus said the 12 tribes of Kobol landed. We found many interesting things, among them what seems to be the remains of a spacecraft, that match one of the diagrams in the scrolls. Unfortunately, we have no more clues in the ruins or in the Sacred Scrolls, where could we continue tracing back our origins, but the spacecraft is the proof that the scrolls were true all along"
     },
     tyliumReactor: {
-        description: "According to the Scrolls of the Exodus, they used this device to power the legendary Galleon. According to the scientist community, we can try to build one.",
+        description: "According to the Scrolls of the Technology, they used this device to power the legendary Galleon. According to the scientist community, we can try to build one.",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
@@ -318,7 +333,7 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        researchedText: "Articles of Colonization, §1, 'We, the representatives of the Twelve Worlds of Man, hereby we agree that no Colony shall be allowed to be suppressed by another Colony, as we are all equal colonies of founded by the people of Kobol. Charter of Unification, §1, 'We, the representatives the Twelve Worlds of Man, hereby we agree that we build and maintain a unified government and fleet to protect the interest of the people of Kobol. Thereby, we name the new government the United Colonies of Kobol and the new fleet the Colonial Fleet.' Both of them are signed. We are one people now. We are ready"
+        researchedText: "Articles of Colonization, §1, 'We, the representatives of the Twelve Worlds of Man, hereby we agree that no Colony shall be allowed to be suppressed by another Colony, as we are all equal colonies of founded by the people of Kobol. Charter of Unification, §1, 'We, the representatives the Twelve Worlds of Man, hereby we agree that we build and maintain a unified government and fleet to protect and serve the interest of the people of Kobol. Thereby, we name the new government the United Colonies of Kobol and the new fleet the Colonial Fleet.' Both of them are signed. We are one people now. We are ready"
     },
     projectDaedalus: {
         id: "projectDaedalus",
@@ -337,7 +352,7 @@ export const TECHS: Record<string, TechDefinition> = {
     banningNukes: {
         id: "banningNukes",
         name: "Banning Nuclear Weapons",
-        description: "We need to ban nuclear weapons to prevent any war from escalating.",
+        description: "We need to ban nuclear weapons to prevent any war from escalating, so peace can be achieved in our and our children lifetime.",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [

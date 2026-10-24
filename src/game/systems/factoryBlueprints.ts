@@ -16,6 +16,7 @@ type FactoryBlueprint = {
     nonEssentialGoods?: Set<keyof Goods>
     optionalGoods?: (keyof Goods)[]
     productionMethods?: Map<string, ProductionMethod>
+    secondaryProductionMethod?: Map<string, ProductionMethod>
 }
 
 type ProductionMethod = {
@@ -677,6 +678,23 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             ["traditional", {
                 desc: "Traditional",
             }], createFullyRobotized("Robot assistants, instead of employing deacons, who can clean and maintain the temples and assist the priests")
+        ]),
+        secondaryProductionMethod: new Map([
+            ["ultraOrtodox", {
+                desc: "Teaching literal interpretation of the Sacred Scrolls. They are regarded as the most fundamentalist version of our religion as it makes people follow very strict rules in their everyday life. Because of this, they are very popular among the people"
+            }],
+            ["traditional", {
+                desc: "Teaching the old, most accepted, canon version of the Sacred Scrolls. They are teachings in metaphors, rather than a literal interpretation. As there is no proof about their authenticity, most people will disregard them as religious texts, nothing more"
+            }],
+            ["originalScrolls", {
+                desc: "Teaching the original scrolls, as they were written. They are teaching in a more literal interpretation, rather than metaphors, this way more people will engage with religion"
+            }],
+            ["extendedScrolls", {
+                desc: "As there is proof that we came from Kobol, we can also teach the other scrolls too, even though their authenticity and precision is questionable. This way religion will become more comprehensive and engaging, as real history mixes with spirituality"
+            }],
+            ["theOne", {
+                desc: "Instead of worshipping the 12 Lords of Kobol, we can worship the One, who created the universe and leads us according his plan into our planned end. He works in a mysterious way, but we can see his work in the world around us. This is the most antagonized faith in the world of men, because it's fundamentally different concept that we are used to."
+            }],
         ])
     })],
     ["lawEnforcement", ({
