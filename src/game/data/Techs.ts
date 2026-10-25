@@ -175,6 +175,7 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
+        researchedText: "Scientists never believed that we would be able to move information, let alone matter faster than the speed of light. Yet here we are. The principle behind this device is simple. Yet, it took an ancient diagram to rediscover it. They feel bad that they didn't discover it sooner. This will make space travel trivial."
     },
     practicalPropulsion: {
         id: "practicalPropulsion",
@@ -203,6 +204,7 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
+        researchedText: "We built the device, and it works. It's much safer and more efficient than any other nuclear reactor we have ever seen. The amount of radioactive waste created by the device is negligible because, according to the project's lead scientist, it basically 'sucks out the last joules of energy from the fission material.' Its design is radically different from any other, so it's no wonder we didn't invent it sooner."
     },
     artificalIntelligence: {
         id: "artificalIntelligence",
@@ -238,20 +240,20 @@ export const TECHS: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         name: "originalScrolls",
-        description: "Had you heard about the scandal on the inter colonial archeological conference? There was a guy who started talking about that the Sacred Scrolls are true and that we are the descendants of the 12 tribes of Kobol, sounds like a complete nonsense. But what's wrong with the guy that there is nothing wrong with him. He is not a religious weirdo, he's a well respected scientist with serious experience, but what he proposed was so unbelievable that everyone laughed at him. According to him, the diagrams in the scroll are real blueprints of real technology, but they become corrupted after they were copied so many times. Many of the poems are not poems, but real scientific texts that were mistranslated, then later priest decided to rewrite them as poems. According to him, if we could find the original scrolls, we could learn a lot of from them.",
+        description: "Have you heard about the scandal at the Intercolonial Archeological Conference? A man began speaking about the authenticity of the Sacred Scrolls and our descent from the twelve tribes of Kobol. At first, it seemed absurd, but there was nothing wrong with him. He's not a religious weirdo; he's a well-respected scientist with serious experience. However, what he proposed was so unbelievable that everyone laughed at him. He claims that the illustrations in the scrolls are real blueprints of technology that became corrupted after being copied so many times. Many of the poems were originally scientific texts that were mistranslated. Later, priests decided to rewrite them as poems. He believes that if we could find the original scrolls, we could learn a lot from them.",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        researchedText: "We have found a set of scrolls in a private collection, that according to carbon dating, are more than 2000 years old. The owner didn't want to sell them, but we managed to convince him by giving him an extremely generous offer. They were written in an unknown old gemenese dialect, but we think we can translate them. The diagrams look more like technical drawings than religious symbols, made by protractors, rulers and compasses. There are many already invented things in it, such as light bulbs, steam engines, airplanes, rocket engines. But there are many mysterius things in it, about that we have no clue. The strangest scroll contains more than 15000 digits of PI. We are currently scanning them and we are planning to release them as the new lost and found Scrolls of Technology. Many churches will rejoice this discovery, but many will be furious",
+        researchedText: "We found a set of scrolls in a private collection that, according to carbon dating, are more than 2,000 years old. The owner didn't want to sell them, but we convinced him with an extremely generous offer. The scrolls are written in an unknown Old Gemenese dialect, but we believe we can translate them. The diagrams resemble technical drawings more than religious symbols and appear to have been made with protractors, rulers, and compasses. They depict many things that were invented long ago, such as light bulbs, steam engines, airplanes, and rocket engines. However, there are many mysterious things in them that we don't understand. The strangest scroll contains more than 15,000 digits of pi. We are currently scanning the scrolls and plan to release them as the Lost and Found Scrolls of Technology. Many people will rejoice at this discovery, but many will also be furious.",
         unlocks: [],
     },
     kobol: {
         id: "kobol",
         name: "Kobol",
-        description: "'Everything started out there when the 12 tribes left Kobol and settled here, in the four system of Cyrannus' The scrolls were right too many times, aren't they? If we could find it, that would be a greatest scientific achievement in archeology",
+        description: "'Everything started out there when the twelve tribes left Kobol and settled here in the Cyrannus star system.' The scrolls were right too many times, weren't they? If we could find it, it would be the greatest archeological achievement.",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
@@ -261,7 +263,7 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        researchedText: "We found the oldest city on Gemenon, exactly where the scrolls of the exodus said the 12 tribes of Kobol landed. We found many interesting things, among them what seems to be the remains of a spacecraft, that match one of the diagrams in the scrolls. Unfortunately, we have no more clues in the ruins or in the Sacred Scrolls, where could we continue tracing back our origins, but the spacecraft is the proof that the scrolls were true all along"
+        researchedText: "We found the ruins of the oldest city on Gemenon, which is exactly where the Scrolls of Exodus said the twelve tribes of Kobol landed. We found many interesting things, including what appears to be the remains of a spacecraft that match a diagram in the scrolls. Unfortunately, we found no more clues in the ruins or the Sacred Scrolls. The spacecraft proves that the scrolls were true all along, even if we still don't know where Kobol is. Maybe one day, we will find it and take a look on the Great Opera House in the city of the Gods."
     },
     tyliumReactor: {
         description: "According to the Scrolls of the Technology, they used this device to power the legendary Galleon. According to the scientist community, we can try to build one.",
@@ -276,6 +278,22 @@ export const TECHS: Record<string, TechDefinition> = {
         adoptionSpeed: 28,
         id: "tyliumReactor",
         name: "Tylium Reactor",
+        researchedText: "We have successfully built a new type of reactor powered by a substance scientists have dubbed 'tylium'. This new energy source is much more efficient than other ones. Tylium can only be found in outer space because it is only stable in microgravity. However, we can still use it on our planet because its half-life in strong gravitational fields is about 500,000,000 years."
+    },
+    ftlCom: {
+        description: "According to the Scrolls of the Technology, they used this device for faster than light communication and scanning. We can't prove if it will work, because we don't understand the mentioned physics behind it, but according to the scientist community, we can try to build one.",
+        cost: { researchPoints: 10000, days: 28 },
+        prerequisites: ["robotics"],
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        unlocks: [],
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "tyliumReactor",
+        name: "Tylium Reactor",
+        researchedText: "We have successfully built a prototype which is stronger and more capable than any other communication device we have ever built. We can use it to communicate real time with other colonies and it will revolutionize space faring"
     },
     microComputers: {
         description: "The old way of electronic is a dead end, we have to move towards micro electronics",
@@ -308,7 +326,7 @@ export const TECHS: Record<string, TechDefinition> = {
     projectJupiter: {
         id: "projectJupiter",
         name: "Project Jupiter",
-        description: "To win the war, we need to build the most powerful warships ever made. As this can cause a lot of political turmoil, we have to make it sure all colonies agree before we can start the project",
+        description: "In order to win the war, we must build the most powerful warships ever. However, this could cause political turmoil, so we must ensure that all colonies agree before starting the project",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
@@ -318,12 +336,12 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        researchedText: "After a lot diplomatic play, we've came to conclusion that a simple treaty wouldn't do. The weaker colonies want a guarantee that after we won the war, they will not be suppressed by the stronger ones anymore. As a symbolic gesture, we have promised to gift every colony a warship of this new class. It's a good start, but there is still a long way to go"
+        researchedText: "After much diplomatic maneuvering, we came to the conclusion that a simple treaty would not suffice. The weaker colonies want a guarantee that they will not be suppressed by the stronger ones after we win the war. As a symbolic gesture, we promised to gift each colony a warship of this new class. It's a good start, but there's still a long way to go."
     },
     articlesOfColinization: {
         id: "projectJupiter",
         name: "Articles of Colonization and Charter of Unification",
-        description: "We need to design a new constitutional framework for the colonies, which can guarantee the rights and freedoms of every man, regardless of colony. This is an extremely daunting task, as no one has ever even considered it before.",
+        description: "We need to design a new constitutional framework for the colonies that guarantees the rights and freedoms of every person, regardless of which colony they are from. This is an extremely daunting task because no one has ever considered it before.",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
@@ -333,7 +351,7 @@ export const TECHS: Record<string, TechDefinition> = {
         unlocks: [],
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        researchedText: "Articles of Colonization, §1, 'We, the representatives of the Twelve Worlds of Man, hereby we agree that no Colony shall be allowed to be suppressed by another Colony, as we are all equal colonies of founded by the people of Kobol. Charter of Unification, §1, 'We, the representatives the Twelve Worlds of Man, hereby we agree that we build and maintain a unified government and fleet to protect and serve the interest of the people of Kobol. Thereby, we name the new government the United Colonies of Kobol and the new fleet the Colonial Fleet.' Both of them are signed. We are one people now. We are ready"
+        researchedText: "The Articles of Colonization, §1: 'We, the representatives of the Twelve Worlds of Man, hereby agree that no colony shall be allowed to suppress another colony, as we are all equal colonies founded by the people of Kobol.' The Charter of Unification, §1: 'We, the representatives of the Twelve Worlds of Man, agree to build and maintain a unified government and fleet to protect and serve the interests of the people of Kobol. We hereby name the new government the United Colonies of Kobol and the new fleet the Colonial Fleet.' Both documents are signed. We are one people now. We are ready."
     },
     projectDaedalus: {
         id: "projectDaedalus",
@@ -352,7 +370,7 @@ export const TECHS: Record<string, TechDefinition> = {
     banningNukes: {
         id: "banningNukes",
         name: "Banning Nuclear Weapons",
-        description: "We need to ban nuclear weapons to prevent any war from escalating, so peace can be achieved in our and our children lifetime.",
+        description: "We need to ban nuclear weapons to prevent any war from escalating, so peace can be achieved in our and our children lifetime",
         cost: { researchPoints: 10000, days: 28 },
         prerequisites: ["robotics"],
         effects: [
