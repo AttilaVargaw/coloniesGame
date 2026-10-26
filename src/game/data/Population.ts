@@ -43,6 +43,7 @@ export type Population = {
     clerks: PopulationBreakdown
     engineer: PopulationBreakdown
     stayAtHome: PopulationBreakdown
+    serviceMan: PopulationBreakdown
 };
 
 export const baseSalaries = {
@@ -61,7 +62,8 @@ export const baseSalaries = {
     retired: 180,
     clerks: 500,
     engineer: 500,
-    stayAtHome: 180
+    stayAtHome: 180,
+    serviceMan: 200
 } as ReadonlyRecord<keyof Population, number>
 
 export function sumPopulation(population: Population) {

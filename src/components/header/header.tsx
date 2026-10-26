@@ -3,6 +3,10 @@ import { useGameDate } from "@/hooks/useGameDate"
 import { useGameEngine } from "@/hooks/useGameContext"
 import { SetTimeScaleCommand } from "@/engine/lib/SetTimeScaleCommand"
 import { DebugModal } from "@/components/header/DebugModal"
+import { GovernmentModal } from "../governmentTab/government"
+import { useEffect, useRef, useState } from "react"
+import { Entity } from "@/engine/entities/entity"
+import { useSelectionChanged } from "@/hooks/useSelectionChanged"
 
 const SPEEDS = [1, 5, 10, 100, 500] as const
 
@@ -15,6 +19,18 @@ export function Header() {
         engine?.addCommand(new SetTimeScaleCommand(multiplier))
     }
 
+    const [colony, setColony] = useState<Entity>()
+
+    useEffect(() => {
+        if(engine) {
+            setTimeout(() => {
+                const colony = engine?.getEntityById("Caprica")!
+
+                setColony(colony)
+            }, 1000)
+        }
+    }, [engine])
+
     return (
         <div className="flex items-center justify-between bg-black p-4 text-white">
             <nav>
@@ -23,6 +39,9 @@ export function Header() {
                     <li>
                         <DebugModal />
                     </li>
+                    {colony && <li>
+                        <GovernmentModal colony={colony!} />
+                    </li>}
                 </ul>
             </nav>
             <h1 className="text-2xl font-bold"></h1>

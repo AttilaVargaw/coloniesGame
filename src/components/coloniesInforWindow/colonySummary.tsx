@@ -31,58 +31,56 @@ export function ColonySummary({ industry, info }: { industry: IndustryComponent;
     const workingAgePopulation = populationSum - industry.population.retired.number - industry.population.student.number
 
     return (
-        <>
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-muted">
-                            <th className="text-left p-2 font-medium">Metric</th>
-                            <th className="text-right p-2 font-medium">Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Population</td>
-                            <td className="p-2 text-right">
-                                {convertToReadable(populationSum)}
-                            </td>
-                            <td className="p-2 text-right">
-                                {colorBySign(popGrowth)}
-                            </td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Working Age Population</td>
-                            <td className="p-2 text-right">
-                                {convertToReadable(workingAgePopulation)}
-                            </td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Unemployed</td>
-                            <td className="p-2 text-right">{convertToReadable(unemployedSum)}</td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Employed</td>
-                            <td className="p-2 text-right">{convertToReadable(employedSum)} ({(employedSum / workingAgePopulation * 100).toFixed(2)}%)</td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Total Income</td>
-                            <td className="p-2 text-right">{convertToReadable(Math.round(totalIncome))}</td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Total Expenses</td>
-                            <td className="p-2 text-right">{convertToReadable(Math.round(totalExpenses))}</td>
-                        </tr>
-                        <tr className="border-b border-muted/50">
-                            <td className="p-2">Total Net</td>
-                            <td className="p-2 text-right">{colorBySign(totalNet)}</td>
-                        </tr>
-                        {info && <tr className="border-b border-muted/50">
-                            <td className="p-2">Patron God: { }</td>
-                            <td className="p-2 text-right">{colorBySign(totalNet)}</td>
-                        </tr>}
-                    </tbody>
-                </table>
-            </div>
-        </>
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-b border-muted">
+                        <th className="text-left p-2 font-medium">Metric</th>
+                        <th className="text-right p-2 font-medium">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Population</td>
+                        <td className="p-2 text-right">
+                            {convertToReadable(populationSum)}
+                        </td>
+                        <td className="p-2 text-right">
+                            {colorBySign(popGrowth)}
+                        </td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Working Age Population</td>
+                        <td className="p-2 text-right">
+                            {convertToReadable(workingAgePopulation)}
+                        </td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Unemployed</td>
+                        <td className="p-2 text-right">{convertToReadable(unemployedSum)}</td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Employed</td>
+                        <td className="p-2 text-right">{convertToReadable(employedSum)} ({(employedSum / workingAgePopulation * 100).toFixed(2)}%)</td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Total Income</td>
+                        <td className="p-2 text-right">{convertToReadable(Math.round(totalIncome))}</td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Total Expenses</td>
+                        <td className="p-2 text-right">{convertToReadable(Math.round(totalExpenses))}</td>
+                    </tr>
+                    <tr className="border-b border-muted/50">
+                        <td className="p-2">Total Net</td>
+                        <td className="p-2 text-right">{colorBySign(totalNet)}</td>
+                    </tr>
+                    {info && <tr className="border-b border-muted/50">
+                        <td className="p-2">Patron God: { }</td>
+                        <td className="p-2 text-right">{colorBySign(totalNet)}</td>
+                    </tr>}
+                </tbody>
+            </table>
+        </div>
     );
 }

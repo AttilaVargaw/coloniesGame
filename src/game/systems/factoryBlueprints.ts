@@ -657,6 +657,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             ["ultraOrtodox", {
                 desc: "Teaching literal interpretation of the Sacred Scrolls. They are regarded as the most fundamentalist version of colonial religion as it makes people follow very strict rules in their everyday life. Because of this, they are very popular among the most conservative people"
             }],
+            ["ultraOrtodoxWithScroll", {
+                desc: "Those news scrolls are clearly fake and heretical. This is why we have to strengthen our faith in the old ways"
+            }],
             ["traditional", {
                 desc: "Teaching the old, most accepted, canon version of the Sacred Scrolls. They treat the stories as metaphors, rather than a literal historical events. As there is no proof about their authenticity, most people will disregard them as religious texts, nothing more"
             }],
@@ -1041,13 +1044,13 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
             weapons: 100,
             ordnance: 50
         },
-        workerRequirement: { worker: 850, clerks: 50, healtcarePersonal: 50, engineer: 50 },
+        workerRequirement: { serviceMan: 850, clerks: 50, healtcarePersonal: 50, engineer: 50 },
         goodsProduction: { defense: 2000, waste: 10 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.8, vehicles: 0.5, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        nonEssentialGoods: new Set(["paper", "governance", "electronics", "ordnance", "militaryVehicles", "electricity"]),
         productionMethods: new Map([
             ["traditional", {
                 desc: "Traditional",
