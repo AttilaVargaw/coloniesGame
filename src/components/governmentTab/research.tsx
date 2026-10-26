@@ -1,5 +1,5 @@
 import { TechResearchComponent } from "@/game/components/TechResearchComponent";
-import { techs, getTech } from "@/game/data/Techs";
+import { techs, getTech, type Age } from "@/game/data/Techs";
 import { ResearchCommand, CancelResearchCommand } from "@/game/commands/ResearchCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { TechResearchedEvent } from "@/game/events/techEvents";
@@ -66,45 +66,106 @@ export function Research({ colony }: { colony: Entity }) {
     const rpPerDay = research?.researchPointsPerDay ?? 0
 
     const layout = useMemo(() => {
-        const techLevel = new Map<string, number>()
-        const visiting = new Set<string>()
+        const ageOrder: Age[] = ["rediscovery", "imperial", "techRevolution", "unification"]
+        const ageIndex = (age: Age) => ageOrder.indexOf(age)
 
-        const levelOf = (id: string): number => {
-            if (techLevel.has(id)) return techLevel.get(id)!
-            if (visiting.has(id)) return 0
-            visiting.add(id)
-            const prereqs = techs[id]?.prerequisites
-            let lvl = 0
-            if (prereqs?.size) {
-                lvl = 1 + Math.max(...[...prereqs].map(levelOf))
+        const parents = new Map<string, Set<string>>()
+        const children = new Map<string, Set<string>>()
+        for (const id of Object.keys(techs)) {
+            parents.set(id, techs[id]?.prerequisites ?? new Set<string>())
+            children.set(id, new Set<string>())
+        }
+        for (const [id, ps] of parents) {
+            for (const p of ps) {
+                children.get(p)?.add(id)
             }
-            visiting.delete(id)
-            techLevel.set(id, lvl)
-            return lvl
         }
 
-        for (const id of Object.keys(techs)) levelOf(id)
+        // Prerequisite depth: longest path from a root (no-prereq) node.
+        const prereqDepth = new Map<string, number>()
+        const visiting = new Set<string>()
+        const depthOf = (id: string): number => {
+            if (prereqDepth.has(id)) return prereqDepth.get(id)!
+            if (visiting.has(id)) return 0
+            visiting.add(id)
+            const ps = parents.get(id)!
+            let d = 0
+            if (ps.size) {
+                d = 1 + Math.max(...[...ps].map(depthOf))
+            }
+            visiting.delete(id)
+            prereqDepth.set(id, d)
+            return d
+        }
+        for (const id of Object.keys(techs)) depthOf(id)
+        const maxDepth = Math.max(0, ...[...prereqDepth.values()])
+
+        // Combined level: age band is the coarse row, prerequisite depth refines
+        // position within the band so a prerequisite always sits above its dependent.
+        const techLevel = new Map<string, number>()
+        for (const id of Object.keys(techs)) {
+            techLevel.set(id, ageIndex(techs[id].age) * (maxDepth + 1) + prereqDepth.get(id)!)
+        }
 
         const levels = new Map<number, string[]>()
-        const positions = new Map<string, { x: number; y: number }>()
         for (const [id, lvl] of techLevel) {
             if (!levels.has(lvl)) levels.set(lvl, [])
             levels.get(lvl)!.push(id)
         }
 
         const sortedLevels = [...levels.entries()].sort((a, b) => a[0] - b[0])
-        sortedLevels.forEach(([_lvl, ids], li) => {
+
+        // Initial ordering: alphabetical within level
+        const order = new Map<number, string[]>()
+        sortedLevels.forEach(([lvl, ids]) => {
+            order.set(lvl, [...ids].sort((a, b) => a.localeCompare(b)))
+        })
+
+        const indexOf = (id: string): number => {
+            const lvl = techLevel.get(id)!
+            return order.get(lvl)!.indexOf(id)
+        }
+
+        // Barycenter heuristic: order nodes within each level to minimize edge crossings.
+        // Alternate top-down and bottom-up passes; each pass reorders a level by the
+        // average position of its neighbors in the adjacent level.
+        for (let pass = 0; pass < 6; pass++) {
+            const forward = pass % 2 === 0
+            const iterate = forward ? sortedLevels : [...sortedLevels].reverse()
+            for (const [lvl, ids] of iterate) {
+                const dir = forward ? -1 : 1 // -1 = look at previous level, +1 = next level
+                const withBary = ids.map((id) => {
+                    let sum = 0
+                    let count = 0
+                    const nbrs = dir === -1 ? parents.get(id) : children.get(id)
+                    for (const n of nbrs!) {
+                        const nlvl = techLevel.get(n)!
+                        if (nlvl !== lvl + dir) continue
+                        const idx = indexOf(n)
+                        if (idx >= 0) { sum += idx; count++ }
+                    }
+                    const bary = count ? sum / count : indexOf(id)
+                    return { id, bary }
+                })
+                withBary.sort((a, b) => a.bary - b.bary || a.id.localeCompare(b.id))
+                order.set(lvl, withBary.map(({ id }) => id))
+            }
+        }
+
+        const positions = new Map<string, { x: number; y: number }>()
+        sortedLevels.forEach(([, ids], li) => {
+            const y = li * levelHeight
             ids.forEach((id, i) => {
-                positions.set(id, { x: i * (nodeWidth + levelGap), y: li * levelHeight })
+                positions.set(id, { x: i * (nodeWidth + levelGap), y })
             })
         })
 
         const edges: { x1: number; y1: number; x2: number; y2: number }[] = []
         for (const [id] of techLevel) {
-            const prereqs = techs[id]?.prerequisites
-            if (!prereqs) continue
+            const ps = techs[id]?.prerequisites
+            if (!ps) continue
             const pos = positions.get(id)!
-            for (const p of prereqs) {
+            for (const p of ps) {
                 const pPos = positions.get(p)
                 if (!pPos) continue
                 edges.push({

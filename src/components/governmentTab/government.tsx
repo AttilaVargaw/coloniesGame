@@ -6,7 +6,6 @@ import { Entity } from "@/engine/entities/entity";
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Button } from "../ui/button";
 import { GoLaw } from "react-icons/go";
-import { Research } from "./research";
 
 export function GovernmentModal({ colony }: { colony: Entity }) {
     const [isOpen, setOpen] = useState(false)
