@@ -396,7 +396,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "neuralCloneProcessor",
-        name: "Neural Clone Processor",
+        name: "Personality Cloning",
         age: "techRevolution",
     },
     "metacognitiveProcessorUnit": {

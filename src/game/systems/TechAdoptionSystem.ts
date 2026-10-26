@@ -13,7 +13,7 @@ import type { IndustrialSectors } from "../components/Factories";
 type TechAdoptionState = {
     techId: string;
     inventedAt: number;
-    model: "logistic" | "linear";
+    model: "logistic" | "linear" | "instant";
     adoptionSpeed: number;
     currentAdoption: number;
 };

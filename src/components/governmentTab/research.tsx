@@ -172,12 +172,14 @@ export function Research({ colony }: { colony: Entity }) {
                 const sy = pPos.y + nodeHeight
                 const tx = pos.x + nodeWidth / 2
                 const ty = pos.y
-                const laneY = (sy + ty) / 2
+                const dy = ty - sy
+                // Cubic S-curve: arcs between levels instead of sharp elbows that
+                // cut across intermediate nodes.
                 edges.push({
                     points: [
                         { x: sx, y: sy },
-                        { x: sx, y: laneY },
-                        { x: tx, y: laneY },
+                        { x: sx, y: sy + dy * 0.3 },
+                        { x: tx, y: sy + dy * 0.7 },
                         { x: tx, y: ty },
                     ],
                 })
@@ -242,10 +244,16 @@ export function Research({ colony }: { colony: Entity }) {
                 }}
             >
                 {/* Edges render first so nodes draw on top and occlude line crossings */}
-                <g stroke="#4b5563" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" pointerEvents="none">
-                    {layout.edges.map((e, i) => (
-                        <polyline key={i} points={e.points.map(({ x, y }) => `${x},${y}`).join(" ")} />
-                    ))}
+                <g stroke="#4b5563" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" fill="none" pointerEvents="none" opacity={0.6}>
+                    {layout.edges.map((e, i) => {
+                        const [p0, p1, p2, p3] = e.points
+                        return (
+                            <path
+                                key={i}
+                                d={`M${p0.x},${p0.y} C${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`}
+                            />
+                        )
+                    })}
                 </g>
                 {layout.sortedLevels.map(([_lvl, ids]) => (
                     <g key={_lvl}>

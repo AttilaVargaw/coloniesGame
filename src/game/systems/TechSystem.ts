@@ -109,7 +109,7 @@ export class TechSystem extends SystemWithNodes<TechResearchNode> {
         if(!tech) return;
 
         // Check prerequisites
-        for(const prereq of tech.prerequisites) {
+        for(const prereq of tech.prerequisites || []) {
             if(!research.researched.has(prereq)) {
                 return;
             }
@@ -165,7 +165,7 @@ export class TechSystem extends SystemWithNodes<TechResearchNode> {
         this.engine?.dispatchEvent(new TechResearchedEvent({ techId, entityId: entity.id }));
 
         // Apply unlock effects immediately
-        for(const _unlock of tech.unlocks) {
+        for(const _unlock of tech.unlocks || []) {
             // Could dispatch unlock events here
         }
     }

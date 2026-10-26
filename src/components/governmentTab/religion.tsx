@@ -15,7 +15,7 @@ export function Religion(_: { industry: IndustryComponent }) {
             <SelectContent className="flex">
                 <SelectGroup>
                     <SelectLabel>State religion</SelectLabel>
-                    {[...religionLaws].map(([key, item]) => (
+                    {[...religionLaws].map(([key,]) => (
                         <SelectItem key={key} value={key}>
                             {key}
                         </SelectItem>
