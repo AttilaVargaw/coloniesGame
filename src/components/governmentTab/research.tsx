@@ -32,22 +32,22 @@ function nodeState(id: string, researched: Set<string>, currentTech?: string): N
 }
 
 function nodeFill(s: NodeState) {
-    if (s.isResearched) return "#16a34a"
-    if (s.isCurrent) return "#2563eb"
-    if (s.isAvailable) return "#f8fafc"
+    if(s.isResearched) return "#16a34a"
+    if(s.isCurrent) return "#2563eb"
+    if(s.isAvailable) return "#f8fafc"
     return "#4b5563"
 }
 
 function nodeTextFill(s: NodeState) {
-    if (s.isResearched || s.isCurrent) return "#ffffff"
-    if (s.isAvailable) return "#0f172a"
+    if(s.isResearched || s.isCurrent) return "#ffffff"
+    if(s.isAvailable) return "#0f172a"
     return "#9ca3af"
 }
 
 function nodeBorder(s: NodeState) {
-    if (s.isResearched) return "#16a34a"
-    if (s.isCurrent) return "#2563eb"
-    if (s.isAvailable) return "#94a3b8"
+    if(s.isResearched) return "#16a34a"
+    if(s.isCurrent) return "#2563eb"
+    if(s.isAvailable) return "#94a3b8"
     return "#6b7280"
 }
 
@@ -71,12 +71,12 @@ export function Research({ colony }: { colony: Entity }) {
 
         const parents = new Map<string, Set<string>>()
         const children = new Map<string, Set<string>>()
-        for (const id of Object.keys(techs)) {
+        for(const id of Object.keys(techs)) {
             parents.set(id, techs[id]?.prerequisites ?? new Set<string>())
             children.set(id, new Set<string>())
         }
-        for (const [id, ps] of parents) {
-            for (const p of ps) {
+        for(const [id, ps] of parents) {
+            for(const p of ps) {
                 children.get(p)?.add(id)
             }
         }
@@ -85,31 +85,31 @@ export function Research({ colony }: { colony: Entity }) {
         const prereqDepth = new Map<string, number>()
         const visiting = new Set<string>()
         const depthOf = (id: string): number => {
-            if (prereqDepth.has(id)) return prereqDepth.get(id)!
-            if (visiting.has(id)) return 0
+            if(prereqDepth.has(id)) return prereqDepth.get(id)!
+            if(visiting.has(id)) return 0
             visiting.add(id)
             const ps = parents.get(id)!
             let d = 0
-            if (ps.size) {
+            if(ps.size) {
                 d = 1 + Math.max(...[...ps].map(depthOf))
             }
             visiting.delete(id)
             prereqDepth.set(id, d)
             return d
         }
-        for (const id of Object.keys(techs)) depthOf(id)
+        for(const id of Object.keys(techs)) depthOf(id)
         const maxDepth = Math.max(0, ...[...prereqDepth.values()])
 
         // Combined level: age band is the coarse row, prerequisite depth refines
         // position within the band so a prerequisite always sits above its dependent.
         const techLevel = new Map<string, number>()
-        for (const id of Object.keys(techs)) {
+        for(const id of Object.keys(techs)) {
             techLevel.set(id, ageIndex(techs[id].age) * (maxDepth + 1) + prereqDepth.get(id)!)
         }
 
         const levels = new Map<number, string[]>()
-        for (const [id, lvl] of techLevel) {
-            if (!levels.has(lvl)) levels.set(lvl, [])
+        for(const [id, lvl] of techLevel) {
+            if(!levels.has(lvl)) levels.set(lvl, [])
             levels.get(lvl)!.push(id)
         }
 
@@ -129,20 +129,20 @@ export function Research({ colony }: { colony: Entity }) {
         // Barycenter heuristic: order nodes within each level to minimize edge crossings.
         // Alternate top-down and bottom-up passes; each pass reorders a level by the
         // average position of its neighbors in the adjacent level.
-        for (let pass = 0; pass < 6; pass++) {
+        for(let pass = 0; pass < 6; pass++) {
             const forward = pass % 2 === 0
             const iterate = forward ? sortedLevels : [...sortedLevels].reverse()
-            for (const [lvl, ids] of iterate) {
+            for(const [lvl, ids] of iterate) {
                 const dir = forward ? -1 : 1 // -1 = look at previous level, +1 = next level
                 const withBary = ids.map((id) => {
                     let sum = 0
                     let count = 0
                     const nbrs = dir === -1 ? parents.get(id) : children.get(id)
-                    for (const n of nbrs!) {
+                    for(const n of nbrs!) {
                         const nlvl = techLevel.get(n)!
-                        if (nlvl !== lvl + dir) continue
+                        if(nlvl !== lvl + dir) continue
                         const idx = indexOf(n)
-                        if (idx >= 0) { sum += idx; count++ }
+                        if(idx >= 0) { sum += idx; count++ }
                     }
                     const bary = count ? sum / count : indexOf(id)
                     return { id, bary }
@@ -160,19 +160,26 @@ export function Research({ colony }: { colony: Entity }) {
             })
         })
 
-        const edges: { x1: number; y1: number; x2: number; y2: number }[] = []
-        for (const [id] of techLevel) {
+        const edges: { points: { x: number; y: number }[] }[] = []
+        for(const [id] of techLevel) {
             const ps = techs[id]?.prerequisites
-            if (!ps) continue
+            if(!ps) continue
             const pos = positions.get(id)!
-            for (const p of ps) {
+            for(const p of ps) {
                 const pPos = positions.get(p)
-                if (!pPos) continue
+                if(!pPos) continue
+                const sx = pPos.x + nodeWidth / 2
+                const sy = pPos.y + nodeHeight
+                const tx = pos.x + nodeWidth / 2
+                const ty = pos.y
+                const laneY = (sy + ty) / 2
                 edges.push({
-                    x1: pPos.x + nodeWidth / 2,
-                    y1: pPos.y + nodeHeight,
-                    x2: pos.x + nodeWidth / 2,
-                    y2: pos.y,
+                    points: [
+                        { x: sx, y: sy },
+                        { x: sx, y: laneY },
+                        { x: tx, y: laneY },
+                        { x: tx, y: ty },
+                    ],
                 })
             }
         }
@@ -182,7 +189,7 @@ export function Research({ colony }: { colony: Entity }) {
 
     const maxWidth = useMemo(() => {
         let w = 0
-        for (const [, ids] of layout.sortedLevels) {
+        for(const [, ids] of layout.sortedLevels) {
             w = Math.max(w, ids.length * (nodeWidth + levelGap))
         }
         return w
@@ -191,16 +198,16 @@ export function Research({ colony }: { colony: Entity }) {
     const currentTechDef = currentTech ? techs[currentTech] : null
 
     const startResearch = (techId: string) => {
-        if (!engine || !research || currentTech) return
+        if(!engine || !research || currentTech) return
         const tech = getTech(techId)
-        if (!tech) return
+        if(!tech) return
         const prereqs = tech.prerequisites
-        if (prereqs && ![...prereqs].every((p) => researched.has(p))) return
+        if(prereqs && ![...prereqs].every((p) => researched.has(p))) return
         engine.addCommand(new ResearchCommand(colony.id, techId))
     }
 
     const cancelResearch = () => {
-        if (!engine || !research || !currentTech) return
+        if(!engine || !research || !currentTech) return
         engine.addCommand(new CancelResearchCommand(colony.id))
     }
 
@@ -234,9 +241,12 @@ export function Research({ colony }: { colony: Entity }) {
                     height: layout.sortedLevels.length * levelHeight + nodeHeight + 40,
                 }}
             >
-                {layout.edges.map((e, i) => (
-                    <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} stroke="#4b5563" strokeWidth={2} />
-                ))}
+                {/* Edges render first so nodes draw on top and occlude line crossings */}
+                <g stroke="#4b5563" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" pointerEvents="none">
+                    {layout.edges.map((e, i) => (
+                        <polyline key={i} points={e.points.map(({ x, y }) => `${x},${y}`).join(" ")} />
+                    ))}
+                </g>
                 {layout.sortedLevels.map(([_lvl, ids]) => (
                     <g key={_lvl}>
                         {ids.map((id) => {
