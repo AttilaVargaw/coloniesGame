@@ -42,7 +42,7 @@ export function GovernmentModal({ colony }: { colony: Entity }) {
                         overflowY: "auto",
                         padding: "1em",
                     }}>
-                        {industry && <DialogInner industry={industry} />}
+                        {industry && <DialogInner industry={industry} colony={colony} />}
                     </div>
                 </Tabs>
             </div>

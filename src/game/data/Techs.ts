@@ -49,11 +49,11 @@ export const techs: Record<string, TechDefinition> = {
             { type: "sector_efficiency", sector: "consumerFactory", multiplier: 1.5 },
             { type: "sector_efficiency", sector: "electronics", multiplier: 1.5 },
         ],
-        unlocks: new Set(["automation"]),
+        //unlocks: new Set(["automation"]),
         adoptionModel: "logistic",
         adoptionSpeed: 21,
         type: "technological",
-        prerequisites: new Set(["microComputers"])
+        prerequisites: new Set(["automation"])
     },
     "synteticLifeformUnit": {
         id: "synteticLifeformUnit",
@@ -67,7 +67,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         type: "technological",
-        prerequisites: new Set(["robotics", "artificialIntelligence"])
+        prerequisites: new Set(["robotics", "metacognitiveProcessorUnit"])
     },
     "virtualReality": {
         id: "virtualReality",
@@ -86,15 +86,15 @@ export const techs: Record<string, TechDefinition> = {
     },
 
     "jupiterClassBattlestar": {
-        id: "battleStar",
-        name: "Battle Star",
+        id: "jupiterClassBattlestar",
+        name: "Jupiter class Battle Star",
         description: "The most powerful flagship ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        prerequisites: new Set(["cruiser", "carrier"]),
+        prerequisites: new Set(["projectDaedalus"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         type: "military",
@@ -136,7 +136,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        prerequisites: new Set(["superAlloy"]),
+        prerequisites: new Set(["superAlloy", "jumpDrive", "ftlCom", "practicalPropulsion"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         type: "military"
@@ -193,7 +193,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        prerequisites: new Set(["originalScrolls"]),
+        prerequisites: new Set(["tyliumReactor", "microComputers"]),
         type: "technological",
         adoptionModel: "logistic",
         adoptionSpeed: 28,
@@ -208,7 +208,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        prerequisites: new Set(["originalScrolls"]),
+        prerequisites: new Set(["nuclearMotors"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         type: "technological"
@@ -227,20 +227,6 @@ export const techs: Record<string, TechDefinition> = {
         type: "technological",
         adoptionSpeed: 28,
         researchedText: "We built the device, and it works. It's much safer and more efficient than any other nuclear reactor we have ever seen. The amount of radioactive waste created by the device is negligible because, according to the project's lead scientist, it basically 'sucks out the last joules of energy from the fission material.' Its design is radically different from any other, so it's no wonder we didn't invent it sooner."
-    },
-    "artificialIntelligence": {
-        id: "artificialIntelligence",
-        name: "Artificial Intelligence",
-        description: "The Scrolls of Technology curse this invention. Fortunately for us, they explained how to build it, so we don't repeat their mistake.",
-        cost: { researchPoints: 10000, days: 28 },
-        effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
-        ],
-        prerequisites: new Set(["originalScrolls"]),
-        adoptionModel: "logistic",
-        adoptionSpeed: 28,
-        type: "technological"
     },
 
     "biodiversity": {
@@ -295,7 +281,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
         type: "technological",
-        prerequisites: new Set(["originalScrolls"]),
+        prerequisites: new Set(["nuclearMotors"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "tyliumReactor",
@@ -313,8 +299,8 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
-        id: "tyliumReactor",
-        name: "Tylium Reactor",
+        id: "ftlCom",
+        name: "Ftl communication",
         researchedText: "We have successfully built a prototype which is stronger and more capable than any other communication device we have ever built. We can use it to communicate real time with other colonies and it will revolutionize space faring"
     },
     "microComputers": {
@@ -331,9 +317,79 @@ export const techs: Record<string, TechDefinition> = {
         id: "microComputers",
         name: "Micro Computers",
     },
+    "neuralNetworks": {
+        description: "A revolutionary new type of processor, based on the human brain",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["microComputers"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "neuralNetworks",
+        name: "Neural Networks",
+    },
+    "largeLanguageModel": {
+        description: "This is a revolutionary new type of processor that can be trained to perform specific tasks using large enough datasets. Since they are just glorified state machines, they cannot invent anything new. However, they can be used to assist with specific repetitive tasks.",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["neuralNetworks"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "largeLanguageModel",
+        name: "Large Language Model",
+    },
+    "neuralCloneProcessor": {
+        description: "This is a revolutionary new type of processor based on the neural map of a specific human brain. Since the mapping process destroys the brain, it can only be used on recently deceased individuals. This allows us to copy the thinking processes of a human brain. While these 'clones' cannot adapt to new situations, they can be used for specific tasks. Attention, after the cloning process, we strongly advice to get rid of all personal memories, as they can cause severe malfunctions in the future, including, but not limited to the ai taking up the personality of the deceased individual",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["neuralNetworks"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "neuralCloneProcessor",
+        name: "Neural Clone Processor",
+    },
+    "digitalPersonalityClone": {
+        description: "This controversial process uses the same mapping method as creating a neural clone processor. However, instead of deleting personal memories, we preserve them. This enables us to create a digital copy of a human personality. This way, we can continue an interrogation that went awry or continue to use a deceased adviser as digital program.",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["neuralCloneProcessor"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "neuralCloneProcessor",
+        name: "Neural Clone Processor",
+    },
+    "metacognitiveProcessorUnit": {
+        description: "This is a revolutionary new type of processor that can learn and adapt to new situations. These units must be used carefully as they remain in a permanent read and write mode and they can learn 'wrong' things, which can cause them to malfunction in the future. They should be discarded after a certain amount of time, doesn't matter how useful or irreplaceable they become",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["neuralNetworks"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "metacognitiveProcessorUnit",
+        name: "Metacognitive Processor Unit",
+    },
     "superAlloy": {
         id: "superAlloy",
-        name: "Super Alloy",
+        name: "Super Materials",
         description: "Inside the Scroll of Technology, we found a chemical receipt, which can be used to make an alloy, which can withstand the extreme conditions of space",
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
@@ -362,7 +418,7 @@ export const techs: Record<string, TechDefinition> = {
     },
     "articlesOfColonization": {
         type: "diplomatic",
-        id: "projectJupiter",
+        id: "articlesOfColonization",
         name: "Articles of Colonization and Charter of Unification",
         description: "We need to design a new constitutional framework for the colonies that guarantees the rights and freedoms of every person, regardless of which colony they are from. This is an extremely daunting task because no one has ever considered it before.",
         cost: { researchPoints: 10000, days: 28 },

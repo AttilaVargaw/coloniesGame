@@ -1,4 +1,5 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
+import { Entity } from "@/engine/entities/entity";
 import { ReactNode } from "react";
 import { TabsContent } from "../ui/tabs";
 import { Religion } from "./religion";
@@ -6,13 +7,13 @@ import { Research } from "./research";
 
 export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
 
-export function DialogInner({ industry }: { industry: IndustryComponent }): ReactNode {
+export function DialogInner({ industry, colony }: { industry: IndustryComponent; colony: Entity }): ReactNode {
     return <>
         <TabsContent style={{ overflowY: "auto", }} value="religion">
             <Religion industry={industry} />
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="research">
-            <Research industry={industry} />
+            <Research colony={colony} />
         </TabsContent>
     </>
 }
