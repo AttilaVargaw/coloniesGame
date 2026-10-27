@@ -289,7 +289,7 @@ const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: str
         bands: [["#5a90d0", "#3a6cb0"], ["#4a7cc0", "#2a5490"], ["#6aa0e0", "#4a78b8"], ["#3870a8", "#184880"], ["#5080c8", "#305898"]],
         storm: "#80b8ff"
     }
-}
+} as const
 
 export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const epsilon = 0.04

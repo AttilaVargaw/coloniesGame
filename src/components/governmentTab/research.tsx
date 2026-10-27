@@ -59,6 +59,10 @@ function nodeBorder(s: NodeState) {
     return "#6b7280"
 }
 
+function typeAccent(tech: typeof techs[string]) {
+    return typeColors[tech.type]
+}
+
 function prerequisiteDepths(parents: Map<string, Set<string>>, ids: string[]): Map<string, number> {
     const depth = new Map<string, number>()
     const visiting = new Set<string>()
@@ -81,8 +85,237 @@ function prerequisiteDepths(parents: Map<string, Set<string>>, ids: string[]): M
     return depth
 }
 
-function typeAccent(tech: typeof techs[string]) {
-    return typeColors[tech.type]
+function buildGraph(ids: string[]): { parents: Map<string, Set<string>>; children: Map<string, Set<string>> } {
+    const parents = new Map<string, Set<string>>()
+    const children = new Map<string, Set<string>>()
+    for(const id of ids) {
+        parents.set(id, techs[id]?.prerequisites ?? new Set<string>())
+        children.set(id, new Set<string>())
+    }
+    for(const [id, ps] of parents) {
+        for(const p of ps) {
+            children.get(p)?.add(id)
+        }
+    }
+    return { parents, children }
+}
+
+function countCrossingsBetween(parents: Map<string, Set<string>>, topIds: string[], bottomIds: string[]): number {
+    const topPos = new Map<string, number>()
+    topIds.forEach((id, i) => topPos.set(id, i))
+    const bottomPos = new Map<string, number>()
+    bottomIds.forEach((id, i) => bottomPos.set(id, i))
+    const edges: [number, number][] = []
+    for(const child of bottomIds) {
+        const ps = parents.get(child)!
+        for(const p of ps) {
+            if(topPos.has(p) && bottomPos.has(child)) {
+                edges.push([topPos.get(p)!, bottomPos.get(child)!])
+            }
+        }
+    }
+    let crossings = 0
+    for(let i = 0; i < edges.length; i++) {
+        for(let j = i + 1; j < edges.length; j++) {
+            const [a1, b1] = edges[i]
+            const [a2, b2] = edges[j]
+            if((a1 < a2 && b1 > b2) || (a1 > a2 && b1 < b2)) crossings++
+        }
+    }
+    return crossings
+}
+
+function countTotalCrossings(parents: Map<string, Set<string>>, sortedLevels: [number, string[]][], order: Map<number, string[]>): number {
+    let total = 0
+    for(let i = 1; i < sortedLevels.length; i++) {
+        const prev = order.get(sortedLevels[i - 1][0])!
+        const curr = order.get(sortedLevels[i][0])!
+        total += countCrossingsBetween(parents, prev, curr)
+    }
+    return total
+}
+
+function barycenterOrder(
+    parents: Map<string, Set<string>>,
+    children: Map<string, Set<string>>,
+    techLevel: Map<string, number>,
+    sortedLevels: [number, string[]][],
+    order: Map<number, string[]>,
+): void {
+    const indexOf = (id: string): number => {
+        const lvl = techLevel.get(id)!
+        return order.get(lvl)!.indexOf(id)
+    }
+
+    for(let pass = 0; pass < 10; pass++) {
+        const forward = pass % 2 === 0
+        const iterate = forward ? sortedLevels : [...sortedLevels].reverse()
+        for(const [lvl, ids] of iterate) {
+            const dir = forward ? -1 : 1
+            const withBary = ids.map((id) => {
+                let sum = 0
+                let count = 0
+                const nbrs = dir === -1 ? parents.get(id) : children.get(id)
+                for(const n of nbrs!) {
+                    const nlvl = techLevel.get(n)!
+                    if(nlvl !== lvl + dir) continue
+                    const idx = indexOf(n)
+                    if(idx >= 0) { sum += idx; count++ }
+                }
+                const bary = count ? sum / count : indexOf(id)
+                return { id, bary, type: techs[id].type }
+            })
+            withBary.sort((a, b) => {
+                if(a.type !== b.type) return a.type.localeCompare(b.type)
+                return a.bary - b.bary || a.id.localeCompare(b.id)
+            })
+            order.set(lvl, withBary.map(({ id }) => id))
+        }
+    }
+}
+
+function siftOrder(
+    parents: Map<string, Set<string>>,
+    techLevel: Map<string, number>,
+    sortedLevels: [number, string[]][],
+    order: Map<number, string[]>,
+): void {
+    let improved = true
+    let siftPass = 0
+    while(improved && siftPass < 15) {
+        improved = false
+        siftPass++
+        const before = countTotalCrossings(parents, sortedLevels, order)
+        for(const [lvl] of sortedLevels) {
+            let ids = order.get(lvl)!
+            for(let si = 0; si < ids.length; si++) {
+                const id = ids[si]
+                let bestPos = si
+                let bestCross = Infinity
+                let bestOrder: string[] | null = null
+
+                const lvlNum = techLevel.get(id)!
+                const prevIds = lvlNum > 0 ? order.get(lvlNum - 1) ?? null : null
+                const nextIds = order.get(lvlNum + 1) ?? null
+
+                for(let ti = 0; ti < ids.length; ti++) {
+                    if(ti === si) continue
+                    const reordered = [...ids]
+                    reordered.splice(si, 1)
+                    reordered.splice(ti, 0, id)
+                    let cross = 0
+                    if(prevIds) cross += countCrossingsBetween(parents, prevIds, reordered)
+                    if(nextIds) cross += countCrossingsBetween(parents, reordered, nextIds)
+                    if(cross < bestCross) { bestCross = cross; bestPos = ti; bestOrder = reordered }
+                }
+
+                if(bestOrder && bestPos !== si) {
+                    order.set(lvl, bestOrder)
+                    ids = bestOrder
+                    improved = true
+                }
+            }
+        }
+        const after = countTotalCrossings(parents, sortedLevels, order)
+        if(after >= before) break
+    }
+}
+
+function computeLayout(techsRecord: Record<string, typeof techs[string]>): {
+    sortedLevels: [number, string[]][]
+    positions: Map<string, { x: number; y: number }>
+    edges: { points: { x: number; y: number }[] }[]
+    maxLevelWidth: number
+} {
+    const ageOrder: Age[] = ["rediscovery", "imperial", "techRevolution", "unification"]
+    const ageIndex = (age: Age) => ageOrder.indexOf(age)
+    const allIds = Object.keys(techsRecord)
+
+    const { parents, children } = buildGraph(allIds)
+
+    // Prerequisite depth: longest path from a root (no-prereq) node.
+    const prereqDepth = prerequisiteDepths(parents, allIds)
+    const maxDepth = Math.max(0, ...[...prereqDepth.values()])
+
+    // Combined level: age band is the coarse row, prerequisite depth refines
+    // position within the band so a prerequisite always sits above its dependent.
+    const techLevel = new Map<string, number>()
+    for(const id of allIds) {
+        techLevel.set(id, ageIndex(techsRecord[id].age) * (maxDepth + 1) + prereqDepth.get(id)!)
+    }
+
+    const levels = new Map<number, string[]>()
+    for(const [id, lvl] of techLevel) {
+        if(!levels.has(lvl)) levels.set(lvl, [])
+        levels.get(lvl)!.push(id)
+    }
+
+    const sortedLevels = [...levels.entries()].sort((a, b) => a[0] - b[0])
+
+    // Initial ordering: group by type, then alphabetical, within level
+    const order = new Map<number, string[]>()
+    sortedLevels.forEach(([lvl, ids]) => {
+        order.set(lvl, [...ids].sort((a, b) => {
+            const ta = techsRecord[a].type
+            const tb = techsRecord[b].type
+            if(ta !== tb) return ta.localeCompare(tb)
+            return a.localeCompare(b)
+        }))
+    })
+
+    barycenterOrder(parents, children, techLevel, sortedLevels, order)
+    siftOrder(parents, techLevel, sortedLevels, order)
+
+    // Per-level dynamic gap: fewer nodes = wider spacing, more nodes = tighter,
+    // clamped to [minLevelGap, maxLevelGap]. Each level is centered within the
+    // widest level so sparse bands don't look lopsided.
+    let maxLevelWidth = 0
+    const levelWidths = new Map<number, number>()
+    const levelGaps = new Map<number, number>()
+    sortedLevels.forEach(([lvl, ids]) => {
+        const gap = Math.min(maxLevelGap, Math.max(minLevelGap, ids.length > 1 ? 240 / (ids.length - 1) : minLevelGap))
+        levelGaps.set(lvl, gap)
+        const width = ids.length * nodeWidth + Math.max(0, ids.length - 1) * gap
+        levelWidths.set(lvl, width)
+        maxLevelWidth = Math.max(maxLevelWidth, width)
+    })
+
+    const positions = new Map<string, { x: number; y: number }>()
+    sortedLevels.forEach(([, ids], li) => {
+        const y = li * levelHeight
+        const lvl = techLevel.get(ids[0])!
+        const gap = levelGaps.get(lvl)!
+        const offsetX = (maxLevelWidth - levelWidths.get(lvl)!) / 2
+        ids.forEach((id, i) => {
+            positions.set(id, { x: offsetX + i * (nodeWidth + gap), y })
+        })
+    })
+
+    const edges: { points: { x: number; y: number }[] }[] = []
+    for(const [id] of techLevel) {
+        const ps = techsRecord[id]?.prerequisites
+        if(!ps) continue
+        const pos = positions.get(id)!
+        for(const p of ps) {
+            const pPos = positions.get(p)
+            if(!pPos) continue
+            const sx = pPos.x + nodeWidth / 2
+            const sy = pPos.y + nodeHeight
+            const tx = pos.x + nodeWidth / 2
+            const ty = pos.y
+            const dy = ty - sy
+            edges.push({
+                points: [
+                    { x: sx, y: sy },
+                    { x: sx, y: sy + dy * 0.3 },
+                    { x: tx, y: sy + dy * 0.7 },
+                    { x: tx, y: ty },
+                ],
+            })
+        }
+    }
+
+    return { sortedLevels, positions, edges, maxLevelWidth }
 }
 
 export function Research({ colony }: { colony: Entity }) {
@@ -99,141 +332,9 @@ export function Research({ colony }: { colony: Entity }) {
     const progress = research?.progress ?? 0
     const rpPerDay = research?.researchPointsPerDay ?? 0
 
-    const layout = useMemo(() => {
-        const ageOrder: Age[] = ["rediscovery", "imperial", "techRevolution", "unification"]
-        const ageIndex = (age: Age) => ageOrder.indexOf(age)
+    const layout = useMemo(() => computeLayout(techs), [])
 
-        const parents = new Map<string, Set<string>>()
-        const children = new Map<string, Set<string>>()
-        for(const id of Object.keys(techs)) {
-            parents.set(id, techs[id]?.prerequisites ?? new Set<string>())
-            children.set(id, new Set<string>())
-        }
-        for(const [id, ps] of parents) {
-            for(const p of ps) {
-                children.get(p)?.add(id)
-            }
-        }
-
-        // Prerequisite depth: longest path from a root (no-prereq) node.
-        const allIds = Object.keys(techs)
-        const prereqDepth = prerequisiteDepths(parents, allIds)
-        const maxDepth = Math.max(0, ...[...prereqDepth.values()])
-
-        // Combined level: age band is the coarse row, prerequisite depth refines
-        // position within the band so a prerequisite always sits above its dependent.
-        const techLevel = new Map<string, number>()
-        for(const id of Object.keys(techs)) {
-            techLevel.set(id, ageIndex(techs[id].age) * (maxDepth + 1) + prereqDepth.get(id)!)
-        }
-
-        const levels = new Map<number, string[]>()
-        for(const [id, lvl] of techLevel) {
-            if(!levels.has(lvl)) levels.set(lvl, [])
-            levels.get(lvl)!.push(id)
-        }
-
-        const sortedLevels = [...levels.entries()].sort((a, b) => a[0] - b[0])
-
-        // Initial ordering: group by type, then alphabetical, within level
-        const order = new Map<number, string[]>()
-        sortedLevels.forEach(([lvl, ids]) => {
-            order.set(lvl, [...ids].sort((a, b) => {
-                const ta = techs[a].type
-                const tb = techs[b].type
-                if(ta !== tb) return ta.localeCompare(tb)
-                return a.localeCompare(b)
-            }))
-        })
-
-        const indexOf = (id: string): number => {
-            const lvl = techLevel.get(id)!
-            return order.get(lvl)!.indexOf(id)
-        }
-
-        // Barycenter heuristic: order nodes within each level to minimize edge crossings.
-        // Alternate top-down and bottom-up passes; each pass reorders a level by the
-        // average position of its neighbors in the adjacent level. Type grouping is
-        // preserved as a primary sort key so same-type techs stay clustered.
-        for(let pass = 0; pass < 6; pass++) {
-            const forward = pass % 2 === 0
-            const iterate = forward ? sortedLevels : [...sortedLevels].reverse()
-            for(const [lvl, ids] of iterate) {
-                const dir = forward ? -1 : 1 // -1 = look at previous level, +1 = next level
-                const typeRank = (id: string) => techs[id].type
-                const withBary = ids.map((id) => {
-                    let sum = 0
-                    let count = 0
-                    const nbrs = dir === -1 ? parents.get(id) : children.get(id)
-                    for(const n of nbrs!) {
-                        const nlvl = techLevel.get(n)!
-                        if(nlvl !== lvl + dir) continue
-                        const idx = indexOf(n)
-                        if(idx >= 0) { sum += idx; count++ }
-                    }
-                    const bary = count ? sum / count : indexOf(id)
-                    return { id, bary, type: typeRank(id) }
-                })
-                withBary.sort((a, b) => {
-                    if(a.type !== b.type) return a.type.localeCompare(b.type)
-                    return a.bary - b.bary || a.id.localeCompare(b.id)
-                })
-                order.set(lvl, withBary.map(({ id }) => id))
-            }
-        }
-
-        const positions = new Map<string, { x: number; y: number }>()
-        // Dynamic horizontal gap: wider when a level has few nodes, narrower when
-        // many nodes, clamped to [minLevelGap, maxLevelGap].
-        let maxNodes = 0
-        for(const [, ids] of sortedLevels) maxNodes = Math.max(maxNodes, ids.length)
-        const levelGap = Math.min(maxLevelGap, Math.max(minLevelGap, 200 / Math.max(1, maxNodes - 1)))
-        sortedLevels.forEach(([, ids], li) => {
-            const y = li * levelHeight
-            ids.forEach((id, i) => {
-                positions.set(id, { x: i * (nodeWidth + levelGap), y })
-            })
-        })
-
-        const edges: { points: { x: number; y: number }[] }[] = []
-        for(const [id] of techLevel) {
-            const ps = techs[id]?.prerequisites
-            if(!ps) continue
-            const pos = positions.get(id)!
-            for(const p of ps) {
-                const pPos = positions.get(p)
-                if(!pPos) continue
-                const sx = pPos.x + nodeWidth / 2
-                const sy = pPos.y + nodeHeight
-                const tx = pos.x + nodeWidth / 2
-                const ty = pos.y
-                const dy = ty - sy
-                // Cubic S-curve: arcs between levels instead of sharp elbows that
-                // cut across intermediate nodes.
-                edges.push({
-                    points: [
-                        { x: sx, y: sy },
-                        { x: sx, y: sy + dy * 0.3 },
-                        { x: tx, y: sy + dy * 0.7 },
-                        { x: tx, y: ty },
-                    ],
-                })
-            }
-        }
-
-        return { sortedLevels, positions, edges }
-    }, [])
-
-    const maxWidth = useMemo(() => {
-        let w = 0
-        let maxNodes = 0
-        for(const [, ids] of layout.sortedLevels) maxNodes = Math.max(maxNodes, ids.length)
-        const levelGap = Math.min(maxLevelGap, Math.max(minLevelGap, 200 / Math.max(1, maxNodes - 1)))
-        for(const [, ids] of layout.sortedLevels) {
-            w = Math.max(w, ids.length * (nodeWidth + levelGap))
-        }
-        return w
-    }, [layout])
+    const maxWidth = useMemo(() => layout.maxLevelWidth, [layout])
 
     const currentTechDef = currentTech ? techs[currentTech] : null
 

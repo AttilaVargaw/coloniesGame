@@ -256,14 +256,6 @@ function atmosphereForArchetype(
             skyColor = "#4a90e2"
             rayleigh = 1.0
             break
-        case "venus":
-            skyColor = "#f5c542"
-            rayleigh = 1.5
-            break
-        case "mars":
-            skyColor = "#e27d60"
-            rayleigh = 0.3
-            break
         default:
             skyColor = color
             rayleigh = 0.8

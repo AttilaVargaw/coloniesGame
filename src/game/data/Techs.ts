@@ -115,7 +115,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
         ],
-        prerequisites: new Set(["cruiser", "carrier"]),
+        prerequisites: new Set(["carrier"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         type: "military",
@@ -518,7 +518,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
-        prerequisites: new Set(["ftlCom", "jumpDrive"]),
+        prerequisites: new Set(["jumpDrive"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
     },
@@ -533,7 +533,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
-        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        prerequisites: new Set(["articlesOfColonization"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "Of the various contenders, we chose the Caprican Viper as the new standard fighter for the Colonial Armed Forces. We chose it not only because it's an excellent interceptor with a reasonable firepower, but also because of its recognizable silhouette, which looks great in any kind of media. We want this fighter to symbolize the military might of the United Colonies of Man."
@@ -549,7 +549,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
-        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        prerequisites: new Set(["corvette"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "There is no armor that can stop this nuclear warhead. Our enemies will think twice before attacking us."
@@ -565,7 +565,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
-        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        prerequisites: new Set(["cruiser"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "A simple timed warhead filled with bearings can tear apart any lightly armored target."
@@ -613,7 +613,7 @@ export const techs: Record<string, TechDefinition> = {
             { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
             { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
         ],
-        prerequisites: new Set(["kew", "destroyer"]),
+        prerequisites: new Set(["destroyer"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "These automatic turrets can fire reliably and accurately in space. We use a combination of traditional chemical propellant to make the shell moving which is further accelerated by a railgun system. This way we can fire shells at high speeds without the need for a complicated barrel."
