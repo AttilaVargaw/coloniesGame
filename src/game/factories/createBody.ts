@@ -246,7 +246,7 @@ function atmosphereForArchetype(
             ? radius * 0.12
             : archetype === "mars"
                 ? radius * 0.05
-                : radius * 0.08
+                : radius * 0.02
 
     let skyColor: string
     let rayleigh: number

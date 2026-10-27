@@ -6,6 +6,7 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { AtmosphereComponent } from "@/engine/components/atmosphereComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { WebGLBaseRenderer } from "./webglBaseRenderer"
+import { SOLAR_UNIT } from "@/game/constants"
 import { Entity } from "@/engine/entities/entity"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { ViewportSystem } from "../../viewportSystem"
@@ -71,7 +72,6 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
         const [camX, camY, camZ] = camera.cameraPosition
         gl.uniform3f(this.shader.uniforms.cameraPosition, camX, camY, camZ)
-        gl.uniform3f(this.shader.uniforms.lightColor, 1, 1, 1)
         gl.uniform1f(this.shader.uniforms.hdrMode, this.hdrEnabled ? 1.0 : 0.0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
@@ -102,6 +102,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
             let lightDir = vec3.fromValues(0, 1, 0)
+            let lightColor = vec3.fromValues(1.0, 1.0, 1.0)
 
             if(starEntity) {
                 const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
@@ -109,6 +110,14 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
                 lightDir = lightDirLength > 0
                     ? vec3.normalize(vec3.create(), lightDirRaw)
                     : vec3.fromValues(0, 1, 0)
+
+                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 40
+
+                const starColorComponent = starEntity.getComponent(ColorComponent)
+                if(starColorComponent?.fill) {
+                    const parsed = hexToRgb(starColorComponent.fill)
+                    lightColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
+                }
             }
 
             const paletteRgb = hexToRgb(node.color.fill || "#808080")
@@ -126,31 +135,32 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
             pool.set(model, poolOffset)
             pool.set(normalMatrix, poolOffset + 16)
             pool.set(lightDir, poolOffset + 25)
-            pool.set([node.atmosphere.thickness, node.radius.radius, node.atmosphere.rayleigh, sh], poolOffset + 28)
-            pool.set(skyColor, poolOffset + 32)
+            pool.set(lightColor, poolOffset + 28)
+            pool.set([node.atmosphere.thickness, node.radius.radius, node.atmosphere.rayleigh, sh], poolOffset + 31)
+            pool.set(skyColor, poolOffset + 35)
 
             this.pendingInstances.push({ depth: projected.depth, offset: poolOffset })
-            poolOffset += 35
+            poolOffset += 38
         }
 
-        const totalFloats = this.pendingInstances.length * 35
+        const totalFloats = this.pendingInstances.length * 38
         if(totalFloats === 0) {
             return
         }
 
         if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-            const newSize = Math.max(totalFloats, this.MAX_ATMOSPHERE_INSTANCES * 35)
+            const newSize = Math.max(totalFloats, this.MAX_ATMOSPHERE_INSTANCES * 38)
             this.sphereBatchBuffer = new Float32Array(newSize)
         }
         const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
         for(let i = 0; i < this.pendingInstances.length; i++) {
-            batch.set(this.sphereInstancePool!.subarray(this.pendingInstances[i].offset, this.pendingInstances[i].offset + 35), i * 35)
+            batch.set(this.sphereInstancePool!.subarray(this.pendingInstances[i].offset, this.pendingInstances[i].offset + 38), i * 38)
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
         gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
 
-        const instanceStride = 35 * 4
+        const instanceStride = 38 * 4
 
         const setupAttrib = (loc: number, size: number, offset: number) => {
             if(loc < 0) return
@@ -170,8 +180,9 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         setupAttrib(normalMatrixLoc + 1, 3, 19 * 4)
         setupAttrib(normalMatrixLoc + 2, 3, 22 * 4)
         setupAttrib(this.shader.attribs.instanceLightDir, 3, 25 * 4)
-        setupAttrib(this.shader.attribs.instanceAtmosParams, 4, 28 * 4)
-        setupAttrib(this.shader.attribs.instanceSkyColor, 3, 32 * 4)
+        setupAttrib(this.shader.attribs.instanceLightColor, 3, 28 * 4)
+        setupAttrib(this.shader.attribs.instanceAtmosParams, 4, 31 * 4)
+        setupAttrib(this.shader.attribs.instanceSkyColor, 3, 35 * 4)
 
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -192,6 +203,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         safeDisable(normalMatrixLoc + 1)
         safeDisable(normalMatrixLoc + 2)
         safeDisable(this.shader.attribs.instanceLightDir)
+        safeDisable(this.shader.attribs.instanceLightColor)
         safeDisable(this.shader.attribs.instanceAtmosParams)
         safeDisable(this.shader.attribs.instanceSkyColor)
         safeDisable(this.shader.attribs.position)
@@ -208,6 +220,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         resetDivisor(normalMatrixLoc + 1)
         resetDivisor(normalMatrixLoc + 2)
         resetDivisor(this.shader.attribs.instanceLightDir)
+        resetDivisor(this.shader.attribs.instanceLightColor)
         resetDivisor(this.shader.attribs.instanceAtmosParams)
         resetDivisor(this.shader.attribs.instanceSkyColor)
     }
