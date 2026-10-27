@@ -1,5 +1,5 @@
 import { TechResearchComponent } from "@/game/components/TechResearchComponent";
-import { techs, getTech, type Age } from "@/game/data/Techs";
+import { techs, getTech, type Age, type TechType } from "@/game/data/Techs";
 import { ResearchCommand, CancelResearchCommand } from "@/game/commands/ResearchCommand";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { TechResearchedEvent } from "@/game/events/techEvents";
@@ -11,8 +11,16 @@ import { useMemo, useState } from "react";
 
 const nodeWidth = 230
 const nodeHeight = 64
-const levelHeight = 120
-const levelGap = 26
+const levelHeight = 140
+const minLevelGap = 34
+const maxLevelGap = 64
+
+const typeColors: Record<TechType, string> = {
+    archeological: "#8b5cf6",
+    technological: "#3b82f6",
+    military: "#ef4444",
+    diplomatic: "#f59e0b",
+}
 
 type NodeState = {
     tech: typeof techs[string]
@@ -51,6 +59,32 @@ function nodeBorder(s: NodeState) {
     return "#6b7280"
 }
 
+function prerequisiteDepths(parents: Map<string, Set<string>>, ids: string[]): Map<string, number> {
+    const depth = new Map<string, number>()
+    const visiting = new Set<string>()
+
+    const depthOf = (id: string): number => {
+        if(depth.has(id)) return depth.get(id)!
+        if(visiting.has(id)) return 0
+        visiting.add(id)
+        const ps = parents.get(id)!
+        let d = 0
+        if(ps.size) {
+            d = 1 + Math.max(...[...ps].map(depthOf))
+        }
+        visiting.delete(id)
+        depth.set(id, d)
+        return d
+    }
+
+    for(const id of ids) depthOf(id)
+    return depth
+}
+
+function typeAccent(tech: typeof techs[string]) {
+    return typeColors[tech.type]
+}
+
 export function Research({ colony }: { colony: Entity }) {
     const research = colony.getComponent(TechResearchComponent)
     const engine = useGameEngine()
@@ -82,22 +116,8 @@ export function Research({ colony }: { colony: Entity }) {
         }
 
         // Prerequisite depth: longest path from a root (no-prereq) node.
-        const prereqDepth = new Map<string, number>()
-        const visiting = new Set<string>()
-        const depthOf = (id: string): number => {
-            if(prereqDepth.has(id)) return prereqDepth.get(id)!
-            if(visiting.has(id)) return 0
-            visiting.add(id)
-            const ps = parents.get(id)!
-            let d = 0
-            if(ps.size) {
-                d = 1 + Math.max(...[...ps].map(depthOf))
-            }
-            visiting.delete(id)
-            prereqDepth.set(id, d)
-            return d
-        }
-        for(const id of Object.keys(techs)) depthOf(id)
+        const allIds = Object.keys(techs)
+        const prereqDepth = prerequisiteDepths(parents, allIds)
         const maxDepth = Math.max(0, ...[...prereqDepth.values()])
 
         // Combined level: age band is the coarse row, prerequisite depth refines
@@ -115,10 +135,15 @@ export function Research({ colony }: { colony: Entity }) {
 
         const sortedLevels = [...levels.entries()].sort((a, b) => a[0] - b[0])
 
-        // Initial ordering: alphabetical within level
+        // Initial ordering: group by type, then alphabetical, within level
         const order = new Map<number, string[]>()
         sortedLevels.forEach(([lvl, ids]) => {
-            order.set(lvl, [...ids].sort((a, b) => a.localeCompare(b)))
+            order.set(lvl, [...ids].sort((a, b) => {
+                const ta = techs[a].type
+                const tb = techs[b].type
+                if(ta !== tb) return ta.localeCompare(tb)
+                return a.localeCompare(b)
+            }))
         })
 
         const indexOf = (id: string): number => {
@@ -128,12 +153,14 @@ export function Research({ colony }: { colony: Entity }) {
 
         // Barycenter heuristic: order nodes within each level to minimize edge crossings.
         // Alternate top-down and bottom-up passes; each pass reorders a level by the
-        // average position of its neighbors in the adjacent level.
+        // average position of its neighbors in the adjacent level. Type grouping is
+        // preserved as a primary sort key so same-type techs stay clustered.
         for(let pass = 0; pass < 6; pass++) {
             const forward = pass % 2 === 0
             const iterate = forward ? sortedLevels : [...sortedLevels].reverse()
             for(const [lvl, ids] of iterate) {
                 const dir = forward ? -1 : 1 // -1 = look at previous level, +1 = next level
+                const typeRank = (id: string) => techs[id].type
                 const withBary = ids.map((id) => {
                     let sum = 0
                     let count = 0
@@ -145,14 +172,22 @@ export function Research({ colony }: { colony: Entity }) {
                         if(idx >= 0) { sum += idx; count++ }
                     }
                     const bary = count ? sum / count : indexOf(id)
-                    return { id, bary }
+                    return { id, bary, type: typeRank(id) }
                 })
-                withBary.sort((a, b) => a.bary - b.bary || a.id.localeCompare(b.id))
+                withBary.sort((a, b) => {
+                    if(a.type !== b.type) return a.type.localeCompare(b.type)
+                    return a.bary - b.bary || a.id.localeCompare(b.id)
+                })
                 order.set(lvl, withBary.map(({ id }) => id))
             }
         }
 
         const positions = new Map<string, { x: number; y: number }>()
+        // Dynamic horizontal gap: wider when a level has few nodes, narrower when
+        // many nodes, clamped to [minLevelGap, maxLevelGap].
+        let maxNodes = 0
+        for(const [, ids] of sortedLevels) maxNodes = Math.max(maxNodes, ids.length)
+        const levelGap = Math.min(maxLevelGap, Math.max(minLevelGap, 200 / Math.max(1, maxNodes - 1)))
         sortedLevels.forEach(([, ids], li) => {
             const y = li * levelHeight
             ids.forEach((id, i) => {
@@ -191,6 +226,9 @@ export function Research({ colony }: { colony: Entity }) {
 
     const maxWidth = useMemo(() => {
         let w = 0
+        let maxNodes = 0
+        for(const [, ids] of layout.sortedLevels) maxNodes = Math.max(maxNodes, ids.length)
+        const levelGap = Math.min(maxLevelGap, Math.max(minLevelGap, 200 / Math.max(1, maxNodes - 1)))
         for(const [, ids] of layout.sortedLevels) {
             w = Math.max(w, ids.length * (nodeWidth + levelGap))
         }
@@ -235,6 +273,25 @@ export function Research({ colony }: { colony: Entity }) {
                 )}
             </div>
 
+            <div className="flex flex-wrap gap-2 text-xs text-gray-400 mb-2">
+                <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full" style={{ background: "#8b5cf6" }} />
+                    Archeological
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full" style={{ background: "#3b82f6" }} />
+                    Technological
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full" style={{ background: "#ef4444" }} />
+                    Military
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full" style={{ background: "#f59e0b" }} />
+                    Diplomatic
+                </span>
+            </div>
+
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-max"
@@ -270,6 +327,7 @@ export function Research({ colony }: { colony: Entity }) {
                                     onMouseLeave={() => setHovered(null)}
                                 >
                                     <rect x="0" y="0" width={nodeWidth} height={nodeHeight} rx="8" fill={nodeFill(s)} stroke={nodeBorder(s)} strokeWidth={2} />
+                                    <rect x="0" y="0" width={6} height={nodeHeight} rx="8" fill={typeAccent(s.tech)} opacity={s.isResearched || s.isCurrent || s.isAvailable ? 1 : 0.35} />
                                     {s.isCurrent && (
                                         <>
                                             <rect x="4" y={nodeHeight - 12} width={nodeWidth - 8} height={6} rx="3" fill="#1e293b" />
