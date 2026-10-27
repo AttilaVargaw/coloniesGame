@@ -241,11 +241,11 @@ function atmosphereForArchetype(
     }
 
     const thickness = gasGiants.has(archetype)
-        ? radius * 0.10
+        ? radius * 0.02
         : archetype === "venus"
-            ? radius * 0.12
+            ? radius * 0.02
             : archetype === "mars"
-                ? radius * 0.05
+                ? radius * 0.01
                 : radius * 0.02
 
     let skyColor: string
