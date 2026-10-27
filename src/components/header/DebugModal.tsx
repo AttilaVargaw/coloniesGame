@@ -31,6 +31,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showCheckerPattern", label: "Show Checker Pattern" },
     { flag: "showFrameTime", label: "Show Frame Time" },
     { flag: "showClickBoxes", label: "Show Click Boxes" },
+    { flag: "showAtmosphere", label: "Show Atmosphere" },
 ] as const
 
 const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
@@ -58,6 +59,7 @@ export function DebugModal() {
         showFrameTime: false,
         showClickBoxes: false,
         showHDR: true,
+        showAtmosphere: true,
     })
     const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()

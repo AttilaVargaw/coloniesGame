@@ -2,12 +2,14 @@ import { Engine } from "@/engine/core/engine";
 import { ViewportSystem } from "../../viewportSystem";
 import { WebGLRectRenderer } from "./webglRectRenderer";
 import { WebGLSphereRenderer } from "./webglSphereRenderer";
+import { WebGLAtmosphereRenderer } from "./webglAtmosphereRenderer";
 import { WebGLOrbitRenderer } from "./webglOrbitRenderer";
 import { createToneMapShaderProgram } from "./webglSphereShaders";
 
 export class WebglRenderManager {
     private readonly sphereRenderer: WebGLSphereRenderer
     private readonly rectRenderer: WebGLRectRenderer
+    private readonly atmosphereRenderer: WebGLAtmosphereRenderer
     private readonly orbitRenderer: WebGLOrbitRenderer
     private engine: Engine | null = null
 
@@ -25,12 +27,14 @@ export class WebglRenderManager {
     constructor(private viewport: ViewportSystem) {
         this.sphereRenderer = new WebGLSphereRenderer(this.viewport)
         this.rectRenderer = new WebGLRectRenderer(this.viewport)
+        this.atmosphereRenderer = new WebGLAtmosphereRenderer(this.viewport)
         this.orbitRenderer = new WebGLOrbitRenderer(this.viewport)
     }
 
     addToEngine(engine: Engine) {
         this.sphereRenderer.addToEngine(engine).init()
         this.rectRenderer.addToEngine(engine).init()
+        this.atmosphereRenderer.addToEngine(engine).init()
         this.orbitRenderer.addToEngine(engine).init()
 
         this.engine = engine
@@ -46,11 +50,14 @@ export class WebglRenderManager {
 
         this.sphereRenderer.setHdr(this.hdrSupported)
         this.sphereRenderer.setHdrFramebuffer(null)
+        this.atmosphereRenderer.setHdr(this.hdrSupported)
+        this.atmosphereRenderer.setHdrFramebuffer(null)
     }
 
     removeFromEngine() {
         this.sphereRenderer.removeFromEngine()
         this.rectRenderer.removeFromEngine()
+        this.atmosphereRenderer.removeFromEngine()
         this.orbitRenderer.removeFromEngine()
 
         const gl = this.engine?.getCanvas("webgl2")?.getContext("webgl2")
@@ -91,16 +98,19 @@ export class WebglRenderManager {
         const hdrEnabled = this.hdrSupported && (debugManager?.debugflags.showHDR ?? true)
 
         this.sphereRenderer.setHdr(hdrEnabled)
+        this.atmosphereRenderer.setHdr(hdrEnabled)
 
         if(hdrEnabled) {
             this.ensureHdrFramebuffer(gl)
             this.sphereRenderer.setHdrFramebuffer(this.hdrFramebuffer)
+            this.atmosphereRenderer.setHdrFramebuffer(this.hdrFramebuffer)
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.hdrFramebuffer)
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
             gl.clearColor(0, 0, 0, 0)
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         } else {
             this.sphereRenderer.setHdrFramebuffer(null)
+            this.atmosphereRenderer.setHdrFramebuffer(null)
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
             gl.clearColor(0, 0, 0, 0)
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -108,6 +118,7 @@ export class WebglRenderManager {
 
         this.sphereRenderer.beginFrame()
         this.rectRenderer.beginFrame()
+        this.atmosphereRenderer.beginFrame()
         this.orbitRenderer.beginFrame()
         this.projectNodes()
 
@@ -115,9 +126,10 @@ export class WebglRenderManager {
         if(hdrEnabled) {
             // Everything renders into the same HDR depth buffer so spheres
             // (drawn last) correctly occlude rects/orbits where they overlap,
-            // matching the LDR draw order: orbit → rect → sphere.
+            // matching the LDR draw order: orbit → rect → sphere → atmosphere.
         this.rectRenderer.drawNodes()
         this.sphereRenderer.drawNodes()
+        this.atmosphereRenderer.drawNodes()
 
             // Tone-map the HDR scene to the canvas. The fullscreen tone-map
             // quad covers every pixel, so no clear is needed.
@@ -127,6 +139,7 @@ export class WebglRenderManager {
         } else {
             this.rectRenderer.drawNodes()
             this.sphereRenderer.drawNodes()
+            this.atmosphereRenderer.drawNodes()
         }
 
         const { cssHeight, cssWidth } = this.viewport.camera!
@@ -237,6 +250,7 @@ export class WebglRenderManager {
     projectNodes() {
         this.sphereRenderer.projectNodes()
         this.rectRenderer.projectNodes()
+        this.atmosphereRenderer.projectNodes()
         this.orbitRenderer.projectNodes()
     }
 }

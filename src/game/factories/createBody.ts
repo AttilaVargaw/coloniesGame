@@ -5,7 +5,7 @@ import { BodyBlueprint } from "../data/BodyBlueprint"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 import { TWO_PI, UNIVERSE_SCALE, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants"
 import buildableSite from "../../components/icons/buildable.svg"
-import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype, soiRatios } from "./helpers"
+import { applyComponents, calculateSoi, createColonyClickHandler, createAttractorClickHandler, massByArchetype, soiRatios, PlanetArchetype } from "./helpers"
 import { createMarker } from "./createMarker"
 import { createVessel } from "./createSpaceship"
 import { createBarycentre } from "./createBarycentre"
@@ -28,6 +28,7 @@ import { SelectableComponent } from "@engine/components/SelectableComponent"
 import { ClickableComponent } from "@/engine/components/clickableComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"
 import { RotationComponent } from "@/game/components/rotationComponent"
+import { AtmosphereComponent } from "@/engine/components/atmosphereComponent"
 import { angularSpeed } from "../utils/orbital"
 import { PositionComponent } from "@/engine/components/position"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
@@ -228,6 +229,50 @@ async function createAsteroidBelts(
 
 const populationRatio = 0.05
 
+const gasGiants = new Set(["jupiter", "saturn", "uranus", "neptune"])
+
+function atmosphereForArchetype(
+    archetype: PlanetArchetype,
+    color: string,
+    radius: number
+): { thickness: number; skyColor: string; rayleigh: number } | undefined {
+    if(archetype === "sol" || archetype === "baricenter" || archetype === "mercury" || archetype === "luna") {
+        return undefined
+    }
+
+    const thickness = gasGiants.has(archetype)
+        ? radius * 0.10
+        : archetype === "venus"
+            ? radius * 0.12
+            : archetype === "mars"
+                ? radius * 0.05
+                : radius * 0.08
+
+    let skyColor: string
+    let rayleigh: number
+    switch(archetype) {
+        case "earth":
+        case "kobol":
+            skyColor = "#4a90e2"
+            rayleigh = 1.0
+            break
+        case "venus":
+            skyColor = "#f5c542"
+            rayleigh = 1.5
+            break
+        case "mars":
+            skyColor = "#e27d60"
+            rayleigh = 0.3
+            break
+        default:
+            skyColor = color
+            rayleigh = 0.8
+            break
+    }
+
+    return { thickness, skyColor, rayleigh }
+}
+
 export async function createBody({
     archetype,
     orbit,
@@ -279,6 +324,11 @@ export async function createBody({
 
             body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
+
+            const atmosphere = atmosphereForArchetype(archetype, marker.color, marker.radius)
+            if(atmosphere) {
+                body.addComponent(new AtmosphereComponent(atmosphere))
+            }
         }
     }
 
