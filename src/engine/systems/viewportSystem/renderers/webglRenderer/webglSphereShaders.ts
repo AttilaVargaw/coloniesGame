@@ -31,8 +31,6 @@ out vec2 vTexOffset;
 out vec2 vTexScale;
 out vec2 vNightTexOffset;
 out vec2 vNightTexScale;
-out vec2 vRoughnessTexOffset;
-out vec2 vRoughnessTexScale;
 out float vCloudPage;
 out float vRotationAngle;
 
@@ -49,8 +47,6 @@ void main() {
     vTexScale = aInstanceTexScale;
     vNightTexOffset = aInstanceNightTexOffset;
     vNightTexScale = aInstanceNightTexScale;
-    vRoughnessTexOffset = aInstanceTexOffset;
-    vRoughnessTexScale = aInstanceTexScale;
     vCloudPage = aInstanceEmissiveCloud.y;
     vRotationAngle = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
@@ -326,8 +322,6 @@ in vec2 vTexOffset;
 in vec2 vTexScale;
 in vec2 vNightTexOffset;
 in vec2 vNightTexScale;
-in vec2 vRoughnessTexOffset;
-in vec2 vRoughnessTexScale;
 in float vCloudPage;
 in float vRotationAngle;
 
@@ -374,7 +368,6 @@ void main() {
     float spunU = fract(u - vRotationAngle / (2.0 * PI));
     vec2 texCoord = vec2(spunU, v) * vTexScale + vTexOffset;
     vec2 nightTexCoord = vec2(spunU, v) * vNightTexScale + vNightTexOffset;
-    vec2 roughnessTexCoord = vec2(spunU, v) * vRoughnessTexScale + vRoughnessTexOffset;
 
     vec3 T = normalize(cross(geometricNormal, vec3(0.0, 1.0, 0.0)));
     if(length(T) < 0.001) T = normalize(cross(geometricNormal, vec3(1.0, 0.0, 0.0)));
@@ -391,7 +384,7 @@ void main() {
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.4;
-    float roughness = texture(uRoughness, roughnessTexCoord).r;
+    float roughness = texture(uRoughness, texCoord).r;
     vec3 rim = vLightColor * fresnel * dayColor;
 
         if(vEmissive > 0.5) {

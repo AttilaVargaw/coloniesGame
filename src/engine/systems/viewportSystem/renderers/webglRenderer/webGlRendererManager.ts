@@ -40,7 +40,6 @@ export class WebglRenderManager {
         this.engine = engine
 
         const gl = this.engine.getCanvas("webgl2")!.getContext("webgl2")!
-        gl.enable(gl.DEPTH_TEST)
 
         this.hdrSupported = !!gl.getExtension("EXT_color_buffer_float")
         if(this.hdrSupported) {
@@ -127,9 +126,9 @@ export class WebglRenderManager {
             // Everything renders into the same HDR depth buffer so spheres
             // (drawn last) correctly occlude rects/orbits where they overlap,
             // matching the LDR draw order: orbit → rect → sphere → atmosphere.
-        this.rectRenderer.drawNodes()
-        this.sphereRenderer.drawNodes()
-        this.atmosphereRenderer.drawNodes()
+            this.rectRenderer.drawNodes()
+            this.sphereRenderer.drawNodes()
+            this.atmosphereRenderer.drawNodes()
 
             // Tone-map the HDR scene to the canvas. The fullscreen tone-map
             // quad covers every pixel, so no clear is needed.

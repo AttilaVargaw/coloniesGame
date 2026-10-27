@@ -10,11 +10,9 @@ import { ProjectedPoint } from "@/lib/camera"
 import { SizeComponent } from "@/engine/components/sizeComponent"
 import { RectNode } from "../rectNode"
 import { ViewportSystem } from "../../viewportSystem"
-import { WebGLSphereRenderer } from "./webglSphereRenderer"
 import { mat4, vec3 } from "gl-matrix"
 import { SOLAR_UNIT } from "@/game/constants"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
-import { Entity } from "@/engine/entities/entity"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -299,7 +297,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
 
         gl.enable(gl.DEPTH_TEST)
-        gl.disable(gl.CULL_FACE)
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.depthMask(false)
@@ -362,7 +359,6 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.depthMask(true)
         gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.BLEND)
-        gl.enable(gl.CULL_FACE)
 
         //set state back
         gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)

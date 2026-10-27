@@ -188,7 +188,6 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.enable(gl.DEPTH_TEST)
         gl.depthMask(false)
-        gl.cullFace(gl.BACK)
 
         gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, this.pendingInstances.length)
 

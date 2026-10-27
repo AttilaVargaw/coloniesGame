@@ -25,6 +25,21 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
         : { r: 0.3, g: 0.6, b: 1.0 }
 }
 
+type SortedGroups = [string, Group[]][]
+
+type Group = {
+    depth: number;
+    offset: number;
+    nightPage: number;
+    roughnessPage: number;
+    cloudPage: number;
+    normalPage: number;
+    paletteR: number;
+    paletteG: number;
+    paletteB: number
+    page?: number
+}
+
 export class WebGLSphereNode extends RenderableNode {
     constructor(
         entity: Entity,
@@ -42,6 +57,44 @@ export class WebGLSphereNode extends RenderableNode {
 }
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
+    private shader: ShaderProgram | null = null
+    private sphereVao: WebGLBuffer | null = null
+    private sphereIndexBuffer: WebGLBuffer | null = null
+    private sphereIndexCount = 0
+    private sphereIndexType = 0
+    private atlas!: WebGLTextureAtlas
+    private nightAtlas!: WebGLTextureAtlas
+    private roughnessAtlas!: WebGLTextureAtlas
+    private cloudAtlas!: WebGLTextureAtlas
+    private normalAtlas!: WebGLTextureAtlas
+    private readonly MAX_SPHERE_INSTANCES = 256
+    private sphereInstancePool: Float32Array | null = null
+    private sphereBatchBuffer: Float32Array | null = null
+    private pendingInstances: Group[] = []
+    private groupsMap = new Map<string, Group[]>()
+    private _blackCanvas: HTMLCanvasElement | undefined
+    private _midGrayCanvas: HTMLCanvasElement | undefined
+    private _lastShowCheckerPattern = false
+    private bloomFramebuffer: WebGLFramebuffer | null = null
+    private bloomTexture: WebGLTexture | null = null
+    private bloomShader: ShaderProgram | null = null
+    private bloomWidth = 0
+    private bloomHeight = 0
+    private blurFramebufferA: WebGLFramebuffer | null = null
+    private blurTextureA: WebGLTexture | null = null
+    private blurFramebufferB: WebGLFramebuffer | null = null
+    private blurTextureB: WebGLTexture | null = null
+    private blurShader: ShaderProgram<any, any> | null = null
+    private quadVao: WebGLBuffer | null = null
+    private quadIndexBuffer: WebGLBuffer | null = null
+    private quadIndexCount = 0
+    private _showBloom = false
+    private hdrEnabled = false
+    private hdrFramebuffer: WebGLFramebuffer | null = null
+    private view = mat4.create()
+    private projection = mat4.create()
+    private static readonly MAX_BLOOM_DIMENSION = 1024
+
     drawNodes(): void {
         if(!this.engine || !this.atlas || !this.gl || !this.shader || !this.viewportSystem.camera) {
             return
@@ -215,7 +268,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 group = []
                 groups.set(key, group)
             }
-            group.push({ depth: inst.depth, offset: inst.offset, nightPage: inst.nightPage, roughnessPage: inst.roughnessPage, cloudPage: inst.cloudPage, normalPage: inst.normalPage, paletteR: inst.paletteR, paletteG: inst.paletteG, paletteB: inst.paletteB })
+
+            group.push({ ...inst })
         }
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
@@ -236,42 +290,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     protected shouldSkipProjection(_node: WebGLSphereNode, _cameraDistance: number, _cameraScale: number): boolean {
         return false
     }
-    private shader: ShaderProgram | null = null
-    private sphereVao: WebGLBuffer | null = null
-    private sphereIndexBuffer: WebGLBuffer | null = null
-    private sphereIndexCount = 0
-    private sphereIndexType = 0
-    private atlas!: WebGLTextureAtlas
-    private nightAtlas!: WebGLTextureAtlas
-    private roughnessAtlas!: WebGLTextureAtlas
-    private cloudAtlas!: WebGLTextureAtlas
-    private normalAtlas!: WebGLTextureAtlas
-    private readonly MAX_SPHERE_INSTANCES = 256
-    private sphereInstancePool: Float32Array | null = null
-    private sphereBatchBuffer: Float32Array | null = null
-    private pendingInstances: Array<{ page: number; depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }> = []
-    private groupsMap = new Map<string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>>()
-    private _blackCanvas: HTMLCanvasElement | undefined
-    private _midGrayCanvas: HTMLCanvasElement | undefined
-    private _lastShowCheckerPattern = false
-    private bloomFramebuffer: WebGLFramebuffer | null = null
-    private bloomTexture: WebGLTexture | null = null
-    private bloomShader: ShaderProgram | null = null
-    private bloomWidth = 0
-    private bloomHeight = 0
-    private blurFramebufferA: WebGLFramebuffer | null = null
-    private blurTextureA: WebGLTexture | null = null
-    private blurFramebufferB: WebGLFramebuffer | null = null
-    private blurTextureB: WebGLTexture | null = null
-    private blurShader: ShaderProgram<any, any> | null = null
-    private quadVao: WebGLBuffer | null = null
-    private quadIndexBuffer: WebGLBuffer | null = null
-    private quadIndexCount = 0
-    private _showBloom = false
-    private hdrEnabled = false
-    private hdrFramebuffer: WebGLFramebuffer | null = null
-
-    private static readonly MAX_BLOOM_DIMENSION = 1024
 
     setShowBloom(value: boolean) {
         this._showBloom = value
@@ -333,7 +351,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         targetFramebuffer: WebGLFramebuffer | null,
         width: number,
         height: number,
-        sortedGroups: Array<[string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>]>,
+        sortedGroups: SortedGroups,
         camera: Camera
     ): void {
         gl.bindFramebuffer(gl.FRAMEBUFFER, targetFramebuffer)
@@ -513,7 +531,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private renderGpuBloom(
         gl: WebGL2RenderingContext,
         camera: Camera,
-        sortedGroups: Array<[string, Array<{ depth: number; offset: number; nightPage: number; roughnessPage: number; cloudPage: number; normalPage: number; paletteR: number; paletteG: number; paletteB: number }>]>
+        sortedGroups: SortedGroups
     ): void {
         if(!this.bloomFramebuffer || !this.bloomShader || !this.blurFramebufferA || !this.blurFramebufferB || !this.blurShader || !this.bloomTexture || !this.blurTextureA || !this.blurTextureB) {
             return
@@ -782,8 +800,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
         this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
-
-        gl.clearColor(0, 0, 0, 0)
     }
 
     private initBuffers() {
@@ -859,9 +875,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         }
         return this._blackCanvas
     }
-
-    private view = mat4.create()
-    private projection = mat4.create()
 
     removeFromEngine(): this {
         if(this.gl) {

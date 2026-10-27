@@ -6,8 +6,6 @@ import { CAMERA_INITIAL_DISTANCE, CAMERA_MAX_DISTANCE, CAMERA_MIN_DISTANCE, FIEL
 import { BaseRenderer } from "./renderers/baseRenderer";
 import Camera from "@/lib/camera";
 import { LabelRenderer } from "./renderers/labelRenderer";
-import { ColorComponent } from "../../components/colorComponent";
-import { RadiusComponent } from "../../components/radiusComponent";
 import { applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess";
 import { drawStarfield } from "./drawStarfield";
 import { drawNebulas } from "./drawNebulas";
@@ -15,7 +13,7 @@ import { drawRotationIndicator } from "./drawRotationIndicator";
 import { WebglRenderManager } from "./renderers/webglRenderer/webGlRendererManager";
 import { DebugRenderer } from "./renderers/debugRenderer";
 import { PointerInteractionSystem } from "../pointerInteractionSystem";
-import { WebGLSphereNode, WebGLSphereRenderer } from "./renderers/webglRenderer/webglSphereRenderer";
+import { WebGLSphereRenderer } from "./renderers/webglRenderer/webglSphereRenderer";
 
 export type RendererConstructor<T extends BaseRenderer<any>> = new (...args: any[]) => T
 export class ViewportSystem extends System {
