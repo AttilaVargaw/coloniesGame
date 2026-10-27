@@ -324,6 +324,22 @@ export const techs: Record<string, TechDefinition> = {
         name: "Ftl communication",
         researchedText: "We have successfully built a prototype which is stronger and more capable than any other communication device we have ever built. We can use it to communicate real time with other colonies and it will revolutionize space faring"
     },
+    "artificialGravity": {
+        age: "rediscovery",
+        description: "According to the Scrolls of the Technology, they used these devices to simulate gravity in their ships. Crazy if true, but we can try to build one",
+        cost: { researchPoints: 10000, days: 28 },
+        type: "technological",
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["originalScrolls"]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        id: "artificialGravity",
+        name: "Artificial Gravity",
+        researchedText: "We have successfully built a gravity panel. To demonstrate how it works, the scientists bolted the panel to the ceiling of the lab. One guy climbed a ladder and jumped up into it and landed on his hands. Then, he walked around a bit. After a big jump, he landed on a big cushion on the floor. Seeing it work was absolutely crazy. This will revolutionize space travel."
+    },
     "microComputers": {
         age: "rediscovery",
         description: "The old way of electronic is a dead end, we have to move towards micro electronics",
@@ -417,7 +433,7 @@ export const techs: Record<string, TechDefinition> = {
     "superAlloy": {
         id: "superAlloy",
         name: "Super Materials",
-        description: "Inside the Scroll of Technology, we found a chemical receipt, which can be used to make an alloy, which can withstand the extreme conditions of space",
+        description: "Inside the Scroll of Technology, we found a library of chemical receipts, which can be used to make an super materials, which can withstand the extreme conditions of space",
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
@@ -459,7 +475,7 @@ export const techs: Record<string, TechDefinition> = {
         age: "unification",
         adoptionModel: "instant",
         adoptionSpeed: 28,
-        researchedText: "The Articles of Colonization, §1: 'We, the representatives of the Twelve Worlds of Man, hereby agree that no colony shall be allowed to suppress another colony, as we are all equal colonies founded by the people of Kobol.' The Charter of Unification, §1: 'We, the representatives of the Twelve Worlds of Man, agree to build and maintain a unified government and fleet to protect and serve the interests of the people of Kobol. We hereby name the new government the United Colonies of Kobol and the new fleet the Colonial Fleet.' Both documents are signed. We are one people now. We are ready."
+        researchedText: "The Articles of Colonization, §1: 'We, the representatives of the Twelve Worlds of Man, hereby agree that no colony shall be allowed to suppress another colony, as we are all equal colonies founded by the people of Kobol.' The Charter of Unification, §1: 'We, the representatives of the Twelve Worlds of Man, agree to build and maintain a unified government and armed forces to protect and serve the interests of the people of Kobol. We hereby name this new government the United Colonies of Kobol, the joint interplanetary defense fleet the Colonial Fleet, the local planetary defense force the Colonial Defense and the marine force the Colonial Marine Corps.' Both documents are signed. We are one people now. We are ready."
     },
     "projectDaedalus": {
         type: "technological",
@@ -490,6 +506,117 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set([]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
+    },
+    "idris": {
+        type: "technological",
+        age: "techRevolution",
+        id: "idris",
+        name: "IDRIS",
+        description: "Interplanetary Distributed Radio Information System. It's a complex crowd computing protocol that allows FTL-connected astrological satellites, ships, and stations to share sensory data and computing power. It increases the maximum jump distance within the Cyrannus system, making space travel safer, faster, and cheaper. It's extremely useful, but losing it would be catastrophic if the interstellar commerce depends too much on it",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["ftlCom", "jumpDrive"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+    },
+    "viper": {
+        type: "technological",
+        age: "unification",
+        id: "viper",
+        name: "viper",
+        description: "The colonial armed forces needs a new, common fighter model to replace the various models that are currently in use around the colonies. We need the most reliable workhorse that we can find",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "Of the various contenders, we chose the Caprican Viper as the new standard fighter for the Colonial Armed Forces. We chose it not only because it's an excellent interceptor with a reasonable firepower, but also because of its recognizable silhouette, which looks great in any kind of media. We want this fighter to symbolize the military might of the United Colonies of Man."
+    },
+    "nuke": {
+        type: "technological",
+        age: "imperial",
+        id: "nuke",
+        name: "Nuclear warhead",
+        description: "We need the most powerful weapon we can get our hands on. A powerful shaped nuclear charge would be a great addition to our arsenal. Radiation is not a concern, as space is already radiation-filled",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "There is no armor that can stop this nuclear warhead. Our enemies will think twice before attacking us."
+    },
+    "flakAmmunition": {
+        type: "technological",
+        age: "imperial",
+        id: "flak",
+        name: "Flak field projection",
+        description: "We need a reliable way to protect our ships from incoming ordnance and small attack craft, as energy shields are only exists in cheesy sci-fi movies. A traditional flak field projection system would be a great addition to our arsenal.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "A simple timed warhead filled with bearings can tear apart any lightly armored target."
+    },
+    "caws": {
+        type: "technological",
+        age: "imperial",
+        id: "ciws",
+        name: "Close-in Weapon System",
+        description: "We need a reliable way to protect our ships from incoming ordnance and small attack craft, as energy shields are only exists in cheesy sci-fi movies. A small point-defense system would be a great addition to our arsenal.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["kew", "destroyer"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "This automatic KEW turret can take down any incoming missile or attack craft"
+    },
+    "kew": {
+        type: "technological",
+        age: "imperial",
+        id: "kew",
+        name: "Kinetic Energy Weapon",
+        description: "We need a reliable way to fire guns in space. Fortunately, guns work in space, but we need to consider other factors such as radiation, dust, overheating, barrel replacement and recoil.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "These full auto, remote controlled guns can fire reliably and accurately in space. It also has an automatic barrel replacement system with a water cooling system and an automatic seal which seals the barrel when not in use. It also has a built in reaction wheel to compensate for recoil."
+    },
+    "heavyGuns": {
+        type: "technological",
+        age: "imperial",
+        id: "guns",
+        name: "Heavy space guns",
+        description: "We need reliable heavy guns on our ships.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
+            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+        ],
+        prerequisites: new Set(["kew", "destroyer"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "These automatic turrets can fire reliably and accurately in space. We use a combination of traditional chemical propellant to make the shell moving which is further accelerated by a railgun system. This way we can fire shells at high speeds without the need for a complicated barrel."
     }
 } as const
 
