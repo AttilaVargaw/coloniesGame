@@ -16,7 +16,7 @@ export const solarisAlpha = {
     }, {
         bodies: [{
             marker: { color: "#b1b3ba", radius: 4, label: "Persephone" },
-            archetype: "mercury",
+            archetype: "luna",
             orbit: { radius: 44, angle: 4, eccentricity: 0.4, inclination: 0 },
             name: "Persephone",
         }],

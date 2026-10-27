@@ -20,7 +20,7 @@ const typeColors: Record<TechType, string> = {
     technological: "#3b82f6",
     military: "#ef4444",
     diplomatic: "#f59e0b",
-}
+} as const
 
 type NodeState = {
     tech: typeof techs[string]

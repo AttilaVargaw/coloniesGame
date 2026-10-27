@@ -355,6 +355,15 @@ vec3 rotateY(vec3 v, float angle) {
     return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c);
 }
 
+vec3 ACESFilm(vec3 x) {
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
 void main() {
     vec3 geometricNormal = normalize(vNormal);
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
@@ -392,7 +401,7 @@ void main() {
             color *= 2.5;
             fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
-            color = color / (color + vec3(1.0));
+            color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));
             fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         }
@@ -405,7 +414,7 @@ void main() {
         vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.6 + 0.4 * (1.0 - roughness));
 
         vec3 lit = dayColor * vLightColor * diff + specular * max(NdotL, 0.0);
-        vec3 ambient = dayColor * uAmbientColor * 0.6;
+        vec3 ambient = dayColor * uAmbientColor * 1.0;
 
         vec3 color = mix(ambient + rim, lit + rim, diff);
         color = mix(color, nightColor, smoothstep(-0.1, -0.3, NdotL));
@@ -418,14 +427,11 @@ void main() {
             color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
         }
 
-        if(uHdrMode > 0.5) {
-            // Output linear HDR color to the framebuffer; ACES tone mapping
-            // is applied in the post-process pass.
-            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
-        } else {
-            color = color / (color + vec3(1.0));
+        if(uHdrMode < 0.5) {
+            color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));
-            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         }
+        
+        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     }
 }`;

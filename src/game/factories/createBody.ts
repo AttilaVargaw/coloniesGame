@@ -228,41 +228,23 @@ async function createAsteroidBelts(
 }
 
 const populationRatio = 0.05
-
 const gasGiants = new Set(["jupiter", "saturn", "uranus", "neptune"])
+const hasAtmosphere = new Set(["earth", "kobol", ...gasGiants])
 
 function atmosphereForArchetype(
     archetype: PlanetArchetype,
     color: string,
     radius: number
 ): { thickness: number; skyColor: string; rayleigh: number } | undefined {
-    if(archetype === "sol" || archetype === "baricenter" || archetype === "mercury" || archetype === "luna") {
-        return undefined
-    }
+    const thickness = gasGiants.has(archetype) ? radius * 0.02 : radius * 0.01
 
-    const thickness = gasGiants.has(archetype)
-        ? radius * 0.02
-        : archetype === "venus"
-            ? radius * 0.02
-            : archetype === "mars"
-                ? radius * 0.01
-                : radius * 0.02
-
-    let skyColor: string
-    let rayleigh: number
     switch(archetype) {
         case "earth":
         case "kobol":
-            skyColor = "#4a90e2"
-            rayleigh = 1.0
-            break
+            return { thickness, skyColor: "#4a90e2", rayleigh: 1.0 }
         default:
-            skyColor = color
-            rayleigh = 0.8
-            break
+            return { thickness, skyColor: color, rayleigh: 0.8 }
     }
-
-    return { thickness, skyColor, rayleigh }
 }
 
 export async function createBody({
@@ -304,6 +286,7 @@ export async function createBody({
         if(archetype === "sol") {
             const dayBitmap = await pool.generate("star", marker.color, undefined, name)
             body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
+
         } else if(archetype !== "baricenter") {
             const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
                 pool.generate("planet", marker.color, archetype, name),
@@ -311,21 +294,24 @@ export async function createBody({
                 pool.generate("normal", marker.color, archetype, name),
             ])
 
-            const nightBitmap = population !== undefined ? await pool.generate("night", marker.color, archetype, name) : undefined
-            const cloudBitmap = population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
+            const [nightBitmap, cloudBitmap] = await Promise.all([
+                population !== undefined ? await pool.generate("night", marker.color, archetype, name) : undefined,
+                population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
+            ])
 
             body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
 
-            const atmosphere = atmosphereForArchetype(archetype, marker.color, marker.radius)
-            if(atmosphere) {
-                body.addComponent(new AtmosphereComponent(atmosphere))
+            if(hasAtmosphere.has(archetype)) {
+                body.addComponent(new AtmosphereComponent(atmosphereForArchetype(archetype, marker.color, marker.radius)))
             }
         }
     }
 
+    let components: EntityComponent[]
+
     if(name !== "root") {
-        const components = createBaseComponents(
+        components = createBaseComponents(
             parent.id,
             orbit,
             angle,
@@ -337,17 +323,20 @@ export async function createBody({
             clickSquare,
             mass
         )
-        applyComponents(body, ...components)
     } else {
-        applyComponents(body, new MassComponent(mass))
+        components = [new MassComponent(mass)]
     }
+
+    applyComponents(body, ...components)
 
     engine.addEntity(body, parent)
 
     const tasks: Promise<void>[] = []
+
     if(systems) {
         tasks.push(createSystems(systems, body, engine, mass))
     }
+
     if(vessels) {
         createVessels(vessels, body, engine, mass)
     }
@@ -357,6 +346,7 @@ export async function createBody({
     if(rings?.length) {
         createRings(rings, body, engine)
     }
+
     if(asteroidBelts?.length) {
         tasks.push(createAsteroidBelts(asteroidBelts, body, engine, mass))
     }
