@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { DebugToggleCommand } from "@/game/commands/DebugToggleCommand";
-import type { DebugFlag, BloomSettings } from "@engine/lib/debugManager";
+import { type DebugFlag, type BloomSettings, DEFAULT_BLOOM_SETTINGS } from "@engine/lib/debugManager";
 
 const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
@@ -33,14 +33,6 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
     { flag: "showClickBoxes", label: "Show Click Boxes" },
     { flag: "showAtmosphere", label: "Show Atmosphere" },
 ] as const
-
-const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
-    brightness: 3,
-    contrast: 2,
-    iterations: 3,
-    alpha: 1,
-    threshold: 0.4,
-} as const
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)
@@ -123,7 +115,7 @@ export function DebugModal() {
                                 <Slider
                                     value={[bloomSettings.brightness]}
                                     min={1}
-                                    max={3}
+                                    max={5}
                                     step={0.1}
                                     onValueChange={([value]) => handleBloomSettingChange("brightness", value)}
                                 />
@@ -162,7 +154,7 @@ export function DebugModal() {
                                 <Slider
                                     value={[bloomSettings.alpha]}
                                     min={0.1}
-                                    max={1}
+                                    max={2}
                                     step={0.1}
                                     onValueChange={([value]) => handleBloomSettingChange("alpha", value)}
                                 />

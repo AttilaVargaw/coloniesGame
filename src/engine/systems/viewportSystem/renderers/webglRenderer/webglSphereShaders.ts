@@ -136,7 +136,10 @@ void main() {
 
     float brightness = dot(color, vec3(0.299, 0.587, 0.114));
     float contribution = max(0.0, brightness - uBloomThreshold);
-    fragColor = vec4(color * contribution * uBloomBrightness * bloomMask, 1.0);
+    // Output uniform brightness-based bloom color so texture variations
+    // (sunspots, granulation) don't create dark patches in the corona.
+    vec3 bloomColor = vec3(contribution);
+    fragColor = vec4(bloomColor * uBloomBrightness * bloomMask, 1.0);
 }
 `;
 
@@ -391,14 +394,14 @@ void main() {
     float roughness = texture(uRoughness, roughnessTexCoord).r;
     vec3 rim = vLightColor * fresnel * dayColor;
 
-    if(vEmissive > 0.5) {
+        if(vEmissive > 0.5) {
         vec3 color = dayColor + rim;
         if(uHdrMode > 0.5) {
             // Stars are brighter than planets: scale into HDR range so the
             // brightest core exceeds 1.0 and blooms, but keep most of the
             // disk below ~1.0 so ACES tone mapping preserves surface detail
             // (granulation + sunspots) instead of crushing it to white.
-            color *= 2.5;
+            color *= 7.5;
             fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
             color = ACESFilm(color);
@@ -412,6 +415,9 @@ void main() {
         float NdotH = dot(normal, halfVec);
         float specPower = mix(6.0, 180.0, 1.0 - roughness);
         vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.6 + 0.4 * (1.0 - roughness));
+        // Stronger specular glint on smooth surfaces (ocean/water)
+        float glint = smoothstep(0.1, 0.0, roughness);
+        specular *= (1.0 + glint * 0.6);
 
         vec3 lit = dayColor * vLightColor * diff + specular * max(NdotL, 0.0);
         vec3 ambient = dayColor * uAmbientColor * 1.0;
@@ -422,6 +428,9 @@ void main() {
         if(vCloudPage > -0.5) {
             vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
             float cloudAlpha = texture(uCloudTexture, cloudUV).a;
+            // Cloud shadows darken the surface beneath thick clouds
+            float cloudShadow = clamp(cloudAlpha * 0.5, 0.0, 0.5);
+            color *= (1.0 - cloudShadow);
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
             color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));

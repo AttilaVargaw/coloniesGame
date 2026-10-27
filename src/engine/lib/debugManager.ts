@@ -8,6 +8,14 @@ export interface BloomSettings {
 
 export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showContrastSaturation" | "showCullingOverlay" | "showCheckerPattern" | "showFrameTime" | "showClickBoxes" | "showHDR" | "showAtmosphere"
 
+export const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
+    brightness: 3,
+    contrast: 2,
+    iterations: 3,
+    alpha: 1,
+    threshold: 0.3,
+} as const
+
 export class DebugManager {
     private readonly _flags: Record<DebugFlag, boolean> = {
         showJumpGraph: false,
@@ -27,13 +35,7 @@ export class DebugManager {
         showAtmosphere: true,
     }
 
-    private _bloomSettings: BloomSettings = {
-        brightness: 3,
-        contrast: 2,
-        iterations: 3,
-        alpha: 1,
-        threshold: 0.4,
-    }
+    private _bloomSettings = DEFAULT_BLOOM_SETTINGS
 
     get debugflags() {
         return this._flags
