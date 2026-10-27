@@ -166,7 +166,6 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         ["roughness", "uRoughness"],
         ["cloudTexture", "uCloudTexture"],
         ["normalMap", "uNormalMap"],
-        ["paletteColor", "uPaletteColor"],
         ["tintColor", "uTintColor"],
         ["tintAlpha", "uTintAlpha"],
         ["time", "uTime"],
@@ -337,7 +336,6 @@ uniform sampler2D uNormalMap;
 uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform vec3 uTintColor;
-uniform vec3 uPaletteColor;
 uniform float uTintAlpha;
 uniform float uTime;
 uniform float uHdrMode;
@@ -392,9 +390,6 @@ void main() {
             // disk below ~1.0 so ACES tone mapping preserves surface detail
             // (granulation + sunspots) instead of crushing it to white.
             color *= 2.5;
-            // Bright atmospheric limb (chromosphere) at the edge
-            float limb = pow(1.0 - NdotV, 5.0) * 1.5;
-            color += vLightColor * limb;
             fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
             color = color / (color + vec3(1.0));
@@ -424,18 +419,13 @@ void main() {
         }
 
         if(uHdrMode > 0.5) {
-            float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
-            vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
-            vec3 outColor = color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0);
-            fragColor = vec4(mix(outColor, outColor * uTintColor, uTintAlpha), 1.0);
+            // Output linear HDR color to the framebuffer; ACES tone mapping
+            // is applied in the post-process pass.
+            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
             color = color / (color + vec3(1.0));
             color = pow(color, vec3(1.0 / 2.2));
-
-            float atmosphere = pow(1.0 - NdotV, 4.0) * 0.45;
-            vec3 atmColor = mix(vec3(0.25, 0.55, 1.0), uPaletteColor, 0.5);
-            vec3 outColor = color + atmColor * atmosphere * (1.0 - vEmissive) * max(diff, 0.0);
-            fragColor = vec4(mix(outColor, outColor * uTintColor, uTintAlpha), 1.0);
+            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         }
     }
 }`;

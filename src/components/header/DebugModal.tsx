@@ -90,14 +90,14 @@ export function DebugModal() {
                     Debug
                 </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1c1c1c] text-popover-foreground">
+            <DialogContent className="bg-[#1c1c1c] text-white">
                 <DialogHeader>
                     <DialogTitle>Debug</DialogTitle>
                     <DialogDescription>
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-2">
-                    {DEBUG_FLAGS.map(({ flag, label }) => (
+                    {DEBUG_FLAGS.filter(({ flag }) => flag !== "showVignette" && flag !== "showCameraTarget" && flag !== "showFrameTime").map(({ flag, label }) => (
                         <div key={flag} className="flex items-center justify-between">
                             <span className="text-sm">{label}</span>
                             <Toggle

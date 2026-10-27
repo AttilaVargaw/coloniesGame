@@ -469,9 +469,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 lastNormalPage = normalPage
             }
 
-            const first = instances[0]
-            gl.uniform3f(shader.uniforms.paletteColor, first.paletteR, first.paletteG, first.paletteB)
-
             gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
         }
 
