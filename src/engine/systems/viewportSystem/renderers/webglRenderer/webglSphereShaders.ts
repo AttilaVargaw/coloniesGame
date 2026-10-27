@@ -158,16 +158,8 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
     ], [
         ["view", "uView"],
         ["projection", "uProjection"],
-        ["ambientColor", "uAmbientColor"],
-        ["cameraPosition", "uCameraPosition"],
         ["texture", "uTexture"],
         ["nightTexture", "uNightTexture"],
-        ["roughness", "uRoughness"],
-        ["cloudTexture", "uCloudTexture"],
-        ["normalMap", "uNormalMap"],
-        ["tintColor", "uTintColor"],
-        ["tintAlpha", "uTintAlpha"],
-        ["time", "uTime"],
         ["bloomBrightness", "uBloomBrightness"],
         ["bloomThreshold", "uBloomThreshold"],
     ])
@@ -346,12 +338,6 @@ vec2 rotateUV(vec2 uv, float angle) {
     return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
 }
 
-vec3 rotateY(vec3 v, float angle) {
-    float s = sin(angle);
-    float c = cos(angle);
-    return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c);
-}
-
 vec3 ACESFilm(vec3 x) {
     float a = 2.51;
     float b = 0.03;
@@ -395,12 +381,11 @@ void main() {
             // disk below ~1.0 so ACES tone mapping preserves surface detail
             // (granulation + sunspots) instead of crushing it to white.
             color *= 7.5;
-            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         } else {
             color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));
-            fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
         }
+        fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
         float diff = max(0.0, NdotL) * 0.7 + 0.3;
 
