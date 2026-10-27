@@ -51,7 +51,7 @@ export class TextureWorkerPool {
     }
 
     async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string): Promise<ImageBitmap> {
-        const cached = await getCachedTexture(textureType, baseColor, archetype ?? undefined, seedKey ?? undefined)
+        const cached = await getCachedTexture(textureType, baseColor, archetype, seedKey)
         if(cached) return cached
 
         if(!this.workers.length) this.start()
@@ -72,20 +72,20 @@ export class TextureWorkerPool {
             })
         })
 
-        setCachedTexture(textureType, baseColor, archetype ?? undefined, seedKey ?? undefined, bitmap)
+        setCachedTexture(textureType, baseColor, archetype, seedKey, bitmap)
 
         return bitmap
     }
 
     private handleMessage(event: MessageEvent<TextureWorkerResult>) {
         const { id, bitmap } = event.data
-        
+
         const pending = this.pending.get(id)
         if(pending) {
             pending.resolve(bitmap)
             this.pending.delete(id)
         }
-        
+
         this.onResult(event.data)
     }
 
@@ -93,7 +93,7 @@ export class TextureWorkerPool {
         for(const worker of this.workers) {
             worker.terminate()
         }
-        this.workers.length = 0 
+        this.workers.length = 0
         this.pending.clear()
     }
 }

@@ -106,6 +106,7 @@ uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform float uBloomBrightness;
 uniform float uBloomThreshold;
+uniform float uBloomThresholdStars;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -131,7 +132,8 @@ void main() {
     }
 
     float brightness = dot(color, vec3(0.299, 0.587, 0.114));
-    float contribution = max(0.0, brightness - uBloomThreshold);
+    float threshold = vEmissive > 0.5 ? uBloomThresholdStars : uBloomThreshold;
+    float contribution = max(0.0, brightness - threshold);
     // Output uniform brightness-based bloom color so texture variations
     // (sunspots, granulation) don't create dark patches in the corona.
     vec3 bloomColor = vec3(contribution);
@@ -162,6 +164,7 @@ export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProg
         ["nightTexture", "uNightTexture"],
         ["bloomBrightness", "uBloomBrightness"],
         ["bloomThreshold", "uBloomThreshold"],
+        ["bloomThresholdStars", "uBloomThresholdStars"],
     ])
 }
 
@@ -366,15 +369,12 @@ void main() {
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
     float NdotV = abs(dot(normal, viewDir));
 
-    float fresnel = pow(1.0 - NdotV, 3.0) * 0.35;
-
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.4;
     float roughness = texture(uRoughness, texCoord).r;
-    vec3 rim = vLightColor * fresnel * dayColor;
 
         if(vEmissive > 0.5) {
-        vec3 color = dayColor + rim;
+        vec3 color = dayColor;
         if(uHdrMode > 0.5) {
             // Stars are brighter than planets: scale into HDR range so the
             // brightest core exceeds 1.0 and blooms, but keep most of the
@@ -400,7 +400,7 @@ void main() {
         vec3 lit = dayColor * vLightColor * diff + specular * max(NdotL, 0.0);
         vec3 ambient = dayColor * uAmbientColor * 1.0;
 
-        vec3 color = mix(ambient + rim, lit + rim, diff);
+        vec3 color = mix(ambient, lit, diff);
         color = mix(color, nightColor, smoothstep(-0.1, -0.3, NdotL));
 
         if(vCloudPage > -0.5) {
@@ -410,7 +410,7 @@ void main() {
             float cloudShadow = clamp(cloudAlpha * 0.5, 0.0, 0.5);
             color *= (1.0 - cloudShadow);
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
-            vec3 cloudColor = mix(ambient + rim, lit + rim, cloudLight);
+            vec3 cloudColor = mix(ambient, lit, cloudLight);
             color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
         }
 

@@ -31,6 +31,7 @@ export interface ShaderProgramUniforms {
     time: WebGLUniformLocation | null;
     bloomBrightness: WebGLUniformLocation | null;
     bloomThreshold: WebGLUniformLocation | null;
+    bloomThresholdStars: WebGLUniformLocation | null;
     [key: string]: WebGLUniformLocation | null;
 }
 

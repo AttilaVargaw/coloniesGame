@@ -205,21 +205,6 @@ function generateTexture(
     return { canvas, ctx, data, imageData, size: textureSize, perm }
 }
 
-function applyAtmosphereGradient(
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-    size: number,
-    rgb: { r: number; g: number; b: number },
-    alpha: number
-): void {
-    const halfSize = size / 2
-    const gradient = ctx.createRadialGradient(halfSize, halfSize, size * 0.42, halfSize, halfSize, halfSize)
-    gradient.addColorStop(0, "rgba(0,0,0,0)")
-    gradient.addColorStop(0.85, "rgba(0,0,0,0)")
-    gradient.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`)
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, size, size)
-}
-
 function boxBlurNormalMap(src: Float32Array, width: number, height: number, radius: number): Float32Array {
     const out = new Float32Array(src.length)
     const tmp = new Float32Array(src.length)
@@ -463,9 +448,6 @@ function createEarthLikeTexture(
 
     ctx.putImageData(imageData, 0, 0)
 
-    const atmRgb = tintColor(hexToRgb("#ffffff"), base, 0.15)
-    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.15)
-
     return canvas
 }
 
@@ -486,7 +468,7 @@ export function createPlanetTexture(baseColor: string, archetype: PlanetArchetyp
     const deepOceanRgb = {
         r: clamp(oceanRgb.r * 0.65, 0, 255),
         g: clamp(oceanRgb.g * 0.65, 0, 255),
-        b: clamp(oceanRgb.b * 1.25, 0, 255),
+        b: clamp(oceanRgb.b * 0.65, 0, 255),
     }
     const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.1)
     const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.1)
@@ -530,10 +512,6 @@ export function createPlanetTexture(baseColor: string, archetype: PlanetArchetyp
 
     ctx.putImageData(imageData, 0, 0)
 
-    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
-    const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.15)
-
     return canvas
 }
 
@@ -573,9 +551,6 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
 
     ctx.putImageData(imageData, 0, 0)
 
-    const atmRgb = tintColor(hexToRgb(palette.bands[0][0]), base, 0.1)
-    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.1)
-
     return canvas
 }
 
@@ -595,8 +570,8 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
         const sharpFalloff = Math.pow(radialFalloff, 1.6)
 
         const bright = 0.05 + fine * 0.50 + coarse * 0.15 + sharpFalloff * 0.25
-        // Sunspots darken localized regions strongly
-        const darkened = bright * (0.15 + 0.85 * spots)
+        // Sunspots darken localized regions subtly
+        const darkened = bright * (0.45 + 0.55 * spots)
         const brightness = Math.round(clamp(darkened * 255, 0, 255))
 
         const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
@@ -886,10 +861,6 @@ export function createNightTexture(baseColor: string, archetype: PlanetArchetype
     })
 
     ctx.putImageData(imageData, 0, 0)
-
-    const atmosphereColor = (palette as Palette).atmosphere || palette.clouds
-    const atmRgb = tintColor(hexToRgb(atmosphereColor), base, 0.15)
-    applyAtmosphereGradient(ctx, textureSize, atmRgb, 0.1)
 
     return canvas
 }

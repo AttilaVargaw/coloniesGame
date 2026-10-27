@@ -373,7 +373,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform1f(shader.uniforms.tintAlpha, 0)
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
         gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 1.0)
-        gl.uniform1f(shader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.2)
+        gl.uniform1f(shader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.3)
+        gl.uniform1f(shader.uniforms.bloomThresholdStars, this.engine?.getDebugManager()?.bloomSettings?.thresholdStars ?? 0.1)
         gl.uniform1f(shader.uniforms.hdrMode, this.hdrEnabled ? 1.0 : 0.0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
