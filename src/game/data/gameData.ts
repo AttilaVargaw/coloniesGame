@@ -15,7 +15,7 @@ const navigationalBodySize = 40
 
 export const MapCreationData = {
     marker: { color: "#0000", radius: 20, label: "root" },
-    archetype: "sol",
+    archetype: "baricenter",
     name: "root",
     radius: 0,
     orbit: { radius: 0, angle: 0, eccentricity: 0, inclination: 0 },

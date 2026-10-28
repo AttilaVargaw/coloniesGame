@@ -178,25 +178,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
-            let lightDir = vec3.fromValues(0, 1, 0)
-            let starColor = vec3.fromValues(1.0, 1.0, 1.0)
+            const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
 
-            if(starEntity) {
-                const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
+            const lightDirLength = vec3.length(lightDirRaw)
+            const lightDir = lightDirLength > 0
+                ? vec3.normalize(vec3.create(), lightDirRaw)
+                : vec3.fromValues(0, 1, 0)
 
-                const lightDirLength = vec3.length(lightDirRaw)
-                lightDir = lightDirLength > 0
-                    ? vec3.normalize(vec3.create(), lightDirRaw)
-                    : vec3.fromValues(0, 1, 0)
+            const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 4
 
-                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2) * 40
+            const starColorComponent = starEntity.getComponent(ColorComponent)!
 
-                const starColorComponent = starEntity.getComponent(ColorComponent)
-                if(starColorComponent?.fill) {
-                    const parsed = hexToRgb(starColorComponent.fill)
-                    starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
-                }
-            }
+            const parsed = hexToRgb(starColorComponent.fill!)
+            const starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
 
             const paletteRgb = hexToRgb(node.color.fill || "#808080")
 
@@ -839,7 +833,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         super(
             viewport,
             [
-                PositionComponent, RadiusComponent, TextureComponent
+                PositionComponent, RadiusComponent, TextureComponent, ColorComponent
             ],
             (entity) => {
                 const pos = entity.getComponent(PositionComponent)!

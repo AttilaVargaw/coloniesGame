@@ -14,6 +14,7 @@ import type { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
 import { CanvasManager } from "../systems/canvasManager"
 import { EntityComponent } from "../entities/entityComponent"
+import { WebGLSphereNode } from "../systems/viewportSystem/renderers/webglRenderer/webglSphereRenderer"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry

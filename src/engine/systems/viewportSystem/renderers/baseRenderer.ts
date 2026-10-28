@@ -39,12 +39,10 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         this.nodeFactory = nodeFactory
     }
 
-    protected findStarEntityForPlanet(planetEntity: Entity): Entity | undefined {
-        if(!this.engine) return undefined
+    private stars = new Set<Entity>()
 
-        if(planetEntity.getComponent(ColorComponent)?.emitLight) {
-            return
-        }
+    protected findStarEntityForPlanet(planetEntity: Entity, starConstructor?: Function): Entity {
+        if(!this.engine) throw "Engine not set"
 
         let current: Entity | undefined = planetEntity
 
@@ -62,21 +60,22 @@ export abstract class BaseRenderer<N extends RenderableNode> {
             }
         }
 
-        //@ts-ignore
-        const stars = this.engine.getNodeList(this.constructor).filter(n => n.color.emitLight)
+        if(this.stars.size === 0) {
+            this.stars = new Set(this.engine.getAllEntities().filter(entity => entity.getComponent(ColorComponent)?.emitLight))
+        }
 
-        const closestStar = stars.reduce((result, star) => {
-            const node = this.engine!.getSceneNode(star.entity)!
+        const closestStar = [...this.stars!].reduce((result, star) => {
+            const node = this.engine!.getSceneNode(star)!
 
             if(vec3.squaredDistance(node.getWorldPosition(), planetEntity.getComponent(PositionComponent)!.getVector())
-                < vec3.squaredDistance(node.getWorldPosition(), result.entity.getComponent(PositionComponent)!.getVector())) {
+                < vec3.squaredDistance(node.getWorldPosition(), result.getComponent(PositionComponent)!.getVector())) {
                 return star
             } else {
                 return result
             }
-        }, stars[0])
+        }, [...this.stars][0])
 
-        return closestStar?.entity ?? stars[0]
+        return closestStar
     }
 
     addToEngine(engine: Engine): this {

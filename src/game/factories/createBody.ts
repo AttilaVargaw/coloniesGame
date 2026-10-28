@@ -262,7 +262,8 @@ export async function createBody({
     allowedSettlementTypes,
     populationRatio: blueprintPopulationRatio,
     occupationStarterRatio: blueprintOccupationStarterRatio,
-}: BodyBlueprint & { mass?: number }, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
+}: BodyBlueprint, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
+    const isRoot = name === "root"
     const angle = orbit.angle ?? generateRandomNumber(0, TWO_PI)
     const clickSize = marker.radius * 2
     const clickSquare = { width: clickSize, height: clickSize }
@@ -271,22 +272,25 @@ export async function createBody({
         ? { ...marker, texture: buildableSite }
         : marker
 
-    const body = createMarker({ name: name === "root" ? undefined : name, ...markerInput })
+    let body: Entity
 
-    const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
+    if(isRoot) {
+        body = createEntity().addComponent(new PositionComponent(0, 0))
+    } else {
+        body = createMarker({ name: isRoot ? undefined : name, ...markerInput })
+    }
 
     if(buildable && markerInput.texture) {
         body.addComponent(new SizeComponent(marker.radius * 2, marker.radius * 2, 12))
         body.addComponent(new TextureComponent({ src: markerInput.texture, id: name }))
     }
 
-    if(!buildable && typeof document !== "undefined") {
+    if(!buildable && typeof document !== "undefined" && !isRoot) {
         const pool = getTextureWorkerPool()
 
         if(archetype === "sol") {
             const dayBitmap = await pool.generate("star", marker.color, undefined, name)
             body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
-
         } else if(archetype !== "baricenter") {
             const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
                 pool.generate("planet", marker.color, archetype, name),
@@ -310,7 +314,9 @@ export async function createBody({
 
     let components: EntityComponent[]
 
-    if(name !== "root") {
+    if(isRoot) {
+        components = [new MassComponent(mass)]
+    } else {
         components = createBaseComponents(
             parent.id,
             orbit,
@@ -323,8 +329,6 @@ export async function createBody({
             clickSquare,
             mass
         )
-    } else {
-        components = [new MassComponent(mass)]
     }
 
     applyComponents(body, ...components)
@@ -341,7 +345,8 @@ export async function createBody({
         createVessels(vessels, body, engine, mass)
     }
 
-    applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any, effectivePopulationRatio, blueprintOccupationStarterRatio))
+    const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
+    !isRoot && applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any, effectivePopulationRatio, blueprintOccupationStarterRatio))
 
     if(rings?.length) {
         createRings(rings, body, engine)
@@ -352,6 +357,8 @@ export async function createBody({
     }
 
     await Promise.all(tasks)
+
+    isRoot && console.log({ body })
 
     return body
 }
