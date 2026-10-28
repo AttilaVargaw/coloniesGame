@@ -46,6 +46,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private readonly pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
     private readonly groupsMap = new Map<number, Array<{ depth: number; offset: number }>>()
     private readonly parseColorCache = new Map<string, [number, number, number]>()
+    private instanceBufferCapacity = 0
 
     beginFrame(): void {
         this.pendingInstances.length = 0
@@ -315,7 +316,13 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+            const byteLength = totalFloats * 4
+            if(byteLength > this.instanceBufferCapacity) {
+                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+                this.instanceBufferCapacity = byteLength
+            } else {
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
+            }
 
             gl.enableVertexAttribArray(this.shader.attribs.instanceTranslation)
             gl.vertexAttribPointer(this.shader.attribs.instanceTranslation, 2, gl.FLOAT, false, instanceStride, 0)

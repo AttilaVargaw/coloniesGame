@@ -1,4 +1,4 @@
-export const UNIVERSE_SCALE = 20
+export const UNIVERSE_SCALE = 25
 
 export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30

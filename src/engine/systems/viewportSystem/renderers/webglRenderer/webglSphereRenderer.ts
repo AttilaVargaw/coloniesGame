@@ -70,6 +70,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private readonly MAX_SPHERE_INSTANCES = 256
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
+    private sphereInstanceBufferCapacity = 0
     private pendingInstances: Group[] = []
     private groupsMap = new Map<string, Group[]>()
     private _blackCanvas: HTMLCanvasElement | undefined
@@ -414,7 +415,13 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-            gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+            const byteLength = totalFloats * 4
+            if(byteLength > this.sphereInstanceBufferCapacity) {
+                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+                this.sphereInstanceBufferCapacity = byteLength
+            } else {
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
+            }
 
             const setupAttrib = (loc: number, size: number, offset: number) => {
                 if(loc < 0) return
