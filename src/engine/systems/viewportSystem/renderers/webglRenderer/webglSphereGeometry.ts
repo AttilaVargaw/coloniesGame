@@ -4,7 +4,6 @@ export interface SphereMesh {
     indices: Uint16Array | Uint32Array
 }
 
-
 function normalize(x: number, y: number, z: number) {
     const len = Math.sqrt(x * x + y * y + z * z)
     return [x / len, y / len, z / len]
@@ -58,7 +57,6 @@ function subdivide(
         indices.push(...newIndices)
     }
 }
-
 
 export function createSphereMesh(subdivisions: number): SphereMesh {
     const phi = (1 + Math.sqrt(5)) / 2

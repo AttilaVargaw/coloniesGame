@@ -1,12 +1,11 @@
 import "./App.css";
-import { useEffect, useState } from 'react';
+import { StrictMode, useEffect, useState } from 'react';
 import { MapCreationData } from "@game/data/gameData";
 import { Game } from "@game/game";
 import { GameContext } from "./hooks/useGameContext";
 import { AppInner } from "./AppInner";
 
 function App() {
-  //const mapRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
@@ -30,13 +29,14 @@ function App() {
     }
   }, [])
 
-  return <GameContext value={game?.engine ?? null}>
-    <AppInner
-      game={game}
-      sidebarCollapsed={sidebarCollapsed}
-      setSidebarCollapsed={setSidebarCollapsed}
-    />
-  </GameContext>
+  return <StrictMode>
+    <GameContext value={game?.engine ?? null}>
+      <AppInner
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+      />
+    </GameContext>
+  </StrictMode>
 }
 
 export default App

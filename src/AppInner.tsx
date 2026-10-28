@@ -2,12 +2,9 @@ import { ColoniesInforWindow } from "./components/coloniesInforWindow/coloniesIn
 import { Header } from "./components/header/header";
 import { Screen } from "./components/map/screen";
 import { ProductionBar } from "./components/productionBar/productionBar";
-import { Game } from "./game/game";
 import { CircularContextMenu } from "./components/ui/circularContextMenu";
-import { SelectionChangedEvent } from "./engine/lib/events";
 
-export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
-  game: Game | null;
+export function AppInner({ sidebarCollapsed, setSidebarCollapsed }: {
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (value: boolean | ((prev: boolean) => boolean)) => void;
 }) {
@@ -39,23 +36,7 @@ export function AppInner({ game, sidebarCollapsed, setSidebarCollapsed }: {
           onToggleCollapse={() => setSidebarCollapsed((prev: boolean) => !prev)} />
       </div>
       <div className="screenContainer flex-1 overflow-auto">
-        <Screen
-          onMouseMove={(data) => {
-            game?.engine.dispatchEvent(data)
-          }}
-          onMouseDown={(data) => {
-            game?.engine.dispatchEvent(data)
-          }}
-          onMouseUp={(data) => {
-            game?.engine.dispatchEvent(data)
-          }}
-          onClick={(data) => {
-            game?.engine.dispatchEvent(data)
-            game?.engine.dispatchEvent(new SelectionChangedEvent({ type: "map", data: undefined }))
-          }}
-          onContextMenu={(data) => {
-            game?.engine.dispatchEvent(data)
-          }} />
+        <Screen />
       </div>
     </div>
   </>

@@ -1,5 +1,6 @@
 import { PointerEventData, ClickEventData, MousedownEvent, MouseupEvent, MousemoveEvent, ContextMenuEvent } from '@/engine/lib/events';
-import { MouseEvent, useLayoutEffect, useRef } from 'react';
+import { GameContext } from '@/hooks/useGameContext';
+import { MouseEvent, use, useLayoutEffect, useRef } from 'react';
 
 function toPointerData(event: MouseEvent<HTMLCanvasElement>): PointerEventData {
     const { nativeEvent } = event
@@ -19,25 +20,18 @@ function toPointerData(event: MouseEvent<HTMLCanvasElement>): PointerEventData {
     }
 }
 
-interface ScreenProps {
-    onClick: (event: ClickEventData) => void,
-    onMouseMove: (event: MousemoveEvent) => void,
-    onMouseDown: (event: MousedownEvent) => void,
-    onMouseUp: (event: MouseupEvent) => void,
-    onContextMenu?: (event: ContextMenuEvent) => void,
-}
-
-export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContextMenu }: ScreenProps) {
+export function Screen() {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const game = use(GameContext)
 
     useLayoutEffect(() => {
         function resize() {
-            if (!canvasRef?.current) {
+            if(!canvasRef?.current) {
                 return
             }
 
             const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined
-            if (!container) {
+            if(!container) {
                 return
             }
 
@@ -62,7 +56,7 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
 
         const container = document.getElementsByClassName('screenContainer')[0] as HTMLDivElement | undefined
 
-        if (container) {
+        if(container) {
             observer.observe(container)
         }
 
@@ -75,39 +69,24 @@ export function Screen({ onClick, onMouseMove, onMouseDown, onMouseUp, onContext
     }, [])
 
     const handleClick = (event: MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef?.current) {
-            return
-        }
-        onClick(new ClickEventData(toPointerData(event)))
+        game?.dispatchEvent(new ClickEventData(toPointerData(event)))
     }
 
     const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef?.current) {
-            return
-        }
-        onMouseMove(new MousemoveEvent(toPointerData(event)))
+        game?.dispatchEvent(new MousemoveEvent(toPointerData(event)))
     }
 
     const handleMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef?.current) {
-            return
-        }
-        onMouseDown(new MousedownEvent(toPointerData(event)))
+        game?.dispatchEvent(new MousedownEvent(toPointerData(event)))
     }
 
     const handleMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef?.current) {
-            return
-        }
-        onMouseUp(new MouseupEvent(toPointerData(event)))
+        game?.dispatchEvent(new MouseupEvent(toPointerData(event)))
     }
 
     const handleContextMenu = (event: MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef?.current) {
-            return
-        }
         event.preventDefault()
-        onContextMenu?.(new ContextMenuEvent({ x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY }))
+        game?.dispatchEvent?.(new ContextMenuEvent({ x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY }))
     }
 
     return <>

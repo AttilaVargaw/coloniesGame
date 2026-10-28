@@ -359,7 +359,5 @@ export async function createBody({
 
     await Promise.all(tasks)
 
-    isRoot && console.log({ body })
-
     return body
 }

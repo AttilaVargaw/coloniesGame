@@ -810,7 +810,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const { indices, normals, positions } = createSphereMesh(5)
+        const { indices, normals, positions } = createSphereMesh(4)
 
         const vertexCount = positions.length / 3
         const interleaved = new Float32Array(vertexCount * 6)
