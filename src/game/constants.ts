@@ -25,7 +25,7 @@ export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
 export const LUNAR_UNIT = 1 / 389 * SOLAR_UNIT * 10
 
-export const STAR_SIZE = 30
+export const STAR_SIZE = 40
 export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const
 
 export const MASS = {
