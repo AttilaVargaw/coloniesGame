@@ -4,7 +4,7 @@ import { WebGLRectRenderer } from "./webglRectRenderer";
 import { WebGLSphereRenderer } from "./webglSphereRenderer";
 import { WebGLAtmosphereRenderer } from "./webglAtmosphereRenderer";
 import { WebGLOrbitRenderer } from "./webglOrbitRenderer";
-import { createToneMapShaderProgram } from "./webglSphereShaders";
+import { createToneMapBloomShaderProgram } from "./webglSphereShaders";
 
 export class WebglRenderManager {
     private readonly sphereRenderer: WebGLSphereRenderer
@@ -19,7 +19,7 @@ export class WebglRenderManager {
     private hdrWidth = 0
     private hdrHeight = 0
     private hdrSupported = false
-    private toneMapShader: ReturnType<typeof createToneMapShaderProgram> | null = null
+    private toneMapBloomShader: ReturnType<typeof createToneMapBloomShaderProgram> | null = null
     private toneMapQuadBuffer: WebGLBuffer | null = null
     private toneMapQuadIndexBuffer: WebGLBuffer | null = null
     private toneMapQuadIndexCount = 0
@@ -43,12 +43,13 @@ export class WebglRenderManager {
 
         this.hdrSupported = !!gl.getExtension("EXT_color_buffer_float")
         if(this.hdrSupported) {
-            this.toneMapShader = createToneMapShaderProgram(gl)
+            this.toneMapBloomShader = createToneMapBloomShaderProgram(gl)
             this.initToneMapQuad(gl)
         }
 
         this.sphereRenderer.setHdr(this.hdrSupported)
         this.sphereRenderer.setHdrFramebuffer(null)
+        this.sphereRenderer.setHdrTexture(null)
         this.atmosphereRenderer.setHdr(this.hdrSupported)
         this.atmosphereRenderer.setHdrFramebuffer(null)
     }
@@ -102,6 +103,7 @@ export class WebglRenderManager {
         if(hdrEnabled) {
             this.ensureHdrFramebuffer(gl)
             this.sphereRenderer.setHdrFramebuffer(this.hdrFramebuffer)
+            this.sphereRenderer.setHdrTexture(this.hdrTexture)
             this.atmosphereRenderer.setHdrFramebuffer(this.hdrFramebuffer)
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.hdrFramebuffer)
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
@@ -130,11 +132,12 @@ export class WebglRenderManager {
             this.sphereRenderer.drawNodes()
             this.atmosphereRenderer.drawNodes()
 
-            // Tone-map the HDR scene to the canvas. The fullscreen tone-map
-            // quad covers every pixel, so no clear is needed.
+            // Combined tone-map + bloom composite: single fullscreen quad
+            // reads HDR texture + blurred bloom, applies ACES + gamma, adds bloom.
+            const bloomTexture = this.sphereRenderer.getBloomResultTexture()
             gl.bindFramebuffer(gl.FRAMEBUFFER, null)
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-            this.toneMapPass(gl)
+            this.toneMapBloomPass(gl, bloomTexture)
         } else {
             this.rectRenderer.drawNodes()
             this.sphereRenderer.drawNodes()
@@ -212,8 +215,8 @@ export class WebglRenderManager {
         this.hdrHeight = height
     }
 
-    private toneMapPass(gl: WebGL2RenderingContext): void {
-        if(!this.toneMapShader || !this.hdrTexture || !this.toneMapQuadBuffer || !this.toneMapQuadIndexBuffer) {
+    private toneMapBloomPass(gl: WebGL2RenderingContext, bloomTexture: WebGLTexture | null): void {
+        if(!this.toneMapBloomShader || !this.hdrTexture || !this.toneMapQuadBuffer || !this.toneMapQuadIndexBuffer) {
             return
         }
 
@@ -222,26 +225,30 @@ export class WebglRenderManager {
         gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.BLEND)
 
-        gl.useProgram(this.toneMapShader.program)
-        gl.uniform1i(this.toneMapShader.uniforms.texture, 0)
-        gl.uniform1f(this.toneMapShader.uniforms.exposure, 1.0)
+        gl.useProgram(this.toneMapBloomShader.program)
+        gl.uniform1i(this.toneMapBloomShader.uniforms.hdrTexture, 0)
+        gl.uniform1i(this.toneMapBloomShader.uniforms.bloomTexture, 1)
+        gl.uniform1f(this.toneMapBloomShader.uniforms.exposure, 1.0)
+        gl.uniform1f(this.toneMapBloomShader.uniforms.bloomIntensity, 1.0)
 
         gl.activeTexture(gl.TEXTURE0)
         gl.bindTexture(gl.TEXTURE_2D, this.hdrTexture)
+        gl.activeTexture(gl.TEXTURE1)
+        gl.bindTexture(gl.TEXTURE_2D, bloomTexture ?? this.hdrTexture)
 
         // Tone-mapped quad must not write depth, else it clobbers the blitted
         // sphere depth that rects/orbits depth-test against.
         gl.depthMask(false)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.toneMapQuadBuffer)
-        gl.enableVertexAttribArray(this.toneMapShader.attribs.position)
-        gl.vertexAttribPointer(this.toneMapShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
-        gl.enableVertexAttribArray(this.toneMapShader.attribs.texCoord)
-        gl.vertexAttribPointer(this.toneMapShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
+        gl.enableVertexAttribArray(this.toneMapBloomShader.attribs.position)
+        gl.vertexAttribPointer(this.toneMapBloomShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
+        gl.enableVertexAttribArray(this.toneMapBloomShader.attribs.texCoord)
+        gl.vertexAttribPointer(this.toneMapBloomShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.toneMapQuadIndexBuffer)
         gl.drawElements(gl.TRIANGLES, this.toneMapQuadIndexCount, gl.UNSIGNED_SHORT, 0)
-        gl.disableVertexAttribArray(this.toneMapShader.attribs.position)
-        gl.disableVertexAttribArray(this.toneMapShader.attribs.texCoord)
+        gl.disableVertexAttribArray(this.toneMapBloomShader.attribs.position)
+        gl.disableVertexAttribArray(this.toneMapBloomShader.attribs.texCoord)
 
         gl.depthMask(true)
     }

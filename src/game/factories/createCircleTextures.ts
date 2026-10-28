@@ -1,3 +1,4 @@
+import { hexToRgb } from "@/engine/systems/viewportSystem/renderers/webglRenderer/hexToRgb"
 import { PlanetArchetype } from "./helpers"
 
 function lerp(a: number, b: number, t: number): number {
@@ -21,13 +22,6 @@ function createCanvas(width: number, height: number): HTMLCanvasElement | Offscr
         return canvas
     }
     return new OffscreenCanvas(width, height)
-}
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result
-        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-        : { r: 128, g: 128, b: 128 }
 }
 
 function tintColor(rgb: { r: number; g: number; b: number }, base: { r: number; g: number; b: number }, strength: number): { r: number; g: number; b: number } {

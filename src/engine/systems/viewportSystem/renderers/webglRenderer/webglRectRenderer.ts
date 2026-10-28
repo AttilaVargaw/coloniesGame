@@ -13,6 +13,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { mat4, vec3 } from "gl-matrix"
 import { SOLAR_UNIT } from "@/game/constants"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
+import { hexToRgb } from "./hexToRgb"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -22,13 +23,6 @@ const QUAD_VERTICES = new Float32Array([
 ])
 
 const QUAD_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result
-        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-        : { r: 0.3, g: 0.6, b: 1.0 }
-}
 
 export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private shader: RectShaderProgram | null = null

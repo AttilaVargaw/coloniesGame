@@ -1,13 +1,12 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
-import { createBloomShaderProgram, createBlurShaderProgram } from "./webglSphereShaders"
+import { createBlurShaderProgram, createBloomShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { WebGLBaseRenderer, sortGroupsByDepth } from "./webglBaseRenderer"
-import { SOLAR_UNIT } from "@/game/constants"
 import { AtlasEntry, WebGLTextureAtlas, createCheckerPatternCanvas } from "./webglTextureAtlas"
 import { getPlatform } from "@/engine/lib/platform"
 import { Entity } from "@/engine/entities/entity"
@@ -17,13 +16,7 @@ import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result
-        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-        : { r: 0.3, g: 0.6, b: 1.0 }
-}
+import { hexToRgb } from "./hexToRgb"
 
 type SortedGroups = [string, Group[]][]
 
@@ -79,6 +72,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private bloomFramebuffer: WebGLFramebuffer | null = null
     private bloomTexture: WebGLTexture | null = null
     private bloomShader: ShaderProgram | null = null
+    private extractBloomShader: ShaderProgram | null = null
     private bloomWidth = 0
     private bloomHeight = 0
     private blurFramebufferA: WebGLFramebuffer | null = null
@@ -92,6 +86,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private _showBloom = false
     private hdrEnabled = false
     private hdrFramebuffer: WebGLFramebuffer | null = null
+    private hdrTexture: WebGLTexture | null = null
+    private bloomResultTexture: WebGLTexture | null = null
     private view = mat4.create()
     private projection = mat4.create()
     private static readonly MAX_BLOOM_DIMENSION = 1024
@@ -273,7 +269,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.renderPass(gl, this.shader, this.hdrFramebuffer, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
         if(this._showBloom) {
-            this.renderGpuBloom(gl, camera, sortedGroups)
+            this.renderGpuBloom(gl)
         }
     }
     protected getCullMargin(node: WebGLSphereNode): number {
@@ -296,6 +292,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
     setHdrFramebuffer(framebuffer: WebGLFramebuffer | null) {
         this.hdrFramebuffer = framebuffer
+    }
+
+    setHdrTexture(texture: WebGLTexture | null) {
+        this.hdrTexture = texture
     }
 
     private createBloomFramebuffer(gl: WebGL2RenderingContext): void {
@@ -532,12 +532,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     }
 
     private renderGpuBloom(
-        gl: WebGL2RenderingContext,
-        camera: Camera,
-        sortedGroups: SortedGroups
-    ): void {
-        if(!this.bloomFramebuffer || !this.bloomShader || !this.blurFramebufferA || !this.blurFramebufferB || !this.blurShader || !this.bloomTexture || !this.blurTextureA || !this.blurTextureB) {
-            return
+        gl: WebGL2RenderingContext
+    ): WebGLTexture | null {
+        if(!this.bloomFramebuffer || !this.extractBloomShader || !this.blurFramebufferA || !this.blurFramebufferB || !this.blurShader || !this.bloomTexture || !this.blurTextureA || !this.blurTextureB || !this.hdrTexture) {
+            return null
         }
 
         const settings = this.engine?.getDebugManager()?.bloomSettings ?? { brightness: 1.2, contrast: 2, iterations: 3, alpha: 0.9 }
@@ -551,12 +549,26 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.createBlurFramebuffers(gl)
         }
 
+        // Extract bright pixels from HDR buffer via fullscreen quad instead of re-drawing all sphere geometry
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloomFramebuffer)
         gl.viewport(0, 0, this.bloomWidth, this.bloomHeight)
         gl.clearColor(0, 0, 0, 1)
         gl.clear(gl.COLOR_BUFFER_BIT)
 
-        this.renderPass(gl, this.bloomShader, this.bloomFramebuffer, this.bloomWidth, this.bloomHeight, sortedGroups, camera)
+        gl.useProgram(this.extractBloomShader.program)
+        gl.uniform1f(this.extractBloomShader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.3)
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, this.hdrTexture)
+        gl.uniform1i(this.extractBloomShader.uniforms.texture, 0)
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVao)
+        gl.enableVertexAttribArray(this.extractBloomShader.attribs.position)
+        gl.vertexAttribPointer(this.extractBloomShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
+        gl.enableVertexAttribArray(this.extractBloomShader.attribs.texCoord)
+        gl.vertexAttribPointer(this.extractBloomShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
+        gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
+        gl.disableVertexAttribArray(this.extractBloomShader.attribs.position)
+        gl.disableVertexAttribArray(this.extractBloomShader.attribs.texCoord)
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
@@ -568,29 +580,12 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             readTexture = this.blurTextureB
         }
 
-        gl.enable(gl.BLEND)
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE)
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.hdrFramebuffer ?? null)
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-        if(this.blurShader && this.quadVao && this.quadIndexBuffer) {
-            gl.useProgram(this.blurShader.program)
-            gl.uniform2f(this.blurShader.uniforms.direction, 0.0, 0.0)
-            gl.uniform1f(this.blurShader.uniforms.intensity, intensity)
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, readTexture)
-            gl.uniform1i(this.blurShader.uniforms.texture, 0)
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVao)
-            gl.enableVertexAttribArray(this.blurShader.attribs.position)
-            gl.vertexAttribPointer(this.blurShader.attribs.position, 2, gl.FLOAT, false, 16, 0)
-            gl.enableVertexAttribArray(this.blurShader.attribs.texCoord)
-            gl.vertexAttribPointer(this.blurShader.attribs.texCoord, 2, gl.FLOAT, false, 16, 8)
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.quadIndexBuffer)
-            gl.drawElements(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0)
-            gl.disableVertexAttribArray(this.blurShader.attribs.position)
-            gl.disableVertexAttribArray(this.blurShader.attribs.texCoord)
-        }
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-        gl.disable(gl.BLEND)
+        this.bloomResultTexture = readTexture
+        return readTexture
+    }
+
+    getBloomResultTexture(): WebGLTexture | null {
+        return this.bloomResultTexture
     }
 
     private createBlurFramebuffers(gl: WebGL2RenderingContext): void {
@@ -757,6 +752,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.shader = createShaderProgram(gl)
         this.bloomShader = createBloomShaderProgram(gl)
+        this.extractBloomShader = createBloomShaderProgram(gl)
         this.blurShader = createBlurShaderProgram(gl)
 
         this.createBloomFramebuffer(gl)

@@ -13,13 +13,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result
-        ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-        : { r: 0.3, g: 0.6, b: 1.0 }
-}
+import { hexToRgb } from "./hexToRgb"
 
 export class WebGLAtmosphereNode extends RenderableNode {
     constructor(

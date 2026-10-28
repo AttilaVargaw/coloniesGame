@@ -1,5 +1,8 @@
+import { compileShader } from "./webglShaders"
+import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
+
 export const VERTEX_SHADER_SOURCE = `#version 300 es
-in vec3 aPosition;
+    in vec3 aPosition;
 in vec3 aNormal;
 
 in mat4 aInstanceModel;
@@ -50,132 +53,16 @@ void main() {
     vCloudPage = aInstanceEmissiveCloud.y;
     vRotationAngle = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
-}`;
-
-export const BLOOM_VERTEX_SHADER_SOURCE = `#version 300 es
-in vec3 aPosition;
-in vec3 aNormal;
-
-in mat4 aInstanceModel;
-in mat3 aInstanceNormalMatrix;
-in vec3 aInstanceLightDir;
-in vec3 aInstanceLightColor;
-in vec2 aInstanceTexOffset;
-in vec2 aInstanceTexScale;
-in vec2 aInstanceNightTexOffset;
-in vec2 aInstanceNightTexScale;
-in vec3 aInstanceEmissiveCloud;
-
-uniform mat4 uView;
-uniform mat4 uProjection;
-
-out vec3 vNormal;
-out vec3 vLightDir;
-out float vEmissive;
-out vec2 vTexOffset;
-out vec2 vTexScale;
-out vec2 vNightTexOffset;
-out vec2 vNightTexScale;
-
-void main() {
-    vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
-    vNormal = normalize(aInstanceNormalMatrix * aNormal);
-    vLightDir = normalize(aInstanceLightDir);
-    vEmissive = aInstanceEmissiveCloud.x;
-    vTexOffset = aInstanceTexOffset;
-    vTexScale = aInstanceTexScale;
-    vNightTexOffset = aInstanceNightTexOffset;
-    vNightTexScale = aInstanceNightTexScale;
-    gl_Position = uProjection * uView * worldPos;
-}`;
-
-export const BLOOM_FRAGMENT_SHADER_SOURCE = `#version 300 es
-precision mediump float;
-
-#define PI 3.14159265359
-
-in vec3 vNormal;
-in vec3 vLightDir;
-in float vEmissive;
-in vec2 vTexOffset;
-in vec2 vTexScale;
-in vec2 vNightTexOffset;
-in vec2 vNightTexScale;
-
-uniform sampler2D uTexture;
-uniform sampler2D uNightTexture;
-uniform float uBloomBrightness;
-uniform float uBloomThreshold;
-uniform float uBloomThresholdStars;
-
-layout(location = 0) out vec4 fragColor;
-
-void main() {
-    vec3 geometricNormal = normalize(vNormal);
-    float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
-    float v = 0.5 + asin(geometricNormal.y) / PI;
-    vec2 texCoord = vec2(u, v) * vTexScale + vTexOffset;
-    vec2 nightTexCoord = vec2(u, v) * vNightTexScale + vNightTexOffset;
-
-    vec3 color;
-    if(vEmissive > 0.5) {
-        color = texture(uTexture, texCoord).rgb;
-    } else {
-        color = texture(uNightTexture, nightTexCoord).rgb;
-    }
-
-    float bloomMask = 1.0;
-    if(vEmissive < 0.5) {
-        float NdotL = dot(geometricNormal, vLightDir);
-        float cosTheta = smoothstep(-0.05, 0.05, NdotL);
-        bloomMask = 1.0 - cosTheta;
-    }
-
-    float brightness = dot(color, vec3(0.299, 0.587, 0.114));
-    float threshold = vEmissive > 0.5 ? uBloomThresholdStars : uBloomThreshold;
-    float contribution = max(0.0, brightness - threshold);
-    // Output uniform brightness-based bloom color so texture variations
-    // (sunspots, granulation) don't create dark patches in the corona.
-    vec3 bloomColor = vec3(contribution);
-    fragColor = vec4(bloomColor * uBloomBrightness * bloomMask, 1.0);
-}
-`;
-
-import { compileShader } from "./webglShaders"
-import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
-
-export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
-    return buildShaderProgram(gl, BLOOM_VERTEX_SHADER_SOURCE, BLOOM_FRAGMENT_SHADER_SOURCE, [
-        ["position", "aPosition"],
-        ["normal", "aNormal"],
-        ["instanceModel", "aInstanceModel"],
-        ["instanceNormalMatrix", "aInstanceNormalMatrix"],
-        ["instanceLightDir", "aInstanceLightDir"],
-        ["instanceLightColor", "aInstanceLightColor"],
-        ["instanceTexOffset", "aInstanceTexOffset"],
-        ["instanceTexScale", "aInstanceTexScale"],
-        ["instanceNightTexOffset", "aInstanceNightTexOffset"],
-        ["instanceNightTexScale", "aInstanceNightTexScale"],
-        ["instanceEmissiveCloud", "aInstanceEmissiveCloud"],
-    ], [
-        ["view", "uView"],
-        ["projection", "uProjection"],
-        ["texture", "uTexture"],
-        ["nightTexture", "uNightTexture"],
-        ["bloomBrightness", "uBloomBrightness"],
-        ["bloomThreshold", "uBloomThreshold"],
-        ["bloomThresholdStars", "uBloomThresholdStars"],
-    ])
-}
+} `;
 
 export const BLUR_VERTEX_SHADER_SOURCE = `#version 300 es
-in vec2 aPosition;
+    in vec2 aPosition;
 in vec2 aTexCoord;
 out vec2 vTexCoord;
 void main() {
     vTexCoord = aTexCoord;
     gl_Position = vec4(aPosition, 0.0, 1.0);
-}`;
+} `;
 
 export const BLUR_FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
@@ -195,16 +82,16 @@ void main() {
     color += texture(uTexture, vTexCoord + uDirection * 4.0) * 0.0162162162;
     color += texture(uTexture, vTexCoord - uDirection * 4.0) * 0.0162162162;
     fragColor = color * uIntensity;
-}`;
+} `;
 
 export const TONE_MAP_VERTEX_SHADER_SOURCE = `#version 300 es
-in vec2 aPosition;
+    in vec2 aPosition;
 in vec2 aTexCoord;
 out vec2 vTexCoord;
 void main() {
     vTexCoord = aTexCoord;
     gl_Position = vec4(aPosition, 0.0, 1.0);
-}`;
+} `;
 
 export const TONE_MAP_FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
@@ -227,7 +114,30 @@ void main() {
     vec3 color = ACESFilm(hdr.rgb * uExposure);
     color = pow(color, vec3(1.0 / 2.2));
     fragColor = vec4(color, hdr.a);
-}`;
+} `;
+
+export const EXTRACT_BLOOM_VERTEX_SHADER_SOURCE = `#version 300 es
+    in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+void main() {
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+} `;
+
+export const EXTRACT_BLOOM_FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+in vec2 vTexCoord;
+uniform sampler2D uHdrTexture;
+uniform float uBloomThreshold;
+out vec4 fragColor;
+
+void main() {
+    vec4 hdr = texture(uHdrTexture, vTexCoord);
+    float brightness = dot(hdr.rgb, vec3(0.299, 0.587, 0.114));
+    float contrib = max(brightness - uBloomThreshold, 0.0);
+    fragColor = vec4(vec3(contrib), hdr.a);
+} `;
 
 interface BlurAttribs {
     position: number;
@@ -263,7 +173,7 @@ export function buildShaderProgram<
     if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         const info = gl.getProgramInfoLog(program)
         gl.deleteProgram(program)
-        throw new Error(`Shader program link error: ${info}`)
+        throw new Error(`Shader program link error: ${info} `)
     }
 
     gl.deleteShader(vertexShader)
@@ -300,6 +210,66 @@ export function createToneMapShaderProgram(gl: WebGL2RenderingContext): ShaderPr
     ], [
         ["texture", "uHdrTexture"],
         ["exposure", "uExposure"],
+    ])
+}
+
+export function createBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
+    return buildShaderProgram(gl, EXTRACT_BLOOM_VERTEX_SHADER_SOURCE, EXTRACT_BLOOM_FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["texCoord", "aTexCoord"],
+    ], [
+        ["texture", "uHdrTexture"],
+        ["bloomThreshold", "uBloomThreshold"],
+    ])
+}
+
+export const TONE_MAP_BLOOM_VERTEX_SHADER_SOURCE = `#version 300 es
+    in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+void main() {
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+} `;
+
+export const TONE_MAP_BLOOM_FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+in vec2 vTexCoord;
+uniform sampler2D uHdrTexture;
+uniform sampler2D uBloomTexture;
+uniform float uExposure;
+uniform float uBloomIntensity;
+out vec4 fragColor;
+
+vec3 ACESFilm(vec3 x) {
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+void main() {
+    vec4 hdr = texture(uHdrTexture, vTexCoord);
+    vec3 color = ACESFilm(hdr.rgb * uExposure);
+    color = pow(color, vec3(1.0 / 2.2));
+
+    vec4 bloom = texture(uBloomTexture, vTexCoord);
+    color += bloom.rgb * uBloomIntensity;
+
+    fragColor = vec4(color, hdr.a);
+} `;
+
+export function createToneMapBloomShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
+    return buildShaderProgram(gl, TONE_MAP_BLOOM_VERTEX_SHADER_SOURCE, TONE_MAP_BLOOM_FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["texCoord", "aTexCoord"],
+    ], [
+        ["hdrTexture", "uHdrTexture"],
+        ["bloomTexture", "uBloomTexture"],
+        ["exposure", "uExposure"],
+        ["bloomIntensity", "uBloomIntensity"],
     ])
 }
 
@@ -418,7 +388,7 @@ void main() {
             color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));
         }
-        
+
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     }
-}`;
+} `;
