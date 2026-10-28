@@ -48,6 +48,12 @@ uniform float uHdrMode;
 
 layout(location = 0) out vec4 fragColor;
 
+// Rayleigh scattering coefficients (wavelength dependent: blue scatters more)
+vec3 rayleighCoefficients(vec3 skyColor) {
+    // Blue channel scatters strongest, red weakest
+    return vec3(0.2, 0.5, 0.8) * skyColor;
+}
+
 float rayleighPhase(float cosTheta) {
     return (3.0 / (16.0 * PI)) * (1.0 + cosTheta * cosTheta);
 }
@@ -72,6 +78,7 @@ void main() {
     altitude = clamp(altitude, 0.0, 1.0);
 
     float sh = scaleHeight > 0.0 ? scaleHeight : thickness * 0.35;
+    // Exponential density falloff with scale height
     float density = exp(-altitude * (thickness / sh));
 
     float fresnel = pow(1.0 - abs(NdotV), 5.0);
@@ -90,15 +97,23 @@ void main() {
 
     float slant = 1.0 / max(abs(NdotV), 0.02);
 
+    // Wavelength-dependent Rayleigh: blue scatters more than red
+    vec3 rayleighCoeff = rayleighCoefficients(vSkyColor);
+
     // Combined optical depth (Rayleigh + Mie)
     float opticalDepth = density * slant * (rayleigh * 0.6 + 0.15);
     float transmission = exp(-opticalDepth);
 
     // Night-side dimming: atmosphere above the unlit hemisphere glows much less
-    float dayFactor = mix(0.12, 1.0, pow(max(NdotL, 0.0), 0.5));
+    float dayFactor = mix(0.05, 1.0, pow(max(NdotL, 0.0), 0.4));
 
-    vec3 scatteredR = vSkyColor * vLightColor * phaseR * density * rayleigh * 1.8 * (1.0 - transmission) * fresnel;
-    vec3 scatteredM = vec3(0.95, 0.95, 1.0) * vLightColor * phaseM * density * 0.30 * (1.0 - transmission) * fresnel;
+    // Sunset shift: when viewing through more atmosphere (grazing), light reddens
+    float sunset = pow(1.0 - max(NdotL, 0.0), 2.0);
+    vec3 sunsetTint = vec3(1.0, 0.7, 0.3); // warm orange/red
+    vec3 lightColorTinted = mix(vLightColor, vLightColor * sunsetTint, sunset * 0.5);
+
+    vec3 scatteredR = rayleighCoeff * lightColorTinted * phaseR * density * rayleigh * 1.8 * (1.0 - transmission) * fresnel;
+    vec3 scatteredM = vec3(0.95, 0.95, 1.0) * lightColorTinted * phaseM * density * 0.30 * (1.0 - transmission) * fresnel;
     vec3 scattered = (scatteredR + scatteredM) * dayFactor;
 
     float rim = pow(1.0 - abs(NdotV), 3.0) * 0.5;

@@ -41,7 +41,7 @@ export abstract class BaseRenderer<N extends RenderableNode> {
 
     private stars = new Set<Entity>()
 
-    protected findStarEntityForPlanet(planetEntity: Entity, starConstructor?: Function): Entity {
+    protected findStarEntityForPlanet(planetEntity: Entity): Entity {
         if(!this.engine) throw "Engine not set"
 
         let current: Entity | undefined = planetEntity

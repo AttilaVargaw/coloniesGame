@@ -373,7 +373,7 @@ void main() {
     vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.4;
     float roughness = texture(uRoughness, texCoord).r;
 
-        if(vEmissive > 0.5) {
+    if(vEmissive > 0.5) {
         vec3 color = dayColor;
         if(uHdrMode > 0.5) {
             // Stars are brighter than planets: scale into HDR range so the
@@ -387,7 +387,7 @@ void main() {
         }
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float diff = max(0.0, NdotL) * 0.7 + 0.3;
+        float diff = max(0.0, NdotL) * 0.9 + 0.1;
 
         vec3 halfVec = normalize(vLightDir + viewDir);
         float NdotH = dot(normal, halfVec);

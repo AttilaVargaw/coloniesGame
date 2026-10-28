@@ -235,15 +235,16 @@ function atmosphereForArchetype(
     archetype: PlanetArchetype,
     color: string,
     radius: number
-): { thickness: number; skyColor: string; rayleigh: number } | undefined {
-    const thickness = gasGiants.has(archetype) ? radius * 0.02 : radius * 0.01
+): { thickness: number; skyColor: string; rayleigh: number; scaleHeight: number } | undefined {
+    const thickness = gasGiants.has(archetype) ? radius * 0.025 : radius * 0.012
+    const scaleHeight = thickness * 0.25
 
     switch(archetype) {
         case "earth":
         case "kobol":
-            return { thickness, skyColor: "#4a90e2", rayleigh: 1.0 }
+            return { thickness, skyColor: "#4a90e2", rayleigh: 1.2, scaleHeight }
         default:
-            return { thickness, skyColor: color, rayleigh: 0.8 }
+            return { thickness, skyColor: color, rayleigh: 0.6, scaleHeight }
     }
 }
 
