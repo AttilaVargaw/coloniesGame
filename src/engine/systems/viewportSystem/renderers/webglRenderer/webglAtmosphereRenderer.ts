@@ -158,7 +158,14 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-        gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+        const byteLength = totalFloats * 4
+        if(byteLength > this.atmosphereInstanceBufferCapacity) {
+            gl.bufferData(gl.ARRAY_BUFFER, batch, gl.STREAM_DRAW)
+            this.atmosphereInstanceBufferCapacity = byteLength
+        } else {
+            gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STREAM_DRAW)
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
+        }
 
         const instanceStride = 38 * 4
 
@@ -242,6 +249,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
     private readonly MAX_ATMOSPHERE_INSTANCES = 256
     private sphereInstancePool: Float32Array | null = null
     private sphereBatchBuffer: Float32Array | null = null
+    private atmosphereInstanceBufferCapacity = 0
     private pendingInstances: Array<{ depth: number; offset: number }> = []
     private _showBloom = false
     private hdrEnabled = false

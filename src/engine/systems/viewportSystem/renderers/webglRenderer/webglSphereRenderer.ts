@@ -417,9 +417,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
             const byteLength = totalFloats * 4
             if(byteLength > this.sphereInstanceBufferCapacity) {
-                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.DYNAMIC_DRAW)
+                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.STREAM_DRAW)
                 this.sphereInstanceBufferCapacity = byteLength
             } else {
+                gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STREAM_DRAW)
                 gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
             }
 

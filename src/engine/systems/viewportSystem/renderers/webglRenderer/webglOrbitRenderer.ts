@@ -129,7 +129,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 }
             }
 
-            gl.bufferData(gl.ARRAY_BUFFER, points, gl.DYNAMIC_DRAW)
+            gl.bufferData(gl.ARRAY_BUFFER, points, gl.STREAM_DRAW)
             gl.drawArrays(gl.LINE_STRIP, 0, segments + 1)
         }
 
