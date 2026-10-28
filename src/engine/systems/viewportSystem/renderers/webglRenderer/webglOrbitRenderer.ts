@@ -23,6 +23,8 @@ export class WebGLOrbitNode extends RenderableNode {
     }
 }
 
+const orbitColor = new Float32Array([0.39, 0.58, 0.92, 0.05])
+
 export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
     private shader: OrbitShaderProgram | null = null
     private vertexBuffer: WebGLBuffer | null = null
@@ -67,7 +69,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
 
         mat4.ortho(this.projection, 0, cssWidth, cssHeight, 0, -1, 1)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, this.projection)
-        gl.uniform4f(this.shader.uniforms.color, 0.39, 0.58, 0.92, 0.2)
+        gl.uniform4f(this.shader.uniforms.color, orbitColor[0], orbitColor[1], orbitColor[2], orbitColor[3])
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer)
         gl.enableVertexAttribArray(this.shader.attribs.position)
@@ -113,9 +115,11 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
             const focusOffset = orbit.radius * orbit.eccentricity
 
             const points = new Float32Array((segments + 1) * 2)
-            let firstIdx = -1
-            let lastVisibleX = 0
-            let lastVisibleY = 0
+            let firstVisibleX = 0
+            let firstVisibleY = 0
+            let lastX = 0
+            let lastY = 0
+            let started = false
 
             for(let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * TWO_PI
@@ -129,26 +133,24 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                 if(projectedPoint) {
                     points[i * 2] = projectedPoint.x
                     points[i * 2 + 1] = projectedPoint.y
-                    lastVisibleX = projectedPoint.x
-                    lastVisibleY = projectedPoint.y
-                    if(firstIdx === -1) {
-                        firstIdx = i
+                    lastX = projectedPoint.x
+                    lastY = projectedPoint.y
+                    if(!started) {
+                        firstVisibleX = projectedPoint.x
+                        firstVisibleY = projectedPoint.y
+                        started = true
                     }
-                } else if(firstIdx !== -1) {
-                    points[i * 2] = lastVisibleX
-                    points[i * 2 + 1] = lastVisibleY
+                } else if(started) {
+                    points[i * 2] = lastX
+                    points[i * 2 + 1] = lastY
+                } else {
+                    points[i * 2] = firstVisibleX
+                    points[i * 2 + 1] = firstVisibleY
                 }
             }
 
-            if(firstIdx === -1) {
+            if(!started) {
                 continue
-            }
-
-            // Forward-fill leading off-screen points with first visible point
-            // so LINE_STRIP doesn't draw from (0,0).
-            for(let i = 0; i < firstIdx; i++) {
-                points[i * 2] = points[firstIdx * 2]
-                points[i * 2 + 1] = points[firstIdx * 2 + 1]
             }
 
             gl.bufferData(gl.ARRAY_BUFFER, points, gl.STREAM_DRAW)
