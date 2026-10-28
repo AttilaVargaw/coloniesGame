@@ -1,4 +1,4 @@
-export const UNIVERSE_SCALE = 25
+export const UNIVERSE_SCALE = 28
 
 export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30
@@ -25,7 +25,7 @@ export const HABITABLE_ZONE = [0.95, 1.37] as const
 export const SOLAR_UNIT = UNIVERSE_SCALE
 export const LUNAR_UNIT = 1 / 389 * SOLAR_UNIT * 10
 
-export const STAR_SIZE = 40
+export const STAR_SIZE = 80
 export const DEFAULT_ORBIT_INCLINATION_RANGE = [0, 0.8] as const
 
 export const MASS = {

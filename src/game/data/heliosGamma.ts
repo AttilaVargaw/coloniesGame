@@ -88,7 +88,7 @@ export const heliosGamma = {
         bodies: [{
             name: "Ophion",
             archetype: "saturn",
-            marker: { color: "#e9d46f", radius: 20, label: "Ophion" },
+            marker: { color: "#e9d46f", radius: 50, label: "Ophion" },
             orbit: { radius: 7 * SOLAR_UNIT, inclination: 0.45 },
             rings: [
                 { color: "#e9d46f", innerRadius: 30, outerRadius: 50 }

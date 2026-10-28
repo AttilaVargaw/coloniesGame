@@ -96,7 +96,7 @@ export const heliosDelta = {
         bodies: [
             {
                 orbit: { radius: 0.01, inclination: 0 },
-                marker: { color: "#ae4937", radius: 10, label: "Hestia" },
+                marker: { color: "#ae4937", radius: 20, label: "Hestia" },
                 archetype: "saturn",
                 name: "Hestia",
                 systems: [{

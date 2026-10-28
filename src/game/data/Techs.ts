@@ -31,9 +31,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "Reduces worker requirements across manufacturing sectors",
         cost: { researchPoints: 2000, days: 7 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 1.25 },
-            { type: "worker_efficiency", worker: "engineer", multiplier: 1.15 },
-            { type: "capital_multiplier", sector: "machineryFactory", multiplier: 1.2 },
+
         ],
         unlocks: new Set(),
         adoptionModel: "logistic",
@@ -48,9 +46,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "Further reduces labor requirements and boosts factory efficiency",
         cost: { researchPoints: 5000, days: 14 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 1.4 },
-            { type: "sector_efficiency", sector: "consumerFactory", multiplier: 1.5 },
-            { type: "sector_efficiency", sector: "electronics", multiplier: 1.5 },
+
         ],
         //unlocks: new Set(["automation"]),
         adoptionModel: "logistic",
@@ -80,8 +76,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "The most immersive experience ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         unlocks: new Set([]),
         adoptionModel: "logistic",
@@ -97,8 +92,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "The most powerful flagship ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["projectDaedalus"]),
         adoptionModel: "instant",
@@ -112,8 +106,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "The most powerful flagship ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["carrier"]),
         adoptionModel: "instant",
@@ -127,8 +120,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "A balanced warship",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["frigate"]),
         adoptionModel: "instant",
@@ -142,8 +134,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "An escort",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["superAlloy", "jumpDrive", "ftlCom", "practicalPropulsion"]),
         adoptionModel: "instant",
@@ -157,8 +148,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "A medium sized warship",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["corvette"]),
         adoptionModel: "instant",
@@ -172,8 +162,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "A small warship",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["destroyer"]),
         adoptionModel: "instant",
@@ -187,8 +176,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "A large warship",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["cruiser"]),
         adoptionModel: "instant",
@@ -203,8 +191,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "According to the Scroll of the Technology, the ancients used this device to travel between the stars. There is no scientific theory to support the theoretical physics it mentions, but the scrolls were right many times before.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["tyliumReactor", "microComputers"]),
         type: "technological",
@@ -219,8 +206,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "According to the Scrolls of the Technology, the ancients used this device to travel between planets. If this works, it will make affordable space travel a reality.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["nuclearMotors"]),
         adoptionModel: "logistic",
@@ -234,8 +220,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "According to the Scrolls of the Exodus, they used this device as a backup energy source on the legendary Galleon. According to the scientist community, we can try to build one.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "logistic",
@@ -251,8 +236,7 @@ export const techs: Record<string, TechDefinition> = {
         description: `There are barely any species in our words. According to our scientists, even if there was a big extinction event, there should be at least some fossils out there. We need to check every corners of our worlds to find the missing link between men and monkey, because if we can't prove that we evolved here, maybe we have to admit that the Scrolls of the Exodus are right and not just religious gobbledygook`,
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         adoptionModel: "instant",
         type: "archeological",
@@ -270,8 +254,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "Have you heard about the scandal at the Intercolonial Archeological Conference? A man began speaking about the authenticity of the Sacred Scrolls and our descent from the twelve tribes of Kobol. At first, it seemed absurd, but there was nothing wrong with him. He's not a religious weirdo; he's a well-respected scientist with serious experience. However, what he proposed was so unbelievable that everyone laughed at him. He claims that the illustrations in the scrolls are real blueprints of technology that became corrupted after being copied so many times. Many of the poems were originally scientific texts that were mistranslated. Later, priests decided to rewrite them as poems. He believes that if we could find the original scrolls, we could learn a lot from them.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         researchedText: "We found a set of scrolls in a private collection that, according to carbon dating, are more than 2,000 years old. The owner didn't want to sell them, but we convinced him with an extremely generous offer. The scrolls are written in an unknown Old Gemenese dialect, but we believe we can translate them. The diagrams resemble technical drawings more than religious symbols and appear to have been made with protractors, rulers, and compasses. They depict many things that were invented long ago, such as light bulbs, steam engines, airplanes, and rocket engines. However, there are many mysterious things in them that we don't understand. The strangest scroll contains more than 15,000 digits of pi. We are currently scanning the scrolls and plan to release them as the Lost and Found Scrolls of Technology. Many people will rejoice at this discovery, but many will also be furious.",
         prerequisites: new Set(["biodiversity"]),
@@ -284,8 +267,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "'Everything started out there when the twelve tribes left Kobol and settled here in the Cyrannus star system.' The scrolls were right too many times, weren't they? If we could find it, it would be the greatest archeological achievement.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 },
+
         ],
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "instant",
@@ -297,8 +279,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "According to the Scrolls of the Technology, they used this device to power the legendary Galleon. According to the scientist community, we can try to build one.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         type: "technological",
         prerequisites: new Set(["nuclearMotors"]),
@@ -314,8 +295,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "logistic",
@@ -330,8 +310,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "logistic",
@@ -346,8 +325,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set([]),
         adoptionModel: "logistic",
@@ -361,8 +339,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["microComputers"]),
         adoptionModel: "logistic",
@@ -375,8 +352,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["neuralNetworks"]),
         adoptionModel: "logistic",
@@ -390,8 +366,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["neuralNetworks"]),
         adoptionModel: "logistic",
@@ -405,8 +380,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["neuralCloneProcessor"]),
         adoptionModel: "logistic",
@@ -420,8 +394,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["neuralNetworks"]),
         adoptionModel: "logistic",
@@ -437,8 +410,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "technological",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["originalScrolls"]),
         adoptionModel: "logistic",
@@ -452,8 +424,7 @@ export const techs: Record<string, TechDefinition> = {
         cost: { researchPoints: 10000, days: 28 },
         type: "diplomatic",
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["battleStar"]),
         adoptionModel: "instant",
@@ -468,8 +439,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need to design a new constitutional framework for the colonies that guarantees the rights and freedoms of every person, regardless of which colony they are from. This is an extremely daunting task because no one has ever considered it before.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["projectJupiter"]),
         age: "unification",
@@ -485,8 +455,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need to build the biggest mobile shipyard ever built, as building the ships in one place is too risky in the middle of the war.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["articlesOfColonization"]),
         adoptionModel: "instant",
@@ -500,8 +469,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need to ban nuclear weapons to prevent any war from escalating, so peace can be achieved in our and our children lifetime",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set([]),
         adoptionModel: "instant",
@@ -515,8 +483,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "Interplanetary Distributed Radio Information System. It's a complex crowd computing protocol that allows FTL-connected astrological satellites, ships, and stations to share sensory data and computing power. It increases the maximum jump distance within the Cyrannus system, making space travel safer, faster, and cheaper. It's extremely useful, but losing it would be catastrophic if the interstellar commerce depends too much on it",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["jumpDrive"]),
         adoptionModel: "instant",
@@ -530,8 +497,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "The colonial armed forces needs a new, common fighter model to replace the various models that are currently in use around the colonies. We need the most reliable workhorse that we can find",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["articlesOfColonization"]),
         adoptionModel: "instant",
@@ -546,8 +512,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need the most powerful weapon we can get our hands on. A powerful shaped nuclear charge would be a great addition to our arsenal. Radiation is not a concern, as space is already radiation-filled",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["corvette"]),
         adoptionModel: "instant",
@@ -562,8 +527,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need a reliable way to protect our ships from incoming ordnance and small attack craft, as energy shields are only exists in cheesy sci-fi movies. A traditional flak field projection system would be a great addition to our arsenal.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["cruiser"]),
         adoptionModel: "instant",
@@ -578,8 +542,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need a reliable way to protect our ships from incoming ordnance and small attack craft, as energy shields are only exists in cheesy sci-fi movies. A small point-defense system would be a great addition to our arsenal.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["kew", "destroyer"]),
         adoptionModel: "instant",
@@ -594,8 +557,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need a reliable way to fire guns in space. Fortunately, guns work in space, but we need to consider other factors such as radiation, dust, overheating, barrel replacement and recoil.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["articlesOfColonization", "carrier"]),
         adoptionModel: "instant",
@@ -610,8 +572,7 @@ export const techs: Record<string, TechDefinition> = {
         description: "We need reliable heavy guns on our ships.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
-            { type: "worker_efficiency", worker: "worker", multiplier: 2.0 },
-            { type: "sector_efficiency", sector: "all", multiplier: 1.75 }
+
         ],
         prerequisites: new Set(["destroyer"]),
         adoptionModel: "instant",

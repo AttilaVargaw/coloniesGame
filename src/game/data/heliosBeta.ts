@@ -80,7 +80,7 @@ export const solarisBeta = {
         bodies: [{
             name: "Hera",
             archetype: "saturn",
-            marker: { color: "#c67242", radius: 20, label: "Hera" },
+            marker: { color: "#c67242", radius: 50, label: "Hera" },
             orbit: { radius: 7 * SOLAR_UNIT },
             systems: [{
                 orbit: { radius: 0.1, angle: 0 },
