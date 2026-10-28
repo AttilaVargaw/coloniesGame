@@ -5,7 +5,7 @@ export const solarisAlpha = {
     name: "Helios Alpha",
     marker: { color: "#fffcc9", radius: STAR_SIZE, label: "Helios Alpha", emitLight: true },
     archetype: "sol",
-    orbit: { radius: 200, angle: Math.PI / 2, eccentricity: 0, inclination: 0 },
+    orbit: { radius: 300, angle: Math.PI / 2, eccentricity: 0, inclination: 0 },
     systems: [{
         bodies: [{
             marker: { color: "#f99838", radius: 4, label: "Icarus" },
@@ -22,7 +22,7 @@ export const solarisAlpha = {
         }],
     }, {
         bodies: [{
-            marker: { color: "#928262", radius: 60, label: "Zeus" },
+            marker: { color: "#928262", radius: 90, label: "Zeus" },
             name: "Zeus",
             archetype: "jupiter",
             orbit: { radius: 6.5 * SOLAR_UNIT, angle: 5, eccentricity: 0.007, inclination: 0.05 },

@@ -9,10 +9,11 @@ interface TextureRequest {
     baseColor: string
     archetype?: PlanetArchetype
     seedKey?: string
+    hasAtmosphere?: boolean
     id: number
 }
 
-self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, id } }: MessageEvent<TextureRequest>) => {
+self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, hasAtmosphere, id } }: MessageEvent<TextureRequest>) => {
     let canvas: HTMLCanvasElement | OffscreenCanvas
     switch(textureType) {
         case "planet":
@@ -22,7 +23,7 @@ self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, id
             canvas = createStarTexture(baseColor, seedKey)
             break
         case "normal":
-            canvas = createNormalTexture(baseColor, archetype, seedKey)
+            canvas = createNormalTexture(baseColor, archetype, seedKey, !!hasAtmosphere)
             break
         case "roughness":
             canvas = createRoughnessTexture(baseColor, archetype, seedKey)

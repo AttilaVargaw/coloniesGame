@@ -359,8 +359,9 @@ void main() {
     } else {
         float diff = max(0.0, NdotL) * 0.9 + 0.1;
 
-        vec3 halfVec = normalize(vLightDir + viewDir);
-        float NdotH = dot(normal, halfVec);
+    vec3 halfVec = normalize(vLightDir + viewDir);
+    vec3 specNormal = mix(geometricNormal, normal, roughness);
+    float NdotH = dot(specNormal, halfVec);
         float specPower = mix(6.0, 180.0, 1.0 - roughness);
         vec3 specular = vLightColor * pow(max(NdotH, 0.0), specPower) * (0.6 + 0.4 * (1.0 - roughness));
         // Stronger specular glint on smooth surfaces (ocean/water)

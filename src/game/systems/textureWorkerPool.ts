@@ -6,6 +6,7 @@ export interface TextureWorkerMessage {
     baseColor: string
     archetype?: string
     seedKey?: string
+    hasAtmosphere?: boolean
     id: number
 }
 
@@ -50,7 +51,7 @@ export class TextureWorkerPool {
         }
     }
 
-    async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string): Promise<ImageBitmap> {
+    async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string, hasAtmosphere?: boolean): Promise<ImageBitmap> {
         const cached = await getCachedTexture(textureType, baseColor, archetype, seedKey)
         if(cached) return cached
 
@@ -68,6 +69,7 @@ export class TextureWorkerPool {
                 baseColor,
                 archetype,
                 seedKey,
+                hasAtmosphere,
                 id,
             })
         })

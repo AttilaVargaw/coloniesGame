@@ -296,7 +296,7 @@ export async function createBody({
             const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
                 pool.generate("planet", marker.color, archetype, name),
                 pool.generate("roughness", marker.color, archetype, name),
-                pool.generate("normal", marker.color, archetype, name),
+                pool.generate("normal", marker.color, archetype, name, hasAtmosphere.has(archetype)),
             ])
 
             const [nightBitmap, cloudBitmap] = await Promise.all([

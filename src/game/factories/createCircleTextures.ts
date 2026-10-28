@@ -160,6 +160,17 @@ function powBandTransition(t: number): number {
 
 const noiseScale = 4
 
+function computeEarthLikeElevation(
+    sx: number, sy: number, sz: number,
+    perm: number[],
+): number {
+    const continental = sampleFbm3d(sx * noiseScale * 0.3, sy * noiseScale * 0.3, sz * noiseScale * 0.3, perm, 0.35, 5)
+    const detail = sampleFbm3d(sx * noiseScale * 1.6, sy * noiseScale * 1.6, sz * noiseScale * 1.6, perm, 0.45, 3)
+    let elevation = (continental * 0.7 + detail * 0.3 + 1) / 2
+    elevation = Math.pow(elevation, 1.4)
+    return elevation
+}
+
 type PixelProcessor = (x: number, y: number, sx: number, sy: number, sz: number, data: Uint8ClampedArray, perm: number[]) => void
 
 interface TextureResult {
@@ -270,9 +281,10 @@ const GAS_GIANT_PALETTES: Record<string, { bands: [string, string][]; storm: str
     }
 } as const
 
-export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+export function createNormalTexture(baseColor: string, archetype: string = "earth", seedKey?: string, hasAtmosphere: boolean = false): HTMLCanvasElement | OffscreenCanvas {
     const epsilon = 0.04
-    const strength = 0.05
+    const strength = hasAtmosphere ? 0.02 : 0.05
+    const isEarthLike = archetype === "earth" || archetype === "kobol"
 
     const raw = new Float32Array(textureSize * textureSize * 3)
 
@@ -300,9 +312,16 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
         const nby = by / bLen
         const nbz = bz / bLen
 
-        const h = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
-        const hT = sampleFbm3d((sx + tx * epsilon) * noiseScale, (sy + ty * epsilon) * noiseScale, (sz + tz * epsilon) * noiseScale, perm, 0.4, 5)
-        const hB = sampleFbm3d((sx + nbx * epsilon) * noiseScale, (sy + nby * epsilon) * noiseScale, (sz + nbz * epsilon) * noiseScale, perm, 0.4, 5)
+        let h: number, hT: number, hB: number
+        if(isEarthLike) {
+            h = computeEarthLikeElevation(sx, sy, sz, perm)
+            hT = computeEarthLikeElevation(sx + tx * epsilon, sy + ty * epsilon, sz + tz * epsilon, perm)
+            hB = computeEarthLikeElevation(sx + nbx * epsilon, sy + nby * epsilon, sz + nbz * epsilon, perm)
+        } else {
+            h = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
+            hT = sampleFbm3d((sx + tx * epsilon) * noiseScale, (sy + ty * epsilon) * noiseScale, (sz + tz * epsilon) * noiseScale, perm, 0.4, 5)
+            hB = sampleFbm3d((sx + nbx * epsilon) * noiseScale, (sy + nby * epsilon) * noiseScale, (sz + nbz * epsilon) * noiseScale, perm, 0.4, 5)
+        }
 
         const dhDT = (hT - h) / epsilon
         const dhDB = (hB - h) / epsilon
@@ -369,10 +388,8 @@ function createEarthLikeTexture(
             const v = y / textureSize
             const [sx, sy, sz] = uvToSpherePoint(u, v)
 
-            const continental = sampleFbm3d(sx * noiseScale * 0.3, sy * noiseScale * 0.3, sz * noiseScale * 0.3, perm, 0.35, 5)
             const detail = sampleFbm3d(sx * noiseScale * 1.6, sy * noiseScale * 1.6, sz * noiseScale * 1.6, perm, 0.45, 3)
-            let elevation = (continental * 0.7 + detail * 0.3 + 1) / 2
-            elevation = Math.pow(elevation, 1.4)
+            const elevation = computeEarthLikeElevation(sx, sy, sz, perm)
 
             const latitude = Math.abs(v - 0.5) * 2
 
@@ -616,11 +633,9 @@ export function createEarthLikeRoughnessTexture(
             const v = y / textureSize
             const [sx, sy, sz] = uvToSpherePoint(u, v)
 
-            const continental = sampleFbm3d(sx * noiseScale * 0.4, sy * noiseScale * 0.4, sz * noiseScale * 0.4, perm, 0.35, 4)
-            const detail = sampleFbm3d(sx * noiseScale * 1.6, sy * noiseScale * 1.6, sz * noiseScale * 1.6, perm, 0.45, 3)
-            const micro = sampleFbm3d(sx * noiseScale * 4.0, sy * noiseScale * 4.0, sz * noiseScale * 4.0, perm, 0.5, 2)
-            const elevation = (continental * 0.65 + detail * 0.35 + 1) / 2
+            const elevation = computeEarthLikeElevation(sx, sy, sz, perm)
             const elevSharpened = Math.pow(elevation, 1.4)
+            const micro = sampleFbm3d(sx * noiseScale * 4.0, sy * noiseScale * 4.0, sz * noiseScale * 4.0, perm, 0.5, 2)
 
             let roughness: number
             if(elevSharpened < 0.34) {

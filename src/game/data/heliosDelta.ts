@@ -5,7 +5,7 @@ export const heliosDelta = {
     name: "Helios Delta",
     marker: { color: "#f7a75c", radius: STAR_SIZE, label: "Helios Delta", emitLight: true },
     archetype: "sol",
-    orbit: { radius: 200, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
+    orbit: { radius: 300, angle: -Math.PI / 2, eccentricity: 0, inclination: 0 },
     asteroidBelts: [
         { innerRadius: 0.7 * SOLAR_UNIT, outerRadius: 1.0 * SOLAR_UNIT, color: "#22222aaa", name: "Aelous" },
     ],
@@ -96,7 +96,7 @@ export const heliosDelta = {
         bodies: [
             {
                 orbit: { radius: 0.01, inclination: 0 },
-                marker: { color: "#ae4937", radius: 20, label: "Hestia" },
+                marker: { color: "#ae4937", radius: 40, label: "Hestia" },
                 archetype: "saturn",
                 name: "Hestia",
                 systems: [{

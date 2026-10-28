@@ -56,7 +56,7 @@ export const MapCreationData = {
             name: "Delium",
             color: "#888",
             orbit: {
-                radius: 10 * SOLAR_UNIT,
+                radius: 300,
                 angle: Math.PI,
                 inclination: 0
             },
@@ -68,7 +68,7 @@ export const MapCreationData = {
                 color: "#888",
                 radius: 20,
                 orbit: {
-                    radius: 10 * SOLAR_UNIT,
+                    radius: 300,
                     angle: 0,
                     inclination: 0
                 },
@@ -125,7 +125,7 @@ export const MapCreationData = {
                 name: "Gortyn",
                 radius: 20,
                 orbit: {
-                    radius: 10 * SOLAR_UNIT,
+                    radius: 300,
                     angle: Math.PI,
                     inclination: 0
                 },
@@ -136,7 +136,7 @@ export const MapCreationData = {
                 name: "Naucratis",
                 radius: 20,
                 orbit: {
-                    radius: 10 * SOLAR_UNIT,
+                    radius: 300,
                     angle: 0,
                     inclination: 0
                 },

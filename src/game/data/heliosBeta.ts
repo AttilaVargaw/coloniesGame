@@ -9,7 +9,7 @@ export const solarisBeta = {
     name: "Helios Beta",
     marker: { color: "#fbe57d", radius: STAR_SIZE, label: "Helios Beta", emitLight: true },
     archetype: "sol",
-    orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: -Math.PI / 2 },
+    orbit: { radius: 300, eccentricity: 0, inclination: 0, angle: -Math.PI / 2 },
     systems: [{
         bodies: [{
             archetype: "mars", marker: { color: "#b17d5d", radius: 8, label: "Pallas" }, orbit: { radius: 2 * SOLAR_UNIT, angle: 2, eccentricity: 0.017, inclination: 0.2 }, name: "Pallas"
@@ -80,7 +80,7 @@ export const solarisBeta = {
         bodies: [{
             name: "Hera",
             archetype: "saturn",
-            marker: { color: "#c67242", radius: 50, label: "Hera" },
+            marker: { color: "#c67242", radius: 80, label: "Hera" },
             orbit: { radius: 7 * SOLAR_UNIT },
             systems: [{
                 orbit: { radius: 0.1, angle: 0 },

@@ -4,7 +4,7 @@ import { BodyBlueprint } from "./BodyBlueprint";
 export const heliosGamma = {
     name: "Helios Gamma",
     marker: { color: "#fbf988", radius: STAR_SIZE, label: "Helios Gamma", emitLight: true },
-    orbit: { radius: 200, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
+    orbit: { radius: 300, eccentricity: 0, inclination: 0, angle: Math.PI / 2 },
     archetype: "sol",
     asteroidBelts: [
         { innerRadius: 0.4 * SOLAR_UNIT, outerRadius: 0.8 * SOLAR_UNIT, color: "#22222aaa", name: "Acheron" },
@@ -88,7 +88,7 @@ export const heliosGamma = {
         bodies: [{
             name: "Ophion",
             archetype: "saturn",
-            marker: { color: "#e9d46f", radius: 50, label: "Ophion" },
+            marker: { color: "#e9d46f", radius: 85, label: "Ophion" },
             orbit: { radius: 7 * SOLAR_UNIT, inclination: 0.45 },
             rings: [
                 { color: "#e9d46f", innerRadius: 30, outerRadius: 50 }
