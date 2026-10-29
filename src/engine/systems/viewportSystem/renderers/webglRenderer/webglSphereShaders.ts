@@ -251,13 +251,6 @@ layout(location = 0) out vec4 fragColor;
 
 ${ACES_FILM_FUNCTION}
 
-vec2 rotateUV(vec2 uv, float angle) {
-    float s = sin(angle);
-    float c = cos(angle);
-    vec2 centered = uv - 0.5;
-    return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
-}
-
 void main() {
     vec3 geometricNormal = normalize(vNormal);
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
@@ -313,7 +306,7 @@ void main() {
         color = color + nightColor * (1.0 - diff);
 
         if(vCloudPage > -0.5) {
-            vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
+            vec2 cloudUV = vec2(spunU, v) * vNightTexScale + vNightTexOffset;
             float cloudAlpha = texture(uCloudTexture, cloudUV).a;
             // Cloud shadows darken the surface beneath thick clouds
             float cloudShadow = clamp(cloudAlpha * 0.5, 0.0, 0.5);
