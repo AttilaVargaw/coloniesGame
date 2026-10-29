@@ -32,7 +32,6 @@ import { RotationComponent } from "@/game/components/rotationComponent"
 import { AtmosphereComponent } from "@/engine/components/atmosphereComponent"
 import { angularSpeed } from "../utils/orbital"
 import { PositionComponent } from "@/engine/components/position"
-import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { ColorComponent } from "@engine/components/colorComponent"
 import { MassComponent } from "@engine/components/massComponent"
 import { TextureComponent } from "@engine/components/textureComponent"
@@ -204,11 +203,10 @@ async function createRings(
     const pool = getTextureWorkerPool()
 
     for(const { innerRadius, outerRadius, color } of rings) {
-        const bitmap = await pool.generate("ring", color, "saturn", body.id)
+        const bitmap = await pool.generate("ring", color, "saturn", body.id, undefined, innerRadius, outerRadius)
 
         const ringEntity = createEntity()
         ringEntity.addComponent(new PositionComponent(0, 0))
-        ringEntity.addComponent(new RadiusComponent(outerRadius))
         ringEntity.addComponent(new RingComponent(ringEntity, innerRadius, outerRadius, color))
         ringEntity.addComponent(new ColorComponent("", color))
         ringEntity.addComponent(new TextureComponent({ day: bitmap, id: `${body.id}_ring` }))

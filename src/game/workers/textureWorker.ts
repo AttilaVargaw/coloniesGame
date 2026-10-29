@@ -10,10 +10,12 @@ interface TextureRequest {
     archetype?: PlanetArchetype
     seedKey?: string
     hasAtmosphere?: boolean
+    innerRadius?: number
+    outerRadius?: number
     id: number
 }
 
-self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, hasAtmosphere, id } }: MessageEvent<TextureRequest>) => {
+self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, hasAtmosphere, innerRadius, outerRadius, id } }: MessageEvent<TextureRequest>) => {
     let canvas: HTMLCanvasElement | OffscreenCanvas
     switch(textureType) {
         case "planet":
@@ -35,7 +37,7 @@ self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, ha
             canvas = createNightTexture(baseColor, archetype, seedKey)
             break
         case "ring":
-            canvas = createRingTexture(baseColor, archetype, seedKey)
+            canvas = createRingTexture(baseColor, archetype, seedKey, innerRadius, outerRadius)
             break
         default:
             throw new Error(`Unknown texture type: ${textureType}`)

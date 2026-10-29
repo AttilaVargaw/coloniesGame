@@ -712,11 +712,11 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 this.normalAtlas?.dispose(gl)
             }
 
-            this.atlas = new WebGLTextureAtlas()
-            this.nightAtlas = new WebGLTextureAtlas()
-            this.roughnessAtlas = new WebGLTextureAtlas()
-            this.cloudAtlas = new WebGLTextureAtlas()
-            this.normalAtlas = new WebGLTextureAtlas()
+            this.atlas = new WebGLTextureAtlas(1024, 512)
+            this.nightAtlas = new WebGLTextureAtlas(1024, 512)
+            this.roughnessAtlas = new WebGLTextureAtlas(1024, 512)
+            this.cloudAtlas = new WebGLTextureAtlas(1024, 512)
+            this.normalAtlas = new WebGLTextureAtlas(1024, 512)
             const whiteCanvas = getPlatform().createCanvas()
             whiteCanvas.width = 1
             whiteCanvas.height = 1
@@ -766,11 +766,11 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         this.glCanvas.width = this.glCanvas.width
         this.glCanvas.height = this.glCanvas.height
         this.glCanvas.style.pointerEvents = "none"
-        this.atlas = new WebGLTextureAtlas()
-        this.nightAtlas = new WebGLTextureAtlas()
-        this.roughnessAtlas = new WebGLTextureAtlas()
-        this.cloudAtlas = new WebGLTextureAtlas()
-        this.normalAtlas = new WebGLTextureAtlas()
+        this.atlas = new WebGLTextureAtlas(1024, 512)
+        this.nightAtlas = new WebGLTextureAtlas(1024, 512)
+        this.roughnessAtlas = new WebGLTextureAtlas(1024, 512)
+        this.cloudAtlas = new WebGLTextureAtlas(1024, 512)
+        this.normalAtlas = new WebGLTextureAtlas(1024, 512)
 
         const whiteCanvas = document.createElement("canvas")
         whiteCanvas.width = 1

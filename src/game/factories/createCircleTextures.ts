@@ -355,9 +355,9 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
-const ringTextureSize = 1024
+const ringTextureSize = 2048
 
-export function createRingTexture(baseColor: string, archetype: string = "saturn", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+export function createRingTexture(baseColor: string, archetype: string = "saturn", seedKey?: string, innerRadius?: number, outerRadius?: number): HTMLCanvasElement | OffscreenCanvas {
     const base = hexToRgb(baseColor)
     const seed = seedFrom(baseColor, archetype, seedKey + "-rings")
     const perm = buildPerm(seed)
@@ -371,6 +371,10 @@ export function createRingTexture(baseColor: string, archetype: string = "saturn
 
     const center = ringTextureSize / 2
     const maxRadius = ringTextureSize / 2
+
+    const rInner = innerRadius !== undefined && outerRadius !== undefined && outerRadius > 0
+        ? innerRadius / outerRadius
+        : 0
 
     const iceR = 220
     const iceG = 225
@@ -386,7 +390,7 @@ export function createRingTexture(baseColor: string, archetype: string = "saturn
             const dist = Math.sqrt(dx * dx + dy * dy)
             const r = dist / maxRadius
 
-            if(r > 1.0) {
+            if(r > 1.0 || r < rInner) {
                 const idx = (y * ringTextureSize + x) * 4
                 data[idx] = 0
                 data[idx + 1] = 0
@@ -395,22 +399,25 @@ export function createRingTexture(baseColor: string, archetype: string = "saturn
                 continue
             }
 
+            // Remap annulus [rInner, 1.0] to full texture [0, 1]
+            const rTex = (r - rInner) / (1.0 - rInner)
+
             const angle = Math.atan2(dy, dx)
             const cosA = Math.cos(angle)
 
             // Streaks tangential to the ring, continuous across the angle branch cut
-            const streakX = (cosA + 1.0) * 30.0 + r * 2.0
-            const streakY = r * 30.0
+            const streakX = (cosA + 1.0) * 30.0 + rTex * 2.0
+            const streakY = rTex * 30.0
             const streakyNoise = sampleFbm3d(streakX, streakY, 0.0, perm, 0.5, 5)
 
-            // Radial banding / gaps (continuous in r and cosA)
-            const bandNoise = sampleFbm3d(r * 16.0, (cosA + 1.0) * 2.0, 0.0, perm, 0.4, 4)
+            // Radial banding / gaps (continuous in rTex and cosA)
+            const bandNoise = sampleFbm3d(rTex * 16.0, (cosA + 1.0) * 2.0, 0.0, perm, 0.4, 4)
 
             let band
             if(archetype === "saturn") {
                 band = 0.5
-                    + Math.sin(r * 20.0 + cosA * 0.5) * 0.15
-                    + Math.cos(r * 40.0) * 0.08
+                    + Math.sin(rTex * 20.0 + cosA * 0.5) * 0.15
+                    + Math.cos(rTex * 40.0) * 0.08
                     + streakyNoise * 0.25
                     + bandNoise * 0.1
             } else {
@@ -418,9 +425,9 @@ export function createRingTexture(baseColor: string, archetype: string = "saturn
             }
 
             // Cassini-style gap
-            const cassiniGap = Math.abs(r - 0.62) < 0.018
-            const innerFade = r < 0.15 ? r / 0.15 : 1.0
-            const outerFade = r > 0.88 ? (1.0 - r) / 0.12 : 1.0
+            const cassiniGap = Math.abs(rTex - 0.62) < 0.018
+            const innerFade = rTex < 0.15 ? rTex / 0.15 : 1.0
+            const outerFade = rTex > 0.88 ? (1.0 - rTex) / 0.12 : 1.0
 
             let brightness = band * innerFade * outerFade
 

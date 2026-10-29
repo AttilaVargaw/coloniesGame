@@ -7,6 +7,8 @@ export interface TextureWorkerMessage {
     archetype?: string
     seedKey?: string
     hasAtmosphere?: boolean
+    innerRadius?: number
+    outerRadius?: number
     id: number
 }
 
@@ -51,7 +53,7 @@ export class TextureWorkerPool {
         }
     }
 
-    async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string, hasAtmosphere?: boolean): Promise<ImageBitmap> {
+    async generate(textureType: TextureWorkerMessage["textureType"], baseColor: string, archetype?: string, seedKey?: string, hasAtmosphere?: boolean, innerRadius?: number, outerRadius?: number): Promise<ImageBitmap> {
         const cached = await getCachedTexture(textureType, baseColor, archetype, seedKey)
         if(cached) return cached
 
@@ -70,11 +72,13 @@ export class TextureWorkerPool {
                 archetype,
                 seedKey,
                 hasAtmosphere,
+                innerRadius,
+                outerRadius,
                 id,
             })
         })
 
-        setCachedTexture(textureType, baseColor, archetype, seedKey, bitmap)
+        setCachedTexture(textureType, baseColor, archetype, seedKey, bitmap, innerRadius, outerRadius)
 
         return bitmap
     }

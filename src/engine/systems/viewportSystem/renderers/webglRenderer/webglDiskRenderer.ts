@@ -13,7 +13,7 @@ import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
-import { mat4 } from "gl-matrix"
+import { mat4, vec3 } from "gl-matrix"
 import { hexToRgb } from "./hexToRgb"
 
 type UVRect = { u0: number; v0: number; u1: number; v1: number }
@@ -89,6 +89,18 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
 
         gl.uniformMatrix4fv(this.shader.uniforms.view, false, view)
         gl.uniformMatrix4fv(this.shader.uniforms.projection, false, projection)
+
+        // Compute light direction from star to view space
+        const starEntity = this.engine!.getAllEntities().find(e => e.getComponent(ColorComponent)?.emitLight)
+        let lightDir = [0.5, 1.0, 0.5]
+        if(starEntity) {
+            const starPos = getAbsolute(starEntity, this.engine!)
+            const cam = camera.cameraPosition
+            const dir = vec3.normalize(vec3.create(), vec3.sub(vec3.create(), starPos, cam))
+            const viewDir = vec3.transformMat4(vec3.create(), dir, view)
+            lightDir = [viewDir[0], viewDir[1], viewDir[2]]
+        }
+        gl.uniform3f(this.shader.uniforms.lightDir!, lightDir[0], lightDir[1], lightDir[2])
 
         const instances = this.collectInstances(camera)
 
@@ -174,6 +186,17 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
         gl.disable(gl.DEPTH_TEST)
         gl.depthMask(true)
         gl.disable(gl.BLEND)
+
+        gl.disableVertexAttribArray(this.shader.attribs.position)
+        gl.disableVertexAttribArray(this.shader.attribs.texCoord)
+        for(let i = 0; i < 4; i++) {
+            gl.disableVertexAttribArray(this.shader.attribs.instanceModel + i)
+            gl.vertexAttribDivisor(this.shader.attribs.instanceModel + i, 0)
+        }
+        gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
+        gl.disableVertexAttribArray(this.shader.attribs.instanceUV)
+        gl.vertexAttribDivisor(this.shader.attribs.instanceUV, 0)
     }
 
     private collectInstances(camera: Camera): RingInstance[] {
@@ -241,7 +264,7 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
         const gl = this.initContext()
 
         this.shader = createDiskShaderProgram(gl)
-        this.atlas = new WebGLTextureAtlas()
+        this.atlas = new WebGLTextureAtlas(2048, 2048)
 
         const vertices = new Float32Array([
             -1, -1, 0, 0,

@@ -33,18 +33,22 @@ function cacheKey(
     textureType: string,
     baseColor: string,
     archetype?: string,
-    seedKey?: string
+    seedKey?: string,
+    innerRadius?: number,
+    outerRadius?: number
 ): string {
-    return `${textureType}|${baseColor}|${archetype ?? ""}|${seedKey ?? ""}`
+    return `${textureType}|${baseColor}|${archetype ?? ""}|${seedKey ?? ""}|${innerRadius ?? ""}|${outerRadius ?? ""}`
 }
 
 export async function getCachedTexture(
     textureType: string,
     baseColor: string,
     archetype: string | undefined,
-    seedKey: string | undefined
+    seedKey: string | undefined,
+    innerRadius?: number,
+    outerRadius?: number
 ): Promise<ImageBitmap | null> {
-    const key = cacheKey(textureType, baseColor, archetype, seedKey)
+    const key = cacheKey(textureType, baseColor, archetype, seedKey, innerRadius, outerRadius)
 
     const cached = memoryCache.get(key)
     if(cached) return cached
@@ -75,9 +79,11 @@ export async function setCachedTexture(
     baseColor: string,
     archetype: string | undefined,
     seedKey: string | undefined,
-    bitmap: ImageBitmap
+    bitmap: ImageBitmap,
+    innerRadius?: number,
+    outerRadius?: number
 ): Promise<void> {
-    const key = cacheKey(textureType, baseColor, archetype, seedKey)
+    const key = cacheKey(textureType, baseColor, archetype, seedKey, innerRadius, outerRadius)
     memoryCache.set(key, bitmap)
 
     const db = await getDB()

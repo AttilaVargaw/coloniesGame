@@ -72,7 +72,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         this.rectInstancePool = new Float32Array(this.MAX_RECT_INSTANCES * 23)
         this.rectBatchBuffer = new Float32Array(this.MAX_RECT_INSTANCES * 23)
 
-        this.atlas = new WebGLTextureAtlas()
+        this.atlas = new WebGLTextureAtlas(1024, 256)
         const whiteCanvas = getPlatform().createCanvas()
         whiteCanvas.width = 1
         whiteCanvas.height = 1
