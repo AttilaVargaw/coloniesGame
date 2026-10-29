@@ -36,7 +36,6 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         ["normalMap", "uNormalMap"],
         ["tintColor", "uTintColor"],
         ["tintAlpha", "uTintAlpha"],
-        ["time", "uTime"],
         ["hdrMode", "uHdrMode"],
     ])
 }

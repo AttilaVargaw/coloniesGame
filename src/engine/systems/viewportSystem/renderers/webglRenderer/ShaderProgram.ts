@@ -25,7 +25,6 @@ export interface ShaderProgramUniforms {
     normalMap: WebGLUniformLocation | null;
     tintColor: WebGLUniformLocation | null;
     tintAlpha: WebGLUniformLocation | null;
-    time: WebGLUniformLocation | null;
     hdrMode: WebGLUniformLocation | null;
     [key: string]: WebGLUniformLocation | null;
 }

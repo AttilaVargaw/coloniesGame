@@ -22,7 +22,6 @@ uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uRoughness;
 uniform sampler2D uCloudTexture;
-uniform float uTime;
 
 out vec3 vNormal;
 out vec3 vLightDir;
@@ -33,8 +32,6 @@ out vec2 vTexOffset;
 out vec2 vTexScale;
 out float vCloudPage;
 out float vRotationAngle;
-
-${PI}
 
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
@@ -237,19 +234,11 @@ uniform vec3 uAmbientColor;
 uniform vec3 uCameraPosition;
 uniform vec3 uTintColor;
 uniform float uTintAlpha;
-uniform float uTime;
 uniform float uHdrMode;
 
 layout(location = 0) out vec4 fragColor;
 
 ${ACES_FILM_FUNCTION}
-
-vec2 rotateUV(vec2 uv, float angle) {
-    float s = sin(angle);
-    float c = cos(angle);
-    vec2 centered = uv - 0.5;
-    return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
-}
 
 void main() {
     vec3 geometricNormal = normalize(vNormal);
@@ -267,7 +256,6 @@ void main() {
     float normalBlend = smoothstep(-0.3, 0.3, NdotL);
     vec3 normal = normalize(mix(geometricNormal, mappedNormal, normalBlend));
     vec3 viewDir = normalize(uCameraPosition - vWorldPos);
-    float NdotV = abs(dot(normal, viewDir));
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
     vec3 nightColor = texture(uNightTexture, texCoord).rgb;

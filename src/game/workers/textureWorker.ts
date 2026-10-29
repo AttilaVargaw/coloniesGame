@@ -1,4 +1,4 @@
-import { createPlanetTexture, createStarTexture, createNormalTexture, createRoughnessTexture, createCloudTexture, createNightTexture, createRingTexture } from "../factories/createCircleTextures"
+import { createPlanetTexture, createStarTexture, createNormalTexture, createRoughnessTexture, createCloudTexture, createNightTexture, createRingTexture } from "../factories/createPlanetTextures"
 import { PlanetArchetype } from "../factories/helpers"
 
 type TextureType = "planet" | "star" | "normal" | "roughness" | "cloud" | "night" | "ring"
