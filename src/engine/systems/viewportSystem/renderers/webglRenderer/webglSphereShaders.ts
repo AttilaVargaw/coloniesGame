@@ -372,7 +372,7 @@ void main() {
         vec3 ambient = dayColor * uAmbientColor * 0.2;
 
         vec3 color = mix(ambient, lit, diff);
-        color = color + nightColor * smoothstep(-0.1, -0.3, NdotL) * (1.0 - diff);
+        color = color + nightColor * (1.0 - diff);
 
         if(vCloudPage > -0.5) {
             vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);
@@ -382,6 +382,8 @@ void main() {
             color *= (1.0 - cloudShadow);
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient, lit, cloudLight);
+            // Clouds are brighter than the surface: blend toward white based on illumination
+            cloudColor = mix(cloudColor, vec3(1.0), cloudLight * 0.6);
             color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
         }
 
