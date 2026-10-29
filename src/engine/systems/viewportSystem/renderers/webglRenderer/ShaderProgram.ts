@@ -9,8 +9,6 @@ export interface ShaderProgramAttribs {
     instanceLightColor: number;
     instanceTexOffset: number;
     instanceTexScale: number;
-    instanceNightTexOffset: number;
-    instanceNightTexScale: number;
     instanceEmissiveCloud: number;
     [key: string]: number;
 }

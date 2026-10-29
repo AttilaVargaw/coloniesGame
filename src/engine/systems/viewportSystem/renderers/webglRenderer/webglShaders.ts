@@ -23,8 +23,6 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         ["instanceLightColor", "aInstanceLightColor"],
         ["instanceTexOffset", "aInstanceTexOffset"],
         ["instanceTexScale", "aInstanceTexScale"],
-        ["instanceNightTexOffset", "aInstanceNightTexOffset"],
-        ["instanceNightTexScale", "aInstanceNightTexScale"],
         ["instanceEmissiveCloud", "aInstanceEmissiveCloud"],
     ], [
         ["view", "uView"],

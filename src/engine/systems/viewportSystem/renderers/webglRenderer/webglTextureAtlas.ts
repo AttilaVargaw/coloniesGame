@@ -108,7 +108,7 @@ export class WebGLTextureAtlas {
         this.pages.push(new AtlasPage(atlasSize, cellSize))
     }
 
-    addTexture(key: string, source: TextureSource): AtlasEntry {
+    addTexture(key: string, source: TextureSource, cellIndex?: number): AtlasEntry {
         if(!(
             source instanceof HTMLCanvasElement ||
             source instanceof HTMLImageElement ||
@@ -118,44 +118,58 @@ export class WebGLTextureAtlas {
         }
 
         const existing = this.entries.get(key)
-        if(existing) {
+        if(existing && cellIndex === undefined) {
             return { ...existing.entry, page: existing.page }
         }
 
         const cellsPerPage = (this.pages[0].size / this.pages[0].cellSize) ** 2
 
-        let pageIndex = 0
-        let cellIndex = 0
+        let pageIndex: number
+        let cellIndexInPage = 0
 
-        for(let i = 0; i < this.pages.length; i++) {
-            const usedInPage = this.entries.size - pageIndex * cellsPerPage
-            if(usedInPage < cellsPerPage) {
-                cellIndex = usedInPage
-                break
+        if(cellIndex !== undefined) {
+            pageIndex = Math.floor(cellIndex / cellsPerPage)
+            cellIndexInPage = cellIndex % cellsPerPage
+            // Already placed at this exact cell: no need to redraw.
+            if(existing && existing.page === pageIndex && existing.index === cellIndexInPage) {
+                return { ...existing.entry, page: existing.page }
             }
-            pageIndex++
+        } else {
+            pageIndex = 0
+            for(let i = 0; i < this.pages.length; i++) {
+                const usedInPage = this.entries.size - pageIndex * cellsPerPage
+                if(usedInPage < cellsPerPage) {
+                    cellIndexInPage = usedInPage
+                    break
+                }
+                pageIndex++
+            }
+
+            if(pageIndex >= this.pages.length) {
+                this.pages.push(new AtlasPage(this.pages[0].size, this.pages[0].cellSize))
+                cellIndexInPage = 0
+            }
         }
 
-        if(pageIndex >= this.pages.length) {
+        while(pageIndex >= this.pages.length) {
             this.pages.push(new AtlasPage(this.pages[0].size, this.pages[0].cellSize))
-            cellIndex = 0
         }
 
         const page = this.pages[pageIndex]
-        const uv = page.addTexture(key, source, cellIndex)
+        const uv = page.addTexture(key, source, cellIndexInPage)
 
-        this.entries.set(key, { page: pageIndex, index: cellIndex, entry: uv })
+        this.entries.set(key, { page: pageIndex, index: cellIndexInPage, entry: uv })
         this.cachedTextures = null
 
         return { ...uv, page: pageIndex }
     }
 
-    getOrCreateEntry(key: string, source: TextureSource): AtlasEntry {
+    getOrCreateEntry(key: string, source: TextureSource, cellIndex?: number): AtlasEntry {
         const existing = this.entries.get(key)
-        if(existing) {
+        if(existing && cellIndex === undefined) {
             return { ...existing.entry, page: existing.page }
         }
-        return this.addTexture(key, source)
+        return this.addTexture(key, source, cellIndex)
     }
 
     getTextures(gl: WebGL2RenderingContext): WebGLTexture[] {
@@ -179,5 +193,13 @@ export class WebGLTextureAtlas {
         const entry = this.entries.get(key)
         if(!entry) return undefined
         return { ...entry.entry, page: entry.page }
+    }
+
+    has(key: string): boolean {
+        return this.entries.has(key)
+    }
+
+    get entryCount(): number {
+        return this.entries.size
     }
 }

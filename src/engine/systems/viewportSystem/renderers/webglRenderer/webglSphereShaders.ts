@@ -11,8 +11,6 @@ in vec3 aInstanceLightDir;
 in vec3 aInstanceLightColor;
 in vec2 aInstanceTexOffset;
 in vec2 aInstanceTexScale;
-in vec2 aInstanceNightTexOffset;
-in vec2 aInstanceNightTexScale;
 in vec3 aInstanceEmissiveCloud;
 
 uniform mat4 uView;
@@ -32,8 +30,6 @@ out float vEmissive;
 out vec3 vWorldPos;
 out vec2 vTexOffset;
 out vec2 vTexScale;
-out vec2 vNightTexOffset;
-out vec2 vNightTexScale;
 out float vCloudPage;
 out float vRotationAngle;
 
@@ -48,8 +44,6 @@ void main() {
     vWorldPos = worldPos.xyz;
     vTexOffset = aInstanceTexOffset;
     vTexScale = aInstanceTexScale;
-    vNightTexOffset = aInstanceNightTexOffset;
-    vNightTexScale = aInstanceNightTexScale;
     vCloudPage = aInstanceEmissiveCloud.y;
     vRotationAngle = aInstanceEmissiveCloud.z;
     gl_Position = uProjection * uView * worldPos;
@@ -230,8 +224,6 @@ in float vEmissive;
 in vec3 vWorldPos;
 in vec2 vTexOffset;
 in vec2 vTexScale;
-in vec2 vNightTexOffset;
-in vec2 vNightTexScale;
 in float vCloudPage;
 in float vRotationAngle;
 
@@ -251,13 +243,19 @@ layout(location = 0) out vec4 fragColor;
 
 ${ACES_FILM_FUNCTION}
 
+vec2 rotateUV(vec2 uv, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    vec2 centered = uv - 0.5;
+    return vec2(centered.x * c - centered.y * s, centered.x * s + centered.y * c) + 0.5;
+}
+
 void main() {
     vec3 geometricNormal = normalize(vNormal);
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
     float spunU = fract(u - vRotationAngle / (2.0 * PI));
     vec2 texCoord = vec2(spunU, v) * vTexScale + vTexOffset;
-    vec2 nightTexCoord = vec2(spunU, v) * vNightTexScale + vNightTexOffset;
 
     vec3 T = normalize(cross(geometricNormal, vec3(0.0, 1.0, 0.0)));
     if(length(T) < 0.001) T = normalize(cross(geometricNormal, vec3(1.0, 0.0, 0.0)));
@@ -271,7 +269,7 @@ void main() {
     float NdotV = abs(dot(normal, viewDir));
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
-    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb;
+    vec3 nightColor = texture(uNightTexture, texCoord).rgb;
     float roughness = texture(uRoughness, texCoord).r;
 
     if(vEmissive > 0.5) {
@@ -306,8 +304,7 @@ void main() {
         color = color + nightColor * (1.0 - diff);
 
         if(vCloudPage > -0.5) {
-            vec2 cloudUV = vec2(spunU, v) * vNightTexScale + vNightTexOffset;
-            float cloudAlpha = texture(uCloudTexture, cloudUV).a;
+            float cloudAlpha = texture(uCloudTexture, texCoord).a;
             // Cloud shadows darken the surface beneath thick clouds
             float cloudShadow = clamp(cloudAlpha * 0.5, 0.0, 0.5);
             color *= (1.0 - cloudShadow);

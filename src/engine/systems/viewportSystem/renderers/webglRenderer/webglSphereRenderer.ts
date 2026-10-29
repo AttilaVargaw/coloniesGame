@@ -66,6 +66,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private sphereInstanceBufferCapacity = 0
     private pendingInstances: Group[] = []
     private groupsMap = new Map<string, Group[]>()
+    private cellIndexCache = new Map<string, number>()
     private _blackCanvas: HTMLCanvasElement | undefined
     private _midGrayCanvas: HTMLCanvasElement | undefined
     private _lastShowCheckerPattern = false
@@ -111,9 +112,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 continue
             }
 
+            let cellIndex: number | undefined
+            if(!showCheckerPattern) {
+                let cached = this.cellIndexCache.get(node.entity.id)
+                if(cached === undefined) {
+                    cached = this.atlas.entryCount
+                    this.cellIndexCache.set(node.entity.id, cached)
+                }
+                cellIndex = cached
+            }
+
             const atlasEntry = showCheckerPattern
                 ? this.atlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
-                : this.atlas.getOrCreateEntry(node.entity.id, textureSource)
+                : this.atlas.getOrCreateEntry(node.entity.id, textureSource, cellIndex)
 
             let nightAtlasEntry: AtlasEntry | undefined
 
@@ -121,9 +132,11 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
             } else if(nightTextureSource) {
                 const nightKey = `${node.entity.id}_night`
-                nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource)
+                nightAtlasEntry = this.nightAtlas.getOrCreateEntry(nightKey, nightTextureSource, cellIndex)
             } else {
-                nightAtlasEntry = this.nightAtlas.getOrCreateEntry("__black__", this.getBlackCanvas())
+                // Draw __black__ at this body's cell so nightTexCoord (= texCoord) samples black
+                // for bodies without a night texture.
+                nightAtlasEntry = this.nightAtlas.addTexture("__black__", this.getBlackCanvas(), cellIndex)
             }
 
             const roughnessSource = node.texture.roughness
@@ -201,9 +214,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             const normalMatrix = mat3.create()
             mat3.normalFromMat4(normalMatrix, model)
 
-            const poolOffset = this.pendingInstances.length * 43
-            if(poolOffset + 43 > this.sphereInstancePool!.length) {
-                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 43 + this.MAX_SPHERE_INSTANCES * 43)
+            const poolOffset = this.pendingInstances.length * 39
+            if(poolOffset + 39 > this.sphereInstancePool!.length) {
+                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 39 + this.MAX_SPHERE_INSTANCES * 39)
                 const newPool = new Float32Array(newSize)
                 newPool.set(this.sphereInstancePool!)
                 this.sphereInstancePool = newPool
@@ -215,10 +228,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             pool.set(starColor, poolOffset + 28)
             pool.set([atlasEntry.u0, atlasEntry.v0], poolOffset + 31)
             pool.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], poolOffset + 33)
-            pool.set([nightAtlasEntry?.u0 ?? 0, nightAtlasEntry?.v0 ?? 0], poolOffset + 35)
-            pool.set([nightAtlasEntry ? (nightAtlasEntry.u1 - nightAtlasEntry.u0) : 1, nightAtlasEntry ? (nightAtlasEntry.v1 - nightAtlasEntry.v0) : 1], poolOffset + 37)
-            pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage, node.texture.rotation ?? 0], poolOffset + 39)
-            pool.set([normalPage], poolOffset + 42)
+            pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage, node.texture.rotation ?? 0], poolOffset + 35)
+            pool.set([normalPage], poolOffset + 38)
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -381,7 +392,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 43 * 4
+        const instanceStride = 39 * 4
 
         let lastDayPage = -1
         let lastNightPage = -1
@@ -400,14 +411,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             instances.sort((a, b) => b.depth - a.depth)
 
             const [dayPage, nightPage, roughnessPage, cloudPage, normalPage] = key.split(':').map(Number)
-            const totalFloats = instances.length * 43
+            const totalFloats = instances.length * 39
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 43)
+                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 39)
                 this.sphereBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 43), i * 43)
+                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 39), i * 39)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -438,9 +449,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             setupAttrib(shader.attribs.instanceLightColor, 3, 28 * 4)
             setupAttrib(shader.attribs.instanceTexOffset, 2, 31 * 4)
             setupAttrib(shader.attribs.instanceTexScale, 2, 33 * 4)
-            setupAttrib(shader.attribs.instanceNightTexOffset, 2, 35 * 4)
-            setupAttrib(shader.attribs.instanceNightTexScale, 2, 37 * 4)
-            setupAttrib(shader.attribs.instanceEmissiveCloud, 3, 39 * 4)
+            setupAttrib(shader.attribs.instanceEmissiveCloud, 3, 35 * 4)
 
             if(dayPage !== lastDayPage) {
                 const atlasTexture = this.atlas.getTextures(gl)[dayPage]
@@ -502,8 +511,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(shader.attribs.instanceLightDir)
         gl.disableVertexAttribArray(shader.attribs.instanceTexOffset)
         gl.disableVertexAttribArray(shader.attribs.instanceTexScale)
-        gl.disableVertexAttribArray(shader.attribs.instanceNightTexOffset)
-        gl.disableVertexAttribArray(shader.attribs.instanceNightTexScale)
         gl.disableVertexAttribArray(shader.attribs.position)
         gl.disableVertexAttribArray(shader.attribs.normal)
 
@@ -522,8 +529,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         resetDivisor(shader.attribs.instanceLightColor)
         resetDivisor(shader.attribs.instanceTexOffset)
         resetDivisor(shader.attribs.instanceTexScale)
-        resetDivisor(shader.attribs.instanceNightTexOffset)
-        resetDivisor(shader.attribs.instanceNightTexScale)
         resetDivisor(shader.attribs.instanceEmissiveCloud)
     }
 
@@ -792,8 +797,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
 
-        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
-        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
+        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 39)
+        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 39)
     }
 
     private initBuffers() {
