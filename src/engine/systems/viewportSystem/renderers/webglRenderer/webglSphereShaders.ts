@@ -357,7 +357,7 @@ void main() {
         }
         fragColor = vec4(mix(color, color * uTintColor, uTintAlpha), 1.0);
     } else {
-        float diff = max(0.0, NdotL) * 0.9 + 0.1;
+        float diff = max(0.0, NdotL);
 
     vec3 halfVec = normalize(vLightDir + viewDir);
     vec3 specNormal = mix(geometricNormal, normal, roughness);
@@ -369,10 +369,10 @@ void main() {
         specular *= (1.0 + glint * 0.6);
 
         vec3 lit = dayColor * vLightColor * diff + specular * max(NdotL, 0.0);
-        vec3 ambient = dayColor * uAmbientColor * 1.0;
+        vec3 ambient = dayColor * uAmbientColor * 0.2;
 
         vec3 color = mix(ambient, lit, diff);
-        color = mix(color, nightColor, smoothstep(-0.1, -0.3, NdotL));
+        color = color + nightColor * smoothstep(-0.1, -0.3, NdotL) * (1.0 - diff);
 
         if(vCloudPage > -0.5) {
             vec2 cloudUV = rotateUV(texCoord, uTime * 0.02);

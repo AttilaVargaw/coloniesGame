@@ -182,7 +182,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 ? vec3.normalize(vec3.create(), lightDirRaw)
                 : vec3.fromValues(0, 1, 0)
 
-            const attenuation = lightDirLength / 15000//1.0 / (1.0 + lightDirLength ** 2) 
+            const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
 
             const starColorComponent = starEntity.getComponent(ColorComponent)!
 

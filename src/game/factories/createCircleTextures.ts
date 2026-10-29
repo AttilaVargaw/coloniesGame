@@ -940,17 +940,17 @@ export function createNightTexture(baseColor: string, archetype: PlanetArchetype
         if(normalizedLand > 0.48) {
             const cityNoise = sampleFbm3d(sx * noiseScale * 3 + 50, sy * noiseScale * 3 + 50, sz * noiseScale * 3 + 50, perm, 0.35, 3)
             const normalizedCity = (cityNoise + 1) / 2
-            if(normalizedCity > 0.55) {
+            if(normalizedCity > 0.65) {
                 const intensity = (normalizedCity - 0.55) / 0.45
                 const warmth = Math.random()
                 if(warmth > 0.5) {
-                    r = lerp(r, 255, intensity * 0.9)
-                    g = lerp(g, 200, intensity * 0.9)
-                    b = lerp(b, 100, intensity * 0.9)
+                    r = lerp(r, 255, intensity * 0.7)
+                    g = lerp(g, 200, intensity * 0.7)
+                    b = lerp(b, 100, intensity * 0.7)
                 } else {
-                    r = lerp(r, 255, intensity * 0.9)
-                    g = lerp(g, 240, intensity * 0.9)
-                    b = lerp(b, 220, intensity * 0.9)
+                    r = lerp(r, 255, intensity * 0.7)
+                    g = lerp(g, 240, intensity * 0.7)
+                    b = lerp(b, 220, intensity * 0.7)
                 }
             }
         }
