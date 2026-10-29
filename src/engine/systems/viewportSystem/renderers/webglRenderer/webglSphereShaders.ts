@@ -306,14 +306,14 @@ void main() {
 
         if(vCloudPage > -0.5) {
             float cloudAlpha = texture(uCloudTexture, texCoord).a;
-            // Cloud shadows darken the surface beneath thick clouds
-            float cloudShadow = clamp(cloudAlpha * 0.5, 0.0, 0.5);
+            // Cloud shadows darken the surface beneath thick clouds (day only)
+            float cloudShadow = clamp(cloudAlpha * 0.5 * diff, 0.0, 0.5);
             color *= (1.0 - cloudShadow);
             float cloudLight = smoothstep(-0.1, 0.2, NdotL);
             vec3 cloudColor = mix(ambient, lit, cloudLight);
             // Clouds are brighter than the surface: blend toward white based on illumination
             cloudColor = mix(cloudColor, vec3(1.0), cloudLight * 0.6);
-            color = mix(color, cloudColor, cloudAlpha * 1.5 * max(diff, 0.15));
+            color = mix(color, cloudColor, cloudAlpha * 1.5 * diff);
         }
 
         if(uHdrMode < 0.5) {
