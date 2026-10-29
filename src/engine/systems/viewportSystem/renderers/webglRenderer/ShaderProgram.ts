@@ -25,13 +25,10 @@ export interface ShaderProgramUniforms {
     roughness: WebGLUniformLocation | null;
     cloudTexture: WebGLUniformLocation | null;
     normalMap: WebGLUniformLocation | null;
-    paletteColor: WebGLUniformLocation | null;
     tintColor: WebGLUniformLocation | null;
     tintAlpha: WebGLUniformLocation | null;
     time: WebGLUniformLocation | null;
-    bloomBrightness: WebGLUniformLocation | null;
-    bloomThreshold: WebGLUniformLocation | null;
-    bloomThresholdStars: WebGLUniformLocation | null;
+    hdrMode: WebGLUniformLocation | null;
     [key: string]: WebGLUniformLocation | null;
 }
 

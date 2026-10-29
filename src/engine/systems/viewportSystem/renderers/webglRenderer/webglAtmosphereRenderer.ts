@@ -340,6 +340,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
 
     removeFromEngine(): this {
         if(this.gl) {
+            if(this.shader) this.gl.deleteProgram(this.shader.program)
             if(this.sphereVao) this.gl.deleteBuffer(this.sphereVao)
             if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
             if(this.instanceBuffer) this.gl.deleteBuffer(this.instanceBuffer)

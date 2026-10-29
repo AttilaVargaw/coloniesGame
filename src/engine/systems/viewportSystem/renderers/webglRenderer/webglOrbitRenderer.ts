@@ -189,6 +189,7 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
 
     removeFromEngine(): this {
         if(this.gl) {
+            if(this.shader) this.gl.deleteProgram(this.shader.program)
             if(this.vertexBuffer) {
                 this.gl.deleteBuffer(this.vertexBuffer)
                 this.vertexBuffer = null

@@ -1,4 +1,5 @@
-import { compileShader } from "./webglShaders";
+import { buildShaderProgram } from "./webglSphereShaders"
+import type { ShaderProgram } from "./ShaderProgram"
 
 export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 aPosition;
@@ -71,67 +72,50 @@ void main() {
     fragColor = vec4(lit, texColor.a * vColor.a);
 }`;
 
-export interface RectShaderProgram {
-    program: WebGLProgram;
-    attribs: {
-        position: number;
-        texCoord: number;
-        instanceTranslation: number;
-        instanceScale: number;
-        instanceRotation: number;
-        instanceTexOffset: number;
-        instanceTexScale: number;
-        instanceColor: number;
-        instanceTintColor: number;
-        instanceTintAlpha: number;
-        instanceLightDir: number;
-        instanceLightColor: number;
-    };
-    uniforms: {
-        projection: WebGLUniformLocation | null;
-        texture: WebGLUniformLocation | null;
-        ambientColor: WebGLUniformLocation | null;
-    };
+interface RectAttribs {
+    position: number;
+    texCoord: number;
+    instanceTranslation: number;
+    instanceScale: number;
+    instanceRotation: number;
+    instanceTexOffset: number;
+    instanceTexScale: number;
+    instanceColor: number;
+    instanceTintColor: number;
+    instanceTintAlpha: number;
+    instanceLightDir: number;
+    instanceLightColor: number;
+    [key: string]: number;
 }
 
+interface RectUniforms {
+    projection: WebGLUniformLocation | null;
+    texture: WebGLUniformLocation | null;
+    ambientColor: WebGLUniformLocation | null;
+    [key: string]: WebGLUniformLocation | null;
+}
+
+export type RectShaderProgram = ShaderProgram<RectAttribs, RectUniforms>
+
+export type { RectAttribs, RectUniforms }
+
 export function createRectShaderProgram(gl: WebGL2RenderingContext): RectShaderProgram {
-    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE);
-    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE);
-
-    const program = gl.createProgram()!;
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        const info = gl.getProgramInfoLog(program);
-        gl.deleteProgram(program);
-        throw new Error(`Shader program link error: ${info}`);
-    }
-
-    gl.deleteShader(vertexShader);
-    gl.deleteShader(fragmentShader);
-
-    const attribs = {
-        position: gl.getAttribLocation(program, "aPosition"),
-        texCoord: gl.getAttribLocation(program, "aTexCoord"),
-        instanceTranslation: gl.getAttribLocation(program, "aInstanceTranslation"),
-        instanceScale: gl.getAttribLocation(program, "aInstanceScale"),
-        instanceRotation: gl.getAttribLocation(program, "aInstanceRotation"),
-        instanceTexOffset: gl.getAttribLocation(program, "aInstanceTexOffset"),
-        instanceTexScale: gl.getAttribLocation(program, "aInstanceTexScale"),
-        instanceColor: gl.getAttribLocation(program, "aInstanceColor"),
-        instanceTintColor: gl.getAttribLocation(program, "aInstanceTintColor"),
-        instanceTintAlpha: gl.getAttribLocation(program, "aInstanceTintAlpha"),
-        instanceLightDir: gl.getAttribLocation(program, "aInstanceLightDir"),
-        instanceLightColor: gl.getAttribLocation(program, "aInstanceLightColor"),
-    };
-
-    const uniforms = {
-        projection: gl.getUniformLocation(program, "uProjection"),
-        texture: gl.getUniformLocation(program, "uTexture"),
-        ambientColor: gl.getUniformLocation(program, "uAmbientColor"),
-    };
-
-    return { program, attribs, uniforms };
+    return buildShaderProgram<RectAttribs, RectUniforms>(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE, [
+        ["position", "aPosition"],
+        ["texCoord", "aTexCoord"],
+        ["instanceTranslation", "aInstanceTranslation"],
+        ["instanceScale", "aInstanceScale"],
+        ["instanceRotation", "aInstanceRotation"],
+        ["instanceTexOffset", "aInstanceTexOffset"],
+        ["instanceTexScale", "aInstanceTexScale"],
+        ["instanceColor", "aInstanceColor"],
+        ["instanceTintColor", "aInstanceTintColor"],
+        ["instanceTintAlpha", "aInstanceTintAlpha"],
+        ["instanceLightDir", "aInstanceLightDir"],
+        ["instanceLightColor", "aInstanceLightColor"],
+    ], [
+        ["projection", "uProjection"],
+        ["texture", "uTexture"],
+        ["ambientColor", "uAmbientColor"],
+    ])
 }

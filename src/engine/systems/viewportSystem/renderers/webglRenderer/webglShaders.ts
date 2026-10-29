@@ -36,12 +36,9 @@ export function createShaderProgram(gl: WebGL2RenderingContext): ShaderProgram {
         ["roughness", "uRoughness"],
         ["cloudTexture", "uCloudTexture"],
         ["normalMap", "uNormalMap"],
-        ["paletteColor", "uPaletteColor"],
         ["tintColor", "uTintColor"],
         ["tintAlpha", "uTintAlpha"],
         ["time", "uTime"],
-        ["bloomBrightness", "uBloomBrightness"],
-        ["bloomThreshold", "uBloomThreshold"],
         ["hdrMode", "uHdrMode"],
     ])
 }

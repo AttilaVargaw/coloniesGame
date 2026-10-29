@@ -290,6 +290,7 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
 
     removeFromEngine(): this {
         if(this.gl) {
+            if(this.shader) this.gl.deleteProgram(this.shader.program)
             if(this.quadBuffer) {
                 this.gl.deleteBuffer(this.quadBuffer)
                 this.quadBuffer = null

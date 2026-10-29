@@ -67,6 +67,7 @@ export class WebglRenderManager {
 
         const gl = this.engine?.getCanvas("webgl2")?.getContext("webgl2")
         if(gl) {
+            if(this.toneMapBloomShader) gl.deleteProgram(this.toneMapBloomShader.program)
             if(this.hdrFramebuffer) gl.deleteFramebuffer(this.hdrFramebuffer)
             if(this.hdrTexture) gl.deleteTexture(this.hdrTexture)
             if(this.hdrDepthBuffer) gl.deleteRenderbuffer(this.hdrDepthBuffer)

@@ -1,6 +1,6 @@
 import { createSphereMesh } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
-import { createBlurShaderProgram, createBloomShaderProgram } from "./webglSphereShaders"
+import { createBlurShaderProgram, createExtractBloomShaderProgram, type BlurAttribs, type BlurUniforms } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
@@ -71,7 +71,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private _lastShowCheckerPattern = false
     private bloomFramebuffer: WebGLFramebuffer | null = null
     private bloomTexture: WebGLTexture | null = null
-    private bloomShader: ShaderProgram | null = null
     private extractBloomShader: ShaderProgram | null = null
     private bloomWidth = 0
     private bloomHeight = 0
@@ -79,7 +78,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private blurTextureA: WebGLTexture | null = null
     private blurFramebufferB: WebGLFramebuffer | null = null
     private blurTextureB: WebGLTexture | null = null
-    private blurShader: ShaderProgram<any, any> | null = null
+    private blurShader: ShaderProgram<BlurAttribs, BlurUniforms> | null = null
     private quadVao: WebGLBuffer | null = null
     private quadIndexBuffer: WebGLBuffer | null = null
     private quadIndexCount = 0
@@ -367,9 +366,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform3f(shader.uniforms.tintColor, 1, 1, 1)
         gl.uniform1f(shader.uniforms.tintAlpha, 0)
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
-        gl.uniform1f(shader.uniforms.bloomBrightness, this.engine?.getDebugManager()?.bloomSettings?.brightness ?? 1.0)
-        gl.uniform1f(shader.uniforms.bloomThreshold, this.engine?.getDebugManager()?.bloomSettings?.threshold ?? 0.3)
-        gl.uniform1f(shader.uniforms.bloomThresholdStars, this.engine?.getDebugManager()?.bloomSettings?.thresholdStars ?? 0.1)
         gl.uniform1f(shader.uniforms.hdrMode, this.hdrEnabled ? 1.0 : 0.0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
@@ -751,8 +747,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const gl = this.initContext()
 
         this.shader = createShaderProgram(gl)
-        this.bloomShader = createBloomShaderProgram(gl)
-        this.extractBloomShader = createBloomShaderProgram(gl)
+        this.extractBloomShader = createExtractBloomShaderProgram(gl)
         this.blurShader = createBlurShaderProgram(gl)
 
         this.createBloomFramebuffer(gl)
@@ -877,6 +872,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
     removeFromEngine(): this {
         if(this.gl) {
+            if(this.shader) this.gl.deleteProgram(this.shader.program)
+            if(this.extractBloomShader) this.gl.deleteProgram(this.extractBloomShader.program)
+            if(this.blurShader) this.gl.deleteProgram(this.blurShader.program)
             if(this.sphereVao) this.gl.deleteBuffer(this.sphereVao)
             if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
             if(this.bloomFramebuffer) this.gl.deleteFramebuffer(this.bloomFramebuffer)

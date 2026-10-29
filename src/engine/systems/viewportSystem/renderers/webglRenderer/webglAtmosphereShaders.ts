@@ -1,3 +1,6 @@
+import { buildShaderProgram } from "./webglSphereShaders"
+import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
+
 export const ATMOSPHERE_VERTEX_SHADER_SOURCE = `#version 300 es
 in vec3 aPosition;
 in vec3 aNormal;
@@ -132,8 +135,6 @@ void main() {
     }
 }`;
 
-import { buildShaderProgram } from "./webglSphereShaders"
-import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
 
 export interface AtmosphereShaderAttribs extends ShaderProgramAttribs {
     instanceAtmosParams: number;
