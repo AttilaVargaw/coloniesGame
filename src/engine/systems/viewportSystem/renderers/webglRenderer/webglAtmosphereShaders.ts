@@ -1,5 +1,6 @@
 import { buildShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
+import { PI } from "./common";
 
 export const ATMOSPHERE_VERTEX_SHADER_SOURCE = `#version 300 es
 in vec3 aPosition;
@@ -37,7 +38,7 @@ void main() {
 export const ATMOSPHERE_FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
-#define PI 3.14159265359
+${PI}
 
 in vec3 vNormal;
 in vec3 vLightDir;

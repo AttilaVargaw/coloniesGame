@@ -1,5 +1,6 @@
 import { compileShader } from "./webglShaders"
 import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
+import { PI } from "./common";
 
 export const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec3 aPosition;
@@ -33,7 +34,7 @@ out vec2 vTexScale;
 out float vCloudPage;
 out float vRotationAngle;
 
-#define PI 3.14159265359
+${PI}
 
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
@@ -120,10 +121,10 @@ export interface BlurUniforms {
     [key: string]: WebGLUniformLocation | null;
 }
 
-export const FULLSCREEN_QUAD_ATTRIBS: Array<[string, string]> = [
+export const FULLSCREEN_QUAD_ATTRIBS: [string, string][] = [
     ["position", "aPosition"],
     ["texCoord", "aTexCoord"],
-];
+] as const;
 
 export function buildShaderProgram<
     A extends Record<string, number> = ShaderProgramAttribs,
@@ -215,7 +216,7 @@ export function createToneMapBloomShaderProgram(gl: WebGL2RenderingContext): Sha
 export const FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
-#define PI 3.14159265359
+${PI}
 
 in vec3 vNormal;
 in vec3 vLightDir;
