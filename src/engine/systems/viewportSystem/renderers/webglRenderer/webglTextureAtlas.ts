@@ -1,6 +1,6 @@
 const ATLAS_SIZE = 1024
 const CELL_SIZE = 128
-const BORDER = 1
+const BORDER = 4
 
 import { TextureSource } from "@/engine/components/textureComponent"
 import { getPlatform } from "@/engine/lib/platform"

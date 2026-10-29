@@ -237,6 +237,16 @@ const populationRatio = 0.05
 const gasGiants = new Set(["jupiter", "saturn", "uranus", "neptune"])
 const hasAtmosphere = new Set(["earth", "kobol", ...gasGiants])
 
+function createBlackNightCanvas(): HTMLCanvasElement {
+    const canvas = document.createElement("canvas")
+    canvas.width = 1
+    canvas.height = 1
+    const ctx = canvas.getContext("2d")!
+    ctx.fillStyle = "#000000"
+    ctx.fillRect(0, 0, 1, 1)
+    return canvas
+}
+
 function atmosphereForArchetype(
     archetype: PlanetArchetype,
     color: string,
@@ -307,7 +317,7 @@ export async function createBody({
             ])
 
             const [nightBitmap, cloudBitmap] = await Promise.all([
-                population !== undefined ? await pool.generate("night", marker.color, archetype, name) : undefined,
+                population !== undefined ? await pool.generate("night", marker.color, archetype, name) : createBlackNightCanvas(),
                 population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
             ])
 

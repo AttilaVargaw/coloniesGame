@@ -340,7 +340,7 @@ void main() {
     float NdotV = abs(dot(normal, viewDir));
 
     vec3 dayColor = texture(uTexture, texCoord).rgb;
-    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb * 0.4;
+    vec3 nightColor = texture(uNightTexture, nightTexCoord).rgb;
     float roughness = texture(uRoughness, texCoord).r;
 
     if(vEmissive > 0.5) {
