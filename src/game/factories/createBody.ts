@@ -20,6 +20,7 @@ import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
 import { PathComponent } from "../components/pathComponent"
 import { JumpNodeComponent } from "../components/jumpGraph"
+import { RingComponent } from "@/engine/components/ringComponent"
 import { IndustryComponent, SettlementType } from "../components/industryComponent"
 import type { IndustrialSectors } from "../components/Factories"
 import { BuildableComponent } from "../components/buildableComponent"
@@ -88,7 +89,7 @@ function createInteractionComponents(
     clickSquare: { width: number; height: number },
     engine: Engine,
     body: Entity,
-    blueprint?: BodyBlueprint,
+    starterIndustries?: Partial<Record<keyof IndustrialSectors, number>>,
     populationRatioOverride?: number,
     occupationStarterRatioOverride?: Partial<Record<keyof Population, number>>
 ): EntityComponent[] {
@@ -106,8 +107,8 @@ function createInteractionComponents(
 
     if(population !== undefined) {
         const starterSectors = createStarterIndustry(population * effectiveRatio);
-        if(blueprint?.starterIndustries) {
-            for(const key of Object.keys(blueprint.starterIndustries) as (keyof IndustrialSectors)[]) {
+        if(starterIndustries) {
+            for(const key of Object.keys(starterIndustries) as (keyof IndustrialSectors)[]) {
                 starterSectors.add(key);
             }
         }
@@ -195,16 +196,23 @@ function createVessels(
     }
 }
 
-function createRings(
+async function createRings(
     rings: NonNullable<BodyBlueprint["rings"]>,
     body: Entity,
     engine: Engine
-): void {
-    for(const { color, outerRadius } of rings) {
+): Promise<void> {
+    const pool = getTextureWorkerPool()
+
+    for(const { innerRadius, outerRadius, color } of rings) {
+        const bitmap = await pool.generate("ring", color, "saturn", body.id)
+
         const ringEntity = createEntity()
-            .addComponent(new PositionComponent(0, 0))
-            .addComponent(new RadiusComponent(outerRadius))
-            .addComponent(new ColorComponent("", color))
+        ringEntity.addComponent(new PositionComponent(0, 0))
+        ringEntity.addComponent(new RadiusComponent(outerRadius))
+        ringEntity.addComponent(new RingComponent(ringEntity, innerRadius, outerRadius, color))
+        ringEntity.addComponent(new ColorComponent("", color))
+        ringEntity.addComponent(new TextureComponent({ day: bitmap, id: `${body.id}_ring` }))
+
         engine.addEntity(ringEntity, body)
     }
 }
@@ -258,6 +266,7 @@ export async function createBody({
     rings,
     asteroidBelts,
     name,
+    starterIndustries,
     mass: explicitMass,
     buildable,
     allowedSettlementTypes,
@@ -347,10 +356,12 @@ export async function createBody({
     }
 
     const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
-    !isRoot && applyComponents(body, ...createInteractionComponents(population, clickSize, clickSquare, engine, body, { archetype, orbit, vessels, systems, marker, population, rings, asteroidBelts, name, mass: explicitMass, buildable, allowedSettlementTypes, ...(arguments[0] as any) } as any, effectivePopulationRatio, blueprintOccupationStarterRatio))
+    !isRoot && applyComponents(
+        body,
+        ...createInteractionComponents(population, clickSize, clickSquare, engine, body, starterIndustries, effectivePopulationRatio, blueprintOccupationStarterRatio))
 
     if(rings?.length) {
-        createRings(rings, body, engine)
+        await createRings(rings, body, engine)
     }
 
     if(asteroidBelts?.length) {

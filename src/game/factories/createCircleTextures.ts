@@ -355,6 +355,100 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
     return canvas
 }
 
+const ringTextureSize = 1024
+
+export function createRingTexture(baseColor: string, archetype: string = "saturn", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
+    const base = hexToRgb(baseColor)
+    const seed = seedFrom(baseColor, archetype, seedKey + "-rings")
+    const perm = buildPerm(seed)
+
+    const canvas = createCanvas(ringTextureSize, ringTextureSize)
+    const ctx = canvas.getContext("2d")!
+    ctx.clearRect(0, 0, ringTextureSize, ringTextureSize)
+
+    const imageData = ctx.createImageData(ringTextureSize, ringTextureSize)
+    const data = imageData.data
+
+    const center = ringTextureSize / 2
+    const maxRadius = ringTextureSize / 2
+
+    const iceR = 220
+    const iceG = 225
+    const iceB = 235
+    const dirtR = 160
+    const dirtG = 150
+    const dirtB = 130
+
+    for(let y = 0; y < ringTextureSize; y++) {
+        for(let x = 0; x < ringTextureSize; x++) {
+            const dx = x - center
+            const dy = y - center
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const r = dist / maxRadius
+
+            if(r > 1.0) {
+                const idx = (y * ringTextureSize + x) * 4
+                data[idx] = 0
+                data[idx + 1] = 0
+                data[idx + 2] = 0
+                data[idx + 3] = 0
+                continue
+            }
+
+            const angle = Math.atan2(dy, dx)
+            const cosA = Math.cos(angle)
+
+            // Streaks tangential to the ring, continuous across the angle branch cut
+            const streakX = (cosA + 1.0) * 30.0 + r * 2.0
+            const streakY = r * 30.0
+            const streakyNoise = sampleFbm3d(streakX, streakY, 0.0, perm, 0.5, 5)
+
+            // Radial banding / gaps (continuous in r and cosA)
+            const bandNoise = sampleFbm3d(r * 16.0, (cosA + 1.0) * 2.0, 0.0, perm, 0.4, 4)
+
+            let band
+            if(archetype === "saturn") {
+                band = 0.5
+                    + Math.sin(r * 20.0 + cosA * 0.5) * 0.15
+                    + Math.cos(r * 40.0) * 0.08
+                    + streakyNoise * 0.25
+                    + bandNoise * 0.1
+            } else {
+                band = 0.5 + streakyNoise * 0.3 + bandNoise * 0.15
+            }
+
+            // Cassini-style gap
+            const cassiniGap = Math.abs(r - 0.62) < 0.018
+            const innerFade = r < 0.15 ? r / 0.15 : 1.0
+            const outerFade = r > 0.88 ? (1.0 - r) / 0.12 : 1.0
+
+            let brightness = band * innerFade * outerFade
+
+            if(cassiniGap) {
+                brightness *= 0.15
+            }
+
+            brightness = Math.pow(brightness, 1.2)
+
+            // Ice streaks with dirt variation
+            const mix = clamp(bandNoise * 0.5 + 0.5, 0, 1)
+            const rgbR = clamp(Math.round(lerp(dirtR, iceR, mix * brightness)), 0, 255)
+            const rgbG = clamp(Math.round(lerp(dirtG, iceG, mix * brightness)), 0, 255)
+            const rgbB = clamp(Math.round(lerp(dirtB, iceB, mix * brightness)), 0, 255)
+
+            const idx = (y * ringTextureSize + x) * 4
+            data[idx] = rgbR
+            data[idx + 1] = rgbG
+            data[idx + 2] = rgbB
+            data[idx + 3] = clamp(Math.round(brightness * 255), 0, 255)
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas
+}
+
 function createEarthLikeTexture(
     baseColor: string,
     archetype: PlanetArchetype,
@@ -554,9 +648,9 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
         const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
 
         const idx = (y * textureSize + x) * 4
-        data[idx] = clamp(Math.round(lerp(r, stormRgb.r, stormMask * 0.6)), 0, 255)
-        data[idx + 1] = clamp(Math.round(lerp(g, stormRgb.g, stormMask * 0.6)), 0, 255)
-        data[idx + 2] = clamp(Math.round(lerp(b, stormRgb.b, stormMask * 0.6)), 0, 255)
+        data[idx] = clamp(Math.round(r), 0, 255)
+        data[idx + 1] = clamp(Math.round(g), 0, 255)
+        data[idx + 2] = clamp(Math.round(b), 0, 255)
         data[idx + 3] = 255
     })
 

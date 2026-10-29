@@ -4,6 +4,7 @@ import { WebGLRectRenderer } from "./webglRectRenderer";
 import { WebGLSphereRenderer } from "./webglSphereRenderer";
 import { WebGLAtmosphereRenderer } from "./webglAtmosphereRenderer";
 import { WebGLOrbitRenderer } from "./webglOrbitRenderer";
+import { WebGLDiskRenderer } from "./webglDiskRenderer";
 import { createToneMapBloomShaderProgram } from "./webglSphereShaders";
 
 export class WebglRenderManager {
@@ -11,6 +12,7 @@ export class WebglRenderManager {
     private readonly rectRenderer: WebGLRectRenderer
     private readonly atmosphereRenderer: WebGLAtmosphereRenderer
     private readonly orbitRenderer: WebGLOrbitRenderer
+    private readonly diskRenderer: WebGLDiskRenderer
     private engine: Engine | null = null
 
     private hdrFramebuffer: WebGLFramebuffer | null = null
@@ -29,6 +31,7 @@ export class WebglRenderManager {
         this.rectRenderer = new WebGLRectRenderer(this.viewport)
         this.atmosphereRenderer = new WebGLAtmosphereRenderer(this.viewport)
         this.orbitRenderer = new WebGLOrbitRenderer(this.viewport)
+        this.diskRenderer = new WebGLDiskRenderer(this.viewport)
     }
 
     addToEngine(engine: Engine) {
@@ -36,6 +39,7 @@ export class WebglRenderManager {
         this.rectRenderer.addToEngine(engine).init()
         this.atmosphereRenderer.addToEngine(engine).init()
         this.orbitRenderer.addToEngine(engine).init()
+        this.diskRenderer.addToEngine(engine).init()
 
         this.engine = engine
 
@@ -59,6 +63,7 @@ export class WebglRenderManager {
         this.rectRenderer.removeFromEngine()
         this.atmosphereRenderer.removeFromEngine()
         this.orbitRenderer.removeFromEngine()
+        this.diskRenderer.removeFromEngine()
 
         const gl = this.engine?.getCanvas("webgl2")?.getContext("webgl2")
         if(gl) {
@@ -121,6 +126,7 @@ export class WebglRenderManager {
         this.rectRenderer.beginFrame()
         this.atmosphereRenderer.beginFrame()
         this.orbitRenderer.beginFrame()
+        this.diskRenderer.beginFrame()
         this.projectNodes()
 
         this.orbitRenderer.drawNodes()
@@ -131,6 +137,7 @@ export class WebglRenderManager {
             this.rectRenderer.drawNodes()
             this.sphereRenderer.drawNodes()
             this.atmosphereRenderer.drawNodes()
+            this.diskRenderer.drawNodes()
 
             // Combined tone-map + bloom composite: single fullscreen quad
             // reads HDR texture + blurred bloom, applies ACES + gamma, adds bloom.
@@ -142,6 +149,7 @@ export class WebglRenderManager {
             this.rectRenderer.drawNodes()
             this.sphereRenderer.drawNodes()
             this.atmosphereRenderer.drawNodes()
+            this.diskRenderer.drawNodes()
         }
 
         const { cssHeight, cssWidth } = this.viewport.camera!
@@ -258,5 +266,6 @@ export class WebglRenderManager {
         this.rectRenderer.projectNodes()
         this.atmosphereRenderer.projectNodes()
         this.orbitRenderer.projectNodes()
+        this.diskRenderer.projectNodes()
     }
 }

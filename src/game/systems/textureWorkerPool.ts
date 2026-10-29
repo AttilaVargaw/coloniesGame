@@ -2,7 +2,7 @@ import { getCachedTexture, setCachedTexture } from "../factories/textureCache";
 
 export interface TextureWorkerMessage {
     type: "texture"
-    textureType: "planet" | "star" | "normal" | "roughness" | "cloud" | "night"
+    textureType: "planet" | "star" | "normal" | "roughness" | "cloud" | "night" | "ring"
     baseColor: string
     archetype?: string
     seedKey?: string

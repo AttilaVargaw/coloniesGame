@@ -1,7 +1,7 @@
-import { createPlanetTexture, createStarTexture, createNormalTexture, createRoughnessTexture, createCloudTexture, createNightTexture } from "../factories/createCircleTextures"
+import { createPlanetTexture, createStarTexture, createNormalTexture, createRoughnessTexture, createCloudTexture, createNightTexture, createRingTexture } from "../factories/createCircleTextures"
 import { PlanetArchetype } from "../factories/helpers"
 
-type TextureType = "planet" | "star" | "normal" | "roughness" | "cloud" | "night"
+type TextureType = "planet" | "star" | "normal" | "roughness" | "cloud" | "night" | "ring"
 
 interface TextureRequest {
     type: "texture"
@@ -33,6 +33,9 @@ self.onmessage = async ({ data: { textureType, baseColor, archetype, seedKey, ha
             break
         case "night":
             canvas = createNightTexture(baseColor, archetype, seedKey)
+            break
+        case "ring":
+            canvas = createRingTexture(baseColor, archetype, seedKey)
             break
         default:
             throw new Error(`Unknown texture type: ${textureType}`)

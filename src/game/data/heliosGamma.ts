@@ -90,9 +90,9 @@ export const heliosGamma = {
             archetype: "saturn",
             marker: { color: "#e9d46f", radius: 85, label: "Ophion" },
             orbit: { radius: 7 * SOLAR_UNIT, inclination: 0.45 },
-            rings: [
-                { color: "#e9d46f", innerRadius: 30, outerRadius: 50 }
-            ]
+        rings: [
+            { color: "#e9d46f", innerRadius: 100, outerRadius: 150 }
+        ]
         }],
     }],
 } as Readonly<BodyBlueprint>
