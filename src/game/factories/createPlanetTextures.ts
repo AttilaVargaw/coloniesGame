@@ -46,6 +46,7 @@ const PALETTES = {
     uranus: { land: "#7ec8c8", ocean: "#5aa8a8", clouds: "#b8e8e8", poles: "#d8f4f4" },
     neptune: { land: "#3a6cb0", ocean: "#1e4a80", clouds: "#6090d0", poles: "#c0d8f8" },
     luna: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
+    asteroid: { land: "#8a8a8a", ocean: "#6e6e6e", clouds: "#a0a0a0", poles: "#c8c8c8" },
 } as Readonly<Record<PlanetArchetype, Palette>>
 
 const textureSize = 512

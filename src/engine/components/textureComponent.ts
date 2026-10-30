@@ -15,6 +15,7 @@ export type TextureComponentOptions = {
     minimumScreenSize?: number;
     animationSpeed?: number;
     id?: string;
+    meshIndex?: number;
 }
 
 export class TextureComponent extends EntityComponent {
@@ -30,6 +31,7 @@ export class TextureComponent extends EntityComponent {
     minimumScreenSize?: number;
     animationSpeed?: number;
     id?: string;
+    meshIndex?: number;
 
     constructor(options: TextureComponentOptions = {}) {
         super();
@@ -45,6 +47,7 @@ export class TextureComponent extends EntityComponent {
         this.minimumScreenSize = options.minimumScreenSize;
         this.animationSpeed = options.animationSpeed;
         this.id = options.id;
+        this.meshIndex = options.meshIndex;
     }
 
     dispose(): void {

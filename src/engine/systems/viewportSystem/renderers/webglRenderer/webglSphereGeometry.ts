@@ -4,9 +4,34 @@ export interface SphereMesh {
     indices: Uint16Array | Uint32Array
 }
 
+export interface AsteroidMesh extends SphereMesh {
+    meshIndex: number
+}
+
 function normalize(x: number, y: number, z: number) {
     const len = Math.sqrt(x * x + y * y + z * z)
     return [x / len, y / len, z / len]
+}
+
+function hash33(x: number, y: number, z: number): number {
+    let h = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791)
+    h = (h ^ (h >>> 13)) * 1274126177 >>> 0
+    h = (h ^ (h >>> 16)) >>> 0
+    return (h / 4294967296) * 2 - 1
+}
+
+function seededFbm3d(x: number, y: number, z: number, seed: number, octaves = 4): number {
+    let value = 0
+    let amplitude = 1
+    let frequency = 1
+    let maxValue = 0
+    for(let i = 0; i < octaves; i++) {
+        value += hash33(x * frequency + seed * 1000, y * frequency + seed * 2000, z * frequency + seed * 3000) * amplitude
+        maxValue += amplitude
+        amplitude *= 0.5
+        frequency *= 2
+    }
+    return value / maxValue
 }
 
 function subdivide(
@@ -120,4 +145,47 @@ export function createSphereMesh(subdivisions: number): SphereMesh {
         normals: new Float32Array(normals),
         indices: finalIndices.length > 65535 ? new Uint32Array(finalIndices) : new Uint16Array(finalIndices),
     }
+}
+
+export function createAsteroidMesh(seed: number, subdivisions: number = 3, lumpiness = 0.18): AsteroidMesh {
+    const base = createSphereMesh(subdivisions)
+    const vertexCount = base.positions.length / 3
+
+    const positions = new Float32Array(base.positions.length)
+    const normals = new Float32Array(base.positions.length)
+
+    for(let i = 0; i < vertexCount; i++) {
+        const baseIdx = i * 3
+        const x = base.positions[baseIdx]
+        const y = base.positions[baseIdx + 1]
+        const z = base.positions[baseIdx + 2]
+
+        const n = seededFbm3d(x * 4.0 + seed * 7.0, y * 4.0 + seed * 13.0, z * 4.0 + seed * 19.0, seed, 3)
+        const r = 1.0 + lumpiness * n
+
+        positions[baseIdx] = x * r
+        positions[baseIdx + 1] = y * r
+        positions[baseIdx + 2] = z * r
+
+        // Recompute normal from distorted position for correct lighting
+        const len = Math.sqrt(x * x + y * y + z * z)
+        normals[baseIdx] = x / len
+        normals[baseIdx + 1] = y / len
+        normals[baseIdx + 2] = z / len
+    }
+
+    return {
+        positions,
+        normals,
+        indices: base.indices,
+        meshIndex: seed,
+    }
+}
+
+export function createAsteroidMeshPool(count: number, subdivisions: number = 3): AsteroidMesh[] {
+    const meshes: AsteroidMesh[] = []
+    for(let i = 0; i < count; i++) {
+        meshes.push(createAsteroidMesh(i + 1, subdivisions))
+    }
+    return meshes
 }

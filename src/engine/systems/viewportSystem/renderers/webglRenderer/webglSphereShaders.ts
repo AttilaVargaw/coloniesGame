@@ -273,7 +273,7 @@ void main() {
             // brightest core exceeds 1.0 and blooms, but keep most of the
             // disk below ~1.0 so ACES tone mapping preserves surface detail
             // (granulation + sunspots) instead of crushing it to white.
-            color *= 4d.0;
+            color *= 4.0;
         } else {
             color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));

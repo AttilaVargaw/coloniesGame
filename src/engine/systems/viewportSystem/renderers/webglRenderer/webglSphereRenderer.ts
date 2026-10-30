@@ -1,4 +1,4 @@
-import { createSphereMesh } from "./webglSphereGeometry"
+import { createSphereMesh, createAsteroidMeshPool } from "./webglSphereGeometry"
 import { createShaderProgram } from "./webglShaders"
 import { createBlurShaderProgram, createExtractBloomShaderProgram, type BlurAttribs, type BlurUniforms } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
@@ -29,8 +29,9 @@ type Group = {
     normalPage: number;
     paletteR: number;
     paletteG: number;
-    paletteB: number
-    page?: number
+    paletteB: number;
+    page?: number;
+    meshIndex: number;
 }
 
 export class WebGLSphereNode extends RenderableNode {
@@ -51,10 +52,12 @@ export class WebGLSphereNode extends RenderableNode {
 
 export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
     private shader: ShaderProgram | null = null
-    private sphereVao: WebGLBuffer | null = null
-    private sphereIndexBuffer: WebGLBuffer | null = null
-    private sphereIndexCount = 0
-    private sphereIndexType = 0
+    private sphereMeshData: Array<{
+        vertexBuffer: WebGLBuffer
+        indexBuffer: WebGLBuffer
+        indexCount: number
+        indexType: number
+    }> = []
     private atlas!: WebGLTextureAtlas
     private nightAtlas!: WebGLTextureAtlas
     private roughnessAtlas!: WebGLTextureAtlas
@@ -239,6 +242,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 roughnessPage: roughnessAtlasEntry?.page ?? 0,
                 cloudPage,
                 normalPage,
+                meshIndex: node.texture.meshIndex ?? 0,
                 paletteR: paletteRgb.r / 255,
                 paletteG: paletteRgb.g / 255,
                 paletteB: paletteRgb.b / 255
@@ -263,7 +267,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         const groups = this.groupsMap
         groups.clear()
         for(const inst of this.pendingInstances) {
-            const key = `${inst.page}:${inst.nightPage}:${inst.roughnessPage}:${inst.cloudPage}:${inst.normalPage}`
+            const key = `${inst.meshIndex}:${inst.page}:${inst.nightPage}:${inst.roughnessPage}:${inst.cloudPage}:${inst.normalPage}`
             let group = groups.get(key)
             if(!group) {
                 group = []
@@ -379,15 +383,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.uniform1f(shader.uniforms.time, performance.now() / 1000.0)
         gl.uniform1f(shader.uniforms.hdrMode, this.hdrEnabled ? 1.0 : 0.0)
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.sphereVao)
-        const stride = 6 * 4
-        gl.enableVertexAttribArray(shader.attribs.position)
-        gl.vertexAttribPointer(shader.attribs.position, 3, gl.FLOAT, false, stride, 0)
-        gl.enableVertexAttribArray(shader.attribs.normal)
-        gl.vertexAttribPointer(shader.attribs.normal, 3, gl.FLOAT, false, stride, 3 * 4)
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
-
         if(!this.instanceBuffer) {
             this.instanceBuffer = gl.createBuffer()
         }
@@ -410,7 +405,19 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         for(const [key, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
-            const [dayPage, nightPage, roughnessPage, cloudPage, normalPage] = key.split(':').map(Number)
+            const [meshIndex, dayPage, nightPage, roughnessPage, cloudPage, normalPage] = key.split(':').map(Number)
+            const mesh = this.sphereMeshData[meshIndex]
+            if(!mesh) continue
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer)
+            const stride = 6 * 4
+            gl.enableVertexAttribArray(shader.attribs.position)
+            gl.vertexAttribPointer(shader.attribs.position, 3, gl.FLOAT, false, stride, 0)
+            gl.enableVertexAttribArray(shader.attribs.normal)
+            gl.vertexAttribPointer(shader.attribs.normal, 3, gl.FLOAT, false, stride, 3 * 4)
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer)
+
             const totalFloats = instances.length * 39
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
                 const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 39)
@@ -495,7 +502,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
                 lastNormalPage = normalPage
             }
 
-            gl.drawElementsInstanced(gl.TRIANGLES, this.sphereIndexCount, this.sphereIndexType, 0, instances.length)
+            gl.drawElementsInstanced(gl.TRIANGLES, mesh.indexCount, mesh.indexType, 0, instances.length)
         }
 
         gl.disable(gl.DEPTH_TEST)
@@ -806,31 +813,41 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const { indices, normals, positions } = createSphereMesh(4)
+        const gl = this.gl
 
-        const vertexCount = positions.length / 3
-        const interleaved = new Float32Array(vertexCount * 6)
-        for(let i = 0; i < vertexCount; i++) {
-            const base = i * 6
-            const posBase = i * 3
+        const meshes = [createSphereMesh(4), ...createAsteroidMeshPool(8, 3)]
 
-            interleaved[base + 0] = positions[posBase + 0]
-            interleaved[base + 1] = positions[posBase + 1]
-            interleaved[base + 2] = positions[posBase + 2]
-            interleaved[base + 3] = normals[posBase + 0]
-            interleaved[base + 4] = normals[posBase + 1]
-            interleaved[base + 5] = normals[posBase + 2]
+        for(const mesh of meshes) {
+            const vertexCount = mesh.positions.length / 3
+            const interleaved = new Float32Array(vertexCount * 6)
+            for(let i = 0; i < vertexCount; i++) {
+                const base = i * 6
+                const posBase = i * 3
+
+                interleaved[base + 0] = mesh.positions[posBase + 0]
+                interleaved[base + 1] = mesh.positions[posBase + 1]
+                interleaved[base + 2] = mesh.positions[posBase + 2]
+                interleaved[base + 3] = mesh.normals[posBase + 0]
+                interleaved[base + 4] = mesh.normals[posBase + 1]
+                interleaved[base + 5] = mesh.normals[posBase + 2]
+            }
+
+            const vertexBuffer = gl.createBuffer()!
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+            gl.bufferData(gl.ARRAY_BUFFER, interleaved, gl.STATIC_DRAW)
+
+            const indexBuffer = gl.createBuffer()!
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW)
+            const indexType = mesh.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
+
+            this.sphereMeshData.push({
+                vertexBuffer,
+                indexBuffer,
+                indexCount: mesh.indices.length,
+                indexType,
+            })
         }
-
-        this.sphereVao = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.sphereVao)
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, interleaved, this.gl.STATIC_DRAW)
-
-        this.sphereIndexBuffer = this.gl.createBuffer()
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.sphereIndexBuffer)
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indices, this.gl.STATIC_DRAW)
-        this.sphereIndexCount = indices.length
-        this.sphereIndexType = indices instanceof Uint32Array ? this.gl.UNSIGNED_INT : this.gl.UNSIGNED_SHORT
     }
 
     constructor(viewport: ViewportSystem) {
@@ -880,8 +897,10 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             if(this.shader) this.gl.deleteProgram(this.shader.program)
             if(this.extractBloomShader) this.gl.deleteProgram(this.extractBloomShader.program)
             if(this.blurShader) this.gl.deleteProgram(this.blurShader.program)
-            if(this.sphereVao) this.gl.deleteBuffer(this.sphereVao)
-            if(this.sphereIndexBuffer) this.gl.deleteBuffer(this.sphereIndexBuffer)
+            for(const mesh of this.sphereMeshData) {
+                if(mesh.vertexBuffer) this.gl.deleteBuffer(mesh.vertexBuffer)
+                if(mesh.indexBuffer) this.gl.deleteBuffer(mesh.indexBuffer)
+            }
             if(this.bloomFramebuffer) this.gl.deleteFramebuffer(this.bloomFramebuffer)
             if(this.bloomTexture) this.gl.deleteTexture(this.bloomTexture)
             if(this.blurFramebufferA) this.gl.deleteFramebuffer(this.blurFramebufferA)

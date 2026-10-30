@@ -24,7 +24,7 @@ export const MapCreationData = {
     systems: [{
         bodies: [{
             navigationalPoint: true,
-            archetype: "mars",
+            archetype: "asteroid",
             marker: { color: "#888", radius: navigationalBodySize, label: "Helicon", texture: asteroid1 },
             name: "Helicon",
             orbit: {
@@ -37,7 +37,7 @@ export const MapCreationData = {
     }, {
         bodies: [{
             navigationalPoint: true,
-            archetype: "mars",
+            archetype: "asteroid",
             marker: { color: "#888", radius: navigationalBodySize, label: "Cocalus", texture: asteroid2 },
             name: "Cocalus",
             color: "#888",
@@ -51,18 +51,18 @@ export const MapCreationData = {
         angle: -Math.PI / 2,
         bodies: [solarisAlpha, solarisBeta, {
             navigationalPoint: true,
-            archetype: "mars",
+            archetype: "asteroid",
             marker: { color: "#888", radius: navigationalBodySize, label: "Delium", texture: asteroid3 },
             name: "Delium",
             color: "#888",
             orbit: {
-                radius: 300,
+                radius: 400,
                 angle: Math.PI,
                 inclination: 0
             },
         }, {
                 navigationalPoint: true,
-                archetype: "mars",
+                archetype: "asteroid",
                 marker: { color: "#888", radius: navigationalBodySize, label: "Knossos", texture: asteroid4 },
                 name: "Knossos",
                 color: "#888",
@@ -119,18 +119,18 @@ export const MapCreationData = {
         bodies: [
             heliosGamma,
             heliosDelta, {
-                archetype: "mars",
+                archetype: "asteroid",
                 navigationalPoint: true,
                 marker: { color: "#888", radius: navigationalBodySize, label: "Gortyn", texture: asteroid5 },
                 name: "Gortyn",
                 radius: 20,
                 orbit: {
-                    radius: 300,
+                    radius: 400,
                     angle: Math.PI,
                     inclination: 0
                 },
             }, {
-                archetype: "mars",
+                archetype: "asteroid",
                 navigationalPoint: true,
                 marker: { color: "#888", radius: navigationalBodySize, label: "Naucratis", texture: asteroid6 },
                 name: "Naucratis",

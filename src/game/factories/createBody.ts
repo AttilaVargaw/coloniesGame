@@ -234,8 +234,9 @@ async function createAsteroidBelts(
 }
 
 const populationRatio = 0.05
-const gasGiants = new Set(["jupiter", "saturn", "uranus", "neptune"])
-const hasAtmosphere = new Set(["earth", "kobol", ...gasGiants])
+const gasGiants = new Set<PlanetArchetype>(["jupiter", "saturn", "uranus", "neptune"])
+const hasAtmosphere = new Set<PlanetArchetype>(["earth", "kobol", ...gasGiants])
+const hasClouds = new Set<PlanetArchetype>(["earth", "kobol", "venus", "uranus", "neptune"])
 
 function createBlackNightCanvas(): HTMLCanvasElement {
     const canvas = document.createElement("canvas")
@@ -318,10 +319,19 @@ export async function createBody({
 
             const [nightBitmap, cloudBitmap] = await Promise.all([
                 population !== undefined ? await pool.generate("night", marker.color, archetype, name) : createBlackNightCanvas(),
-                population !== undefined ? await pool.generate("cloud", marker.color, archetype, name) : undefined
+                hasClouds.has(archetype) ? await pool.generate("cloud", marker.color, archetype, name) : undefined
             ])
 
-            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name }))
+            let meshIndex = 0
+            if(archetype === "asteroid") {
+                let h = 0
+                for(let i = 0; i < name.length; i++) {
+                    h = ((h << 5) - h + name.charCodeAt(i)) | 0
+                }
+                meshIndex = (Math.abs(h) % 8) + 1
+            }
+
+            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name, meshIndex }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
 
             if(hasAtmosphere.has(archetype)) {

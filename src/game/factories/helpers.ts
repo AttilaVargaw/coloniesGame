@@ -20,7 +20,8 @@ export const soiRatios = {
     neptune: 3525,
     sol: 10000,
     baricenter: 1,
-    luna: 10
+    luna: 10,
+    asteroid: 50
 } as const
 
 export const massByArchetype = {
@@ -35,7 +36,8 @@ export const massByArchetype = {
     neptune: 150,
     sol: 333000,
     baricenter: 0,
-    luna: 0.012 * 1000000
+    luna: 0.012 * 1000000,
+    asteroid: 0.1
 } as const
 
 export type PlanetArchetype = keyof typeof soiRatios
