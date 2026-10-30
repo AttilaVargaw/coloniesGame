@@ -11,7 +11,7 @@ interface CameraFollowTarget {
 }
 
 const wasdButtons = new Set(["w", "a", "s", "d", "W", "A", "S", "D", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
-const allButtons = new Set(["+", "=", "-", "_", ...wasdButtons])
+const allButtons = new Set(["+", "=", "-", "_", "shift", ...wasdButtons])
 
 export class ViewportInputHandler {
     private _isDragging = false
@@ -81,10 +81,13 @@ export class ViewportInputHandler {
     private applyKeyScroll(dt: number, camera: Camera) {
         let panForward = 0
         let panRight = 0
-        if(this.heldKeys.has("w")) panForward += 1
-        if(this.heldKeys.has("s")) panForward -= 1
-        if(this.heldKeys.has("d")) panRight += 1
-        if(this.heldKeys.has("a")) panRight -= 1
+
+        const movingSpeed = this.heldKeys.has("shift") ? 2 : 1
+
+        if(this.heldKeys.has("w")) panForward += movingSpeed
+        if(this.heldKeys.has("s")) panForward -= movingSpeed
+        if(this.heldKeys.has("d")) panRight += movingSpeed
+        if(this.heldKeys.has("a")) panRight -= movingSpeed
 
         if(panForward || panRight) {
             const { rx, rz, fx, fz } = camera.viewBasis
@@ -204,19 +207,20 @@ export class ViewportInputHandler {
     }
 
     private onKeyDown = (event: KeyboardEvent) => {
-        const key = event.key
+        const key = event.key.toLowerCase()
 
         if(allButtons.has(key)) {
             if(wasdButtons.has(key)) {
                 this.cameraFollowSystem?.stopFollowing()
             }
-            this.heldKeys.add(key)
+            this.heldKeys.add(key.toLowerCase())
+
             event.preventDefault()
         }
     }
 
-    private onKeyUp = (event: KeyboardEvent) => {
-        this.heldKeys.delete(event.key)
+    private onKeyUp = ({ key }: KeyboardEvent) => {
+        this.heldKeys.delete(key.toLowerCase())
     }
 
     private onWheel = (event: WheelEvent) => {

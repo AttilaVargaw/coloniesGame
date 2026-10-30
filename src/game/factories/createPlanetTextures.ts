@@ -675,16 +675,18 @@ export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanv
         // Coarse surface structure
         const coarse = (sampleFbm3d(sx * noiseScale * 0.75 + 7, sy * noiseScale * 0.75 + 7, sz * noiseScale * 0.75 + 7, perm, 0.3, 4) + 1) / 2
         // Sunspot regions (low-frequency dark patches)
-        const spots = (sampleFbm3d(sx * noiseScale * 0.3 + 50, sy * noiseScale * 0.3 + 50, sz * noiseScale * 0.3 + 50, perm, 0.4, 3) + 1) / 2
+        const spots = (sampleFbm3d(sx * noiseScale * 1.2 + 50, sy * noiseScale * 1.2 + 50, sz * noiseScale * 1.2 + 50, perm, 0.4, 3) + 1) / 2
+        // Additional small sunspots
+        const smallSpots = (sampleFbm3d(sx * noiseScale * 3.0 + 150, sy * noiseScale * 3.0 + 150, sz * noiseScale * 3.0 + 150, perm, 0.35, 2) + 1) / 2
 
         const v = y / textureSize
         const radialFalloff = 1.0 - Math.abs(v - 0.5) * 2.0
         const sharpFalloff = Math.pow(radialFalloff, 1.6)
 
         const bright = 0.05 + fine * 0.50 + coarse * 0.15 + sharpFalloff * 0.25
-        // Sunspots darken localized regions subtly
-        const darkened = bright * (0.45 + 0.55 * spots)
-        const brightness = Math.round(clamp(darkened * 255, 0, 255))
+        // Sunspots darken localized regions
+        const spotted = bright * (0.4 + 0.6 * spots) * (0.7 + 0.3 * smallSpots)
+        const brightness = Math.round(clamp(spotted * 255, 0, 255))
 
         const r = Math.round(clamp(brightness * (base.r / 255), 0, 255))
         const g = Math.round(clamp(brightness * (base.g / 255), 0, 255))

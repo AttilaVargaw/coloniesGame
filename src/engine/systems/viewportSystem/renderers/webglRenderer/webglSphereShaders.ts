@@ -263,12 +263,17 @@ void main() {
 
     if(vEmissive > 0.5) {
         vec3 color = dayColor;
+        // Soft limb glow for stars (atmosphere/prominence extending beyond the disk)
+        vec2 localUV = (texCoord - vTexOffset) / vTexScale;
+        float dist = length(localUV - 0.5) * 2.0;
+        float limbGlow = smoothstep(1.0, 0.85, dist);
+        color *= 1.0 + limbGlow * 0.6;
         if(uHdrMode > 0.5) {
             // Stars are brighter than planets: scale into HDR range so the
             // brightest core exceeds 1.0 and blooms, but keep most of the
             // disk below ~1.0 so ACES tone mapping preserves surface detail
             // (granulation + sunspots) instead of crushing it to white.
-            color *= 7.5;
+            color *= 4d.0;
         } else {
             color = ACESFilm(color);
             color = pow(color, vec3(1.0 / 2.2));
