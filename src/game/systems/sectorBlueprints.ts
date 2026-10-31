@@ -1,10 +1,7 @@
-// import { IndustryReducerReturn, type IndustryReducer } from "./";
-// import type { IndustrialSectors } from "../components/Factories";
-import { industrialSectors, IndustrialSectors } from "../components/Factories";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 
-type FactoryBlueprint = {
+type SectorBlueprint = {
     name: string,
     goodsRequirements: Partial<Goods>,
     workerRequirement: Partial<Record<keyof Population, number>>,
@@ -61,6 +58,22 @@ function createRobotized(descOverride?: string): ["robotized", ProductionMethod]
     }]
 }
 
+function createLLM() {
+    return ["llm", {
+        desc: "Most of the manufacturing processes are handled by large language models, less humans needed",
+        goodsRequirements: {},
+        workerRequirement: {},
+        goodsProduction: {},
+        efficiencyBonus: 0,
+        capitalGoods: {},
+        capitalEfficiency: 0,
+        capitalEfficiencyDecay: 0,
+        nonEssentialGoods: new Set<keyof Goods>(),
+        optionalGoods: [],
+        prerequisites: new Set(["largeLanguageModel"])
+    }]
+}
+
 function createFullyRobotized(descOverride?: string): ["robotized", ProductionMethod] {
     return ["robotized", {
         desc: descOverride || "Very high performance equipment handled by a robotic workforce, only few human supervisors are needed",
@@ -84,7 +97,7 @@ const goodsReqHeavyVehicle = { environmentFactor: 20, paper: 10, electricity: 15
 const goodsReqSpaceShipyard = { paper: 10, environmentFactor: 20, electricity: 280, governance: 20, electronics: 10 } as const
 const usualNonEssentialGoods = ["electronics", "governance", "paper", "water", "vehicles", "electricity", "services", "environmentFactor", "retail", "itServices"] as const
 
-export const industrySectorBlueprints = new Map<keyof IndustrialSectors, FactoryBlueprint>([
+export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
     ["mine", {
         name: "mine",
         goodsRequirements: {
@@ -213,18 +226,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         efficiencyBonus: 0.01,
         capitalGoods: { electronics: 0.1, buildings: 0.1, vehicles: 0.1 },
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "ammunition", "chemicals"]),
-        productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional"
-            }],
-            ["Forest reserve", {
-
-            }],
-            ["Industrial wood plantations", {
-
-            }],
-
-        ])
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
@@ -652,32 +653,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
                 desc: "Traditional",
             }],
             createFullyRobotized("Robot assistants, instead of employing deacons, who can clean the churches and assist the priests")
-        ]),
-        secondaryProductionMethod: new Map([
-            ["ultraOrtodox", {
-                desc: "Teaching literal interpretation of the Sacred Scrolls. They are regarded as the most fundamentalist version of colonial religion as it makes people follow very strict rules in their everyday life. Because of this, they are very popular among the most conservative people"
-            }],
-            ["ultraOrtodoxWithScroll", {
-                desc: "Those news scrolls are clearly fake and heretical. This is why we have to strengthen our faith in the old ways"
-            }],
-            ["traditional", {
-                desc: "Teaching the old, most accepted, canon version of the Sacred Scrolls. They treat the stories as metaphors, rather than a literal historical events. As there is no proof about their authenticity, most people will disregard them as religious texts, nothing more"
-            }],
-            ["originalScrolls", {
-                desc: "Teaching only from the original scrolls, as they were written. As there is proof which support the stories, much more people will engage with religion"
-            }],
-            ["atheistic", {
-                desc: "There is no proof that we came from some kind of fallen paradise and who was left behind. The most reasonable explanation is that a great cataclysm destroyed our words and our ancestors rebuilt the civilization."
-            }],
-            ["atheisticWithScrolls", {
-                desc: "We had modify our word view, because we have proof that we came from Kobol, but we still believe that Lords of Kobol or the One God are not real."
-            }],
-            ["extendedScrolls", {
-                desc: "As there is proof that we came from Kobol, we can also teach the other scrolls too, even though their authenticity and precision is questionable. This way religion will become more comprehensive and engaging, as real history mixes with spirituality"
-            }],
-            ["theOne", {
-                desc: "Instead of worshipping the 12 Lords of Kobol, we can worship the One, who created the universe and leads into our planned ends, according his grand plan. He works in a mysterious way, but we can see his work in the world around us. This is the most antagonized faith in the world of men, because it's fundamentally different concept that we are all used to."
-            }],
         ])
     })],
     ["lawEnforcement", ({
@@ -754,7 +729,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         productionMethods: new Map([
             ["traditional", {
                 desc: "Traditional",
-            }], createFullyRobotized("A highly effective, AI powered automatic government")
+            }],
+
+            createFullyRobotized("A highly effective, AI powered automatic government")
         ])
     })],
     ["automotive", ({
@@ -1085,8 +1062,3 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, Factory
         ])
     }]
 ])
-
-
-// console.log([...industrialSectors].reduce((acc, [, value]) => {
-//     return acc + value.size
-// }, 0), industrySectorBlueprints.size)

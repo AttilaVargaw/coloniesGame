@@ -1,4 +1,4 @@
-import { industrySectorBlueprints } from "../systems/factoryBlueprints";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { Goods } from "../data/Goods";
 import type { IndustrialSectors } from "../components/Factories";
 

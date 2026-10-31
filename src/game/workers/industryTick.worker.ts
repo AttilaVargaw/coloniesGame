@@ -1,4 +1,4 @@
-import { industrySectorBlueprints } from "../systems/factoryBlueprints";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
@@ -39,12 +39,22 @@ const BUY_BUFFER_TICKS = 5;
 const KEEP_BUFFER_RATIO = 0.5;
 
 function processIndustry(
-    industry: IndustryTickInput,
+    {
+        entityId,
+        activeSectors,
+        goods,
+        population,
+        allowedSectors,
+        techMultipliers,
+        laborAssigned,
+        capitalStock,
+        money: startingMoney,
+        sectorGoods,
+        settlementType
+    }: IndustryTickInput,
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
-    const { entityId, activeSectors, goods, population, techMultipliers, laborAssigned, capitalStock, money: startingMoney, sectorGoods, settlementType, allowedSectors } = industry;
-
     const memory = priceMemory.get(entityId) || {};
     const prices = getPrices(goods, memory);
     priceMemory.set(entityId, memory);

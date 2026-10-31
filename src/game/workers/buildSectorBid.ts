@@ -1,4 +1,4 @@
-import { industrySectorBlueprints } from "../systems/factoryBlueprints";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import type { IndustrialSectors } from "../components/Factories";
@@ -22,6 +22,7 @@ export function buildSectorBid(
     previousProfit: number,
 ): SectorBid | null {
     const config = industrySectorBlueprints.get(name);
+
     if(!config) return null;
 
     const capitalGoods = config.capitalGoods || {};

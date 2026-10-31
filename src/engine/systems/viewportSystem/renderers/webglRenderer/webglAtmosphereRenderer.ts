@@ -105,7 +105,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
                     ? vec3.normalize(vec3.create(), lightDirRaw)
                     : vec3.fromValues(0, 1, 0)
 
-                const attenuation = (SOLAR_UNIT ** 2) / (SOLAR_UNIT ** 2 + lightDirLength ** 2)
+                const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {

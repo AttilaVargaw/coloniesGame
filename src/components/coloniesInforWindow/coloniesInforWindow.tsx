@@ -46,7 +46,7 @@ export function ColoniesInforWindow() {
     const info = currentColony?.getComponent(InfoComponent)
 
     return <Dialog modal={false} open={!!currentColony}>
-        <DialogContent className="bg-[#1c1c1c] text-white min-w-4xl" onCloseButtonClick={() => {
+        <DialogContent className="bg-[#1c1c1c] text-white min-w-6xl" onCloseButtonClick={() => {
             setCurrentColony(undefined)
             setIndustry(null)
         }}>

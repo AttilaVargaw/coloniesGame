@@ -41,7 +41,7 @@ export class ViewportInputHandler {
     private static readonly KEY_PAN_SPEED = 0.02
     private static readonly KEY_PAN_ACCELERATION = 0.3
     private static readonly MOUSE_ROTATE_SPEED = 0.008
-    private static readonly WHEEL_ZOOM_STEP = 40
+    private static readonly WHEEL_ZOOM_STEP = 20
     private static readonly EDGE_PAN_THRESHOLD = 30
     private static readonly EDGE_PAN_SPEED = 1.5
     private static readonly ROTATION_INERTIA_DECAY = 0.82
@@ -82,7 +82,7 @@ export class ViewportInputHandler {
         let panForward = 0
         let panRight = 0
 
-        const movingSpeed = this.heldKeys.has("shift") ? 2 : 1
+        const movingSpeed = this.heldKeys.has("shift") ? 3 : 1
 
         if(this.heldKeys.has("w")) panForward += movingSpeed
         if(this.heldKeys.has("s")) panForward -= movingSpeed

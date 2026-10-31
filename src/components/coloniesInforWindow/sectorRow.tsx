@@ -2,7 +2,7 @@ import { IndustrialSectors } from "@/game/components/Factories";
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Goods, basePrices } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
-import { industrySectorBlueprints } from "@/game/systems/factoryBlueprints";
+import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
 import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
