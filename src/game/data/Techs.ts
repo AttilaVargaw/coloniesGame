@@ -7,14 +7,14 @@ export type TechEffect =
     | { type: "unlock_good"; good: string };
 
 export type TechType = "archeological" | "technological" | "military" | "diplomatic";
-export type Age = "rediscovery" | "imperial" | "techRevolution" | "unification"
+export type Age = "rediscovery" | "imperial" | "techRevolution" | "unification" | "earlySpaceTravel" | "night"
 
 export type TechDefinition = {
     id: string;
     name: string;
     description?: string;
     cost: { researchPoints: number; days: number };
-    prerequisites?: Set<string>;
+    prerequisites: Set<string>;
     effects: TechEffect[];
     unlocks?: Set<keyof typeof techs>;
     adoptionModel: "logistic" | "linear" | "instant";
@@ -23,6 +23,20 @@ export type TechDefinition = {
     type: TechType,
     age: Age
 };
+
+export type TechLevel = {
+    previous: Age | null,
+    minTechs: Set<string> | null
+}
+
+export const techLevels = new Map<Age, TechLevel>([
+    ["earlySpaceTravel", { previous: null, minTechs: null }],
+    ["rediscovery", { previous: "earlySpaceTravel", minTechs: new Set([""]) }],
+    ["imperial", { previous: "rediscovery", minTechs: new Set(["automation"]) }],
+    ["techRevolution", { previous: "imperial", minTechs: new Set(["robotics"]) }],
+    ["unification", { previous: "techRevolution", minTechs: new Set(["synteticLifeformUnit"]) }],
+    ["night", { previous: "unification", minTechs: new Set([""]) }]
+])
 
 export const techs: Record<string, TechDefinition> = {
     "automation": {
@@ -52,7 +66,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 21,
         type: "technological",
-        prerequisites: new Set(["automation"]),
+        prerequisites: new Set([]),
         age: "techRevolution"
     },
     "synteticLifeformUnit": {
@@ -82,7 +96,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         type: "technological",
-        prerequisites: new Set(["microComputers"]),
+        prerequisites: new Set([]),
         age: "techRevolution"
     },
     "electronicWarfare": {
@@ -96,7 +110,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         type: "technological",
-        prerequisites: new Set(["microComputers"]),
+        prerequisites: new Set([]),
         age: "techRevolution"
     },
     "electricHacking": {
@@ -138,7 +152,7 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         type: "technological",
-        prerequisites: new Set(["electronicWarfare"]),
+        prerequisites: new Set(["electricHacking"]),
         age: "techRevolution"
     },
     "jupiterClassBattlestar": {
@@ -163,7 +177,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["carrier"]),
+        prerequisites: new Set([]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         type: "military",
@@ -219,7 +233,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["superAlloy", "jumpDrive", "ftlCom", "practicalPropulsion"]),
+        prerequisites: new Set(["smallUtilityCraft"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         type: "military",
@@ -321,6 +335,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
+        prerequisites: new Set(),
         adoptionModel: "instant",
         type: "archeological",
         age: "rediscovery",
@@ -395,7 +410,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["originalScrolls"]),
+        prerequisites: new Set(["nuclearMotors"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "artificialGravity",
@@ -424,7 +439,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["microComputers"]),
+        prerequisites: new Set([]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "neuralNetworks",
@@ -451,7 +466,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["neuralNetworks"]),
+        prerequisites: new Set(["virtualReality", "neuralNetworks"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "neuralCloneProcessor",
@@ -479,7 +494,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["neuralNetworks"]),
+        prerequisites: new Set(["neuralCloneProcessor"]),
         adoptionModel: "logistic",
         adoptionSpeed: 28,
         id: "metacognitiveProcessorUnit",
@@ -518,7 +533,7 @@ export const techs: Record<string, TechDefinition> = {
     "articlesOfColonization": {
         type: "diplomatic",
         id: "articlesOfColonization",
-        name: "Articles of Colonization and Charter of Unification",
+        name: "Articles of Colonization & Charter of Unification",
         description: "We need to design a new constitutional framework for the colonies that guarantees the rights and freedoms of every person, regardless of which colony they are from. This is an extremely daunting task because no one has ever considered it before.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
@@ -568,7 +583,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["jumpDrive"]),
+        prerequisites: new Set([]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
     },
@@ -617,6 +632,21 @@ export const techs: Record<string, TechDefinition> = {
         adoptionSpeed: 28,
         researchedText: "A simple timed warhead filled with bearings can tear apart any lightly armored target."
     },
+    "decentralization": {
+        type: "technological",
+        age: "unification",
+        id: "decentralization",
+        name: "decentralization",
+        description: "By decentralizing our computer systems, we can harden our systems against cyber attacks",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+
+        ],
+        prerequisites: new Set(["cruiser"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "By decentralizing our computer systems and putting a men between every system, we can ensure that not one system can be compromised by a single point of failure. This will make our systems more resilient to cyber attacks, at the cost of a bigger crew."
+    },
     "caws": {
         type: "technological",
         age: "imperial",
@@ -661,7 +691,22 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "These automatic turrets can fire reliably and accurately in space. We use a combination of traditional chemical propellant to make the shell moving which is further accelerated by a railgun system. This way we can fire shells at high speeds without the need for a complicated barrel."
-    }
+    },
+    "commandNavigationSystem": {
+        type: "technological",
+        age: "night",
+        id: "commandNavigationSystem",
+        name: "Command Navigation System",
+        description: "We need to maximalize the computing capabilities of our ships. By unifying the all of the computer systems of our ships we can get the maximum out of our ships.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+
+        ],
+        prerequisites: new Set(["cruiser"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "This new highly effective operating system can multiply the performance of any system of our ships. High ratio of automation can lower the crew requirements of our ships."
+    },
 } as const
 
 //@ts-ignore
@@ -685,6 +730,17 @@ export function getTech(id: string): TechDefinition | undefined {
 export function getAllTechs(): TechDefinition[] {
     return Object.values(TECHS);
 }
+
+export const techByAge = [...TECHS].map(([key, value]) => {
+    return { key, value };
+}).reduce((acc, { key, value }) => {
+    if(!acc.has(value.age)) {
+        acc.set(value.age, new Set<string>());
+    }
+    acc.get(value.age)!.add(key);
+
+    return acc;
+}, new Map<string, Set<string>>());
 
 // export function getPrerequisiteIds(techId: string): string[] {
 //     const tech = TECHS.get(techId);
