@@ -62,7 +62,7 @@ export function LawsPanel({ colony, industry }: { colony: Entity; industry: Indu
                             size="sm"
                             onClick={() => isActive ? repeal(lawId) : enact(lawId)}
                             variant={isActive ? "destructive" : "default"}
-                            disabled={!isActive && engine ? false : true}
+                            disabled={!engine}
                         >
                             {isActive ? "Repeal" : "Enact"}
                         </Button>

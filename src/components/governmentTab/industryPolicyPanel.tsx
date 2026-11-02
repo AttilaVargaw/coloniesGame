@@ -6,7 +6,7 @@ import { SelectProductionMethodCommand, AllocateBudgetCommand } from "@/game/com
 import { useGameEngine } from "@/hooks/useGameContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { SubmitEventHandler } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { SectorIcon } from "../icons/SectorIcon";
@@ -25,8 +25,12 @@ export function IndustryPolicyPanel({ colony, industry }: { colony: Entity; indu
         const { target } = event
 
         const amount = parseFloat(target.amount.value);
+        if(!amount || amount <= 0) return;
 
-        engine?.addCommand(new AllocateBudgetCommand(colony.id, target.id as keyof IndustrialSectors, amount));
+        const sectorId = target.id.replace(/^allocate-/, "") as keyof IndustrialSectors;
+
+        if(!engine) return;
+        engine.addCommand(new AllocateBudgetCommand(colony.id, sectorId, amount));
     };
 
     const methodsFor = (sector: keyof IndustrialSectors) => {

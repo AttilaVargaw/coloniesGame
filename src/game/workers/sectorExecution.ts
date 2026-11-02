@@ -82,7 +82,7 @@ export function executeSectors(
             }
         }
 
-        const budgetRatio = Math.max(bid.budgetRatio, 0.05);
+        const budgetRatio = bid.budgetRatio;
         const actualScale = Math.min(budgetRatio, marketConstraint);
 
         if(actualScale <= 0) {

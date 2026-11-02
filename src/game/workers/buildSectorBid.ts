@@ -113,8 +113,9 @@ export function buildSectorBid(
 
     // Budget ratio: how much of full operation the sector can afford.
     // Player investment + sector's own cash fund production.
+    // Clamp sectorMoney at 0 so broke sectors can't go negative budget.
     const sectorInvestment = options?.sectorInvestment ?? 0;
-    const sectorMoney = options?.sectorStartingMoney ?? 0;
+    const sectorMoney = Math.max(options?.sectorStartingMoney ?? 0, 0);
     let budgetRatio = operatingCost > 0 ? Math.min(1, (sectorMoney + sectorInvestment) / Math.max(operatingCost, 1)) : 1;
 
     // Profitability-based scaling: unprofitable sectors reduce output next tick

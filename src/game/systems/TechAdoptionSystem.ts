@@ -16,7 +16,7 @@ import type { Goods } from "../data/Goods";
 type TechAdoptionState = {
     techId: string;
     inventedAt: number;
-    model: "logistic" | "linear" | "instant";
+    model: "logistic" | "linear" | "instant";
     adoptionSpeed: number;
     currentAdoption: number;
 };

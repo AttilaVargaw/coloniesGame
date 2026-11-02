@@ -212,13 +212,14 @@ export const basePrices = {
 } satisfies ReadonlyRecord<keyof Goods, number>
 
 export const godsCategories = new Map<string, Set<keyof Goods>>([
+    ["publicServices", new Set(["governance", "healthcare", "lawEnforcement", "education", "post"])],
     ["rawMaterials", new Set(["agriculturalGoods", "wood", "oil", "ore", "tylium", "water", "electricity", "uranium", "environmentFactor"])],
     ["industrialMaterials", new Set(["buildings", "chemicals", "electronics", "lumber", "metals", "medicine", "paper", "waste", "machinery"])],
     ["consumerGoods", new Set(["consumerGoods", "luxuryFurniture", "furniture", "food", "meat", "alcoholDrinks", "clothing", "stimulantDrinks"])],
-    ["services", new Set(["services", "governance", "healthcare", "lawEnforcement", "tourism", "faith", "monetaryServices", "education", "entertainment", "itServices", "retail", "post"])],
+    ["services", new Set(["services", "tourism", "faith", "monetaryServices", "entertainment", "itServices", "retail"])],
     ["military", new Set(["ammunition", "weapons", "nuclearWeapons", "ordnance", "militaryVehicles", "defense"])],
     ["mobility", new Set(["automotiveMobility", "railroadMobility", "shipMobility", "airMobility", "vehicles", "ships", "aircraft", "railroadVehicles", "spaceTransport"])]
-])
+]) as ReadonlyMap<string, Set<keyof Goods>>;
 
 //console.log("goodsN", Object.keys(basePrices).length)
 

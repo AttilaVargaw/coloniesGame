@@ -11,24 +11,17 @@ export function isPopulationReq(name: keyof Population | keyof Goods | "money"):
 }
 
 export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }) {
+    const subsectors = [...industrialSubsectors.entries()];
+
     return (
-        <Tabs className="overflow-x-auto">
-            {/* <div className="border-b border-gray-700 p-2 mb-2 flex items-center justify-between gap-4">
-                <div>
-                    <div className="font-medium">Colony Treasury</div>
-                    <div className="font-mono text-yellow-400">{Math.round(industry.colonyTreasury)}</div>
-                </div>
-                <div className="text-xs text-gray-400">
-                    Allocate funds via Government → Industry Policy
-                </div>
-            </div> */}
-            <TabsList defaultValue="energy">
-                {[...industrialSubsectors.keys()].map((key) => {
-                    return <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
-                })}
+        <Tabs className="overflow-x-auto" defaultValue="energy">
+            <TabsList>
+                {subsectors.map(([key]) => (
+                    <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
+                ))}
             </TabsList>
-            {[...industrialSubsectors.keys()].map((key) => (
-                <TabsContent key={key} value={key} style={{ overflowY: "auto", }} >
+            {subsectors.map(([key, sectors]) => (
+                <TabsContent key={key} value={key} style={{ overflowY: "auto" }}>
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-muted">
@@ -38,7 +31,6 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                                 <th className="text-center p-2 font-medium">Efficiency</th>
                                 <th className="text-center p-2 font-medium">Profit</th>
                                 <th className="text-center p-2 font-medium">Margin</th>
-                                <th className="text-center p-2 font-medium">Cost/Unit</th>
                                 <th className="text-center p-2 font-medium">Bottleneck</th>
                                 <th className="text-center p-2 font-medium">Method</th>
                                 <th className="text-left p-2 font-medium">Requirements</th>
@@ -46,13 +38,14 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                             </tr>
                         </thead>
                         <tbody>
-                            {[...industrialSubsectors.get(key)!.keys()].map((key2) =>
+                            {[...sectors.keys()].map((key2) => (
                                 <SectorRow
                                     key={key2}
                                     rowKey={key2}
                                     sectorKey={key2}
                                     industry={industry}
-                                />)}
+                                />
+                            ))}
                         </tbody>
                     </table>
                 </TabsContent>

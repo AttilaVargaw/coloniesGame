@@ -8,6 +8,7 @@ import { colorBySign } from "./colorBySign";
 import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 const warehousePriceMemory: Partial<Record<keyof Goods, number>> = {};
 
@@ -54,51 +55,54 @@ function getGoodCostPerUnit(
 export function WarehouseBreakdown({ industry, showPhysical }: { industry: IndustryComponent; showPhysical?: boolean }) {
     const { goods, goodsProduction, goodsRequirements } = industry;
     const prices = getPrices(goods, warehousePriceMemory);
-    const [category, setCategory] = useState<string>("rawMaterials")
 
     return (
-        <>
-            <ToggleGroup onValueChange={setCategory} value={category} type="single" >
+        <Tabs defaultValue="rawMaterials">
+            <TabsList  className="f-width">
                 {[...godsCategories.keys()].map((key) => {
-                    return <ToggleGroupItem key={key} value={key}>{key}</ToggleGroupItem>
+                    return <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
                 })}
-            </ToggleGroup>
+            </TabsList>
 
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className="border-b border-muted">
-                        <th className="text-left p-2 font-medium">{showPhysical ? "Good" : "Service"}</th>
-                        <th className="text-right p-2 font-medium">Price</th>
-                        <th className="text-right p-2 font-medium">Cost/Unit</th>
-                        <th className="text-right p-2 font-medium">Stock</th>
-                        <th className="text-center p-2 font-medium">Net</th>
-                        <th className="text-center p-2 font-medium">Production</th>
-                        <th className="text-center p-2 font-medium">Requirements</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {(Object.entries(goods) as [keyof Goods, number][])
-                        .filter(([key]) => godsCategories.get(category)?.has(key))
-                        .sort(([keyA], [keyB]) => RESOURCE_NAMES[keyA].localeCompare(RESOURCE_NAMES[keyB]))
-                        .map(([key, value]) => {
-                            const addition = goodsProduction[key] || 0;
-                            const used = goodsRequirements[key] || 0;
+            {[...godsCategories.keys()].map((category) => {
+                return <TabsContent key={category} value={category}>
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-muted">
+                                <th className="text-left p-2 font-medium">{showPhysical ? "Good" : "Service"}</th>
+                                <th className="text-right p-2 font-medium">Price</th>
+                                <th className="text-right p-2 font-medium">Cost/Unit</th>
+                                <th className="text-right p-2 font-medium">Stock</th>
+                                <th className="text-center p-2 font-medium">Net</th>
+                                <th className="text-center p-2 font-medium">Production</th>
+                                <th className="text-center p-2 font-medium">Requirements</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(Object.entries(goods) as [keyof Goods, number][])
+                                .filter(([key]) => godsCategories.get(category)?.has(key))
+                                .sort(([keyA], [keyB]) => RESOURCE_NAMES[keyA].localeCompare(RESOURCE_NAMES[keyB]))
+                                .map(([key, value]) => {
+                                    const addition = goodsProduction[key] || 0;
+                                    const used = goodsRequirements[key] || 0;
 
-                            return <tr key={key} className="border-b border-muted/50 last:border-0">
-                                <td className="p-2" style={{ display: "flex", gap: "1em" }}>
-                                    <ResourceIcon name={key} />
-                                    {RESOURCE_NAMES[key] || key}
-                                </td>
-                                <td className="p-2 text-right">{convertToReadable(prices[key] || 0)}</td>
-                                <td className="p-2 text-right">{convertToReadable(Math.round(getGoodCostPerUnit(key, industry)))}</td>
-                                <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
-                                <td className="p-2 text-center">{colorBySign(addition - used)}</td>
-                                <td className="p-2 text-center">{convertToReadable(addition)}</td>
-                                <td className="p-2 text-center">{convertToReadable(used)}</td>
-                            </tr>;
-                        })}
-                </tbody>
-            </table>
-        </>
+                                    return <tr key={key} className="border-b border-muted/50 last:border-0">
+                                        <td className="p-2" style={{ display: "flex", gap: "1em" }}>
+                                            <ResourceIcon name={key} />
+                                            {RESOURCE_NAMES[key] || key}
+                                        </td>
+                                        <td className="p-2 text-right">{convertToReadable(prices[key] || 0)}</td>
+                                        <td className="p-2 text-right">{convertToReadable(Math.round(getGoodCostPerUnit(key, industry)))}</td>
+                                        <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
+                                        <td className="p-2 text-center">{colorBySign(addition - used)}</td>
+                                        <td className="p-2 text-center">{convertToReadable(addition)}</td>
+                                        <td className="p-2 text-center">{convertToReadable(used)}</td>
+                                    </tr>;
+                                })}
+                        </tbody>
+                    </table>
+                </TabsContent>
+            })}
+        </Tabs>
     );
 }

@@ -429,6 +429,9 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const sectorGoodsDiff = shallowDiff(last?.sectorGoods, result.sectorGoods);
     if(sectorGoodsDiff) { patch.sectorGoods = sectorGoodsDiff; hasChanged = true; }
 
+    const moneyDiff = shallowDiff(last?.money, result.money);
+    if(moneyDiff) { patch.money = moneyDiff; hasChanged = true; }
+
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
 
@@ -448,6 +451,12 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
     for(const entityId of colonyPriceMemory.keys()) {
         if(!activeEntityIds.has(entityId)) {
             colonyPriceMemory.delete(entityId);
+        }
+    }
+
+    for(const entityId of colonyWageMemory.keys()) {
+        if(!activeEntityIds.has(entityId)) {
+            colonyWageMemory.delete(entityId);
         }
     }
 

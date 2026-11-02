@@ -84,7 +84,7 @@ export class EntityRegistry {
         this.nodes.removeEntityFromNodes(entity)
 
         //Nothing uses this yet
-        //this.events.dispatchEvent(new EntityRemovedEvent(entity))
+        this.events.dispatchEvent(new EntityRemovedEvent(entity))
 
         return this
     }

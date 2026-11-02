@@ -5,7 +5,7 @@ import { EntityNode } from "@engine/entities/entityNode";
 import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "@game/components/vessel";
 import { TargetSystem } from "./targetSystem";
-import { HourPassedEvent } from "@/engine/lib/events";
+import { HourPassedEvent, EntityRemovedEvent } from "@/engine/lib/events";
 import { getAbsolute } from "@/engine/lib/getAbsolute";
 import { OrbitComponent } from "@engine/components/orbitComponent";
 import { SoiComponent } from "@engine/components/soiComponent";
@@ -103,6 +103,8 @@ export class MoveNode extends EntityNode {
 }
 
 export class MoveSystem extends SystemWithNodes<MoveNode> {
+    handleEntityRemoved = (entity: Entity) => clearShipPath(entity)
+
     // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: MoveNode, _dT?: number): void {
     }
@@ -342,6 +344,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
 
         this.engine =
             engine.subscribe(HourPassedEvent, this.moveNodes)
+            engine.subscribe(EntityRemovedEvent, this.handleEntityRemoved)
         engine.registerNodeType(MoveNode,
             new Set([PositionComponent, JumpDriveComponent, SensorSuiteComponent]),
             (entity) => {
@@ -366,6 +369,7 @@ export class MoveSystem extends SystemWithNodes<MoveNode> {
         this.engine.unregisterNodeType(MoveNode)
 
         this.engine.unsubscribe(HourPassedEvent, this.moveNodes)
+        this.engine.unsubscribe(EntityRemovedEvent, this.handleEntityRemoved)
         super.removeFromEngine()
 
         return this
