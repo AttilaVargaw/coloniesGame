@@ -40,7 +40,8 @@ import {
     Cog,
     Tractor,
     Ham,
-    BottleWine
+    BottleWine,
+    SolarPanel
 } from "lucide-react";
 
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
@@ -49,6 +50,7 @@ import { GiGreekTemple, GiRifle } from "react-icons/gi";
 
 const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>> = {
     aircraft: Plane,
+    greenEnergy : SolarPanel,
     aircraftInfrastructure: PlaneLanding,
     automotive: Car,
     automotiveInfrastructure: Factory,
@@ -99,7 +101,6 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     religion: GiGreekTemple,
     weaponFactory: GiRifle,
     spaceInfrastructure: Satellite,
-    orbitalFactory: Satellite,
     spaceGoodsTransport: Satellite
 } as const
 

@@ -20,7 +20,6 @@ export type IndustrialSectors = Readonly<{
     weaponFactory: number;
     spaceShips: number;
     spaceInfrastructure: number;
-    orbitalFactory: number;
     construction: number;
     services: number;
     tourism: number;
@@ -69,14 +68,15 @@ export type IndustrialMainSectors = Readonly<{
 export const industrialSubsectors = new Map<string, Set<keyof IndustrialSectors>>([
     ["energy", new Set(["powerPlant", "greenEnergy", "nuclearSector"])],
     ["rawMaterials", new Set(["mine", "waterTreatment", "oilRig"])],
-    ["agriculture", new Set(["forestry", "farm", "fishery", "meat"])],
+    ["agriculture", new Set(["forestry", "farm", "fishery", "meat", "alternativeMedicine"])],
     ["environment", new Set(["environmentControl", "recycling"])],
-    ["heavyIndustry", new Set(["metalFactory", "machineryFactory", "chemical", "construction", "spaceShips", "orbitalFactory", "automotive", "railroadVehicles", "aircraft", "ships"])],
-    ["lightIndustry", new Set(["lumberMill", "paperFactory", "furnitureFactory", "clothing", "consumerFactory", "electronics", "foodFactory", "drinkIndustry", "medicineFactory", "alternativeMedicine"])],
-    ["services", new Set(["government", "lawEnforcement", "education", "healthcare", "postalServices", "services", "retail", "tourism", "bank"])],
-    ["entertainment", new Set(["entertainmentIndustry", "informationTechnology", "religion"])],
-    ["military", new Set(["ammunitionFactory", "weaponFactory", "militaryVehicles", "defense"])],
-    ["mobility", new Set(["railroadInfrastructure", "automotiveInfrastructure", "spaceInfrastructure", "orbitalFactory", "spaceGoodsTransport", "aircraftInfrastructure", "shipInfrastructure"])],
+    ["heavyIndustry", new Set(["metalFactory", "machineryFactory", "chemical", "construction"])],
+    ["lightIndustry", new Set(["lumberMill", "paperFactory", "furnitureFactory", "clothing", "consumerFactory", "electronics", "foodFactory", "drinkIndustry", "medicineFactory"])],
+    ["services", new Set(["services", "retail", "tourism", "bank", "entertainmentIndustry", "informationTechnology", "religion"])],
+    ["publicServices", new Set(["government", "lawEnforcement", "education", "healthcare", "postalServices"])],
+    ["military", new Set(["ammunitionFactory", "weaponFactory", "militaryVehicles", "defense", "spaceShips"])],
+    ["vehicleManufacturing", new Set(["automotive", "railroadVehicles", "aircraft", "ships"])],
+    ["mobility", new Set(["railroadInfrastructure", "automotiveInfrastructure", "spaceInfrastructure", "spaceGoodsTransport", "aircraftInfrastructure", "shipInfrastructure"])],
 ]);
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

@@ -16,4 +16,13 @@ export interface IndustryTickInput {
     sectorGoods: Record<keyof IndustrialSectors, Goods>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
+
+    // ---- Gamification inputs ----
+    workerEfficiencyMultipliers: Record<keyof Population, number>;
+    materialRequirementMultipliers: Record<keyof Goods, number>;
+    capitalMultipliers: Record<keyof IndustrialSectors, number>;
+    selectedMethod: Record<keyof IndustrialSectors, string | null>;
+    colonyTreasury: number;
+    sectorInvestment: Record<keyof IndustrialSectors, number>;
+    activeLaws: Set<string>;
 }

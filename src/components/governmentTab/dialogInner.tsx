@@ -4,6 +4,8 @@ import { ReactNode } from "react";
 import { TabsContent } from "../ui/tabs";
 import { Religion } from "./religion";
 import { Research } from "./research";
+import { LawsPanel } from "./lawsPanel";
+import { IndustryPolicyPanel } from "./industryPolicyPanel";
 
 export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
 
@@ -14,6 +16,12 @@ export function DialogInner({ industry, colony }: { industry: IndustryComponent;
         </TabsContent>
         <TabsContent style={{ overflowY: "auto", }} value="research">
             <Research colony={colony} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="laws">
+            <LawsPanel colony={colony} industry={industry} />
+        </TabsContent>
+        <TabsContent style={{ overflowY: "auto", }} value="industryPolicy">
+            <IndustryPolicyPanel colony={colony} industry={industry} />
         </TabsContent>
     </>
 }

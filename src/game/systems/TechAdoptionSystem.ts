@@ -7,8 +7,11 @@ import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { TechAdoptionProgressEvent, TechFullyAdoptedEvent } from "@game/events/techEvents";
 import { getTech } from "@game/data/Techs";
 import { IndustryComponent } from "@game/components/industryComponent";
+import { createStarterWarehouse } from "@game/factories/createStarterWarehouse";
 import { Queue } from "@/engine/lib/commandQueue";
 import type { IndustrialSectors } from "../components/Factories";
+import type { Population } from "../data/Population";
+import type { Goods } from "../data/Goods";
 
 type TechAdoptionState = {
     techId: string;
@@ -129,28 +132,62 @@ export class TechAdoptionSystem extends SystemWithNodes<TechAdoptionNode> {
 
         for(const effect of tech.effects) {
             switch(effect.type) {
-                case "sector_efficiency":
-                case "capital_multiplier": {
+                case "sector_efficiency": {
                     const sectorKey = effect.sector as keyof IndustrialSectors;
-                    if(industry.techMultipliers[sectorKey] !== undefined) {
-                        const current = industry.techMultipliers[sectorKey];
-                        industry.techMultipliers[sectorKey] = 1 + (current - 1) + (effect.multiplier - 1) * effectStrength;
+                    const sectors = effect.sector === "all"
+                        ? Array.from(industry.activeSectors)
+                        : [sectorKey];
+                    for(const s of sectors) {
+                        if(industry.techMultipliers[s] === undefined) continue;
+                        const current = industry.techMultipliers[s];
+                        industry.techMultipliers[s] = current * (1 + (effect.multiplier - 1) * effectStrength);
                     }
                     break;
                 }
-                case "worker_efficiency":
-                    // Worker efficiency affects laborAssigned - more effective workers = less needed
-                    // This is handled by the laborAssigned field in IndustryComponent
+                case "capital_multiplier": {
+                    const sectorKey = effect.sector as keyof IndustrialSectors;
+                    if(industry.capitalMultipliers[sectorKey] === undefined) continue;
+                    industry.capitalMultipliers[sectorKey] = 1 + (effect.multiplier - 1) * effectStrength;
                     break;
-                case "material_requirement":
-                    // Material reductions applied in IndustrySystem when building input
+                }
+                case "worker_efficiency": {
+                    const workerKey = effect.worker as keyof Population;
+                    if(industry.workerEfficiencyMultipliers[workerKey] === undefined) continue;
+                    industry.workerEfficiencyMultipliers[workerKey] = effect.multiplier ** effectStrength;
                     break;
-                case "unlock_sector":
-                case "unlock_good":
-                    // Unlocks handled elsewhere
+                }
+                case "material_requirement": {
+                    const goodKey = effect.good as keyof Goods;
+                    if(industry.materialRequirementMultipliers[goodKey] === undefined) continue;
+                    industry.materialRequirementMultipliers[goodKey] = 1 - (1 - effect.reduction) * effectStrength;
                     break;
+                }
+                case "unlock_sector": {
+                    const sectorKey = effect.sector as keyof IndustrialSectors;
+                    if(industry.activeSectors.has(sectorKey)) continue;
+                    industry.activeSectors.add(sectorKey);
+                    this.initializeSector(industry, sectorKey);
+                    break;
+                }
+                case "unlock_good": {
+                    // Goods are always available; unlocks are informational for now.
+                    break;
+                }
             }
         }
+    }
+
+    private initializeSector(industry: IndustryComponent, sectorKey: keyof IndustrialSectors) {
+        industry.techMultipliers[sectorKey] = 1;
+        industry.laborAssigned[sectorKey] = 0;
+        industry.capitalStock[sectorKey] = {};
+        industry.money[sectorKey] = 0;
+        industry.sectorGoods[sectorKey] = { ...createStarterWarehouse(0) };
+        industry.sectorUtilization[sectorKey] = 0;
+        industry.sectorProfits[sectorKey] = 0;
+        industry.selectedMethod[sectorKey] = null;
+        industry.capitalMultipliers[sectorKey] = 1;
+        industry.sectorInvestment[sectorKey] = 0;
     }
 
     private calculateAdoption(tech: any, _state: TechAdoptionState, daysSince: number): number {

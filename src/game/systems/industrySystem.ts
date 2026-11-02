@@ -10,6 +10,7 @@ import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { IndustryWorkerPool } from "./industryWorkerPool";
 import type { IndustrialSectors } from "../components/Factories";
+import { laws } from "./laws";
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -58,8 +59,28 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             const money = industry.money;
             const sectorGoods: Record<keyof IndustrialSectors, Goods> = {} as Record<keyof IndustrialSectors, Goods>;
 
+            const bannedSectors = new Set<keyof IndustrialSectors>();
+            const lawMultiplier: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             for(const sectorKey of industry.activeSectors) {
-                techMultipliers[sectorKey] = industry.techMultipliers[sectorKey] ?? 1;
+                lawMultiplier[sectorKey] = 1;
+            }
+            for(const lawId of industry.activeLaws) {
+                const law = laws.get(lawId);
+                if(!law) continue;
+                for(const effect of law.effects) {
+                    if(effect.type === "disable_sector" && effect.sector) {
+                        bannedSectors.add(effect.sector as keyof IndustrialSectors);
+                    }
+                    if(effect.type === "efficiency_penalty" && effect.sector) {
+                        const s = effect.sector as keyof IndustrialSectors;
+                        lawMultiplier[s] = (lawMultiplier[s] ?? 1) * effect.value;
+                    }
+                }
+            }
+            const effectiveActiveSectors = new Set([...industry.activeSectors].filter(s => !bannedSectors.has(s)));
+
+            for(const sectorKey of effectiveActiveSectors) {
+                techMultipliers[sectorKey] = (industry.techMultipliers[sectorKey] ?? 1) * (lawMultiplier[sectorKey] ?? 1);
                 laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
                 sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
@@ -67,7 +88,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
             return {
                 entityId: entity.id,
-                activeSectors: industry.activeSectors,
+                activeSectors: effectiveActiveSectors,
                 goods: industry.goods,
                 population: industry.population,
                 techMultipliers,
@@ -76,7 +97,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 money,
                 sectorGoods,
                 settlementType: industry.settlementType,
-                allowedSectors: [...industry.activeSectors]
+                allowedSectors: [...effectiveActiveSectors],
+                workerEfficiencyMultipliers: industry.workerEfficiencyMultipliers,
+                materialRequirementMultipliers: industry.materialRequirementMultipliers,
+                capitalMultipliers: industry.capitalMultipliers,
+                selectedMethod: industry.selectedMethod,
+                colonyTreasury: industry.colonyTreasury,
+                sectorInvestment: industry.sectorInvestment,
+                activeLaws: industry.activeLaws,
             };
         });
 

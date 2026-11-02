@@ -6,10 +6,18 @@ import { Entity } from "@/engine/entities/entity";
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { Button } from "../ui/button";
 import { GoLaw } from "react-icons/go";
+import { useGameEvent } from "@/hooks/useGameEvent";
+import { IndustryUpdatedEvent } from "@/engine/lib/events";
 
 export function GovernmentModal({ colony }: { colony: Entity }) {
     const [isOpen, setOpen] = useState(false)
-    const industry = colony.getComponent(IndustryComponent)
+    const [industry, setIndustry] = useState<IndustryComponent | null>({ ...colony.getComponent(IndustryComponent)! })
+
+    useGameEvent(IndustryUpdatedEvent, (entity) => {
+        if(entity.id === colony.id) {
+            setIndustry({ ...entity.getComponent(IndustryComponent)! })
+        }
+    })
 
     return <Dialog modal={false} open={isOpen}>
         <DialogTrigger asChild>
@@ -35,6 +43,8 @@ export function GovernmentModal({ colony }: { colony: Entity }) {
                     }} >
                         <TabsTrigger value="religion">Religion</TabsTrigger>
                         <TabsTrigger value="research">Research</TabsTrigger>
+                        <TabsTrigger value="laws">Laws</TabsTrigger>
+                        <TabsTrigger value="industryPolicy">Industry Policy</TabsTrigger>
                     </TabsList>
                     <div style={{
                         height: "calc(75vh - 2em)",

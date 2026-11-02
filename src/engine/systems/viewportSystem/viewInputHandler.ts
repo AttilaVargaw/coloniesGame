@@ -47,7 +47,7 @@ export class ViewportInputHandler {
     private static readonly ROTATION_INERTIA_DECAY = 0.82
     private static readonly ROTATION_INERTIA_THRESHOLD = 0.01
     private static readonly MAX_ZOOM = 5_000
-    private static readonly MIN_ZOOM = -1000
+    private static readonly MIN_ZOOM = -1600
 
     get isDragging() {
         return this._isDragging

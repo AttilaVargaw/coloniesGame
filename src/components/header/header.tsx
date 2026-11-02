@@ -7,6 +7,9 @@ import { GovernmentModal } from "../governmentTab/government"
 import { useEffect, useRef, useState } from "react"
 import { Entity } from "@/engine/entities/entity"
 import { useSelectionChanged } from "@/hooks/useSelectionChanged"
+import { SelectionChangedEvent } from "@/engine/lib/events"
+import { IndustryComponent } from "@/game/components/industryComponent"
+import { useGameEvent } from "@/hooks/useGameEvent"
 
 const SPEEDS = [1, 5, 10, 100, 500] as const
 

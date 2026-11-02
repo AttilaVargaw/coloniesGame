@@ -50,7 +50,12 @@ function processIndustry(
         capitalStock,
         money: startingMoney,
         sectorGoods,
-        settlementType
+        settlementType,
+        workerEfficiencyMultipliers,
+        materialRequirementMultipliers,
+        capitalMultipliers,
+        selectedMethod,
+        sectorInvestment,
     }: IndustryTickInput,
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
@@ -132,7 +137,14 @@ function processIndustry(
         const laborAssignedVal = laborAssigned[name] ?? 0;
         const capitalStockVal = capitalStock[name] ?? {};
 
-        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0);
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0, {
+            workerEfficiencyMultipliers,
+            materialRequirementMultipliers,
+            capitalMultipliers,
+            selectedMethod: selectedMethod[name] ?? null,
+            sectorInvestment: sectorInvestment[name] ?? 0,
+            sectorStartingMoney: startingMoney[name] ?? 0,
+        });
         if(bid) {
             sectorBids.push(bid);
         }

@@ -85,10 +85,65 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set(["microComputers"]),
         age: "techRevolution"
     },
-
+    "electronicWarfare": {
+        id: "electronicWarfare",
+        name: "Electric Warfare",
+        description: "The most immersive experience ever created",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+        ],
+        unlocks: new Set([]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        type: "technological",
+        prerequisites: new Set(["microComputers"]),
+        age: "techRevolution"
+    },
+    "electricHacking": {
+        id: "electricHacking",
+        name: "Electric Hacking",
+        description: "By locating and and sending fake data packets into enemy systems, we can disrupt their operations, in some cases, even take control of them",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+        ],
+        unlocks: new Set([]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        type: "technological",
+        prerequisites: new Set(["electronicWarfare"]),
+        age: "techRevolution"
+    },
+    "targetSpoofing": {
+        id: "targetSpoofing",
+        name: "Target Spoofing",
+        description: "By overriding the targetting systems of enemy weapons, we can disrupt their ability to target us or even make them fire at our own ships",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+        ],
+        unlocks: new Set([]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        type: "technological",
+        prerequisites: new Set(["electronicWarfare"]),
+        age: "techRevolution"
+    },
+    "selfDestructiveHacking": {
+        id: "selfDestructiveHacking",
+        name: "Self Destructive Hacking",
+        description: "By hacking into the core systems of enemy ships, we can cause them to shut down or even self destruct",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+        ],
+        unlocks: new Set([]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        type: "technological",
+        prerequisites: new Set(["electronicWarfare"]),
+        age: "techRevolution"
+    },
     "jupiterClassBattlestar": {
         id: "jupiterClassBattlestar",
-        name: "Jupiter class Battle Star",
+        name: "Jupiter class Battlestar",
         description: "The most powerful flagship ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
@@ -102,7 +157,7 @@ export const techs: Record<string, TechDefinition> = {
     },
     "battleStar": {
         id: "battleStar",
-        name: "Battle Star",
+        name: "Battlestar",
         description: "The most powerful flagship ever created",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
@@ -132,6 +187,34 @@ export const techs: Record<string, TechDefinition> = {
         id: "destroyer",
         name: "Destroyer",
         description: "An escort",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+
+        ],
+        prerequisites: new Set(["superAlloy", "jumpDrive", "ftlCom", "practicalPropulsion"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        type: "military",
+        age: "imperial"
+    },
+    "smallUtilityCraft": {
+        id: "smallUtilityCraft",
+        name: "Small Utility Craft",
+        description: "A universal multi utility weapons platform craft.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+
+        ],
+        prerequisites: new Set(["superAlloy", "jumpDrive", "ftlCom", "practicalPropulsion"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        type: "military",
+        age: "imperial"
+    },
+    "boardingAction": {
+        id: "boardingAction",
+        name: "Boarding Action",
+        description: "A universal multi utility weapons platform craft.",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
 
@@ -559,7 +642,7 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["articlesOfColonization", "carrier"]),
+        prerequisites: new Set(["superAlloy"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "These full auto, remote controlled guns can fire reliably and accurately in space. It also has an automatic barrel replacement system with a water cooling system and an automatic seal which seals the barrel when not in use. It also has a built in reaction wheel to compensate for recoil."

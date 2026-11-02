@@ -6,6 +6,7 @@ import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { ColonyType } from "../constants";
 import type { IndustrialSectors } from "./Factories";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 
 export type SettlementType = "colony" | "outpost" | "hydrocarbonRefinery";
 
@@ -27,6 +28,15 @@ export class IndustryComponent extends EntityComponent {
     public capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>
     public money: Record<keyof IndustrialSectors, number>
     public sectorGoods: Record<keyof IndustrialSectors, Goods>
+
+    // ---- Gamification fields ----
+    public workerEfficiencyMultipliers: Record<keyof Population, number>
+    public materialRequirementMultipliers: Record<keyof Goods, number>
+    public capitalMultipliers: Record<keyof IndustrialSectors, number>
+    public selectedMethod: Record<keyof IndustrialSectors, string | null>
+    public colonyTreasury: number
+    public sectorInvestment: Record<keyof IndustrialSectors, number>
+    public activeLaws: Set<string>
 
     constructor(
         public activeSectorKeys: Set<keyof IndustrialSectors>,
@@ -74,5 +84,23 @@ export class IndustryComponent extends EntityComponent {
         this.sectorGoods = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, createStarterWarehouse(0)])
         ) as Record<keyof IndustrialSectors, Goods>;
+
+        this.workerEfficiencyMultipliers = Object.fromEntries(
+            Object.keys(population).map(key => [key, 1])
+        ) as Record<keyof Population, number>;
+        this.materialRequirementMultipliers = Object.fromEntries(
+            Object.keys(createStarterWarehouse(0)).map(key => [key, 1])
+        ) as Record<keyof Goods, number>;
+        this.capitalMultipliers = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 1])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.selectedMethod = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, industrySectorBlueprints.get(key)?.productionMethods?.keys().next().value ?? null])
+        ) as Record<keyof IndustrialSectors, string | null>;
+        this.colonyTreasury = 0;
+        this.sectorInvestment = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.activeLaws = new Set();
     }
 }
