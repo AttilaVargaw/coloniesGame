@@ -13,8 +13,8 @@ import { createStarterPopulation } from "../data/getPopulationBreakdown"
 import { createStarterIndustry } from "./createStarterIndustry"
 import { createStarterWarehouse } from "./createStarterWarehouse"
 import { industrySectorBlueprints } from "../systems/sectorBlueprints"
-import { Goods } from "../data/Goods"
-import type { Population } from "../data/Population"
+import { Goods, basePrices } from "../data/Goods"
+import { Population, baseSalaries } from "../data/Population"
 import { createAsteroidBelt } from "./createAsteroidBelt"
 import { HoverableComponent } from "@game/systems/cursorSystem"
 import { SoiComponent } from "@engine/components/soiComponent"
@@ -112,18 +112,29 @@ function createInteractionComponents(
             }
         }
 
-        const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {};
-        const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {};
+        const BUDGET_RUNWAY_DAYS = 5
+        const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
+        const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {}
         for(const sector of starterSectors) {
-            const config = industrySectorBlueprints.get(sector);
+            const config = industrySectorBlueprints.get(sector)
             if(config?.capitalGoods) {
-                starterCapitalStock[sector] = {};
+                starterCapitalStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 5));
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 5))
                 }
             }
-            starterMoney[sector] = Math.max(500, population);
+
+            const goodsCost = config?.goodsRequirements
+                ? Object.entries(config.goodsRequirements).reduce((sum, [g, r]) => sum + (r as number) * (basePrices[g as keyof Goods] ?? 0), 0)
+                : 0
+            const laborCost = config?.workerRequirement
+                ? Object.entries(config.workerRequirement).reduce((sum, [w, r]) => sum + (r as number) * (baseSalaries[w as keyof Population] ?? 0), 0)
+                : 0
+            const operatingCost = goodsCost + laborCost
+            starterMoney[sector] = Math.max(500, Math.round(operatingCost * BUDGET_RUNWAY_DAYS))
         }
+
+        const colonyTreasury = Math.max(5000, population * 2)
 
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
@@ -143,7 +154,8 @@ function createInteractionComponents(
                 "standard",
                 "colony",
                 starterMoney as Record<keyof IndustrialSectors, number>,
-                starterCapitalStock
+                starterCapitalStock,
+                colonyTreasury
             )
         )
     } else {

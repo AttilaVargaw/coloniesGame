@@ -102,9 +102,6 @@ export function SectorRow({
             <td className="p-2 text-center text-xs">
                 {industry.selectedMethod[sectorKey] ?? "Default"}
             </td>
-            <td className="p-2 text-center text-xs font-mono">
-                {Math.round(industry.sectorInvestment[sectorKey] ?? 0)}
-            </td>
             <td className="p-2 text-left">
                 <div className="text-xs space-y-0.5">
                     {reqs.items.map((req, i) => (

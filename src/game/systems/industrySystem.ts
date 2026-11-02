@@ -166,7 +166,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
 
     applyPopulationPatch(industry, patch.populationUpdates)
 
-    applySectorResultsPatch(industry, patch.sectorResults)
+    applySectorResultsPatch(industry, patch.sectorResults, patch.sectorProfits)
 }
 
 function mergeRecord<T extends Record<string, any>>(
@@ -225,7 +225,8 @@ function applyPopulationPatch(
 
 function applySectorResultsPatch(
     industry: IndustryComponent,
-    results: { changed: Record<string, SectorResult>; removed: string[] } | undefined
+    results: { changed: Record<string, SectorResult>; removed: string[] } | undefined,
+    sectorProfits: Record<string, number> | undefined
 ) {
     if(!results) {
         return
@@ -236,5 +237,11 @@ function applySectorResultsPatch(
     }
     for(const name of results.removed) {
         delete industry.sectorResults[name]
+    }
+
+    if(sectorProfits) {
+        for(const [name, profit] of Object.entries(sectorProfits)) {
+            industry.sectorProfits[name as keyof IndustrialSectors] = profit
+        }
     }
 }

@@ -38,9 +38,9 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                                 <th className="text-center p-2 font-medium">Efficiency</th>
                                 <th className="text-center p-2 font-medium">Profit</th>
                                 <th className="text-center p-2 font-medium">Margin</th>
+                                <th className="text-center p-2 font-medium">Cost/Unit</th>
                                 <th className="text-center p-2 font-medium">Bottleneck</th>
                                 <th className="text-center p-2 font-medium">Method</th>
-                                <th className="text-center p-2 font-medium">Invested</th>
                                 <th className="text-left p-2 font-medium">Requirements</th>
                                 <th className="text-left p-2 font-medium">Stock</th>
                             </tr>
