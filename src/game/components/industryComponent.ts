@@ -1,6 +1,6 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
 import { Goods } from "../data/Goods";
-import { Population } from "../data/Population";
+import { Population, baseSalaries } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import type { SectorResult } from "../systems/generateIndustrialSector";
@@ -24,6 +24,7 @@ export class IndustryComponent extends EntityComponent {
     public sectorLaborCosts: Record<keyof IndustrialSectors, number>
     public sectorInputCosts: Record<keyof IndustrialSectors, number>
     public populationProfits: Record<keyof Population, number>
+    public wages: Record<keyof Population, number>
     public populationRequirements: Record<keyof Population, Partial<Record<keyof Goods, number>>>
     public techMultipliers: Record<keyof IndustrialSectors, number>
     public laborAssigned: Record<keyof IndustrialSectors, number>
@@ -78,6 +79,9 @@ export class IndustryComponent extends EntityComponent {
         ) as Record<keyof IndustrialSectors, number>;
         this.populationProfits = Object.fromEntries(
             Object.keys(population).map(key => [key, 0])
+        ) as Record<keyof Population, number>;
+        this.wages = Object.fromEntries(
+            Object.keys(population).map(key => [key, baseSalaries[key as keyof Population] ?? 0])
         ) as Record<keyof Population, number>;
         this.populationRequirements = Object.fromEntries(
             Object.keys(population).map(key => [key, {}])

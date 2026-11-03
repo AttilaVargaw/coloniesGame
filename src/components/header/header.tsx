@@ -7,7 +7,7 @@ import { GovernmentModal } from "../governmentTab/government"
 import { useEffect, useRef, useState } from "react"
 import { Entity } from "@/engine/entities/entity"
 
-const SPEEDS = [1, 10, 200, 500] as const
+const SPEEDS = [1, 10, 150, 500] as const
 
 export function Header() {
     const time = useGameDate()

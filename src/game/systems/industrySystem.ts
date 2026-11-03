@@ -151,6 +151,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     mergeRecord(industry.sectorLaborCosts, patch.sectorLaborCosts)
     mergeRecord(industry.sectorInputCosts, patch.sectorInputCosts)
     mergeRecord(industry.populationProfits, patch.populationProfits)
+    mergeRecord(industry.wages, patch.wages)
     mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
     mergeRecord(industry.capitalStock, patch.capitalStock)
     if(patch.money) {

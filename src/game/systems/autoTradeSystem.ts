@@ -23,6 +23,7 @@ type Settlement = {
     goodsProduction: Partial<Goods>;
     goodsRequirements: Partial<Goods>;
     population: Population;
+    wages: Record<keyof Population, number>;
     routeCount: number;
 };
 
@@ -98,6 +99,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 goodsProduction: industry.goodsProduction,
                 goodsRequirements: industry.goodsRequirements,
                 population: industry.population,
+                wages: industry.wages,
                 routeCount: routeCounts.get(entity.id) ?? 0,
             });
         }
@@ -199,12 +201,16 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     ) {
         if(settlements.length < 2) return;
 
+        const WAGE_MIGRATION_THRESHOLD = 1.1; // dest wage must be at least 10% higher
+        const MAX_MIGRATION_RATIO = 0.2;      // max 20% of free workers per tick
+
         const populations = settlements.map(s => ({
             entityId: s.entityId,
             position: s.position,
             totalPop: Object.values(s.population).reduce((sum, c) => sum + c.number, 0),
             routeCount: s.routeCount,
             freeWorkers: s.population.worker.number,
+            workerWage: s.wages.worker,
         }));
 
         const avgPop = populations.reduce((sum, p) => sum + p.totalPop, 0) / populations.length;
@@ -221,9 +227,19 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             for(const dest of deficit) {
                 if(dest.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
+                // Wage-driven: only migrate if destination pays better
+                if(dest.workerWage <= source.workerWage * WAGE_MIGRATION_THRESHOLD) continue;
+
                 const distance = Math.hypot(dest.position.x - source.position.x, dest.position.y - source.position.y);
                 const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
-                const workerCount = Math.min(source.freeWorkers, Math.max(1, Math.floor(source.freeWorkers * 0.1)));
+
+                // Wage gap scales how many workers want to move
+                const wageRatio = dest.workerWage / source.workerWage;
+                const wageFactor = Math.min(wageRatio - 1, MAX_MIGRATION_RATIO);
+                const workerCount = Math.min(
+                    source.freeWorkers,
+                    Math.max(1, Math.floor(source.freeWorkers * wageFactor))
+                );
 
                 if(workerCount <= 0) continue;
                 if(distance > travelDays * 10) continue;

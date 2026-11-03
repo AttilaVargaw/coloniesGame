@@ -262,6 +262,46 @@ function processIndustry(
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
     }
 
+    // Distribute population consumption spending to producing sectors.
+    // Worker expenses on goods flow back to the sectors that produced them,
+    // closing the money loop instead of vanishing into a wealth drain.
+    const totalProductionPerGood: Partial<Record<keyof Goods, number>> = {};
+    for(const bid of sectorBids) {
+        const result = sectorResults[bid.name];
+        if(!result) continue;
+        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
+            if(amount > 0) {
+                totalProductionPerGood[goodKey as keyof Goods] =
+                    (totalProductionPerGood[goodKey as keyof Goods] ?? 0) + amount;
+            }
+        }
+    }
+
+    const populationSpending: Partial<Record<keyof Goods, number>> = {};
+    for(const [goodKey, amount] of Object.entries(populationConsumption)) {
+        if(amount > 0) {
+            populationSpending[goodKey as keyof Goods] = amount * (prices[goodKey as keyof Goods] ?? 0);
+        }
+    }
+
+    for(const bid of sectorBids) {
+        const sectorName = bid.name as keyof IndustrialSectors;
+        const result = sectorResults[sectorName];
+        if(!result) continue;
+        let sectorPopulationRevenue = 0;
+        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
+            if(amount <= 0) continue;
+            const totalProd = totalProductionPerGood[goodKey as keyof Goods] ?? 0;
+            if(totalProd <= 0) continue;
+            const spending = populationSpending[goodKey as keyof Goods] ?? 0;
+            if(spending <= 0) continue;
+            sectorPopulationRevenue += spending * (amount / totalProd);
+        }
+        if(sectorPopulationRevenue > 0) {
+            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + sectorPopulationRevenue;
+        }
+    }
+
     // Move goods between sectors and colony pool
     const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
 
@@ -332,6 +372,7 @@ function processIndustry(
         sectorInputCosts,
         populationProfits,
         sectorUtilization,
+        wages: adjustedSalaries,
         sectorResults,
         capitalStock: newCapitalStock,
         money: newMoney,
@@ -461,6 +502,9 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
 
     const sectorRevenueDiff = shallowDiff(last?.sectorRevenue, result.sectorRevenue);
     if(sectorRevenueDiff) { patch.sectorRevenue = sectorRevenueDiff; hasChanged = true; }
+
+    const wagesDiff = shallowDiff(last?.wages, result.wages);
+    if(wagesDiff) { patch.wages = wagesDiff; hasChanged = true; }
 
     const sectorLaborCostsDiff = shallowDiff(last?.sectorLaborCosts, result.sectorLaborCosts);
     if(sectorLaborCostsDiff) { patch.sectorLaborCosts = sectorLaborCostsDiff; hasChanged = true; }

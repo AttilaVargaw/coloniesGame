@@ -113,10 +113,24 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set([]),
         age: "techRevolution"
     },
+    "iffHacking": {
+        id: "electricHacking",
+        name: "IFF spoofing",
+        description: "By replicating enemy IFF signals, we can make our ships appear as friendly to enemy sensors",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+        ],
+        unlocks: new Set([]),
+        adoptionModel: "logistic",
+        adoptionSpeed: 28,
+        type: "technological",
+        prerequisites: new Set(["electronicWarfare"]),
+        age: "techRevolution"
+    },
     "electricHacking": {
         id: "electricHacking",
         name: "Electric Hacking",
-        description: "By locating and and sending fake data packets into enemy systems, we can disrupt their operations, in some cases, even take control of them",
+        description: "By locating and and sending fake data packets into enemy systems, we can disrupt their operations",
         cost: { researchPoints: 10000, days: 28 },
         effects: [
         ],
