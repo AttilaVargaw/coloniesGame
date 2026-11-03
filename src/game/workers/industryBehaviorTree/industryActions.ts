@@ -55,3 +55,9 @@ export class SetInvestmentTotal extends Action<IndustryBlackboard> {
         return "SUCCESS";
     }
 }
+
+export class Idle extends Action<IndustryBlackboard> {
+    execute(_bb: IndustryBlackboard): "SUCCESS" | "FAILURE" {
+        return "SUCCESS";
+    }
+}

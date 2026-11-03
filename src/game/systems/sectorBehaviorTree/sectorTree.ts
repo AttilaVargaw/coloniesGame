@@ -11,7 +11,6 @@ import {
     HasLaborShortage,
 } from "./sectorConditions";
 import {
-    EmergencyStop,
     NormalOperations,
     ReduceProduction,
     BuyCapital,
@@ -21,11 +20,11 @@ import {
 
 export function createSectorTree(_blackboard: SectorBlackboard): BTNode {
     return new Sequence([
-        // 1. Solvency check: if no money, emergency stop
+        // 1. Solvency check: don't stop broke sectors entirely — let budgetRatio handle it
         // Generic condition: GreaterThan("money", 0) works on any blackboard with a "money" key
         new Selector([
             new GreaterThan("money", 0),
-            new EmergencyStop(),
+            new Idle(),  // stay in bids even with 0 money; budgetRatio floor allows minimal production
         ]),
 
         // 2. Profitability branch

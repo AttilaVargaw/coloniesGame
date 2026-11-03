@@ -3,7 +3,7 @@ import { Goods } from "../data/Goods";
 export function createStarterWarehouse(population: number) {
     return {
         water: population / 10,
-        agriculturalGoods: population / 30,
+        agriculturalGoods: population / 100,
         ammunition: population / 20,
         consumerGoods: population * 5,
         electricity: population / 10,

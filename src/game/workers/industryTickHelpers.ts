@@ -246,3 +246,52 @@ export function computeColonyGoodsDelta(
     return colonyGoodsDelta;
 }
 
+export function applyGoodsModifier(
+    goods: Record<keyof Goods, number>,
+    deltas: Record<string, number>,
+    modifier: (current: number, delta: number) => number,
+): void {
+    for(const key in deltas) {
+        const goodKey = key as keyof Goods;
+        goods[goodKey] = modifier(goods[goodKey] ?? 0, deltas[goodKey] ?? 0);
+    }
+}
+
+export function pruneMemory<T>(
+    memory: Map<string, T>,
+    activeEntityIds: Set<string>,
+): void {
+    for(const entityId of memory.keys()) {
+        if(!activeEntityIds.has(entityId)) {
+            memory.delete(entityId);
+        }
+    }
+}
+
+export function computeMarketRatios<TKey extends string | number | symbol>(
+    demands: Record<TKey, number>,
+    available: Record<TKey, number>,
+): Record<TKey, number> {
+    const ratios = {} as Record<TKey, number>;
+    for(const key of Object.keys(demands)) {
+        const totalDemand = demands[key as TKey];
+        const avail = available[key as TKey] ?? 0;
+        ratios[key as TKey] = totalDemand > 0 ? Math.min(1, avail / totalDemand) : 1;
+    }
+    return ratios;
+}
+
+export function trySetPatchField<T>(
+    patch: any,
+    field: string,
+    lastVal: T | undefined,
+    newVal: T,
+    diffFn: (a: T | undefined, b: T) => any
+): boolean {
+    const diff = diffFn(lastVal, newVal);
+    if(diff) {
+        patch[field] = diff;
+        return true;
+    }
+    return false;
+}

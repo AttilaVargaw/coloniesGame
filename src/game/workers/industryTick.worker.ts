@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, computeBidConstraints, buySectorInputs, distributePopulationSpending, computeColonyGoodsDelta } from "./industryTickHelpers";
+import { computePopulationConsumption, computeBidConstraints, buySectorInputs, distributePopulationSpending, computeColonyGoodsDelta, applyGoodsModifier, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
@@ -347,19 +347,20 @@ function calculateMarketRatios(
         }
     }
 
-    const workerMarketRatios = {} as Record<keyof Population, number>;
-    for(const [key, totalDemand] of Object.entries(totalIdealWorkerDemand)) {
-        const available = population[key as keyof Population].number;
-        workerMarketRatios[key as keyof Population] = totalDemand > 0 ? Math.min(1, available / totalDemand) : 1;
+    const workerAvailable = {} as Record<keyof Population, number>;
+    for(const [key, pop] of Object.entries(population)) {
+        workerAvailable[key as keyof Population] = pop.number;
     }
 
-    const goodsMarketRatios = {} as Record<keyof Goods, number>;
-    for(const [key, totalDemand] of Object.entries(totalIdealGoodsDemand)) {
-        const available = Math.max(0, goods[key as keyof Goods]);
-        goodsMarketRatios[key as keyof Goods] = totalDemand > 0 ? Math.min(1, available / totalDemand) : 1;
+    const goodsAvailable = {} as Record<keyof Goods, number>;
+    for(const key in goods) {
+        goodsAvailable[key as keyof Goods] = goods[key as keyof Goods];
     }
 
-    return { workerMarketRatios, goodsMarketRatios };
+    return {
+        workerMarketRatios: computeMarketRatios(totalIdealWorkerDemand, workerAvailable),
+        goodsMarketRatios: computeMarketRatios(totalIdealGoodsDemand, goodsAvailable),
+    };
 }
 
 function finalizeGoods(
@@ -371,20 +372,9 @@ function finalizeGoods(
 ): Goods {
     const finalGoods = { ...currentGoods } as Goods;
 
-    for(const key in sumGoodsProduction) {
-        const goodKey = key as keyof Goods;
-        finalGoods[goodKey] = (finalGoods[goodKey] ?? 0) + (sumGoodsProduction[goodKey] ?? 0);
-    }
-
-    for(const key in sumGoodsRequirements) {
-        const goodKey = key as keyof Goods;
-        finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) - (sumGoodsRequirements[goodKey] ?? 0));
-    }
-
-    for(const key in populationConsumption) {
-        const goodKey = key as keyof Goods;
-        finalGoods[goodKey] = Math.max(0, (finalGoods[goodKey] ?? 0) - (populationConsumption[goodKey] ?? 0));
-    }
+    applyGoodsModifier(finalGoods, sumGoodsProduction, (cur, d) => cur + d);
+    applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) => Math.max(0, cur - d));
+    applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => Math.max(0, cur - d));
 
     const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
     const populationWaste = totalPopulation * wastePerPerson;
@@ -405,20 +395,11 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const patch: IndustryTickPatch = { entityId: result.entityId };
     let hasChanged = false;
 
-    const goodsDiff = shallowDiff(last?.goods, result.goods);
-    if(goodsDiff) { patch.goods = goodsDiff; hasChanged = true; }
-
-    const goodsReqDiff = shallowDiff(last?.goodsRequirements, result.goodsRequirements);
-    if(goodsReqDiff) { patch.goodsRequirements = goodsReqDiff; hasChanged = true; }
-
-    const goodsProdDiff = shallowDiff(last?.goodsProduction, result.goodsProduction);
-    if(goodsProdDiff) { patch.goodsProduction = goodsProdDiff; hasChanged = true; }
-
-    const workingWorkersDiff = populationDiff(last?.workingWorkers, result.workingWorkers);
-    if(workingWorkersDiff) { patch.workingWorkers = workingWorkersDiff; hasChanged = true; }
-
-    const freeWorkersDiff = populationDiff(last?.freeWorkers, result.freeWorkers);
-    if(freeWorkersDiff) { patch.freeWorkers = freeWorkersDiff; hasChanged = true; }
+    hasChanged = trySetPatchField(patch, "goods", last?.goods, result.goods, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "goodsRequirements", last?.goodsRequirements, result.goodsRequirements, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "goodsProduction", last?.goodsProduction, result.goodsProduction, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "workingWorkers", last?.workingWorkers, result.workingWorkers, populationDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "freeWorkers", last?.freeWorkers, result.freeWorkers, populationDiff) || hasChanged;
 
     if(last?.populationUpdates !== result.populationUpdates) {
         const updatedPop: IndustryTickPatch["populationUpdates"] = {};
@@ -437,35 +418,16 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
         }
     }
 
-    const sectorProfitsDiff = shallowDiff(last?.sectorProfits, result.sectorProfits);
-    if(sectorProfitsDiff) { patch.sectorProfits = sectorProfitsDiff; hasChanged = true; }
-
-    const sectorRevenueDiff = shallowDiff(last?.sectorRevenue, result.sectorRevenue);
-    if(sectorRevenueDiff) { patch.sectorRevenue = sectorRevenueDiff; hasChanged = true; }
-
-    const wagesDiff = shallowDiff(last?.wages, result.wages);
-    if(wagesDiff) { patch.wages = wagesDiff; hasChanged = true; }
-
-    const sectorLaborCostsDiff = shallowDiff(last?.sectorLaborCosts, result.sectorLaborCosts);
-    if(sectorLaborCostsDiff) { patch.sectorLaborCosts = sectorLaborCostsDiff; hasChanged = true; }
-
-    const sectorInputCostsDiff = shallowDiff(last?.sectorInputCosts, result.sectorInputCosts);
-    if(sectorInputCostsDiff) { patch.sectorInputCosts = sectorInputCostsDiff; hasChanged = true; }
-
-    const popProfitsDiff = shallowDiff(last?.populationProfits, result.populationProfits);
-    if(popProfitsDiff) { patch.populationProfits = popProfitsDiff; hasChanged = true; }
-
-    const sectorUtilDiff = shallowDiff(last?.sectorUtilization, result.sectorUtilization);
-    if(sectorUtilDiff) { patch.sectorUtilization = sectorUtilDiff; hasChanged = true; }
-
-    const capitalStockDiff = shallowDiff(last?.capitalStock, result.capitalStock);
-    if(capitalStockDiff) { patch.capitalStock = capitalStockDiff; hasChanged = true; }
-
-    const sectorGoodsDiff = shallowDiff(last?.sectorGoods, result.sectorGoods);
-    if(sectorGoodsDiff) { patch.sectorGoods = sectorGoodsDiff; hasChanged = true; }
-
-    const moneyDiff = shallowDiff(last?.money, result.money);
-    if(moneyDiff) { patch.money = moneyDiff; hasChanged = true; }
+    hasChanged = trySetPatchField(patch, "sectorProfits", last?.sectorProfits, result.sectorProfits, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorRevenue", last?.sectorRevenue, result.sectorRevenue, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "wages", last?.wages, result.wages, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorLaborCosts", last?.sectorLaborCosts, result.sectorLaborCosts, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorInputCosts", last?.sectorInputCosts, result.sectorInputCosts, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "populationProfits", last?.populationProfits, result.populationProfits, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorUtilization", last?.sectorUtilization, result.sectorUtilization, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "money", last?.money, result.money, shallowDiff) || hasChanged;
 
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
@@ -483,23 +445,9 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         activeEntityIds.add(industry.entityId);
     }
 
-    for(const entityId of colonyPriceMemory.keys()) {
-        if(!activeEntityIds.has(entityId)) {
-            colonyPriceMemory.delete(entityId);
-        }
-    }
-
-    for(const entityId of colonyWageMemory.keys()) {
-        if(!activeEntityIds.has(entityId)) {
-            colonyWageMemory.delete(entityId);
-        }
-    }
-
-    for(const entityId of lastResults.keys()) {
-        if(!activeEntityIds.has(entityId)) {
-            lastResults.delete(entityId);
-        }
-    }
+    pruneMemory(colonyPriceMemory, activeEntityIds);
+    pruneMemory(colonyWageMemory, activeEntityIds);
+    pruneMemory(lastResults, activeEntityIds);
 
     const patches: IndustryTickPatch[] = [];
     for(const industry of event.data.industries) {

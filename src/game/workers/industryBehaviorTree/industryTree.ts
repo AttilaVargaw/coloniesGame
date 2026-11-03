@@ -3,40 +3,33 @@ import { Sequence, Selector } from "../../systems/sectorBehaviorTree/bt";
 import type { IndustryBlackboard } from "./industryBT";
 import {
     ColonyMoneyLow,
-    ColonyUnprofitable,
     ColonyFoodShortage,
     ColonyFoodSurplus,
     ColonyUnemploymentHigh,
     ColonyUnemploymentLow,
 } from "./industryConditions";
 import {
-    EmergencyStopAll,
     ClearEmergencyStop,
-    ShutdownUnprofitableSectors,
     PrioritizeFoodSectors,
     SetInvestmentTotal,
+    Idle,
 } from "./industryActions";
 
 export function createIndustryTree(_bb: IndustryBlackboard): BTNode {
     return new Sequence([
-        // 1. Emergency: if colony money is critically low, stop everything
+        // Always clear emergency stop so it's never permanent
+        new ClearEmergencyStop(),
+
+        // 1. Low money: reduce investment, don't stop production entirely
         new Selector([
             new Sequence([
                 new ColonyMoneyLow(5000),
-                new EmergencyStopAll(),
+                new SetInvestmentTotal(0.02), // minimal investment when broke
             ]),
-            new ClearEmergencyStop(),
+            new Idle(),
         ]),
 
-        // 2. If unprofitable, shutdown unprofitable sectors
-        new Selector([
-            new Sequence([
-                new ColonyUnprofitable(),
-                new ShutdownUnprofitableSectors(),
-            ]),
-        ]),
-
-        // 3. Food crisis: prioritize food sectors
+        // 2. Food crisis: prioritize food sectors
         new Selector([
             new Sequence([
                 new ColonyFoodShortage(),
@@ -52,15 +45,15 @@ export function createIndustryTree(_bb: IndustryBlackboard): BTNode {
             ]),
         ]),
 
-        // 4. Unemployment: adjust investment
+        // 3. Unemployment: adjust investment
         new Selector([
             new Sequence([
                 new ColonyUnemploymentHigh(0.3),
-                new SetInvestmentTotal(0.05), // less investment, more labor needed
+                new SetInvestmentTotal(0.05),
             ]),
             new Sequence([
                 new ColonyUnemploymentLow(0.1),
-                new SetInvestmentTotal(0.15), // more investment to absorb labor
+                new SetInvestmentTotal(0.15),
             ]),
         ]),
     ]);
