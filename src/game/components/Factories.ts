@@ -74,8 +74,8 @@ export const industrialSubsectors = new Map<string, Set<keyof IndustrialSectors>
     ["lightIndustry", new Set(["lumberMill", "paperFactory", "furnitureFactory", "clothing", "consumerFactory", "electronics", "foodFactory", "drinkIndustry", "medicineFactory"])],
     ["services", new Set(["services", "retail", "tourism", "bank", "entertainmentIndustry", "informationTechnology", "religion"])],
     ["publicServices", new Set(["government", "lawEnforcement", "education", "healthcare", "postalServices"])],
-    ["military", new Set(["ammunitionFactory", "weaponFactory", "militaryVehicles", "defense", "spaceShips"])],
-    ["vehicleManufacturing", new Set(["automotive", "railroadVehicles", "aircraft", "ships"])],
+    ["military", new Set(["ammunitionFactory", "weaponFactory", "militaryVehicles", "defense"])],
+    ["vehicleManufacturing", new Set(["automotive", "railroadVehicles", "aircraft", "ships", "spaceShips"])],
     ["mobility", new Set(["railroadInfrastructure", "automotiveInfrastructure", "spaceInfrastructure", "spaceGoodsTransport", "aircraftInfrastructure", "shipInfrastructure"])],
 ]);
 

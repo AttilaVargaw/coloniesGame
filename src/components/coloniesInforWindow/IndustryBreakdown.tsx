@@ -29,6 +29,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                                 <th className="text-center p-2 font-medium">Tech Mult.</th>
                                 <th className="text-center p-2 font-medium">Utilization</th>
                                 <th className="text-center p-2 font-medium">Efficiency</th>
+                                <th className="text-center p-2 font-medium">Income</th>
                                 <th className="text-center p-2 font-medium">Profit</th>
                                 <th className="text-center p-2 font-medium">Labor Cost</th>
                                 <th className="text-center p-2 font-medium">Material Cost</th>

@@ -9,6 +9,7 @@ import { Population } from "../data/Population";
 import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
 import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 import { TradeRouteNode } from "./TradeRouteNode";
+import { MigrationRouteNode } from "./MigrationRouteNode";
 
 const MIN_TRADE_AMOUNT = 1;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
@@ -25,6 +26,7 @@ type Settlement = {
     population: Population;
     wages: Record<keyof Population, number>;
     routeCount: number;
+    hasIncomingMigration: boolean;
 };
 
 const exportableGoods = new Set<keyof Goods>([...physicalGoods, "tourism"]);
@@ -79,10 +81,14 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         // instead of O(routes) per lookup inside the O(n²) settlement loops.
         const routeCounts = new Map<string, number>();
         const activeRoutes = new Set<string>();
+        const incomingMigrationDestinations = new Set<string>();
         if(this.engine) {
             for(const { tradeRoute } of this.engine.getNodeList(TradeRouteNode)) {
                 routeCounts.set(tradeRoute.sourceEntityId, (routeCounts.get(tradeRoute.sourceEntityId) ?? 0) + 1);
                 activeRoutes.add(`${tradeRoute.sourceEntityId}->${tradeRoute.destinationEntityId}`);
+            }
+            for(const { migrationRoute } of this.engine.getNodeList(MigrationRouteNode)) {
+                incomingMigrationDestinations.add(migrationRoute.destinationEntityId);
             }
         }
 
@@ -101,6 +107,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 population: industry.population,
                 wages: industry.wages,
                 routeCount: routeCounts.get(entity.id) ?? 0,
+                hasIncomingMigration: incomingMigrationDestinations.has(entity.id),
             });
         }
 
@@ -211,6 +218,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             routeCount: s.routeCount,
             freeWorkers: s.population.worker.number,
             workerWage: s.wages.worker,
+            hasIncomingMigration: s.hasIncomingMigration,
         }));
 
         const avgPop = populations.reduce((sum, p) => sum + p.totalPop, 0) / populations.length;
@@ -226,6 +234,7 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
 
             for(const dest of deficit) {
                 if(dest.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
+                if(dest.hasIncomingMigration) continue;
 
                 // Wage-driven: only migrate if destination pays better
                 if(dest.workerWage <= source.workerWage * WAGE_MIGRATION_THRESHOLD) continue;

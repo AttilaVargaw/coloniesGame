@@ -88,6 +88,9 @@ export function SectorRow({
             <td className="p-2 text-center">{techMultiplier.toFixed(2)}</td>
             <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
             <td className="p-2 text-center">100%</td>
+            <td className={`p-2 text-center ${revenue >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {convertToReadable(Math.round(revenue))}
+            </td>
             <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {convertToReadable(Math.round(profit))}
             </td>
