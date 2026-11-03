@@ -2,12 +2,13 @@ import type { SectorBlackboard } from "./bt";
 import { Sequence, Selector, BTNode } from "./bt";
 import { defaultDecisions } from "./bt";
 import {
-    HasMoney,
-    IsProfitable,
-    IsUnprofitable,
+    GreaterThan,
+    LessThan,
+} from "./generic";
+import {
     HasCapitalDeficit,
-    HasLaborShortage,
     CanAffordCapital,
+    HasLaborShortage,
 } from "./sectorConditions";
 import {
     EmergencyStop,
@@ -21,19 +22,21 @@ import {
 export function createSectorTree(_blackboard: SectorBlackboard): BTNode {
     return new Sequence([
         // 1. Solvency check: if no money, emergency stop
+        // Generic condition: GreaterThan("money", 0) works on any blackboard with a "money" key
         new Selector([
-            new HasMoney(),
+            new GreaterThan("money", 0),
             new EmergencyStop(),
         ]),
 
         // 2. Profitability branch
+        // Generic conditions: GreaterThan/LessThan on "sectorProfits"
         new Selector([
             new Sequence([
-                new IsProfitable(),
+                new GreaterThan("sectorProfits", 0),
                 new NormalOperations(),
             ]),
             new Sequence([
-                new IsUnprofitable(),
+                new LessThan("sectorProfits", 0),
                 new ReduceProduction(),
             ]),
         ]),
@@ -52,6 +55,7 @@ export function createSectorTree(_blackboard: SectorBlackboard): BTNode {
         new Selector([
             new Sequence([
                 new HasLaborShortage(),
+                new GreaterThan("freeWorkers", 0),
                 new HireWorkers(),
             ]),
             new Idle(),
@@ -78,6 +82,8 @@ export function buildBlackboard(
     goodsProduction?: Record<string, number>,
     outputLevel: number = 0,
     inputLevel: number = 0,
+    investmentPriority: number = 0.5,
+    investRemaining: number = 0,
 ): SectorBlackboard {
     return {
         sectorName,
@@ -98,6 +104,8 @@ export function buildBlackboard(
         goodsProduction,
         outputLevel,
         inputLevel,
+        investmentPriority,
+        investRemaining,
         decisions: { ...defaultDecisions },
     };
 }

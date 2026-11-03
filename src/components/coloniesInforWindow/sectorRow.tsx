@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
+import { Cuboid, Hammer } from "lucide-react";
 
 //-386.8M	
 
@@ -88,17 +89,18 @@ export function SectorRow({
             <td className="p-2 text-center">{techMultiplier.toFixed(2)}</td>
             <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
             <td className="p-2 text-center">100%</td>
-            <td className={`p-2 text-center ${revenue >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {convertToReadable(Math.round(revenue))}
-            </td>
-            <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {convertToReadable(Math.round(profit))}
-            </td>
-            <td className={`p-2 text-center ${laborCosts >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {convertToReadable(Math.round(laborCosts))}
-            </td>
-            <td className={`p-2 text-center ${inputCosts >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {convertToReadable(Math.round(inputCosts))}
+            <td className={`p-2 text-center`}>
+                <div className="flex flex-col">
+                    <span className="text-green-400">
+                        {convertToReadable(Math.round(revenue))}
+                    </span>
+                    <span className="text-red-400">
+                        {convertToReadable(Math.round(laborCosts))} + {convertToReadable(Math.round(inputCosts))}
+                    </span>
+                    <span className={`${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {convertToReadable(Math.round(profit))}
+                    </span>
+                </div>
             </td>
             <td className={`p-2 text-center ${margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {hasData ? `${margin.toFixed(0)}%` : '—'}

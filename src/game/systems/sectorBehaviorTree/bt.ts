@@ -1,7 +1,7 @@
 export type BTStatus = "SUCCESS" | "FAILURE" | "RUNNING";
 
-export interface BTNode {
-    tick(blackboard: SectorBlackboard): BTStatus;
+export interface BTNode<TBlackboard = any> {
+    tick(blackboard: TBlackboard): BTStatus;
 }
 
 export interface SectorBlackboard {
@@ -23,6 +23,8 @@ export interface SectorBlackboard {
     goodsProduction?: Record<string, number>;
     outputLevel: number;
     inputLevel: number;
+    investmentPriority: number;
+    investRemaining: number;
     decisions: SectorDecisions;
 }
 
@@ -42,10 +44,10 @@ export const defaultDecisions: SectorDecisions = {
     buyCapital: false,
 };
 
-export class Sequence implements BTNode {
-    constructor(public children: BTNode[]) {}
+export class Sequence<TBlackboard = any> implements BTNode<TBlackboard> {
+    constructor(public children: BTNode<TBlackboard>[]) {}
 
-    tick(blackboard: SectorBlackboard): BTStatus {
+    tick(blackboard: TBlackboard): BTStatus {
         for (const child of this.children) {
             const status = child.tick(blackboard);
             if (status !== "SUCCESS") return status;
@@ -54,10 +56,10 @@ export class Sequence implements BTNode {
     }
 }
 
-export class Selector implements BTNode {
-    constructor(public children: BTNode[]) {}
+export class Selector<TBlackboard = any> implements BTNode<TBlackboard> {
+    constructor(public children: BTNode<TBlackboard>[]) {}
 
-    tick(blackboard: SectorBlackboard): BTStatus {
+    tick(blackboard: TBlackboard): BTStatus {
         for (const child of this.children) {
             const status = child.tick(blackboard);
             if (status === "SUCCESS") return status;
@@ -66,26 +68,26 @@ export class Selector implements BTNode {
     }
 }
 
-export abstract class Condition implements BTNode {
-    abstract check(blackboard: SectorBlackboard): boolean;
+export abstract class Condition<TBlackboard = any> implements BTNode<TBlackboard> {
+    abstract check(blackboard: TBlackboard): boolean;
 
-    tick(blackboard: SectorBlackboard): BTStatus {
+    tick(blackboard: TBlackboard): BTStatus {
         return this.check(blackboard) ? "SUCCESS" : "FAILURE";
     }
 }
 
-export abstract class Action implements BTNode {
-    abstract execute(blackboard: SectorBlackboard): BTStatus;
+export abstract class Action<TBlackboard = any> implements BTNode<TBlackboard> {
+    abstract execute(blackboard: TBlackboard): BTStatus;
 
-    tick(blackboard: SectorBlackboard): BTStatus {
+    tick(blackboard: TBlackboard): BTStatus {
         return this.execute(blackboard);
     }
 }
 
-export class Inverter implements BTNode {
-    constructor(public child: BTNode) {}
+export class Inverter<TBlackboard = any> implements BTNode<TBlackboard> {
+    constructor(public child: BTNode<TBlackboard>) {}
 
-    tick(blackboard: SectorBlackboard): BTStatus {
+    tick(blackboard: TBlackboard): BTStatus {
         const status = this.child.tick(blackboard);
         if (status === "SUCCESS") return "FAILURE";
         if (status === "FAILURE") return "SUCCESS";

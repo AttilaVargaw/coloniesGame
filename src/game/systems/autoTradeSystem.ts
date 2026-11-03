@@ -4,18 +4,29 @@ import { Engine } from "@/engine/core/engine";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { PositionComponent } from "@/engine/components/position";
 import { Goods, physicalGoods } from "../data/Goods";
-import { CreateTradeRouteCommand } from "@game/commands/createTradeRouteCommand";
 import { Population } from "../data/Population";
-import { TradeRouteComponent } from "@game/components/tradeRouteComponent";
-import { CreateMigrationRouteCommand } from "@game/commands/createMigrationRouteCommand";
 import { TradeRouteNode } from "./TradeRouteNode";
 import { MigrationRouteNode } from "./MigrationRouteNode";
+import {
+    SourceHasRouteCapacity,
+    DestHasRouteCapacity,
+    RouteDoesNotExist,
+    ValidTradeDistance,
+    MigrationDestFree,
+} from "./autoTradeBehaviorTree/autoTradeConditions";
+import {
+    CreateTradeRouteAction,
+    CreateMigrationRouteAction,
+} from "./autoTradeBehaviorTree/autoTradeActions";
+import { Sequence } from "./sectorBehaviorTree/bt";
 
 const MIN_TRADE_AMOUNT = 1;
 const MAX_AUTO_ROUTES_PER_SETTLEMENT = 10;
 const MAX_ROUTE_SPEED = 20;
 const MIGRATION_SURPLUS_FACTOR = 1.5;
 const MIGRATION_DEFICIT_FACTOR = 0.75;
+const WAGE_MIGRATION_THRESHOLD = 1.1;
+const MAX_MIGRATION_RATIO = 0.2;
 
 type Settlement = {
     entityId: string;
@@ -35,7 +46,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     private dirty = false;
     private flushScheduled = false;
 
-    // eslint-disable-next-line class-methods-use-this,no-empty-function
     protected updateNode(_node: IndustryNode, _dT?: number): void {
     }
 
@@ -77,8 +87,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
     };
 
     private evaluate = () => {
-        // Build route-count and active-route lookups once (O(routes) total),
-        // instead of O(routes) per lookup inside the O(n²) settlement loops.
         const routeCounts = new Map<string, number>();
         const activeRoutes = new Set<string>();
         const incomingMigrationDestinations = new Set<string>();
@@ -135,15 +143,15 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             return { ...s, goodsInfo };
         });
 
-        // Batch all tradeable goods per (source, dest) pair into a single route
-        const pairRoutes = new Map<string, { source: Settlement; importer: Settlement; goods: Partial<Goods> }>();
+        const pairRoutes = new Map<string, {
+            source: typeof scored[0];
+            importer: typeof scored[0];
+            goods: Partial<Goods>;
+        }>();
 
         for(const exporter of scored) {
-            if(exporter.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
-
             for(const importer of scored) {
                 if(importer === exporter) continue;
-                if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
                 const distance = Math.hypot(
                     importer.position.x - exporter.position.x,
@@ -151,7 +159,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 );
                 const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
                 if(distance > travelDays * 20) continue;
-                if(activeRoutes.has(`${exporter.entityId}->${importer.entityId}`)) continue;
 
                 const batch: Partial<Goods> = {};
                 let hasAny = false;
@@ -189,17 +196,30 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
             if(source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
             if(importer.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) continue;
 
-            this.engine?.addCommand(
-                new CreateTradeRouteCommand(
-                    source.entityId,
-                    importer.entityId,
-                    goods,
-                    MAX_ROUTE_SPEED
-                )
-            );
+            // Behavior tree decision: should we create this trade route?
+            const bb = {
+                settlements,
+                activeRoutes,
+                incomingMigrationDestinations: new Set(),
+                engine: this.engine,
+                pairRoutes: new Map(),
+                decisions: [],
+            };
 
-            source.routeCount++;
-            importer.routeCount++;
+            const tree = new Sequence([
+                new SourceHasRouteCapacity(source.entityId),
+                new DestHasRouteCapacity(importer.entityId),
+                new RouteDoesNotExist(source.entityId, importer.entityId),
+                new ValidTradeDistance(source.entityId, importer.entityId),
+                new CreateTradeRouteAction(source.entityId, importer.entityId, goods as Record<string, number>),
+            ]);
+
+            const status = tree.tick(bb);
+            if(status === "SUCCESS") {
+                source.routeCount++;
+                importer.routeCount++;
+                activeRoutes.add(`${source.entityId}->${importer.entityId}`);
+            }
         }
     }
 
@@ -207,9 +227,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
         settlements: Settlement[],
     ) {
         if(settlements.length < 2) return;
-
-        const WAGE_MIGRATION_THRESHOLD = 1.1; // dest wage must be at least 10% higher
-        const MAX_MIGRATION_RATIO = 0.2;      // max 20% of free workers per tick
 
         const populations = settlements.map(s => ({
             entityId: s.entityId,
@@ -242,7 +259,6 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 const distance = Math.hypot(dest.position.x - source.position.x, dest.position.y - source.position.y);
                 const travelDays = Math.max(1, Math.ceil(distance / (MAX_ROUTE_SPEED * 0.5)));
 
-                // Wage gap scales how many workers want to move
                 const wageRatio = dest.workerWage / source.workerWage;
                 const wageFactor = Math.min(wageRatio - 1, MAX_MIGRATION_RATIO);
                 const workerCount = Math.min(
@@ -253,17 +269,28 @@ export class AutoTradeSystem extends SystemWithNodes<IndustryNode> {
                 if(workerCount <= 0) continue;
                 if(distance > travelDays * 10) continue;
 
-                this.engine?.addCommand(
-                    new CreateMigrationRouteCommand(
-                        source.entityId,
-                        dest.entityId,
-                        workerCount,
-                        MAX_ROUTE_SPEED
-                    )
-                );
+                // Behavior tree decision: should we create this migration route?
+                const bb = {
+                    settlements: [],
+                    activeRoutes: new Set(),
+                    incomingMigrationDestinations: new Set(),
+                    engine: this.engine,
+                    pairRoutes: new Map(),
+                    decisions: [],
+                };
 
-                source.routeCount++;
-                dest.routeCount++;
+                const tree = new Sequence([
+                    new SourceHasRouteCapacity(source.entityId),
+                    new DestHasRouteCapacity(dest.entityId),
+                    new MigrationDestFree(dest.entityId),
+                    new CreateMigrationRouteAction(source.entityId, dest.entityId, workerCount),
+                ]);
+
+                const status = tree.tick(bb);
+                if(status === "SUCCESS") {
+                    source.routeCount++;
+                    dest.routeCount++;
+                }
 
                 if(source.routeCount >= MAX_AUTO_ROUTES_PER_SETTLEMENT) break;
             }

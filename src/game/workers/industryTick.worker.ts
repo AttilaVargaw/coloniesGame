@@ -17,6 +17,8 @@ import { buildSectorResultsPatch } from "./sectorResultsPatch";
 import { buildAdjustedSalaries, updateWageMemory } from "./wageSystem";
 import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
+import { createIndustryTree } from "./industryBehaviorTree/industryTree";
+import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
@@ -131,14 +133,72 @@ function processIndustry(
     const previousSectorUtilization: Record<string, number> = last?.sectorUtilization ?? {};
 
     const sectorBids: SectorBid[] = [];
+
+    // ---- Industry-wide behavior tree ----
+    // Computes colony-wide aggregates and makes colony-level decisions
+    // (emergency stop, sector shutdowns, investment priorities) that
+    // constrain per-sector decisions below.
+    const industryBlackboard = defaultIndustryBlackboard(entityId, settlementType);
+
+    // Aggregate sector data from previous tick
+    for(const name of activeSectors) {
+        industryBlackboard.sectorProfits[name] = previousSectorProfits[name] ?? 0;
+        industryBlackboard.sectorRevenue[name] = previousSectorRevenue[name] ?? 0;
+        industryBlackboard.sectorLaborCosts[name] = previousSectorLaborCosts[name] ?? 0;
+        industryBlackboard.sectorUtilization[name] = previousSectorUtilization[name] ?? 0;
+        industryBlackboard.totalSectorProfits += previousSectorProfits[name] ?? 0;
+        industryBlackboard.totalSectorRevenue += previousSectorRevenue[name] ?? 0;
+        industryBlackboard.totalSectorLaborCosts += previousSectorLaborCosts[name] ?? 0;
+        industryBlackboard.totalSectorInputCosts += previousSectorInputCosts[name] ?? 0;
+    }
+
+    // Aggregate money
+    for(const name of activeSectors) {
+        industryBlackboard.totalMoney += startingMoney[name] ?? 0;
+    }
+
+    // Aggregate population
+    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        industryBlackboard.totalPopulation += pop.number;
+        if(key === "worker") {
+            industryBlackboard.totalFreeWorkers = pop.number; // will be refined below
+        }
+    }
+
+    // Colony goods state (production/requirements refined after executeSectors)
+    industryBlackboard.colonyGoods = { ...goods };
+    industryBlackboard.colonyGoodsProduction = {};
+    industryBlackboard.colonyGoodsRequirements = {};
+
+    // Wages
+    for(const [key, wage] of Object.entries(adjustedSalaries)) {
+        industryBlackboard.wages[key] = wage;
+    }
+
+    const industryTree = createIndustryTree(industryBlackboard);
+    industryTree.tick(industryBlackboard);
+
+    let investRemaining = industryBlackboard.investTotal;
+
     for(const name of activeSectors) {
         if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
+            continue;
+        }
+
+        // Industry-wide emergency stop: skip all sectors
+        if(industryBlackboard.emergencyStopAll) {
+            continue;
+        }
+
+        // Industry-wide sector shutdown: skip unprofitable sectors
+        if(industryBlackboard.shutdownSectors.has(name)) {
             continue;
         }
 
         // Run behavior tree to make sector-level decisions
         const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
         const sectorMoney = startingMoney[name] ?? 0;
+        const investPriority = industryBlackboard.investmentPriority[name] ?? 0.5;
         const blackboard = buildBlackboard(
             name,
             sectorMoney,
@@ -156,9 +216,16 @@ function processIndustry(
             config?.capitalGoods,
             config?.workerRequirement,
             config?.goodsProduction,
+            0, // outputLevel
+            0, // inputLevel
+            investPriority,
+            investRemaining,
         );
         const tree = createSectorTree(blackboard);
         tree.tick(blackboard);
+
+        // Track remaining investment budget across sectors
+        investRemaining = blackboard.investRemaining;
 
         // Apply behavior tree decisions
         if(blackboard.decisions.stopProduction) {

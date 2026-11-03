@@ -8,6 +8,14 @@ import { CancelTradeRouteCommand } from "@game/commands/cancelTradeRouteCommand"
 import { Goods } from "@game/data/Goods";
 import { Entity } from "@/engine/entities/entity";
 import { CommandBase } from "@/engine/lib/CommandBase";
+import { Condition, Sequence } from "./sectorBehaviorTree/bt";
+
+class SourceHasIndustry extends Condition {
+    constructor(private source: Entity) { super(); }
+    check(): boolean {
+        return !!this.source.getComponent(IndustryComponent);
+    }
+}
 
 export class TradeSystem extends RouteSystem<TradeRouteNode> {
     protected readonly nodeConstructor = TradeRouteNode;
@@ -36,7 +44,11 @@ export class TradeSystem extends RouteSystem<TradeRouteNode> {
     }
 
     protected validateCreate(source: Entity): boolean {
-        return !!source.getComponent(IndustryComponent);
+        const bb = {} as any;
+        const tree = new Sequence([
+            new SourceHasIndustry(source),
+        ]);
+        return tree.tick(bb) === "SUCCESS";
     }
 
     protected prepareSource(source: Entity, command: CommandBase): Partial<Goods> | null {

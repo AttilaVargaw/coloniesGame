@@ -41,6 +41,10 @@ export class BuyCapital extends Action {
     execute(blackboard: SectorBlackboard): BTStatus {
         if (!blackboard.capitalGoods) return "FAILURE";
 
+        // Respect industry-wide investment priority and remaining budget
+        if (blackboard.investmentPriority < 0.3) return "FAILURE";
+        if (blackboard.investRemaining <= 0) return "FAILURE";
+
         let bestGood: string | null = null;
         let bestCost = Infinity;
 
@@ -57,11 +61,12 @@ export class BuyCapital extends Action {
             }
         }
 
-        if (!bestGood || bestCost > blackboard.money) return "FAILURE";
+        if (!bestGood || bestCost > blackboard.money || bestCost > blackboard.investRemaining) return "FAILURE";
 
         blackboard.decisions.sectorInvestment = bestCost;
         blackboard.decisions.buyCapital = true;
         blackboard.decisions.restartProduction = true;
+        blackboard.investRemaining -= bestCost;
         return "SUCCESS";
     }
 }
