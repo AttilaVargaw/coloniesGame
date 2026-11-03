@@ -702,10 +702,25 @@ export const techs: Record<string, TechDefinition> = {
         effects: [
 
         ],
-        prerequisites: new Set(["cruiser"]),
+        prerequisites: new Set([""]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "This new highly effective operating system can multiply the performance of any system of our ships. High ratio of automation can lower the crew requirements of our ships."
+    },
+    "warMemorial": {
+        type: "technological",
+        age: "night",
+        id: "warMuseum",
+        name: "War Museum",
+        description: "Although the war is long over, we must not forget why so many sacrificed so much for freedom. For historical purposes, we should build a war memorial, but not a usual one. There is one particular ship that is not worth updating. Instead of scrapping it, we should build a war museum out of it.",
+        cost: { researchPoints: 10000, days: 28 },
+        effects: [
+
+        ],
+        prerequisites: new Set(["commandNavigationSystem"]),
+        adoptionModel: "instant",
+        adoptionSpeed: 28,
+        researchedText: "Everything is finished. We collected and restored all the old decommissioned fighters we could find to their former glory. We have all the memorabilia we could find. We even found original Centurions in a small tourist trap on Canceron. Since we kept the old Galactica, we will use it as a museum to house everything. It's ironic that the first ship of its class will last the longest. Even the commander is a relic from the war."
     },
 } as const
 
