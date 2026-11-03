@@ -125,10 +125,10 @@ function createInteractionComponents(
                 starterCapitalStock[sector] = {}
                 starterStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 20_000))
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 500_000))
                 }
                 for(const [goodKey, rate] of Object.entries(config.goodsRequirements)) {
-                    starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 20_000))
+                    starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 500_000))
                 }
             }
 
