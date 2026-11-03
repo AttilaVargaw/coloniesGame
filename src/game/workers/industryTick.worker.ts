@@ -1,8 +1,7 @@
 import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
-import { getGoodRequirementsAndQoL, getRequirementsForQol, Population, PopulationBreakdown } from "../data/Population";
+import { Population, PopulationBreakdown } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
-import { populationGrowth } from "../data/populationHelpers";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorBid } from "./SectorBid";
 import type { IndustryTickInput } from "./IndustryTickInput";
@@ -19,26 +18,16 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
+import { computePopulationConsumption, computeBidConstraints, buySectorInputs, distributePopulationSpending, computeColonyGoodsDelta } from "./industryTickHelpers";
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 const colonyWageMemory = new Map<string, Partial<Record<keyof Population, number>>>();
 
-const qolSmoothing = 0.03;
-const wealthSmoothing = 0.5;
-const expectedQolSmoothing = 0.03;
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
-const maxDailyChangeSmoothing = 0.001;
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
-
-const extraRequirements = {
-    student: { education: 1 },
-    retired: { healthcare: 2 }
-} as Readonly<Record<keyof Population, Partial<Goods>>>;
-
-const BUY_BUFFER_TICKS = 5;
 
 function processIndustry(
     {
@@ -70,60 +59,11 @@ function processIndustry(
 
     const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
-    const populationConsumption = {} as Partial<Goods>;
-    const populationUpdates: IndustryTickResult["populationUpdates"] = {} as IndustryTickResult["populationUpdates"];
-    const populationProfits: Record<string, number> = {};
-
-    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
-        const { qol: targetQol } = getGoodRequirementsAndQoL(
-            adjustedSalaries[key],
-            prices,
-            pop
-        );
-
-        const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
-        const requirements = getRequirementsForQol(smoothedQol, pop.number);
-
-        const extra = extraRequirements[key];
-        if(extra) {
-            for(const [good, amount] of Object.entries(extra)) {
-                requirements[good as keyof Goods] = (requirements[good as keyof Goods] ?? 0) + amount * pop.number;
-            }
-        }
-
-        for(const it in requirements) {
-            populationConsumption[it as keyof Goods] =
-                (requirements[it as keyof Goods] ?? 0) +
-                (populationConsumption[it as keyof Goods] ?? 0);
-        }
-
-        const income = adjustedSalaries[key] * pop.number;
-        const expenses = Object.entries(requirements).reduce((sum, [good, amount]) => {
-            if(!amount) return sum;
-            return sum + amount * prices[good as keyof Goods];
-        }, 0);
-
-        const targetWealth = pop.wealth + income - expenses;
-        const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;
-
-        const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
-
-        const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
-        const maxDailyChange = pop.number * maxDailyChangeSmoothing;
-        const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, Number.isFinite(rawPopulationChange) ? rawPopulationChange : 0));
-        const clampedPopulationNumber = Math.max(0, pop.number + clampedPopulationChange);
-
-        populationUpdates[key] = {
-            qol: smoothedQol,
-            expectedQol,
-            populationChange: clampedPopulationChange,
-            wealth: Math.max(0, smoothedWealth),
-            number: clampedPopulationNumber,
-            requirements: requirements as Record<string, number>,
-        };
-
-        populationProfits[key] = income - expenses;
-    }
+    const { populationConsumption, populationUpdates, populationProfits } = computePopulationConsumption(
+        population,
+        adjustedSalaries,
+        prices,
+    );
 
     const last = results.get(entityId);
     const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
@@ -134,10 +74,6 @@ function processIndustry(
 
     const sectorBids: SectorBid[] = [];
 
-    // ---- Industry-wide behavior tree ----
-    // Computes colony-wide aggregates and makes colony-level decisions
-    // (emergency stop, sector shutdowns, investment priorities) that
-    // constrain per-sector decisions below.
     const industryBlackboard = defaultIndustryBlackboard(entityId, settlementType);
 
     // Aggregate sector data from previous tick
@@ -255,69 +191,29 @@ function processIndustry(
     updateWageMemory(wageMemory, workerMarketRatios);
     colonyWageMemory.set(entityId, wageMemory);
 
-    const newMoney: Record<string, number> = { ...startingMoney };
+    let newMoney: Record<string, number> = { ...startingMoney };
 
     const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
 
     // Compute market constraint per bid so sectors only buy what they can actually consume.
     // Without this, sectors buy inputs at full bid scale but execute at actualScale (which may be 0 due to bottlenecks),
     // draining money on inputs that sit unused in inventory.
-    const bidConstraints = new Map<string, number>();
-    for(const bid of sectorBids) {
-        let mc = 1;
-        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            if(value > 0) {
-                mc = Math.min(mc, workerMarketRatios[key as keyof Population] ?? 1);
-            }
-        }
-        const config = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
-        const nonEssentialGoods = new Set<keyof Goods>((config?.nonEssentialGoods || config?.optionalGoods || []) as (keyof Goods)[]);
-        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            if(value > 0) {
-                const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
-                const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
-                mc = Math.min(mc, isNonEssential ? Math.min(0.5 + 0.75 * ratio) : ratio);
-                const sectorInv = updatedSectorGoodsBeforeExec[bid.name as keyof IndustrialSectors] ?? createStarterWarehouse(0);
-                const available = sectorInv[key as keyof Goods] ?? 0;
-                const maxScaleFromInventory = value > 0 ? available / value : 1;
-                const inventoryConstraint = isNonEssential ? Math.max(0.5, maxScaleFromInventory) : maxScaleFromInventory;
-                mc = Math.min(mc, inventoryConstraint);
-            }
-        }
-        bidConstraints.set(bid.name, mc);
-    }
+    const bidConstraints = computeBidConstraints(
+        sectorBids,
+        workerMarketRatios,
+        goodsMarketRatios,
+        updatedSectorGoodsBeforeExec,
+    );
 
     // Sectors buy input goods from colony pool using their own money
-    const colonyGoodsAfterPurchase = { ...goods };
-    for(const bid of sectorBids) {
-        const sectorName = bid.name as keyof IndustrialSectors;
-        const config = industrySectorBlueprints.get(sectorName);
-        if(!config?.goodsRequirements) continue;
-
-        const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
-        let sectorMoney = newMoney[sectorName] ?? 0;
-        const marketConstraint = bidConstraints.get(bid.name) ?? 1;
-
-        for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
-            if(demandPerTick <= 0) continue;
-
-            const demand = demandPerTick * marketConstraint * BUY_BUFFER_TICKS;
-            const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
-            const price = prices[goodKey as keyof Goods] ?? 0;
-            if(available <= 0 || price <= 0) continue;
-
-            const canAfford = Math.floor(sectorMoney / price);
-            const toBuy = Math.min(demand, available, canAfford);
-            if(toBuy <= 0) continue;
-
-            sectorMoney -= toBuy * price;
-            colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
-            sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + toBuy;
-        }
-
-        newMoney[sectorName] = sectorMoney;
-        updatedSectorGoodsBeforeExec[sectorName] = sectorInv;
-    }
+    const { colonyGoodsAfterPurchase } = buySectorInputs(
+        sectorBids,
+        bidConstraints,
+        goods,
+        updatedSectorGoodsBeforeExec,
+        newMoney,
+        prices,
+    );
 
     const {
         sectorResults,
@@ -363,75 +259,13 @@ function processIndustry(
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
     }
 
-    // Distribute population consumption spending to producing sectors.
-    // Worker expenses on goods flow back to the sectors that produced them,
-    // closing the money loop instead of vanishing into a wealth drain.
-    const totalProductionPerGood: Partial<Record<keyof Goods, number>> = {};
-    for(const bid of sectorBids) {
-        const result = sectorResults[bid.name];
-        if(!result) continue;
-        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
-            if(amount > 0) {
-                totalProductionPerGood[goodKey as keyof Goods] =
-                    (totalProductionPerGood[goodKey as keyof Goods] ?? 0) + amount;
-            }
-        }
-    }
-
-    const populationSpending: Partial<Record<keyof Goods, number>> = {};
-    for(const [goodKey, amount] of Object.entries(populationConsumption)) {
-        if(amount > 0) {
-            populationSpending[goodKey as keyof Goods] = amount * (prices[goodKey as keyof Goods] ?? 0);
-        }
-    }
-
-    for(const bid of sectorBids) {
-        const sectorName = bid.name as keyof IndustrialSectors;
-        const result = sectorResults[sectorName];
-        if(!result) continue;
-        let sectorPopulationRevenue = 0;
-        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
-            if(amount <= 0) continue;
-            const totalProd = totalProductionPerGood[goodKey as keyof Goods] ?? 0;
-            if(totalProd <= 0) continue;
-            const spending = populationSpending[goodKey as keyof Goods] ?? 0;
-            if(spending <= 0) continue;
-            sectorPopulationRevenue += spending * (amount / totalProd);
-        }
-        if(sectorPopulationRevenue > 0) {
-            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + sectorPopulationRevenue;
-        }
-    }
-
-    // Move goods between sectors and colony pool
-    const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
-
-    for(const goodKey of Object.keys(goods)) {
-        const bought = (goods[goodKey as keyof Goods] ?? 0) - (colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0);
-        if(bought > 0) {
-            colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) - bought;
-        }
-    }
-
-    for(const name of activeSectors) {
-        const sectorResult = sectorResults[name];
-        if(!sectorResult || sectorResult.productionRatio <= 0) continue;
-
-        for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
-            if(amount > 0) {
-                const price = prices[goodKey as keyof Goods] ?? 0;
-                if(price > 0) {
-                    // Sell all produced goods to colony pool if worth it (positive market price)
-                    colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
-                } else {
-                    // Not worth selling, keep in sector inventory
-                    const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                    sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;
-                    updatedSectorGoods[name] = sectorInv;
-                }
-            }
-        }
-    }
+    newMoney = distributePopulationSpending(
+        sectorBids,
+        sectorResults,
+        populationConsumption,
+        prices,
+        newMoney,
+    );
 
     // Capital wear, decay, replenishment, investment
     const { newCapitalStock, replenishmentDelta } = processCapital(
@@ -442,10 +276,15 @@ function processIndustry(
         newMoney
     );
 
-    // Merge capital replenishment into colony goods delta
-    for(const [goodKey, amount] of Object.entries(replenishmentDelta)) {
-        colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
-    }
+    const colonyGoodsDelta = computeColonyGoodsDelta(
+        goods,
+        colonyGoodsAfterPurchase,
+        activeSectors,
+        sectorResults,
+        replenishmentDelta,
+        prices,
+        updatedSectorGoods,
+    );
 
     // Apply colony goods changes
     const colonyGoodsProduction = { ...createStarterWarehouse(0) };
