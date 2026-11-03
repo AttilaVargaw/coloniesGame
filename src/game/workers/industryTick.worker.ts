@@ -36,7 +36,6 @@ const extraRequirements = {
 } as Readonly<Record<keyof Population, Partial<Goods>>>;
 
 const BUY_BUFFER_TICKS = 5;
-const KEEP_BUFFER_RATIO = 0.5;
 
 function processIndustry(
     {
@@ -279,14 +278,16 @@ function processIndustry(
 
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             if(amount > 0) {
-                const keep = Math.floor(amount * KEEP_BUFFER_RATIO);
-                const sell = amount - keep;
-                if(sell > 0) {
-                    colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + sell;
+                const price = prices[goodKey as keyof Goods] ?? 0;
+                if(price > 0) {
+                    // Sell all produced goods to colony pool if worth it (positive market price)
+                    colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
+                } else {
+                    // Not worth selling, keep in sector inventory
+                    const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                    sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;
+                    updatedSectorGoods[name] = sectorInv;
                 }
-                const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + keep;
-                updatedSectorGoods[name] = sectorInv;
             }
         }
     }
