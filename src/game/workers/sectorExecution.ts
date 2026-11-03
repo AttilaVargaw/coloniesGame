@@ -55,6 +55,9 @@ export function executeSectors(
 
     const sectorResults: Record<string, SectorResult> = {};
     const sectorProfits: Record<string, number> = {};
+    const sectorRevenue: Record<string, number> = {};
+    const sectorLaborCosts: Record<string, number> = {};
+    const sectorInputCosts: Record<string, number> = {};
     const sectorUtilization: Record<string, number> = {};
 
     const sectorGoods: Record<keyof IndustrialSectors, Goods> = { ...inputSectorGoods };
@@ -95,8 +98,11 @@ export function executeSectors(
                 inputLevel: bid.inputLevel,
                 outputLevel: bid.outputLevel,
             };
-            sectorProfits[bid.name] = 0;
-            continue;
+        sectorProfits[bid.name] = 0;
+        sectorRevenue[bid.name] = 0;
+        sectorLaborCosts[bid.name] = 0;
+        sectorInputCosts[bid.name] = 0;
+        continue;
         }
 
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
@@ -152,6 +158,9 @@ export function executeSectors(
             outputLevel: bid.outputLevel,
         };
         sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
+        sectorRevenue[bid.name] = revenue;
+        sectorLaborCosts[bid.name] = laborCosts;
+        sectorInputCosts[bid.name] = inputCosts;
         sectorUtilization[bid.name] = actualScale;
     }
 
@@ -171,7 +180,11 @@ export function executeSectors(
     return {
         sectorResults,
         sectorProfits,
+        sectorRevenue,
+        sectorLaborCosts,
+        sectorInputCosts,
         sectorUtilization,
+        populationProfits: {},
         workingWorkers,
         remainingWorkers,
         sectorGoods,

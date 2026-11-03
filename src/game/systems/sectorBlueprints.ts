@@ -214,7 +214,9 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
             paper: 10, environmentFactor: 20, electricity: 10, governance: 20
-        }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { oil: 1500, waste: 20 },
+        },
+        workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
+        goodsProduction: { oil: 2000, waste: 20 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
@@ -284,7 +286,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
             farmer: 900, clerks: 50, engineer: 50, healtcarePersonal: 10
         }, goodsProduction: { agriculturalGoods: 1000, },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(["chemicals", "electronics", "paper"]),
+        nonEssentialGoods: new Set(["chemicals", "electronics", "paper", "environmentFactor"]),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, vehicles: 1 },
         productionMethods: new Map([
             ["traditional", {
@@ -305,7 +307,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         goodsProduction: { meat: 1000 },
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, ships: 0.1 },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        nonEssentialGoods: new Set(["paper", "governance", "electronics", "environmentFactor"]),
         productionMethods: new Map([
             ["traditional", {
                 desc: "Traditional",
@@ -378,7 +380,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.08, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
     })],
     ["lumberMill", ({
         name: "lumberMill", goodsRequirements: {
@@ -412,7 +414,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
     })],
     ["medicineFactory", ({
         name: "medicineFactory", goodsRequirements: {
@@ -424,7 +426,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.6, buildings: 0.2, electronics: 0.1 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
     })],
     ["consumerFactory", ({
         name: "consumerFactory", goodsRequirements: {
@@ -435,7 +437,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.6, buildings: 0.1 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
     })],
     ["furnitureFactory", ({
         name: "furnitureFactory", goodsRequirements: { paper: 10, environmentFactor: 20, retail: 200, lumber: 100, chemicals: 40, electricity: 200, governance: 20 }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { furniture: 500 },
@@ -443,7 +445,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.5, buildings: 0.1 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
     })],
     ["ammunitionFactory", ({
         name: "ammunitionFactory", goodsRequirements: { paper: 10, environmentFactor: 20, retail: 100, chemicals: 50, electricity: 200, governance: 20 }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
@@ -476,6 +478,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.8, electronics: 0.5, buildings: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["spaceShips", ({
         name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
@@ -485,6 +488,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 1, metals: 0.8, buildings: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["construction", ({
         name: "construction", goodsRequirements: {
@@ -578,7 +582,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.5, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
-
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
@@ -627,6 +631,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.8, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
+        nonEssentialGoods: new Set(usualNonEssentialGoods),
     })],
     ["alternativeMedicine", ({
         name: "alternativeMedicine", goodsRequirements: {
@@ -853,7 +858,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.0005,
         capitalEfficiencyDecay: 0.0005,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics"]),
+        nonEssentialGoods: new Set(["paper", "governance", "electronics", "environmentFactor"]),
     })],
     ["defense", ({
         name: "retail",
@@ -872,7 +877,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.8, vehicles: 0.5, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "electronics", "ordnance", "militaryVehicles", "electricity"]),
+        nonEssentialGoods: new Set(["paper", "governance", "electronics", "ordnance", "militaryVehicles", "electricity", "environmentFactor"]),
         productionMethods: new Map([
             createTraditional(),
             createFullyRobotized("A fully autonomus robot army, lead by powerful AIs, which can wage wars without any human intervention. May the Gods have mercy on -our- *their enemies.")
@@ -896,7 +901,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { vehicles: 0.5, machinery: 0.5, buildings: 0.1, electronics: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance"]),
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
         productionMethods: new Map([
             createTraditional(),
             createFullyRobotized("A merchant marine which is fully automated by AI.")

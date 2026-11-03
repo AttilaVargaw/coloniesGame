@@ -20,7 +20,7 @@ export function createStarterWarehouse(population: number) {
         spaceTransport: population,
         tourism: population,
         weapons: population / 5,
-        wood: population,
+        wood: population / 3,
         lumber: population,
         food: population * 5,
         meat: population / 5,

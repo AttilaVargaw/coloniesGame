@@ -63,8 +63,8 @@ export function buildSectorBid(
         if(referenceConsumption <= 0) continue;
 
         const ratio = stock / referenceConsumption;
-        const adequacy = ratio >= 1 ? 1 + Math.sqrt(ratio) : ratio;
-        capitalAdequacy = Math.min(capitalAdequacy, adequacy);
+        //const adequacy = ratio >= 1 ? 1 + Math.log1p(ratio) : ratio;
+        capitalAdequacy = ratio//Math.min(capitalAdequacy, ratio);
     }
     if(!hasCapitalGoods) capitalAdequacy = 1;
 

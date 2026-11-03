@@ -21,6 +21,8 @@ export function SectorRow({
     industry: IndustryComponent;
 }) {
     const profit = industry.sectorProfits[sectorKey] ?? 0;
+    const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0;
+    const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0;
     const utilization = industry.sectorUtilization[sectorKey] ?? 0;
     const techMultiplier = industry.techMultipliers[sectorKey] ?? 1;
 
@@ -92,6 +94,12 @@ export function SectorRow({
             <td className="p-2 text-center">100%</td>
             <td className={`p-2 text-center ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {convertToReadable(Math.round(profit))}
+            </td>
+            <td className={`p-2 text-center ${laborCosts >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {convertToReadable(Math.round(laborCosts))}
+            </td>
+            <td className={`p-2 text-center ${inputCosts >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {convertToReadable(Math.round(inputCosts))}
             </td>
             <td className={`p-2 text-center ${margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {hasData ? `${margin.toFixed(0)}%` : '—'}

@@ -112,15 +112,23 @@ function createInteractionComponents(
             }
         }
 
-        const BUDGET_RUNWAY_DAYS = 5
+        const BUDGET_RUNWAY_DAYS = 500
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
-        const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {}
+        //@ts-ignore
+        const starterStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
+        //@ts-ignore
+        const starterMoney: Record<keyof IndustrialSectors, number> = {}
+
         for(const sector of starterSectors) {
             const config = industrySectorBlueprints.get(sector)
             if(config?.capitalGoods) {
                 starterCapitalStock[sector] = {}
+                starterStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population * 5))
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 2_000))
+                }
+                for(const [goodKey, rate] of Object.entries(config.goodsRequirements)) {
+                    starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 2_000))
                 }
             }
 
@@ -131,10 +139,10 @@ function createInteractionComponents(
                 ? Object.entries(config.workerRequirement).reduce((sum, [w, r]) => sum + (r as number) * (baseSalaries[w as keyof Population] ?? 0), 0)
                 : 0
             const operatingCost = goodsCost + laborCost
-            starterMoney[sector] = Math.max(500, Math.round(operatingCost * BUDGET_RUNWAY_DAYS))
+            starterMoney[sector] = Math.round(operatingCost * BUDGET_RUNWAY_DAYS)
         }
 
-        const colonyTreasury = Math.max(5000, population * 2)
+        const colonyTreasury = Math.max(50000, population * 10)
 
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
@@ -153,9 +161,11 @@ function createInteractionComponents(
                 createStarterPopulation(population * effectiveRatio, occupationStarterRatioOverride),
                 "standard",
                 "colony",
-                starterMoney as Record<keyof IndustrialSectors, number>,
+                starterMoney,
                 starterCapitalStock,
-                colonyTreasury
+                colonyTreasury,
+                //@ts-ignore
+                starterStock
             )
         )
     } else {
@@ -245,7 +255,7 @@ async function createAsteroidBelts(
     }
 }
 
-const populationRatio = 0.05
+const populationRatio = 0.01
 const gasGiants = new Set<PlanetArchetype>(["jupiter", "saturn", "uranus", "neptune"])
 const hasAtmosphere = new Set<PlanetArchetype>(["earth", "kobol", ...gasGiants])
 const hasClouds = new Set<PlanetArchetype>(["earth", "kobol", "venus", "uranus", "neptune"])

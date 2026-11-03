@@ -20,6 +20,8 @@ export class IndustryComponent extends EntityComponent {
     public sectorUtilization: Record<keyof IndustrialSectors, number>
     public sectorResults: Record<string, SectorResult>
     public sectorProfits: Record<keyof IndustrialSectors, number>
+    public sectorLaborCosts: Record<keyof IndustrialSectors, number>
+    public sectorInputCosts: Record<keyof IndustrialSectors, number>
     public populationProfits: Record<keyof Population, number>
     public populationRequirements: Record<keyof Population, Partial<Record<keyof Goods, number>>>
     public techMultipliers: Record<keyof IndustrialSectors, number>
@@ -27,7 +29,7 @@ export class IndustryComponent extends EntityComponent {
     public activeSectors: Set<keyof IndustrialSectors>
     public capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>
     public money: Record<keyof IndustrialSectors, number>
-    public sectorGoods: Record<keyof IndustrialSectors, Goods>
+    public sectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>
 
     // ---- Gamification fields ----
     public workerEfficiencyMultipliers: Record<keyof Population, number>
@@ -46,6 +48,7 @@ export class IndustryComponent extends EntityComponent {
         public starterMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>,
         public starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {},
         public colonyTreasury: number = 0,
+        public starterSectorGoods: Record<keyof IndustrialSectors, Partial<Goods>>
     ) {
         super()
 
@@ -61,6 +64,12 @@ export class IndustryComponent extends EntityComponent {
         ) as Record<keyof IndustrialSectors, number>;
         this.sectorResults = {};
         this.sectorProfits = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.sectorLaborCosts = Object.fromEntries(
+            Array.from(activeSectorKeys).map(key => [key, 0])
+        ) as Record<keyof IndustrialSectors, number>;
+        this.sectorInputCosts = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, 0])
         ) as Record<keyof IndustrialSectors, number>;
         this.populationProfits = Object.fromEntries(
@@ -81,7 +90,7 @@ export class IndustryComponent extends EntityComponent {
         this.money = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, starterMoney[key] ?? 0])
         ) as Record<keyof IndustrialSectors, number>;
-        this.sectorGoods = Object.fromEntries(
+        this.sectorGoods = starterSectorGoods || Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, createStarterWarehouse(0)])
         ) as Record<keyof IndustrialSectors, Goods>;
 

@@ -159,7 +159,7 @@ export const basePrices = {
     furniture: 10,
     luxuryFurniture: 120,
     services: 15,
-    agriculturalGoods: 5,
+    agriculturalGoods: 20,
     // dividents: 10,
 
     tylium: 150,

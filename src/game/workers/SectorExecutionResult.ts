@@ -6,6 +6,10 @@ import type { SectorResult } from "../systems/generateIndustrialSector";
 export interface SectorExecutionResult {
     sectorResults: Record<string, SectorResult>;
     sectorProfits: Record<string, number>;
+    sectorRevenue: Record<string, number>;
+    sectorLaborCosts: Record<string, number>;
+    sectorInputCosts: Record<string, number>;
+    populationProfits: Record<string, number>;
     sectorUtilization: Record<string, number>;
     workingWorkers: Record<keyof Population, PopulationBreakdown>;
     remainingWorkers: Record<keyof Population, PopulationBreakdown>;

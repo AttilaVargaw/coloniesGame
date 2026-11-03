@@ -157,9 +157,38 @@ function processIndustry(
 
     const newMoney: Record<string, number> = { ...startingMoney };
 
+    const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
+
+    // Compute market constraint per bid so sectors only buy what they can actually consume.
+    // Without this, sectors buy inputs at full bid scale but execute at actualScale (which may be 0 due to bottlenecks),
+    // draining money on inputs that sit unused in inventory.
+    const bidConstraints = new Map<string, number>();
+    for(const bid of sectorBids) {
+        let mc = 1;
+        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
+            if(value > 0) {
+                mc = Math.min(mc, workerMarketRatios[key as keyof Population] ?? 1);
+            }
+        }
+        const config = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
+        const nonEssentialGoods = new Set<keyof Goods>((config?.nonEssentialGoods || config?.optionalGoods || []) as (keyof Goods)[]);
+        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
+            if(value > 0) {
+                const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
+                const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
+                mc = Math.min(mc, isNonEssential ? Math.min(0.5 + 0.75 * ratio) : ratio);
+                const sectorInv = updatedSectorGoodsBeforeExec[bid.name as keyof IndustrialSectors] ?? createStarterWarehouse(0);
+                const available = sectorInv[key as keyof Goods] ?? 0;
+                const maxScaleFromInventory = value > 0 ? available / value : 1;
+                const inventoryConstraint = isNonEssential ? Math.max(0.5, maxScaleFromInventory) : maxScaleFromInventory;
+                mc = Math.min(mc, inventoryConstraint);
+            }
+        }
+        bidConstraints.set(bid.name, mc);
+    }
+
     // Sectors buy input goods from colony pool using their own money
     const colonyGoodsAfterPurchase = { ...goods };
-    const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
     for(const bid of sectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
         const config = industrySectorBlueprints.get(sectorName);
@@ -167,11 +196,12 @@ function processIndustry(
 
         const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
         let sectorMoney = newMoney[sectorName] ?? 0;
+        const marketConstraint = bidConstraints.get(bid.name) ?? 1;
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
-            const demand = demandPerTick * BUY_BUFFER_TICKS;
+            const demand = demandPerTick * marketConstraint * BUY_BUFFER_TICKS;
             const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
             const price = prices[goodKey as keyof Goods] ?? 0;
             if(available <= 0 || price <= 0) continue;
@@ -192,6 +222,9 @@ function processIndustry(
     const {
         sectorResults,
         sectorProfits,
+        sectorRevenue,
+        sectorLaborCosts,
+        sectorInputCosts,
         sectorUtilization,
         workingWorkers,
         remainingWorkers,
@@ -220,9 +253,14 @@ function processIndustry(
         };
     }
 
-    // Sector profits go into per-sector money pools
-    for(const [sectorName, profit] of Object.entries(sectorProfits)) {
-        newMoney[sectorName] = (newMoney[sectorName] ?? 0) + profit;
+    // Sector money: revenue minus labor costs go into per-sector money pools.
+    // Input costs were already deducted during the buying loop above, so we add
+    // revenue - laborCosts (not full profit which re-subtracts input costs).
+    for(const bid of sectorBids) {
+        const sectorName = bid.name as keyof IndustrialSectors;
+        const revenue = sectorRevenue[sectorName] ?? 0;
+        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+        newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
     }
 
     // Move goods between sectors and colony pool
@@ -288,6 +326,8 @@ function processIndustry(
         populationUpdates,
         goods: colonyGoodsChanges,
         sectorProfits,
+        sectorLaborCosts,
+        sectorInputCosts,
         populationProfits,
         sectorUtilization,
         sectorResults,
@@ -416,6 +456,12 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
 
     const sectorProfitsDiff = shallowDiff(last?.sectorProfits, result.sectorProfits);
     if(sectorProfitsDiff) { patch.sectorProfits = sectorProfitsDiff; hasChanged = true; }
+
+    const sectorLaborCostsDiff = shallowDiff(last?.sectorLaborCosts, result.sectorLaborCosts);
+    if(sectorLaborCostsDiff) { patch.sectorLaborCosts = sectorLaborCostsDiff; hasChanged = true; }
+
+    const sectorInputCostsDiff = shallowDiff(last?.sectorInputCosts, result.sectorInputCosts);
+    if(sectorInputCostsDiff) { patch.sectorInputCosts = sectorInputCostsDiff; hasChanged = true; }
 
     const popProfitsDiff = shallowDiff(last?.populationProfits, result.populationProfits);
     if(popProfitsDiff) { patch.populationProfits = popProfitsDiff; hasChanged = true; }
