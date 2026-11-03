@@ -327,6 +327,7 @@ function processIndustry(
         populationUpdates,
         goods: colonyGoodsChanges,
         sectorProfits,
+        sectorRevenue,
         sectorLaborCosts,
         sectorInputCosts,
         populationProfits,
@@ -457,6 +458,9 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
 
     const sectorProfitsDiff = shallowDiff(last?.sectorProfits, result.sectorProfits);
     if(sectorProfitsDiff) { patch.sectorProfits = sectorProfitsDiff; hasChanged = true; }
+
+    const sectorRevenueDiff = shallowDiff(last?.sectorRevenue, result.sectorRevenue);
+    if(sectorRevenueDiff) { patch.sectorRevenue = sectorRevenueDiff; hasChanged = true; }
 
     const sectorLaborCostsDiff = shallowDiff(last?.sectorLaborCosts, result.sectorLaborCosts);
     if(sectorLaborCostsDiff) { patch.sectorLaborCosts = sectorLaborCostsDiff; hasChanged = true; }

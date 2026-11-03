@@ -20,6 +20,7 @@ export interface IndustryTickResult {
     }>;
     goods: Goods;
     sectorProfits: Record<string, number>;
+    sectorRevenue: Record<string, number>;
     sectorLaborCosts: Record<string, number>;
     sectorInputCosts: Record<string, number>;
     populationProfits: Record<string, number>;

@@ -20,6 +20,7 @@ export interface IndustryTickPatch {
         requirements?: Partial<Goods>;
     }>>;
     sectorProfits?: Partial<Record<keyof IndustrialSectors, number>>;
+    sectorRevenue?: Partial<Record<keyof IndustrialSectors, number>>;
     sectorLaborCosts?: Partial<Record<keyof IndustrialSectors, number>>;
     sectorInputCosts?: Partial<Record<keyof IndustrialSectors, number>>;
     populationProfits?: Partial<Record<keyof Population, number>>;

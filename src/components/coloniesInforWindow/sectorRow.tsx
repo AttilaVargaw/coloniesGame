@@ -1,6 +1,6 @@
 import { IndustrialSectors } from "@/game/components/Factories";
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Goods, basePrices } from "@/game/data/Goods";
+import { Goods } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
@@ -21,6 +21,7 @@ export function SectorRow({
     industry: IndustryComponent;
 }) {
     const profit = industry.sectorProfits[sectorKey] ?? 0;
+    const revenue = industry.sectorRevenue[sectorKey] ?? 0;
     const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0;
     const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0;
     const utilization = industry.sectorUtilization[sectorKey] ?? 0;
@@ -28,11 +29,6 @@ export function SectorRow({
 
     const config = industrySectorBlueprints.get(sectorKey);
     const sectorResult = industry.sectorResults?.[sectorKey];
-    const revenue = sectorResult
-        ? Object.entries(sectorResult.producedGoods as Record<keyof Goods, number>).reduce((sum, [key, amount]) => {
-            return sum + (amount ?? 0) * (basePrices[key as keyof Goods] ?? 0);
-        }, 0)
-        : 0;
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
