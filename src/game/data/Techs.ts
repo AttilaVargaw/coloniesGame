@@ -572,6 +572,7 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set(["articlesOfColonization"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
+        researchedText: "The Daedalus is ready. We can now build ships in the safety of a mobile shipyard. How should we call the first ship of the Jupiter class? The 'Interstellar Destroyer'? No, that would be silly"
     },
     "banningNukes": {
         type: "diplomatic",

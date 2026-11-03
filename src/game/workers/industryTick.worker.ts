@@ -16,6 +16,7 @@ import { executeSectors } from "./sectorExecution";
 import { buildSectorResultsPatch } from "./sectorResultsPatch";
 import { buildAdjustedSalaries, updateWageMemory } from "./wageSystem";
 import { processCapital } from "./capitalSystem";
+import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
@@ -54,7 +55,6 @@ function processIndustry(
         materialRequirementMultipliers,
         capitalMultipliers,
         selectedMethod,
-        sectorInvestment,
     }: IndustryTickInput,
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
@@ -125,6 +125,10 @@ function processIndustry(
 
     const last = results.get(entityId);
     const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
+    const previousSectorRevenue: Record<string, number> = last?.sectorRevenue ?? {};
+    const previousSectorLaborCosts: Record<string, number> = last?.sectorLaborCosts ?? {};
+    const previousSectorInputCosts: Record<string, number> = last?.sectorInputCosts ?? {};
+    const previousSectorUtilization: Record<string, number> = last?.sectorUtilization ?? {};
 
     const sectorBids: SectorBid[] = [];
     for(const name of activeSectors) {
@@ -132,16 +136,46 @@ function processIndustry(
             continue;
         }
 
+        // Run behavior tree to make sector-level decisions
+        const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
+        const sectorMoney = startingMoney[name] ?? 0;
+        const blackboard = buildBlackboard(
+            name,
+            sectorMoney,
+            capitalStock[name] ?? {},
+            previousSectorProfits[name] ?? 0,
+            previousSectorRevenue[name] ?? 0,
+            previousSectorLaborCosts[name] ?? 0,
+            previousSectorInputCosts[name] ?? 0,
+            previousSectorUtilization[name] ?? 0,
+            laborAssigned[name] ?? 0,
+            population.worker.number,
+            prices,
+            adjustedSalaries,
+            {}, // workerMarketRatios not yet computed at this stage
+            config?.capitalGoods,
+            config?.workerRequirement,
+            config?.goodsProduction,
+        );
+        const tree = createSectorTree(blackboard);
+        tree.tick(blackboard);
+
+        // Apply behavior tree decisions
+        if(blackboard.decisions.stopProduction) {
+            continue; // skip this sector entirely
+        }
+
         const techMultiplier = techMultipliers[name] ?? 1;
-        const laborAssignedVal = laborAssigned[name] ?? 0;
+        let laborAssignedVal = blackboard.decisions.laborAssigned > 0
+            ? blackboard.decisions.laborAssigned
+            : (laborAssigned[name] ?? 0);
         const capitalStockVal = capitalStock[name] ?? {};
 
-        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0, {
+        const bid = buildSectorBid(name, prices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0, blackboard.decisions, {
             workerEfficiencyMultipliers,
             materialRequirementMultipliers,
             capitalMultipliers,
             selectedMethod: selectedMethod[name] ?? null,
-            sectorInvestment: sectorInvestment[name] ?? 0,
             sectorStartingMoney: startingMoney[name] ?? 0,
         });
         if(bid) {
