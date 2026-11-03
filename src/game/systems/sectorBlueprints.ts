@@ -355,7 +355,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         },
         workerRequirement: {
             worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10
-        }, goodsProduction: { electricity: 2500, waste: 10 },
+        }, goodsProduction: { electricity: 10_000, waste: 10 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1 },
