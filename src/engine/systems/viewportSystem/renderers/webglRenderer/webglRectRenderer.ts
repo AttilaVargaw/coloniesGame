@@ -14,6 +14,14 @@ import { mat4, vec3 } from "gl-matrix"
 import { SOLAR_UNIT } from "@/game/constants"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { hexToRgb } from "./hexToRgb"
+import {
+    setupInstancedAttrib,
+    resetInstancedAttrib,
+    bindPageTexture,
+    growFloatPool,
+    uploadInstanceBatch,
+    groupInstancesByPage,
+} from "./webglRendererUtils"
 
 const QUAD_VERTICES = new Float32Array([
     -0.5, -0.5, 0, 0,
@@ -38,14 +46,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
     private rectInstancePool: Float32Array | null = null
     private rectBatchBuffer: Float32Array | null = null
     private readonly pendingInstances: Array<{ page: number; depth: number; offset: number }> = []
-    private readonly groupsMap = new Map<number, Array<{ depth: number; offset: number }>>()
     private readonly parseColorCache = new Map<string, [number, number, number]>()
     private instanceBufferCapacity = 0
-
-    beginFrame(): void {
-        this.pendingInstances.length = 0
-        this.groupsMap.clear()
-    }
 
     private ensureRectCapacity(count: number): void {
         const needed = count * 17
@@ -148,6 +150,8 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
             return
         }
 
+        this.pendingInstances.length = 0
+
         const { camera } = this.viewportSystem
         const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
         const gl = this.gl
@@ -205,7 +209,7 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
                 lightDir = lightDirLength > 0
                     ? vec3.normalize(vec3.create(), lightDirRaw)
                     : vec3.fromValues(0, 1, 0)
-            const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
+                const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {
@@ -275,86 +279,42 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
 
         const instanceStride = 23 * 4
 
-        const groups = this.groupsMap
-        groups.clear()
-        for(const inst of this.pendingInstances) {
-            let group = groups.get(inst.page)
-            if(!group) {
-                group = []
-                groups.set(inst.page, group)
-            }
-            group.push({ depth: inst.depth, offset: inst.offset })
-        }
+        const groups = groupInstancesByPage(this.pendingInstances)
 
-        if(!this.instanceBuffer) {
-            this.instanceBuffer = gl.createBuffer()
-        }
-
-        const sortedGroups = sortGroupsByDepth(this.groupsMap)
+        const sortedGroups = sortGroupsByDepth(groups)
 
         gl.enable(gl.DEPTH_TEST)
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
         gl.depthMask(false)
 
+        let _lastPage = -1
         for(const [page, instances] of sortedGroups) {
             instances.sort((a, b) => b.depth - a.depth)
 
             const totalFloats = instances.length * 23
-            if(!this.rectBatchBuffer || this.rectBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_RECT_INSTANCES * 23)
-                this.rectBatchBuffer = new Float32Array(newSize)
-            }
+            this.rectBatchBuffer = growFloatPool(this.rectBatchBuffer, totalFloats, this.MAX_RECT_INSTANCES * 23)
             const batch = this.rectBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
                 batch.set(this.rectInstancePool!.subarray(instances[i].offset, instances[i].offset + 23), i * 23)
             }
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-            const byteLength = totalFloats * 4
-            if(byteLength > this.instanceBufferCapacity) {
-                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.STREAM_DRAW)
-                this.instanceBufferCapacity = byteLength
-            } else {
-                gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STREAM_DRAW)
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
-            }
+            const upload = uploadInstanceBatch(gl, this.instanceBuffer, batch, this.instanceBufferCapacity)
+            this.instanceBuffer = upload.buffer
+            this.instanceBufferCapacity = upload.capacity
 
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTranslation)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTranslation, 2, gl.FLOAT, false, instanceStride, 0)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceScale)
-            gl.vertexAttribPointer(this.shader.attribs.instanceScale, 2, gl.FLOAT, false, instanceStride, 2 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceScale, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceRotation)
-            gl.vertexAttribPointer(this.shader.attribs.instanceRotation, 1, gl.FLOAT, false, instanceStride, 4 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceRotation, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTexOffset, 2, gl.FLOAT, false, instanceStride, 5 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTexScale)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTexScale, 2, gl.FLOAT, false, instanceStride, 7 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceColor)
-            gl.vertexAttribPointer(this.shader.attribs.instanceColor, 4, gl.FLOAT, false, instanceStride, 9 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTintColor)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTintColor, 3, gl.FLOAT, false, instanceStride, 13 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTintColor, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceTintAlpha)
-            gl.vertexAttribPointer(this.shader.attribs.instanceTintAlpha, 1, gl.FLOAT, false, instanceStride, 16 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceLightDir)
-            gl.vertexAttribPointer(this.shader.attribs.instanceLightDir, 3, gl.FLOAT, false, instanceStride, 17 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceLightDir, 1)
-            gl.enableVertexAttribArray(this.shader.attribs.instanceLightColor)
-            gl.vertexAttribPointer(this.shader.attribs.instanceLightColor, 3, gl.FLOAT, false, instanceStride, 20 * 4)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceLightColor, 1)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceTranslation, 2, 0, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceScale, 2, 2 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceRotation, 1, 4 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceTexOffset, 2, 5 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceTexScale, 2, 7 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceColor, 4, 9 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceTintColor, 3, 13 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceTintAlpha, 1, 16 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceLightDir, 3, 17 * 4, instanceStride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceLightColor, 3, 20 * 4, instanceStride)
 
-            const texture = this.atlas.getTextures(gl)[page]
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, texture)
-            gl.uniform1i(this.shader.uniforms.texture, 0)
+            _lastPage = bindPageTexture(gl, this.atlas.getTextures(gl), page, 0, this.shader.uniforms.texture, _lastPage)
 
             gl.drawElementsInstanced(gl.TRIANGLES, this.quadIndexCount, gl.UNSIGNED_SHORT, 0, instances.length)
         }
@@ -364,24 +324,16 @@ export class WebGLRectRenderer extends WebGLBaseRenderer<RectNode> {
         gl.disable(gl.BLEND)
 
         //set state back
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTranslation)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceScale)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceRotation)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexOffset)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTexScale)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTintColor)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceTintAlpha)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceTranslation)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceScale)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceRotation)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceTexOffset)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceTexScale)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceColor)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceTintColor)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceTintAlpha)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.texCoord)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTranslation, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceScale, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceRotation, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexOffset, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTexScale, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTintColor, 0)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceTintAlpha, 0)
     }
 
     protected getCullMargin(node: RectNode): number {

@@ -11,10 +11,6 @@ const MAX_LABEL_SCREEN_SIZE = 48;
 const MIN_LABEL_SCREEN_SIZE = 12;
 
 export class LabelRenderer extends BaseRenderer<LabelNode> {
-    beginFrame(): void {
-    }
-    endFrame(): void {
-    }
     protected getCullMargin(_node: LabelNode): number {
         // Label sizes are clamped screen pixels, not world-proportional, so the
         // viewport-bounds pre-check cannot express their true extent. Bypass it

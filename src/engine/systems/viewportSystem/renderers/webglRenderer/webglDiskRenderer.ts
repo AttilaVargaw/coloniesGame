@@ -15,6 +15,12 @@ import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { mat4, vec3 } from "gl-matrix"
 import { hexToRgb } from "./hexToRgb"
+import {
+    setupInstancedAttrib,
+    resetInstancedAttrib,
+    bindPageTexture,
+    uploadInstanceBatch,
+} from "./webglRendererUtils"
 
 type UVRect = { u0: number; v0: number; u1: number; v1: number }
 
@@ -49,10 +55,6 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
     private atlas!: WebGLTextureAtlas
     protected instanceBuffer: WebGLBuffer | null = null
     private instanceBufferCapacity = 0
-
-    beginFrame(): void {
-        // no-op
-    }
 
     drawNodes(): void {
         if(!this.engine || !this.atlas || !this.gl || !this.shader || !this.viewportSystem.camera) {
@@ -123,6 +125,7 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
 
         const textures = this.atlas.getTextures(gl)
 
+        let lastPage = -1
         for(const [page, items] of sortedPages) {
             const texture = textures[page]
             if(!texture) continue
@@ -145,39 +148,19 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
                 floatOffset += 4
             }
 
-            if(!this.instanceBuffer) {
-                this.instanceBuffer = gl.createBuffer()!
-            }
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-
-            if(totalFloats > this.instanceBufferCapacity) {
-                gl.bufferData(gl.ARRAY_BUFFER, pool, gl.STREAM_DRAW)
-                this.instanceBufferCapacity = totalFloats
-            } else {
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, pool)
-            }
+            const upload = uploadInstanceBatch(gl, this.instanceBuffer, pool, this.instanceBufferCapacity)
+            this.instanceBuffer = upload.buffer
+            this.instanceBufferCapacity = upload.capacity
 
             const stride = floatsPerInstance * 4
-            for(let i = 0; i < 4; i++) {
-                const loc = this.shader.attribs.instanceModel + i
-                gl.enableVertexAttribArray(loc)
-                gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, stride, i * 4 * 4)
-                gl.vertexAttribDivisor(loc, 1)
-            }
+            setupInstancedAttrib(gl, this.shader.attribs.instanceModel, 4, 0, stride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceModel + 1, 4, 4 * 4, stride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceModel + 2, 4, 8 * 4, stride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceModel + 3, 4, 12 * 4, stride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceColor, 3, 16 * 4, stride)
+            setupInstancedAttrib(gl, this.shader.attribs.instanceUV, 4, 19 * 4, stride)
 
-            const colorLoc = this.shader.attribs.instanceColor
-            gl.enableVertexAttribArray(colorLoc)
-            gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, stride, 16 * 4)
-            gl.vertexAttribDivisor(colorLoc, 1)
-
-            const uvLoc = this.shader.attribs.instanceUV
-            gl.enableVertexAttribArray(uvLoc)
-            gl.vertexAttribPointer(uvLoc, 4, gl.FLOAT, false, stride, 19 * 4)
-            gl.vertexAttribDivisor(uvLoc, 1)
-
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, texture)
-            gl.uniform1i(this.shader.uniforms.ringTexture, 0)
+            lastPage = bindPageTexture(gl, textures, page, 0, this.shader.uniforms.ringTexture, lastPage)
             gl.uniform1f(this.shader.uniforms.innerRadiusRatio, items[0].innerRadius / items[0].outerRadius)
 
             gl.drawElementsInstanced(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_SHORT, 0, items.length)
@@ -187,16 +170,14 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
         gl.depthMask(true)
         gl.disable(gl.BLEND)
 
+        resetInstancedAttrib(gl, this.shader.attribs.instanceModel)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceModel + 1)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceModel + 2)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceModel + 3)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceColor)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceUV)
         gl.disableVertexAttribArray(this.shader.attribs.position)
         gl.disableVertexAttribArray(this.shader.attribs.texCoord)
-        for(let i = 0; i < 4; i++) {
-            gl.disableVertexAttribArray(this.shader.attribs.instanceModel + i)
-            gl.vertexAttribDivisor(this.shader.attribs.instanceModel + i, 0)
-        }
-        gl.disableVertexAttribArray(this.shader.attribs.instanceColor)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceColor, 0)
-        gl.disableVertexAttribArray(this.shader.attribs.instanceUV)
-        gl.vertexAttribDivisor(this.shader.attribs.instanceUV, 0)
     }
 
     private collectInstances(camera: Camera): RingInstance[] {

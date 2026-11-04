@@ -30,9 +30,6 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
     private vertexBuffer: WebGLBuffer | null = null
     private projection = new Float32Array(16)
 
-    beginFrame(): void {
-    }
-
     init() {
         if(!this.engine) {
             return
@@ -115,8 +112,6 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
             const focusOffset = orbit.radius * orbit.eccentricity
 
             const points = new Float32Array((segments + 1) * 2)
-            let firstVisibleX = 0
-            let firstVisibleY = 0
             let lastX = 0
             let lastY = 0
             let started = false
@@ -135,17 +130,10 @@ export class WebGLOrbitRenderer extends WebGLBaseRenderer<WebGLOrbitNode> {
                     points[i * 2 + 1] = projectedPoint.y
                     lastX = projectedPoint.x
                     lastY = projectedPoint.y
-                    if(!started) {
-                        firstVisibleX = projectedPoint.x
-                        firstVisibleY = projectedPoint.y
-                        started = true
-                    }
+                    started = true
                 } else if(started) {
                     points[i * 2] = lastX
                     points[i * 2 + 1] = lastY
-                } else {
-                    points[i * 2] = firstVisibleX
-                    points[i * 2 + 1] = firstVisibleY
                 }
             }
 

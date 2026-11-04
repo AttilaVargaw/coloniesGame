@@ -6,7 +6,6 @@ import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { AtmosphereComponent } from "@/engine/components/atmosphereComponent"
 import { ColorComponent } from "@/engine/components/colorComponent"
 import { WebGLBaseRenderer } from "./webglBaseRenderer"
-import { SOLAR_UNIT } from "@/game/constants"
 import { Entity } from "@/engine/entities/entity"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { ViewportSystem } from "../../viewportSystem"
@@ -14,6 +13,12 @@ import { RenderableNode } from "../renderableNode"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
 import { hexToRgb } from "./hexToRgb"
+import {
+    setupInstancedAttrib,
+    resetInstancedAttrib,
+    growFloatPool,
+    uploadInstanceBatch,
+} from "./webglRendererUtils"
 
 export class WebGLAtmosphereNode extends RenderableNode {
     constructor(
@@ -32,6 +37,7 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         if(!this.engine || !this.gl || !this.shader || !this.viewportSystem.camera) {
             return
         }
+        this.pendingInstances.length = 0
 
         const { camera } = this.viewportSystem
         const showAtmosphere = this.engine.getDebugManager().debugflags.showAtmosphere
@@ -50,8 +56,8 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
         mat4.perspective(this.projection, camera.fieldOfView, aspectRatio, camera.minDistance * 0.1, camera.maxDistance * 2)
 
         const targetFramebuffer = this.hdrEnabled ? this.hdrFramebuffer : null
-        const width = targetFramebuffer ? gl.canvas.width : gl.canvas.width
-        const height = targetFramebuffer ? gl.canvas.height : gl.canvas.height
+        const width = gl.canvas.width
+        const height = gl.canvas.height
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, targetFramebuffer)
         if(targetFramebuffer) {
@@ -142,48 +148,32 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
             return
         }
 
-        if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-            const newSize = Math.max(totalFloats, this.MAX_ATMOSPHERE_INSTANCES * 38)
-            this.sphereBatchBuffer = new Float32Array(newSize)
-        }
+        this.sphereBatchBuffer = growFloatPool(this.sphereBatchBuffer, totalFloats, this.MAX_ATMOSPHERE_INSTANCES * 38)
         const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
         for(let i = 0; i < this.pendingInstances.length; i++) {
             batch.set(this.sphereInstancePool!.subarray(this.pendingInstances[i].offset, this.pendingInstances[i].offset + 38), i * 38)
         }
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-        const byteLength = totalFloats * 4
-        if(byteLength > this.atmosphereInstanceBufferCapacity) {
-            gl.bufferData(gl.ARRAY_BUFFER, batch, gl.STREAM_DRAW)
-            this.atmosphereInstanceBufferCapacity = byteLength
-        } else {
-            gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STREAM_DRAW)
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
-        }
+        const upload = uploadInstanceBatch(gl, this.instanceBuffer, batch, this.atmosphereInstanceBufferCapacity)
+        this.instanceBuffer = upload.buffer
+        this.atmosphereInstanceBufferCapacity = upload.capacity
 
         const instanceStride = 38 * 4
-
-        const setupAttrib = (loc: number, size: number, offset: number) => {
-            if(loc < 0) return
-            gl.enableVertexAttribArray(loc)
-            gl.vertexAttribPointer(loc, size, gl.FLOAT, false, instanceStride, offset)
-            gl.vertexAttribDivisor(loc, 1)
-        }
 
         const modelLoc = this.shader.attribs.instanceModel
         const normalMatrixLoc = this.shader.attribs.instanceNormalMatrix
 
-        setupAttrib(modelLoc, 4, 0)
-        setupAttrib(modelLoc + 1, 4, 16)
-        setupAttrib(modelLoc + 2, 4, 32)
-        setupAttrib(modelLoc + 3, 4, 48)
-        setupAttrib(normalMatrixLoc, 3, 16 * 4)
-        setupAttrib(normalMatrixLoc + 1, 3, 19 * 4)
-        setupAttrib(normalMatrixLoc + 2, 3, 22 * 4)
-        setupAttrib(this.shader.attribs.instanceLightDir, 3, 25 * 4)
-        setupAttrib(this.shader.attribs.instanceLightColor, 3, 28 * 4)
-        setupAttrib(this.shader.attribs.instanceAtmosParams, 4, 31 * 4)
-        setupAttrib(this.shader.attribs.instanceSkyColor, 3, 35 * 4)
+        setupInstancedAttrib(gl, modelLoc, 4, 0, instanceStride)
+        setupInstancedAttrib(gl, modelLoc + 1, 4, 16, instanceStride)
+        setupInstancedAttrib(gl, modelLoc + 2, 4, 32, instanceStride)
+        setupInstancedAttrib(gl, modelLoc + 3, 4, 48, instanceStride)
+        setupInstancedAttrib(gl, normalMatrixLoc, 3, 16 * 4, instanceStride)
+        setupInstancedAttrib(gl, normalMatrixLoc + 1, 3, 19 * 4, instanceStride)
+        setupInstancedAttrib(gl, normalMatrixLoc + 2, 3, 22 * 4, instanceStride)
+        setupInstancedAttrib(gl, this.shader.attribs.instanceLightDir, 3, 25 * 4, instanceStride)
+        setupInstancedAttrib(gl, this.shader.attribs.instanceLightColor, 3, 28 * 4, instanceStride)
+        setupInstancedAttrib(gl, this.shader.attribs.instanceAtmosParams, 4, 31 * 4, instanceStride)
+        setupInstancedAttrib(gl, this.shader.attribs.instanceSkyColor, 3, 35 * 4, instanceStride)
 
         gl.enable(gl.BLEND)
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -194,35 +184,19 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
 
         gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.BLEND)
-        const safeDisable = (loc: number) => { if(loc >= 0) gl.disableVertexAttribArray(loc) }
-        safeDisable(modelLoc)
-        safeDisable(modelLoc + 1)
-        safeDisable(modelLoc + 2)
-        safeDisable(modelLoc + 3)
-        safeDisable(normalMatrixLoc)
-        safeDisable(normalMatrixLoc + 1)
-        safeDisable(normalMatrixLoc + 2)
-        safeDisable(this.shader.attribs.instanceLightDir)
-        safeDisable(this.shader.attribs.instanceLightColor)
-        safeDisable(this.shader.attribs.instanceAtmosParams)
-        safeDisable(this.shader.attribs.instanceSkyColor)
-        safeDisable(this.shader.attribs.position)
-        safeDisable(this.shader.attribs.normal)
-
-        const resetDivisor = (loc: number) => {
-            if(loc >= 0) gl.vertexAttribDivisor(loc, 0)
-        }
-        resetDivisor(modelLoc)
-        resetDivisor(modelLoc + 1)
-        resetDivisor(modelLoc + 2)
-        resetDivisor(modelLoc + 3)
-        resetDivisor(normalMatrixLoc)
-        resetDivisor(normalMatrixLoc + 1)
-        resetDivisor(normalMatrixLoc + 2)
-        resetDivisor(this.shader.attribs.instanceLightDir)
-        resetDivisor(this.shader.attribs.instanceLightColor)
-        resetDivisor(this.shader.attribs.instanceAtmosParams)
-        resetDivisor(this.shader.attribs.instanceSkyColor)
+        resetInstancedAttrib(gl, modelLoc)
+        resetInstancedAttrib(gl, modelLoc + 1)
+        resetInstancedAttrib(gl, modelLoc + 2)
+        resetInstancedAttrib(gl, modelLoc + 3)
+        resetInstancedAttrib(gl, normalMatrixLoc)
+        resetInstancedAttrib(gl, normalMatrixLoc + 1)
+        resetInstancedAttrib(gl, normalMatrixLoc + 2)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceLightDir)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceLightColor)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceAtmosParams)
+        resetInstancedAttrib(gl, this.shader.attribs.instanceSkyColor)
+        resetInstancedAttrib(gl, this.shader.attribs.position)
+        resetInstancedAttrib(gl, this.shader.attribs.normal)
     }
 
     protected getCullMargin(node: WebGLAtmosphereNode): number {
@@ -258,10 +232,6 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
 
     setHdrFramebuffer(framebuffer: WebGLFramebuffer | null) {
         this.hdrFramebuffer = framebuffer
-    }
-
-    beginFrame(): void {
-        this.pendingInstances.length = 0
     }
 
     init() {

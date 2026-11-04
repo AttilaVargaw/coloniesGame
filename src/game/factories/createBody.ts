@@ -114,7 +114,6 @@ function createInteractionComponents(
 
         const BUDGET_RUNWAY_DAYS = 500
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
-        //@ts-ignore
         const starterStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
         //@ts-ignore
         const starterMoney: Record<keyof IndustrialSectors, number> = {}

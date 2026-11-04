@@ -57,7 +57,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
             const money = industry.money;
-            const sectorGoods: Record<keyof IndustrialSectors, Goods> = {} as Record<keyof IndustrialSectors, Goods>;
+            const sectorGoods = {} as Record<keyof IndustrialSectors, Goods>;
 
             const bannedSectors = new Set<keyof IndustrialSectors>();
             const lawMultiplier: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
@@ -83,6 +83,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 techMultipliers[sectorKey] = (industry.techMultipliers[sectorKey] ?? 1) * (lawMultiplier[sectorKey] ?? 1);
                 laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
+                //@ts-ignore
                 sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
             }
 

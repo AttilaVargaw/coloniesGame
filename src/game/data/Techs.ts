@@ -735,11 +735,10 @@ export const techs: Record<string, TechDefinition> = {
         prerequisites: new Set(["commandNavigationSystem"]),
         adoptionModel: "instant",
         adoptionSpeed: 28,
-        researchedText: "Everything is finished. We collected and restored all the old decommissioned fighters we could find to their former glory. We have all the memorabilia we could find. We even found original Centurions in a small tourist trap on Canceron. Since we kept the old Galactica, we will use it as a museum to house everything. It's ironic that the first ship of its class will last the longest. Even the commander is a relic from the war."
+        researchedText: "Everything is finished. We collected and restored all the old decommissioned fighters we could find to their former glory. We have all the memorabilia we could find. We even found original Centurions in a small tourist trap on Canceron. Since we kept the old Galactica, we will use it as a museum to house everything. Even the commander is a relic from the war. It's ironic that the first ship of its class will last the longest."
     },
 } as const
 
-//@ts-ignore
 export const TECHS = new Map<string, TechDefinition>((Object.entries(techs)).map(([key, value]) => {
     return [key, value]
 }))

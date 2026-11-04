@@ -39,9 +39,6 @@ export abstract class WebGLBaseRenderer<N extends RenderableNode> extends BaseRe
         this.gl.viewport(0, 0, width, height)
     }
 
-    endFrame(): void {
-    }
-
     protected endFrameFallback(): void {
         const ctx = this.canvas.getContext("2d")
         if(ctx) {

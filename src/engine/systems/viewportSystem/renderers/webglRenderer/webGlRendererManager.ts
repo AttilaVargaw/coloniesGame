@@ -123,11 +123,6 @@ export class WebglRenderManager {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         }
 
-        this.sphereRenderer.beginFrame()
-        this.rectRenderer.beginFrame()
-        this.atmosphereRenderer.beginFrame()
-        this.orbitRenderer.beginFrame()
-        this.diskRenderer.beginFrame()
         this.projectNodes()
 
         this.orbitRenderer.drawNodes()

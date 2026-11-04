@@ -157,9 +157,6 @@ export abstract class BaseRenderer<N extends RenderableNode> {
         this.projectedCacheEntries.sort((a, b) => b.projected.depth - a.projected.depth)
     }
 
-    abstract beginFrame(): void
-    abstract endFrame(): void
-
     getProjectedCacheEntries(): Array<{ node: N; projected: ProjectedPoint }> {
         return this.projectedCacheEntries
     }

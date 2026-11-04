@@ -17,6 +17,13 @@ import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
 import { hexToRgb } from "./hexToRgb"
+import {
+    setupInstancedAttrib,
+    resetInstancedAttrib,
+    bindPageTexture,
+    growFloatPool,
+    uploadInstanceBatch,
+} from "./webglRendererUtils"
 
 type SortedGroups = [string, Group[]][]
 
@@ -100,9 +107,54 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             return
         }
 
-        const { camera } = this.viewportSystem
+        this.pendingInstances.length = 0
+        this.groupsMap.clear()
+        const gl = this.gl
 
-        const showCheckerPattern = this.engine.getDebugManager().debugflags.showCheckerPattern
+        const showCheckerPattern = this.engine?.getDebugManager().debugflags.showCheckerPattern
+        if(showCheckerPattern !== undefined && showCheckerPattern !== this._lastShowCheckerPattern) {
+            this._lastShowCheckerPattern = showCheckerPattern
+
+            if(gl) {
+                this.atlas?.dispose(gl)
+                this.nightAtlas?.dispose(gl)
+                this.roughnessAtlas?.dispose(gl)
+                this.cloudAtlas?.dispose(gl)
+                this.normalAtlas?.dispose(gl)
+            }
+
+            this.atlas = new WebGLTextureAtlas(1024, 512)
+            this.nightAtlas = new WebGLTextureAtlas(1024, 512)
+            this.roughnessAtlas = new WebGLTextureAtlas(1024, 512)
+            this.cloudAtlas = new WebGLTextureAtlas(1024, 512)
+            this.normalAtlas = new WebGLTextureAtlas(1024, 512)
+            this.cellIndexCache.clear()
+            const whiteCanvas = getPlatform().createCanvas()
+            whiteCanvas.width = 1
+            whiteCanvas.height = 1
+            const whiteCtx = whiteCanvas.getContext("2d")!
+            whiteCtx.fillStyle = "#ffffff"
+            whiteCtx.fillRect(0, 0, 1, 1)
+            this.nightAtlas.addTexture("__white__", whiteCanvas)
+            this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
+            const midGray = getPlatform().createCanvas()
+            midGray.width = 1
+            midGray.height = 1
+            const midCtx = midGray.getContext("2d")!
+            midCtx.fillStyle = "#808080"
+            midCtx.fillRect(0, 0, 1, 1)
+            this.roughnessAtlas.addTexture("__mid__", midGray)
+            const flatNormal = getPlatform().createCanvas()
+            flatNormal.width = 1
+            flatNormal.height = 1
+            const flatCtx = flatNormal.getContext("2d")!
+            flatCtx.fillStyle = "#8080ff"
+            flatCtx.fillRect(0, 0, 1, 1)
+            this.normalAtlas.addTexture("__flat__", flatNormal)
+        }
+
+
+        const { camera } = this.viewportSystem
 
         for(const { node, projected } of this.getProjectedCacheEntries()) {
             const textureSource = node.texture.day
@@ -190,7 +242,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const starEntity = this.findStarEntityForPlanet(node.entity)
 
-            const lightDirRaw: vec3 = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
+            let lightDirRaw: vec3
+            let starColorComponent: ColorComponent | undefined
+            if(starEntity) {
+                lightDirRaw = vec3.sub(vec3.create(), getAbsolute(starEntity, this.engine!), worldPos)
+                starColorComponent = starEntity.getComponent(ColorComponent)
+            } else {
+                lightDirRaw = vec3.fromValues(0, 1, 0)
+                starColorComponent = undefined
+            }
 
             const lightDirLength = vec3.length(lightDirRaw)
             const lightDir = lightDirLength > 0
@@ -199,9 +259,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
 
-            const starColorComponent = starEntity.getComponent(ColorComponent)!
-
-            const parsed = hexToRgb(starColorComponent.fill!)
+            const parsed = starColorComponent?.fill ? hexToRgb(starColorComponent.fill) : { r: 255, g: 255, b: 255 }
             const starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
 
             const paletteRgb = hexToRgb(node.color.fill || "#808080")
@@ -251,13 +309,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             })
         }
 
-        const gl = this.gl
-
         this.resetGLState(gl)
-
-        if(this.pendingInstances.length === 0) {
-            return
-        }
 
         const { fx, fy, fz } = camera.viewBasis
         const cam = camera.cameraPosition
@@ -280,8 +332,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         }
 
         const sortedGroups = sortGroupsByDepth(this.groupsMap)
-
-        if(!this.shader) return
 
         this.renderPass(gl, this.shader, this.hdrFramebuffer, gl.canvas.width, gl.canvas.height, sortedGroups, camera)
         if(this._showBloom) {
@@ -421,89 +471,35 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer)
 
             const totalFloats = instances.length * 43
-            if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 43)
-                this.sphereBatchBuffer = new Float32Array(newSize)
-            }
+            this.sphereBatchBuffer = growFloatPool(this.sphereBatchBuffer, totalFloats, this.MAX_SPHERE_INSTANCES * 43)
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
                 batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 43), i * 43)
             }
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
-            const byteLength = totalFloats * 4
-            if(byteLength > this.sphereInstanceBufferCapacity) {
-                gl.bufferData(gl.ARRAY_BUFFER, batch, gl.STREAM_DRAW)
-                this.sphereInstanceBufferCapacity = byteLength
-            } else {
-                gl.bufferData(gl.ARRAY_BUFFER, byteLength, gl.STREAM_DRAW)
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch)
-            }
+            const upload = uploadInstanceBatch(gl, this.instanceBuffer, batch, this.sphereInstanceBufferCapacity)
+            this.instanceBuffer = upload.buffer
+            this.sphereInstanceBufferCapacity = upload.capacity
 
-            const setupAttrib = (loc: number, size: number, offset: number) => {
-                if(loc < 0) return
-                gl.enableVertexAttribArray(loc)
-                gl.vertexAttribPointer(loc, size, gl.FLOAT, false, instanceStride, offset)
-                gl.vertexAttribDivisor(loc, 1)
-            }
+            setupInstancedAttrib(gl, modelLoc, 4, 0, instanceStride)
+            setupInstancedAttrib(gl, modelLoc + 1, 4, 16, instanceStride)
+            setupInstancedAttrib(gl, modelLoc + 2, 4, 32, instanceStride)
+            setupInstancedAttrib(gl, modelLoc + 3, 4, 48, instanceStride)
+            setupInstancedAttrib(gl, normalMatrixLoc, 3, 16 * 4, instanceStride)
+            setupInstancedAttrib(gl, normalMatrixLoc + 1, 3, 19 * 4, instanceStride)
+            setupInstancedAttrib(gl, normalMatrixLoc + 2, 3, 22 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceLightDir, 3, 25 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceLightColor, 3, 28 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceTexOffset, 2, 31 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceTexScale, 2, 33 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceEmissiveCloud, 3, 35 * 4, instanceStride)
+            setupInstancedAttrib(gl, shader.attribs.instanceTilt, 4, 39 * 4, instanceStride)
 
-            setupAttrib(modelLoc, 4, 0)
-            setupAttrib(modelLoc + 1, 4, 16)
-            setupAttrib(modelLoc + 2, 4, 32)
-            setupAttrib(modelLoc + 3, 4, 48)
-            setupAttrib(normalMatrixLoc, 3, 16 * 4)
-            setupAttrib(normalMatrixLoc + 1, 3, 19 * 4)
-            setupAttrib(normalMatrixLoc + 2, 3, 22 * 4)
-            setupAttrib(shader.attribs.instanceLightDir, 3, 25 * 4)
-            setupAttrib(shader.attribs.instanceLightColor, 3, 28 * 4)
-            setupAttrib(shader.attribs.instanceTexOffset, 2, 31 * 4)
-            setupAttrib(shader.attribs.instanceTexScale, 2, 33 * 4)
-            setupAttrib(shader.attribs.instanceEmissiveCloud, 3, 35 * 4)
-            setupAttrib(shader.attribs.instanceTilt, 4, 39 * 4)
-
-            if(dayPage !== lastDayPage) {
-                const atlasTexture = this.atlas.getTextures(gl)[dayPage]
-                gl.activeTexture(gl.TEXTURE0)
-                gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
-                gl.uniform1i(shader.uniforms.texture, 0)
-                lastDayPage = dayPage
-            }
-
-            if(nightPage !== lastNightPage) {
-                const nightAtlasTextures = this.nightAtlas.getTextures(gl)
-                const nightPageTexture = nightAtlasTextures[nightPage] ?? nightAtlasTextures[0]
-                gl.activeTexture(gl.TEXTURE1)
-                gl.bindTexture(gl.TEXTURE_2D, nightPageTexture)
-                gl.uniform1i(shader.uniforms.nightTexture, 1)
-                lastNightPage = nightPage
-            }
-
-            if(roughnessPage !== lastRoughnessPage) {
-                const roughnessAtlasTextures = this.roughnessAtlas.getTextures(gl)
-                const roughnessPageTexture = roughnessAtlasTextures[roughnessPage] ?? roughnessAtlasTextures[0]
-                gl.activeTexture(gl.TEXTURE2)
-                gl.bindTexture(gl.TEXTURE_2D, roughnessPageTexture)
-                gl.uniform1i(shader.uniforms.roughness, 2)
-                lastRoughnessPage = roughnessPage
-            }
-
-            if(cloudPage !== lastCloudPage) {
-                const cloudAtlasTextures = this.cloudAtlas.getTextures(gl)
-                const cloudPageTexture = cloudAtlasTextures[cloudPage] ?? cloudAtlasTextures[0]
-                gl.activeTexture(gl.TEXTURE3)
-                gl.bindTexture(gl.TEXTURE_2D, cloudPageTexture)
-                gl.uniform1i(shader.uniforms.cloudTexture, 3)
-                lastCloudPage = cloudPage
-            }
-
-            if(normalPage !== lastNormalPage) {
-                const normalAtlasTextures = this.normalAtlas.getTextures(gl)
-                const normalPageTexture = normalAtlasTextures[normalPage] ?? normalAtlasTextures[0]
-                gl.activeTexture(gl.TEXTURE4)
-                gl.bindTexture(gl.TEXTURE_2D, normalPageTexture)
-                gl.uniform1i(shader.uniforms.normalMap, 4)
-                lastNormalPage = normalPage
-            }
+            lastDayPage = bindPageTexture(gl, this.atlas.getTextures(gl), dayPage, 0, shader.uniforms.texture, lastDayPage)
+            lastNightPage = bindPageTexture(gl, this.nightAtlas.getTextures(gl), nightPage, 1, shader.uniforms.nightTexture, lastNightPage)
+            lastRoughnessPage = bindPageTexture(gl, this.roughnessAtlas.getTextures(gl), roughnessPage, 2, shader.uniforms.roughness, lastRoughnessPage)
+            lastCloudPage = bindPageTexture(gl, this.cloudAtlas.getTextures(gl), cloudPage, 3, shader.uniforms.cloudTexture, lastCloudPage)
+            lastNormalPage = bindPageTexture(gl, this.normalAtlas.getTextures(gl), normalPage, 4, shader.uniforms.normalMap, lastNormalPage)
 
             gl.drawElementsInstanced(gl.TRIANGLES, mesh.indexCount, mesh.indexType, 0, instances.length)
         }
@@ -511,35 +507,18 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disable(gl.DEPTH_TEST)
         gl.disable(gl.CULL_FACE)
 
-        gl.disableVertexAttribArray(modelLoc)
-        gl.disableVertexAttribArray(modelLoc + 1)
-        gl.disableVertexAttribArray(modelLoc + 2)
-        gl.disableVertexAttribArray(modelLoc + 3)
-        gl.disableVertexAttribArray(normalMatrixLoc)
-        gl.disableVertexAttribArray(normalMatrixLoc + 1)
-        gl.disableVertexAttribArray(normalMatrixLoc + 2)
-        gl.disableVertexAttribArray(shader.attribs.instanceLightDir)
-        gl.disableVertexAttribArray(shader.attribs.instanceTexOffset)
-        gl.disableVertexAttribArray(shader.attribs.instanceTexScale)
+        resetInstancedAttrib(gl, modelLoc)
+        resetInstancedAttrib(gl, modelLoc + 1)
+        resetInstancedAttrib(gl, modelLoc + 2)
+        resetInstancedAttrib(gl, modelLoc + 3)
+        resetInstancedAttrib(gl, normalMatrixLoc)
+        resetInstancedAttrib(gl, normalMatrixLoc + 1)
+        resetInstancedAttrib(gl, normalMatrixLoc + 2)
+        resetInstancedAttrib(gl, shader.attribs.instanceLightDir)
+        resetInstancedAttrib(gl, shader.attribs.instanceTexOffset)
+        resetInstancedAttrib(gl, shader.attribs.instanceTexScale)
         gl.disableVertexAttribArray(shader.attribs.position)
         gl.disableVertexAttribArray(shader.attribs.normal)
-
-        const resetDivisor = (loc: number) => {
-            if(loc >= 0) gl.vertexAttribDivisor(loc, 0)
-        }
-
-        resetDivisor(modelLoc)
-        resetDivisor(modelLoc + 1)
-        resetDivisor(modelLoc + 2)
-        resetDivisor(modelLoc + 3)
-        resetDivisor(normalMatrixLoc)
-        resetDivisor(normalMatrixLoc + 1)
-        resetDivisor(normalMatrixLoc + 2)
-        resetDivisor(shader.attribs.instanceLightDir)
-        resetDivisor(shader.attribs.instanceLightColor)
-        resetDivisor(shader.attribs.instanceTexOffset)
-        resetDivisor(shader.attribs.instanceTexScale)
-        resetDivisor(shader.attribs.instanceEmissiveCloud)
     }
 
     private renderGpuBloom(
@@ -706,52 +685,6 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
         gl.disableVertexAttribArray(this.blurShader.attribs.texCoord)
     }
 
-    beginFrame(): void {
-        this.pendingInstances.length = 0
-        this.groupsMap.clear()
-
-        const showCheckerPattern = this.engine?.getDebugManager().debugflags.showCheckerPattern
-        if(showCheckerPattern !== undefined && showCheckerPattern !== this._lastShowCheckerPattern) {
-            this._lastShowCheckerPattern = showCheckerPattern
-
-            const gl = this.gl
-            if(gl) {
-                this.atlas?.dispose(gl)
-                this.nightAtlas?.dispose(gl)
-                this.roughnessAtlas?.dispose(gl)
-                this.cloudAtlas?.dispose(gl)
-                this.normalAtlas?.dispose(gl)
-            }
-
-            this.atlas = new WebGLTextureAtlas(1024, 512)
-            this.nightAtlas = new WebGLTextureAtlas(1024, 512)
-            this.roughnessAtlas = new WebGLTextureAtlas(1024, 512)
-            this.cloudAtlas = new WebGLTextureAtlas(1024, 512)
-            this.normalAtlas = new WebGLTextureAtlas(1024, 512)
-            const whiteCanvas = getPlatform().createCanvas()
-            whiteCanvas.width = 1
-            whiteCanvas.height = 1
-            const whiteCtx = whiteCanvas.getContext("2d")!
-            whiteCtx.fillStyle = "#ffffff"
-            whiteCtx.fillRect(0, 0, 1, 1)
-            this.nightAtlas.addTexture("__white__", whiteCanvas)
-            this.nightAtlas.addTexture("__black__", this.getBlackCanvas())
-            const midGray = getPlatform().createCanvas()
-            midGray.width = 1
-            midGray.height = 1
-            const midCtx = midGray.getContext("2d")!
-            midCtx.fillStyle = "#808080"
-            midCtx.fillRect(0, 0, 1, 1)
-            this.roughnessAtlas.addTexture("__mid__", midGray)
-            const flatNormal = getPlatform().createCanvas()
-            flatNormal.width = 1
-            flatNormal.height = 1
-            const flatCtx = flatNormal.getContext("2d")!
-            flatCtx.fillStyle = "#8080ff"
-            flatCtx.fillRect(0, 0, 1, 1)
-            this.normalAtlas.addTexture("__flat__", flatNormal)
-        }
-    }
 
     init() {
         if(!this.engine) {

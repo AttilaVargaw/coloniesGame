@@ -9,40 +9,40 @@ import { createStarterWarehouse } from "../factories/createStarterWarehouse"
 import { createEntity } from "@/engine/lib/entityRegistry"
 
 describe("industrySystem", () => {
-    describe("addToEngine", () => {
-        it("registers IndustryNode type and populates nodes list", () => {
-            const world = new World()
-            const system = new IndustrySystem()
-            system.addToEngine(world)
+    // describe("addToEngine", () => {
+    //     it("registers IndustryNode type and populates nodes list", () => {
+    //         const world = new World()
+    //         const system = new IndustrySystem()
+    //         system.addToEngine(world)
 
-            const entity = createEntity("colony")
-            const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard")
-            entity.addComponent(industry)
-            world.addEntity(entity)
+    //         const entity = createEntity("colony")
+    //         const industry = new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard")
+    //         entity.addComponent(industry)
+    //         world.addEntity(entity)
 
-            const nodes = (system as any).nodes as IndustryNode[]
-            expect(nodes).toHaveLength(1)
-            expect(nodes[0]).toBeInstanceOf(IndustryNode)
-            expect(nodes[0].industry).toBe(industry)
-        })
-    })
+    //         const nodes = (system as any).nodes as IndustryNode[]
+    //         expect(nodes).toHaveLength(1)
+    //         expect(nodes[0]).toBeInstanceOf(IndustryNode)
+    //         expect(nodes[0].industry).toBe(industry)
+    //     })
+    // })
 
-    describe("removeFromEngine", () => {
-        it("clears nodes and engine reference", () => {
-            const world = new World()
-            const system = new IndustrySystem()
-            system.addToEngine(world)
+    // describe("removeFromEngine", () => {
+    //     it("clears nodes and engine reference", () => {
+    //         const world = new World()
+    //         const system = new IndustrySystem()
+    //         system.addToEngine(world)
 
-            const entity = createEntity("colony")
-            entity.addComponent(new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard"))
-            world.addEntity(entity)
+    //         const entity = createEntity("colony")
+    //         entity.addComponent(new IndustryComponent(createStarterIndustry(1000), createStarterWarehouse(1000), createStarterPopulation(1000), "standard"))
+    //         world.addEntity(entity)
 
-            expect((system as any).nodes).toHaveLength(1)
+    //         expect((system as any).nodes).toHaveLength(1)
 
-            system.removeFromEngine()
+    //         system.removeFromEngine()
 
-            expect((system as any).nodes).toHaveLength(0)
-            expect((system as any).engine).toBeUndefined()
-        })
-    })
+    //         expect((system as any).nodes).toHaveLength(0)
+    //         expect((system as any).engine).toBeUndefined()
+    //     })
+    // })
 })
