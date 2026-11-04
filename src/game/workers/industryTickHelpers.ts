@@ -3,7 +3,6 @@ import { Population, PopulationBreakdown } from "../data/Population";
 import { getGoodRequirementsAndQoL, getRequirementsForQol } from "../data/Population";
 import { populationGrowth } from "../data/populationHelpers";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
-import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import type { IndustrialSectors } from "../components/Factories";
 import type { IndustryTickResult } from "./IndustryTickResult";
 import type { SectorBid } from "./SectorBid";
@@ -85,42 +84,8 @@ export function computePopulationConsumption(
     return { populationConsumption, populationUpdates, populationProfits };
 }
 
-export function computeBidConstraints(
-    sectorBids: SectorBid[],
-    workerMarketRatios: Record<keyof Population, number>,
-    goodsMarketRatios: Record<keyof Goods, number>,
-    updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods>,
-): Map<string, number> {
-    const bidConstraints = new Map<string, number>();
-    for(const bid of sectorBids) {
-        let mc = 1;
-        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            if(value > 0) {
-                mc = Math.min(mc, workerMarketRatios[key as keyof Population] ?? 1);
-            }
-        }
-        const config = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
-        const nonEssentialGoods = new Set<keyof Goods>((config?.nonEssentialGoods || config?.optionalGoods || []) as (keyof Goods)[]);
-        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            if(value > 0) {
-                const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
-                const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
-                mc = Math.min(mc, isNonEssential ? Math.min(0.5 + 0.75 * ratio) : ratio);
-                const sectorInv = updatedSectorGoodsBeforeExec[bid.name as keyof IndustrialSectors] ?? createStarterWarehouse(0);
-                const available = sectorInv[key as keyof Goods] ?? 0;
-                const maxScaleFromInventory = value > 0 ? available / value : 1;
-                const inventoryConstraint = isNonEssential ? Math.max(0.5, maxScaleFromInventory) : maxScaleFromInventory;
-                mc = Math.min(mc, inventoryConstraint);
-            }
-        }
-        bidConstraints.set(bid.name, mc);
-    }
-    return bidConstraints;
-}
-
 export function buySectorInputs(
     sectorBids: SectorBid[],
-    bidConstraints: Map<string, number>,
     goods: Goods,
     updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods>,
     newMoney: Record<string, number>,
@@ -131,12 +96,11 @@ export function buySectorInputs(
         const sectorName = bid.name as keyof IndustrialSectors;
         const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
         let sectorMoney = newMoney[sectorName] ?? 0;
-        const marketConstraint = bidConstraints.get(bid.name) ?? 1;
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
-            const demand = demandPerTick * Math.min(bid.budgetRatio, marketConstraint);
+            const demand = demandPerTick * bid.budgetRatio;
             const existingInv = sectorInv[goodKey as keyof Goods] ?? 0;
             if(existingInv >= demand) continue; // already have enough in inventory
 

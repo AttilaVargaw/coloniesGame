@@ -42,7 +42,6 @@ function applyGoodConstraint(
 export function executeSectors(
     sectorBids: SectorBid[],
     workerMarketRatios: Record<keyof Population, number>,
-    goodsMarketRatios: Record<keyof Goods, number>,
     population: Population,
     inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
     colonyGoods: Goods,
@@ -91,30 +90,14 @@ export function executeSectors(
             goodsRatio = Math.min(goodsRatio, ratio);
         }
 
-        // Market constraint for production scale: each good independently evaluated.
-        // Sector inventory overrides colony pool when it fully covers demand.
+        // Market constraint for production scale: sector inventory only.
+        // Colony pool availability is handled separately in buySectorInputs.
         let marketConstraint = 1;
-        const sectorConfig = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
-        const nonEssentialGoods = new Set<keyof Goods>((sectorConfig?.nonEssentialGoods || sectorConfig?.optionalGoods || []) as (keyof Goods)[]);
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             if(value <= 0) continue;
-            const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
-            const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
-            const singleGoodConstraint = isNonEssential
-                ? Math.min(1, 0.5 + 0.75 * ratio)
-                : Math.min(1, ratio);
-
-            // Sector inventory fully covers this tick's demand — no constraint from this good
             const gKey = key as keyof Goods;
             const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
-            const maxScaleFromInventory = value > 0 ? sectorInv / value : 1;
-            if(maxScaleFromInventory >= 1) continue;
-
-            const inventoryConstraint = isNonEssential
-                ? Math.max(0.5, maxScaleFromInventory)
-                : maxScaleFromInventory;
-
-            marketConstraint = Math.min(marketConstraint, singleGoodConstraint, inventoryConstraint);
+            marketConstraint = Math.min(marketConstraint, value > 0 ? sectorInv / value : 1);
         }
 
         const budgetRatio = bid.budgetRatio;

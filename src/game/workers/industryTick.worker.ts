@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, computeBidConstraints, buySectorInputs, distributePopulationSpending, computeColonyGoodsDelta, applyGoodsModifier, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, distributePopulationSpending, computeColonyGoodsDelta, applyGoodsModifier, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
@@ -186,7 +186,7 @@ function processIndustry(
         }
     }
 
-    const { workerMarketRatios, goodsMarketRatios } = calculateMarketRatios(sectorBids, population, goods);
+    const { workerMarketRatios } = calculateMarketRatios(sectorBids, population);
 
     updateWageMemory(wageMemory, workerMarketRatios);
     colonyWageMemory.set(entityId, wageMemory);
@@ -195,20 +195,9 @@ function processIndustry(
 
     const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
 
-    // Compute market constraint per bid so sectors only buy what they can actually consume.
-    // Without this, sectors buy inputs at full bid scale but execute at actualScale (which may be 0 due to bottlenecks),
-    // draining money on inputs that sit unused in inventory.
-    const bidConstraints = computeBidConstraints(
-        sectorBids,
-        workerMarketRatios,
-        goodsMarketRatios,
-        updatedSectorGoodsBeforeExec,
-    );
-
     // Sectors buy input goods from colony pool using their own money
     const { colonyGoodsAfterPurchase } = buySectorInputs(
         sectorBids,
-        bidConstraints,
         goods,
         updatedSectorGoodsBeforeExec,
         newMoney,
@@ -231,7 +220,6 @@ function processIndustry(
     } = executeSectors(
         sectorBids,
         workerMarketRatios,
-        goodsMarketRatios,
         population,
         updatedSectorGoodsBeforeExec,
         goods,
@@ -336,8 +324,7 @@ function processIndustry(
 function calculateMarketRatios(
     sectorBids: SectorBid[],
     population: Population,
-    goods: Goods
-): { workerMarketRatios: Record<keyof Population, number>; goodsMarketRatios: Record<keyof Goods, number> } {
+): { workerMarketRatios: Record<keyof Population, number> } {
     const totalIdealWorkerDemand = {} as Record<keyof Population, number>;
     const totalIdealGoodsDemand = {} as Record<keyof Goods, number>;
 
@@ -355,14 +342,8 @@ function calculateMarketRatios(
         workerAvailable[key as keyof Population] = pop.number;
     }
 
-    const goodsAvailable = {} as Record<keyof Goods, number>;
-    for(const key in goods) {
-        goodsAvailable[key as keyof Goods] = goods[key as keyof Goods];
-    }
-
     return {
         workerMarketRatios: computeMarketRatios(totalIdealWorkerDemand, workerAvailable),
-        goodsMarketRatios: computeMarketRatios(totalIdealGoodsDemand, goodsAvailable),
     };
 }
 
