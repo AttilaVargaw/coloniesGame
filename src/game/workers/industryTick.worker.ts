@@ -191,9 +191,14 @@ function processIndustry(
     updateWageMemory(wageMemory, workerMarketRatios);
     colonyWageMemory.set(entityId, wageMemory);
 
-    let newMoney: Record<string, number> = { ...startingMoney };
-
     const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
+
+    // Compute actual production scale per bid (worker + inventory constrained)
+    for(const bid of sectorBids) {
+        bid.actualScale = computeActualScale(bid, workerMarketRatios, updatedSectorGoodsBeforeExec);
+    }
+
+    let newMoney: Record<string, number> = { ...startingMoney };
 
     // Sectors buy input goods from colony pool using their own money
     const { colonyGoodsAfterPurchase } = buySectorInputs(
@@ -219,7 +224,6 @@ function processIndustry(
         sumGoodsProduction,
     } = executeSectors(
         sectorBids,
-        workerMarketRatios,
         population,
         updatedSectorGoodsBeforeExec,
         goods,
@@ -258,13 +262,18 @@ function processIndustry(
     );
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, replenishmentDelta } = processCapital(
+    const { newCapitalStock, replenishmentDelta, moneySpent } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
         prices,
         newMoney
     );
+
+    // Deduct capital costs from sector money
+    for(const name of activeSectors) {
+        newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
+    }
 
     const colonyGoodsDelta = computeColonyGoodsDelta(
         goods,
@@ -345,6 +354,32 @@ function calculateMarketRatios(
     return {
         workerMarketRatios: computeMarketRatios(totalIdealWorkerDemand, workerAvailable),
     };
+}
+
+function computeActualScale(
+    bid: SectorBid,
+    workerMarketRatios: Record<keyof Population, number>,
+    sectorGoods: Record<keyof IndustrialSectors, Goods>,
+): number {
+    // Worker availability from global market ratio
+    let workerRatio = 1;
+    for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
+        if(value > 0) {
+            const r = workerMarketRatios[key as keyof Population] ?? 1;
+            workerRatio = Math.min(workerRatio, r);
+        }
+    }
+
+    // Market constraint from sector inventory
+    let marketConstraint = 1;
+    for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
+        if(value <= 0) continue;
+        const gKey = key as keyof Goods;
+        const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
+        marketConstraint = Math.min(marketConstraint, value > 0 ? sectorInv / value : 1);
+    }
+
+    return Math.min(bid.budgetRatio, marketConstraint, workerRatio);
 }
 
 function finalizeGoods(

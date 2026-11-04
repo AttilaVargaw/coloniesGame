@@ -41,7 +41,6 @@ function applyGoodConstraint(
 
 export function executeSectors(
     sectorBids: SectorBid[],
-    workerMarketRatios: Record<keyof Population, number>,
     population: Population,
     inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
     colonyGoods: Goods,
@@ -68,15 +67,7 @@ export function executeSectors(
     const sectorStopReason: Record<string, string> = {};
 
     for(const bid of sectorBids) {
-        let workerRatio = 1;
-
-        // Worker availability
-        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            if(value > 0) {
-                const r = workerMarketRatios[key as keyof Population] ?? 1;
-                workerRatio = Math.min(workerRatio, r);
-            }
-        }
+        const actualScale = bid.actualScale;
 
         // Goods availability: colony pool + sector inventory combined (for stop reason)
         let goodsRatio = 1;
@@ -90,31 +81,28 @@ export function executeSectors(
             goodsRatio = Math.min(goodsRatio, ratio);
         }
 
-        // Market constraint for production scale: sector inventory only.
-        // Colony pool availability is handled separately in buySectorInputs.
-        let marketConstraint = 1;
-        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            if(value <= 0) continue;
-            const gKey = key as keyof Goods;
-            const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
-            marketConstraint = Math.min(marketConstraint, value > 0 ? sectorInv / value : 1);
+        // Worker availability based on remaining workers (for stop reason)
+        let workerRatio = 1;
+        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
+            if(value > 0) {
+                const available = remainingWorkers[key as keyof Population].number;
+                const r = available / value;
+                workerRatio = Math.min(workerRatio, r);
+            }
         }
-
-        const budgetRatio = bid.budgetRatio;
-        const actualScale = Math.min(budgetRatio, marketConstraint);
 
         // Determine stop reason
         let stopReason = "";
         if(actualScale <= 0) {
-            if(budgetRatio <= 0) stopReason = "No money";
+            if(bid.budgetRatio <= 0) stopReason = "No money";
             else if(workerRatio <= 0) stopReason = "No workers";
             else if(goodsRatio <= 0) stopReason = "No materials";
             else stopReason = "Bottlenecked";
-        } else if(budgetRatio < 1 && budgetRatio < marketConstraint) {
+        } else if(bid.budgetRatio < 1 && bid.budgetRatio < actualScale) {
             stopReason = "Low budget";
-        } else if(workerRatio < 1 && workerRatio < goodsRatio) {
+        } else if(workerRatio < 1 && workerRatio < goodsRatio && workerRatio < actualScale) {
             stopReason = "Worker shortage";
-        } else if(goodsRatio < 1 && goodsRatio < workerRatio) {
+        } else if(goodsRatio < 1 && goodsRatio < workerRatio && goodsRatio < actualScale) {
             stopReason = "Material shortage";
         }
         sectorStopReason[bid.name] = stopReason;
@@ -138,11 +126,13 @@ export function executeSectors(
 
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            const employed = value * actualScale;
+            const available = remainingWorkers[key as keyof Population].number;
+            const demanded = value * actualScale;
+            const employed = Math.min(demanded, Math.max(0, available));
             workersEmployed[key as keyof Population] = employed;
             remainingWorkers[key as keyof Population] = {
                 ...remainingWorkers[key as keyof Population],
-                number: remainingWorkers[key as keyof Population].number - employed,
+                number: available - employed,
             };
             workingWorkers[key as keyof Population] = {
                 ...workingWorkers[key as keyof Population],

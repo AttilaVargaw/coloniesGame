@@ -5,6 +5,7 @@ export type SectorBid = {
     name: string;
     level: number;
     budgetRatio: number;
+    actualScale: number;
     inputCost: number;
     laborCost: number;
     idealWorkerDemand: Partial<Record<keyof Population, number>>;

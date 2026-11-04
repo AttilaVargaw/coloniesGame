@@ -9,7 +9,7 @@ import { TbHexagonNumber4 } from "react-icons/tb";
 import { useMemo } from "react";
 import { cn } from "cn";
 
-export function RequirementItem({ name, scaledReq, actual, hasData }: { name: keyof Population | keyof Goods | "money"; scaledReq: number; actual: number; hasData?: boolean }) {
+export function RequirementItem({ name, scaledReq, actual, hasData }: { name: keyof Population | keyof Goods | "money"; scaledReq: number; actual: number; hasData?: boolean; ratio?: number }) {
     const isFilled = !hasData || actual >= scaledReq * 0.99;
     const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
     const icon = useMemo(() => {

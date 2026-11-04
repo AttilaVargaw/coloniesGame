@@ -219,7 +219,7 @@ export class ViewportSystem extends System {
 
         this.camera = new Camera({
             initialPosition: [
-                -6066.5, 869, 2963.6, 600
+                -7652, 73, 8281.6, -2.47
             ],
             distance: CAMERA_INITIAL_DISTANCE,
             fieldOfView: FIELD_OF_VIEW,

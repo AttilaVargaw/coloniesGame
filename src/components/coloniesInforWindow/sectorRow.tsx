@@ -34,12 +34,28 @@ export function SectorRow({
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
 
+    // Capital goods adequacy: stock / required per unit, bottleneck across all capital goods
+    let capitalAdequacy = 1;
+    const capitalGoods = config?.capitalGoods ?? {};
+    if(Object.keys(capitalGoods).length > 0) {
+        capitalAdequacy = Infinity;
+        const stock = industry.capitalStock[sectorKey] ?? {};
+        for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
+            const gKey = goodKey as keyof Goods;
+            const available = stock[gKey] ?? 0;
+            const req = (requiredPerUnit as number) ?? 0;
+            const ratio = req > 0 ? available / req : Infinity;
+            capitalAdequacy = Math.min(capitalAdequacy, ratio);
+        }
+        if(capitalAdequacy === Infinity) capitalAdequacy = 1;
+    }
+
     const reqs = useMemo(() => {
         const items: React.ReactNode[] = [];
         let bottleneck: keyof Population | keyof Goods | null = null;
         let bottleneckRatio = Infinity;
 
-        const addReq = (name: keyof Population | keyof Goods, scaledReq: number, actual: number) => {
+        const addReq = (name: keyof Population | keyof Goods, scaledReq: number, actual: number, ratio?: number) => {
             if(hasData && scaledReq > 0) {
                 const ratio = actual / scaledReq;
                 if(ratio < 0.99 && ratio < bottleneckRatio) {
@@ -55,6 +71,7 @@ export function SectorRow({
                     scaledReq={scaledReq}
                     actual={actual}
                     hasData={hasData}
+                    ratio={ratio}
                 />
             );
         };
@@ -68,16 +85,17 @@ export function SectorRow({
         }
 
         if(config?.workerRequirement) {
-            const capitalAdequacy = sectorResult?.inputLevel ?? 1;
             (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const scaledReq = (req as number) * techMultiplier * capitalAdequacy;
-                const employed = isStopped ? (industry.population[worker].number ?? 0) : (sectorResult?.workersEmployed?.[worker] ?? 0);
-                addReq(worker, scaledReq, employed);
+                const baseScaledReq = (req as number) * techMultiplier;
+                const scaledReq = baseScaledReq * capitalAdequacy;
+                const employed = isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0);
+                const workerRatio = baseScaledReq > 0 ? employed / baseScaledReq : 1;
+                addReq(worker, scaledReq, employed, workerRatio);
             });
         }
 
         return { items, bottleneck, bottleneckRatio };
-    }, [config, techMultiplier, sectorKey, industry.sectorGoods, industry.population, sectorResult, hasData, isStopped]);
+    }, [config, techMultiplier, sectorKey, industry.sectorGoods, industry.capitalStock, industry.population, sectorResult, hasData, isStopped]);
 
     return (
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
@@ -110,7 +128,14 @@ export function SectorRow({
                 </span>
             </td>
             <td className="pt-2 text-center">{techMultiplier.toFixed(2)}</td>
-            <td className="pt-2 text-center">{(utilization * 100).toFixed(0)}%</td>
+            <td className="pt-2 text-center">
+                <div className="text-xs">
+                    {(utilization * 100).toFixed(0)}%
+                    {capitalAdequacy < 0.99 && (
+                        <div className="text-orange-400">{Math.round(capitalAdequacy * 100)}% capital</div>
+                    )}
+                </div>
+            </td>
             {/* <td className=" text-center">100%</td> */}
             <td className={`pt-2 text-center`}>
                 <div className="flex flex-col">

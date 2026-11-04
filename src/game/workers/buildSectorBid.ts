@@ -81,17 +81,9 @@ function calculateCosts(
 function scaleLaborDemand(
     adjustedWorkerRequirement: Record<string, number>,
     inputLevel: number,
-    laborAssigned: number,
+    _laborAssigned: number,
 ): Record<string, number> {
-    const idealWorkerDemand = scaleMap(adjustedWorkerRequirement, inputLevel);
-    const totalWorkerDemand = Object.values(idealWorkerDemand).reduce((a, b) => a + b, 0);
-
-    let laborScale = 1;
-    if(laborAssigned > 0 && totalWorkerDemand > 0) {
-        laborScale = Math.min(1, laborAssigned / totalWorkerDemand);
-    }
-
-    return scaleMap(idealWorkerDemand as Record<string, number>, laborScale);
+    return scaleMap(adjustedWorkerRequirement, inputLevel);
 }
 
 export function buildSectorBid(
@@ -99,7 +91,7 @@ export function buildSectorBid(
     prices: Record<keyof Goods, number>,
     techMultiplier: number,
     laborAssigned: number,
-    _capitalStock: Partial<Goods>,
+    capitalStock: Partial<Goods>,
     salaries: Record<keyof Population, number>,
     _previousProfit: number,
     decisions: SectorDecisions,
@@ -144,13 +136,34 @@ export function buildSectorBid(
 
     const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel, laborAssigned);
 
+    // Capital goods scaling: more capital = more employable workers, less = fewer
+    let capitalRatio = 1;
+    const capitalGoods = effective.capitalGoods ?? {};
+    if(Object.keys(capitalGoods).length > 0) {
+        capitalRatio = Infinity;
+        for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
+            const gKey = goodKey as keyof Goods;
+            const stock = capitalStock[gKey] ?? 0;
+            const req = (requiredPerUnit as number) ?? 0;
+            const ratio = req > 0 ? stock / req : Infinity;
+            capitalRatio = Math.min(capitalRatio, ratio);
+        }
+        if(capitalRatio === Infinity) capitalRatio = 1;
+    }
+
+    const capitalAdjustedWorkerDemand: Record<string, number> = {};
+    for(const [key, value] of Object.entries(scaledWorkerDemand)) {
+        capitalAdjustedWorkerDemand[key] = value * capitalRatio;
+    }
+
     return {
         name: name as string,
         level: 1,
         budgetRatio,
+        actualScale: budgetRatio,
         inputCost,
         laborCost,
-        idealWorkerDemand: scaledWorkerDemand,
+        idealWorkerDemand: capitalAdjustedWorkerDemand,
         idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel),
         idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel),
         outputLevel,
