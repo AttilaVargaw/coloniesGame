@@ -132,10 +132,10 @@ function createInteractionComponents(
             }
 
             const goodsCost = config?.goodsRequirements
-                ? Object.entries(config.goodsRequirements).reduce((sum, [g, r]) => sum + (r as number) * (basePrices[g as keyof Goods] ?? 0), 0)
+                ? Object.entries(config.goodsRequirements).reduce((sum, [g, r]) => sum + r * (basePrices[g as keyof Goods] ?? 0), 0)
                 : 0
             const laborCost = config?.workerRequirement
-                ? Object.entries(config.workerRequirement).reduce((sum, [w, r]) => sum + (r as number) * (baseSalaries[w as keyof Population] ?? 0), 0)
+                ? Object.entries(config.workerRequirement).reduce((sum, [w, r]) => sum + r * (baseSalaries[w as keyof Population] ?? 0), 0)
                 : 0
             const operatingCost = goodsCost + laborCost
             starterMoney[sector] = Math.round(operatingCost * BUDGET_RUNWAY_DAYS)

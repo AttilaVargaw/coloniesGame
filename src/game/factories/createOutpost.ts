@@ -15,13 +15,13 @@ export function createOutpost(config: OutpostConfig) {
     const { population, allowedSectors, colonyType = "standard", goods = {} } = config;
 
     const sectors = {} as Record<keyof IndustrialSectors, number>;
-    for (const key of Object.keys(allowedSectors)) {
+    for(const key of Object.keys(allowedSectors)) {
         sectors[key as keyof IndustrialSectors] = 1;
     }
 
     const fullGoods = createStarterWarehouse(0) as Goods;
-    for (const [key, value] of Object.entries(goods)) {
-        fullGoods[key as keyof Goods] = value as number;
+    for(const [key, value] of Object.entries(goods)) {
+        fullGoods[key as keyof Goods] = value;
     }
 
     const populationBreakdown = createStarterPopulation(population);

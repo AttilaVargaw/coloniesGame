@@ -14,9 +14,9 @@ function scaleMap(obj: Record<string, number>, factor: number): Record<string, n
     return result;
 }
 
-function mergeMethodOverrides(base: any, method: ProductionMethod | undefined): any {
+function mergeMethodOverrides<T extends { goodsRequirements?: Record<string, number>; workerRequirement?: Record<string, number>, goodsProduction?: Record<string, number>, capitalGoods?: Record<string, number> }>(base: any, method: ProductionMethod | undefined): T {
     if(!method) return base;
-    const out: any = { ...base };
+    const out: T = { ...base };
     if(method.goodsRequirements) out.goodsRequirements = { ...base.goodsRequirements, ...method.goodsRequirements };
     if(method.workerRequirement) out.workerRequirement = { ...base.workerRequirement, ...method.workerRequirement };
     if(method.goodsProduction) out.goodsProduction = { ...base.goodsProduction, ...method.goodsProduction };
@@ -33,7 +33,7 @@ function adjustWorkerRequirements(
     const adjusted: Record<string, number> = {};
     for(const [key, value] of Object.entries(workerRequirement)) {
         const mult = workerEff[key as keyof Population] ?? 1;
-        adjusted[key] = (value as number) / Math.max(mult, 0.01);
+        adjusted[key] = value / Math.max(mult, 0.01);
     }
     const workerMethodMult = method?.workerMultiplier ?? 1;
     for(const key of Object.keys(adjusted)) {
@@ -51,7 +51,7 @@ function adjustGoodsRequirements(
     const adjusted: Record<string, number> = {};
     for(const [key, value] of Object.entries(goodsRequirements)) {
         const mult = materialMult[key as keyof Goods] ?? 1;
-        adjusted[key] = (value as number) * mult;
+        adjusted[key] = value * mult;
     }
     const materialMethodMult = method?.materialMultiplier ?? 1;
     for(const key of Object.keys(adjusted)) {
@@ -144,7 +144,7 @@ export function buildSectorBid(
         for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
             const gKey = goodKey as keyof Goods;
             const stock = capitalStock[gKey] ?? 0;
-            const req = (requiredPerUnit as number) ?? 0;
+            const req = requiredPerUnit ?? 0;
             const ratio = req > 0 ? stock / req : Infinity;
             capitalRatio = Math.min(capitalRatio, ratio);
         }

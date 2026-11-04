@@ -6,8 +6,6 @@ import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
 import { colorBySign } from "./colorBySign";
 import { ResourceIcon, RESOURCE_NAMES } from "@/components/icons/ResourceIcon";
-import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 const warehousePriceMemory: Partial<Record<keyof Goods, number>> = {};
@@ -23,13 +21,13 @@ function getSectorCostPerUnit(
 
     const goodsCost = config.goodsRequirements
         ? Object.entries(config.goodsRequirements).reduce((sum: number, [good, req]) => {
-            return sum + (req as number) * (basePrices[good as keyof Goods] ?? 0);
+            return sum + req * (basePrices[good as keyof Goods] ?? 0);
         }, 0) * techMult
         : 0;
 
     const laborCost = config.workerRequirement
         ? Object.entries(config.workerRequirement).reduce((sum: number, [worker, req]) => {
-            return sum + (req as number) * (baseSalaries[worker as keyof Population] ?? 0);
+            return sum + req * (baseSalaries[worker as keyof Population] ?? 0);
         }, 0) * techMult
         : 0;
 
@@ -58,7 +56,7 @@ export function WarehouseBreakdown({ industry, showPhysical }: { industry: Indus
 
     return (
         <Tabs defaultValue="rawMaterials">
-            <TabsList  className="f-width">
+            <TabsList className="f-width">
                 {[...godsCategories.keys()].map((key) => {
                     return <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
                 })}

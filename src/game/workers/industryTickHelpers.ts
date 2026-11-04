@@ -197,6 +197,10 @@ export function computeColonyGoodsDelta(
                 const price = prices[goodKey as keyof Goods] ?? 0;
                 if(price > 0) {
                     colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
+                    // Remove from sector inventory since goods were sold to colony pool
+                    const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                    sectorInv[goodKey as keyof Goods] = Math.max(0, (sectorInv[goodKey as keyof Goods] ?? 0) - amount);
+                    updatedSectorGoods[name] = sectorInv;
                 } else {
                     const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
                     sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;

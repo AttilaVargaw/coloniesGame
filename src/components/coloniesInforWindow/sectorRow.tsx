@@ -43,7 +43,7 @@ export function SectorRow({
         for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
             const gKey = goodKey as keyof Goods;
             const available = stock[gKey] ?? 0;
-            const req = (requiredPerUnit as number) ?? 0;
+            const req = requiredPerUnit ?? 0;
             const ratio = req > 0 ? available / req : Infinity;
             capitalAdequacy = Math.min(capitalAdequacy, ratio);
         }
@@ -78,18 +78,22 @@ export function SectorRow({
 
         if(config?.goodsRequirements) {
             (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
-                const scaledReq = req * techMultiplier;
-                const consumed = industry.sectorGoods[sectorKey]?.[good] ?? 0;
-                addReq(good, scaledReq, consumed);
+                const baseScaledReq = req * techMultiplier;
+                const scaledReq = baseScaledReq * capitalAdequacy;
+                const used = isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0);
+                const goodsRatio = baseScaledReq > 0 ? used / baseScaledReq : 1;
+                console.log(good, scaledReq, used, goodsRatio)
+                addReq(good, scaledReq, used, goodsRatio);
             });
         }
 
         if(config?.workerRequirement) {
             (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const baseScaledReq = (req as number) * techMultiplier;
+                const baseScaledReq = req * techMultiplier;
                 const scaledReq = baseScaledReq * capitalAdequacy;
                 const employed = isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0);
                 const workerRatio = baseScaledReq > 0 ? employed / baseScaledReq : 1;
+
                 addReq(worker, scaledReq, employed, workerRatio);
             });
         }

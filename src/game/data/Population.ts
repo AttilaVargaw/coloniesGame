@@ -92,8 +92,8 @@ export function getRequirementsForQol(qol: number, number: number): Record<keyof
     let floorLevel = QOL_LEVELS[0];
     let ceilLevel = QOL_LEVELS[QOL_LEVELS.length - 1];
 
-    for (let i = 0; i < QOL_LEVELS.length; i++) {
-        if (QOL_LEVELS[i].id <= clampedQol) {
+    for(let i = 0; i < QOL_LEVELS.length; i++) {
+        if(QOL_LEVELS[i].id <= clampedQol) {
             floorLevel = QOL_LEVELS[i];
         } else {
             ceilLevel = QOL_LEVELS[i];
@@ -102,9 +102,9 @@ export function getRequirementsForQol(qol: number, number: number): Record<keyof
     }
 
     // Exact level match or no ceiling above floor
-    if (clampedQol <= floorLevel.id || ceilLevel.id <= floorLevel.id) {
+    if(clampedQol <= floorLevel.id || ceilLevel.id <= floorLevel.id) {
         const requirements = {} as Record<keyof Goods, number>;
-        for (const key in floorLevel.cumulativeData) {
+        for(const key in floorLevel.cumulativeData) {
             requirements[key as keyof Goods] = floorLevel.cumulativeData[key as keyof Goods] * number;
         }
         return requirements;
@@ -118,7 +118,7 @@ export function getRequirementsForQol(qol: number, number: number): Record<keyof
     ]) as Set<keyof Goods>;
 
     const requirements = {} as Record<keyof Goods, number>;
-    for (const good of allGoods) {
+    for(const good of allGoods) {
         const floorVal = floorLevel.cumulativeData[good] ?? 0;
         const ceilVal = ceilLevel.cumulativeData[good] ?? 0;
         requirements[good] = ((1 - fraction) * floorVal + fraction * ceilVal) * number;
@@ -138,16 +138,16 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     let lastAffordableData: Partial<Record<keyof Goods, number>> = {}
     const budget = salary + wealth * WEALTH_DRAWDOWN_RATE;
 
-    for (const level of QOL_LEVELS) {
+    for(const level of QOL_LEVELS) {
         const cumulativeCost = Object.entries(level.cumulativeData).reduce(
             (acc, [key, value]) => {
                 const price = goodsPrices[key as keyof Goods] ?? 0;
-                return acc + (value as number) * Math.max(price, 0);
+                return acc + value * Math.max(price, 0);
             },
             0
         )
 
-        if (budget >= cumulativeCost) {
+        if(budget >= cumulativeCost) {
             qol = level.id
             lastAffordableCumulativeCost = cumulativeCost
             lastAffordableId = level.id
@@ -156,7 +156,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
             const margin = budget - lastAffordableCumulativeCost
             const gap = cumulativeCost - lastAffordableCumulativeCost
 
-            if (gap > 0 && margin >= 0) {
+            if(gap > 0 && margin >= 0) {
                 qol = lastAffordableId + (margin / gap) * (level.id - lastAffordableId)
             }
             break
@@ -164,7 +164,7 @@ export function getGoodRequirementsAndQoL(salary: number, goodsPrices: Goods, { 
     }
 
     const requirements = {} as Record<keyof Goods, number>
-    for (const key in lastAffordableData) {
+    for(const key in lastAffordableData) {
         requirements[key as keyof Goods] = (lastAffordableData[key as keyof Goods] ?? 0) * number
     }
 

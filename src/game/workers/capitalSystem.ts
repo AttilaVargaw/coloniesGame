@@ -79,9 +79,9 @@ export function processCapital(
         // Add investment branch per capital good
         for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
             children.push(new Sequence([
-                new BelowTargetStock(goodKey, rate as number),
-                new CanAffordInvestment(goodKey, rate as number),
-                new InvestCapital(goodKey, rate as number),
+                new BelowTargetStock(goodKey, rate),
+                new CanAffordInvestment(goodKey, rate),
+                new InvestCapital(goodKey, rate),
             ]));
         }
 

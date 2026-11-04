@@ -26,11 +26,11 @@ export class MigrationSystem extends RouteSystem<MigrationRouteNode> {
     protected createRouteComponent(
         sourceEntityId: string,
         destinationEntityId: string,
-        payload: unknown,
+        payload: number,
         travelDays: number,
         speed: number,
     ): MigrationRouteComponent {
-        const workerCount = payload as number;
+        const workerCount = payload;
         return new MigrationRouteComponent(sourceEntityId, destinationEntityId, workerCount, travelDays, travelDays, speed);
     }
 
