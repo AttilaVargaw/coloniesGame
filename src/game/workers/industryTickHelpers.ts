@@ -136,18 +136,22 @@ export function buySectorInputs(
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
-            const demand = demandPerTick * marketConstraint * 5;
+            const demand = demandPerTick * Math.min(bid.budgetRatio, marketConstraint);
+            const existingInv = sectorInv[goodKey as keyof Goods] ?? 0;
+            if(existingInv >= demand) continue; // already have enough in inventory
+
+            const netDemand = demand - existingInv;
             const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
             const price = prices[goodKey as keyof Goods] ?? 0;
             if(available <= 0 || price <= 0) continue;
 
             const canAfford = Math.floor(sectorMoney / price);
-            const toBuy = Math.min(demand, available, canAfford);
+            const toBuy = Math.min(netDemand, available, canAfford);
             if(toBuy <= 0) continue;
 
             sectorMoney -= toBuy * price;
             colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
-            sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + toBuy;
+            sectorInv[goodKey as keyof Goods] = existingInv + toBuy;
         }
 
         newMoney[sectorName] = sectorMoney;

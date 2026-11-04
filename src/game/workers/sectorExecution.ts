@@ -29,10 +29,13 @@ function applyGoodConstraint(
     // Sector inventory constraint: can't consume more than available
     const available = sectorInventory[goodKey] ?? 0;
     const maxScaleFromInventory = demandPerTick > 0 ? available / demandPerTick : 1;
+
+    // Sector inventory fully covers this tick's demand — colony pool constraint doesn't apply
+    if(maxScaleFromInventory >= 1) return currentConstraint;
+
     const inventoryConstraint = isNonEssential
         ? Math.max(0.5, maxScaleFromInventory)
         : maxScaleFromInventory;
-
     return Math.min(marketConstraint, inventoryConstraint);
 }
 
@@ -42,6 +45,7 @@ export function executeSectors(
     goodsMarketRatios: Record<keyof Goods, number>,
     population: Population,
     inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
+    colonyGoods: Goods,
     prices: Record<keyof Goods, number>,
     salaries: Record<keyof Population, number>
 ): SectorExecutionResult {
@@ -62,31 +66,75 @@ export function executeSectors(
 
     const sectorGoods: Record<keyof IndustrialSectors, Goods> = { ...inputSectorGoods };
 
+    const sectorStopReason: Record<string, string> = {};
+
     for(const bid of sectorBids) {
-        let marketConstraint = 1;
+        let workerRatio = 1;
+
+        // Worker availability
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
             if(value > 0) {
-                marketConstraint = Math.min(marketConstraint, workerMarketRatios[key as keyof Population] ?? 1);
+                const r = workerMarketRatios[key as keyof Population] ?? 1;
+                workerRatio = Math.min(workerRatio, r);
             }
         }
+
+        // Goods availability: colony pool + sector inventory combined (for stop reason)
+        let goodsRatio = 1;
+        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
+            if(value <= 0) continue;
+            const gKey = key as keyof Goods;
+            const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
+            const colonyAvail = colonyGoods[gKey] ?? 0;
+            const totalAvailable = sectorInv + colonyAvail;
+            const ratio = value > 0 ? totalAvailable / value : 1;
+            goodsRatio = Math.min(goodsRatio, ratio);
+        }
+
+        // Market constraint for production scale: each good independently evaluated.
+        // Sector inventory overrides colony pool when it fully covers demand.
+        let marketConstraint = 1;
         const sectorConfig = industrySectorBlueprints.get(bid.name as keyof IndustrialSectors);
         const nonEssentialGoods = new Set<keyof Goods>((sectorConfig?.nonEssentialGoods || sectorConfig?.optionalGoods || []) as (keyof Goods)[]);
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            if(value > 0) {
-                const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
-                marketConstraint = applyGoodConstraint(
-                    marketConstraint,
-                    key as keyof Goods,
-                    value,
-                    goodsMarketRatios,
-                    sectorGoods[bid.name as keyof IndustrialSectors],
-                    isNonEssential
-                );
-            }
+            if(value <= 0) continue;
+            const isNonEssential = nonEssentialGoods.has(key as keyof Goods);
+            const ratio = goodsMarketRatios[key as keyof Goods] ?? 1;
+            const singleGoodConstraint = isNonEssential
+                ? Math.min(1, 0.5 + 0.75 * ratio)
+                : Math.min(1, ratio);
+
+            // Sector inventory fully covers this tick's demand — no constraint from this good
+            const gKey = key as keyof Goods;
+            const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
+            const maxScaleFromInventory = value > 0 ? sectorInv / value : 1;
+            if(maxScaleFromInventory >= 1) continue;
+
+            const inventoryConstraint = isNonEssential
+                ? Math.max(0.5, maxScaleFromInventory)
+                : maxScaleFromInventory;
+
+            marketConstraint = Math.min(marketConstraint, singleGoodConstraint, inventoryConstraint);
         }
 
         const budgetRatio = bid.budgetRatio;
         const actualScale = Math.min(budgetRatio, marketConstraint);
+
+        // Determine stop reason
+        let stopReason = "";
+        if(actualScale <= 0) {
+            if(budgetRatio <= 0) stopReason = "No money";
+            else if(workerRatio <= 0) stopReason = "No workers";
+            else if(goodsRatio <= 0) stopReason = "No materials";
+            else stopReason = "Bottlenecked";
+        } else if(budgetRatio < 1 && budgetRatio < marketConstraint) {
+            stopReason = "Low budget";
+        } else if(workerRatio < 1 && workerRatio < goodsRatio) {
+            stopReason = "Worker shortage";
+        } else if(goodsRatio < 1 && goodsRatio < workerRatio) {
+            stopReason = "Material shortage";
+        }
+        sectorStopReason[bid.name] = stopReason;
 
         if(actualScale <= 0) {
             sectorResults[bid.name] = {
@@ -184,6 +232,7 @@ export function executeSectors(
         sectorLaborCosts,
         sectorInputCosts,
         sectorUtilization,
+        sectorStopReason,
         populationProfits: {},
         workingWorkers,
         remainingWorkers,

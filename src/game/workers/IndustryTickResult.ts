@@ -25,6 +25,7 @@ export interface IndustryTickResult {
     sectorInputCosts: Record<string, number>;
     populationProfits: Record<string, number>;
     sectorUtilization: Record<string, number>;
+    sectorStopReason: Record<string, string>;
     wages: Record<keyof Population, number>;
     sectorResults: Record<string, SectorResult>;
     capitalStock: Record<string, Partial<Goods>>;

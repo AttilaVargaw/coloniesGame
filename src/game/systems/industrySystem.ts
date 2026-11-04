@@ -153,6 +153,7 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     mergeRecord(industry.populationProfits, patch.populationProfits)
     mergeRecord(industry.wages, patch.wages)
     mergeRecord(industry.sectorUtilization, patch.sectorUtilization)
+    mergeRecord(industry.sectorStopReason, patch.sectorStopReason)
     mergeRecord(industry.capitalStock, patch.capitalStock)
     if(patch.money) {
         for(const [key, value] of Object.entries(patch.money)) {

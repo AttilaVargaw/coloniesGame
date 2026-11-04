@@ -11,6 +11,7 @@ export interface SectorExecutionResult {
     sectorInputCosts: Record<string, number>;
     populationProfits: Record<string, number>;
     sectorUtilization: Record<string, number>;
+    sectorStopReason: Record<string, string>;
     workingWorkers: Record<keyof Population, PopulationBreakdown>;
     remainingWorkers: Record<keyof Population, PopulationBreakdown>;
     sectorGoods: Record<keyof IndustrialSectors, Goods>;

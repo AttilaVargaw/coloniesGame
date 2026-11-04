@@ -26,12 +26,11 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
                         <thead>
                             <tr className="border-b border-muted">
                                 <th className="text-left p-2 font-medium">Sector</th>
-                                <th className="text-center p-2 font-medium">Tech Mult.</th>
-                                <th className="text-center p-2 font-medium">Utilization</th>
+                                <th className="text-center p-2 font-medium w-1">Tech Mult.</th>
+                                {/* <th className="text-center p-2 font-medium">Utilization</th> */}
                                 <th className="text-center p-2 font-medium">Efficiency</th>
                                 <th className="text-center p-2 font-medium">Profit</th>
                                 <th className="text-center p-2 font-medium">Margin</th>
-                                <th className="text-center p-2 font-medium">Bottleneck</th>
                                 <th className="text-center p-2 font-medium">Method</th>
                                 <th className="text-left p-2 font-medium">Requirements</th>
                                 <th className="text-left p-2 font-medium">Stock</th>

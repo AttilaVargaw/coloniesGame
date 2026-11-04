@@ -222,6 +222,7 @@ function processIndustry(
         sectorLaborCosts,
         sectorInputCosts,
         sectorUtilization,
+        sectorStopReason,
         workingWorkers,
         remainingWorkers,
         sectorGoods: updatedSectorGoods,
@@ -233,6 +234,7 @@ function processIndustry(
         goodsMarketRatios,
         population,
         updatedSectorGoodsBeforeExec,
+        goods,
         prices,
         adjustedSalaries
     );
@@ -312,6 +314,7 @@ function processIndustry(
         sectorInputCosts,
         populationProfits,
         sectorUtilization,
+        sectorStopReason,
         wages: adjustedSalaries,
         sectorResults,
         capitalStock: newCapitalStock,
@@ -425,6 +428,7 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     hasChanged = trySetPatchField(patch, "sectorInputCosts", last?.sectorInputCosts, result.sectorInputCosts, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "populationProfits", last?.populationProfits, result.populationProfits, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "sectorUtilization", last?.sectorUtilization, result.sectorUtilization, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "sectorStopReason", last?.sectorStopReason, result.sectorStopReason, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "money", last?.money, result.money, shallowDiff) || hasChanged;

@@ -8,9 +8,8 @@ import { useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
-import { Cuboid, Hammer } from "lucide-react";
-
-//-386.8M	
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { FaCircleExclamation } from "react-icons/fa6";
 
 export function SectorRow({
     rowKey,
@@ -26,6 +25,7 @@ export function SectorRow({
     const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0;
     const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0;
     const utilization = industry.sectorUtilization[sectorKey] ?? 0;
+    const stopReason = industry.sectorStopReason?.[sectorKey] ?? "";
     const techMultiplier = industry.techMultipliers[sectorKey] ?? 1;
 
     const config = industrySectorBlueprints.get(sectorKey);
@@ -83,13 +83,36 @@ export function SectorRow({
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
             <td className="p-2 capitalize">
                 <span style={{ display: "flex", gap: "1em" }}>
-                    <SectorIcon name={sectorKey} /> {sectorKey}
+                    <SectorIcon name={sectorKey} /> {sectorKey} {isStopped && stopReason && (
+                        <Tooltip>
+                            <TooltipTrigger asChild >
+                                <span className="inline-flex items-center">
+                                    <FaCircleExclamation className="text-red-400" />
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className="pt-2 text-center text-xs text-red-400" title={stopReason}>
+                                    {stopReason}
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                    {reqs.bottleneck && <Tooltip>
+                        <TooltipTrigger asChild >
+                            <span className="inline-flex items-center">
+                                <FaCircleExclamation className="text-orange-400" />
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <BottleneckCell bottleneck={reqs.bottleneck} bottleneckRatio={reqs.bottleneckRatio} />
+                        </TooltipContent>
+                    </Tooltip>}
                 </span>
             </td>
-            <td className="p-2 text-center">{techMultiplier.toFixed(2)}</td>
-            <td className="p-2 text-center">{(utilization * 100).toFixed(0)}%</td>
-            <td className="p-2 text-center">100%</td>
-            <td className={`p-2 text-center`}>
+            <td className="pt-2 text-center">{techMultiplier.toFixed(2)}</td>
+            <td className="pt-2 text-center">{(utilization * 100).toFixed(0)}%</td>
+            {/* <td className=" text-center">100%</td> */}
+            <td className={`pt-2 text-center`}>
                 <div className="flex flex-col">
                     <span className="text-green-400">
                         {convertToReadable(Math.round(revenue))}
@@ -102,23 +125,20 @@ export function SectorRow({
                     </span>
                 </div>
             </td>
-            <td className={`p-2 text-center ${margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <td className={`pt-2 text-center ${margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {hasData ? `${margin.toFixed(0)}%` : '—'}
             </td>
-            <td className="p-2 text-center">
-                <BottleneckCell bottleneck={reqs.bottleneck} bottleneckRatio={reqs.bottleneckRatio} />
-            </td>
-            <td className="p-2 text-center text-xs">
+            <td className="pt-2 text-center text-xs">
                 {industry.selectedMethod[sectorKey] ?? "Default"}
             </td>
-            <td className="p-2 text-left">
+            <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
                     {reqs.items.map((req, i) => (
                         <div key={i}>{req} </div>
                     ))}
                 </div>
             </td>
-            <td className="p-2 text-left">
+            <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
                     {
                         (() => {
