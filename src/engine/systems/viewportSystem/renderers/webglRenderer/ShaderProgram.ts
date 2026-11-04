@@ -10,6 +10,7 @@ export interface ShaderProgramAttribs {
     instanceTexOffset: number;
     instanceTexScale: number;
     instanceEmissiveCloud: number;
+    instanceTilt: number;
     [key: string]: number;
 }
 

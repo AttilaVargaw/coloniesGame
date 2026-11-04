@@ -84,6 +84,7 @@ export const solarisAlpha = {
             archetype: "kobol",
             orbit: { radius: 3, angle: 0, eccentricity: 0.0, inclination: 0 },
             name: "Caprica",
+            axialTilt: 0.41,
             population: 4900000000,
             starterIndustries: {
                 // bank: 490_000_000,

@@ -150,7 +150,7 @@ function uvToSpherePoint(u: number, v: number): [number, number, number] {
     const y = Math.sin(theta)
     const cosTheta = Math.cos(theta)
     const x = cosTheta * Math.cos(phi)
-    const z = cosTheta * Math.sin(phi)
+    const z = cosTheta * Math.sin(phi) + 1.0 / 3.0
     return [x, y, z]
 }
 

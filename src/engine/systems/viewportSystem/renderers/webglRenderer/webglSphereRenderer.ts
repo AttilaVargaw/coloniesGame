@@ -217,9 +217,9 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             const normalMatrix = mat3.create()
             mat3.normalFromMat4(normalMatrix, model)
 
-            const poolOffset = this.pendingInstances.length * 39
-            if(poolOffset + 39 > this.sphereInstancePool!.length) {
-                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 39 + this.MAX_SPHERE_INSTANCES * 39)
+            const poolOffset = this.pendingInstances.length * 43
+            if(poolOffset + 43 > this.sphereInstancePool!.length) {
+                const newSize = Math.max(this.sphereInstancePool!.length * 2, poolOffset + 43 + this.MAX_SPHERE_INSTANCES * 43)
                 const newPool = new Float32Array(newSize)
                 newPool.set(this.sphereInstancePool!)
                 this.sphereInstancePool = newPool
@@ -233,6 +233,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             pool.set([atlasEntry.u1 - atlasEntry.u0, atlasEntry.v1 - atlasEntry.v0], poolOffset + 33)
             pool.set([node.color.emitLight ? 1.0 : 0.0, cloudPage, node.texture.rotation ?? 0], poolOffset + 35)
             pool.set([normalPage], poolOffset + 38)
+            pool.set([node.texture.tiltAxis?.[0] ?? 0, node.texture.tiltAxis?.[1] ?? 0, node.texture.tiltAxis?.[2] ?? 1], poolOffset + 39)
+            pool.set([node.texture.tilt ?? 0], poolOffset + 42)
 
             this.pendingInstances.push({
                 page: atlasEntry.page,
@@ -387,7 +389,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             this.instanceBuffer = gl.createBuffer()
         }
 
-        const instanceStride = 39 * 4
+        const instanceStride = 43 * 4
 
         let lastDayPage = -1
         let lastNightPage = -1
@@ -418,14 +420,14 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer)
 
-            const totalFloats = instances.length * 39
+            const totalFloats = instances.length * 43
             if(!this.sphereBatchBuffer || this.sphereBatchBuffer.length < totalFloats) {
-                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 39)
+                const newSize = Math.max(totalFloats, this.MAX_SPHERE_INSTANCES * 43)
                 this.sphereBatchBuffer = new Float32Array(newSize)
             }
             const batch = this.sphereBatchBuffer!.subarray(0, totalFloats)
             for(let i = 0; i < instances.length; i++) {
-                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 39), i * 39)
+                batch.set(this.sphereInstancePool!.subarray(instances[i].offset, instances[i].offset + 43), i * 43)
             }
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer)
@@ -457,6 +459,7 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
             setupAttrib(shader.attribs.instanceTexOffset, 2, 31 * 4)
             setupAttrib(shader.attribs.instanceTexScale, 2, 33 * 4)
             setupAttrib(shader.attribs.instanceEmissiveCloud, 3, 35 * 4)
+            setupAttrib(shader.attribs.instanceTilt, 4, 39 * 4)
 
             if(dayPage !== lastDayPage) {
                 const atlasTexture = this.atlas.getTextures(gl)[dayPage]
@@ -804,8 +807,8 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
         this.initBuffers()
 
-        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 39)
-        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 39)
+        this.sphereInstancePool = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
+        this.sphereBatchBuffer = new Float32Array(this.MAX_SPHERE_INSTANCES * 43)
     }
 
     private initBuffers() {

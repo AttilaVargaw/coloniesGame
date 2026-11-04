@@ -12,6 +12,8 @@ export type TextureComponentOptions = {
     svg?: string;
     tint?: string;
     rotation?: number;
+    tilt?: number;
+    tiltAxis?: [number, number, number];
     minimumScreenSize?: number;
     animationSpeed?: number;
     id?: string;
@@ -28,6 +30,8 @@ export class TextureComponent extends EntityComponent {
     svg?: string;
     tint?: string;
     rotation?: number;
+    tilt?: number;
+    tiltAxis?: [number, number, number];
     minimumScreenSize?: number;
     animationSpeed?: number;
     id?: string;
@@ -44,6 +48,8 @@ export class TextureComponent extends EntityComponent {
         this.svg = options.svg;
         this.tint = options.tint;
         this.rotation = options.rotation;
+        this.tilt = options.tilt;
+        this.tiltAxis = options.tiltAxis;
         this.minimumScreenSize = options.minimumScreenSize;
         this.animationSpeed = options.animationSpeed;
         this.id = options.id;

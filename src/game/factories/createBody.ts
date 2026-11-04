@@ -303,6 +303,8 @@ export async function createBody({
     allowedSettlementTypes,
     populationRatio: blueprintPopulationRatio,
     occupationStarterRatio: blueprintOccupationStarterRatio,
+    axialTilt,
+    axialTiltAxis,
 }: BodyBlueprint, parent: Entity, engine: Engine, parentMass: number): Promise<Entity> {
     const isRoot = name === "root"
     const angle = orbit.angle ?? generateRandomNumber(0, TWO_PI)
@@ -353,7 +355,7 @@ export async function createBody({
                 meshIndex = (Math.abs(h) % 8) + 1
             }
 
-            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name, meshIndex }))
+            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name, meshIndex, tilt: axialTilt, tiltAxis: axialTiltAxis }))
             body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
 
             if(hasAtmosphere.has(archetype)) {

@@ -24,5 +24,7 @@ export type BodyBlueprint = Readonly<{
     rings?: { innerRadius: number; outerRadius: number; color: string }[];
     asteroidBelts?: { innerRadius: number; outerRadius: number; color: string, name: string }[];
     starterIndustries?: Partial<IndustrialSectors>;
+    axialTilt?: number;
+    axialTiltAxis?: [number, number, number];
 }>
 

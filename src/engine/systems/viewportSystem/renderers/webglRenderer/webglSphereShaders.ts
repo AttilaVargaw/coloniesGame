@@ -13,6 +13,7 @@ in vec3 aInstanceLightColor;
 in vec2 aInstanceTexOffset;
 in vec2 aInstanceTexScale;
 in vec3 aInstanceEmissiveCloud;
+in vec4 aInstanceTilt;
 
 uniform mat4 uView;
 uniform mat4 uProjection;
@@ -32,6 +33,7 @@ out vec2 vTexOffset;
 out vec2 vTexScale;
 out float vCloudPage;
 out float vRotationAngle;
+out vec4 vTilt;
 
 void main() {
     vec4 worldPos = aInstanceModel * vec4(aPosition, 1.0);
@@ -44,6 +46,7 @@ void main() {
     vTexScale = aInstanceTexScale;
     vCloudPage = aInstanceEmissiveCloud.y;
     vRotationAngle = aInstanceEmissiveCloud.z;
+    vTilt = aInstanceTilt;
     gl_Position = uProjection * uView * worldPos;
 }
 `;
@@ -224,6 +227,7 @@ in vec2 vTexOffset;
 in vec2 vTexScale;
 in float vCloudPage;
 in float vRotationAngle;
+in vec4 vTilt;
 
 uniform sampler2D uTexture;
 uniform sampler2D uNightTexture;
@@ -240,8 +244,18 @@ layout(location = 0) out vec4 fragColor;
 
 ${ACES_FILM_FUNCTION}
 
+vec3 rotateAboutAxis(vec3 v, float angle, vec3 axis) {
+    axis = normalize(axis);
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    return v * cosA + cross(axis, v) * sinA + axis * dot(axis, v) * (1.0 - cosA);
+}
+
 void main() {
     vec3 geometricNormal = normalize(vNormal);
+    if(vTilt.w != 0.0) {
+        geometricNormal = rotateAboutAxis(geometricNormal, -vTilt.w, vTilt.xyz);
+    }
     float u = 0.5 + atan(geometricNormal.z, geometricNormal.x) / (2.0 * PI);
     float v = 0.5 + asin(geometricNormal.y) / PI;
     float spunU = fract(u - vRotationAngle / (2.0 * PI));
