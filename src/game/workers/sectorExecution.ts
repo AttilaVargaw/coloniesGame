@@ -1,4 +1,3 @@
-import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { Goods } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
@@ -12,7 +11,7 @@ const EMPTY_WAREHOUSE = createStarterWarehouse(0);
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 
-function applyGoodConstraint(
+export function applyGoodConstraint(
     currentConstraint: number,
     goodKey: keyof Goods,
     demandPerTick: number,
