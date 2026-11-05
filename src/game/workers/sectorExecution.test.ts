@@ -1,52 +1,668 @@
 import { describe, it, expect } from "vitest"
-import { applyGoodConstraint } from "./sectorExecution"
+import { applyGoodConstraint, executeSectors } from "./sectorExecution"
+import { createStarterPopulation } from "../data/getPopulationBreakdown"
+import type { Population } from "../data/Population"
+import type { Goods } from "../data/Goods"
+import type { SectorBid } from "./SectorBid"
+
+function makePopulation(overrides: Partial<Population> = {}): Population {
+    const createBreakdown = (number: number): any => ({
+        number,
+        wealth: 1,
+        wealthLevel: 1,
+        qol: 50,
+        expectedQol: 50,
+        populationChange: 0,
+        mortality: 0,
+        salary: 200,
+        birthRate: 0,
+    })
+    return {
+        farmer: createBreakdown(100),
+        scientist: createBreakdown(100),
+        worker: createBreakdown(1000),
+        student: createBreakdown(100),
+        healtcarePersonal: createBreakdown(100),
+        policeMen: createBreakdown(100),
+        teacher: createBreakdown(100),
+        serviceWorker: createBreakdown(100),
+        clergy: createBreakdown(100),
+        retired: createBreakdown(100),
+        clerks: createBreakdown(100),
+        engineer: createBreakdown(100),
+        stayAtHome: createBreakdown(500),
+        serviceMan: createBreakdown(100),
+        ...overrides,
+    } as Population
+}
+
+function populationWorker(number: number): Partial<Population> {
+    return { worker: createBreakdownHelper(number) }
+}
+
+function createBreakdownHelper(number: number): any {
+    return {
+        number,
+        wealth: 1,
+        wealthLevel: 1,
+        qol: 50,
+        expectedQol: 50,
+        populationChange: 0,
+        mortality: 0,
+        salary: 200,
+        birthRate: 0,
+    }
+}
+
+function makeGoods(overrides: Partial<Goods> = {}): Goods {
+    return {
+        food: 0,
+        meat: 0,
+        tourism: 0,
+        consumerGoods: 0,
+        water: 0,
+        electricity: 0,
+        furniture: 0,
+        luxuryFurniture: 0,
+        services: 0,
+        agriculturalGoods: 0,
+        tylium: 0,
+        metals: 0,
+        uranium: 0,
+        machinery: 0,
+        medicine: 0,
+        wood: 0,
+        lumber: 0,
+        oil: 0,
+        spaceTransport: 0,
+        ammunition: 0,
+        weapons: 0,
+        nuclearWeapons: 0,
+        ordnance: 0,
+        vehicles: 0,
+        electronics: 0,
+        environmentFactor: 0,
+        faith: 0,
+        lawEnforcement: 0,
+        healthcare: 0,
+        chemicals: 0,
+        buildings: 0,
+        waste: 0,
+        governance: 0,
+        railroadVehicles: 0,
+        ships: 0,
+        aircraft: 0,
+        clothing: 0,
+        post: 0,
+        paper: 0,
+        entertainment: 0,
+        itServices: 0,
+        education: 0,
+        alcoholDrinks: 0,
+        stimulantDrinks: 0,
+        retail: 0,
+        automotiveMobility: 0,
+        railroadMobility: 0,
+        shipMobility: 0,
+        airMobility: 0,
+        ore: 0,
+        defense: 0,
+        monetaryServices: 0,
+        militaryVehicles: 0,
+        ...overrides,
+    }
+}
+
+function makeSectorBid(overrides: Partial<SectorBid> = {}): SectorBid {
+    return {
+        name: "testSector",
+        level: 1,
+        budgetRatio: 1,
+        actualScale: 1,
+        inputCost: 0,
+        laborCost: 0,
+        idealWorkerDemand: {},
+        idealGoodsDemand: {},
+        idealGoodsProduction: {},
+        outputLevel: 1,
+        inputLevel: 1,
+        ...overrides,
+    }
+}
+
+const basePrices: Record<string, number> = {
+    oil: 100,
+    paper: 20,
+    environmentFactor: 50,
+    governance: 40,
+    machinery: 50,
+    electronics: 60,
+    buildings: 20,
+    water: 10,
+}
+
+const baseSalaries: Record<string, number> = {
+    worker: 200,
+    clerks: 500,
+    engineer: 500,
+    healtcarePersonal: 500,
+}
 
 describe("applyGoodConstraint", () => {
     const emptyMarketRatios: Record<string, number> = {}
 
     it("returns currentConstraint when market ratio is 1 and inventory covers demand", () => {
-        // marketRatio=1, available=1000, demandPerTick=100 → maxScaleFromInventory=10 >= 1
-        // Returns currentConstraint unchanged
         const result = applyGoodConstraint(1, "oil", 100, emptyMarketRatios, { oil: 1000 } as any, false)
         expect(result).toBe(1)
     })
 
     it("returns market ratio when market constraint is the limiting factor", () => {
-        // marketRatio=0.3, demandPerTick=100, available=50 → maxScaleFromInventory=0.5
-        // marketConstraint = min(1, 0.3) = 0.3
-        // inventoryConstraint = 0.5 (essential)
-        // result = min(0.3, 0.5) = 0.3
         const result = applyGoodConstraint(1, "oil", 100, { oil: 0.3 } as any, { oil: 50 } as any, false)
         expect(result).toBeCloseTo(0.3)
     })
 
     it("applies inventory constraint when inventory is scarce (essential good)", () => {
-        // demandPerTick=100, available=10 → maxScaleFromInventory=0.1
-        // marketRatio=1, essential good → inventoryConstraint=0.1 → returns 0.1
         const result = applyGoodConstraint(1, "oil", 100, emptyMarketRatios, { oil: 10 } as any, false)
         expect(result).toBeCloseTo(0.1)
     })
 
     it("applies floor of 0.5 for non-essential goods with inventory constraint", () => {
-        // demandPerTick=100, available=10 → maxScaleFromInventory=0.1
-        // non-essential → inventoryConstraint=max(0.5, 0.1)=0.5 → returns 0.5
         const result = applyGoodConstraint(1, "oil", 100, emptyMarketRatios, { oil: 10 } as any, true)
         expect(result).toBeCloseTo(0.5)
     })
 
     it("takes minimum of marketConstraint and inventoryConstraint", () => {
-        // marketRatio=0.8, demandPerTick=1000, available=100 → maxScaleFromInventory=0.1
-        // marketConstraint = min(1, 0.8) = 0.8
-        // inventoryConstraint = 0.1
-        // result = min(0.8, 0.1) = 0.1
         const result = applyGoodConstraint(1, "oil", 1000, { oil: 0.8 } as any, { oil: 100 } as any, false)
         expect(result).toBeCloseTo(0.1)
     })
 
     it("handles zero demandPerTick", () => {
-        // demandPerTick=0 → maxScaleFromInventory=1 (since demandPerTick > 0 is false)
-        // Returns currentConstraint unchanged
         const result = applyGoodConstraint(0.5, "oil", 0, emptyMarketRatios, {} as any, false)
         expect(result).toBe(0.5)
+    })
+})
+
+describe("executeSectors", () => {
+    const emptyPopulation = createStarterPopulation(0)
+
+    it("handles empty sector bids", () => {
+        const result = executeSectors(
+            [],
+            emptyPopulation,
+            {} as any,
+            makeGoods(),
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorResults).toEqual({})
+        expect(result.sectorProfits).toEqual({})
+        expect(result.sectorRevenue).toEqual({})
+        expect(result.sectorLaborCosts).toEqual({})
+        expect(result.sectorInputCosts).toEqual({})
+        expect(result.sectorUtilization).toEqual({})
+        expect(result.sectorStopReason).toEqual({})
+        expect(result.sumGoodsRequirements).toEqual(makeGoods())
+        expect(result.sumGoodsProduction).toEqual(makeGoods())
+    })
+
+    it("executes a single sector with full scale", () => {
+        const bid = makeSectorBid({
+            name: "powerPlant",
+            actualScale: 1,
+            idealGoodsDemand: { oil: 100, paper: 10 },
+            idealGoodsProduction: { electricity: 50 },
+            idealWorkerDemand: { worker: 100, clerks: 10 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 10000, paper: 1000 })
+        const inputSectorGoods = { powerPlant: makeGoods({ oil: 500 }) } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // Consumed goods should reflect actual consumption
+        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({ oil: 100, paper: 10 })
+        expect(result.sectorResults["powerPlant"]?.producedGoods).toEqual({ electricity: 50 })
+        expect(result.sectorResults["powerPlant"]?.workersEmployed).toEqual({ worker: 100, clerks: 10 })
+        expect(result.sectorResults["powerPlant"]?.productionRatio).toBe(1)
+
+        // Revenue = electricity * price = 50 * (no price defined → 0) = 0
+        // Actually basePrices doesn't have electricity, so revenue = 0
+        // Input costs = 100 * 100 + 10 * 20 = 10000 + 200 = 10200
+        expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(10200)
+
+        // Labor costs = 100 * 200 + 10 * 500 = 20000 + 5000 = 25000
+        expect(result.sectorLaborCosts["powerPlant"]).toBeCloseTo(25000)
+
+        // Workers should be deducted from remaining
+        expect(result.remainingWorkers.worker.number).toBe(900)
+        expect(result.remainingWorkers.clerks.number).toBe(90)
+    })
+
+    it("calculates revenue from produced goods with prices", () => {
+        const bid = makeSectorBid({
+            name: "oilRig",
+            actualScale: 1,
+            idealGoodsProduction: { oil: 50 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { oilRig: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // Revenue = 50 * 100 = 5000
+        expect(result.sectorRevenue["oilRig"]).toBeCloseTo(5000)
+        expect(result.sectorProfits["oilRig"]).toBeCloseTo(5000) // no costs
+    })
+
+    it("calculates profit = revenue - inputCosts - laborCosts", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            idealGoodsDemand: { oil: 10 },
+            idealGoodsProduction: { paper: 100 },
+            idealWorkerDemand: { worker: 5 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 1000 })
+        const inputSectorGoods = { factory: makeGoods({ oil: 100 }) } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // Revenue = 100 * 20 = 2000
+        // Input costs = 10 * 100 = 1000
+        // Labor costs = 5 * 200 = 1000
+        // Profit = 2000 - 1000 - 1000 = 0
+        expect(result.sectorRevenue["factory"]).toBeCloseTo(2000)
+        expect(result.sectorInputCosts["factory"]).toBeCloseTo(1000)
+        expect(result.sectorLaborCosts["factory"]).toBeCloseTo(1000)
+        expect(result.sectorProfits["factory"]).toBeCloseTo(0)
+    })
+
+    it("stopped sector (actualScale = 0) produces no goods and has stop reason", () => {
+        const bid = makeSectorBid({
+            name: "stoppedPlant",
+            actualScale: 0,
+            budgetRatio: 0,
+            idealGoodsDemand: { oil: 100 },
+            idealGoodsProduction: {},
+            idealWorkerDemand: { worker: 10 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { stoppedPlant: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorResults["stoppedPlant"]?.productionRatio).toBe(0)
+        expect(result.sectorResults["stoppedPlant"]?.consumedGoods).toEqual({})
+        expect(result.sectorResults["stoppedPlant"]?.producedGoods).toEqual({})
+        expect(result.sectorResults["stoppedPlant"]?.workersEmployed).toEqual({})
+        expect(result.sectorStopReason["stoppedPlant"]).toBe("No money")
+        // sectorUtilization is not set for stopped sectors (actualScale <= 0)
+        expect(result.sectorUtilization["stoppedPlant"]).toBeUndefined()
+    })
+
+    it("determines stop reason as No workers when zero workers available", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 0,
+            budgetRatio: 1,
+            idealGoodsDemand: {},
+            idealWorkerDemand: { worker: 10 }, // any demand > 0 with 0 available
+        })
+
+        const population = makePopulation({ ...populationWorker(0) })
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("No workers")
+    })
+
+    it("determines stop reason as No materials when zero goods available", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 0,
+            budgetRatio: 1,
+            idealGoodsDemand: { oil: 100 },
+            idealWorkerDemand: {},
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 0 }) // zero available
+        const inputSectorGoods = { factory: makeGoods({ oil: 0 }) } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("No materials")
+    })
+
+    it("determines stop reason as Bottlenecked when scale <= 0 but all resources available", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 0,
+            budgetRatio: 1,
+            idealGoodsDemand: {},
+            idealWorkerDemand: {},
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("Bottlenecked")
+    })
+
+    it("determines stop reason as Low budget when budgetRatio < actualScale", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 0.5, // budget constrains production
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("Low budget")
+    })
+
+    it("determines stop reason as Worker shortage when workers are the bottleneck", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 1,
+            idealGoodsDemand: {},
+            idealWorkerDemand: { worker: 2000 }, // more than remaining 1000
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("Worker shortage")
+    })
+
+    it("determines stop reason as Material shortage when goods are the bottleneck", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 1,
+            idealGoodsDemand: { oil: 5000 }, // more than available 1000
+            idealWorkerDemand: {},
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 1000 })
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sectorStopReason["factory"]).toBe("Material shortage")
+    })
+
+    it("tracks remaining workers across multiple sectors", () => {
+        const bid1 = makeSectorBid({
+            name: "sector1",
+            actualScale: 1,
+            idealWorkerDemand: { worker: 300 },
+        })
+        const bid2 = makeSectorBid({
+            name: "sector2",
+            actualScale: 1,
+            idealWorkerDemand: { worker: 400 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = {
+            sector1: makeGoods(),
+            sector2: makeGoods(),
+        } as any
+
+        const result = executeSectors(
+            [bid1, bid2],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // 1000 - 300 - 400 = 300 remaining
+        expect(result.remainingWorkers.worker.number).toBe(300)
+        // Working workers accumulated: 300 + 400 = 700
+        expect(result.workingWorkers.worker.number).toBe(700)
+    })
+
+    it("accumulates sumGoodsRequirements across sectors", () => {
+        const bid1 = makeSectorBid({
+            name: "sector1",
+            actualScale: 1,
+            idealGoodsDemand: { oil: 100, paper: 50 },
+        })
+        const bid2 = makeSectorBid({
+            name: "sector2",
+            actualScale: 1,
+            idealGoodsDemand: { oil: 200 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 10000, paper: 1000 })
+        const inputSectorGoods = {
+            sector1: makeGoods(),
+            sector2: makeGoods(),
+        } as any
+
+        const result = executeSectors(
+            [bid1, bid2],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sumGoodsRequirements.oil).toBeCloseTo(300)
+        expect(result.sumGoodsRequirements.paper).toBeCloseTo(50)
+    })
+
+    it("accumulates sumGoodsProduction across sectors", () => {
+        const bid1 = makeSectorBid({
+            name: "sector1",
+            actualScale: 1,
+            idealGoodsProduction: { electricity: 100 },
+        })
+        const bid2 = makeSectorBid({
+            name: "sector2",
+            actualScale: 1,
+            idealGoodsProduction: { electricity: 200 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = {
+            sector1: makeGoods(),
+            sector2: makeGoods(),
+        } as any
+
+        const result = executeSectors(
+            [bid1, bid2],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        expect(result.sumGoodsProduction.electricity).toBeCloseTo(300)
+    })
+
+    it("finalizes stayAtHome as always working", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            idealGoodsDemand: {},
+            idealWorkerDemand: {},
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { factory: makeGoods() } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // stayAtHome should be set to full population number
+        expect(result.workingWorkers.stayAtHome.number).toBe(500)
+        // stayAtHome remaining should be 0
+        expect(result.remainingWorkers.stayAtHome.number).toBe(0)
+    })
+
+    it("scales consumption by actualScale", () => {
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 0.5, // half production
+            idealGoodsDemand: { oil: 100 },
+            idealGoodsProduction: { paper: 200 },
+            idealWorkerDemand: { worker: 100 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 10000 })
+        const inputSectorGoods = { powerPlant: makeGoods({ oil: 500 }) } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // Consumed: 100 * 0.5 = 50 oil
+        expect(result.sectorResults["factory"]?.consumedGoods).toEqual({ oil: 50 })
+        // Produced: 200 * 0.5 = 100 paper
+        expect(result.sectorResults["factory"]?.producedGoods).toEqual({ paper: 100 })
+        // Workers: 100 * 0.5 = 50
+        expect(result.sectorResults["factory"]?.workersEmployed).toEqual({ worker: 50 })
+        expect(result.sectorResults["factory"]?.productionRatio).toBe(0.5)
+    })
+
+    it("does not consume more goods than available in inventory", () => {
+        // demand=1000 but only 100 oil available in sector inventory
+        const bid = makeSectorBid({
+            name: "powerPlant",
+            actualScale: 1,
+            idealGoodsDemand: { oil: 1000 },
+        })
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods()
+        const inputSectorGoods = { powerPlant: makeGoods({ oil: 100 }) } as any
+
+        const result = executeSectors(
+            [bid],
+            population,
+            inputSectorGoods,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        // consumedGoods still reports 1000 even though only 100 was available
+        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({ oil: 1000 })
+        // But sector inventory is drained to 0
+        expect(result.sectorGoods["powerPlant"]?.oil).toBe(0)
     })
 })
