@@ -35,9 +35,9 @@ export type ProductionMethod = {
     capitalMultiplier?: number      // multiplies capital stock effectiveness
 }
 
-function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
-    return ["robotized", {
-        desc: descOverride || "The most complicated parts of the manufacturing processes are handled by highly specialized purpose built robots, the most complicated parts are still done by human workers",
+function createMethod<K extends string>(key: K, overrides?: Partial<ProductionMethod>): [K, ProductionMethod] {
+    return [key, {
+        desc: "",
         goodsRequirements: {},
         workerRequirement: {},
         goodsProduction: {},
@@ -47,49 +47,39 @@ function createRobotized(descOverride?: string): ["robotized", ProductionMethod]
         capitalEfficiencyDecay: 0,
         nonEssentialGoods: new Set<keyof Goods>(),
         optionalGoods: [],
-        prerequisites: new Set(["synteticLifeformUnit"]),
+        ...overrides,
+    }]
+}
+
+const robotizedDefaults = { prerequisites: new Set(["synteticLifeformUnit"]), nonEssentialGoods: new Set<keyof Goods>(), optionalGoods: [] }
+
+function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
+    return createMethod("robotized", {
+        desc: descOverride || "The most complicated parts of the manufacturing processes are handled by highly specialized purpose built robots, the most complicated parts are still done by human workers",
+        ...robotizedDefaults,
         workerMultiplier: 0.4,
         efficiencyMultiplier: 1.3,
         capitalMultiplier: 1.2,
-    }]
+    })
 }
 
 function createFullyRobotized(descOverride?: string): ["robotized", ProductionMethod] {
-    return ["robotized", {
+    return createMethod("robotized", {
         desc: descOverride || "Very high performance equipment handled by a robotic workforce, only few human supervisors are needed",
-        goodsRequirements: {},
-        workerRequirement: {},
-        goodsProduction: {},
-        efficiencyBonus: 0,
-        capitalGoods: {},
-        capitalEfficiency: 0,
-        capitalEfficiencyDecay: 0,
-        nonEssentialGoods: new Set<keyof Goods>(),
-        optionalGoods: [],
-        prerequisites: new Set(["synteticLifeformUnit"]),
+        ...robotizedDefaults,
         workerMultiplier: 0.25,
         efficiencyMultiplier: 1.6,
         capitalMultiplier: 1.4,
-    }]
+    })
 }
 
 function createTraditional(descOverride?: string): ["traditional", ProductionMethod] {
-    return ["traditional", {
+    return createMethod("traditional", {
         desc: descOverride || "Traditional manufacturing processes, all parts are handled by human workers",
-        goodsRequirements: {},
-        workerRequirement: {},
-        goodsProduction: {},
-        efficiencyBonus: 0,
-        capitalGoods: {},
-        capitalEfficiency: 0,
-        capitalEfficiencyDecay: 0,
-        nonEssentialGoods: new Set<keyof Goods>(),
-        optionalGoods: [],
-        prerequisites: new Set(),
         workerMultiplier: 1.0,
         efficiencyMultiplier: 1.0,
         capitalMultiplier: 1.0,
-    }]
+    })
 }
 
 const workerReqStandard = { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 } as const
@@ -132,53 +122,10 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
-            ["dieselEngines", {
-                desc: "Traditional machinery powered by onsite diesel motors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: [],
-            }], ["nuclear", {
-                desc: "Laser mining lasers powered by onsite nuclear reactors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: [],
-            }],
-            ["tylium", {
-                desc: "Very high power mining lasers powered by onsite tylium reactors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: []
-            }],
-            ["robotized", {
-                desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: []
-            }]
+            createMethod("dieselEngines", { desc: "Traditional machinery powered by onsite diesel motors" }),
+            createMethod("nuclear", { desc: "Laser mining lasers powered by onsite nuclear reactors" }),
+            createMethod("tylium", { desc: "Very high power mining lasers powered by onsite tylium reactors" }),
+            createMethod("robotized", { desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed" }),
         ])
     }],
     ["oilRig", ({
@@ -191,53 +138,10 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
-            ["dieselEngines", {
-                desc: "Traditional machinery powered by onsite diesel motors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: [],
-            }], ["nuclear", {
-                desc: "Traditional machinery powered by onsite nuclear reactors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: [],
-            }],
-            ["tylium", {
-                desc: "Traditional machinery powered by powered by onsite tylium reactors",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: []
-            }],
-            ["robotized", {
-                desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed",
-                goodsRequirements: {},
-                workerRequirement: {},
-                goodsProduction: {},
-                efficiencyBonus: 0,
-                capitalGoods: {},
-                capitalEfficiency: 0,
-                capitalEfficiencyDecay: 0,
-                nonEssentialGoods: new Set<keyof Goods>(),
-                optionalGoods: []
-            }]
+            createMethod("dieselEngines", { desc: "Traditional machinery powered by onsite diesel motors" }),
+            createMethod("nuclear", { desc: "Laser mining lasers powered by onsite nuclear reactors" }),
+            createMethod("tylium", { desc: "Very high power mining lasers powered by onsite tylium reactors" }),
+            createMethod("robotized", { desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed" }),
         ])
     })],
     ["forestry", ({
@@ -259,12 +163,8 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         nonEssentialGoods: new Set(["chemicals", "electronics", "paper", "environmentFactor"]),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, vehicles: 1 },
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }],
-            ["hydroponics", {
-                desc: "hydroponics",
-            }]
+            createMethod("traditional", { desc: "Traditional" }),
+            createMethod("hydroponics", { desc: "hydroponics" }),
         ])
     })],
     ["fishery", {
@@ -279,9 +179,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["paper", "governance", "electronics", "environmentFactor"]),
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }]
+            createMethod("traditional", { desc: "Traditional" }),
         ])
     }],
     ["foodFactory", ({
@@ -311,9 +209,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1 },
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }]
+            createMethod("traditional", { desc: "Traditional" }),
         ])
     })],
     ["powerPlant", ({
@@ -330,12 +226,8 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1 },
         productionMethods: new Map([
-            ["Fossil", {
-                desc: "Fossil",
-            }],
-            ["Nuclear", {
-                desc: "Nuclear energy generation",
-            }]
+            createMethod("Fossil", { desc: "Fossil" }),
+            createMethod("Nuclear", { desc: "Nuclear energy generation" }),
         ])
     })],
     ["metalFactory", ({
@@ -515,9 +407,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }],
+            createMethod("traditional", { desc: "Traditional" }),
             createFullyRobotized("All of the non teaching staff is replaced by robots, because teacher are still cheaper")
         ])
     })],
@@ -531,9 +421,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }], createFullyRobotized()
+            createMethod("traditional", { desc: "Traditional" }), createFullyRobotized()
         ])
     })],
     ["environmentControl", ({
@@ -590,9 +478,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         capitalEfficiencyDecay: 0.0005,
         nonEssentialGoods: new Set(usualNonEssentialGoods),
         productionMethods: new Map([
-            ["traditional", {
-                desc: "Traditional",
-            }],
+            createMethod("traditional", { desc: "Traditional" }),
             createFullyRobotized("The future of law enforcement is here!")
         ])
     })],

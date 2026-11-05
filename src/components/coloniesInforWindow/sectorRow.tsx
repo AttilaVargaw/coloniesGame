@@ -11,6 +11,36 @@ import { SectorIcon } from "../icons/SectorIcon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FaCircleExclamation } from "react-icons/fa6";
 
+function renderInventoryColumn(config: ReturnType<typeof industrySectorBlueprints.get>, sectorKey: keyof IndustrialSectors, industry: IndustryComponent) {
+    const stock = industry.capitalStock[sectorKey] ?? {};
+    const sectorInv = industry.sectorGoods[sectorKey] ?? {};
+    const money = industry.money[sectorKey];
+
+    const relevantGoods =
+        new Set([
+            ...Object.keys(config?.capitalGoods ?? {}),
+            ...Object.keys(config?.goodsRequirements ?? {}),
+            ...Object.keys(config?.goodsProduction ?? {}),
+        ]) as Set<keyof Goods>
+
+    return [...relevantGoods.values()].map((good) => {
+        const isCapitalGood = config?.capitalGoods?.[good] !== undefined;
+        const cap = stock[good] ?? 0;
+        const amount = sectorInv[good] ?? 0;
+        const primaryAmount = isCapitalGood ? cap : amount;
+
+        return (
+            <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+                <RequirementItem currentCapacityReq={primaryAmount} name={good} />
+            </div>
+        );
+    }).concat(
+        <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+            <RequirementItem fullCapacityReq={money} currentCapacityReq={money} satisfied={money} name="money" />
+        </div>
+    )
+}
+
 export function SectorRow({
     rowKey,
     sectorKey,
@@ -20,13 +50,13 @@ export function SectorRow({
     sectorKey: keyof IndustrialSectors;
     industry: IndustryComponent;
 }) {
-    const profit = industry.sectorProfits[sectorKey] ?? 0;
-    const revenue = industry.sectorRevenue[sectorKey] ?? 0;
-    const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0;
-    const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0;
-    const utilization = industry.sectorUtilization[sectorKey] ?? 0;
-    const stopReason = industry.sectorStopReason?.[sectorKey] ?? "";
-    const techMultiplier = industry.techMultipliers[sectorKey] ?? 1;
+    const profit = industry.sectorProfits[sectorKey] ?? 0
+    const revenue = industry.sectorRevenue[sectorKey] ?? 0
+    const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0
+    const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0
+    const utilization = industry.sectorUtilization[sectorKey] ?? 0
+    const stopReason = industry.sectorStopReason?.[sectorKey] ?? ""
+    const techMultiplier = industry.techMultipliers[sectorKey] ?? 1
 
     const config = industrySectorBlueprints.get(sectorKey);
     const sectorResult = industry.sectorResults?.[sectorKey];
@@ -44,17 +74,15 @@ export function SectorRow({
     let capitalAdequacy = 1;
     const capitalGoods = config?.capitalGoods ?? {};
     if(Object.keys(capitalGoods).length > 0) {
-        capitalAdequacy = Infinity;
         const stock = industry.capitalStock[sectorKey] ?? {};
-
+        const ratios = [];
         for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
             const gKey = goodKey as keyof Goods;
             const available = stock[gKey] ?? 0;
             const req = requiredPerUnit ?? 0;
-            const ratio = req > 0 ? available / req : Infinity;
-            capitalAdequacy = Math.min(capitalAdequacy, ratio);
+            ratios.push(req > 0 ? available / req : Infinity);
         }
-        if(capitalAdequacy === Infinity) capitalAdequacy = 1;
+        capitalAdequacy = Math.min(1, ...ratios);
     }
 
     const reqs = useMemo(() => {
@@ -62,7 +90,38 @@ export function SectorRow({
         let bottleneck: keyof Population | keyof Goods | null = null;
         let bottleneckRatio = Infinity;
 
-        const addReq = (name: keyof Population | keyof Goods, fullCapacityReq: number, currentCapacityReq: number, satisfied: number, isNegativeCapable?: boolean) => {
+        const productionRatio = sectorResult?.productionRatio ?? 1;
+
+        const requirements: { name: keyof Population | keyof Goods; fullCapacityReq: number; currentCapacityReq: number; satisfied: number; isNegativeCapable?: boolean }[] = [];
+
+        if(config?.goodsRequirements) {
+            for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
+                const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
+                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * capitalAdequacy;
+                requirements.push({
+                    name: good,
+                    fullCapacityReq,
+                    currentCapacityReq: fullCapacityReq * productionRatio,
+                    satisfied: isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0),
+                    isNegativeCapable: CAN_BE_NEGATIVE.has(good),
+                });
+            }
+        }
+
+        if(config?.workerRequirement) {
+            for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
+                const workerEffMult = industry.workerEfficiencyMultipliers[worker] ?? 1;
+                const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * capitalAdequacy;
+                requirements.push({
+                    name: worker,
+                    fullCapacityReq,
+                    currentCapacityReq: fullCapacityReq * productionRatio,
+                    satisfied: isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0),
+                });
+            }
+        }
+
+        for(const { name, fullCapacityReq, currentCapacityReq, satisfied, isNegativeCapable } of requirements) {
             if(hasData && currentCapacityReq > 0 && !isNegativeCapable) {
                 const reqRatio = satisfied / currentCapacityReq;
                 if(reqRatio < 0.99 && reqRatio < bottleneckRatio) {
@@ -70,40 +129,7 @@ export function SectorRow({
                     bottleneck = name;
                 }
             }
-
-            items.push(
-                <RequirementItem
-                    key={name}
-                    name={name}
-                    fullCapacityReq={fullCapacityReq}
-                    currentCapacityReq={currentCapacityReq}
-                    satisfied={satisfied}
-                />
-            );
-        };
-
-        if(config?.goodsRequirements) {
-            (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
-                const productionRatio = sectorResult?.productionRatio ?? 1;
-                const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
-                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * capitalAdequacy;
-                const currentCapacityReq = fullCapacityReq * productionRatio;
-                const satisfied = isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0);
-                const isNegativeCapable = CAN_BE_NEGATIVE.has(good);
-                addReq(good, fullCapacityReq, currentCapacityReq, satisfied, isNegativeCapable);
-            });
-        }
-
-        if(config?.workerRequirement) {
-            (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const productionRatio = sectorResult?.productionRatio ?? 1;
-                const workerEffMult = industry.workerEfficiencyMultipliers[worker] ?? 1;
-                const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * capitalAdequacy;
-                const currentCapacityReq = fullCapacityReq * productionRatio;
-                const satisfied = isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0);
-
-                addReq(worker, fullCapacityReq, currentCapacityReq, satisfied);
-            });
+            items.push(<RequirementItem key={name} name={name} fullCapacityReq={fullCapacityReq} currentCapacityReq={currentCapacityReq} satisfied={satisfied} />);
         }
 
         return { items, bottleneck, bottleneckRatio };
@@ -182,40 +208,7 @@ export function SectorRow({
             </td>
             <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
-                    {
-                        (() => {
-                            const stock = industry.capitalStock[sectorKey] ?? {};
-                            const sectorInv = industry.sectorGoods[sectorKey] ?? {};
-                            const money = industry.money[sectorKey];
-
-                            const relevantGoods =
-                                new Set([
-                                    ...Object.keys(config?.capitalGoods ?? {}),
-                                    ...Object.keys(config?.goodsRequirements ?? {}),
-                                    ...Object.keys(config?.goodsProduction ?? {}),
-                                ]) as Set<keyof Goods>
-
-                            return [...relevantGoods.values()].map((good) => {
-                                const isCapitalGood = config?.capitalGoods?.[good] !== undefined;
-                                const cap = stock[good] ?? 0;
-                                const amount = sectorInv[good] ?? 0;
-
-                                // Show capital stock as primary value for capital goods,
-                                // sector inventory for raw materials/products
-                                const primaryAmount = isCapitalGood ? cap : amount;
-
-                                return (
-                                    <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                        <RequirementItem currentCapacityReq={primaryAmount} name={good} />
-                                    </div>
-                                );
-                            }).concat(
-                                <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                    <RequirementItem fullCapacityReq={money} currentCapacityReq={money} satisfied={money} name="money" />
-                                </div>
-                            )
-                        })()
-                    }
+                    {renderInventoryColumn(config, sectorKey, industry)}
                 </div>
             </td>
         </tr>

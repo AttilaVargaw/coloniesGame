@@ -40,8 +40,7 @@ import { createEntity } from "@/engine/lib/entityRegistry"
 import { getTextureWorkerPool } from "./textureWorkerPool"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
-    if(blueprint.mass !== undefined) return blueprint.mass
-    return massByArchetype[blueprint.archetype]
+    return blueprint.mass ?? massByArchetype[blueprint.archetype]
 }
 
 function createBaseComponents(
@@ -118,6 +117,9 @@ function createInteractionComponents(
         //@ts-ignore
         const starterMoney: Record<keyof IndustrialSectors, number> = {}
 
+        const cost = (reqs?: Record<string, number>, prices?: Record<string, number>) =>
+            Object.entries(reqs ?? {}).reduce((sum, [k, r]) => sum + r * (prices?.[k] ?? 0), 0)
+
         for(const sector of starterSectors) {
             const config = industrySectorBlueprints.get(sector)
             if(config?.capitalGoods) {
@@ -126,19 +128,14 @@ function createInteractionComponents(
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
                     starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round((starterIndustries?.[sector] ?? 1) * rate * population / 800_000))
                 }
-                for(const [goodKey, rate] of Object.entries(config.goodsRequirements)) {
+                for(const [goodKey, rate] of Object.entries(config.goodsRequirements ?? {})) {
                     starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 1_000_000))
                 }
             }
 
-            const goodsCost = config?.goodsRequirements
-                ? Object.entries(config.goodsRequirements).reduce((sum, [g, r]) => sum + r * (basePrices[g as keyof Goods] ?? 0), 0)
-                : 0
-            const laborCost = config?.workerRequirement
-                ? Object.entries(config.workerRequirement).reduce((sum, [w, r]) => sum + r * (baseSalaries[w as keyof Population] ?? 0), 0)
-                : 0
-            const operatingCost = goodsCost + laborCost
-            starterMoney[sector] = Math.round(operatingCost * BUDGET_RUNWAY_DAYS)
+            starterMoney[sector] = Math.round(
+                (cost(config?.goodsRequirements, basePrices) + cost(config?.workerRequirement, baseSalaries)) * BUDGET_RUNWAY_DAYS
+            )
         }
 
         const colonyTreasury = Math.max(50000, population * 10)
