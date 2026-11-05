@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix"
+
 export interface SphereMesh {
     positions: Float32Array
     normals: Float32Array
@@ -6,11 +8,6 @@ export interface SphereMesh {
 
 export interface AsteroidMesh extends SphereMesh {
     meshIndex: number
-}
-
-function normalize(x: number, y: number, z: number) {
-    const len = Math.sqrt(x * x + y * y + z * z)
-    return [x / len, y / len, z / len]
 }
 
 function hash33(x: number, y: number, z: number): number {
@@ -52,7 +49,7 @@ function subdivide(
         const z = (vertices[i1 * 3 + 2] + vertices[i2 * 3 + 2]) / 2
 
         const idx = vertices.length / 3
-        vertices.push(...normalize(x, y, z))
+        vertices.push(...vec3.normalize(vec3.create(), [x, y, z]))
         midpointCache.set(key, idx)
         return idx
     }
@@ -131,7 +128,7 @@ export function createSphereMesh(subdivisions: number): SphereMesh {
     const finalIndices: number[] = []
 
     for(let i = 0; i < icoVertices.length; i += 3) {
-        const [x, y, z] = normalize(icoVertices[i], icoVertices[i + 1], icoVertices[i + 2])
+        const [x, y, z] = vec3.normalize(vec3.create(), [icoVertices[i], icoVertices[i + 1], icoVertices[i + 2]])
         positions.push(x, y, z)
         normals.push(x, y, z)
     }
@@ -168,10 +165,10 @@ export function createAsteroidMesh(seed: number, subdivisions: number = 3, lumpi
         positions[baseIdx + 2] = z * r
 
         // Recompute normal from distorted position for correct lighting
-        const len = Math.sqrt(x * x + y * y + z * z)
-        normals[baseIdx] = x / len
-        normals[baseIdx + 1] = y / len
-        normals[baseIdx + 2] = z / len
+        const nrm = vec3.normalize(vec3.create(), [x, y, z])
+        normals[baseIdx] = nrm[0]
+        normals[baseIdx + 1] = nrm[1]
+        normals[baseIdx + 2] = nrm[2]
     }
 
     return {
