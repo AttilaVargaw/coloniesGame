@@ -68,7 +68,7 @@ export function IndustryPolicyPanel({ colony, industry }: { colony: Entity; indu
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectGroup>
-                                                    {methods.map(([methodId, { }]) => (
+                                                    {methods.map(([methodId]) => (
                                                         <SelectItem key={methodId} value={methodId}>{methodId}</SelectItem>
                                                     ))}
                                                 </SelectGroup>

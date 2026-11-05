@@ -4,7 +4,7 @@ import { useGameEngine } from "@/hooks/useGameContext"
 import { SetTimeScaleCommand } from "@/engine/lib/SetTimeScaleCommand"
 import { DebugModal } from "@/components/header/DebugModal"
 import { GovernmentModal } from "../governmentTab/government"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Entity } from "@/engine/entities/entity"
 
 const SPEEDS = [1, 10, 150, 500] as const

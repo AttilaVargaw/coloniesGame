@@ -1,7 +1,7 @@
 import { IndustryComponent } from "@game/components/industryComponent";
 import { System } from "@engine/systems/system";
 import { Engine } from "@/engine/core/engine";
-import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
+import { IndustryUpdatedEvent } from "@/engine/lib/events";
 import { SelectProductionMethodCommand, AllocateBudgetCommand } from "@game/commands/IndustryPolicyCommand";
 import { Queue } from "@/engine/lib/commandQueue";
 

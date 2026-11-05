@@ -78,8 +78,6 @@ export function SectorRow({
                     fullCapacityReq={fullCapacityReq}
                     currentCapacityReq={currentCapacityReq}
                     satisfied={satisfied}
-                    hasData={hasData}
-                    isNegativeCapable={isNegativeCapable}
                 />
             );
         };
@@ -205,14 +203,10 @@ export function SectorRow({
                                 // Show capital stock as primary value for capital goods,
                                 // sector inventory for raw materials/products
                                 const primaryAmount = isCapitalGood ? cap : amount;
-                                const secondaryAmount = isCapitalGood ? amount : cap;
 
                                 return (
                                     <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                        <RequirementItem fullCapacityReq={primaryAmount} currentCapacityReq={primaryAmount} satisfied={primaryAmount} hasData name={good} />
-                                        {secondaryAmount > 0 && (
-                                            <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(secondaryAmount * 100) / 100)} {isCapitalGood ? "inv" : "cap"})</span>
-                                        )}
+                                        <RequirementItem currentCapacityReq={primaryAmount} name={good} />
                                     </div>
                                 );
                             }).concat(

@@ -9,9 +9,9 @@ const PER_CAPITA_SECTOR_RATIOS = {
     foodFactory: 0.00006,
     meat: 0.00005,
     waterTreatment: 0.00005,
-    powerPlant: 0.000004,
-    nuclearSector: 0.00001,
-    alternativeMedicine: 0.000008,
+    powerPlant: 0.000000004,
+    nuclearSector: 0.000001,
+    alternativeMedicine: 0.0000008,
     metalFactory: 0.00000526,
     lumberMill: 0.0000064,
     machineryFactory: 0.000004,
@@ -53,7 +53,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     defense: 0.000015,
     militaryVehicles: 0.000002,
     spaceGoodsTransport: 0.000002,
-    greenEnergy: 0.0000001
+    greenEnergy: 0.00000001
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 export function createStarterIndustry(population: number): Set<keyof IndustrialSectors> {

@@ -359,7 +359,6 @@ export function createNormalTexture(baseColor: string, archetype: string = "eart
 const ringTextureSize = 2048
 
 export function createRingTexture(baseColor: string, archetype: string = "saturn", seedKey?: string, innerRadius?: number, outerRadius?: number): HTMLCanvasElement | OffscreenCanvas {
-    const base = hexToRgb(baseColor)
     const seed = seedFrom(baseColor, archetype, seedKey + "-rings")
     const perm = buildPerm(seed)
 
@@ -650,10 +649,6 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
         const r = lerp(rgbA.r, rgbB.r, bandT)
         const g = lerp(rgbA.g, rgbB.g, bandT)
         const b = lerp(rgbA.b, rgbB.b, bandT)
-
-        const stormNoise = sampleFbm3d(sx * 3.0 + 20, sy * 3.0 + 20, sz * 3.0 + 20, perm, 0.4, 3)
-        const stormMask = Math.max(0, stormNoise - 0.35) / 0.65
-        const stormRgb = tintColor(hexToRgb(palette.storm), base, 0.2)
 
         const idx = (y * textureSize + x) * 4
         data[idx] = clamp(Math.round(r), 0, 255)

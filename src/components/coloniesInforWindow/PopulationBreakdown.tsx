@@ -63,7 +63,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                         {reqEntries.sort(([a], [b]) => RESOURCE_NAMES[a].localeCompare(RESOURCE_NAMES[b])).map(([good, req]) => {
                                             const available = goods[good] ?? 0;
                                             return (
-                                                <RequirementItem key={good} hasData fullCapacityReq={req} currentCapacityReq={req} satisfied={available} name={good} />
+                                                <RequirementItem key={good} currentCapacityReq={req} satisfied={available} name={good} />
                                             );
                                         })}
                                     </div>

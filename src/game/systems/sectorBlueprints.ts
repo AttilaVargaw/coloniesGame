@@ -35,18 +35,6 @@ export type ProductionMethod = {
     capitalMultiplier?: number      // multiplies capital stock effectiveness
 }
 
-const basicProductionMethod = {
-    goodsRequirements: {},
-    workerRequirement: {},
-    goodsProduction: {},
-    efficiencyBonus: 0,
-    capitalGoods: {},
-    capitalEfficiency: 0,
-    capitalEfficiencyDecay: 0,
-    nonEssentialGoods: new Set<keyof Goods>(),
-    optionalGoods: [],
-}
-
 function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
     return ["robotized", {
         desc: descOverride || "The most complicated parts of the manufacturing processes are handled by highly specialized purpose built robots, the most complicated parts are still done by human workers",
@@ -63,24 +51,6 @@ function createRobotized(descOverride?: string): ["robotized", ProductionMethod]
         workerMultiplier: 0.4,
         efficiencyMultiplier: 1.3,
         capitalMultiplier: 1.2,
-    }]
-}
-
-function createLLM() {
-    return ["llm", {
-        desc: "Most of the manufacturing processes are handled by large language models, less humans needed",
-        goodsRequirements: {},
-        workerRequirement: {},
-        goodsProduction: {},
-        efficiencyBonus: 0,
-        capitalGoods: {},
-        capitalEfficiency: 0,
-        capitalEfficiencyDecay: 0,
-        nonEssentialGoods: new Set<keyof Goods>(),
-        optionalGoods: [],
-        prerequisites: new Set(["largeLanguageModel"]),
-        workerMultiplier: 0.5,
-        efficiencyMultiplier: 1.2,
     }]
 }
 

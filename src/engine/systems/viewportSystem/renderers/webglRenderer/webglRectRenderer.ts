@@ -11,7 +11,6 @@ import { SizeComponent } from "@/engine/components/sizeComponent"
 import { RectNode } from "../rectNode"
 import { ViewportSystem } from "../../viewportSystem"
 import { mat4, vec3 } from "gl-matrix"
-import { SOLAR_UNIT } from "@/game/constants"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { hexToRgb } from "./hexToRgb"
 import {

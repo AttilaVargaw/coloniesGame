@@ -330,7 +330,6 @@ export function Research({ colony }: { colony: Entity | null }) {
     const research = colony.getComponent(TechResearchComponent)
     const engine = useGameEngine()
     const [, setTick] = useState(0)
-    const [hovered, setHovered] = useState<string | null>(null)
 
     useGameEvent(DayPassedEvent, () => setTick((t) => t + 1))
     useGameEvent(TechResearchedEvent, () => setTick((t) => t + 1))
@@ -418,7 +417,7 @@ export function Research({ colony }: { colony: Entity | null }) {
                     height: "2em",
                 }} >
                     {[...techByAge].map(([type]) => (
-                        <TabsTrigger value={type} onClick={() => setSelectedAge(type)}>{type}</TabsTrigger>
+                        <TabsTrigger key={type} value={type} onClick={() => setSelectedAge(type)}>{type}</TabsTrigger>
                     ))}
                 </TabsList>
                 {
@@ -460,8 +459,6 @@ export function Research({ colony }: { colony: Entity | null }) {
                                                         transform={`translate(${pos.x} ${pos.y})`}
                                                         style={{ cursor: s.isAvailable ? "pointer" : "default" }}
                                                         onClick={() => s.isAvailable && startResearch(id)}
-                                                        onMouseEnter={() => setHovered(id)}
-                                                        onMouseLeave={() => setHovered(null)}
                                                     >
                                                         <rect x="0" y="0" width={nodeWidth} height={nodeHeight} rx="8" fill={nodeFill(s)} stroke={nodeBorder(s)} strokeWidth={2} />
                                                         <rect x="0" y="0" width={6} height={nodeHeight} rx="8" fill={typeAccent(s.tech)} opacity={s.isResearched || s.isCurrent || s.isAvailable ? 1 : 0.35} />

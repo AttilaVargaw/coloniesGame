@@ -1,9 +1,8 @@
 import { Goods } from "@/game/data/Goods";
-import { Atom, Beer, Clapperboard, Coffee, Cuboid, Ham, Mail, MonitorSmartphone, Newspaper, School, ShipIcon, ShipWheel, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
+import { Atom, Beer, Clapperboard, Coffee, Cuboid, Ham, Mail, MonitorSmartphone, Newspaper, School, ShipIcon, Shirt, ShoppingCart, TrainIcon, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
-    Grape,
     Plane,
     Boxes,
     Droplets,
@@ -37,7 +36,6 @@ import {
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 
 import { FaPray } from "react-icons/fa";
-import { GiMeat } from "react-icons/gi";
 
 const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     food: Cookie,

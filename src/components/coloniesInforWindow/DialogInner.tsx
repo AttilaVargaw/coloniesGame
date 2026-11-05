@@ -1,4 +1,3 @@
-import { Entity } from "@/engine/entities/entity";
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { ReactNode } from "react";
 import { IndustryBreakdown } from "./IndustryBreakdown";

@@ -299,7 +299,6 @@ describe("World (Engine refactor regression)", () => {
 
         world.addCommand(new SelectEntityCommand(testEntity))
         expect(world.getCommands(SelectEntityCommand)!.length).toBe(1)
-        console.log(world.getCommands(SelectEntityCommand)!.peek(), testEntity)
         expect(world.getCommands(SelectEntityCommand)!.peek()).toEqual({ data: testEntity })
     })
 

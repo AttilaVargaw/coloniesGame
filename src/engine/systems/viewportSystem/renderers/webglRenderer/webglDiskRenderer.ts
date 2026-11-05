@@ -2,7 +2,6 @@ import { createDiskShaderProgram, type DiskAttribs, type DiskUniforms } from "./
 import type { ShaderProgram } from "./ShaderProgram"
 import { PositionComponent } from "@/engine/components/position"
 import { ColorComponent } from "@/engine/components/colorComponent"
-import { RadiusComponent } from "@/engine/components/radiusComponent"
 import { TextureComponent } from "@/engine/components/textureComponent"
 import { RingComponent } from "@/engine/components/ringComponent"
 import { OrbitComponent } from "@engine/components/orbitComponent"

@@ -1,6 +1,6 @@
 import { Population } from "@/game/data/Population";
 import { cn } from "cn";
-import { Beaker, BookOpen, Church, Cog, HardHat, HeartPulse, House, Pencil, Tractor, CoffeeIcon } from "lucide-react";
+import { Beaker, BookOpen, Church, HardHat, HeartPulse, House, Pencil, Tractor, CoffeeIcon } from "lucide-react";
 import { FaPersonWalkingWithCane, FaPersonMilitaryRifle } from "react-icons/fa6"
 import { MdOutlineEngineering, MdOutlineLocalPolice } from "react-icons/md";
 
