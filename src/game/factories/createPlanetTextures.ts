@@ -945,7 +945,8 @@ export function createNightTexture(baseColor: string, archetype: PlanetArchetype
             const normalizedCity = (cityNoise + 1) / 2
             if(normalizedCity > 0.65) {
                 const intensity = (normalizedCity - 0.55) / 0.45
-                const warmth = Math.random()
+                const warmthNoise = sampleFbm3d(sx * noiseScale * 5 + 100, sy * noiseScale * 5 + 100, sz * noiseScale * 5 + 100, perm, 0.35, 2)
+                const warmth = (warmthNoise + 1) / 2
                 if(warmth > 0.5) {
                     r = lerp(r, 255, intensity * 0.7)
                     g = lerp(g, 200, intensity * 0.7)
