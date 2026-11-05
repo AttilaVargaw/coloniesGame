@@ -149,6 +149,10 @@ export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
     "electricity",
 ]);
 
+export const CAN_BE_NEGATIVE: ReadonlySet<keyof Goods> = new Set([
+    "environmentFactor",
+]);
+
 export const basePrices = {
     food: 30,
     meat: 60,

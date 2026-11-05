@@ -1,6 +1,6 @@
 import { IndustrialSectors } from "@/game/components/Factories";
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { Goods } from "@/game/data/Goods";
+import { Goods, CAN_BE_NEGATIVE } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
@@ -34,12 +34,19 @@ export function SectorRow({
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
 
+    const methodName = industry.selectedMethod[sectorKey] ?? null;
+    const method = methodName ? config?.productionMethods?.get(methodName) : undefined;
+    const materialMethodMult = method?.materialMultiplier ?? 1;
+    const workerMethodMult = method?.workerMultiplier ?? 1;
+    const inputLevel = sectorResult?.inputLevel ?? 1;
+
     // Capital goods adequacy: stock / required per unit, bottleneck across all capital goods
     let capitalAdequacy = 1;
     const capitalGoods = config?.capitalGoods ?? {};
     if(Object.keys(capitalGoods).length > 0) {
         capitalAdequacy = Infinity;
         const stock = industry.capitalStock[sectorKey] ?? {};
+
         for(const [goodKey, requiredPerUnit] of Object.entries(capitalGoods)) {
             const gKey = goodKey as keyof Goods;
             const available = stock[gKey] ?? 0;
@@ -55,11 +62,11 @@ export function SectorRow({
         let bottleneck: keyof Population | keyof Goods | null = null;
         let bottleneckRatio = Infinity;
 
-        const addReq = (name: keyof Population | keyof Goods, scaledReq: number, actual: number, ratio?: number) => {
-            if(hasData && scaledReq > 0) {
-                const ratio = actual / scaledReq;
-                if(ratio < 0.99 && ratio < bottleneckRatio) {
-                    bottleneckRatio = ratio;
+        const addReq = (name: keyof Population | keyof Goods, fullCapacityReq: number, currentCapacityReq: number, satisfied: number, isNegativeCapable?: boolean) => {
+            if(hasData && currentCapacityReq > 0 && !isNegativeCapable) {
+                const reqRatio = satisfied / currentCapacityReq;
+                if(reqRatio < 0.99 && reqRatio < bottleneckRatio) {
+                    bottleneckRatio = reqRatio;
                     bottleneck = name;
                 }
             }
@@ -68,38 +75,41 @@ export function SectorRow({
                 <RequirementItem
                     key={name}
                     name={name}
-                    scaledReq={scaledReq}
-                    actual={actual}
+                    fullCapacityReq={fullCapacityReq}
+                    currentCapacityReq={currentCapacityReq}
+                    satisfied={satisfied}
                     hasData={hasData}
-                    ratio={ratio}
+                    isNegativeCapable={isNegativeCapable}
                 />
             );
         };
 
         if(config?.goodsRequirements) {
             (Object.entries(config.goodsRequirements) as [keyof Goods, number][]).forEach(([good, req]) => {
-                const baseScaledReq = req * techMultiplier;
-                const scaledReq = baseScaledReq * capitalAdequacy;
-                const used = isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0);
-                const goodsRatio = baseScaledReq > 0 ? used / baseScaledReq : 1;
-                console.log(good, scaledReq, used, goodsRatio)
-                addReq(good, scaledReq, used, goodsRatio);
+                const productionRatio = sectorResult?.productionRatio ?? 1;
+                const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
+                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * capitalAdequacy;
+                const currentCapacityReq = fullCapacityReq * productionRatio;
+                const satisfied = isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0);
+                const isNegativeCapable = CAN_BE_NEGATIVE.has(good);
+                addReq(good, fullCapacityReq, currentCapacityReq, satisfied, isNegativeCapable);
             });
         }
 
         if(config?.workerRequirement) {
             (Object.entries(config.workerRequirement) as [keyof Population, number][]).forEach(([worker, req]) => {
-                const baseScaledReq = req * techMultiplier;
-                const scaledReq = baseScaledReq * capitalAdequacy;
-                const employed = isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0);
-                const workerRatio = baseScaledReq > 0 ? employed / baseScaledReq : 1;
+                const productionRatio = sectorResult?.productionRatio ?? 1;
+                const workerEffMult = industry.workerEfficiencyMultipliers[worker] ?? 1;
+                const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * capitalAdequacy;
+                const currentCapacityReq = fullCapacityReq * productionRatio;
+                const satisfied = isStopped ? 0 : (sectorResult?.workersEmployed?.[worker] ?? 0);
 
-                addReq(worker, scaledReq, employed, workerRatio);
+                addReq(worker, fullCapacityReq, currentCapacityReq, satisfied);
             });
         }
 
         return { items, bottleneck, bottleneckRatio };
-    }, [config, techMultiplier, sectorKey, industry.sectorGoods, industry.capitalStock, industry.population, sectorResult, hasData, isStopped]);
+    }, [config, materialMethodMult, inputLevel, workerMethodMult, capitalAdequacy, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
 
     return (
         <tr key={rowKey} className="border-b border-muted/50 last:border-0">
@@ -138,6 +148,11 @@ export function SectorRow({
                     {capitalAdequacy < 0.99 && (
                         <div className="text-orange-400">{Math.round(capitalAdequacy * 100)}% capital</div>
                     )}
+                </div>
+            </td>
+            <td className="pt-2 text-center">
+                <div className={`text-xs ${capitalAdequacy >= 0.99 ? 'text-green-400' : 'text-red-400'}`}>
+                    {(capitalAdequacy).toFixed(0)}
                 </div>
             </td>
             {/* <td className=" text-center">100%</td> */}
@@ -194,7 +209,7 @@ export function SectorRow({
 
                                 return (
                                     <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                        <RequirementItem actual={primaryAmount} hasData name={good} scaledReq={primaryAmount} />
+                                        <RequirementItem fullCapacityReq={primaryAmount} currentCapacityReq={primaryAmount} satisfied={primaryAmount} hasData name={good} />
                                         {secondaryAmount > 0 && (
                                             <span className="text-xs text-muted-foreground">({convertToReadable(Math.round(secondaryAmount * 100) / 100)} {isCapitalGood ? "inv" : "cap"})</span>
                                         )}
@@ -202,7 +217,7 @@ export function SectorRow({
                                 );
                             }).concat(
                                 <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                                    <RequirementItem actual={money} name="money" scaledReq={money} />
+                                    <RequirementItem fullCapacityReq={money} currentCapacityReq={money} satisfied={money} name="money" />
                                 </div>
                             )
                         })()
@@ -210,5 +225,5 @@ export function SectorRow({
                 </div>
             </td>
         </tr>
-    );
+    )
 }

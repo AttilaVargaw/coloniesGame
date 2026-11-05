@@ -9,8 +9,8 @@ import { TbHexagonNumber4 } from "react-icons/tb";
 import { useMemo } from "react";
 import { cn } from "cn";
 
-export function RequirementItem({ name, scaledReq, actual, hasData }: { name: keyof Population | keyof Goods | "money"; scaledReq: number; actual: number; hasData?: boolean; ratio?: number }) {
-    const isFilled = !hasData || actual >= scaledReq * 0.99;
+export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, satisfied, hasData, isNegativeCapable }: { name: keyof Population | keyof Goods | "money"; fullCapacityReq: number; currentCapacityReq: number; satisfied: number; hasData?: boolean; isNegativeCapable?: boolean; ratio?: number }) {
+    const isFilled = !hasData || satisfied >= currentCapacityReq * 0.99;
     const colorClass = !hasData ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
     const icon = useMemo(() => {
         if(name === "money") {
@@ -30,11 +30,18 @@ export function RequirementItem({ name, scaledReq, actual, hasData }: { name: ke
                     <span>{isPopulationReq(name) ? POPULATION_NAMES[name] : RESOURCE_NAMES[name] || name}</span>
                 </TooltipContent>
             </Tooltip>
-            {convertToReadable(Math.round(scaledReq))}
-            {hasData && (
-                <span className="text-muted-foreground">
-                    ({convertToReadable(Math.round(actual))})
-                </span>
+            {isNegativeCapable && hasData && fullCapacityReq < 0 ? (
+                <span className="text-orange-400">{convertToReadable(Math.round(fullCapacityReq))}</span>
+            ) : (
+                <>
+                    {convertToReadable(Math.round(fullCapacityReq))}
+                    {hasData && (
+                        <>
+                            <span className="text-muted-foreground"> / {convertToReadable(Math.round(currentCapacityReq))}</span>
+                            <span className="text-muted-foreground"> ({convertToReadable(Math.round(satisfied))})</span>
+                        </>
+                    )}
+                </>
             )}
         </span>
     );
