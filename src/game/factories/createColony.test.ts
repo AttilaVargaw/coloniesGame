@@ -58,7 +58,7 @@ describe("createBody", () => {
         const orbit = body.getComponent(OrbitComponent)
         expect(orbit).toBeDefined()
         expect(orbit!.centerEntityId).toBe(parent.id)
-        expect(orbit!.radius).toBeCloseTo(2000)
+        expect(orbit!.radius).toBeCloseTo(3000)
         expect(orbit!.eccentricity).toBe(0.1)
 
         const pos = body.getComponent(PositionComponent)!
@@ -73,6 +73,7 @@ describe("createBody", () => {
         const child = bodyBlueprint({
             marker: { color: "grey", radius: 3, label: "Moon" },
             orbit: { radius: 2, angle: 0 },
+            name: "Moon",
         })
 
         const body = await createBody(bodyBlueprint({

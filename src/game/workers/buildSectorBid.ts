@@ -164,7 +164,7 @@ export function buildSectorBid(
         inputCost,
         laborCost,
         idealWorkerDemand: capitalAdjustedWorkerDemand,
-        idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel),
+        idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel * capitalRatio),
         idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel),
         outputLevel,
         inputLevel,
