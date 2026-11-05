@@ -1,4 +1,4 @@
-import { hexToRgb } from "@/engine/systems/viewportSystem/renderers/webglRenderer/hexToRgb"
+import chroma from "chroma-js";
 import { PlanetArchetype } from "./helpers"
 
 function lerp(a: number, b: number, t: number): number {
@@ -22,15 +22,6 @@ function createCanvas(width: number, height: number): HTMLCanvasElement | Offscr
         return canvas
     }
     return new OffscreenCanvas(width, height)
-}
-
-function tintColor(rgb: { r: number; g: number; b: number }, base: { r: number; g: number; b: number }, strength: number): { r: number; g: number; b: number } {
-    const t = strength
-    return {
-        r: Math.round(lerp(rgb.r, base.r, t)),
-        g: Math.round(lerp(rgb.g, base.g, t)),
-        b: Math.round(lerp(rgb.b, base.b, t)),
-    }
 }
 
 type Palette = { land: string; ocean: string; clouds: string; poles: string; atmosphere?: string }
@@ -461,7 +452,8 @@ function createEarthLikeTexture(
     archetype: PlanetArchetype,
     seedKey: string | undefined
 ): HTMLCanvasElement | OffscreenCanvas {
-    const base = hexToRgb(baseColor)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
     const seed = seedFrom(baseColor, archetype, seedKey)
     const perm = buildPerm(seed)
 
@@ -573,17 +565,22 @@ export function createPlanetTexture(baseColor: string, archetype: PlanetArchetyp
     }
 
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
-    const base = hexToRgb(baseColor)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
 
-    const landRgb = tintColor(hexToRgb(palette.land), base, 0.18)
-    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.05)
+    const [lrn, lgn, lbn] = chroma(palette.land).mix(base, 0.18).rgb()
+    const landRgb = { r: Math.round(lrn), g: Math.round(lgn), b: Math.round(lbn) }
+    const [orn, ogn, obn] = chroma(palette.ocean).mix(base, 0.05).rgb()
+    const oceanRgb = { r: Math.round(orn), g: Math.round(ogn), b: Math.round(obn) }
     const deepOceanRgb = {
         r: clamp(oceanRgb.r * 0.65, 0, 255),
         g: clamp(oceanRgb.g * 0.65, 0, 255),
         b: clamp(oceanRgb.b * 0.65, 0, 255),
     }
-    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.1)
-    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.1)
+    const [crn, cgn, cbn] = chroma(palette.clouds).mix(base, 0.1).rgb()
+    const cloudsRgb = { r: Math.round(crn), g: Math.round(cgn), b: Math.round(cbn) }
+    const [prn, pgn, pbn] = chroma(palette.poles).mix(base, 0.1).rgb()
+    const polesRgb = { r: Math.round(prn), g: Math.round(pgn), b: Math.round(pbn) }
 
     const { canvas, ctx, imageData, } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
         const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)
@@ -629,7 +626,8 @@ export function createPlanetTexture(baseColor: string, archetype: PlanetArchetyp
 
 export function createGasGiantTexture(baseColor: string, archetype: string = "jupiter", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const palette = GAS_GIANT_PALETTES[archetype] || GAS_GIANT_PALETTES.jupiter
-    const base = hexToRgb(baseColor)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
 
     const { canvas, ctx, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
         const latitude = sy
@@ -642,8 +640,10 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
         const bandB = palette.bands[Math.min(bandIndex + 1, palette.bands.length - 1)]
 
         const [colorA, colorB] = [bandA[0], bandB[0]]
-        const rgbA = tintColor(hexToRgb(colorA), base, 0.25)
-        const rgbB = tintColor(hexToRgb(colorB), base, 0.25)
+        const [arn, agn, abn] = chroma(colorA).mix(base, 0.25).rgb()
+        const rgbA = { r: Math.round(arn), g: Math.round(agn), b: Math.round(abn) }
+        const [crn2, cgn2, cbn2] = chroma(colorB).mix(base, 0.25).rgb()
+        const rgbB = { r: Math.round(crn2), g: Math.round(cgn2), b: Math.round(cbn2) }
 
         const bandT = powBandTransition(bandFrac)
         const r = lerp(rgbA.r, rgbB.r, bandT)
@@ -663,7 +663,8 @@ export function createGasGiantTexture(baseColor: string, archetype: string = "ju
 }
 
 export function createStarTexture(baseColor: string, seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
-    const base = hexToRgb(baseColor)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
 
     const { canvas, ctx, imageData } = generateTexture(baseColor, "star", seedKey, (x, y, sx, sy, sz, data, perm) => {
         // Fine granulation (higher frequency for solar surface detail)
@@ -878,8 +879,10 @@ export function createCloudTexture(baseColor: string, archetype: PlanetArchetype
     }
 
     const palette = PALETTES[archetype] || { clouds: "#ffffff" }
-    const base = hexToRgb(baseColor)
-    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
+    const [ccrn, ccgn, ccbn] = chroma(palette.clouds).mix(base, 0.2).rgb()
+    const cloudsRgb = { r: Math.round(ccrn), g: Math.round(ccgn), b: Math.round(ccbn) }
 
     const { canvas, ctx, imageData } = generateTexture(baseColor, `${archetype}-clouds`, seedKey, (x, y, sx, sy, sz, data, perm) => {
         const cloudNoise = sampleFbm3d(sx * noiseScale * 0.8 + 20, sy * noiseScale * 0.8 + 20, sz * noiseScale * 0.8 + 20, perm, 0.35, 4)
@@ -904,12 +907,17 @@ export function createCloudTexture(baseColor: string, archetype: PlanetArchetype
 
 export function createNightTexture(baseColor: string, archetype: PlanetArchetype = "earth", seedKey?: string): HTMLCanvasElement | OffscreenCanvas {
     const palette = { land: baseColor, ocean: PALETTES[archetype].ocean, clouds: "#ffffff", poles: "#e0e0e0" }
-    const base = hexToRgb(baseColor)
+    const [br, bg, bb] = chroma(baseColor).rgb()
+    const base = { r: br, g: bg, b: bb }
 
-    const landRgb = tintColor(hexToRgb(palette.land), base, 0.35)
-    const oceanRgb = tintColor(hexToRgb(palette.ocean), base, 0.35)
-    const cloudsRgb = tintColor(hexToRgb(palette.clouds), base, 0.2)
-    const polesRgb = tintColor(hexToRgb(palette.poles), base, 0.15)
+    const [nlrn, nlgn, nlbn] = chroma(palette.land).mix(base, 0.35).rgb()
+    const landRgb = { r: Math.round(nlrn), g: Math.round(nlgn), b: Math.round(nlbn) }
+    const [norn, nogn, nobn] = chroma(palette.ocean).mix(base, 0.35).rgb()
+    const oceanRgb = { r: Math.round(norn), g: Math.round(nogn), b: Math.round(nobn) }
+    const [ncrn, ncgn, ncbn] = chroma(palette.clouds).mix(base, 0.2).rgb()
+    const cloudsRgb = { r: Math.round(ncrn), g: Math.round(ncgn), b: Math.round(ncbn) }
+    const [nprn, npgn, npbn] = chroma(palette.poles).mix(base, 0.15).rgb()
+    const polesRgb = { r: Math.round(nprn), g: Math.round(npgn), b: Math.round(npbn) }
 
     const { canvas, ctx, imageData } = generateTexture(baseColor, archetype, seedKey, (x, y, sx, sy, sz, data, perm) => {
         const landMask = sampleFbm3d(sx * noiseScale, sy * noiseScale, sz * noiseScale, perm, 0.4, 5)

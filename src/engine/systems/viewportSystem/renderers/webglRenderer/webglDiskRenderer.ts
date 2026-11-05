@@ -13,7 +13,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { mat4, vec3 } from "gl-matrix"
-import { hexToRgb } from "./hexToRgb"
+import chroma from "chroma-js"
 import {
     setupInstancedAttrib,
     resetInstancedAttrib,
@@ -218,7 +218,8 @@ export class WebGLDiskRenderer extends WebGLBaseRenderer<WebGLRingNode> {
                 ? this.atlas.getOrCreateEntry("__checker__", createCheckerPatternCanvas())
                 : this.atlas.getOrCreateEntry(node.entity.id, textureSource)
 
-            const ringColor = hexToRgb(node.ring.color || "#d4bc7e")
+            const [rr, rg, rb] = chroma(node.ring.color || "#d4bc7e").rgb()
+            const ringColor = { r: rr, g: rg, b: rb }
 
             instances.push({
                 model: new Float32Array(model),

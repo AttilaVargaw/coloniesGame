@@ -1,6 +1,6 @@
 import { TWO_PI } from "@/engine/lib/cameraConstants";
 import Camera from "@/lib/camera";
-import { hexToRgba } from "./renderers/hexToRgba";
+import chroma from "chroma-js";
 import { mulberry32 } from "./mulberry32";
 
 const rng = mulberry32(42)
@@ -59,8 +59,10 @@ export function drawStarfield(ctx: CanvasRenderingContext2D, camera: Camera) {
         ctx.globalCompositeOperation = "screen"
         for(const star of stars) {
             const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.r)
-            gradient.addColorStop(0, hexToRgba(star.color, star.alpha * 0.6))
-            gradient.addColorStop(0.4, hexToRgba(star.color, star.alpha * 0.2))
+            const [gr, gg, gb, ga] = chroma(star.color).alpha(star.alpha * 0.6).rgba()
+            gradient.addColorStop(0, `rgba(${gr},${gg},${gb},${ga})`)
+            const [br, bg, bb, ba] = chroma(star.color).alpha(star.alpha * 0.2).rgba()
+            gradient.addColorStop(0.4, `rgba(${br},${bg},${bb},${ba})`)
             gradient.addColorStop(1, "rgba(0,0,0,0)")
             ctx.fillStyle = gradient
             ctx.beginPath()

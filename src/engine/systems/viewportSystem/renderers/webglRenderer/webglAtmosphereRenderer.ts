@@ -12,7 +12,7 @@ import { ViewportSystem } from "../../viewportSystem"
 import { RenderableNode } from "../renderableNode"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
-import { hexToRgb } from "./hexToRgb"
+import chroma from "chroma-js"
 import {
     setupInstancedAttrib,
     resetInstancedAttrib,
@@ -115,14 +115,16 @@ export class WebGLAtmosphereRenderer extends WebGLBaseRenderer<WebGLAtmosphereNo
 
                 const starColorComponent = starEntity.getComponent(ColorComponent)
                 if(starColorComponent?.fill) {
-                    const parsed = hexToRgb(starColorComponent.fill)
-                    lightColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
+                    const [r, g, b] = chroma(starColorComponent.fill).rgb()
+                    lightColor = [r / 255 * attenuation, g / 255 * attenuation, b / 255 * attenuation]
                 }
             }
 
-            const paletteRgb = hexToRgb(node.color.fill || "#808080")
+            const [pr, pg, pb] = chroma(node.color.fill || "#808080").rgb()
+            const paletteRgb = { r: pr, g: pg, b: pb }
 
-            const skyRgb = hexToRgb(node.atmosphere.skyColor)
+            const [sr, sg, sb] = chroma(node.atmosphere.skyColor).rgb()
+            const skyRgb = { r: sr, g: sg, b: sb }
             const skyColor = [
                 skyRgb.r / 255 * (0.6 + 0.4 * paletteRgb.r / 255),
                 skyRgb.g / 255 * (0.6 + 0.4 * paletteRgb.g / 255),

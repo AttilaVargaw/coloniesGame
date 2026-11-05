@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest"
 import { mulberry32 } from "./mulberry32"
-import { hexToRgba } from "./renderers/hexToRgba"
+import chroma from "chroma-js"
 import { drawRotationIndicator } from "./drawRotationIndicator"
 import { drawCameraGizmo, drawCameraTarget } from "./drawCameraGizmo"
 import { applyColorGrading, applyVignette, applyContrastSaturation } from "./postProcess"
@@ -148,15 +148,18 @@ describe("mulberry32", () => {
 
 describe("hexToRgba", () => {
     it("parses a hex color with alpha", () => {
-        expect(hexToRgba("#ff0000", 0.5)).toBe("rgba(255,0,0,0.5)")
+        const [r, g, b, a] = chroma("#ff0000").alpha(0.5).rgba()
+        expect(`rgba(${r},${g},${b},${a})`).toBe("rgba(255,0,0,0.5)")
     })
 
     it("parses white", () => {
-        expect(hexToRgba("#ffffff", 1)).toBe("rgba(255,255,255,1)")
+        const [r, g, b, a] = chroma("#ffffff").alpha(1).rgba()
+        expect(`rgba(${r},${g},${b},${a})`).toBe("rgba(255,255,255,1)")
     })
 
     it("parses black", () => {
-        expect(hexToRgba("#000000", 0)).toBe("rgba(0,0,0,0)")
+        const [r, g, b, a] = chroma("#000000").alpha(0).rgba()
+        expect(`rgba(${r},${g},${b},${a})`).toBe("rgba(0,0,0,0)")
     })
 })
 

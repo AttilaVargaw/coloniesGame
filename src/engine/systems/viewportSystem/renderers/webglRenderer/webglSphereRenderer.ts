@@ -16,7 +16,7 @@ import { RenderableNode } from "../renderableNode"
 import Camera from "@/lib/camera"
 import { ProjectedPoint } from "@/lib/camera"
 import { vec3, mat4, mat3 } from "gl-matrix"
-import { hexToRgb } from "./hexToRgb"
+import chroma from "chroma-js"
 import {
     setupInstancedAttrib,
     resetInstancedAttrib,
@@ -259,10 +259,15 @@ export class WebGLSphereRenderer extends WebGLBaseRenderer<WebGLSphereNode> {
 
             const attenuation = lightDirLength > 0 ? Math.min(1.0, 150.0 / lightDirLength) : 1.0
 
-            const parsed = starColorComponent?.fill ? hexToRgb(starColorComponent.fill) : { r: 255, g: 255, b: 255 }
+            let parsed: { r: number; g: number; b: number } = { r: 255, g: 255, b: 255 }
+            if(starColorComponent?.fill) {
+                const [r, g, b] = chroma(starColorComponent.fill).rgb()
+                parsed = { r, g, b }
+            }
             const starColor = [parsed.r / 255 * attenuation, parsed.g / 255 * attenuation, parsed.b / 255 * attenuation]
 
-            const paletteRgb = hexToRgb(node.color.fill || "#808080")
+            const [pr, pg, pb] = chroma(node.color.fill || "#808080").rgb()
+            const paletteRgb = { r: pr, g: pg, b: pb }
 
             const model = mat4.create()
             mat4.identity(model)
