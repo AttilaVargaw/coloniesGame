@@ -158,7 +158,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
             paper: 10, environmentFactor: 20, water: 40, chemicals: 80, governance: 20,
         }, workerRequirement: {
             farmer: 900, clerks: 50, engineer: 50, healtcarePersonal: 10
-        }, goodsProduction: { agriculturalGoods: 1000, },
+        }, goodsProduction: { agriculturalGoods: 100_000, },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set(["chemicals", "electronics", "paper", "environmentFactor"]),
         capitalGoods: { machinery: 0.5, electronics: 0.1, buildings: 0.1, vehicles: 1 },
@@ -195,7 +195,7 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         name: "meat",
         goodsRequirements: { paper: 10, environmentFactor: 20, electricity: 180, governance: 20, retail: 200 },
         workerRequirement: workerReqStandard,
-        goodsProduction: { meat: 1_000 },
+        goodsProduction: { meat: 10_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.5, buildings: 0.1, },
         nonEssentialGoods: new Set(usualNonEssentialGoods),
@@ -766,6 +766,29 @@ export const industrySectorBlueprints = new Map<string, SectorBlueprint>([
         productionMethods: new Map([
             createTraditional(),
             createFullyRobotized("A merchant marine which is fully automated by AI.")
+        ])
+    }],
+    ["drinkIndustry", {
+        name: "drinkIndustry",
+        goodsRequirements: {
+            environmentFactor: 20,
+            electricity: 150,
+            governance: 20,
+            paper: 100
+        },
+        workerRequirement: {
+            worker: 340,
+            clerks: 50,
+            serviceWorker: 600,
+            healtcarePersonal: 10
+        },
+        goodsProduction: { waste: 10, alcoholDrinks: 100_000, stimulantDrinks: 100_000 },
+        capitalGoods: { machinery: 0.5, buildings: 0.1, electronics: 0.1 },
+        capitalEfficiency: 0.001,
+        capitalEfficiencyDecay: 0.001,
+        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        productionMethods: new Map([
+            createTraditional(),
         ])
     }]
 ])
