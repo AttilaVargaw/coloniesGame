@@ -22,7 +22,7 @@ export class IsUnprofitable extends Condition {
 export class HasCapitalDeficit extends Condition {
     check(blackboard: SectorBlackboard): boolean {
         if (!blackboard.capitalGoods) return false;
-        let minAdequacy = Infinity;
+        let minLevel = Infinity;
         let hasCapital = false;
         for (const [goodKey, rate] of Object.entries(blackboard.capitalGoods)) {
             hasCapital = true;
@@ -30,10 +30,10 @@ export class HasCapitalDeficit extends Condition {
             const referenceConsumption = rate * 100;
             if (referenceConsumption <= 0) continue;
             const ratio = stock / referenceConsumption;
-            minAdequacy = Math.min(minAdequacy, ratio);
+            minLevel = Math.min(minLevel, ratio);
         }
         if (!hasCapital) return false;
-        return minAdequacy < 0.5;
+        return minLevel < 0.5;
     }
 }
 

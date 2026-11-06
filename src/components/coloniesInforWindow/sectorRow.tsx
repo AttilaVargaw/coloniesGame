@@ -39,8 +39,8 @@ export function SectorRow({
     const workerMethodMult = method?.workerMultiplier ?? 1;
     const inputLevel = sectorResult?.inputLevel ?? 1;
 
-    // Capital goods adequacy: stock / required per unit, bottleneck across all capital goods
-    let capitalAdequacy = 1;
+    // Capital goods level: stock / required per unit, bottleneck across all capital goods
+    let sectorLevel = 1;
     const capitalGoods = config?.capitalGoods ?? {};
     if(Object.keys(capitalGoods).length > 0) {
         const stock = industry.capitalStock[sectorKey] ?? {};
@@ -51,7 +51,7 @@ export function SectorRow({
             const req = requiredPerUnit ?? 0;
             ratios.push(req > 0 ? available / req : Infinity);
         }
-        capitalAdequacy = Math.min(...ratios);
+        sectorLevel = Math.min(...ratios);
     }
 
     const reqs = useMemo(() => {
@@ -66,7 +66,7 @@ export function SectorRow({
         if(config?.goodsRequirements) {
             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
                 const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
-                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * capitalAdequacy;
+                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * sectorLevel;
                 requirements.push({
                     name: good,
                     fullCapacityReq,
@@ -80,7 +80,7 @@ export function SectorRow({
         if(config?.workerRequirement) {
             for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
                 const workerEffMult = industry.workerEfficiencyMultipliers[worker] ?? 1;
-                const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * capitalAdequacy;
+                const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * sectorLevel;
                 requirements.push({
                     name: worker,
                     fullCapacityReq,
@@ -104,7 +104,7 @@ export function SectorRow({
         items.push(<RequirementItem currentCapacityReq={industry.sectorLaborCosts[sectorKey] + industry.sectorInputCosts[sectorKey]} name="money" />);
 
         return { items, bottleneck, bottleneckRatio }
-    }, [config, materialMethodMult, inputLevel, workerMethodMult, capitalAdequacy, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
+    }, [config, materialMethodMult, inputLevel, workerMethodMult, sectorLevel, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
 
     return (
         <tr className="border-b border-muted/50 last:border-0">
@@ -140,14 +140,14 @@ export function SectorRow({
             <td className="pt-2 text-center">
                 <div className="text-xs">
                     {(utilization * 100).toFixed(0)}%
-                    {capitalAdequacy < 0.99 && (
-                        <div className="text-orange-400">{Math.round(capitalAdequacy * 100)}% capital</div>
+                    {sectorLevel < 0.99 && (
+                        <div className="text-orange-400">{Math.round(sectorLevel * 100)}% capital</div>
                     )}
                 </div>
             </td>
             <td className="pt-2 text-center">
-                <div className={`text-xs ${capitalAdequacy >= 0.99 ? 'text-green-400' : 'text-red-400'}`}>
-                    {(capitalAdequacy).toFixed(0)}
+                <div className={`text-xs ${sectorLevel >= 0.99 ? 'text-green-400' : 'text-red-400'}`}>
+                    {(sectorLevel).toFixed(0)}
                 </div>
             </td>
             {/* <td className=" text-center">100%</td> */}
@@ -185,7 +185,11 @@ export function SectorRow({
             </td>
             <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
-                    <InventoryColumn type="goodsProduction" config={config} sectorKey={sectorKey} industry={industry} />
+                    {Object.entries(sectorResult?.producedGoods ?? {}).map(([good, amount]) => (
+                        <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
+                            <RequirementItem currentCapacityReq={amount} name={good as keyof Goods} />
+                        </div>
+                    ))}
                     <RequirementItem currentCapacityReq={revenue} name="money" />
                 </div>
             </td>
