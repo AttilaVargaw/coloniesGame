@@ -38,7 +38,7 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
         }
 
         return ret
-    }, [name, icon])
+    }, [name, icon, fullCapacityReq, currentCapacityReq, satisfied])
 
     return (
         <span style={{ flex: 1 }} className={cn('inline-flex', 'items-center', 'gap-1', color)}>
