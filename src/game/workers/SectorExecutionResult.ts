@@ -14,7 +14,7 @@ export interface SectorExecutionResult {
     sectorStopReason: Record<string, string>;
     workingWorkers: Record<keyof Population, PopulationBreakdown>;
     remainingWorkers: Record<keyof Population, PopulationBreakdown>;
-    sectorGoods: Record<keyof IndustrialSectors, Goods>;
+    // sectorGoods: Record<keyof IndustrialSectors, Goods>;
     sumGoodsRequirements: Goods;
     sumGoodsProduction: Goods;
 }

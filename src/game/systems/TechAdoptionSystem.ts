@@ -182,7 +182,7 @@ export class TechAdoptionSystem extends SystemWithNodes<TechAdoptionNode> {
         industry.laborAssigned[sectorKey] = 0;
         industry.capitalStock[sectorKey] = {};
         industry.money[sectorKey] = 0;
-        industry.sectorGoods[sectorKey] = { ...createStarterWarehouse(0) };
+        // industry.sectorGoods[sectorKey] = { ...createStarterWarehouse(0) };
         industry.sectorUtilization[sectorKey] = 0;
         industry.sectorProfits[sectorKey] = 0;
         industry.selectedMethod[sectorKey] = null;

@@ -60,7 +60,7 @@ export function PopulationBreakdown({ industry: { population, populationProfits,
                                     <span className="text-muted-foreground text-xs">—</span>
                                 ) : (
                                     <div className="text-xs space-y-0.5" style={{ display: "flex", flexFlow: "wrap", gap: "1em" }}>
-                                        {reqEntries.sort(([a], [b]) => RESOURCE_NAMES[a].localeCompare(RESOURCE_NAMES[b])).map(([good, req]) => {
+                                        {reqEntries.sort(([a], [b]) => RESOURCE_NAMES?.[a].localeCompare(RESOURCE_NAMES[b])).map(([good, req]) => {
                                             const available = goods[good] ?? 0;
                                             return (
                                                 <RequirementItem key={good} currentCapacityReq={req} satisfied={available} name={good} />

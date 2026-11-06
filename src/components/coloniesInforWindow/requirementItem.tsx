@@ -10,9 +10,6 @@ import { useMemo } from "react";
 import { cn } from "cn";
 
 export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, satisfied }: { name: keyof Population | keyof Goods | "money"; fullCapacityReq?: number; currentCapacityReq: number; satisfied?: number; }) {
-    const isFilled = satisfied && satisfied >= currentCapacityReq * 0.99;
-    const colorClass = !isFilled || fullCapacityReq ? 'text-muted-foreground' : (isFilled ? 'text-green-400' : 'text-red-400');
-
     const icon = useMemo(() => {
         if(name === "money") {
             return <TbHexagonNumber4 className="w-4 h-4 text-yellow-400" strokeWidth={1.5} />
@@ -21,8 +18,26 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
         }
     }, [name])
 
+    const color = satisfied && satisfied >= currentCapacityReq * 0.99 ? "text-green-400" : "text-red-400"
+
+    const inside = useMemo(() => {
+        const ret = []
+
+        if(fullCapacityReq !== undefined) {
+            ret.push(<span key="full">{convertToReadable(Math.round(fullCapacityReq))}</span>)
+        }
+        if(currentCapacityReq !== undefined) {
+            ret.push(ret.length > 0 && "/", <span key="current">{convertToReadable(Math.round(currentCapacityReq))}</span >)
+        }
+        if(satisfied !== undefined) {
+            ret.push(ret.length > 0 && "/", <span key="satisfied">({convertToReadable(Math.round(satisfied))})</span>)
+        }
+
+        return ret
+    }, [name, icon])
+
     return (
-        <span style={{ flex: 1 }} className={cn('inline-flex', 'items-center', 'gap-1', colorClass)}>
+        <span style={{ flex: 1 }} className={cn('inline-flex', 'items-center', 'gap-1', color)}>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <span className="inline-flex items-center"> {icon} </span>
@@ -31,9 +46,7 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
                     <span>{isPopulationReq(name) ? POPULATION_NAMES[name] : RESOURCE_NAMES[name] || name}</span>
                 </TooltipContent>
             </Tooltip>
-            {fullCapacityReq && <span className="text-green-400">{convertToReadable(Math.round(fullCapacityReq))}</span>}
-            {currentCapacityReq && <span className="text-muted-foreground"> {convertToReadable(Math.round(currentCapacityReq))}</span>}
-            {satisfied && <span className="text-muted-foreground"> ({convertToReadable(Math.round(satisfied))})</span>}
+            {inside}
         </span >
     );
 }

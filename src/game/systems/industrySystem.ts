@@ -84,7 +84,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
                 //@ts-ignore
-                sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
+                // sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
             }
 
             return {
@@ -161,11 +161,11 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
             industry.money[key as keyof IndustrialSectors] = value;
         }
     }
-    if(patch.sectorGoods) {
-        for(const [key, goods] of Object.entries(patch.sectorGoods)) {
-            industry.sectorGoods[key as keyof IndustrialSectors] = goods;
-        }
-    }
+    // if(patch.sectorGoods) {
+    //     for(const [key, goods] of Object.entries(patch.sectorGoods)) {
+    //         industry.sectorGoods[key as keyof IndustrialSectors] = goods;
+    //     }
+    // }
 
     mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
     mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)

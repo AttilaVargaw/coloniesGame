@@ -41,7 +41,7 @@ export function applyGoodConstraint(
 export function executeSectors(
     sectorBids: SectorBid[],
     population: Population,
-    inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
+    // inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
     colonyGoods: Goods,
     prices: Record<keyof Goods, number>,
     salaries: Record<keyof Population, number>
@@ -61,7 +61,7 @@ export function executeSectors(
     const sectorInputCosts: Record<string, number> = {};
     const sectorUtilization: Record<string, number> = {};
 
-    const sectorGoods: Record<keyof IndustrialSectors, Goods> = { ...inputSectorGoods };
+    // const sectorGoods: Record<keyof IndustrialSectors, Goods> = { ...inputSectorGoods };
 
     const sectorStopReason: Record<string, string> = {};
 
@@ -73,9 +73,9 @@ export function executeSectors(
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             if(value <= 0) continue;
             const gKey = key as keyof Goods;
-            const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
+            // const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
             const colonyAvail = colonyGoods[gKey] ?? 0;
-            const totalAvailable = sectorInv + colonyAvail;
+            const totalAvailable = colonyAvail;
             const ratio = value > 0 ? totalAvailable / value : 1;
             goodsRatio = Math.min(goodsRatio, ratio);
         }
@@ -116,11 +116,11 @@ export function executeSectors(
                 inputLevel: bid.inputLevel,
                 outputLevel: bid.outputLevel,
             };
-        sectorProfits[bid.name] = 0;
-        sectorRevenue[bid.name] = 0;
-        sectorLaborCosts[bid.name] = 0;
-        sectorInputCosts[bid.name] = 0;
-        continue;
+            sectorProfits[bid.name] = 0;
+            sectorRevenue[bid.name] = 0;
+            sectorLaborCosts[bid.name] = 0;
+            sectorInputCosts[bid.name] = 0;
+            continue;
         }
 
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
@@ -139,12 +139,12 @@ export function executeSectors(
             };
         }
 
-        const sectorInventory = { ...(sectorGoods[bid.name as keyof IndustrialSectors] ?? EMPTY_WAREHOUSE) };
+        // const sectorInventory = { ...(sectorGoods[bid.name as keyof IndustrialSectors] ?? EMPTY_WAREHOUSE) };
         const consumedGoods: Partial<Goods> = {};
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
             const consumed = value * actualScale;
             consumedGoods[key as keyof Goods] = consumed;
-            sectorInventory[key as keyof Goods] = Math.max(0, (sectorInventory[key as keyof Goods] ?? 0) - consumed);
+            // sectorInventory[key as keyof Goods] = Math.max(0, (sectorInventory[key as keyof Goods] ?? 0) - consumed);
             sumGoodsRequirements[key as keyof Goods] = (sumGoodsRequirements[key as keyof Goods] ?? 0) + consumed;
         }
 
@@ -152,11 +152,11 @@ export function executeSectors(
         for(const [key, value] of Object.entries(bid.idealGoodsProduction)) {
             const produced = value * actualScale;
             producedGoods[key as keyof Goods] = produced;
-            sectorInventory[key as keyof Goods] = (sectorInventory[key as keyof Goods] ?? 0) + produced;
+            // sectorInventory[key as keyof Goods] = (sectorInventory[key as keyof Goods] ?? 0) + produced;
             sumGoodsProduction[key as keyof Goods] = (sumGoodsProduction[key as keyof Goods] ?? 0) + produced;
         }
 
-        sectorGoods[bid.name as keyof IndustrialSectors] = sectorInventory;
+        // sectorGoods[bid.name as keyof IndustrialSectors] = sectorInventory;
 
         const revenue = Object.entries(producedGoods).reduce((sum, [key, amount]) => {
             return sum + (amount) * prices[key as keyof Goods];
@@ -208,7 +208,7 @@ export function executeSectors(
         populationProfits: {},
         workingWorkers,
         remainingWorkers,
-        sectorGoods,
+        // sectorGoods,
         sumGoodsRequirements,
         sumGoodsProduction,
     };

@@ -87,39 +87,39 @@ export function computePopulationConsumption(
 export function buySectorInputs(
     sectorBids: SectorBid[],
     goods: Goods,
-    updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods>,
+    // updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods>,
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
 ): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number> } {
     const colonyGoodsAfterPurchase = { ...goods };
     for(const bid of sectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
-        const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
+        // const sectorInv = { ...(updatedSectorGoodsBeforeExec[sectorName] ?? createStarterWarehouse(0)) };
         let sectorMoney = newMoney[sectorName] ?? 0;
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
             const demand = demandPerTick * bid.actualScale;
-            const existingInv = sectorInv[goodKey as keyof Goods] ?? 0;
-            if(existingInv >= demand) continue; // already have enough in inventory
+            // const existingInv = sectorInv[goodKey as keyof Goods] ?? 0;
+            // if(existingInv >= demand) continue; // already have enough in inventory
 
-            const netDemand = demand - existingInv;
+            // const netDemand = demand - existingInv;
             const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
             const price = prices[goodKey as keyof Goods] ?? 0;
             if(available <= 0 || price <= 0) continue;
 
-            const canAfford = Math.floor(sectorMoney / price);
-            const toBuy = Math.min(netDemand, available, canAfford);
-            if(toBuy <= 0) continue;
+            // const canAfford = Math.floor(sectorMoney / price);
+            // const toBuy = Math.min(netDemand, available, canAfford);
+            // if(toBuy <= 0) continue;
 
-            sectorMoney -= toBuy * price;
-            colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
-            sectorInv[goodKey as keyof Goods] = existingInv + toBuy;
+            // sectorMoney -= toBuy * price;
+            // colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
+            // sectorInv[goodKey as keyof Goods] = existingInv + toBuy;
         }
 
         newMoney[sectorName] = sectorMoney;
-        updatedSectorGoodsBeforeExec[sectorName] = sectorInv;
+        // updatedSectorGoodsBeforeExec[sectorName] = sectorInv;
     }
     return { colonyGoodsAfterPurchase, newMoney };
 }
@@ -177,7 +177,7 @@ export function computeColonyGoodsDelta(
     sectorResults: Record<string, { productionRatio: number; producedGoods: Record<string, number> }>,
     replenishmentDelta: Record<string, number>,
     prices: Record<keyof Goods, number>,
-    updatedSectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
+    // updatedSectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
 ): Partial<Goods> {
     const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
 
@@ -198,13 +198,13 @@ export function computeColonyGoodsDelta(
                 if(price > 0) {
                     colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
                     // Remove from sector inventory since goods were sold to colony pool
-                    const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                    sectorInv[goodKey as keyof Goods] = Math.max(0, (sectorInv[goodKey as keyof Goods] ?? 0) - amount);
-                    updatedSectorGoods[name] = sectorInv;
+                    // const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                    // sectorInv[goodKey as keyof Goods] = Math.max(0, (sectorInv[goodKey as keyof Goods] ?? 0) - amount);
+                    // updatedSectorGoods[name] = sectorInv;
                 } else {
-                    const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                    sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;
-                    updatedSectorGoods[name] = sectorInv;
+                    // const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
+                    // sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;
+                    // updatedSectorGoods[name] = sectorInv;
                 }
             }
         }

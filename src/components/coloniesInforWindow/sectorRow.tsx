@@ -10,43 +10,12 @@ import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FaCircleExclamation } from "react-icons/fa6";
-
-function renderInventoryColumn(config: ReturnType<typeof industrySectorBlueprints.get>, sectorKey: keyof IndustrialSectors, industry: IndustryComponent) {
-    const stock = industry.capitalStock[sectorKey] ?? {};
-    const sectorInv = industry.sectorGoods[sectorKey] ?? {};
-    const money = industry.money[sectorKey];
-
-    const relevantGoods =
-        new Set([
-            ...Object.keys(config?.capitalGoods ?? {}),
-            ...Object.keys(config?.goodsRequirements ?? {}),
-            ...Object.keys(config?.goodsProduction ?? {}),
-        ]) as Set<keyof Goods>
-
-    return [...relevantGoods.values()].map((good) => {
-        const isCapitalGood = config?.capitalGoods?.[good] !== undefined;
-        const cap = stock[good] ?? 0;
-        const amount = sectorInv[good] ?? 0;
-        const primaryAmount = isCapitalGood ? cap : amount;
-
-        return (
-            <div key={good} style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-                <RequirementItem currentCapacityReq={primaryAmount} name={good} />
-            </div>
-        );
-    }).concat(
-        <div key="money" style={{ display: "flex", gap: "0.5em", alignItems: "center" }}>
-            <RequirementItem fullCapacityReq={money} currentCapacityReq={money} satisfied={money} name="money" />
-        </div>
-    )
-}
+import { InventoryColumn } from "./InventoryColumn";
 
 export function SectorRow({
-    rowKey,
     sectorKey,
     industry,
 }: {
-    rowKey: string;
     sectorKey: keyof IndustrialSectors;
     industry: IndustryComponent;
 }) {
@@ -82,7 +51,7 @@ export function SectorRow({
             const req = requiredPerUnit ?? 0;
             ratios.push(req > 0 ? available / req : Infinity);
         }
-        capitalAdequacy = Math.min(1, ...ratios);
+        capitalAdequacy = Math.min(...ratios);
     }
 
     const reqs = useMemo(() => {
@@ -136,7 +105,7 @@ export function SectorRow({
     }, [config, materialMethodMult, inputLevel, workerMethodMult, capitalAdequacy, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
 
     return (
-        <tr key={rowKey} className="border-b border-muted/50 last:border-0">
+        <tr className="border-b border-muted/50 last:border-0">
             <td className="p-2 capitalize">
                 <span style={{ display: "flex", gap: "1em" }}>
                     <SectorIcon name={sectorKey} /> {sectorKey} {isStopped && stopReason && (
@@ -199,7 +168,7 @@ export function SectorRow({
             <td className="pt-2 text-center text-xs">
                 {industry.selectedMethod[sectorKey] ?? "Default"}
             </td>
-            <td className="pt-2 text-left">
+            <td className="pt-2 text-center">
                 <div className="text-xs space-y-0.5">
                     {reqs.items.map((req, i) => (
                         <div key={i}>{req} </div>
@@ -208,7 +177,7 @@ export function SectorRow({
             </td>
             <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
-                    {renderInventoryColumn(config, sectorKey, industry)}
+                    <InventoryColumn config={config} sectorKey={sectorKey} industry={industry} />
                 </div>
             </td>
         </tr>

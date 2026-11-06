@@ -40,7 +40,7 @@ function processIndustry(
         laborAssigned,
         capitalStock,
         money: startingMoney,
-        sectorGoods,
+        // sectorGoods,
         settlementType,
         workerEfficiencyMultipliers,
         materialRequirementMultipliers,
@@ -191,11 +191,11 @@ function processIndustry(
     updateWageMemory(wageMemory, workerMarketRatios);
     colonyWageMemory.set(entityId, wageMemory);
 
-    const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
+    // const updatedSectorGoodsBeforeExec: Record<keyof IndustrialSectors, Goods> = { ...sectorGoods };
 
     // Compute actual production scale per bid (worker + inventory constrained)
     for(const bid of sectorBids) {
-        bid.actualScale = computeActualScale(bid, workerMarketRatios, updatedSectorGoodsBeforeExec);
+        bid.actualScale = computeActualScale(bid, workerMarketRatios);
     }
 
     let newMoney: Record<string, number> = { ...startingMoney };
@@ -204,7 +204,7 @@ function processIndustry(
     const { colonyGoodsAfterPurchase } = buySectorInputs(
         sectorBids,
         goods,
-        updatedSectorGoodsBeforeExec,
+        // updatedSectorGoodsBeforeExec,
         newMoney,
         prices,
     );
@@ -219,13 +219,13 @@ function processIndustry(
         sectorStopReason,
         workingWorkers,
         remainingWorkers,
-        sectorGoods: updatedSectorGoods,
+        // sectorGoods: updatedSectorGoods,
         sumGoodsRequirements,
         sumGoodsProduction,
     } = executeSectors(
         sectorBids,
         population,
-        updatedSectorGoodsBeforeExec,
+        // updatedSectorGoodsBeforeExec,
         goods,
         prices,
         adjustedSalaries
@@ -282,7 +282,7 @@ function processIndustry(
         sectorResults,
         replenishmentDelta,
         prices,
-        updatedSectorGoods,
+        // updatedSectorGoods,
     );
 
     // Apply colony goods changes
@@ -316,7 +316,7 @@ function processIndustry(
         sectorResults,
         capitalStock: newCapitalStock,
         money: newMoney,
-        sectorGoods: updatedSectorGoods,
+        // sectorGoods: updatedSectorGoods,
         settlementType,
         allowedSectors,
     };
@@ -359,7 +359,7 @@ function calculateMarketRatios(
 function computeActualScale(
     bid: SectorBid,
     workerMarketRatios: Record<keyof Population, number>,
-    sectorGoods: Record<keyof IndustrialSectors, Goods>,
+    // sectorGoods: Record<keyof IndustrialSectors, Goods>,
 ): number {
     // Worker availability from global market ratio
     let workerRatio = 1;
@@ -375,8 +375,8 @@ function computeActualScale(
     for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
         if(value <= 0) continue;
         const gKey = key as keyof Goods;
-        const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
-        marketConstraint = Math.min(marketConstraint, value > 0 ? sectorInv / value : 1);
+        // const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
+        // marketConstraint = Math.min(marketConstraint, value > 0 ? sectorInv / value : 1);
     }
 
     return Math.min(bid.budgetRatio, marketConstraint, workerRatio);
@@ -446,7 +446,7 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     hasChanged = trySetPatchField(patch, "sectorUtilization", last?.sectorUtilization, result.sectorUtilization, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "sectorStopReason", last?.sectorStopReason, result.sectorStopReason, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
+    // hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "money", last?.money, result.money, shallowDiff) || hasChanged;
 
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
