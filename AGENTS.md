@@ -180,6 +180,7 @@ The game uses runtime-generated 128×128 canvas textures for stars and planets, 
 - Use `engine.addCommand` to queue a command
 - About 30 unique rendered bodies, so texture generation cost is negligible
 - The debug server is usually running, use it, don't kill it
+- **capitalRatio is uncapped**: `capitalRatio = stock / blueprintCapitalRequirement` multiplies worker demand, goods demand, and production proportionally in `buildSectorBid.ts` (`src/game/workers/buildSectorBid.ts:140-167`) and `sectorRow.tsx` (`src/components/coloniesInforWindow/sectorRow.tsx:42-56`). Surplus capital scales output up (ratio > 1), scarcity scales it down (ratio < 1). Do not cap capitalRatio at 1.0 — tests expect uncapped values (e.g. `buildSectorBid.test.ts`).
 
 ## Known Issues
 
