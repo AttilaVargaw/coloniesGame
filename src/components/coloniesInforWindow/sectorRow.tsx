@@ -101,7 +101,9 @@ export function SectorRow({
             items.push(<RequirementItem key={name} name={name} fullCapacityReq={fullCapacityReq} currentCapacityReq={currentCapacityReq} satisfied={satisfied} />);
         }
 
-        return { items, bottleneck, bottleneckRatio };
+        items.push(<RequirementItem currentCapacityReq={industry.sectorLaborCosts[sectorKey] + industry.sectorInputCosts[sectorKey]} name="money" />);
+
+        return { items, bottleneck, bottleneckRatio }
     }, [config, materialMethodMult, inputLevel, workerMethodMult, capitalAdequacy, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
 
     return (
@@ -166,18 +168,25 @@ export function SectorRow({
                 {hasData ? `${margin.toFixed(0)}%` : '—'}
             </td>
             <td className="pt-2 text-center text-xs">
-                {industry.selectedMethod[sectorKey] ?? "Default"}
+                <div className="text-xs space-y-0.5">
+                    {industry.selectedMethod[sectorKey] ?? "Default"}
+                </div>
             </td>
             <td className="pt-2 text-center">
+                {reqs.items.map((req, i) => (
+                    <div className="text-xs space-y-0.5" key={i}>{req}</div>
+                ))}
+            </td>
+            <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
-                    {reqs.items.map((req, i) => (
-                        <div key={i}>{req} </div>
-                    ))}
+                    <InventoryColumn type="capitalGoods" config={config} sectorKey={sectorKey} industry={industry} />
+                    <RequirementItem currentCapacityReq={industry.money[sectorKey]} name="money" />
                 </div>
             </td>
             <td className="pt-2 text-left">
                 <div className="text-xs space-y-0.5">
-                    <InventoryColumn config={config} sectorKey={sectorKey} industry={industry} />
+                    <InventoryColumn type="goodsProduction" config={config} sectorKey={sectorKey} industry={industry} />
+                    <RequirementItem currentCapacityReq={revenue} name="money" />
                 </div>
             </td>
         </tr>

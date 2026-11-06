@@ -100,7 +100,7 @@ export function buySectorInputs(
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
-            const demand = demandPerTick * bid.actualScale;
+            // const demand = demandPerTick * bid.actualScale;
             // const existingInv = sectorInv[goodKey as keyof Goods] ?? 0;
             // if(existingInv >= demand) continue; // already have enough in inventory
 

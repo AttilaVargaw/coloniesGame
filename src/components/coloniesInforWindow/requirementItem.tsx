@@ -18,7 +18,11 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
         }
     }, [name])
 
-    const color = satisfied && satisfied >= currentCapacityReq * 0.99 ? "text-green-400" : "text-red-400"
+    let color = "text-green-400"
+
+    if(satisfied && satisfied <= currentCapacityReq * 0.99) {
+        color = "text-red-400"
+    }
 
     const inside = useMemo(() => {
         const ret = []

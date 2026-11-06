@@ -1,13 +1,13 @@
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 
-type SectorBlueprint = {
+export type SectorBlueprint = {
     name: string,
     goodsRequirements: Partial<Goods>,
     workerRequirement: Partial<Record<keyof Population, number>>,
     goodsProduction: Partial<Goods>,
     efficiencyBonus?: number
-    capitalGoods?: Partial<Record<keyof Goods, number>>
+    capitalGoods: Partial<Record<keyof Goods, number>>
     capitalEfficiency?: number
     capitalEfficiencyDecay?: number
     nonEssentialGoods?: Set<keyof Goods>

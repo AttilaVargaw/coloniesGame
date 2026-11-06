@@ -1,0 +1,276 @@
+import { describe, it, expect } from "vitest"
+import { computeColonyGoodsDelta, applyGoodsModifier, buySectorInputs } from "./industryTickHelpers"
+import { createStarterWarehouse } from "../factories/createStarterWarehouse"
+import { basePrices } from "../data/Goods"
+import type { Goods } from "../data/Goods"
+import type { SectorBid } from "./SectorBid"
+
+const emptySectorResult = (producedGoods: Partial<Goods> = {}) => ({
+    productionRatio: 1,
+    producedGoods: producedGoods as Record<string, number>,
+})
+
+function makeBid(
+    name: string,
+    idealGoodsDemand: Partial<Record<string, number>> = {},
+    actualScale = 1,
+    _money = 1_000_000,
+): SectorBid {
+    return {
+        name,
+        level: 1,
+        budgetRatio: 1,
+        actualScale,
+        inputCost: 0,
+        laborCost: 0,
+        idealWorkerDemand: {},
+        idealGoodsDemand: idealGoodsDemand as Partial<Record<string, number>>,
+        idealGoodsProduction: {},
+        outputLevel: 1,
+        inputLevel: 1,
+    }
+}
+
+describe("colony goods pool changes", () => {
+    describe("buySectorInputs", () => {
+        it("returns a copy of goods when no bids", () => {
+            const goods = createStarterWarehouse(1000)
+            const result = buySectorInputs([], goods, {}, basePrices as any)
+            expect(result.colonyGoodsAfterPurchase).toEqual(goods)
+        })
+
+        it("does not modify the original goods object", () => {
+            const goods = createStarterWarehouse(1000)
+            const oilBefore = goods.oil
+            buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any)
+            expect(goods.oil).toBe(oilBefore)
+        })
+
+        it("returns colonyGoodsAfterPurchase identical to input when buying is disabled", () => {
+            const goods = createStarterWarehouse(1000)
+            const result = buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any)
+            expect(result.colonyGoodsAfterPurchase.oil).toBe(goods.oil)
+        })
+    })
+
+    describe("computeColonyGoodsDelta", () => {
+        it("returns zero delta when nothing changed", () => {
+            const goods = createStarterWarehouse(1000)
+            const delta = computeColonyGoodsDelta(
+                goods,
+                goods,
+                [],
+                {},
+                {},
+                basePrices as any,
+            )
+            expect(Object.values(delta).every((v) => v === 0)).toBe(true)
+        })
+
+        it("subtracts bought goods from colony pool", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 1000
+            goods.paper = 500
+            const afterPurchase = { ...goods }
+            afterPurchase.oil = 700 // 300 bought
+            afterPurchase.paper = 400 // 100 bought
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                [],
+                {},
+                {},
+                basePrices as any,
+            )
+
+            expect(delta.oil).toBe(-300)
+            expect(delta.paper).toBe(-100)
+        })
+
+        it("adds produced goods to colony pool", () => {
+            const goods = createStarterWarehouse(0)
+            const afterPurchase = { ...goods }
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: emptySectorResult({ electricity: 400_000, waste: 10 }) },
+                {},
+                basePrices as any,
+            )
+
+            expect(delta.electricity).toBe(400_000)
+            expect(delta.waste).toBe(10)
+        })
+
+        it("combines bought subtraction and production addition", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 1000
+            const afterPurchase = { ...goods }
+            afterPurchase.oil = 700 // 300 bought
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: emptySectorResult({ electricity: 400_000 }) },
+                {},
+                basePrices as any,
+            )
+
+            expect(delta.oil).toBe(-300)
+            expect(delta.electricity).toBe(400_000)
+        })
+
+        it("skips sectors with productionRatio <= 0", () => {
+            const goods = createStarterWarehouse(0)
+            const afterPurchase = { ...goods }
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: { ...emptySectorResult({ electricity: 400_000 }), productionRatio: 0 } },
+                {},
+                basePrices as any,
+            )
+
+            expect(delta.electricity).toBe(0)
+        })
+
+        it("merges replenishment delta into colony goods delta", () => {
+            const goods = createStarterWarehouse(0)
+            const afterPurchase = { ...goods }
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                [],
+                {},
+                { machinery: 50, electronics: 25 },
+                basePrices as any,
+            )
+
+            expect(delta.machinery).toBe(50)
+            expect(delta.electronics).toBe(25)
+        })
+    })
+
+    describe("applyGoodsModifier", () => {
+        it("adds positive deltas to goods", () => {
+            const goods = createStarterWarehouse(0)
+            goods.electricity = 100_000
+
+            applyGoodsModifier(goods, { electricity: 400_000, waste: 10 }, (cur, d) => cur + d)
+
+            expect(goods.electricity).toBe(500_000)
+            expect(goods.waste).toBe(10)
+        })
+
+        it("subtracts deltas from goods (requirements/consumption)", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 1000
+
+            applyGoodsModifier(goods, { oil: 300 }, (cur, d) => Math.max(0, cur - d))
+
+            expect(goods.oil).toBe(700)
+        })
+
+        it("floors at 0 when subtracting more than available", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 100
+
+            applyGoodsModifier(goods, { oil: 500 }, (cur, d) => Math.max(0, cur - d))
+
+            expect(goods.oil).toBe(0)
+        })
+
+        it("handles multiple goods deltas at once", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 1000
+            goods.paper = 500
+            goods.electricity = 100_000
+
+            applyGoodsModifier(
+                goods,
+                { oil: -200, paper: -100, electricity: 400_000 },
+                (cur, d) => cur + d,
+            )
+
+            expect(goods.oil).toBe(800)
+            expect(goods.paper).toBe(400)
+            expect(goods.electricity).toBe(500_000)
+        })
+
+        it("does not create new goods keys for zero deltas", () => {
+            const goods = createStarterWarehouse(0)
+            const beforeKeys = Object.keys(goods)
+
+            applyGoodsModifier(goods, { oil: 0, electricity: 0 }, (cur, d) => cur + d)
+
+            expect(Object.keys(goods).sort()).toEqual(beforeKeys.sort())
+        })
+    })
+
+    describe("full colony pool flow", () => {
+        it("computes net colony goods change from purchase + production", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 1000
+            goods.electricity = 0
+
+            const afterPurchase = { ...goods }
+            afterPurchase.oil = 700 // 300 oil bought by sector
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: emptySectorResult({ electricity: 400_000, waste: 10 }) },
+                {},
+                basePrices as any,
+            )
+
+            // oil: -300 (bought), electricity: +400000 (produced), waste: +10 (produced)
+            expect(delta.oil).toBe(-300)
+            expect(delta.electricity).toBe(400_000)
+            expect(delta.waste).toBe(10)
+
+            // Apply delta to get final colony goods
+            const finalGoods = { ...goods } as Goods
+            applyGoodsModifier(finalGoods, delta, (cur, d) => cur + d)
+
+            expect(finalGoods.oil).toBe(700) // 1000 - 300
+            expect(finalGoods.electricity).toBe(400_000) // 0 + 400000
+            expect(finalGoods.waste).toBe(10) // 0 + 10
+        })
+
+        it("handles production exceeding available stock (net add)", () => {
+            const goods = createStarterWarehouse(0)
+            goods.oil = 100
+
+            const afterPurchase = { ...goods }
+            // Sector buys all 100 oil
+            afterPurchase.oil = 0
+
+            const delta = computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: emptySectorResult({ electricity: 400_000 }) },
+                {},
+                basePrices as any,
+            )
+
+            expect(delta.oil).toBe(-100)
+            expect(delta.electricity).toBe(400_000)
+
+            const finalGoods = { ...goods } as Goods
+            applyGoodsModifier(finalGoods, delta, (cur, d) => cur + d)
+
+            expect(finalGoods.oil).toBe(0)
+            expect(finalGoods.electricity).toBe(400_000)
+        })
+    })
+})
