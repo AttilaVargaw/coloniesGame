@@ -11,7 +11,10 @@ import {
 	applyGoodsModifier,
 	computeMarketRatios,
 } from "../workers/industryTickHelpers";
+import { processCapital } from "../workers/capitalSystem";
 import { buildAdjustedSalaries, updateWageMemory } from "../workers/wageSystem";
+import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import type { IndustryTickInput } from "../workers/IndustryTickInput";
 import type { IndustryTickResult } from "../workers/IndustryTickResult";
 import type { SectorBid } from "../workers/SectorBid";
@@ -19,14 +22,6 @@ import type { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
-
-const defaultDecisions: SectorDecisions = {
-	stopProduction: false,
-	sectorInvestment: 0,
-	laborAssigned: 0,
-	restartProduction: false,
-	buyCapital: false,
-};
 
 export interface SimState {
 	priceMemory: Partial<Record<keyof Goods, number>>;
@@ -60,6 +55,9 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		materialRequirementMultipliers,
 		capitalMultipliers,
 		selectedMethod,
+		colonyTreasury,
+		sectorInvestment,
+		activeLaws,
 	} = input;
 
 	const prices = getPrices(goods, state.priceMemory);
@@ -90,19 +88,53 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			continue;
 		}
 
-		// Use default decisions (no behavior tree) — keeps the simulator deterministic
+		const config = industrySectorBlueprints.get(name);
+		const sectorMoney = startingMoney[name] ?? 0;
+		const blackboard = buildBlackboard(
+			name,
+			sectorMoney,
+			capitalStock[name] ?? {},
+			previousSectorProfits[name] ?? 0,
+			previousSectorRevenue[name] ?? 0,
+			previousSectorLaborCosts[name] ?? 0,
+			previousSectorInputCosts[name] ?? 0,
+			previousSectorUtilization[name] ?? 0,
+			laborAssigned[name] ?? 0,
+			population.worker.number,
+			prices,
+			adjustedSalaries,
+			{},
+			config?.capitalGoods,
+			config?.workerRequirement,
+			config?.goodsProduction,
+			0,
+			0,
+			0.5,
+			sectorInvestment[name] ?? 0,
+		);
+		const tree = createSectorTree(blackboard);
+		tree.tick(blackboard);
+
+		if (blackboard.decisions.stopProduction) {
+			continue;
+		}
+
 		const techMultiplier = techMultipliers[name] ?? 1;
+		let laborAssignedVal =
+			blackboard.decisions.laborAssigned > 0
+				? blackboard.decisions.laborAssigned
+				: laborAssigned[name] ?? 0;
 		const capitalStockVal = capitalStock[name] ?? {};
 
 		const bid = buildSectorBid(
 			name,
 			prices,
 			techMultiplier,
-			laborAssigned[name] ?? 0,
+			laborAssignedVal,
 			capitalStockVal,
 			adjustedSalaries,
 			previousSectorProfits[name] ?? 0,
-			defaultDecisions,
+			blackboard.decisions,
 			{
 				workerEfficiencyMultipliers,
 				materialRequirementMultipliers,
@@ -116,7 +148,6 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 	}
 
-	// Worker market ratios from aggregate demand vs available population
 	const { workerMarketRatios } = calculateMarketRatios(sectorBids, population);
 
 	updateWageMemory(state.wageMemory, workerMarketRatios);
@@ -127,7 +158,12 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	let newMoney: Record<string, number> = { ...startingMoney };
 
-	const { colonyGoodsAfterPurchase } = buySectorInputs(sectorBids, goods, newMoney, prices);
+	const { colonyGoodsAfterPurchase } = buySectorInputs(
+		sectorBids,
+		goods,
+		newMoney,
+		prices
+	);
 
 	const {
 		sectorResults,
@@ -163,15 +199,24 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		newMoney
 	);
 
-	// Capital: keep stock constant (no processCapital) to keep simulator deterministic
-	const newCapitalStock = { ...capitalStock };
+	const { newCapitalStock, replenishmentDelta, moneySpent } = processCapital(
+		Array.from(activeSectors),
+		capitalStock,
+		sectorResults,
+		prices,
+		newMoney
+	);
+
+	for (const name of activeSectors) {
+		newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
+	}
 
 	const colonyGoodsDelta = computeColonyGoodsDelta(
 		goods,
 		colonyGoodsAfterPurchase,
 		activeSectors,
 		sectorResults,
-		{}, // no replenishment delta
+		replenishmentDelta,
 		prices
 	);
 
@@ -182,6 +227,19 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			colonyGoodsProduction[key as keyof Goods] = value;
 		} else if (value < 0) {
 			colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
+		}
+	}
+
+	// Apply population updates from this tick to carry forward
+	const updatedPopulation: Population = { ...population };
+	for (const [key, update] of Object.entries(populationUpdates)) {
+		const pop = updatedPopulation[key as keyof Population];
+		if (!pop) continue;
+		if (update.number !== undefined) {
+			updatedPopulation[key as keyof Population] = {
+				...pop,
+				number: update.number,
+			};
 		}
 	}
 
@@ -219,7 +277,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	state.lastResult = result;
 	state.tick++;
 
-	return buildPatch(result);
+	return buildPatch(result, updatedPopulation);
 }
 
 export interface IndustryTickPatch {
@@ -241,6 +299,7 @@ export interface IndustryTickPatch {
 	capitalStock?: Record<string, Partial<Goods>>;
 	money?: Record<string, number>;
 	sectorResults?: any;
+	population?: Population;
 }
 
 function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): Record<keyof Goods, number> {
@@ -248,18 +307,59 @@ function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): 
 	const priceMinMultiplier = 0.1;
 	const priceMaxMultiplier = 10;
 	const basePrices: Record<keyof Goods, number> = {
-		food: 30, meat: 60, tourism: 300, consumerGoods: 100, water: 10, electricity: 20,
-		furniture: 10, luxuryFurniture: 120, services: 15, agriculturalGoods: 20,
-		tylium: 150, metals: 150, uranium: 100, machinery: 50, medicine: 20, wood: 20,
-		lumber: 30, oil: 100, spaceTransport: 2000, ammunition: 20, weapons: 30,
-		nuclearWeapons: 300, ordnance: 50, vehicles: 80, electronics: 60,
-		environmentFactor: 50, faith: 40, lawEnforcement: 40, healthcare: 70,
-		chemicals: 20, buildings: 20, waste: 2, governance: 40, aircraft: 1000,
-		clothing: 100, ships: 100, railroadVehicles: 100, paper: 20, post: 40,
-		entertainment: 30, itServices: 50, education: 80, alcoholDrinks: 50,
-		stimulantDrinks: 50, retail: 100, automotiveMobility: 100, railroadMobility: 100,
-		shipMobility: 100, airMobility: 100, ore: 100, defense: 100,
-		monetaryServices: 200, militaryVehicles: 500,
+		food: 30,
+		meat: 60,
+		tourism: 300,
+		consumerGoods: 100,
+		water: 10,
+		electricity: 20,
+		furniture: 10,
+		luxuryFurniture: 120,
+		services: 15,
+		agriculturalGoods: 20,
+		tylium: 150,
+		metals: 150,
+		uranium: 100,
+		machinery: 50,
+		medicine: 20,
+		wood: 20,
+		lumber: 30,
+		oil: 100,
+		spaceTransport: 2000,
+		ammunition: 20,
+		weapons: 30,
+		nuclearWeapons: 300,
+		ordnance: 50,
+		vehicles: 80,
+		electronics: 60,
+		environmentFactor: 50,
+		faith: 40,
+		lawEnforcement: 40,
+		healthcare: 70,
+		chemicals: 20,
+		buildings: 20,
+		waste: 2,
+		governance: 40,
+		aircraft: 1000,
+		clothing: 100,
+		ships: 100,
+		railroadVehicles: 100,
+		paper: 20,
+		post: 40,
+		entertainment: 30,
+		itServices: 50,
+		education: 80,
+		alcoholDrinks: 50,
+		stimulantDrinks: 50,
+		retail: 100,
+		automotiveMobility: 100,
+		railroadMobility: 100,
+		shipMobility: 100,
+		airMobility: 100,
+		ore: 100,
+		defense: 100,
+		monetaryServices: 200,
+		militaryVehicles: 500,
 	};
 
 	const prices: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
@@ -321,7 +421,10 @@ function finalizeGoods(
 	return finalGoods;
 }
 
-function buildPatch(result: IndustryTickResult): IndustryTickPatch {
+function buildPatch(
+	result: IndustryTickResult,
+	updatedPopulation: Population
+): IndustryTickPatch {
 	return {
 		entityId: result.entityId,
 		goods: result.goods,
@@ -341,6 +444,7 @@ function buildPatch(result: IndustryTickResult): IndustryTickPatch {
 		capitalStock: result.capitalStock,
 		money: result.money,
 		sectorResults: result.sectorResults,
+		population: updatedPopulation,
 	};
 }
 

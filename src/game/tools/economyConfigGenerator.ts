@@ -30,14 +30,11 @@ export const BASIC_SECTORS: (keyof IndustrialSectors)[] = [
 	"furnitureFactory",
 	"ammunitionFactory",
 	"weaponFactory",
-	//"spaceShips",
-	//"spaceInfrastructure",
 	"construction",
 	"services",
 	"tourism",
 	"education",
 	"healthcare",
-	// "environmentControl",
 	"chemical",
 	"bank",
 	"religion",
@@ -63,64 +60,8 @@ export const BASIC_SECTORS: (keyof IndustrialSectors)[] = [
 	"automotiveInfrastructure",
 	"defense",
 	"militaryVehicles",
-	// "spaceGoodsTransport",
 	"greenEnergy",
 ];
-
-console.log({a: BASIC_SECTORS.length})
-
-const basicGoods = new Set<keyof Goods>([
-	"food",
-	"meat",
-	"tourism",
-	"consumerGoods",
-	"water",
-	"electricity",
-	"furniture",
-	"luxuryFurniture",
-	"services",
-	"agriculturalGoods",
-	"metals",
-	"uranium",
-	"machinery",
-	"medicine",
-	"wood",
-	"lumber",
-	"oil",
-	"ammunition",
-	"weapons",
-	"ordnance",
-	"vehicles",
-	"electronics",
-	"environmentFactor",
-	"faith",
-	"lawEnforcement",
-	"healthcare",
-	"chemicals",
-	"buildings",
-	"waste",
-	"governance",
-	"railroadVehicles",
-	"ships",
-	"aircraft",
-	"clothing",
-	"post",
-	"paper",
-	"entertainment",
-	"itServices",
-	"education",
-	"alcoholDrinks",
-	"stimulantDrinks",
-	"retail",
-	"automotiveMobility",
-	"railroadMobility",
-	"shipMobility",
-	"airMobility",
-	"ore",
-	"defense",
-	"monetaryServices",
-	"militaryVehicles"
-]);
 
 export interface ColonyConfig {
 	populationSize: number;
@@ -207,7 +148,7 @@ export function generateColonyConfig(config: Partial<ColonyConfig> = {}): Indust
 	};
 }
 
-const numSectors = 17
+const numSectors = BASIC_SECTORS.length;
 
 export function generateRandomConfig(seed: number, populationSize: number): IndustryTickInput {
 	let s = seed;
@@ -216,7 +157,6 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 		return s / 4294967296;
 	};
 
-	// const populationSize = Math.round(500_000 + next() * 4_500_000);
 	const starterMoneyPerSector = Math.round(1_000_000 + next() * 10_000_000);
 	const capitalStockMultiplier = 1 + next() * 20;
 
@@ -229,6 +169,6 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 		activeSectors,
 		starterMoneyPerSector,
 		capitalStockMultiplier,
-		initialGoodsMultiplier: 5,
+		initialGoodsMultiplier: 500,
 	});
 }

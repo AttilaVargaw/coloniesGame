@@ -121,7 +121,6 @@ function createInteractionComponents(
                 starterCapitalStock[sector] = {}
                 starterStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    console.log(goodKey, rate, economies.get(body.id), sector)
                     //@ts-ignore
                     starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, economies.get(body.id)?.[sector] * rate || 0)
                 }
