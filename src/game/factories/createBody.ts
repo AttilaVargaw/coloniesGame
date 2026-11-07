@@ -38,6 +38,7 @@ import { TextureComponent } from "@engine/components/textureComponent"
 import { SizeComponent } from "@engine/components/sizeComponent"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { getTextureWorkerPool } from "./textureWorkerPool"
+import { economies } from "./generatedEconomy"
 
 export function resolveMass(blueprint: BodyBlueprint): number {
     return blueprint.mass ?? massByArchetype[blueprint.archetype]
@@ -87,7 +88,6 @@ function createInteractionComponents(
     clickSquare: { width: number; height: number },
     engine: Engine,
     body: Entity,
-    starterIndustries?: Partial<Record<keyof IndustrialSectors, number>>,
     populationRatioOverride?: number,
     occupationStarterRatioOverride?: Partial<Record<keyof Population, number>>
 ): EntityComponent[] {
@@ -105,11 +105,6 @@ function createInteractionComponents(
 
     if(population !== undefined) {
         const starterSectors = createStarterIndustry(population * effectiveRatio);
-        if(starterIndustries) {
-            for(const key of Object.keys(starterIndustries) as (keyof IndustrialSectors)[]) {
-                starterSectors.add(key);
-            }
-        }
 
         const BUDGET_RUNWAY_DAYS = 500
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
@@ -126,7 +121,9 @@ function createInteractionComponents(
                 starterCapitalStock[sector] = {}
                 starterStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round((starterIndustries?.[sector] ?? 1) * rate * population / 800_000))
+                    console.log(goodKey, rate, economies.get(body.id), sector)
+                    //@ts-ignore
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, economies.get(body.id)?.[sector] * rate || 0)
                 }
                 for(const [goodKey, rate] of Object.entries(config.goodsRequirements ?? {})) {
                     starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 1_000_000))
@@ -293,7 +290,6 @@ export async function createBody({
     rings,
     asteroidBelts,
     name,
-    starterIndustries,
     mass: explicitMass,
     buildable,
     allowedSettlementTypes,
@@ -396,7 +392,7 @@ export async function createBody({
     const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
     !isRoot && applyComponents(
         body,
-        ...createInteractionComponents(population, clickSize, clickSquare, engine, body, starterIndustries, effectivePopulationRatio, blueprintOccupationStarterRatio))
+        ...createInteractionComponents(population, clickSize, clickSquare, engine, body, effectivePopulationRatio, blueprintOccupationStarterRatio))
 
     if(rings?.length) {
         await createRings(rings, body, engine)

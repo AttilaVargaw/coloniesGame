@@ -15,45 +15,11 @@ export const heliosDelta = {
             archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.1, angle: Math.PI / 3, eccentricity: 0.007, inclination: 0 },
             name: "Canceron",
             population: 6_700_000_000,
-            starterIndustries: {
-                // farm: 29_480_000,
-                // foodFactory: 402_000_000,
-                // meat: 335_000_000,
-                // mine: 67_000_000,
-                // metalFactory: 70_500_000,
-                // oilRig: 37_520_000,
-                // powerPlant: 53_600_000,
-                // consumerFactory: 536_000_000,
-                // furnitureFactory: 335_000_000,
-                // clothing: 670_000_000,
-                // // services: 402_000_000,
-                // // retail: 335_000_000,
-                // bank: 670_000_000,
-                // government: 670_00_000,
-                // construction: 80_400_000,
-                // // lawEnforcement: 335_000_000,
-                // // healthcare: 268_000_000,
-                // // education: 60_300_000,
-                // machineryFactory: 26_800_000,
-            }
         }],
     }, {
         bodies: [{
             marker: { color: "#849cbe", radius: 10, label: "Aquaria" },
             archetype: "kobol", orbit: { radius: SOLAR_UNIT * 1.35, inclination: 0.4 }, name: "Aquaria", population: 25_000,
-            starterIndustries: {
-                // fishery: 150,
-                // foodFactory: 1500,
-                // waterTreatment: 125,
-                // powerPlant: 100,
-                // // services: 1500,
-                // // healthcare: 1000,
-                // // education: 225,
-                // retail: 1250,
-                // tourism: 2100,
-                // government: 2500,
-                // construction: 150,
-            }
         }],
     }, {
         bodies: [{
@@ -64,22 +30,6 @@ export const heliosDelta = {
                 eccentricity: 0.007,
                 inclination: 0
             }, name: "Aerilon", population: 1_200_000_000,
-            starterIndustries: {
-                // farm: 10_560_000,
-                // foodFactory: 36_000_000,
-                // meat: 24_000_000,
-                // forestry: 15_600_000,
-                // lumberMill: 3_840_000,
-                // mine: 3_000_000,
-                // metalFactory: 2_526_000,
-                // machineryFactory: 2_400_000,
-                // waterTreatment: 6_000_000,
-                // powerPlant: 4_800_000,
-                // // services: 36_000_000,
-                // // retail: 30_000_000,
-                // // education: 10_800_000,
-                // // healthcare: 24_000_000,
-            }
         }],
     }, {
         bodies: [{

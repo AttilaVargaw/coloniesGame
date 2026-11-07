@@ -1,4 +1,4 @@
-export const UNIVERSE_SCALE = 30 
+export const UNIVERSE_SCALE = 30
 
 export const SHIP_RADIUS = 6
 export const SENSOR_SUITE_DEFAULT_RANGE = 30
@@ -52,3 +52,5 @@ export const ColonyType = {
 } as const
 
 export type ColonyType = typeof ColonyType[keyof typeof ColonyType]
+
+export const StarDistance = 600

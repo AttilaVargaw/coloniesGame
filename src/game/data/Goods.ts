@@ -1,4 +1,3 @@
-import { ReadonlyRecord } from "@/lib/readonlyRecord";
 import { getLowestRatio } from "../utils/getLowestRatio";
 
 export type Goods = {
@@ -213,7 +212,7 @@ export const basePrices = {
     defense: 100,
     monetaryServices: 200,
     militaryVehicles: 500
-} satisfies ReadonlyRecord<keyof Goods, number>
+} satisfies Record<keyof Goods, number>
 
 export const godsCategories = new Map<string, Set<keyof Goods>>([
     ["publicServices", new Set(["governance", "healthcare", "lawEnforcement", "education", "post"])],
