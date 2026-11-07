@@ -18,18 +18,13 @@ export const BASIC_SECTORS: (keyof IndustrialSectors)[] = [
 	"farm",
 	"fishery",
 	"foodFactory",
-	"meat",
 	"waterTreatment",
 	"powerPlant",
 	"nuclearSector",
 	"metalFactory",
-	"lumberMill",
 	"machineryFactory",
 	"medicineFactory",
 	"consumerFactory",
-	"furnitureFactory",
-	"ammunitionFactory",
-	"weaponFactory",
 	"construction",
 	"services",
 	"tourism",
@@ -39,28 +34,15 @@ export const BASIC_SECTORS: (keyof IndustrialSectors)[] = [
 	"bank",
 	"religion",
 	"lawEnforcement",
-	"alternativeMedicine",
 	"recycling",
 	"government",
 	"automotive",
 	"electronics",
-	"railroadVehicles",
-	"aircraft",
-	"clothing",
-	"ships",
-	"postalServices",
+	"logistics",
 	"paperFactory",
 	"entertainmentIndustry",
-	"informationTechnology",
-	"drinkIndustry",
-	"retail",
-	"railroadInfrastructure",
-	"shipInfrastructure",
-	"aircraftInfrastructure",
-	"automotiveInfrastructure",
 	"defense",
-	"militaryVehicles",
-	"greenEnergy",
+	"militaryEquipment",
 ];
 
 export interface ColonyConfig {
@@ -77,7 +59,7 @@ const DEFAULT_CONFIG: ColonyConfig = {
 	starterMoneyPerSector: 50_000_000,
 	capitalStockMultiplier: 1,
 	initialGoodsMultiplier: 50_000,
-};
+} as const;
 
 /** Seed capital stock so capitalRatio doesn't start at 0. */
 function seedCapitalStock(

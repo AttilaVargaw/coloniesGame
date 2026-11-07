@@ -8,13 +8,10 @@ import { CAN_BE_NEGATIVE } from "../data/Goods"
 function makeGoods(overrides: Partial<Goods> = {}): Goods {
     return {
         food: 0,
-        meat: 0,
         tourism: 0,
         consumerGoods: 0,
         water: 0,
-        electricity: 0,
-        furniture: 0,
-        luxuryFurniture: 0,
+        energy: 0,
         services: 0,
         agriculturalGoods: 0,
         tylium: 0,
@@ -22,16 +19,11 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         uranium: 0,
         machinery: 0,
         medicine: 0,
-        wood: 0,
         lumber: 0,
         oil: 0,
         spaceTransport: 0,
-        ammunition: 0,
-        weapons: 0,
         nuclearWeapons: 0,
-        ordnance: 0,
         vehicles: 0,
-        electronics: 0,
         environmentFactor: 0,
         faith: 0,
         lawEnforcement: 0,
@@ -40,26 +32,16 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         buildings: 0,
         waste: 0,
         governance: 0,
-        railroadVehicles: 0,
-        ships: 0,
-        aircraft: 0,
-        clothing: 0,
-        post: 0,
+        logistics: 0,
         paper: 0,
         entertainment: 0,
-        itServices: 0,
         education: 0,
-        alcoholDrinks: 0,
-        stimulantDrinks: 0,
         retail: 0,
-        automotiveMobility: 0,
-        railroadMobility: 0,
-        shipMobility: 0,
-        airMobility: 0,
         ore: 0,
         defense: 0,
         monetaryServices: 0,
-        militaryVehicles: 0,
+        militaryEquipment: 0,
+        mobility: 0,
         ...overrides,
     }
 }
@@ -131,7 +113,7 @@ describe("IndustryComponent", () => {
         const goods = makeGoods()
         const population = makePopulation()
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {
-            powerPlant: { machinery: 5, electronics: 1, buildings: 1 },
+            powerPlant: { machinery: 5, buildings: 1 },
         }
 
         const industry = new IndustryComponent(

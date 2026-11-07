@@ -20,7 +20,7 @@ function makeBid(name: string): SectorBid {
 }
 
 describe("distributePopulationSpending", () => {
-    const prices: Record<string, number> = { food: 30, oil: 100, electricity: 20 }
+    const prices: Record<string, number> = { food: 30, oil: 100, energy: 20 }
 
     it("returns newMoney unchanged when there are no bids", () => {
         const bids: SectorBid[] = []
@@ -69,9 +69,9 @@ describe("distributePopulationSpending", () => {
     it("skips goods with zero or negative production", () => {
         const bids = [makeBid("sectorA")]
         const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { food: 0, oil: -10, electricity: 100 } },
+            sectorA: { producedGoods: { food: 0, oil: -10, energy: 100 } },
         }
-        const populationConsumption = { electricity: 50 }
+        const populationConsumption = { energy: 50 }
         const newMoney = { sectorA: 1000 }
 
         const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)

@@ -77,7 +77,7 @@ describe("industry sector calculations", () => {
         it("calculates goods production with outputLevel = 1", () => {
             const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
             expect(bid).not.toBeNull()
-            expect(bid!.idealGoodsProduction.electricity).toBe(400_000)
+            expect(bid!.idealGoodsProduction.energy).toBe(400_000)
             expect(bid!.idealGoodsProduction.waste).toBe(10)
         })
 
@@ -88,7 +88,7 @@ describe("industry sector calculations", () => {
             expect(bid!.idealWorkerDemand.worker).toBe(8900)
             expect(bid!.idealWorkerDemand.clerks).toBe(500)
             expect(bid!.idealGoodsDemand.oil).toBe(1400)
-            expect(bid!.idealGoodsProduction.electricity).toBe(400_000) // outputLevel unchanged = 1
+            expect(bid!.idealGoodsProduction.energy).toBe(400_000) // outputLevel unchanged = 1
         })
 
         it("sets budgetRatio = 1 when money is sufficient", () => {
@@ -112,7 +112,7 @@ describe("industry sector calculations", () => {
                 basePrices as any,
                 1,
                 0,
-                { machinery: 0.5, electronics: 0.1, buildings: 0.1 },
+                { machinery: 0.5, buildings: 0.1 },
                 baseSalaries as any,
                 0,
                 { ...decisions, stopProduction: true } as SectorDecisions,
@@ -147,7 +147,7 @@ describe("industry sector calculations", () => {
             expect(sectorResult!.consumedGoods.governance).toBe(20)
 
             // Goods produced
-            expect(sectorResult!.producedGoods.electricity).toBe(400_000)
+            expect(sectorResult!.producedGoods.energy).toBe(400_000)
             expect(sectorResult!.producedGoods.waste).toBe(10)
 
             // Workers employed
@@ -208,7 +208,7 @@ describe("industry sector calculations", () => {
             const sectorResult = result.sectorResults["powerPlant"]
             expect(sectorResult!.productionRatio).toBe(1)
             expect(sectorResult!.consumedGoods.oil).toBe(140)
-            expect(sectorResult!.producedGoods.electricity).toBe(400_000)
+            expect(sectorResult!.producedGoods.energy).toBe(400_000)
         })
 
         it("scales everything proportionally when money is insufficient", () => {
@@ -233,7 +233,7 @@ describe("industry sector calculations", () => {
             expect(sectorResult!.consumedGoods.paper).toBeCloseTo(10 * bid!.budgetRatio, 1)
 
             // Goods produced scale proportionally
-            expect(sectorResult!.producedGoods.electricity).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
+            expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
 
             // Revenue, costs and profit all scale proportionally
             expect(result.sectorRevenue["powerPlant"]).toBeCloseTo(8_000_020 * bid!.budgetRatio, 0)

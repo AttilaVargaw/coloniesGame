@@ -2,7 +2,6 @@ import { PlanetArchetype } from "../factories/helpers";
 import { VesselBlueprint } from "./VesselBlueprint";
 import { OrbitalBlueprint } from "./OrbitalBlueprint";
 import { MapMarker } from "./MapMarker";
-import { IndustrialSectors } from "../components/Factories";
 import { Population } from "./Population";
 
 export type BodyBlueprint = Readonly<{

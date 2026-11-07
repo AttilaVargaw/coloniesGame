@@ -96,12 +96,12 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: emptySectorResult({ electricity: 400_000, waste: 10 }) },
+                { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
                 {},
                 basePrices as any,
             )
 
-            expect(delta.electricity).toBe(400_000)
+            expect(delta.energy).toBe(400_000)
             expect(delta.waste).toBe(10)
         })
 
@@ -115,13 +115,13 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: emptySectorResult({ electricity: 400_000 }) },
+                { powerPlant: emptySectorResult({ energy: 400_000 }) },
                 {},
                 basePrices as any,
             )
 
             expect(delta.oil).toBe(-300)
-            expect(delta.electricity).toBe(400_000)
+            expect(delta.energy).toBe(400_000)
         })
 
         it("skips sectors with productionRatio <= 0", () => {
@@ -132,12 +132,12 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: { ...emptySectorResult({ electricity: 400_000 }), productionRatio: 0 } },
+                { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: 0 } },
                 {},
                 basePrices as any,
             )
 
-            expect(delta.electricity).toBe(0)
+            expect(delta.energy).toBe(0)
         })
 
         it("merges replenishment delta into colony goods delta", () => {
@@ -149,23 +149,22 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 [],
                 {},
-                { machinery: 50, electronics: 25 },
+                { machinery: 50 },
                 basePrices as any,
             )
 
             expect(delta.machinery).toBe(50)
-            expect(delta.electronics).toBe(25)
         })
     })
 
     describe("applyGoodsModifier", () => {
         it("adds positive deltas to goods", () => {
             const goods = createStarterWarehouse(0)
-            goods.electricity = 100_000
+            goods.energy = 100_000
 
-            applyGoodsModifier(goods, { electricity: 400_000, waste: 10 }, (cur, d) => cur + d)
+            applyGoodsModifier(goods, { energy: 400_000, waste: 10 }, (cur, d) => cur + d)
 
-            expect(goods.electricity).toBe(500_000)
+            expect(goods.energy).toBe(500_000)
             expect(goods.waste).toBe(10)
         })
 
@@ -191,24 +190,24 @@ describe("colony goods pool changes", () => {
             const goods = createStarterWarehouse(0)
             goods.oil = 1000
             goods.paper = 500
-            goods.electricity = 100_000
+            goods.energy = 100_000
 
             applyGoodsModifier(
                 goods,
-                { oil: -200, paper: -100, electricity: 400_000 },
+                { oil: -200, paper: -100, energy: 400_000 },
                 (cur, d) => cur + d,
             )
 
             expect(goods.oil).toBe(800)
             expect(goods.paper).toBe(400)
-            expect(goods.electricity).toBe(500_000)
+            expect(goods.energy).toBe(500_000)
         })
 
         it("does not create new goods keys for zero deltas", () => {
             const goods = createStarterWarehouse(0)
             const beforeKeys = Object.keys(goods)
 
-            applyGoodsModifier(goods, { oil: 0, electricity: 0 }, (cur, d) => cur + d)
+            applyGoodsModifier(goods, { oil: 0, energy: 0 }, (cur, d) => cur + d)
 
             expect(Object.keys(goods).sort()).toEqual(beforeKeys.sort())
         })
@@ -218,7 +217,7 @@ describe("colony goods pool changes", () => {
         it("computes net colony goods change from purchase + production", () => {
             const goods = createStarterWarehouse(0)
             goods.oil = 1000
-            goods.electricity = 0
+            goods.energy = 0
 
             const afterPurchase = { ...goods }
             afterPurchase.oil = 700 // 300 oil bought by sector
@@ -227,14 +226,14 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: emptySectorResult({ electricity: 400_000, waste: 10 }) },
+                { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
                 {},
                 basePrices as any,
             )
 
             // oil: -300 (bought), electricity: +400000 (produced), waste: +10 (produced)
             expect(delta.oil).toBe(-300)
-            expect(delta.electricity).toBe(400_000)
+            expect(delta.energy).toBe(400_000)
             expect(delta.waste).toBe(10)
 
             // Apply delta to get final colony goods
@@ -242,7 +241,7 @@ describe("colony goods pool changes", () => {
             applyGoodsModifier(finalGoods, delta, (cur, d) => cur + d)
 
             expect(finalGoods.oil).toBe(700) // 1000 - 300
-            expect(finalGoods.electricity).toBe(400_000) // 0 + 400000
+            expect(finalGoods.energy).toBe(400_000) // 0 + 400000
             expect(finalGoods.waste).toBe(10) // 0 + 10
         })
 
@@ -258,19 +257,19 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: emptySectorResult({ electricity: 400_000 }) },
+                { powerPlant: emptySectorResult({ energy: 400_000 }) },
                 {},
                 basePrices as any,
             )
 
             expect(delta.oil).toBe(-100)
-            expect(delta.electricity).toBe(400_000)
+            expect(delta.energy).toBe(400_000)
 
             const finalGoods = { ...goods } as Goods
             applyGoodsModifier(finalGoods, delta, (cur, d) => cur + d)
 
             expect(finalGoods.oil).toBe(0)
-            expect(finalGoods.electricity).toBe(400_000)
+            expect(finalGoods.energy).toBe(400_000)
         })
     })
 })

@@ -23,10 +23,9 @@ const CURATED_SECTORS: (keyof IndustrialSectors)[] = [
 	"construction",
 	"government",
 	"services",
-	"retail",
 ];
 
-const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "electricity", "agriculturalGoods", "furniture", "oil", "buildings", "weapons", "clothing", "tourism"];
+const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "agriculturalGoods", "oil", "buildings", "tourism"];
 const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = ["powerPlant", "waterTreatment", "farm", "foodFactory", "oilRig"
 	// "furnitureFactory", "oilRig", "construction", "government", "services", "retail"
 ];

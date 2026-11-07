@@ -200,7 +200,7 @@ describe("sector result utilities", () => {
         it("returns true when producedGoods changed", () => {
             expect(sectorResultChanged(
                 makeSectorResult({ producedGoods: {} }),
-                makeSectorResult({ producedGoods: { electricity: 1000 } }),
+                makeSectorResult({ producedGoods: { energy: 1000 } }),
             )).toBe(true)
         })
 

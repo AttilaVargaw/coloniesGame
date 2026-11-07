@@ -117,7 +117,7 @@ describe("buildSectorBid capital adequacy scaling", () => {
             prices as any,
             1,
             0,
-            { machinery: 5, electronics: 1, buildings: 1 },
+            { machinery: 5, buildings: 1 },
             salaries as any,
             0,
             { ...decisions, stopProduction: true } as SectorDecisions,

@@ -19,7 +19,7 @@ export function createStarterPopulation(n: number, occupationStarterRatioOverrid
             birthRate: 1,
             mortality: 0,
             populationChange: 0,
-            qol: 20,
+            qol: 5,
             expectedQol: 50,
             salary: baseSalaries[key as keyof Population]
         };

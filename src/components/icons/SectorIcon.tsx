@@ -6,26 +6,17 @@ import {
     CircleDollarSign,
     Clapperboard,
     Droplets,
-    Factory,
     FlaskConical,
     Landmark,
     LucideProps,
     Mail,
     Newspaper,
     Plane,
-    PlaneLanding,
     Recycle,
     Shield,
-    Ship,
-    ShipIcon,
     ShipWheel,
-    Shirt,
-    Sofa,
     Stone,
-    TrainIcon,
-    TrainTrack,
     Zap,
-    Vegan,
     UserGroupIcon,
     GpuIcon,
     Ambulance,
@@ -39,37 +30,21 @@ import {
     Satellite,
     Cog,
     Tractor,
-    Ham,
-    BottleWine,
-    SolarPanel
 } from "lucide-react";
 
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 import { FaOilCan } from "react-icons/fa6";
 import { GiGreekTemple, GiRifle } from "react-icons/gi";
 
-const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>> = {
-    aircraft: Plane,
-    greenEnergy : SolarPanel,
-    aircraftInfrastructure: PlaneLanding,
+const ICON_MAP = {
     automotive: Car,
-    automotiveInfrastructure: Factory,
     chemical: FlaskConical,
-    clothing: Shirt,
     defense: Shield,
-    militaryVehicles: InfantryFightingVehicle,
-    railroadVehicles: TrainIcon,
-    railroadInfrastructure: TrainTrack,
-    ships: ShipIcon,
-    shipInfrastructure: Ship,
     tourism: Plane,
-    postalServices: Mail,
+    logistics: Mail,
     waterTreatment: Droplets,
-    alternativeMedicine: Vegan,
-    ammunitionFactory: GiRifle,
+    weaponFactory: GiRifle,
     bank: CircleDollarSign,
-    furnitureFactory: Sofa,
-    drinkIndustry: BottleWine,
     mine: Stone,
     paperFactory: Newspaper,
     construction: BrickWall,
@@ -86,25 +61,21 @@ const ICON_MAP: Record<keyof IndustrialSectors, React.ComponentType<LucideProps>
     farm: Tractor,
     forestry: TreePine,
     services: UserGroupIcon,
-    meat: Ham,
-    retail: Shirt,
     foodFactory: Cookie,
     powerPlant: Zap,
     nuclearSector: Atom,
     metalFactory: FactoryIcon,
-    lumberMill: TreePine,
     environmentControl: VeganIcon,
-    informationTechnology: GpuIcon,
     lawEnforcement: Shield,
     machineryFactory: Cog,
     medicineFactory: BriefcaseMedical,
     religion: GiGreekTemple,
-    weaponFactory: GiRifle,
     spaceInfrastructure: Satellite,
-    spaceGoodsTransport: Satellite
-} as const
+    spaceGoodsTransport: Satellite,
+    militaryEquipment: InfantryFightingVehicle
+} satisfies Record<keyof IndustrialSectors, React.ComponentType<LucideProps>>
 
-// console.log("sectorsN", Object.keys(ICON_MAP).length)
+console.log("sectorsN", Object.keys(ICON_MAP).length)
 
 export function SectorIcon({ name, className }: { name: keyof IndustrialSectors; className?: string }) {
     const IconComponent = ICON_MAP[name]
