@@ -1,6 +1,6 @@
 import type { IndustrialSectors } from "../components/Factories";
 
-const PER_CAPITA_SECTOR_RATIOS = {
+export const PER_CAPITA_SECTOR_RATIOS = {
     mine: 0.000001,
     oilRig: 0.0000028,
     forestry: 0.00006,
@@ -29,7 +29,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     government: 0.00001,
     automotive: 0.0001,
     electronics: 0.00005,
-    postalServices: 0.00005,
+    logistics: 0.00005,
     paperFactory: 0.00001,
     entertainmentIndustry: 0.00005,
     spaceInfrastructure: 0.00004,
@@ -37,6 +37,7 @@ const PER_CAPITA_SECTOR_RATIOS = {
     defense: 0.000015,
     militaryEquipment: 0.000002,
     spaceGoodsTransport: 0.000002,
+    mobility: 0.000002
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 
 export function createStarterIndustry(population: number): Set<keyof IndustrialSectors> {

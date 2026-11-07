@@ -303,6 +303,7 @@ function processIndustry(
         goodsProduction: sumGoodsProduction,
         workingWorkers: workingWorkers as Population,
         freeWorkers: remainingWorkers,
+        population,
         populationUpdates,
         goods: colonyGoodsChanges,
         sectorProfits,

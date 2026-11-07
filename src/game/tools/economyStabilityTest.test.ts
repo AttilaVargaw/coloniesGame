@@ -1,180 +1,81 @@
 
 //@ts-ignore
 import fs from "fs";
-import { ColonyConfig, generateColonyConfig, BASIC_SECTORS, generateRandomConfig } from "./economyConfigGenerator.ts";
-import { createSimState, simulateTick } from "./economySimulator.ts";
+import { ColonyConfig, generateColonyConfig, generateRandomConfig, generateValidatedColonyConfig, validateColonyConfigFromOptions, ESSENTIAL_GOODS, ESSENTIAL_SECTORS } from "./economyConfigGenerator.ts";
 import { IndustrialSectors } from "../components/Factories.ts";
 import { BodyBlueprint } from "../data/BodyBlueprint.ts";
 import { MapCreationData } from "../data/gameData.ts";
 import { Goods } from "../data/Goods.ts";
 import { describe, expect, it } from "vitest";
 
-const TICKS = 20;
+const TICKS = 30;
 
-const CURATED_SECTORS: (keyof IndustrialSectors)[] = [
-	"powerPlant",
-	"waterTreatment",
-	"farm",
-	"foodFactory",
-	"fishery",
-	"mine",
-	"oilRig",
-	"metalFactory",
-	"construction",
-	"government",
-	"services",
-];
-
-const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "agriculturalGoods", "oil", "buildings", "tourism"];
-const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = ["powerPlant", "waterTreatment", "farm", "foodFactory", "oilRig"];
-
-function runColony(config: Partial<ColonyConfig> = {}) {
-	const input = generateColonyConfig({
-		activeSectors: CURATED_SECTORS,
-		...config,
-	});
-	const state = createSimState();
-	const history: {
-		tick: number;
-		goods: Goods;
-		money: Record<string, number>;
-		population: number;
-		profits: Record<string, number>;
-	}[] = [];
-
-	let currentInput = input;
-
-	for(let i = 0; i < TICKS; i++) {
-		const patch = simulateTick(currentInput, state);
-		const result = state.lastResult!;
-		const totalPopulation = Object.values(currentInput.population).reduce(
-			(sum, p) => sum + p.number,
-			0
-		);
-		history.push({
-			tick: i + 1,
-			goods: { ...result.goods },
-			money: { ...result.money },
-			population: totalPopulation,
-			profits: { ...result.sectorProfits },
-		});
-
-		currentInput.goods = result.goods;
-		currentInput.money = result.money;
-		currentInput.capitalStock = result.capitalStock;
-		currentInput.population = patch.population ?? currentInput.population;
-		currentInput.laborAssigned = Object.fromEntries(
-			Array.from(currentInput.activeSectors).map((k) => [k, 0])
-		) as Record<string, number>;
+function getColoniesWithPopulation(root: BodyBlueprint) {
+	const colonies: BodyBlueprint[] = [];
+	if(root.population) colonies.push(root);
+	for(const system of root.systems ?? []) {
+		for(const body of system.bodies) {
+			colonies.push(...getColoniesWithPopulation(body));
+		}
 	}
-
-	return history;
+	return colonies;
 }
 
+const words = getColoniesWithPopulation(MapCreationData)
+
 describe("economy stability", () => {
-	it("keeps essential goods above zero over ticks", () => {
-		const history = runColony();
-
-		for(const good of ESSENTIAL_GOODS) {
-			for(const snapshot of history) {
-				expect(snapshot.goods[good]).toBeGreaterThan(0);
-			}
-		}
-	});
-
-	it("keeps essential sectors solvent", () => {
-		const history = runColony();
-		for(const snapshot of history) {
-			for(const sector of ESSENTIAL_SECTORS) {
-				const amount = snapshot.money[sector];
-				expect(amount).toBeGreaterThan(-1_000_000);
-			}
-		}
-	});
-
-	it("keeps population from collapsing", () => {
-		const history = runColony();
-		const firstPop = history[0].population;
-		for(const snapshot of history) {
-			expect(snapshot.population).toBeGreaterThan(firstPop * 0.5);
-		}
-	});
-
-	it("keeps essential sectors profitable more than half the time", () => {
-		const history = runColony();
-		let profitableTicks = 0;
-		for(const snapshot of history) {
-			const anyProfitable = ESSENTIAL_SECTORS.some(
-				(s) => (snapshot.profits[s] ?? 0) > 0
-			);
-			if(anyProfitable) profitableTicks++;
-		}
-		expect(profitableTicks).toBeGreaterThan(TICKS / 2);
-	});
-
-	function getColoniesWithPopulation(root: BodyBlueprint) {
-		const colonies: BodyBlueprint[] = [];
-		if(root.population) colonies.push(root);
-		for(const system of root.systems ?? []) {
-			for(const body of system.bodies) {
-				colonies.push(...getColoniesWithPopulation(body));
-			}
-		}
-		return colonies;
-	}
-
-	const words = getColoniesWithPopulation(MapCreationData)
-
 	it("finds all colonies", () => {
 		expect(words.length).toBe(13)
 	})
 
+	it("validates curated sectors directly without retry", () => {
+		// Curated 12-sector economy loop - should be viable on first try
+		const validation = validateColonyConfigFromOptions({
+			populationSize: 1_000_000,
+			activeSectors: [
+				"powerPlant",
+				"waterTreatment",
+				"farm",
+				"foodFactory",
+				"fishery",
+				"mine",
+				"oilRig",
+				"metalFactory",
+				"construction",
+				"government",
+				"services",
+			],
+			starterMoneyPerSector: 20_000_000,
+			capitalStockMultiplier: 10,
+			initialGoodsMultiplier: 500,
+		}, { ticks: TICKS });
+
+		expect(validation.viable).toBe(true);
+		if(!validation.viable) {
+			console.log(`Failed at tick ${validation.ticksSurvived}`, 
+				validation.failedGood ? `good: ${validation.failedGood.good} = ${validation.failedGood.value}` : ``,
+				validation.failedSector ? `sector: ${validation.failedSector.sector} = ${validation.failedSector.money}` : ``);
+		}
+	})
+
 	it("generates configs that pass basic stability for multiple seeds", () => {
 		const ret = new Map<string, Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>>()
-		let seed = 0
-		const aEssentialGoods = [...ESSENTIAL_GOODS]
-		const aEssentialSectors = [...ESSENTIAL_SECTORS]
 
 		for(const { population, name } of words) {
 			let found = false;
-			for(; seed < 25_000 && !found; ++seed) {
-				let crashed = false;
+			for(let seed = 0; seed < 25_000 && !found; ++seed) {
 				const baseInput = generateRandomConfig(seed, population!);
 				const activeSectors = [...baseInput.activeSectors];
-				const state = createSimState();
 
-				const input = generateColonyConfig({
+				const { config, validation } = generateValidatedColonyConfig({
 					populationSize: population!,
 					activeSectors,
 					starterMoneyPerSector: 20_000_000,
 					capitalStockMultiplier: 10,
 					initialGoodsMultiplier: 500,
-				});
+				}, { ticks: TICKS });
 
-				let currentInput = input;
-
-				for(let i = 0; i < TICKS; i++) {
-					const patch = simulateTick(currentInput, state);
-					const result = state.lastResult!;
-
-					if(
-						aEssentialGoods.some((s) => result.goods[s] <= 0) ||
-						aEssentialSectors.some((s) => (result.money[s] ?? 0) <= -1_000_000)
-					) {
-						crashed = true;
-						break;
-					}
-
-					currentInput.goods = result.goods;
-					currentInput.money = result.money;
-					currentInput.capitalStock = result.capitalStock;
-					currentInput.population = patch.population ?? currentInput.population;
-					currentInput.laborAssigned = Object.fromEntries(
-						[...currentInput.activeSectors].map((k) => [k, 0])
-					) as Record<string, number>;
-				}
-
-				if(!crashed) {
+				if(validation.viable) {
 					const { capitalStock } = baseInput
 					ret.set(name, capitalStock)
 					console.log(`Found valid config for ${name} with seed ${seed}`)

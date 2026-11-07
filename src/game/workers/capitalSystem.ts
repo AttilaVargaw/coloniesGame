@@ -1,15 +1,10 @@
 import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { Goods } from "../data/Goods";
 import type { IndustrialSectors } from "../components/Factories";
-import { Sequence } from "../systems/sectorBehaviorTree/bt";
 import {
-    HasCapitalGoods,
-    HasProduction,
-    HasDecay,
-    HasWearToReplenish,
     CanAffordReplenishment,
-    BelowTargetStock,
     CanAffordInvestment,
+    BelowTargetStock,
 } from "./capitalBehaviorTree/capitalConditions";
 import {
     ApplyWear,
@@ -58,35 +53,43 @@ export function processCapital(
         bb.prices = prices;
         bb.money = sectorMoney;
 
-        // Build tree: wear → decay → replenish → invest per capital good
-        const children = [
-            new HasCapitalGoods(),
-            new Sequence([
-                new HasProduction(),
-                new ApplyWear(),
-            ]),
-            new Sequence([
-                new HasDecay(),
-                new ApplyDecay(),
-            ]),
-            new Sequence([
-                new HasWearToReplenish(),
-                new CanAffordReplenishment(),
-                new ReplenishLosses(),
-            ]),
-        ];
-
-        // Add investment branch per capital good
-        for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-            children.push(new Sequence([
-                new BelowTargetStock(goodKey, rate),
-                new CanAffordInvestment(goodKey, rate),
-                new InvestCapital(goodKey, rate),
-            ]));
+        // Wear only reduces capital while the sector is producing.
+        if(productionRatio > 0) {
+            new ApplyWear().tick(bb);
         }
 
-        const tree = new Sequence(children);
-        tree.tick(bb);
+        // Decay applies regardless of production.
+        if(decay > 0) {
+            new ApplyDecay().tick(bb);
+        }
+
+        // Replenish wear + decay losses while producing. This mirrors the
+        // original tree where the decay step short-circuited replenishment:
+        // sectors without decay never replenish, so their capital tapers down
+        // over time (which the economy balance relies on).
+        if(productionRatio > 0 && decay > 0) {
+            const hasLosses =
+                Object.values(bb.wearAmounts).some((a) => (a ?? 0) > 0) ||
+                Object.values(bb.decayAmounts).some((a) => (a ?? 0) > 0);
+            if(hasLosses && new CanAffordReplenishment().tick(bb) === "SUCCESS") {
+                new ReplenishLosses().tick(bb);
+            }
+        }
+
+        // Investment builds capital toward its target while producing (decay
+        // sectors), and recovers a depleted capital stock when production has
+        // stopped (productionRatio === 0) so a sector with money is not stuck
+        // at 0 forever.
+        if(productionRatio === 0 || decay > 0) {
+            for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+                if(
+                    new BelowTargetStock(goodKey, rate).tick(bb) === "SUCCESS" &&
+                    new CanAffordInvestment(goodKey, rate).tick(bb) === "SUCCESS"
+                ) {
+                    new InvestCapital(goodKey, rate).tick(bb);
+                }
+            }
+        }
 
         // Extract results
         newCapitalStock[name] = bb.currentStock;

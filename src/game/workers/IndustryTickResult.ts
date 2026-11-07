@@ -33,4 +33,5 @@ export interface IndustryTickResult {
     // sectorGoods: Record<string, Goods>;
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
+    population: Population;
 }
