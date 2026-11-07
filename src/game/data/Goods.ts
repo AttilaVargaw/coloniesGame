@@ -8,8 +8,6 @@ export type Goods = {
     energy: number
     services: number
     agriculturalGoods: number;
-    // dividents: number
-
     tylium: number;
     metals: number;
     uranium: number;
@@ -18,10 +16,8 @@ export type Goods = {
     lumber: number;
     oil: number;
     spaceTransport: number;
-
     nuclearWeapons: number;
     vehicles: number;
-
     environmentFactor: number
     faith: number,
     lawEnforcement: number,
@@ -30,20 +26,13 @@ export type Goods = {
     buildings: number;
     waste: number;
     governance: number;
-
     logistics: number;
     paper: number;
-
     entertainment: number;
-
     education: number;
-
-    retail: number;
-
     ore: number
     defense: number
     monetaryServices: number
-
     mobility: number
     militaryEquipment: number
 }
@@ -80,7 +69,6 @@ export const services = new Set<keyof Goods>([
     "governance",
     "environmentFactor",
     "defense",
-    "retail",
     "entertainment",
     "logistics",
     "monetaryServices",
@@ -97,7 +85,6 @@ export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
     "governance",
     "environmentFactor",
     "defense",
-    "retail",
     "entertainment",
     "logistics",
     "monetaryServices",
@@ -143,7 +130,6 @@ export const basePrices = {
     logistics: 60,
     entertainment: 30,
     education: 80,
-    retail: 100,
 
     mobility: 100,
     ore: 100,

@@ -3,126 +3,122 @@ export const economies = new Map([
     "Picon",
     {
       "consumerFactory": {
-        "machinery": 3.9428029026836153,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "religion": {
-        "buildings": 1.314267634227872
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 2.628535268455744,
-        "buildings": 0.657133817113936
+        "machinery": 3,
+        "buildings": 1
       },
       "education": {
-        "buildings": 1.314267634227872
+        "buildings": 2
       },
       "machineryFactory": {
-        "buildings": 0.657133817113936
+        "buildings": 1
       },
       "bank": {
-        "buildings": 1.314267634227872
+        "buildings": 2
       },
       "lawEnforcement": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "healthcare": {
-        "buildings": 0.657133817113936,
-        "machinery": 1.314267634227872
+        "buildings": 1,
+        "machinery": 2
       },
       "mine": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "chemical": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "paperFactory": {
-        "machinery": 3.9428029026836153,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 3.2856690855696797,
-        "machinery": 1.9714014513418077,
-        "buildings": 0.657133817113936
+      "logistics": {
+        "vehicles": 33,
+        "machinery": 4,
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "defense": {
-        "machinery": 5.257070536911488,
-        "vehicles": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 6,
+        "militaryEquipment": 33,
+        "buildings": 1
       },
       "entertainmentIndustry": {
-        "machinery": 2.628535268455744,
-        "buildings": 0.657133817113936
+        "machinery": 3,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936,
-        "vehicles": 6.5713381711393595
+        "machinery": 4,
+        "buildings": 1,
+        "vehicles": 7
       },
       "forestry": {
-        "buildings": 0.657133817113936,
-        "vehicles": 0.657133817113936
+        "buildings": 1,
+        "vehicles": 1
       },
       "automotive": {
-        "machinery": 5.257070536911488,
-        "metals": 3.2856690855696797
+        "machinery": 6,
+        "metals": 4
       },
       "tourism": {
-        "buildings": 1.314267634227872
+        "buildings": 2
       },
       "services": {
-        "buildings": 0.657133817113936
-      },
-      "greenEnergy": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936,
-        "vehicles": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1,
+        "vehicles": 1
       },
       "nuclearSector": {
-        "machinery": 5.257070536911488,
-        "buildings": 0.657133817113936
+        "machinery": 6,
+        "buildings": 1
       },
       "electronics": {},
       "government": {
-        "buildings": 0.657133817113936
+        "buildings": 1
       },
       "powerPlant": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 3.9428029026836153,
-        "buildings": 1.314267634227872
+        "machinery": 4,
+        "buildings": 2
       },
       "waterTreatment": {
-        "machinery": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.5257070536911488,
-        "buildings": 0.657133817113936
+        "machinery": 1,
+        "buildings": 1
       },
       "militaryEquipment": {
-        "machinery": 3.9428029026836153,
-        "metals": 3.2856690855696797,
-        "buildings": 0.657133817113936
+        "machinery": 4,
+        "metals": 4,
+        "buildings": 1
       },
       "construction": {
-        "machinery": 3.9428029026836153
+        "machinery": 4
       }
     }
   ],
@@ -130,126 +126,122 @@ export const economies = new Map([
     "Tauron",
     {
       "metalFactory": {
-        "machinery": 0.6708330779522658,
-        "buildings": 0.8385413474403323
+        "machinery": 1,
+        "buildings": 1
       },
       "paperFactory": {
-        "machinery": 5.031248084641993,
-        "buildings": 0.8385413474403323
+        "machinery": 6,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "education": {
-        "buildings": 1.6770826948806645
+        "buildings": 2
       },
       "defense": {
-        "machinery": 6.708330779522658,
-        "vehicles": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 7,
+        "militaryEquipment": 42,
+        "buildings": 1
       },
       "bank": {
-        "buildings": 1.6770826948806645
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 5.031248084641993,
-        "buildings": 1.6770826948806645
+        "machinery": 6,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 5.031248084641993,
-        "metals": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 6,
+        "metals": 5,
+        "buildings": 1
       },
       "recycling": {
-        "machinery": 3.354165389761329,
-        "buildings": 0.8385413474403323
+        "machinery": 4,
+        "buildings": 1
       },
       "electronics": {},
       "lawEnforcement": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323,
-        "vehicles": 8.385413474403322
+        "machinery": 5,
+        "buildings": 1,
+        "vehicles": 9
       },
       "chemical": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 4.192706737201661,
-        "machinery": 2.5156240423209963,
-        "buildings": 0.8385413474403323
+      "logistics": {
+        "vehicles": 42,
+        "machinery": 5,
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "construction": {
-        "machinery": 5.031248084641993
+        "machinery": 6
       },
       "powerPlant": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "religion": {
-        "buildings": 1.6770826948806645
+        "buildings": 2
       },
       "government": {
-        "buildings": 0.8385413474403323
+        "buildings": 1
       },
       "entertainmentIndustry": {
-        "machinery": 3.354165389761329,
-        "buildings": 0.8385413474403323
+        "machinery": 4,
+        "buildings": 1
       },
       "machineryFactory": {
-        "buildings": 0.8385413474403323
+        "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 6.708330779522658,
-        "buildings": 0.8385413474403323
+        "machinery": 7,
+        "buildings": 1
       },
       "tourism": {
-        "buildings": 1.6770826948806645
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 0.8385413474403323,
-        "machinery": 1.6770826948806645
+        "buildings": 1,
+        "machinery": 2
       },
       "consumerFactory": {
-        "machinery": 5.031248084641993,
-        "buildings": 0.8385413474403323
-      },
-      "greenEnergy": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 6,
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323,
-        "vehicles": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1,
+        "vehicles": 1
       },
       "forestry": {
-        "buildings": 0.8385413474403323,
-        "vehicles": 0.8385413474403323
+        "buildings": 1,
+        "vehicles": 1
       },
       "waterTreatment": {
-        "machinery": 4.192706737201661,
-        "buildings": 0.8385413474403323
+        "machinery": 5,
+        "buildings": 1
       },
       "services": {
-        "buildings": 0.8385413474403323
+        "buildings": 1
       },
       "automotive": {
-        "machinery": 6.708330779522658,
-        "metals": 4.192706737201661
+        "machinery": 7,
+        "metals": 5
       }
     }
   ],
@@ -257,125 +249,121 @@ export const economies = new Map([
     "Caprica",
     {
       "machineryFactory": {
-        "buildings": 1.0199488777667285
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 6.11969326660037,
-        "buildings": 2.039897755533457
+        "machinery": 7,
+        "buildings": 3
       },
       "powerPlant": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "construction": {
-        "machinery": 6.11969326660037
+        "machinery": 7
       },
       "consumerFactory": {
-        "machinery": 6.11969326660037,
-        "buildings": 1.0199488777667285
+        "machinery": 7,
+        "buildings": 2
       },
-      "postalServices": {
-        "vehicles": 5.099744388833642,
-        "machinery": 3.059846633300185,
-        "buildings": 1.0199488777667285
+      "logistics": {
+        "vehicles": 51,
+        "machinery": 6,
+        "buildings": 2
       },
       "farm": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285,
-        "vehicles": 10.199488777667284
+        "machinery": 6,
+        "buildings": 2,
+        "vehicles": 11
       },
       "oilRig": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 8.159591022133828,
-        "buildings": 1.0199488777667285
+        "machinery": 9,
+        "buildings": 2
       },
       "government": {
-        "buildings": 1.0199488777667285
+        "buildings": 2
       },
       "religion": {
-        "buildings": 2.039897755533457
+        "buildings": 3
       },
       "fishery": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285,
-        "vehicles": 1.0199488777667285
-      },
-      "greenEnergy": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2,
+        "vehicles": 2
       },
       "waterTreatment": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "mine": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "forestry": {
-        "buildings": 1.0199488777667285,
-        "vehicles": 1.0199488777667285
+        "buildings": 2,
+        "vehicles": 2
       },
       "entertainmentIndustry": {
-        "machinery": 4.079795511066914,
-        "buildings": 1.0199488777667285
+        "machinery": 5,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "lawEnforcement": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 6.11969326660037,
-        "metals": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 7,
+        "metals": 6,
+        "buildings": 2
       },
       "tourism": {
-        "buildings": 2.039897755533457
+        "buildings": 3
       },
       "foodFactory": {
-        "machinery": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 6,
+        "buildings": 2
       },
       "automotive": {
-        "machinery": 8.159591022133828,
-        "metals": 5.099744388833642
+        "machinery": 9,
+        "metals": 6
       },
       "paperFactory": {
-        "machinery": 6.11969326660037,
-        "buildings": 1.0199488777667285
+        "machinery": 7,
+        "buildings": 2
       },
       "defense": {
-        "machinery": 8.159591022133828,
-        "vehicles": 5.099744388833642,
-        "buildings": 1.0199488777667285
+        "machinery": 9,
+        "militaryEquipment": 51,
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 4.079795511066914,
-        "buildings": 1.0199488777667285
+        "machinery": 5,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.0199488777667285,
-        "machinery": 2.039897755533457
+        "buildings": 2,
+        "machinery": 3
       },
       "metalFactory": {
-        "machinery": 0.8159591022133827,
-        "buildings": 1.0199488777667285
+        "machinery": 1,
+        "buildings": 2
       },
       "bank": {
-        "buildings": 2.039897755533457
+        "buildings": 3
       },
       "education": {
-        "buildings": 2.039897755533457
+        "buildings": 3
       },
       "services": {
-        "buildings": 1.0199488777667285
+        "buildings": 2
       },
       "electronics": {}
     }
@@ -384,126 +372,122 @@ export const economies = new Map([
     "Gemenon",
     {
       "consumerFactory": {
-        "machinery": 7.208138448558747,
-        "buildings": 1.2013564080931247
+        "machinery": 8,
+        "buildings": 2
       },
       "metalFactory": {
-        "machinery": 0.9610851264744997,
-        "buildings": 1.2013564080931247
+        "machinery": 1,
+        "buildings": 2
       },
       "services": {
-        "buildings": 1.2013564080931247
+        "buildings": 2
       },
       "bank": {
-        "buildings": 2.4027128161862494
+        "buildings": 3
       },
       "recycling": {
-        "machinery": 4.805425632372499,
-        "buildings": 1.2013564080931247
+        "machinery": 5,
+        "buildings": 2
       },
       "mine": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "tourism": {
-        "buildings": 2.4027128161862494
+        "buildings": 3
       },
       "nuclearSector": {
-        "machinery": 9.610851264744998,
-        "buildings": 1.2013564080931247
-      },
-      "greenEnergy": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 10,
+        "buildings": 2
       },
       "fishery": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247,
-        "vehicles": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2,
+        "vehicles": 2
       },
       "foodFactory": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "construction": {
-        "machinery": 7.208138448558747
+        "machinery": 8
       },
       "oilRig": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "religion": {
-        "buildings": 2.4027128161862494
+        "buildings": 3
       },
       "militaryEquipment": {
-        "machinery": 7.208138448558747,
-        "metals": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 8,
+        "metals": 7,
+        "buildings": 2
       },
       "automotive": {
-        "machinery": 9.610851264744998,
-        "metals": 6.006782040465623
+        "machinery": 10,
+        "metals": 7
       },
       "forestry": {
-        "buildings": 1.2013564080931247,
-        "vehicles": 1.2013564080931247
+        "buildings": 2,
+        "vehicles": 2
       },
       "government": {
-        "buildings": 1.2013564080931247
+        "buildings": 2
       },
       "paperFactory": {
-        "machinery": 7.208138448558747,
-        "buildings": 1.2013564080931247
+        "machinery": 8,
+        "buildings": 2
       },
       "farm": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247,
-        "vehicles": 12.013564080931246
+        "machinery": 7,
+        "buildings": 2,
+        "vehicles": 13
       },
-      "postalServices": {
-        "vehicles": 6.006782040465623,
-        "machinery": 3.6040692242793737,
-        "buildings": 1.2013564080931247
+      "logistics": {
+        "vehicles": 61,
+        "machinery": 7,
+        "buildings": 2
       },
       "lawEnforcement": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.2013564080931247,
-        "machinery": 2.4027128161862494
+        "buildings": 2,
+        "machinery": 3
       },
       "education": {
-        "buildings": 2.4027128161862494
+        "buildings": 3
       },
       "entertainmentIndustry": {
-        "machinery": 4.805425632372499,
-        "buildings": 1.2013564080931247
+        "machinery": 5,
+        "buildings": 2
       },
       "powerPlant": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 7.208138448558747,
-        "buildings": 2.4027128161862494
+        "machinery": 8,
+        "buildings": 3
       },
       "electronics": {},
       "waterTreatment": {
-        "machinery": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 7,
+        "buildings": 2
       },
       "machineryFactory": {
-        "buildings": 1.2013564080931247
+        "buildings": 2
       },
       "defense": {
-        "machinery": 9.610851264744998,
-        "vehicles": 6.006782040465623,
-        "buildings": 1.2013564080931247
+        "machinery": 10,
+        "militaryEquipment": 61,
+        "buildings": 2
       }
     }
   ],
@@ -511,126 +495,122 @@ export const economies = new Map([
     "Virgon",
     {
       "mine": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "oilRig": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "bank": {
-        "buildings": 2.765527876839042
+        "buildings": 3
       },
       "fishery": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521,
-        "vehicles": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2,
+        "vehicles": 2
       },
       "religion": {
-        "buildings": 2.765527876839042
+        "buildings": 3
       },
       "metalFactory": {
-        "machinery": 1.1062111507356167,
-        "buildings": 1.382763938419521
+        "machinery": 2,
+        "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 11.062111507356168,
-        "buildings": 1.382763938419521
+        "machinery": 12,
+        "buildings": 2
       },
       "lawEnforcement": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "waterTreatment": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "machineryFactory": {
-        "buildings": 1.382763938419521
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 5.531055753678084,
-        "buildings": 1.382763938419521
+        "machinery": 6,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 8.296583630517125,
-        "metals": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 9,
+        "metals": 7,
+        "buildings": 2
       },
       "paperFactory": {
-        "machinery": 8.296583630517125,
-        "buildings": 1.382763938419521
+        "machinery": 9,
+        "buildings": 2
       },
       "entertainmentIndustry": {
-        "machinery": 5.531055753678084,
-        "buildings": 1.382763938419521
+        "machinery": 6,
+        "buildings": 2
       },
       "construction": {
-        "machinery": 8.296583630517125
+        "machinery": 9
       },
       "tourism": {
-        "buildings": 2.765527876839042
+        "buildings": 3
       },
       "defense": {
-        "machinery": 11.062111507356168,
-        "vehicles": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 12,
+        "militaryEquipment": 70,
+        "buildings": 2
       },
       "powerPlant": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "education": {
-        "buildings": 2.765527876839042
+        "buildings": 3
       },
       "services": {
-        "buildings": 1.382763938419521
+        "buildings": 2
       },
       "government": {
-        "buildings": 1.382763938419521
+        "buildings": 2
       },
       "automotive": {
-        "machinery": 11.062111507356168,
-        "metals": 6.913819692097604
+        "machinery": 12,
+        "metals": 7
       },
       "farm": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521,
-        "vehicles": 13.827639384195209
+        "machinery": 7,
+        "buildings": 2,
+        "vehicles": 14
       },
       "forestry": {
-        "buildings": 1.382763938419521,
-        "vehicles": 1.382763938419521
-      },
-      "greenEnergy": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "buildings": 2,
+        "vehicles": 2
       },
       "foodFactory": {
-        "machinery": 6.913819692097604,
-        "buildings": 1.382763938419521
+        "machinery": 7,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.382763938419521,
-        "machinery": 2.765527876839042
+        "buildings": 2,
+        "machinery": 3
       },
-      "postalServices": {
-        "vehicles": 6.913819692097604,
-        "machinery": 4.148291815258562,
-        "buildings": 1.382763938419521
+      "logistics": {
+        "vehicles": 70,
+        "machinery": 7,
+        "buildings": 2
       },
       "electronics": {},
       "consumerFactory": {
-        "machinery": 8.296583630517125,
-        "buildings": 1.382763938419521
+        "machinery": 9,
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 8.296583630517125,
-        "buildings": 2.765527876839042
+        "machinery": 9,
+        "buildings": 3
       }
     }
   ],
@@ -638,126 +618,122 @@ export const economies = new Map([
     "Hibernia",
     {
       "tourism": {
-        "buildings": 3.1283429374918343
+        "buildings": 4
       },
       "lawEnforcement": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "foodFactory": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.5641714687459172,
-        "machinery": 3.1283429374918343
+        "buildings": 2,
+        "machinery": 4
       },
       "paperFactory": {
-        "machinery": 9.385028812475502,
-        "buildings": 1.5641714687459172
+        "machinery": 10,
+        "buildings": 2
       },
       "electronics": {},
       "powerPlant": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 9.385028812475502,
-        "metals": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 10,
+        "metals": 8,
+        "buildings": 2
       },
       "bank": {
-        "buildings": 3.1283429374918343
-      },
-      "greenEnergy": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "buildings": 4
       },
       "entertainmentIndustry": {
-        "machinery": 6.256685874983669,
-        "buildings": 1.5641714687459172
+        "machinery": 7,
+        "buildings": 2
       },
       "consumerFactory": {
-        "machinery": 9.385028812475502,
-        "buildings": 1.5641714687459172
+        "machinery": 10,
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 9.385028812475502,
-        "buildings": 3.1283429374918343
+        "machinery": 10,
+        "buildings": 4
       },
       "farm": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172,
-        "vehicles": 15.64171468745917
+        "machinery": 8,
+        "buildings": 2,
+        "vehicles": 16
       },
       "nuclearSector": {
-        "machinery": 12.513371749967337,
-        "buildings": 1.5641714687459172
+        "machinery": 13,
+        "buildings": 2
       },
       "automotive": {
-        "machinery": 12.513371749967337,
-        "metals": 7.820857343729585
+        "machinery": 13,
+        "metals": 8
       },
       "machineryFactory": {
-        "buildings": 1.5641714687459172
+        "buildings": 2
       },
       "defense": {
-        "machinery": 12.513371749967337,
-        "vehicles": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 13,
+        "militaryEquipment": 79,
+        "buildings": 2
       },
       "construction": {
-        "machinery": 9.385028812475502
+        "machinery": 10
       },
       "education": {
-        "buildings": 3.1283429374918343
+        "buildings": 4
       },
       "fishery": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172,
-        "vehicles": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2,
+        "vehicles": 2
       },
       "oilRig": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "mine": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "government": {
-        "buildings": 1.5641714687459172
+        "buildings": 2
       },
       "waterTreatment": {
-        "machinery": 7.820857343729585,
-        "buildings": 1.5641714687459172
+        "machinery": 8,
+        "buildings": 2
       },
       "forestry": {
-        "buildings": 1.5641714687459172,
-        "vehicles": 1.5641714687459172
+        "buildings": 2,
+        "vehicles": 2
       },
       "services": {
-        "buildings": 1.5641714687459172
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 6.256685874983669,
-        "buildings": 1.5641714687459172
+        "machinery": 7,
+        "buildings": 2
       },
       "religion": {
-        "buildings": 3.1283429374918343
+        "buildings": 4
       },
       "metalFactory": {
-        "machinery": 1.2513371749967337,
-        "buildings": 1.5641714687459172
+        "machinery": 2,
+        "buildings": 2
       },
-      "postalServices": {
-        "vehicles": 7.820857343729585,
-        "machinery": 4.692514406237751,
-        "buildings": 1.5641714687459172
+      "logistics": {
+        "vehicles": 79,
+        "machinery": 8,
+        "buildings": 2
       }
     }
   ],
@@ -765,126 +741,122 @@ export const economies = new Map([
     "Leonis",
     {
       "bank": {
-        "buildings": 3.491157998144627
+        "buildings": 4
       },
       "automotive": {
-        "machinery": 13.964631992578507,
-        "metals": 8.727894995361567
+        "machinery": 14,
+        "metals": 9
       },
       "mine": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 6.982315996289254,
-        "buildings": 1.7455789990723134
+        "machinery": 7,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 10.47347399443388,
-        "metals": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 11,
+        "metals": 9,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.7455789990723134,
-        "machinery": 3.491157998144627
+        "buildings": 2,
+        "machinery": 4
       },
       "powerPlant": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "religion": {
-        "buildings": 3.491157998144627
+        "buildings": 4
       },
       "services": {
-        "buildings": 1.7455789990723134
+        "buildings": 2
       },
       "defense": {
-        "machinery": 13.964631992578507,
-        "vehicles": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 14,
+        "militaryEquipment": 88,
+        "buildings": 2
       },
-      "postalServices": {
-        "vehicles": 8.727894995361567,
-        "machinery": 5.23673699721694,
-        "buildings": 1.7455789990723134
+      "logistics": {
+        "vehicles": 88,
+        "machinery": 9,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "construction": {
-        "machinery": 10.47347399443388
+        "machinery": 11
       },
       "nuclearSector": {
-        "machinery": 13.964631992578507,
-        "buildings": 1.7455789990723134
+        "machinery": 14,
+        "buildings": 2
       },
       "paperFactory": {
-        "machinery": 10.47347399443388,
-        "buildings": 1.7455789990723134
-      },
-      "greenEnergy": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 11,
+        "buildings": 2
       },
       "government": {
-        "buildings": 1.7455789990723134
+        "buildings": 2
       },
       "electronics": {},
       "lawEnforcement": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "farm": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134,
-        "vehicles": 17.455789990723133
+        "machinery": 9,
+        "buildings": 2,
+        "vehicles": 18
       },
       "education": {
-        "buildings": 3.491157998144627
+        "buildings": 4
       },
       "fishery": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134,
-        "vehicles": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2,
+        "vehicles": 2
       },
       "oilRig": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "forestry": {
-        "buildings": 1.7455789990723134,
-        "vehicles": 1.7455789990723134
+        "buildings": 2,
+        "vehicles": 2
       },
       "entertainmentIndustry": {
-        "machinery": 6.982315996289254,
-        "buildings": 1.7455789990723134
+        "machinery": 7,
+        "buildings": 2
       },
       "medicineFactory": {
-        "machinery": 10.47347399443388,
-        "buildings": 3.491157998144627
+        "machinery": 11,
+        "buildings": 4
       },
       "tourism": {
-        "buildings": 3.491157998144627
+        "buildings": 4
       },
       "waterTreatment": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "metalFactory": {
-        "machinery": 1.3964631992578507,
-        "buildings": 1.7455789990723134
+        "machinery": 2,
+        "buildings": 2
       },
       "consumerFactory": {
-        "machinery": 10.47347399443388,
-        "buildings": 1.7455789990723134
+        "machinery": 11,
+        "buildings": 2
       },
       "foodFactory": {
-        "machinery": 8.727894995361567,
-        "buildings": 1.7455789990723134
+        "machinery": 9,
+        "buildings": 2
       },
       "machineryFactory": {
-        "buildings": 1.7455789990723134
+        "buildings": 2
       }
     }
   ],
@@ -892,126 +864,122 @@ export const economies = new Map([
     "Scorpia",
     {
       "medicineFactory": {
-        "machinery": 11.561919176392257,
-        "buildings": 3.8539730587974192
+        "machinery": 12,
+        "buildings": 4
       },
       "mine": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 1.9269865293987096,
-        "machinery": 3.8539730587974192
+        "buildings": 2,
+        "machinery": 4
       },
       "entertainmentIndustry": {
-        "machinery": 7.7079461175948385,
-        "buildings": 1.9269865293987096
+        "machinery": 8,
+        "buildings": 2
       },
       "automotive": {
-        "machinery": 15.415892235189677,
-        "metals": 9.634932646993548
+        "machinery": 16,
+        "metals": 10
       },
       "fishery": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096,
-        "vehicles": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2,
+        "vehicles": 2
       },
-      "postalServices": {
-        "vehicles": 9.634932646993548,
-        "machinery": 5.780959588196128,
-        "buildings": 1.9269865293987096
+      "logistics": {
+        "vehicles": 97,
+        "machinery": 10,
+        "buildings": 2
       },
       "metalFactory": {
-        "machinery": 1.5415892235189677,
-        "buildings": 1.9269865293987096
+        "machinery": 2,
+        "buildings": 2
       },
       "government": {
-        "buildings": 1.9269865293987096
+        "buildings": 2
       },
       "services": {
-        "buildings": 1.9269865293987096
+        "buildings": 2
       },
       "oilRig": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
-      },
-      "greenEnergy": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 15.415892235189677,
-        "buildings": 1.9269865293987096
+        "machinery": 16,
+        "buildings": 2
       },
       "electronics": {},
       "bank": {
-        "buildings": 3.8539730587974192
+        "buildings": 4
       },
       "construction": {
-        "machinery": 11.561919176392257
+        "machinery": 12
       },
       "recycling": {
-        "machinery": 7.7079461175948385,
-        "buildings": 1.9269865293987096
+        "machinery": 8,
+        "buildings": 2
       },
       "lawEnforcement": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "paperFactory": {
-        "machinery": 11.561919176392257,
-        "buildings": 1.9269865293987096
+        "machinery": 12,
+        "buildings": 2
       },
       "consumerFactory": {
-        "machinery": 11.561919176392257,
-        "buildings": 1.9269865293987096
+        "machinery": 12,
+        "buildings": 2
       },
       "chemical": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "waterTreatment": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "defense": {
-        "machinery": 15.415892235189677,
-        "vehicles": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 16,
+        "militaryEquipment": 97,
+        "buildings": 2
       },
       "farm": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096,
-        "vehicles": 19.269865293987095
+        "machinery": 10,
+        "buildings": 2,
+        "vehicles": 20
       },
       "machineryFactory": {
-        "buildings": 1.9269865293987096
+        "buildings": 2
       },
       "tourism": {
-        "buildings": 3.8539730587974192
+        "buildings": 4
       },
       "forestry": {
-        "buildings": 1.9269865293987096,
-        "vehicles": 1.9269865293987096
+        "buildings": 2,
+        "vehicles": 2
       },
       "education": {
-        "buildings": 3.8539730587974192
+        "buildings": 4
       },
       "powerPlant": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "religion": {
-        "buildings": 3.8539730587974192
+        "buildings": 4
       },
       "foodFactory": {
-        "machinery": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 10,
+        "buildings": 2
       },
       "militaryEquipment": {
-        "machinery": 11.561919176392257,
-        "metals": 9.634932646993548,
-        "buildings": 1.9269865293987096
+        "machinery": 12,
+        "metals": 10,
+        "buildings": 2
       }
     }
   ],
@@ -1019,126 +987,122 @@ export const economies = new Map([
     "Sagitarron",
     {
       "automotive": {
-        "machinery": 0.8671524778008461,
-        "metals": 0.5419702986255288
+        "machinery": 1,
+        "metals": 1
       },
       "electronics": {},
       "consumerFactory": {
-        "machinery": 0.6503643583506346,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "lawEnforcement": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "construction": {
-        "machinery": 0.6503643583506346
+        "machinery": 1
       },
       "healthcare": {
-        "buildings": 0.10839405972510577,
-        "machinery": 0.21678811945021154
+        "buildings": 1,
+        "machinery": 1
       },
       "waterTreatment": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "tourism": {
-        "buildings": 0.21678811945021154
+        "buildings": 1
       },
       "powerPlant": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "education": {
-        "buildings": 0.21678811945021154
+        "buildings": 1
       },
       "religion": {
-        "buildings": 0.21678811945021154
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 0.5419702986255288,
-        "machinery": 0.3251821791753173,
-        "buildings": 0.10839405972510577
+      "logistics": {
+        "vehicles": 6,
+        "machinery": 1,
+        "buildings": 1
       },
       "recycling": {
-        "machinery": 0.43357623890042307,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "defense": {
-        "machinery": 0.8671524778008461,
-        "vehicles": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "militaryEquipment": 6,
+        "buildings": 1
       },
       "government": {
-        "buildings": 0.10839405972510577
-      },
-      "greenEnergy": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.08671524778008462,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "bank": {
-        "buildings": 0.21678811945021154
+        "buildings": 1
       },
       "services": {
-        "buildings": 0.10839405972510577
+        "buildings": 1
       },
       "forestry": {
-        "buildings": 0.10839405972510577,
-        "vehicles": 0.10839405972510577
+        "buildings": 1,
+        "vehicles": 1
       },
       "paperFactory": {
-        "machinery": 0.6503643583506346,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "militaryEquipment": {
-        "machinery": 0.6503643583506346,
-        "metals": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "metals": 1,
+        "buildings": 1
       },
       "chemical": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577,
-        "vehicles": 1.0839405972510576
+        "machinery": 1,
+        "buildings": 1,
+        "vehicles": 2
       },
       "nuclearSector": {
-        "machinery": 0.8671524778008461,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 0.6503643583506346,
-        "buildings": 0.21678811945021154
+        "machinery": 1,
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 0.5419702986255288,
-        "buildings": 0.10839405972510577,
-        "vehicles": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1,
+        "vehicles": 1
       },
       "machineryFactory": {
-        "buildings": 0.10839405972510577
+        "buildings": 1
       },
       "entertainmentIndustry": {
-        "machinery": 0.43357623890042307,
-        "buildings": 0.10839405972510577
+        "machinery": 1,
+        "buildings": 1
       }
     }
   ],
@@ -1146,126 +1110,122 @@ export const economies = new Map([
     "Libran",
     {
       "forestry": {
-        "buildings": 0.289801590051502,
-        "vehicles": 0.289801590051502
+        "buildings": 1,
+        "vehicles": 1
       },
       "healthcare": {
-        "buildings": 0.289801590051502,
-        "machinery": 0.579603180103004
+        "buildings": 1,
+        "machinery": 1
       },
       "paperFactory": {
-        "machinery": 1.7388095403090118,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "powerPlant": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502,
-        "vehicles": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1,
+        "vehicles": 1
       },
       "entertainmentIndustry": {
-        "machinery": 1.159206360206008,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "defense": {
-        "machinery": 2.318412720412016,
-        "vehicles": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 3,
+        "militaryEquipment": 15,
+        "buildings": 1
       },
       "waterTreatment": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "recycling": {
-        "machinery": 1.159206360206008,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502,
-        "vehicles": 2.89801590051502
+        "machinery": 2,
+        "buildings": 1,
+        "vehicles": 3
       },
       "automotive": {
-        "machinery": 2.318412720412016,
-        "metals": 1.44900795025751
+        "machinery": 3,
+        "metals": 2
       },
       "bank": {
-        "buildings": 0.579603180103004
-      },
-      "greenEnergy": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "buildings": 1
       },
       "government": {
-        "buildings": 0.289801590051502
+        "buildings": 1
       },
       "tourism": {
-        "buildings": 0.579603180103004
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.23184127204120158,
-        "buildings": 0.289801590051502
+        "machinery": 1,
+        "buildings": 1
       },
       "construction": {
-        "machinery": 1.7388095403090118
+        "machinery": 2
       },
       "services": {
-        "buildings": 0.289801590051502
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 1.7388095403090118,
-        "buildings": 0.579603180103004
+        "machinery": 2,
+        "buildings": 1
       },
       "lawEnforcement": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "religion": {
-        "buildings": 0.579603180103004
+        "buildings": 1
       },
       "militaryEquipment": {
-        "machinery": 1.7388095403090118,
-        "metals": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "metals": 2,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 2.318412720412016,
-        "buildings": 0.289801590051502
+        "machinery": 3,
+        "buildings": 1
       },
       "electronics": {},
       "chemical": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 1.44900795025751,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 1.7388095403090118,
-        "buildings": 0.289801590051502
+        "machinery": 2,
+        "buildings": 1
       },
       "education": {
-        "buildings": 0.579603180103004
+        "buildings": 1
       },
       "machineryFactory": {
-        "buildings": 0.289801590051502
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 1.44900795025751,
-        "machinery": 0.8694047701545059,
-        "buildings": 0.289801590051502
+      "logistics": {
+        "vehicles": 15,
+        "machinery": 2,
+        "buildings": 1
       }
     }
   ],
@@ -1273,126 +1233,122 @@ export const economies = new Map([
     "Canceron",
     {
       "tourism": {
-        "buildings": 0.9424182407557965
-      },
-      "greenEnergy": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "buildings": 1
       },
       "paperFactory": {
-        "machinery": 2.8272547222673894,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "powerPlant": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "waterTreatment": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.37696729630231857,
-        "buildings": 0.47120912037789825
+        "machinery": 1,
+        "buildings": 1
       },
       "defense": {
-        "machinery": 3.769672963023186,
-        "vehicles": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 4,
+        "militaryEquipment": 24,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 2.8272547222673894,
-        "buildings": 0.9424182407557965
+        "machinery": 3,
+        "buildings": 1
       },
       "forestry": {
-        "buildings": 0.47120912037789825,
-        "vehicles": 0.47120912037789825
+        "buildings": 1,
+        "vehicles": 1
       },
       "nuclearSector": {
-        "machinery": 3.769672963023186,
-        "buildings": 0.47120912037789825
+        "machinery": 4,
+        "buildings": 1
       },
       "services": {
-        "buildings": 0.47120912037789825
+        "buildings": 1
       },
       "machineryFactory": {
-        "buildings": 0.47120912037789825
+        "buildings": 1
       },
       "education": {
-        "buildings": 0.9424182407557965
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 2.356045601889491,
-        "machinery": 1.4136273611336947,
-        "buildings": 0.47120912037789825
+      "logistics": {
+        "vehicles": 24,
+        "machinery": 3,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "bank": {
-        "buildings": 0.9424182407557965
+        "buildings": 1
       },
       "chemical": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "electronics": {},
       "healthcare": {
-        "buildings": 0.47120912037789825,
-        "machinery": 0.9424182407557965
+        "buildings": 1,
+        "machinery": 1
       },
       "entertainmentIndustry": {
-        "machinery": 1.884836481511593,
-        "buildings": 0.47120912037789825
+        "machinery": 2,
+        "buildings": 1
       },
       "construction": {
-        "machinery": 2.8272547222673894
+        "machinery": 3
       },
       "consumerFactory": {
-        "machinery": 2.8272547222673894,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "militaryEquipment": {
-        "machinery": 2.8272547222673894,
-        "metals": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "metals": 3,
+        "buildings": 1
       },
       "recycling": {
-        "machinery": 1.884836481511593,
-        "buildings": 0.47120912037789825
+        "machinery": 2,
+        "buildings": 1
       },
       "government": {
-        "buildings": 0.47120912037789825
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "religion": {
-        "buildings": 0.9424182407557965
+        "buildings": 1
       },
       "lawEnforcement": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825,
-        "vehicles": 0.47120912037789825
+        "machinery": 3,
+        "buildings": 1,
+        "vehicles": 1
       },
       "automotive": {
-        "machinery": 3.769672963023186,
-        "metals": 2.356045601889491
+        "machinery": 4,
+        "metals": 3
       },
       "farm": {
-        "machinery": 2.356045601889491,
-        "buildings": 0.47120912037789825,
-        "vehicles": 4.712091203778982
+        "machinery": 3,
+        "buildings": 1,
+        "vehicles": 5
       }
     }
   ],
@@ -1400,253 +1356,245 @@ export const economies = new Map([
     "Aquaria",
     {
       "waterTreatment": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "machineryFactory": {
-        "buildings": 0.6526166507042945
+        "buildings": 1
       },
       "paperFactory": {
-        "machinery": 3.9156999042257663,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "government": {
-        "buildings": 0.6526166507042945
+        "buildings": 1
       },
       "defense": {
-        "machinery": 5.220933205634356,
-        "vehicles": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 6,
+        "militaryEquipment": 33,
+        "buildings": 1
       },
       "religion": {
-        "buildings": 1.305233301408589
+        "buildings": 2
       },
       "construction": {
-        "machinery": 3.9156999042257663
+        "machinery": 4
       },
       "healthcare": {
-        "buildings": 0.6526166507042945,
-        "machinery": 1.305233301408589
+        "buildings": 1,
+        "machinery": 2
       },
       "electronics": {},
       "lawEnforcement": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 3.9156999042257663,
-        "buildings": 1.305233301408589
+        "machinery": 4,
+        "buildings": 2
       },
       "education": {
-        "buildings": 1.305233301408589
+        "buildings": 2
       },
       "recycling": {
-        "machinery": 2.610466602817178,
-        "buildings": 0.6526166507042945
+        "machinery": 3,
+        "buildings": 1
       },
       "chemical": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "bank": {
-        "buildings": 1.305233301408589
+        "buildings": 2
       },
       "services": {
-        "buildings": 0.6526166507042945
+        "buildings": 1
       },
       "forestry": {
-        "buildings": 0.6526166507042945,
-        "vehicles": 0.6526166507042945
+        "buildings": 1,
+        "vehicles": 1
       },
       "automotive": {
-        "machinery": 5.220933205634356,
-        "metals": 3.263083253521472
+        "machinery": 6,
+        "metals": 4
       },
       "oilRig": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 5.220933205634356,
-        "buildings": 0.6526166507042945
+        "machinery": 6,
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.5220933205634356,
-        "buildings": 0.6526166507042945
+        "machinery": 1,
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945,
-        "vehicles": 6.526166507042944
+        "machinery": 4,
+        "buildings": 1,
+        "vehicles": 7
       },
       "fishery": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945,
-        "vehicles": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1,
+        "vehicles": 1
       },
       "powerPlant": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
-      "postalServices": {
-        "vehicles": 3.263083253521472,
-        "machinery": 1.9578499521128832,
-        "buildings": 0.6526166507042945
+      "logistics": {
+        "vehicles": 33,
+        "machinery": 4,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
-      },
-      "greenEnergy": {
-        "machinery": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "militaryEquipment": {
-        "machinery": 3.9156999042257663,
-        "metals": 3.263083253521472,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "metals": 4,
+        "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 3.9156999042257663,
-        "buildings": 0.6526166507042945
+        "machinery": 4,
+        "buildings": 1
       },
       "entertainmentIndustry": {
-        "machinery": 2.610466602817178,
-        "buildings": 0.6526166507042945
+        "machinery": 3,
+        "buildings": 1
       },
       "tourism": {
-        "buildings": 1.305233301408589
+        "buildings": 2
       }
     }
   ],
   [
     "Aerilon",
     {
-      "postalServices": {
-        "vehicles": 4.170120905153453,
-        "machinery": 2.502072543092072,
-        "buildings": 0.8340241810306908
+      "logistics": {
+        "vehicles": 42,
+        "machinery": 5,
+        "buildings": 1
       },
       "farm": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908,
-        "vehicles": 8.340241810306907
+        "machinery": 5,
+        "buildings": 1,
+        "vehicles": 9
       },
       "religion": {
-        "buildings": 1.6680483620613815
+        "buildings": 2
       },
       "electronics": {},
       "tourism": {
-        "buildings": 1.6680483620613815
+        "buildings": 2
       },
       "paperFactory": {
-        "machinery": 5.004145086184144,
-        "buildings": 0.8340241810306908
-      },
-      "greenEnergy": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 6,
+        "buildings": 1
       },
       "forestry": {
-        "buildings": 0.8340241810306908,
-        "vehicles": 0.8340241810306908
+        "buildings": 1,
+        "vehicles": 1
       },
       "services": {
-        "buildings": 0.8340241810306908
+        "buildings": 1
       },
       "oilRig": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 6.672193448245526,
-        "buildings": 0.8340241810306908
+        "machinery": 7,
+        "buildings": 1
       },
       "medicineFactory": {
-        "machinery": 5.004145086184144,
-        "buildings": 1.6680483620613815
+        "machinery": 6,
+        "buildings": 2
       },
       "education": {
-        "buildings": 1.6680483620613815
+        "buildings": 2
       },
       "bank": {
-        "buildings": 1.6680483620613815
+        "buildings": 2
       },
       "healthcare": {
-        "buildings": 0.8340241810306908,
-        "machinery": 1.6680483620613815
+        "buildings": 1,
+        "machinery": 2
       },
       "militaryEquipment": {
-        "machinery": 5.004145086184144,
-        "metals": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 6,
+        "metals": 5,
+        "buildings": 1
       },
       "recycling": {
-        "machinery": 3.336096724122763,
-        "buildings": 0.8340241810306908
+        "machinery": 4,
+        "buildings": 1
       },
       "machineryFactory": {
-        "buildings": 0.8340241810306908
+        "buildings": 1
       },
       "foodFactory": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "metalFactory": {
-        "machinery": 0.6672193448245526,
-        "buildings": 0.8340241810306908
+        "machinery": 1,
+        "buildings": 1
       },
       "chemical": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "lawEnforcement": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "waterTreatment": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "powerPlant": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "mine": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1
       },
       "fishery": {
-        "machinery": 4.170120905153453,
-        "buildings": 0.8340241810306908,
-        "vehicles": 0.8340241810306908
+        "machinery": 5,
+        "buildings": 1,
+        "vehicles": 1
       },
       "government": {
-        "buildings": 0.8340241810306908
+        "buildings": 1
       },
       "construction": {
-        "machinery": 5.004145086184144
+        "machinery": 6
       },
       "consumerFactory": {
-        "machinery": 5.004145086184144,
-        "buildings": 0.8340241810306908
+        "machinery": 6,
+        "buildings": 1
       },
       "defense": {
-        "machinery": 6.672193448245526,
-        "vehicles": 4.170120905153453,
-        "buildings": 0.8340241810306908
+        "machinery": 7,
+        "militaryEquipment": 42,
+        "buildings": 1
       },
       "entertainmentIndustry": {
-        "machinery": 3.336096724122763,
-        "buildings": 0.8340241810306908
+        "machinery": 4,
+        "buildings": 1
       },
       "automotive": {
-        "machinery": 6.672193448245526,
-        "metals": 4.170120905153453
+        "machinery": 7,
+        "metals": 5
       }
     }
   ]

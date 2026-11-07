@@ -72,7 +72,8 @@ const ICON_MAP = {
     religion: GiGreekTemple,
     spaceInfrastructure: Satellite,
     spaceGoodsTransport: Satellite,
-    militaryEquipment: InfantryFightingVehicle
+    militaryEquipment: InfantryFightingVehicle,
+    mobility: Car,
 } satisfies Record<keyof IndustrialSectors, React.ComponentType<LucideProps>>
 
 console.log("sectorsN", Object.keys(ICON_MAP).length)

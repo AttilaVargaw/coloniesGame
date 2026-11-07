@@ -26,9 +26,7 @@ const CURATED_SECTORS: (keyof IndustrialSectors)[] = [
 ];
 
 const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "agriculturalGoods", "oil", "buildings", "tourism"];
-const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = ["powerPlant", "waterTreatment", "farm", "foodFactory", "oilRig"
-	// "furnitureFactory", "oilRig", "construction", "government", "services", "retail"
-];
+const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = ["powerPlant", "waterTreatment", "farm", "foodFactory", "oilRig"];
 
 function runColony(config: Partial<ColonyConfig> = {}) {
 	const input = generateColonyConfig({
@@ -185,7 +183,21 @@ describe("economy stability", () => {
 			}
 		}
 
-		fs.writeFileSync("src/game/factories/generatedEconomy.ts", "export const economies = new Map(" + JSON.stringify([...ret], null, 2) + ")")
+		// Round up all capital stock numbers and write the file every time
+		const roundedRet = new Map<string, Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>>()
+		for(const [name, capitalStock] of ret) {
+			const roundedSectors: Record<string, Record<string, number>> = {}
+			for(const [sector, goods] of Object.entries(capitalStock)) {
+				const roundedGoods: Record<string, number> = {}
+				for(const [good, value] of Object.entries(goods)) {
+					roundedGoods[good] = Math.ceil(value!)
+				}
+				roundedSectors[sector] = roundedGoods
+			}
+			roundedRet.set(name, roundedSectors as Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>)
+		}
+
+		fs.writeFileSync("src/game/factories/generatedEconomy.ts", "export const economies = new Map(" + JSON.stringify([...roundedRet], null, 2) + ")")
 
 		expect(ret.size).toBe(13)
 	}, 120_000)

@@ -35,7 +35,6 @@ const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
     food: Cookie,
     entertainment: Clapperboard,
     education: School,
-    retail: ShoppingCart,
     tourism: Palmtree,
     consumerGoods: Boxes,
     water: Droplets,

@@ -47,7 +47,6 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         paper: 0,
         entertainment: 0,
         education: 0,
-        retail: 0,
         ore: 0,
         defense: 0,
         monetaryServices: 0,

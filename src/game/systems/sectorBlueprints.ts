@@ -84,14 +84,12 @@ function createTraditional(descOverride?: string): ["traditional", ProductionMet
 }
 
 const workerReqStandard = { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 } as const
-const goodsReqSpaceShipyard = { paper: 10, environmentFactor: 20, energy: 280, governance: 20 } as const
-const usualNonEssentialGoods = new Set<keyof Goods>(["governance", "paper", "water", "vehicles", "energy", "services", "environmentFactor", "retail"])
+const usualNonEssentialGoods = new Set<keyof Goods>(["governance", "water", "vehicles", "energy", "services", "environmentFactor"])
 
 export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorBlueprint>([
     ["mine", {
         name: "mine",
         goodsRequirements: {
-            paper: 1,
             energy: 50, governance: 20, environmentFactor: 20
         },
         workerRequirement: workerReqStandard,
@@ -110,7 +108,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
-            paper: 10, environmentFactor: 20, energy: 10, governance: 20
+            environmentFactor: 20, energy: 10, governance: 20
         },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { oil: 2_000, waste: 20 },
@@ -126,16 +124,16 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["forestry", ({
         name: "forestry", goodsRequirements: {
-            paper: 10, chemicals: 30, governance: 20
+            chemicals: 30, governance: 20
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { lumber: 50_000, agriculturalGoods: 2_000, environmentFactor: 1_000_00 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.1, vehicles: 0.1 },
-        nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
+        nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
-            paper: 10, environmentFactor: 20, water: 40, chemicals: 80, governance: 20,
+            environmentFactor: 20, water: 40, chemicals: 80, governance: 20,
         }, workerRequirement: {
             farmer: 900, clerks: 50, engineer: 50, healtcarePersonal: 10
         }, goodsProduction: { agriculturalGoods: 100_000, },
@@ -149,7 +147,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["fishery", {
         name: "fishery", goodsRequirements: {
-            paper: 1,
             governance: 2,
             environmentFactor: 2,
         },
@@ -157,14 +154,14 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         goodsProduction: { agriculturalGoods: 300_000 },
         capitalGoods: { machinery: 0.5, buildings: 0.1, vehicles: 0.1 },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
         productionMethods: new Map([
             createMethod("traditional", { desc: "Traditional" }),
         ])
     }],
     ["foodFactory", ({
         name: "foodFactory",
-        goodsRequirements: { paper: 10, environmentFactor: 20, agriculturalGoods: 200, governance: 20, retail: 200 },
+        goodsRequirements: { environmentFactor: 20, agriculturalGoods: 200, governance: 20 },
         workerRequirement: workerReqStandard,
         goodsProduction: { food: 500_000 },
         efficiencyBonus: 0.01,
@@ -173,7 +170,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["waterTreatment", ({
         name: "waterTreatment", goodsRequirements: {
-            paper: 10, environmentFactor: 20, energy: 200, chemicals: 80, governance: 20
+            environmentFactor: 20, energy: 200, chemicals: 80, governance: 20
         },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { water: 500_000 },
         efficiencyBonus: 0.01,
@@ -186,7 +183,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["powerPlant", ({
         name: "powerPlant", goodsRequirements: {
             environmentFactor: 20,
-            paper: 10,
             oil: 140,
             governance: 20,
         },
@@ -204,7 +200,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["metalFactory", ({
         name: "metalFactory", goodsRequirements: {
             environmentFactor: 30,
-            paper: 10,
             energy: 200,
             ore: 1000,
             governance: 20,
@@ -214,12 +209,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalGoods: { machinery: 0.08, buildings: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods
     })],
     ["machineryFactory", ({
         name: "machineryFactory", goodsRequirements: {
             environmentFactor: 20,
-            paper: 10,
             metals: 80,
             energy: 150,
             governance: 20
@@ -235,36 +229,35 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalGoods: { buildings: 0.1 },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["medicineFactory", ({
         name: "medicineFactory", goodsRequirements: {
             environmentFactor: 20,
-            paper: 10, chemicals: 50, energy: 140, governance: 20
+            chemicals: 50, energy: 140, governance: 20
         }, workerRequirement: { worker: 850, scientist: 50, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { medicine: 500_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.6, buildings: 0.2, },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["consumerFactory", ({
         name: "consumerFactory", goodsRequirements: {
             environmentFactor: 20,
-            paper: 10, chemicals: 60, energy: 220, governance: 20,
+            chemicals: 60, energy: 220, governance: 20,
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { consumerGoods: 500_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.6, buildings: 0.1 },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["spaceInfrastructure", ({
         name: "spaceport", goodsRequirements: {
             energy: 250,
             governance: 20,
-            paper: 10,
             environmentFactor: 20,
         }, workerRequirement: { worker: 790, clerks: 50, engineer: 50, scientist: 100, healtcarePersonal: 10 },
         goodsProduction: { spaceTransport: 50 },
@@ -275,7 +268,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["spaceShips", ({
-        name: "spaceShipyard", goodsRequirements: goodsReqSpaceShipyard,
+        name: "spaceShipyard", goodsRequirements: { environmentFactor: 20, energy: 280, governance: 20 },
         workerRequirement: workerReqStandard,
         goodsProduction: { spaceTransport: 8_000 },
         efficiencyBonus: 0.01,
@@ -286,7 +279,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["construction", ({
         name: "construction", goodsRequirements: {
-            paper: 10,
             energy: 40,
             governance: 20,
             environmentFactor: 30,
@@ -303,7 +295,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["services", ({
         name: "services", goodsRequirements: {
-            paper: 10, environmentFactor: 10, retail: 500, energy: 220, consumerGoods: 80, governance: 20
+            environmentFactor: 10, energy: 220, consumerGoods: 80, governance: 20
         },
         workerRequirement: { healtcarePersonal: 10, serviceWorker: 940, clergy: 50 },
         goodsProduction: { services: 500_000 },
@@ -316,7 +308,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["tourism", ({
         name: "tourism",
         goodsRequirements: {
-            paper: 10, environmentFactor: 30, retail: 500, services: 120, food: 60, governance: 20
+            environmentFactor: 30, services: 120, food: 60, governance: 20
         }, workerRequirement: { worker: 200, clerks: 50, serviceWorker: 700, healtcarePersonal: 50 }, goodsProduction: { tourism: 1_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2, },
@@ -326,7 +318,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["education", ({
         name: "education", goodsRequirements: {
-            energy: 100, services: 60, governance: 20, paper: 20
+            energy: 100, services: 60, governance: 20,
         }, workerRequirement: { teacher: 890, clerks: 100, worker: 50, healtcarePersonal: 10 },
         goodsProduction: { education: 300_000 },
         efficiencyBonus: 0.01,
@@ -341,7 +333,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["healthcare", ({
         name: "healthcare", goodsRequirements: {
-            paper: 10, retail: 200, medicine: 30, energy: 80, governance: 20
+            medicine: 30, energy: 80, governance: 20
         }, workerRequirement: { healtcarePersonal: 900, clerks: 50, worker: 50 }, goodsProduction: { healthcare: 2_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.1, machinery: 0.2, },
@@ -355,7 +347,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["environmentControl", ({
         name: "environmentControl",
         goodsRequirements: {
-            paper: 10, energy: 140, medicine: 30, chemicals: 30, governance: 20
+            energy: 140, medicine: 30, chemicals: 30, governance: 20
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10, },
         goodsProduction: { environmentFactor: 3_000 },
         efficiencyBonus: 0.01,
@@ -365,7 +357,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["chemical", ({
         name: "chemical", goodsRequirements: {
-            paper: 10, environmentFactor: 30, oil: 80, energy: 150, governance: 20
+            environmentFactor: 30, oil: 80, energy: 150, governance: 20
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { chemicals: 7_000, waste: 40 },
         efficiencyBonus: 0.01,
@@ -376,7 +368,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
-            paper: 10, energy: 140, services: 80, governance: 20
+            energy: 140, services: 80, governance: 20
         }, workerRequirement: { worker: 190, clerks: 800, healtcarePersonal: 10 }, goodsProduction: { monetaryServices: 800_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2, },
@@ -387,7 +379,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["religion", ({
         name: "religion",
         goodsRequirements: {
-            paper: 10, services: 120, governance: 20
+            services: 120, governance: 20
         }, workerRequirement: { clergy: 890, clerks: 50, worker: 50, healtcarePersonal: 10 }, goodsProduction: { faith: 2_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2 },
@@ -397,7 +389,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["lawEnforcement", ({
         name: "lawEnforcement",
-        goodsRequirements: { paper: 10, energy: 120, governance: 20 },
+        goodsRequirements: { energy: 120, governance: 20 },
         workerRequirement: { policeMen: 890, worker: 50, clerks: 50, healtcarePersonal: 10 },
         goodsProduction: { lawEnforcement: 800_000 },
         efficiencyBonus: 0.01,
@@ -412,7 +404,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["nuclearSector", ({
         name: "nuclearSector", goodsRequirements:
-            { ore: 200, paper: 10, energy: 100, governance: 20, environmentFactor: 10 },
+            { ore: 200, energy: 100, governance: 20, environmentFactor: 10 },
         workerRequirement: { scientist: 50, worker: 690, clerks: 50, engineer: 200, healtcarePersonal: 10 },
         goodsProduction: { uranium: 1_000, waste: 30, energy: 10_000_000 },
         efficiencyBonus: 0.01,
@@ -423,7 +415,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["recycling", ({
         name: "recycling",
-        goodsRequirements: { waste: 200, energy: 40, paper: 10, governance: 20, environmentFactor: 20, },
+        goodsRequirements: { waste: 200, energy: 40, governance: 20, environmentFactor: 20, },
         workerRequirement: workerReqStandard,
         goodsProduction: { metals: 60, lumber: 40, water: 300, chemicals: 20, oil: 40 },
         capitalGoods: { machinery: 0.4, buildings: 0.1, },
@@ -433,7 +425,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["government", ({
         name: "government",
-        goodsRequirements: { paper: 10, services: 50, environmentFactor: 10 },
+        goodsRequirements: { services: 50, environmentFactor: 10 },
         workerRequirement: { clerks: 790, worker: 200, healtcarePersonal: 10 },
         goodsProduction: { governance: 150_000 },
         efficiencyBonus: 0.01,
@@ -446,8 +438,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "automotive",
         goodsRequirements: {
             environmentFactor: 30,
-            paper: 10,
-            retail: 200,
             oil: 60,
             energy: 150,
             water: 20,
@@ -474,18 +464,20 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["logistics", ({
         name: "logistics",
-        goodsRequirements: { environmentFactor: 20, retail: 50, energy: 150, governance: 20, paper: 100 },
+        goodsRequirements: { environmentFactor: 20, energy: 150, governance: 20, paper: 100 },
         workerRequirement: { worker: 790, clerks: 50, serviceWorker: 150, healtcarePersonal: 10 },
         goodsProduction: { logistics: 15000, waste: 10 },
         efficiencyBonus: 0.01,
-        capitalGoods: { vehicles: 0.5, machinery: 0.3, buildings: 0.1, },
+        capitalGoods: { vehicles: 5, machinery: 0.5, buildings: 0.1, },
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["entertainmentIndustry", ({
         name: "entertainmentIndustry",
-        goodsRequirements: { environmentFactor: 20, retail: 500, energy: 150, governance: 2, paper: 100 },
+        goodsRequirements: {
+            environmentFactor: 20, energy: 150, governance: 2, paper: 100
+        },
         workerRequirement: { worker: 490, clerks: 50, engineer: 50, serviceWorker: 400, healtcarePersonal: 10 },
         goodsProduction: { entertainment: 1_000_000, waste: 10 },
         efficiencyBonus: 0.01,
@@ -500,22 +492,21 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             militaryEquipment: 10,
             energy: 15,
             governance: 2,
-            paper: 10,
         },
         workerRequirement: { serviceMan: 850, clerks: 50, healtcarePersonal: 50, engineer: 50 },
         goodsProduction: { defense: 2000000, waste: 10 },
         efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.8, vehicles: 0.5, buildings: 0.1, },
+        capitalGoods: { machinery: 0.8, militaryEquipment: 5, buildings: 0.1, },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "energy", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
         productionMethods: new Map([
             createTraditional(),
             createFullyRobotized("A fully autonomus robot army, lead by powerful AIs, which can wage wars without any human intervention. May the Gods have mercy on -our- *their enemies.")
         ])
     })],
     ["militaryEquipment", ({
-        name: "weaponFactory", goodsRequirements: { paper: 10, environmentFactor: 20, retail: 100, energy: 200, governance: 20 },
+        name: "weaponFactory", goodsRequirements: { environmentFactor: 20, energy: 200, governance: 20 },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { militaryEquipment: 10_000_000 },
         efficiencyBonus: 0.01,
@@ -524,13 +515,26 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalEfficiencyDecay: 0.001,
         nonEssentialGoods: usualNonEssentialGoods,
     })],
+    ["mobility", ({
+        name: "mobility",
+        goodsRequirements: {
+            environmentFactor: 20,
+            oil: 500, energy: 10, governance: 20
+        },
+        workerRequirement: { worker: 804, clerks: 50, serviceWorker: 50, engineer: 50, healtcarePersonal: 10 },
+        goodsProduction: { mobility: 15_000, waste: 10 },
+        efficiencyBonus: 0.01,
+        capitalGoods: { buildings: 100, governance: 20, vehicles: 100, },
+        capitalEfficiency: 0.0008,
+        capitalEfficiencyDecay: 0.0008,
+        nonEssentialGoods: usualNonEssentialGoods,
+    })],
     ["spaceGoodsTransport", {
         name: "spaceGoodsTransport",
         goodsRequirements: {
             environmentFactor: 20,
             energy: 150,
             governance: 20,
-            paper: 100
         },
         workerRequirement: {
             worker: 340,
@@ -542,7 +546,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalGoods: { vehicles: 0.5, machinery: 0.5, buildings: 0.1, },
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: new Set(["paper", "governance", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
         productionMethods: new Map([
             createTraditional(),
             createFullyRobotized("A merchant marine which is fully automated by AI.")
