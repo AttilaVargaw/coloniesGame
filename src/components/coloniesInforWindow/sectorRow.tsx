@@ -4,7 +4,7 @@ import { Goods, CAN_BE_NEGATIVE } from "@/game/data/Goods";
 import { Population } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { BottleneckCell } from "./BottleneckCell";
 import { RequirementItem } from "./requirementItem";
 import { SectorIcon } from "../icons/SectorIcon";
@@ -55,7 +55,7 @@ export function SectorRow({
     }
 
     const reqs = useMemo(() => {
-        const items: React.ReactNode[] = [];
+        const items: ReactNode[] = [];
         let bottleneck: keyof Population | keyof Goods | null = null;
         let bottleneckRatio = Infinity;
 

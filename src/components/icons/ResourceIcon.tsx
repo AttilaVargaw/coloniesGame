@@ -30,8 +30,9 @@ import {
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 
 import { FaPray } from "react-icons/fa";
+import { ComponentType } from "react";
 
-const ICON_MAP: Record<keyof Goods, React.ComponentType<LucideProps>> = {
+const ICON_MAP: Record<keyof Goods, ComponentType<LucideProps>> = {
     food: Cookie,
     entertainment: Clapperboard,
     education: School,

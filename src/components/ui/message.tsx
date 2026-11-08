@@ -1,7 +1,8 @@
-import * as React from "react"
-import { cn } from "cn"
 
-function MessageGroup({ className, ...props }: React.ComponentProps<"div">) {
+import { cn } from "cn"
+import { ComponentProps } from "react"
+
+function MessageGroup({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="message-group"
@@ -15,7 +16,7 @@ function Message({
   className,
   align = "start",
   ...props
-}: React.ComponentProps<"div"> & { align?: "start" | "end" }) {
+}: ComponentProps<"div"> & { align?: "start" | "end" }) {
   return (
     <div
       data-slot="message"
@@ -29,7 +30,7 @@ function Message({
   )
 }
 
-function MessageAvatar({ className, ...props }: React.ComponentProps<"div">) {
+function MessageAvatar({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="message-avatar"
@@ -42,7 +43,7 @@ function MessageAvatar({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function MessageContent({ className, ...props }: React.ComponentProps<"div">) {
+function MessageContent({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="message-content"
@@ -55,7 +56,7 @@ function MessageContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function MessageHeader({ className, ...props }: React.ComponentProps<"div">) {
+function MessageHeader({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="message-header"
@@ -68,7 +69,7 @@ function MessageHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function MessageFooter({ className, ...props }: React.ComponentProps<"div">) {
+function MessageFooter({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="message-footer"

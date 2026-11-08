@@ -19,7 +19,7 @@ export default defineConfig(
     extends: [
       eslintJs.configs.recommended,
       tseslint.configs.recommended,
-      eslintReact.configs["recommended-typescript"],
+      eslintconfigs["recommended-typescript"],
       oxlint.configs["flat/recommended"],
     ],
     languageOptions: {

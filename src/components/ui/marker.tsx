@@ -1,7 +1,8 @@
-import * as React from "react"
+
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { ComponentProps } from "react"
 
 const markerVariants = cva(
   "group/marker relative flex min-h-4 w-full items-center gap-2 text-left text-sm text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [a]:underline [a]:underline-offset-3 [a]:hover:text-foreground",
@@ -22,7 +23,7 @@ function Marker({
   variant = "default",
   asChild = false,
   ...props
-}: React.ComponentProps<"div"> &
+}: ComponentProps<"div"> &
   VariantProps<typeof markerVariants> & {
     asChild?: boolean
   }) {
@@ -38,7 +39,7 @@ function Marker({
   )
 }
 
-function MarkerIcon({ className, ...props }: React.ComponentProps<"span">) {
+function MarkerIcon({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       data-slot="marker-icon"
@@ -52,7 +53,7 @@ function MarkerIcon({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
-function MarkerContent({ className, ...props }: React.ComponentProps<"span">) {
+function MarkerContent({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       data-slot="marker-content"

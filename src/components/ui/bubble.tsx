@@ -1,9 +1,10 @@
-import * as React from "react"
+
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { ComponentProps } from "react"
 
-function BubbleGroup({ className, ...props }: React.ComponentProps<"div">) {
+function BubbleGroup({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="bubble-group"
@@ -45,7 +46,7 @@ function Bubble({
   align = "start",
   className,
   ...props
-}: React.ComponentProps<"div"> &
+}: ComponentProps<"div"> &
   VariantProps<typeof bubbleVariants> & {
     align?: "start" | "end"
   }) {
@@ -64,7 +65,7 @@ function BubbleContent({
   asChild = false,
   className,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ComponentProps<"div"> & {
   asChild?: boolean
 }) {
   const Comp = asChild ? Slot.Root : "div"
@@ -106,7 +107,7 @@ function BubbleReactions({
   align = "end",
   className,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ComponentProps<"div"> & {
   align?: "start" | "end"
   side?: "top" | "bottom"
 }) {

@@ -35,6 +35,7 @@ import {
 import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 import { FaOilCan } from "react-icons/fa6";
 import { GiGreekTemple, GiRifle } from "react-icons/gi";
+import { ComponentType } from "react";
 
 const ICON_MAP = {
     automotive: Car,
@@ -71,7 +72,7 @@ const ICON_MAP = {
     spaceInfrastructure: Satellite,
     militaryEquipment: InfantryFightingVehicle,
     mobility: Car,
-} satisfies Record<keyof IndustrialSectors, React.ComponentType<LucideProps>>
+} satisfies Record<keyof IndustrialSectors, ComponentType<LucideProps>>
 
 console.log("sectorsN", Object.keys(ICON_MAP).length)
 

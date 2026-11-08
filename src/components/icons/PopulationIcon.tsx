@@ -1,14 +1,15 @@
 import { Population } from "@/game/data/Population";
 import { cn } from "cn";
 import { Beaker, BookOpen, Church, HardHat, HeartPulse, House, Pencil, Tractor, CoffeeIcon } from "lucide-react";
+import { ReactNode } from "react";
 import { FaPersonWalkingWithCane, FaPersonMilitaryRifle } from "react-icons/fa6"
 import { MdOutlineEngineering, MdOutlineLocalPolice } from "react-icons/md";
 
-function createIcon(Icon: (props: { className?: string }) => React.ReactNode) {
+function createIcon(Icon: (props: { className?: string }) => ReactNode) {
     return ({ className }: { className?: string }) => <Icon className={cn("size-4", className)} />
 }
 
-const ICONS: Record<keyof Population, (props: { className?: string }) => React.ReactNode> = {
+const ICONS: Record<keyof Population, (props: { className?: string }) => ReactNode> = {
     farmer: createIcon(({ className }) => <Tractor className={cn("size-4", className)} />),
     scientist: createIcon(({ className }) => <Beaker className={cn("size-4", className)} />),
     worker: createIcon(({ className }) => <HardHat className={cn("size-4", className)} />),

@@ -4,7 +4,7 @@ import { useGameEngine } from "@/hooks/useGameContext"
 import { SetTimeScaleCommand } from "@/engine/lib/SetTimeScaleCommand"
 import { DebugModal } from "@/components/header/DebugModal"
 import { GovernmentModal } from "../governmentTab/government"
-import { useEffect, useState } from "react"
+import { MouseEventHandler, useEffect, useState } from "react"
 import { Entity } from "@/engine/entities/entity"
 import { cn } from "cn"
 import { Button } from "../ui/button"
@@ -18,7 +18,7 @@ export function Header() {
     const engine = useGameEngine()
     const [multiplier, setMultiplier] = useState(1)
 
-    const setSpeed: React.MouseEventHandler<HTMLButtonElement> = ({ target }) => {
+    const setSpeed: MouseEventHandler<HTMLButtonElement> = ({ target }) => {
         //@ts-ignore
         const { id } = target
 

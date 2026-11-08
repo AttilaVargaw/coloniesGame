@@ -3,6 +3,7 @@ import { cn } from "cn"
 import { Slot } from "radix-ui"
 
 import { Separator } from "@/components/ui/separator"
+import { ComponentProps } from "react"
 
 const buttonGroupVariants = cva(
   "group/button-group flex w-fit items-stretch *:focus-visible:relative *:focus-visible:z-10 has-[>[data-slot=button-group]]:gap-2 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-lg [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
@@ -25,7 +26,7 @@ function ButtonGroup({
   className,
   orientation,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>) {
+}: ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>) {
   return (
     <div
       role="group"
@@ -41,7 +42,7 @@ function ButtonGroupText({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ComponentProps<"div"> & {
   asChild?: boolean
 }) {
   const Comp = asChild ? Slot.Root : "div"
@@ -61,7 +62,7 @@ function ButtonGroupSeparator({
   className,
   orientation = "vertical",
   ...props
-}: React.ComponentProps<typeof Separator>) {
+}: ComponentProps<typeof Separator>) {
   return (
     <Separator
       data-slot="button-group-separator"
