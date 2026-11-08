@@ -176,131 +176,177 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	const industryTree = createIndustryTree(industryBlackboard);
 	industryTree.tick(industryBlackboard);
 
+	// === ITERATIVE SECTOR ALLOCATION ===
+	// Run bid → buy → execute multiple times. Each round starts with fresh
+	// sector money but goods carry forward and are depleted, so prices get
+	// recomputed to reflect real scarcity. Only the final round's results are
+	// committed downstream (money, capital, goods delta).
+	const MAX_ITERATIONS = 3;
+	const CONVERGENCE_THRESHOLD = 0.005;
+
+	let currentGoods = { ...goods };
+	let currentPrices = prices;
+
+	let sectorBids: SectorBid[] = [];
+	let execResult: ReturnType<typeof executeSectors> | null = null;
+	let newMoney: Record<string, number> = { ...startingMoney };
 	let investRemaining = industryBlackboard.investTotal;
 
-	// === SECTOR-LEVEL BEHAVIOR TREES ===
-	const sectorBids: SectorBid[] = [];
+	for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+		const goodsBeforeIteration = { ...currentGoods };
 
-	for(const name of activeSectors) {
-		if(
-			(settlementType === "outpost" || settlementType === "hydrocarbonRefinery") &&
-			!allowedSectorsSet.has(name)
-		) {
-			continue;
+		// Carry forward money from previous round (starts as startingMoney)
+		const roundMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
+		for(const name of activeSectors) {
+			roundMoney[name] = newMoney[name] ?? startingMoney[name] ?? 0;
 		}
 
-		// Industry-wide emergency stop: skip all sectors
-		if(industryBlackboard.emergencyStopAll) {
-			continue;
-		}
+		let roundInvestRemaining = investRemaining;
 
-		// Industry-wide sector shutdown: skip unprofitable sectors
-		if(industryBlackboard.shutdownSectors.has(name)) {
-			continue;
-		}
+		// === SECTOR-LEVEL BEHAVIOR TREES ===
+		const roundSectorBids: SectorBid[] = [];
 
-		const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
-		const sectorMoney = startingMoney[name] ?? 0;
-		const investPriority = industryBlackboard.investmentPriority[name] ?? 0.5;
-		const blackboard = buildBlackboard(
-			name,
-			sectorMoney,
-			capitalStock[name] ?? {},
-			previousSectorProfits[name] ?? 0,
-			previousSectorRevenue[name] ?? 0,
-			previousSectorLaborCosts[name] ?? 0,
-			previousSectorInputCosts[name] ?? 0,
-			previousSectorUtilization[name] ?? 0,
-			laborAssigned[name] ?? 0,
-			population.worker.number,
-			prices,
-			adjustedSalaries,
-			{}, // workerMarketRatios not yet computed at this stage
-			config?.capitalGoods,
-			config?.workerRequirement,
-			config?.goodsProduction,
-			0, // outputLevel
-			0, // inputLevel
-			investPriority,
-			investRemaining,
-		);
-		const tree = createSectorTree(blackboard);
-		tree.tick(blackboard);
-
-		// Track remaining investment budget across sectors
-		investRemaining = blackboard.investRemaining;
-
-		// Apply behavior tree decisions
-		if(blackboard.decisions.stopProduction) {
-			continue; // skip this sector entirely
-		}
-
-		const techMultiplier = techMultipliers[name] ?? 1;
-		let laborAssignedVal =
-			blackboard.decisions.laborAssigned > 0
-				? blackboard.decisions.laborAssigned
-				: laborAssigned[name] ?? 0;
-		const capitalStockVal = capitalStock[name] ?? {};
-
-		const bid = buildSectorBid(
-			name,
-			prices,
-			techMultiplier,
-			laborAssignedVal,
-			capitalStockVal,
-			adjustedSalaries,
-			previousSectorProfits[name] ?? 0,
-			blackboard.decisions,
-			{
-				workerEfficiencyMultipliers,
-				materialRequirementMultipliers,
-				capitalMultipliers,
-				selectedMethod: selectedMethod[name] ?? null,
-				sectorStartingMoney: startingMoney[name] ?? 0,
+		for(const name of activeSectors) {
+			if(
+				(settlementType === "outpost" || settlementType === "hydrocarbonRefinery") &&
+				!allowedSectorsSet.has(name)
+			) {
+				continue;
 			}
-		);
-		if(bid) {
-			sectorBids.push(bid);
-		}
-	}
 
-	const totalIdealWorkerDemand: Record<string, number> = {};
-	for(const bid of sectorBids) {
-		const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
-		for(const [key, value] of Object.entries(idealWorkerDemand)) {
-			totalIdealWorkerDemand[key] = (totalIdealWorkerDemand[key] ?? 0) + value;
-		}
-	}
-	const workerAvailable: Record<string, number> = {};
-	for(const [key, pop] of Object.entries(population)) {
-		workerAvailable[key] = pop.number;
-	}
-	const workerMarketRatios = computeMarketRatios(totalIdealWorkerDemand, workerAvailable);
+			if(industryBlackboard.emergencyStopAll) {
+				continue;
+			}
 
-	updateWageMemory(state.wageMemory, workerMarketRatios as Record<keyof Population, number>);
+			if(industryBlackboard.shutdownSectors.has(name)) {
+				continue;
+			}
 
-	// Compute actual production scale per bid (worker constrained)
-	for(const bid of sectorBids) {
-		let workerRatio = 1;
-		const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
-		for(const [key, value] of Object.entries(idealWorkerDemand)) {
-			if(value > 0) {
-				const r = workerMarketRatios[key as keyof Population] ?? 1;
-				workerRatio = Math.min(workerRatio, r);
+			const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
+			const sectorMoney = roundMoney[name] ?? 0;
+			const investPriority = industryBlackboard.investmentPriority[name] ?? 0.5;
+			const blackboard = buildBlackboard(
+				name,
+				sectorMoney,
+				capitalStock[name] ?? {},
+				previousSectorProfits[name] ?? 0,
+				previousSectorRevenue[name] ?? 0,
+				previousSectorLaborCosts[name] ?? 0,
+				previousSectorInputCosts[name] ?? 0,
+				previousSectorUtilization[name] ?? 0,
+				laborAssigned[name] ?? 0,
+				population.worker.number,
+				currentPrices,
+				adjustedSalaries,
+				{}, // workerMarketRatios not yet computed at this stage
+				config?.capitalGoods,
+				config?.workerRequirement,
+				config?.goodsProduction,
+				0, // outputLevel
+				0, // inputLevel
+				investPriority,
+				roundInvestRemaining,
+			);
+			const tree = createSectorTree(blackboard);
+			tree.tick(blackboard);
+
+			roundInvestRemaining = blackboard.investRemaining;
+
+			if(blackboard.decisions.stopProduction) {
+				continue;
+			}
+
+			const techMultiplier = techMultipliers[name] ?? 1;
+			let laborAssignedVal =
+				blackboard.decisions.laborAssigned > 0
+					? blackboard.decisions.laborAssigned
+					: laborAssigned[name] ?? 0;
+			const capitalStockVal = capitalStock[name] ?? {};
+
+			const bid = buildSectorBid(
+				name,
+				currentPrices,
+				techMultiplier,
+				laborAssignedVal,
+				capitalStockVal,
+				adjustedSalaries,
+				previousSectorProfits[name] ?? 0,
+				blackboard.decisions,
+				{
+					workerEfficiencyMultipliers,
+					materialRequirementMultipliers,
+					capitalMultipliers,
+					selectedMethod: selectedMethod[name] ?? null,
+					sectorStartingMoney: sectorMoney,
+				}
+			);
+			if(bid) {
+				roundSectorBids.push(bid);
 			}
 		}
-		bid.actualScale = Math.min(bid.budgetRatio, workerRatio);
+
+		const totalIdealWorkerDemand: Record<string, number> = {};
+		for(const bid of roundSectorBids) {
+			const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
+			for(const [key, value] of Object.entries(idealWorkerDemand)) {
+				totalIdealWorkerDemand[key] = (totalIdealWorkerDemand[key] ?? 0) + value;
+			}
+		}
+		const workerAvailable: Record<string, number> = {};
+		for(const [key, pop] of Object.entries(population)) {
+			workerAvailable[key] = pop.number;
+		}
+		const workerMarketRatios = computeMarketRatios(totalIdealWorkerDemand, workerAvailable);
+
+		updateWageMemory(state.wageMemory, workerMarketRatios as Record<keyof Population, number>);
+
+		// Compute actual production scale per bid (worker constrained)
+		for(const bid of roundSectorBids) {
+			let workerRatio = 1;
+			const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
+			for(const [key, value] of Object.entries(idealWorkerDemand)) {
+				if(value > 0) {
+					const r = workerMarketRatios[key as keyof Population] ?? 1;
+					workerRatio = Math.min(workerRatio, r);
+				}
+			}
+			bid.actualScale = Math.min(bid.budgetRatio, workerRatio);
+		}
+
+		// Sectors buy input goods from colony pool using their own money
+		const { colonyGoodsAfterPurchase, newMoney: roundNewMoney } = buySectorInputs(
+			roundSectorBids,
+			currentGoods,
+			roundMoney,
+			currentPrices
+		);
+		currentGoods = colonyGoodsAfterPurchase;
+		newMoney = roundNewMoney;
+
+		// Execute sectors
+		execResult = executeSectors(roundSectorBids, population, currentGoods, currentPrices, adjustedSalaries);
+
+		// Recompute prices for next iteration based on remaining goods
+		currentPrices = getPrices(currentGoods, state.priceMemory);
+
+		sectorBids = roundSectorBids;
+		investRemaining = roundInvestRemaining;
+
+		// Convergence check: stop if goods barely changed this round
+		if(iteration > 0) {
+			let goodsDelta = 0;
+			let totalScale = 0;
+			for(const key of Object.keys(currentGoods)) {
+				const cur = (currentGoods as Record<string, number>)[key] ?? 0;
+				const prev = (goodsBeforeIteration as Record<string, number>)[key] ?? 0;
+				goodsDelta += Math.abs(cur - prev);
+				totalScale += Math.abs(prev);
+			}
+			if(totalScale > 0 && goodsDelta / totalScale < CONVERGENCE_THRESHOLD) {
+				break;
+			}
+		}
 	}
-
-	let newMoney: Record<string, number> = { ...startingMoney };
-
-	// Sectors buy input goods from colony pool using their own money
-	const { colonyGoodsAfterPurchase } = buySectorInputs(
-		sectorBids,
-		goods,
-		newMoney,
-		prices
-	);
 
 	const {
 		sectorResults,
@@ -314,7 +360,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		remainingWorkers,
 		sumGoodsRequirements,
 		sumGoodsProduction,
-	} = executeSectors(sectorBids, population, goods, prices, adjustedSalaries);
+	} = execResult!;
 
 	for(const key of ["stayAtHome"] as const) {
 		workingWorkers[key] = { ...workingWorkers[key], number: population[key].number };
@@ -333,7 +379,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		sectorBids,
 		sectorResults,
 		populationConsumption,
-		prices,
+		currentPrices,
 		newMoney
 	);
 
@@ -342,7 +388,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		Array.from(activeSectors),
 		capitalStock,
 		sectorResults,
-		prices,
+		currentPrices,
 		newMoney
 	);
 
@@ -353,11 +399,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	const colonyGoodsDelta = computeColonyGoodsDelta(
 		goods,
-		colonyGoodsAfterPurchase,
+		currentGoods,
 		activeSectors,
 		sectorResults,
 		replenishmentDelta,
-		prices
+		currentPrices
 	);
 
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)

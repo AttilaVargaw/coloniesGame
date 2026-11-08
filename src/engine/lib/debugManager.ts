@@ -18,24 +18,26 @@ export const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
     thresholdStars: 0.06,
 } as const
 
+export const DEBUG_FLAGS = {
+    showJumpGraph: false,
+    drawOrbits: true,
+    showCameraGizmo: true,
+    showFpsCounter: true,
+    showCameraTarget: false,
+    showBloom: true,
+    showColorGrading: false,
+    showVignette: false,
+    showContrastSaturation: false,
+    showCullingOverlay: false,
+    showCheckerPattern: false,
+    showFrameTime: false,
+    showClickBoxes: false,
+    showHDR: true,
+    showAtmosphere: true,
+}
+
 export class DebugManager {
-    private readonly _flags: Record<DebugFlag, boolean> = {
-        showJumpGraph: false,
-        drawOrbits: true,
-        showCameraGizmo: true,
-        showFpsCounter: true,
-        showCameraTarget: false,
-        showBloom: true,
-        showColorGrading: false,
-        showVignette: false,
-        showContrastSaturation: false,
-        showCullingOverlay: false,
-        showCheckerPattern: false,
-        showFrameTime: false,
-        showClickBoxes: false,
-        showHDR: true,
-        showAtmosphere: true,
-    }
+    private readonly _flags: Record<DebugFlag, boolean> = { ...DEBUG_FLAGS }
 
     private _bloomSettings = DEFAULT_BLOOM_SETTINGS
 

@@ -14,9 +14,9 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { DebugToggleCommand } from "@/game/commands/DebugToggleCommand";
-import { type DebugFlag, type BloomSettings, DEFAULT_BLOOM_SETTINGS } from "@engine/lib/debugManager";
+import { type DebugFlag, type BloomSettings, DEFAULT_BLOOM_SETTINGS, DEBUG_FLAGS } from "@engine/lib/debugManager";
 
-const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
+const debugFlags: { flag: DebugFlag; label: string }[] = [
     { flag: "showJumpGraph", label: "Show Jump Graph" },
     { flag: "drawOrbits", label: "Draw Orbits" },
     { flag: "showCameraGizmo", label: "Show Camera Gizmo" },
@@ -36,23 +36,7 @@ const DEBUG_FLAGS: { flag: DebugFlag; label: string }[] = [
 
 export function DebugModal() {
     const [open, setOpen] = useState(false)
-    const [flags, setFlags] = useState<Record<DebugFlag, boolean>>({
-        showJumpGraph: false,
-        drawOrbits: true,
-        showCameraGizmo: true,
-        showFpsCounter: true,
-        showCameraTarget: false,
-        showBloom: true,
-        showColorGrading: false,
-        showVignette: false,
-        showContrastSaturation: false,
-        showCullingOverlay: false,
-        showCheckerPattern: false,
-        showFrameTime: false,
-        showClickBoxes: false,
-        showHDR: true,
-        showAtmosphere: true,
-    })
+    const [flags, setFlags] = useState<Record<DebugFlag, boolean>>(DEBUG_FLAGS)
     const [bloomSettings, setBloomSettings] = useState<BloomSettings>(DEFAULT_BLOOM_SETTINGS)
     const engine = useGameEngine()
 
@@ -89,7 +73,7 @@ export function DebugModal() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-2">
-                    {DEBUG_FLAGS.filter(({ flag }) => flag !== "showVignette" && flag !== "showCameraTarget" && flag !== "showFrameTime").map(({ flag, label }) => (
+                    {debugFlags.filter(({ flag }) => flag !== "showVignette" && flag !== "showCameraTarget" && flag !== "showFrameTime").map(({ flag, label }) => (
                         <div key={flag} className="flex items-center justify-between">
                             <span className="text-sm">{label}</span>
                             <Toggle

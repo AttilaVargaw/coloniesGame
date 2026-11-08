@@ -18,7 +18,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 2
+        "buildings": 2,
+        "vehicles": 1
       },
       "lawEnforcement": {
         "machinery": 4,
@@ -158,7 +159,8 @@ export const economies = new Map([
         "buildings": 1
       },
       "bank": {
-        "buildings": 2
+        "buildings": 2,
+        "vehicles": 1
       },
       "consumerFactory": {
         "machinery": 6,
@@ -396,7 +398,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 3
+        "buildings": 3,
+        "vehicles": 1
       },
       "education": {
         "buildings": 3
@@ -426,7 +429,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 3
+        "buildings": 3,
+        "vehicles": 1
       },
       "chemical": {
         "machinery": 7,
@@ -563,7 +567,8 @@ export const economies = new Map([
         "buildings": 3
       },
       "bank": {
-        "buildings": 3
+        "buildings": 3,
+        "vehicles": 1
       },
       "foodFactory": {
         "machinery": 7,
@@ -734,7 +739,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 4
+        "buildings": 4,
+        "vehicles": 1
       },
       "defense": {
         "machinery": 13,
@@ -825,7 +831,8 @@ export const economies = new Map([
     "Leonis",
     {
       "bank": {
-        "buildings": 4
+        "buildings": 4,
+        "vehicles": 1
       },
       "government": {
         "buildings": 2
@@ -1022,7 +1029,8 @@ export const economies = new Map([
         "metals": 10
       },
       "bank": {
-        "buildings": 4
+        "buildings": 4,
+        "vehicles": 1
       },
       "construction": {
         "machinery": 12
@@ -1177,7 +1185,8 @@ export const economies = new Map([
         "buildings": 1
       },
       "bank": {
-        "buildings": 1
+        "buildings": 1,
+        "vehicles": 1
       },
       "services": {
         "buildings": 1
@@ -1291,7 +1300,8 @@ export const economies = new Map([
         "buildings": 1
       },
       "bank": {
-        "buildings": 1
+        "buildings": 1,
+        "vehicles": 1
       },
       "defense": {
         "machinery": 3,
@@ -1437,7 +1447,8 @@ export const economies = new Map([
         "buildings": 1
       },
       "bank": {
-        "buildings": 1
+        "buildings": 1,
+        "vehicles": 1
       },
       "environmentControl": {
         "machinery": 2,
@@ -1568,7 +1579,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 2
+        "buildings": 2,
+        "vehicles": 1
       },
       "services": {
         "buildings": 1
@@ -1709,7 +1721,8 @@ export const economies = new Map([
         "buildings": 2
       },
       "bank": {
-        "buildings": 2
+        "buildings": 2,
+        "vehicles": 1
       },
       "healthcare": {
         "buildings": 1,

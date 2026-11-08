@@ -92,7 +92,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             environmentFactor: 20, energy: 10, governance: 20
         },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-        goodsProduction: { oil: 2_000, waste: 20 },
+        goodsProduction: { oil: 5_000, waste: 20 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.5, buildings: 0.1, },
         nonEssentialGoods: usualNonEssentialGoods,
@@ -107,7 +107,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "forestry", goodsRequirements: {
             chemicals: 30, governance: 20
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-        goodsProduction: { lumber: 50_000, agriculturalGoods: 2_000, environmentFactor: 1_000_00 },
+        goodsProduction: { lumber: 500_000, agriculturalGoods: 2_000, environmentFactor: 1_000_00 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.1, vehicles: 0.1 },
         nonEssentialGoods: usualNonEssentialGoods,
@@ -153,7 +153,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "waterTreatment", goodsRequirements: {
             environmentFactor: 20, energy: 200, chemicals: 80, governance: 20
         },
-        workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { water: 500_000 },
+        workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { water: 1_000_000 },
         efficiencyBonus: 0.01,
         nonEssentialGoods: new Set([...usualNonEssentialGoods, "chemicals"]),
         capitalGoods: { machinery: 0.5, buildings: 0.1 },
@@ -339,7 +339,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "chemical", goodsRequirements: {
             environmentFactor: 30, oil: 80, energy: 150, governance: 20
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-        goodsProduction: { chemicals: 7_000, waste: 40 },
+        goodsProduction: { chemicals: 70_000, waste: 40 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.5, buildings: 0.1, },
         capitalEfficiency: 0.001,
@@ -351,7 +351,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             energy: 140, services: 80, governance: 20
         }, workerRequirement: { worker: 190, clerks: 800, healtcarePersonal: 10 }, goodsProduction: { monetaryServices: 800_000 },
         efficiencyBonus: 0.01,
-        capitalGoods: { buildings: 0.2, },
+        capitalGoods: { buildings: 0.2, vehicles: 0.01 },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.0006,
         nonEssentialGoods: usualNonEssentialGoods,
@@ -384,9 +384,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["nuclearSector", ({
         name: "nuclearSector", goodsRequirements:
-            { energy: 100, governance: 20, environmentFactor: 10 },
+            { governance: 20, environmentFactor: 10 },
         workerRequirement: { scientist: 50, worker: 690, clerks: 50, engineer: 200, healtcarePersonal: 10 },
-        goodsProduction: { fissionMaterial: 1_000, waste: 30, energy: 10_000_000 },
+        goodsProduction: { fissionMaterial: 500, waste: 30, energy: 10_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.8, buildings: 0.1, },
         capitalEfficiency: 0.001,
@@ -488,7 +488,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["militaryEquipment", ({
         name: "weaponFactory", goodsRequirements: { environmentFactor: 20, energy: 200, governance: 20 },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-        goodsProduction: { militaryEquipment: 10_000_000 },
+        goodsProduction: { militaryEquipment: 50_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.6, metals: 0.5, buildings: 0.1 },
         capitalEfficiency: 0.001,
