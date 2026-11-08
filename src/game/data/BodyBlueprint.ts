@@ -25,4 +25,3 @@ export type BodyBlueprint = Readonly<{
     axialTilt?: number;
     axialTiltAxis?: [number, number, number];
 }>
-

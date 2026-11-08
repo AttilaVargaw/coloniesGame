@@ -7,7 +7,7 @@ export interface BloomSettings {
     thresholdStars: number
 }
 
-export type DebugFlag = 'showJumpGraph' | "drawOrbits" | "showCameraGizmo" | "showFpsCounter" | "showCameraTarget" | "showBloom" | "showColorGrading" | "showVignette" | "showContrastSaturation" | "showCullingOverlay" | "showCheckerPattern" | "showFrameTime" | "showClickBoxes" | "showHDR" | "showAtmosphere"
+export type DebugFlag = keyof typeof DEBUG_FLAGS
 
 export const DEFAULT_BLOOM_SETTINGS: Readonly<BloomSettings> = {
     brightness: 3.5,

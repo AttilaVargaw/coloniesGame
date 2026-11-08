@@ -438,7 +438,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	const result: IndustryTickResult = {
 		entityId,
-		goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption },
+		goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption, ...negateReplenishmentDelta(replenishmentDelta) },
 		goodsProduction: sumGoodsProduction,
 		workingWorkers: workingWorkers as Population,
 		freeWorkers: remainingWorkers,
@@ -730,4 +730,16 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 		capitalStockMultiplier,
 		initialGoodsMultiplier: 500,
 	});
+}
+
+// ReplenishmentDelta contains negative values (goods consumed from colony pool).
+// Negate them so they show as positive demand in goodsRequirements.
+function negateReplenishmentDelta(replenishmentDelta: Partial<Goods>): Partial<Goods> {
+	const out: Partial<Goods> = {};
+	for(const [key, value] of Object.entries(replenishmentDelta)) {
+		if(value < 0) {
+			out[key as keyof Goods] = -value;
+		}
+	}
+	return out;
 }

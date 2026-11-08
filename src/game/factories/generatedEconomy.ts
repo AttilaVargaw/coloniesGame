@@ -99,7 +99,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 6,
+        "machinery": 7,
         "buildings": 1
       },
       "mobility": {
@@ -117,7 +117,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 4,
+        "machinery": 14,
         "buildings": 1
       },
       "powerPlant": {
@@ -163,7 +163,7 @@ export const economies = new Map([
         "vehicles": 1
       },
       "consumerFactory": {
-        "machinery": 6,
+        "machinery": 17,
         "buildings": 1
       },
       "spaceShips": {
@@ -205,7 +205,7 @@ export const economies = new Map([
         "machinery": 6
       },
       "nuclearSector": {
-        "machinery": 7,
+        "machinery": 9,
         "buildings": 1
       },
       "religion": {
@@ -283,11 +283,11 @@ export const economies = new Map([
         "buildings": 3
       },
       "consumerFactory": {
-        "machinery": 7,
+        "machinery": 21,
         "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 9,
+        "machinery": 11,
         "buildings": 2
       },
       "construction": {
@@ -521,11 +521,11 @@ export const economies = new Map([
         "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 10,
+        "machinery": 13,
         "buildings": 2
       },
       "consumerFactory": {
-        "machinery": 8,
+        "machinery": 25,
         "buildings": 2
       },
       "automotive": {
@@ -624,7 +624,7 @@ export const economies = new Map([
         "buildings": 2
       },
       "nuclearSector": {
-        "machinery": 12,
+        "machinery": 14,
         "buildings": 2
       },
       "education": {
@@ -684,7 +684,7 @@ export const economies = new Map([
       },
       "weaponFactory": {},
       "consumerFactory": {
-        "machinery": 9,
+        "machinery": 28,
         "buildings": 2
       }
     }
@@ -716,7 +716,7 @@ export const economies = new Map([
         "metals": 8
       },
       "nuclearSector": {
-        "machinery": 13,
+        "machinery": 16,
         "buildings": 2
       },
       "mobility": {
@@ -753,7 +753,7 @@ export const economies = new Map([
       },
       "weaponFactory": {},
       "consumerFactory": {
-        "machinery": 10,
+        "machinery": 32,
         "buildings": 2
       },
       "fishery": {
@@ -855,7 +855,7 @@ export const economies = new Map([
         "machinery": 4
       },
       "nuclearSector": {
-        "machinery": 14,
+        "machinery": 18,
         "buildings": 2
       },
       "religion": {
@@ -936,7 +936,7 @@ export const economies = new Map([
         "buildings": 2
       },
       "consumerFactory": {
-        "machinery": 11,
+        "machinery": 35,
         "buildings": 2
       },
       "tourism": {
@@ -969,7 +969,7 @@ export const economies = new Map([
     "Scorpia",
     {
       "consumerFactory": {
-        "machinery": 12,
+        "machinery": 39,
         "buildings": 2
       },
       "oilRig": {
@@ -1086,7 +1086,7 @@ export const economies = new Map([
         "buildings": 4
       },
       "nuclearSector": {
-        "machinery": 16,
+        "machinery": 20,
         "buildings": 2
       },
       "religion": {
@@ -1142,7 +1142,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 1,
+        "machinery": 2,
         "buildings": 1
       },
       "education": {
@@ -1219,7 +1219,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 1,
+        "machinery": 3,
         "buildings": 1
       },
       "foodFactory": {
@@ -1329,7 +1329,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 2,
+        "machinery": 6,
         "buildings": 1
       },
       "lawEnforcement": {
@@ -1395,7 +1395,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 4,
+        "machinery": 5,
         "buildings": 1
       },
       "powerPlant": {
@@ -1415,7 +1415,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 3,
+        "machinery": 10,
         "buildings": 1
       },
       "farm": {
@@ -1564,7 +1564,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 4,
+        "machinery": 14,
         "buildings": 1
       },
       "education": {
@@ -1623,7 +1623,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 6,
+        "machinery": 7,
         "buildings": 1
       },
       "logistics": {
@@ -1714,7 +1714,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "consumerFactory": {
-        "machinery": 6,
+        "machinery": 17,
         "buildings": 1
       },
       "education": {
@@ -1761,7 +1761,7 @@ export const economies = new Map([
         "buildings": 1
       },
       "nuclearSector": {
-        "machinery": 7,
+        "machinery": 9,
         "buildings": 1
       },
       "oilRig": {
