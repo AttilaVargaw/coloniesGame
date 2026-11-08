@@ -16,7 +16,6 @@ const prices: Record<string, number> = {
     environmentFactor: 50,
     governance: 40,
     machinery: 50,
-    electronics: 60,
     buildings: 20,
 }
 
@@ -48,7 +47,7 @@ describe("buildSectorBid capital adequacy scaling", () => {
         // With stock { machinery: 5, electronics: 1, buildings: 1 }:
         //   capitalRatio = min(5/0.5, 1/0.1, 1/0.1) = min(10, 10, 10) = 10
         //   oil demand = 140 * 1 * 10 = 1400
-        const bid = makeBid("powerPlant", { machinery: 5, electronics: 1, buildings: 1 })
+        const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 })
         expect(bid).not.toBeNull()
         expect(bid!.idealGoodsDemand.oil).toBe(1400)
     })
@@ -57,7 +56,7 @@ describe("buildSectorBid capital adequacy scaling", () => {
         // powerPlant with stock { machinery: 0.1, electronics: 0.01, buildings: 0.01 }:
         //   capitalRatio = min(0.1/0.5, 0.01/0.1, 0.01/0.1) = min(0.2, 0.1, 0.1) = 0.1
         //   oil demand = 140 * 1 * 0.1 = 14
-        const bid = makeBid("powerPlant", { machinery: 0.1, electronics: 0.01, buildings: 0.01 })
+        const bid = makeBid("powerPlant", { machinery: 0.1, buildings: 0.01 })
         expect(bid).not.toBeNull()
         expect(bid!.idealGoodsDemand.oil).toBeCloseTo(14)
     })
@@ -82,7 +81,7 @@ describe("buildSectorBid capital adequacy scaling", () => {
     it("scales worker demand by capital adequacy", () => {
         // powerPlant workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }
         // capitalRatio = 10: worker demand = 890 * 1 * 10 = 8900
-        const bid = makeBid("powerPlant", { machinery: 5, electronics: 1, buildings: 1 }, 1_000_000)
+        const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 }, 1_000_000)
         expect(bid).not.toBeNull()
         expect(bid!.idealWorkerDemand.worker).toBe(8900)
         expect(bid!.idealWorkerDemand.clerks).toBe(500)

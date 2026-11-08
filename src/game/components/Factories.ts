@@ -1,5 +1,4 @@
 export type IndustrialSectors = Readonly<{
-    mine: number;
     oilRig: number;
     forestry: number;
     farm: number;
@@ -28,7 +27,6 @@ export type IndustrialSectors = Readonly<{
     recycling: number;
     government: number;
     automotive: number;
-    electronics: number;
     logistics: number;
     paperFactory: number;
     entertainmentIndustry: number;

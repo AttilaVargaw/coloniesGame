@@ -227,7 +227,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "consumerFactory", goodsRequirements: {
             environmentFactor: 20,
             chemicals: 60, energy: 220, governance: 20,
-        }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { consumerGoods: 500_000 },
+        }, workerRequirement: { worker: 890 * 4, clerks: 50 * 4, engineer: 50 * 4, healtcarePersonal: 10 * 4 }, goodsProduction: { consumerGoods: 500_000 * 10 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.6, buildings: 0.1 },
         capitalEfficiency: 0.0008,
@@ -499,7 +499,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "mobility",
         goodsRequirements: {
             environmentFactor: 20,
-            oil: 500, energy: 10, governance: 20
+            oil: 500,
+            energy: 10,
+            governance: 20
         },
         workerRequirement: { worker: 804, clerks: 50, serviceWorker: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { mobility: 15_000, waste: 10 },

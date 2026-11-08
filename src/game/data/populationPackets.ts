@@ -14,7 +14,8 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             lawEnforcement: 1,
             healthcare: 4,
             governance: 0.5,
-            defense: 1
+            defense: 1,
+            consumerGoods: 1
         },
         10: {
             services: 1,
@@ -26,10 +27,11 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             buildings: 0.01,
             energy: 0.1,
             entertainment: 0.5,
-            monetaryServices: 0.1
+            monetaryServices: 0.1,
+            consumerGoods: 2
         },
         20: {
-            consumerGoods: 1,
+            consumerGoods: 4,
             healthcare: 2,
             buildings: 0.05,
         },
@@ -44,7 +46,8 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             logistics: 1,
             entertainment: 1,
             tourism: 1,
-            monetaryServices: 1
+            monetaryServices: 1,
+            consumerGoods: 5
         },
         50: {
         },
@@ -57,6 +60,7 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             entertainment: 2,
             services: 5,
             monetaryServices: 2,
+            consumerGoods: 10
         }
     } satisfies Record<number, Partial<Record<keyof Goods, number>>>
 

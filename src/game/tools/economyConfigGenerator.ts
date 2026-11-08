@@ -36,6 +36,7 @@ export const ESSENTIAL_GOODS: (keyof Goods)[] = [
 	"agriculturalGoods",
 	"oil",
 	"buildings",
+	"consumerGoods"
 ];
 
 export const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = [
@@ -44,6 +45,15 @@ export const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = [
 	"farm",
 	"foodFactory",
 	"oilRig",
+	"religion",
+	"defense",
+	"consumerFactory",
+	"lawEnforcement",
+	"mobility",
+	"healthcare",
+	"paperFactory",
+	"logistics",
+	"services"
 ];
 
 export interface ColonyConfig {

@@ -1,7 +1,6 @@
 import type { IndustrialSectors } from "../components/Factories";
 
 export const PER_CAPITA_SECTOR_RATIOS = {
-    mine: 0.000001,
     oilRig: 0.0000028,
     forestry: 0.00006,
     farm: 0.0000088,
@@ -28,7 +27,6 @@ export const PER_CAPITA_SECTOR_RATIOS = {
     recycling: 0.000002,
     government: 0.00001,
     automotive: 0.0001,
-    electronics: 0.00005,
     logistics: 0.00005,
     paperFactory: 0.00001,
     entertainmentIndustry: 0.00005,
