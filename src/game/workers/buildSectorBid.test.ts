@@ -44,7 +44,7 @@ function makeBid(sectorKey: string, capitalStock: Record<string, number>, money 
 
 describe("buildSectorBid capital adequacy scaling", () => {
     it("scales goods demand by capital adequacy when capital is abundant", () => {
-        // powerPlant: capitalGoods = { machinery: 0.5, electronics: 0.1, buildings: 0.1 }
+        // powerPlant: capitalGoods = { machinery: 0.5, buildings: 0.1 }
         // With stock { machinery: 5, electronics: 1, buildings: 1 }:
         //   capitalRatio = min(5/0.5, 1/0.1, 1/0.1) = min(10, 10, 10) = 10
         //   oil demand = 140 * 1 * 10 = 1400
@@ -71,10 +71,9 @@ describe("buildSectorBid capital adequacy scaling", () => {
     })
 
     it("scales all goods requirements equally by capitalRatio", () => {
-        // capitalRatio = 10: oil=140*10=1400, paper=10*10=100, governance=20*10=200, environmentFactor=20*10=200
-        const bid = makeBid("powerPlant", { machinery: 5, electronics: 1, buildings: 1 }, 1_000_000)
+        // capitalRatio = 10: oil=140*10=1400, governance=20*10=200, environmentFactor=20*10=200
+        const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 }, 1_000_000)
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.paper).toBe(100)
         expect(bid!.idealGoodsDemand.governance).toBe(200)
         expect(bid!.idealGoodsDemand.environmentFactor).toBe(200)
         expect(bid!.idealGoodsDemand.oil).toBe(1400)
@@ -98,15 +97,12 @@ describe("buildSectorBid capital adequacy scaling", () => {
     })
 
     it("uses capitalRatio of 1 for sectors without capital goods", () => {
-        // greenEnergy has capitalGoods but let's check a sector without any
-        // metalFactory has capitalGoods: { machinery: 0.08, buildings: 0.1, electronics: 0.1 }
-        // With empty stock: ratio = 0/0.08 = 0 for machinery → capitalRatio = 0
-        // With full stock: ratio = min(stock/req)
-        const bid = makeBid("metalFactory", { machinery: 8, buildings: 10, electronics: 10 })
+        // metalFactory has capitalGoods: { machinery: 0.08, buildings: 0.1 }
+        // With full stock: capitalRatio = min(8/0.08, 10/0.1) = min(100, 100) = 100
+        // environmentFactor demand = 30 * 100 = 3000
+        const bid = makeBid("metalFactory", { machinery: 8, buildings: 10 })
         expect(bid).not.toBeNull()
-        // capitalRatio = min(8/0.08, 10/0.1, 10/0.1) = min(100, 100, 100) = 100
-        // ore demand = 1000 * 1 * 100 = 100000
-        expect(bid!.idealGoodsDemand.ore).toBe(100000)
+        expect(bid!.idealGoodsDemand.environmentFactor).toBe(3000)
     })
 
     it("applies inputLevel multiplier to goods demand", () => {

@@ -71,7 +71,6 @@ const ICON_MAP = {
     medicineFactory: BriefcaseMedical,
     religion: GiGreekTemple,
     spaceInfrastructure: Satellite,
-    spaceGoodsTransport: Satellite,
     militaryEquipment: InfantryFightingVehicle,
     mobility: Car,
 } satisfies Record<keyof IndustrialSectors, React.ComponentType<LucideProps>>

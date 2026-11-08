@@ -10,12 +10,12 @@ export type Goods = {
     agriculturalGoods: number;
     tylium: number;
     metals: number;
-    uranium: number;
+    fissionMaterial: number;
     machinery: number;
     medicine: number;
     lumber: number;
     oil: number;
-    spaceTransport: number;
+    spaceShips: number;
     nuclearWeapons: number;
     vehicles: number;
     environmentFactor: number
@@ -30,7 +30,6 @@ export type Goods = {
     paper: number;
     entertainment: number;
     education: number;
-    ore: number
     defense: number
     monetaryServices: number
     mobility: number
@@ -40,18 +39,17 @@ export type Goods = {
 export const physicalGoods = new Set<keyof Goods>([
     "militaryEquipment",
     "food",
-    "ore",
     "consumerGoods",
     "water",
     "agriculturalGoods",
     "tylium",
     "metals",
-    "uranium",
+    "fissionMaterial",
     "machinery",
     "medicine",
     "lumber",
     "oil",
-    "spaceTransport",
+    "spaceShips",
     "nuclearWeapons",
     "vehicles",
     "chemicals",
@@ -107,12 +105,12 @@ export const basePrices = {
 
     tylium: 150,
     metals: 150,
-    uranium: 100,
+    fissionMaterial: 100,
     machinery: 50,
     medicine: 20,
     lumber: 30,
     oil: 100,
-    spaceTransport: 2000,
+    spaceShips: 2000,
 
     nuclearWeapons: 300,
     vehicles: 80,
@@ -132,7 +130,6 @@ export const basePrices = {
     education: 80,
 
     mobility: 100,
-    ore: 100,
     defense: 100,
     monetaryServices: 200,
     militaryEquipment: 800,
@@ -140,12 +137,12 @@ export const basePrices = {
 
 export const godsCategories = new Map<string, Set<keyof Goods>>([
     ["publicServices", new Set(["governance", "healthcare", "lawEnforcement", "education", "logistics"])],
-    ["rawMaterials", new Set(["agriculturalGoods", "oil", "ore", "tylium", "water", "energy", "uranium", "environmentFactor"])],
+    ["rawMaterials", new Set(["agriculturalGoods", "oil", "tylium", "water", "energy", "fissionMaterial", "environmentFactor"])],
     ["industrialMaterials", new Set(["buildings", "chemicals", "lumber", "metals", "medicine", "paper", "waste", "machinery"])],
     ["consumerGoods", new Set(["consumerGoods", "food"])],
     ["services", new Set(["services", "tourism", "faith", "monetaryServices", "entertainment"])],
     ["military", new Set(["nuclearWeapons", "militaryEquipment", "defense"])],
-    ["mobility", new Set(["vehicles", "spaceTransport", "mobility"])]
+    ["mobility", new Set(["vehicles", "spaceShips", "mobility"])]
 ]) as ReadonlyMap<string, Set<keyof Goods>>;
 
 if(Object.keys(basePrices).length !== [...godsCategories].reduce((acc, [_, set]) => acc + set.size, 0)) {

@@ -65,12 +65,12 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         agriculturalGoods: 0,
         tylium: 0,
         metals: 0,
-        uranium: 0,
+        fissionMaterial: 0,
         machinery: 0,
         medicine: 0,
         lumber: 0,
         oil: 0,
-        spaceTransport: 0,
+        spaceShips: 0,
         nuclearWeapons: 0,
         vehicles: 0,
         environmentFactor: 0,
@@ -85,7 +85,6 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         paper: 0,
         entertainment: 0,
         education: 0,
-        ore: 0,
         defense: 0,
         monetaryServices: 0,
         mobility: 0,
@@ -191,13 +190,13 @@ describe("executeSectors", () => {
         const bid = makeSectorBid({
             name: "powerPlant",
             actualScale: 1,
-            idealGoodsDemand: { oil: 100, paper: 10 },
+            idealGoodsDemand: { oil: 100 },
             idealGoodsProduction: { energy: 50 },
             idealWorkerDemand: { worker: 100, clerks: 10 },
         })
 
         const population = makePopulation()
-        const colonyGoods = makeGoods({ oil: 10000, paper: 1000 })
+        const colonyGoods = makeGoods({ oil: 10000 })
         const inputSectorGoods = { powerPlant: makeGoods({ oil: 500 }) } as any
 
         const result = executeSectors(
@@ -210,15 +209,14 @@ describe("executeSectors", () => {
         )
 
         // Consumed goods should reflect actual consumption
-        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({ oil: 100, paper: 10 })
-        expect(result.sectorResults["powerPlant"]?.producedGoods).toEqual({ electricity: 50 })
+        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({ oil: 100 })
+        expect(result.sectorResults["powerPlant"]?.producedGoods).toEqual({ energy: 50 })
         expect(result.sectorResults["powerPlant"]?.workersEmployed).toEqual({ worker: 100, clerks: 10 })
         expect(result.sectorResults["powerPlant"]?.productionRatio).toBe(1)
 
-        // Revenue = electricity * price = 50 * (no price defined → 0) = 0
-        // Actually basePrices doesn't have electricity, so revenue = 0
-        // Input costs = 100 * 100 + 10 * 20 = 10000 + 200 = 10200
-        expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(10200)
+        // Revenue = energy * price = 50 * 20 = 1000
+        // Input costs = 100 * 100 = 10000
+        expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(10000)
 
         // Labor costs = 100 * 200 + 10 * 500 = 20000 + 5000 = 25000
         expect(result.sectorLaborCosts["powerPlant"]).toBeCloseTo(25000)

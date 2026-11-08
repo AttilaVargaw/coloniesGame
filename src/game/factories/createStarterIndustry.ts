@@ -36,7 +36,6 @@ export const PER_CAPITA_SECTOR_RATIOS = {
     spaceShips: 0.00005,
     defense: 0.000015,
     militaryEquipment: 0.000002,
-    spaceGoodsTransport: 0.000002,
     mobility: 0.000002
 } satisfies Readonly<Record<keyof IndustrialSectors, number>>;
 

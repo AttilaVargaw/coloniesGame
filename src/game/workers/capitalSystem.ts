@@ -68,14 +68,12 @@ export function processCapital(
             new ReplenishLosses().tick(bb);
         }
 
-        if(productionRatio === 0 || decay > 0) {
-            for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
-                if(
-                    new BelowTargetStock(goodKey, rate).tick(bb) === "SUCCESS" &&
-                    new CanAffordInvestment(goodKey, rate).tick(bb) === "SUCCESS"
-                ) {
-                    new InvestCapital(goodKey, rate).tick(bb);
-                }
+        for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
+            if(
+                new BelowTargetStock(goodKey, rate).tick(bb) === "SUCCESS" &&
+                new CanAffordInvestment(goodKey, rate).tick(bb) === "SUCCESS"
+            ) {
+                new InvestCapital(goodKey, rate).tick(bb);
             }
         }
 

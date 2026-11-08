@@ -42,14 +42,13 @@ const population = createStarterPopulation(10000, {
 
 const colonyGoods = createStarterWarehouse(0)
 colonyGoods.oil = 10_000
-colonyGoods.paper = 10_000
 colonyGoods.environmentFactor = 10_000
 colonyGoods.governance = 10_000
 
 describe("industry sector calculations", () => {
     describe("buildSectorBid", () => {
         it("calculates level, inputLevel and outputLevel for powerPlant", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
             expect(bid!.level).toBe(1)
             expect(bid!.inputLevel).toBe(1)
@@ -57,7 +56,7 @@ describe("industry sector calculations", () => {
         })
 
         it("calculates worker demand with capitalRatio = 1", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
             expect(bid!.idealWorkerDemand.worker).toBe(890)
             expect(bid!.idealWorkerDemand.clerks).toBe(50)
@@ -66,24 +65,23 @@ describe("industry sector calculations", () => {
         })
 
         it("calculates goods demand with capitalRatio = 1", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
             expect(bid!.idealGoodsDemand.oil).toBe(140)
-            expect(bid!.idealGoodsDemand.paper).toBe(10)
             expect(bid!.idealGoodsDemand.environmentFactor).toBe(20)
             expect(bid!.idealGoodsDemand.governance).toBe(20)
         })
 
         it("calculates goods production with outputLevel = 1", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
             expect(bid!.idealGoodsProduction.energy).toBe(400_000)
             expect(bid!.idealGoodsProduction.waste).toBe(10)
         })
 
         it("scales worker and goods demand by capitalRatio", () => {
-            // capitalRatio = min(5/0.5, 1/0.1, 1/0.1) = 10
-            const bid = makePowerPlantBid({ machinery: 5, electronics: 1, buildings: 1 })
+            // capitalRatio = min(5/0.5, 1/0.1) = 10
+            const bid = makePowerPlantBid({ machinery: 5, buildings: 1 })
             expect(bid).not.toBeNull()
             expect(bid!.idealWorkerDemand.worker).toBe(8900)
             expect(bid!.idealWorkerDemand.clerks).toBe(500)
@@ -92,14 +90,14 @@ describe("industry sector calculations", () => {
         })
 
         it("sets budgetRatio = 1 when money is sufficient", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 }, 1_000_000)
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 1_000_000)
             expect(bid).not.toBeNull()
             expect(bid!.budgetRatio).toBe(1)
             expect(bid!.actualScale).toBe(1)
         })
 
         it("sets budgetRatio < 1 when money is insufficient", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 }, 1000)
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 1000)
             expect(bid).not.toBeNull()
             expect(bid!.budgetRatio).toBeGreaterThan(0)
             expect(bid!.budgetRatio).toBeLessThan(1)
@@ -122,14 +120,13 @@ describe("industry sector calculations", () => {
             expect(bid!.inputLevel).toBe(0)
             expect(bid!.outputLevel).toBe(0)
             expect(bid!.idealGoodsDemand.oil).toBe(0)
-            expect(bid!.idealGoodsDemand.paper).toBe(0)
             expect(bid!.idealWorkerDemand.worker).toBe(0)
         })
     })
 
     describe("executeSectors", () => {
         it("produces full output with sufficient workers, goods and money", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
 
             const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
@@ -142,7 +139,6 @@ describe("industry sector calculations", () => {
 
             // Goods consumed
             expect(sectorResult!.consumedGoods.oil).toBe(140)
-            expect(sectorResult!.consumedGoods.paper).toBe(10)
             expect(sectorResult!.consumedGoods.environmentFactor).toBe(20)
             expect(sectorResult!.consumedGoods.governance).toBe(20)
 
@@ -161,19 +157,19 @@ describe("industry sector calculations", () => {
         })
 
         it("calculates revenue, input costs, labor costs and profit", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
 
             const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
 
-            // revenue = electricity(400000 * 20) + waste(10 * 2) = 8_000_020
+            // revenue = energy(400000 * 20) + waste(10 * 2) = 8_000_020
             expect(result.sectorRevenue["powerPlant"]).toBe(8_000_020)
-            // inputCosts = oil(140*100) + paper(10*20) + envFactor(20*50) + governance(20*40) = 16000
-            expect(result.sectorInputCosts["powerPlant"]).toBe(16_000)
+            // inputCosts = oil(140*100) + envFactor(20*50) + governance(20*40) = 15800
+            expect(result.sectorInputCosts["powerPlant"]).toBe(15_800)
             // laborCosts = worker(890*200) + clerks(50*500) + engineer(50*500) + health(10*500) = 233000
             expect(result.sectorLaborCosts["powerPlant"]).toBe(233_000)
-            // profit = revenue - inputCosts - laborCosts = 8_000_020 - 16_000 - 233_000 = 7_751_020
-            expect(result.sectorProfits["powerPlant"]).toBe(7_751_020)
+            // profit = revenue - inputCosts - laborCosts = 8_000_020 - 15_800 - 233_000 = 7_751_220
+            expect(result.sectorProfits["powerPlant"]).toBe(7_751_220)
         })
 
         it("limits workers employed when workers are insufficient", () => {
@@ -181,7 +177,7 @@ describe("industry sector calculations", () => {
                 ...population,
                 worker: { ...population.worker, number: 3 },
             }
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
 
             const result = executeSectors([bid!], lowPop, colonyGoods, basePrices as any, baseSalaries as any)
@@ -195,11 +191,10 @@ describe("industry sector calculations", () => {
         it("consumes full demand even when colony goods are low", () => {
             const lowGoods = createStarterWarehouse(0)
             lowGoods.oil = 70
-            lowGoods.paper = 5
             lowGoods.environmentFactor = 10
             lowGoods.governance = 10
 
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 })
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
 
             const result = executeSectors([bid!], population, lowGoods, basePrices as any, baseSalaries as any)
@@ -212,9 +207,9 @@ describe("industry sector calculations", () => {
         })
 
         it("scales everything proportionally when money is insufficient", () => {
-            // costPerUnit = inputCost(16000) + laborCost(233000) = 249000
-            // budgetRatio = 100000 / 249000 ≈ 0.4016
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 }, 100_000)
+            // costPerUnit = inputCost(15800) + laborCost(233000) = 248800
+            // budgetRatio = 100000 / 248800 ≈ 0.4019
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 100_000)
             expect(bid).not.toBeNull()
             expect(bid!.budgetRatio).toBeLessThan(1)
             expect(bid!.actualScale).toBe(bid!.budgetRatio)
@@ -230,23 +225,22 @@ describe("industry sector calculations", () => {
 
             // Goods consumed scale proportionally
             expect(sectorResult!.consumedGoods.oil).toBeCloseTo(140 * bid!.budgetRatio, 1)
-            expect(sectorResult!.consumedGoods.paper).toBeCloseTo(10 * bid!.budgetRatio, 1)
 
             // Goods produced scale proportionally
             expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
 
             // Revenue, costs and profit all scale proportionally
             expect(result.sectorRevenue["powerPlant"]).toBeCloseTo(8_000_020 * bid!.budgetRatio, 0)
-            expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(16_000 * bid!.budgetRatio, 1)
+            expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(15_800 * bid!.budgetRatio, 1)
             expect(result.sectorLaborCosts["powerPlant"]).toBeCloseTo(233_000 * bid!.budgetRatio, 1)
-            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(7_751_020 * bid!.budgetRatio, 0)
+            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(7_751_220 * bid!.budgetRatio, 0)
 
             // Stop reason reflects low budget
             expect(result.sectorStopReason["powerPlant"]).toBe("")
         })
 
         it("stops production entirely when money is zero", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, electronics: 0.1, buildings: 0.1 }, 0)
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 0)
             expect(bid).not.toBeNull()
             expect(bid!.budgetRatio).toBe(0)
             expect(bid!.actualScale).toBe(0)

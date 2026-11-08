@@ -59,18 +59,19 @@ export class InvestCapital extends Action<CapitalBlackboard> {
         const current = bb.currentStock[key] ?? 0;
         if(current >= targetStock) return "FAILURE";
 
-        const needed = targetStock - current;
-        const cost = needed * (bb.prices[key] ?? 0);
-        if(cost <= 0) return "FAILURE";
+        // One level of capital goods per tick
+        const toBuy = Math.min(targetStock - current, this.rate);
+        const price = bb.prices[key] ?? 0;
+        if(toBuy <= 0 || price <= 0) return "FAILURE";
 
-        const canAfford = Math.floor((bb.money - bb.moneySpent) / cost);
-        if(canAfford <= 0) return "FAILURE";
+        const maxAffordable = Math.floor((bb.money - bb.moneySpent) / price);
+        const actualBuy = Math.min(toBuy, maxAffordable);
+        if(actualBuy <= 0) return "FAILURE";
 
-        const toBuy = Math.min(needed, canAfford);
-        const buyCost = toBuy * (bb.prices[key] ?? 0);
+        const buyCost = actualBuy * price;
         bb.moneySpent += buyCost;
-        bb.currentStock[key] = current + toBuy;
-        bb.investAmounts[key] = (bb.investAmounts[key] ?? 0) - toBuy;
+        bb.currentStock[key] = current + actualBuy;
+        bb.investAmounts[key] = (bb.investAmounts[key] ?? 0) - actualBuy;
         return "SUCCESS";
     }
 }

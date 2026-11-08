@@ -1,4 +1,4 @@
-import { Goods, NON_CUMULATING_GOODS } from "../data/Goods.ts";
+import { basePrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods.ts";
 import { Population } from "../data/Population.ts";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse.ts";
 import { createStarterPopulation } from "../data/getPopulationBreakdown.ts";
@@ -23,7 +23,7 @@ import { buildAdjustedSalaries, updateWageMemory } from "../workers/wageSystem.t
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree.ts";
 import { createIndustryTree } from "../workers/industryBehaviorTree/industryTree.ts";
 import { defaultIndustryBlackboard } from "../workers/industryBehaviorTree/industryBT.ts";
-import { createStarterIndustry, PER_CAPITA_SECTOR_RATIOS } from "../factories/createStarterIndustry.ts";
+import { PER_CAPITA_SECTOR_RATIOS } from "../factories/createStarterIndustry.ts";
 
 export const sectors = new Set<keyof IndustrialSectors>(
 	(Object.keys(PER_CAPITA_SECTOR_RATIOS) as unknown) as (keyof IndustrialSectors)[]
@@ -106,9 +106,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		materialRequirementMultipliers,
 		capitalMultipliers,
 		selectedMethod,
-		sectorInvestment,
 	} = input;
-
 	const prices = getPrices(goods, state.priceMemory);
 	const adjustedSalaries = buildAdjustedSalaries(state.wageMemory);
 
@@ -131,7 +129,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	const industryBlackboard = defaultIndustryBlackboard(entityId, settlementType);
 
 	// Aggregate sector data from previous tick
-	for (const name of activeSectors) {
+	for(const name of activeSectors) {
 		industryBlackboard.sectorProfits[name] = previousSectorProfits[name] ?? 0;
 		industryBlackboard.sectorRevenue[name] = previousSectorRevenue[name] ?? 0;
 		industryBlackboard.sectorLaborCosts[name] = previousSectorLaborCosts[name] ?? 0;
@@ -143,14 +141,14 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	}
 
 	// Aggregate money
-	for (const name of activeSectors) {
+	for(const name of activeSectors) {
 		industryBlackboard.totalMoney += startingMoney[name] ?? 0;
 	}
 
 	// Aggregate population
-	for (const [key, pop] of Object.entries(population) as [keyof Population, any][]) {
+	for(const [key, pop] of Object.entries(population) as [keyof Population, any][]) {
 		industryBlackboard.totalPopulation += pop.number;
-		if (key === "worker") {
+		if(key === "worker") {
 			industryBlackboard.totalFreeWorkers = pop.number;
 		}
 	}
@@ -161,7 +159,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	industryBlackboard.colonyGoodsRequirements = {};
 
 	// Wages
-	for (const [key, wage] of Object.entries(adjustedSalaries)) {
+	for(const [key, wage] of Object.entries(adjustedSalaries)) {
 		industryBlackboard.wages[key] = wage;
 	}
 
@@ -173,8 +171,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// === SECTOR-LEVEL BEHAVIOR TREES ===
 	const sectorBids: SectorBid[] = [];
 
-	for (const name of activeSectors) {
-		if (
+	for(const name of activeSectors) {
+		if(
 			(settlementType === "outpost" || settlementType === "hydrocarbonRefinery") &&
 			!allowedSectorsSet.has(name)
 		) {
@@ -182,12 +180,12 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 
 		// Industry-wide emergency stop: skip all sectors
-		if (industryBlackboard.emergencyStopAll) {
+		if(industryBlackboard.emergencyStopAll) {
 			continue;
 		}
 
 		// Industry-wide sector shutdown: skip unprofitable sectors
-		if (industryBlackboard.shutdownSectors.has(name)) {
+		if(industryBlackboard.shutdownSectors.has(name)) {
 			continue;
 		}
 
@@ -223,7 +221,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		investRemaining = blackboard.investRemaining;
 
 		// Apply behavior tree decisions
-		if (blackboard.decisions.stopProduction) {
+		if(blackboard.decisions.stopProduction) {
 			continue; // skip this sector entirely
 		}
 
@@ -251,20 +249,20 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 				sectorStartingMoney: startingMoney[name] ?? 0,
 			}
 		);
-		if (bid) {
+		if(bid) {
 			sectorBids.push(bid);
 		}
 	}
 
 	const totalIdealWorkerDemand: Record<string, number> = {};
-	for (const bid of sectorBids) {
+	for(const bid of sectorBids) {
 		const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
-		for (const [key, value] of Object.entries(idealWorkerDemand)) {
+		for(const [key, value] of Object.entries(idealWorkerDemand)) {
 			totalIdealWorkerDemand[key] = (totalIdealWorkerDemand[key] ?? 0) + value;
 		}
 	}
 	const workerAvailable: Record<string, number> = {};
-	for (const [key, pop] of Object.entries(population)) {
+	for(const [key, pop] of Object.entries(population)) {
 		workerAvailable[key] = pop.number;
 	}
 	const workerMarketRatios = computeMarketRatios(totalIdealWorkerDemand, workerAvailable);
@@ -272,11 +270,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	updateWageMemory(state.wageMemory, workerMarketRatios as Record<keyof Population, number>);
 
 	// Compute actual production scale per bid (worker constrained)
-	for (const bid of sectorBids) {
+	for(const bid of sectorBids) {
 		let workerRatio = 1;
 		const idealWorkerDemand = bid.idealWorkerDemand as Record<string, number>;
-		for (const [key, value] of Object.entries(idealWorkerDemand)) {
-			if (value > 0) {
+		for(const [key, value] of Object.entries(idealWorkerDemand)) {
+			if(value > 0) {
 				const r = workerMarketRatios[key as keyof Population] ?? 1;
 				workerRatio = Math.min(workerRatio, r);
 			}
@@ -308,13 +306,13 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		sumGoodsProduction,
 	} = executeSectors(sectorBids, population, goods, prices, adjustedSalaries);
 
-	for (const key of ["stayAtHome"] as const) {
+	for(const key of ["stayAtHome"] as const) {
 		workingWorkers[key] = { ...workingWorkers[key], number: population[key].number };
 		remainingWorkers[key] = { ...remainingWorkers[key], number: 0 };
 	}
 
 	// Sector money: revenue minus labor costs
-	for (const bid of sectorBids) {
+	for(const bid of sectorBids) {
 		const sectorName = bid.name as keyof typeof startingMoney;
 		const revenue = sectorRevenue[sectorName] ?? 0;
 		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
@@ -339,7 +337,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	);
 
 	// Deduct capital costs from sector money
-	for (const name of activeSectors) {
+	for(const name of activeSectors) {
 		newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
 	}
 
@@ -355,10 +353,10 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
 	const colonyGoodsProduction = { ...createStarterWarehouse(0) };
 	const colonyGoodsRequirements = { ...createStarterWarehouse(0) };
-	for (const [key, value] of Object.entries(colonyGoodsDelta)) {
-		if (value > 0) {
+	for(const [key, value] of Object.entries(colonyGoodsDelta)) {
+		if(value > 0) {
 			colonyGoodsProduction[key as keyof Goods] = value;
-		} else if (value < 0) {
+		} else if(value < 0) {
 			colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
 		}
 	}
@@ -371,10 +369,10 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	);
 
 	const updatedPopulation: Population = { ...population };
-	for (const [key, update] of Object.entries(populationUpdates)) {
+	for(const [key, update] of Object.entries(populationUpdates)) {
 		const pop = updatedPopulation[key as keyof Population];
-		if (!pop) continue;
-		if (update.number !== undefined) {
+		if(!pop) continue;
+		if(update.number !== undefined) {
 			updatedPopulation[key as keyof Population] = {
 				...pop,
 				number: update.number,
@@ -416,70 +414,17 @@ function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): 
 	const priceDamping = 0.3;
 	const priceMinMultiplier = 0.1;
 	const priceMaxMultiplier = 10;
-	const basePrices: Record<string, number> = {
-		food: 30,
-		tourism: 300,
-		consumerGoods: 100,
-		water: 10,
-		energy: 20,
-		furniture: 10,
-		luxuryFurniture: 120,
-		services: 15,
-		agriculturalGoods: 20,
-		tylium: 150,
-		metals: 150,
-		uranium: 100,
-		machinery: 50,
-		medicine: 20,
-		wood: 20,
-		lumber: 30,
-		oil: 100,
-		spaceTransport: 2000,
-		ammunition: 20,
-		weapons: 30,
-		nuclearWeapons: 300,
-		ordnance: 50,
-		vehicles: 80,
-		electronics: 60,
-		environmentFactor: 50,
-		faith: 40,
-		lawEnforcement: 40,
-		healthcare: 70,
-		chemicals: 20,
-		buildings: 20,
-		waste: 2,
-		governance: 40,
-		aircraft: 1000,
-		clothing: 100,
-		ships: 100,
-		railroadVehicles: 100,
-		paper: 20,
-		post: 40,
-		entertainment: 30,
-		itServices: 50,
-		education: 80,
-		alcoholDrinks: 50,
-		stimulantDrinks: 50,
-		retail: 100,
-		automotiveMobility: 100,
-		railroadMobility: 100,
-		shipMobility: 100,
-		airMobility: 100,
-		ore: 100,
-		defense: 100,
-		monetaryServices: 200,
-		militaryVehicles: 500,
-	};
 
 	const prices: Record<string, number> = {};
-	for (const key of Object.keys(basePrices)) {
-		if (!(key in goods)) continue;
+	for(const key of Object.keys(basePrices)) {
+		if(!(key in goods)) continue;
 		const gKey = key as keyof Goods;
 		const stock = goods[gKey] ?? 0;
-		const base = basePrices[key];
+		const base = basePrices[key as keyof typeof basePrices];
 		const baseline = Math.max(base * 10, 1);
 		let adjustment = 1.0;
-		if (stock > 0) {
+
+		if(stock > 0) {
 			adjustment = baseline / stock;
 		} else {
 			adjustment = priceMaxMultiplier;
@@ -513,9 +458,9 @@ function finalizeGoods(
 	applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => Math.max(0, cur - d));
 
 	// For non-cumulative goods, replace with net production (matches live worker pipeline)
-	for (const key in finalGoods) {
+	for(const key in finalGoods) {
 		const goodKey = key as keyof Goods;
-		if (NON_CUMULATING_GOODS.has(goodKey)) {
+		if(NON_CUMULATING_GOODS.has(goodKey)) {
 			const production = sumGoodsProduction[goodKey] ?? 0;
 			const requirements = sumGoodsRequirements[goodKey] ?? 0;
 			finalGoods[goodKey] = Math.max(0, production - requirements);
@@ -541,10 +486,10 @@ function seedCapitalStock(
 	multiplier: number
 ): Partial<Goods> {
 	const config = industrySectorBlueprints.get(sector);
-	if (!config?.capitalGoods) return {};
+	if(!config?.capitalGoods) return {};
 
 	const stock: Partial<Goods> = {};
-	for (const [goodKey, requiredPerUnit] of Object.entries(config.capitalGoods)) {
+	for(const [goodKey, requiredPerUnit] of Object.entries(config.capitalGoods)) {
 		stock[goodKey as keyof Goods] = requiredPerUnit * multiplier;
 	}
 	return stock;
@@ -555,7 +500,7 @@ export function generateColonyConfig(config: Partial<ColonyConfig> = {}): Indust
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
 
 	const goods = createStarterWarehouse(populationSize);
-	for (const key of Object.keys(goods) as (keyof Goods)[]) {
+	for(const key of Object.keys(goods) as (keyof Goods)[]) {
 		goods[key] *= cfg.initialGoodsMultiplier;
 	}
 	const population = createStarterPopulation(populationSize);
@@ -567,7 +512,7 @@ export function generateColonyConfig(config: Partial<ColonyConfig> = {}): Indust
 	const sectorInvestment: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 	const selectedMethod: Record<keyof IndustrialSectors, string | null> = {} as Record<keyof IndustrialSectors, string | null>;
 
-	for (const sector of activeSectors) {
+	for(const sector of activeSectors) {
 		money[sector] = starterMoneyPerSector;
 		capitalStock[sector] = seedCapitalStock(sector, capitalStockMultiplier);
 		techMultipliers[sector] = 1;
@@ -615,25 +560,25 @@ export function validateColonyConfig(
 	const minGoods: Partial<Record<keyof Goods, number>> = {};
 	const maxMoneyDeficit: Partial<Record<keyof IndustrialSectors, number>> = {};
 
-	for (const good of essentialGoods) {
+	for(const good of essentialGoods) {
 		minGoods[good] = currentInput.goods[good] ?? 0;
 	}
-	for (const sector of essentialSectors) {
+	for(const sector of essentialSectors) {
 		maxMoneyDeficit[sector] = currentInput.money[sector] ?? 0;
 	}
 
 	let ticksSurvived = 0;
 
-	for (let i = 0; i < ticks; i++) {
+	for(let i = 0; i < ticks; i++) {
 		const result = simulateTick(currentInput, state);
 		ticksSurvived = i + 1;
 
-		for (const good of essentialGoods) {
+		for(const good of essentialGoods) {
 			const value = result.goods[good] ?? 0;
 			const prevMin = minGoods[good] ?? Infinity;
-			if (value < prevMin) minGoods[good] = value;
+			if(value < prevMin) minGoods[good] = value;
 
-			if (value <= 0) {
+			if(value < 0) {
 				return {
 					viable: false,
 					ticksSurvived,
@@ -644,12 +589,12 @@ export function validateColonyConfig(
 			}
 		}
 
-		for (const sector of essentialSectors) {
+		for(const sector of essentialSectors) {
 			const money = result.money[sector] ?? 0;
 			const prevDeficit = maxMoneyDeficit[sector] ?? 0;
-			if (money < prevDeficit) maxMoneyDeficit[sector] = money;
+			if(money < prevDeficit) maxMoneyDeficit[sector] = money;
 
-			if (money <= -1_000_000) {
+			if(money <= -1_000_000) {
 				return {
 					viable: false,
 					ticksSurvived,
@@ -677,28 +622,20 @@ export function validateColonyConfig(
 	};
 }
 
-export function validateColonyConfigFromOptions(
-	config: Partial<ColonyConfig>,
-	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[] } = {}
-): ColonyValidationResult {
-	const input = generateColonyConfig(config);
-	return validateColonyConfig(input, options);
-}
-
 export function generateValidatedColonyConfig(
 	config: Partial<ColonyConfig> = {},
-	options: { ticks?: number; maxAttempts?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[] } = {}
+	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[], extraSectors?: string[] } = {}
 ): { config: IndustryTickInput; validation: ColonyValidationResult } {
-	const { ticks = 20, maxAttempts = 10, essentialGoods, essentialSectors } = options;
+	const { ticks = 20, essentialGoods, essentialSectors } = options;
 
 	let lastValidation: ColonyValidationResult | null = null;
 
-	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+	for(let attempt = 0; attempt < 20; attempt++) {
 		const input = generateColonyConfig(config);
 		const validation = validateColonyConfig(input, { ticks, essentialGoods, essentialSectors });
 		lastValidation = validation;
 
-		if (validation.viable) {
+		if(validation.viable) {
 			return { config: input, validation };
 		}
 

@@ -320,19 +320,19 @@ SI -.->|capital: machinery 0.8, buildings 0.1| C35((capital))
 
 ## Sector Categories & Key Production Chains
 
-| Category | Sectors | Key Outputs |
-|----------|---------|-------------|
-| **Energy** | powerPlant, nuclearSector | energy, uranium |
-| **Raw Materials** | mine, oilRig, waterTreatment | ore, oil, water |
-| **Agriculture** | forestry, farm, fishery | lumber, agriculturalGoods |
-| **Environment** | environmentControl, recycling | environmentFactor, recycled goods |
-| **Heavy Industry** | metalFactory, machineryFactory, chemical, construction | metals, machinery, chemicals, buildings |
-| **Light Industry** | paperFactory, foodFactory, consumerFactory, medicineFactory | paper, food, consumerGoods, medicine |
-| **Services** | services, tourism, bank, entertainmentIndustry, religion | services, tourism, monetaryServices, entertainment, faith |
-| **Public Services** | government, lawEnforcement, education, healthcare, logistics | governance, lawEnforcement, education, healthcare, logistics |
-| **Military** | militaryEquipment, defense | militaryEquipment, defense |
-| **Vehicle Manufacturing** | automotive, spaceShips, spaceInfrastructure | vehicles, spaceTransport |
-| **Mobility** | spaceGoodsTransport | transport logistics |
+| Category | Sectors | Key Outputs | Key Capital Goods |
+|----------|---------|-------------|-------------------|
+| **Energy** | powerPlant, nuclearSector | energy, uranium | machinery, buildings |
+| **Raw Materials** | mine, oilRig, waterTreatment | ore, oil, water | machinery, buildings |
+| **Agriculture** | forestry, farm, fishery | lumber, agriculturalGoods | machinery, buildings, vehicles |
+| **Environment** | environmentControl, recycling | environmentFactor, recycled goods | machinery, buildings |
+| **Heavy Industry** | metalFactory, machineryFactory, chemical, construction | metals, machinery, chemicals, buildings | machinery, buildings |
+| **Light Industry** | paperFactory, foodFactory, consumerFactory, medicineFactory | paper, food, consumerGoods, medicine | machinery, buildings |
+| **Services** | services, tourism, bank, entertainmentIndustry, religion | services, tourism, monetaryServices, entertainment, faith | buildings |
+| **Public Services** | government, lawEnforcement, education, healthcare, logistics | governance, lawEnforcement, education, healthcare, logistics | buildings, machinery, vehicles |
+| **Military** | militaryEquipment, defense | militaryEquipment, defense | machinery, metals, buildings, vehicles |
+| **Vehicle Manufacturing** | automotive, spaceShips, spaceInfrastructure | vehicles, spaceTransport | machinery, metals, buildings |
+| **Mobility** | spaceGoodsTransport | transport logistics | vehicles, machinery, buildings |
 
 ## Core Production Loops
 
@@ -340,6 +340,11 @@ SI -.->|capital: machinery 0.8, buildings 0.1| C35((capital))
 2. **Mine → Metal → Construction**: mine produces ore → metalFactory uses ore to produce metals → construction uses metals to produce buildings
 3. **Forestry → Paper → All Industry**: forestry produces lumber → paperFactory uses lumber to produce paper → paper is consumed by nearly every sector
 4. **Recycling Loop**: recycling converts waste back into metals, lumber, water, chemicals, and oil
+5. **Energy → Machinery → Heavy Industry**: powerPlant/nuclearSector produce energy → machineryFactory uses energy + metals to produce machinery → machinery is consumed as capital input by mine, oilRig, farm, metalFactory, medicineFactory, consumerFactory, chemical, automotive, defense, etc.
+6. **Oil → Power → Energy**: oilRig produces oil → powerPlant consumes oil to produce energy → energy powers nearly all sectors
+7. **Chemical → Medicine → Healthcare**: chemical produces chemicals → medicineFactory uses chemicals to produce medicine → healthcare consumes medicine
+8. **Buildings → Construction → All Industry**: construction produces buildings → buildings are consumed as capital input by almost every sector
+9. **Metals → Vehicles/Transport/Defense**: metalFactory produces metals → automotive/spaceShips/militaryEquipment use metals to produce vehicles/spaceTransport/defense equipment
 
 ## Capital Goods Legend
 
@@ -348,6 +353,23 @@ Capital goods are consumed to build/maintain sector capacity. Common capital goo
 - **buildings** – used by almost every sector
 - **vehicles** – used by forestry, farm, fishery, logistics, automotive, defense, spaceGoodsTransport
 - **metals** – used by spaceShips, automotive, militaryEquipment, defense
+
+## Capital Growth Mechanics
+
+Capital stock for each sector evolves independently each tick through three stages:
+
+1. **Wear** — applied when `productionRatio > 0`. Each capital good loses `rate * productionRatio` stock (e.g. powerPlant loses `0.5 * machinery` per unit of production).
+2. **Decay** — applied when `capitalEfficiencyDecay > 0`. Each capital good loses `stock * decay` fraction.
+3. **Replenishment** — restores wear + decay losses if the sector can afford them. Runs independently of wear/decay, so capital never gets stuck at 0 while money remains.
+
+4. **Investment** — grows capital toward its target (`rate * 100`) by **at most one level per tick**, where one level = the blueprint's `capitalGoods` rate value. Runs every tick when stock is below target and the sector can afford `rate * price`. Capital grows faster than it decays, so over time each sector's stock accumulates toward its full target, raising `capitalRatio` (stock / requiredPerUnit) and scaling input demand and production proportionally.
+
+| Stage | Condition | Effect |
+|-------|-----------|--------|
+| Wear | `productionRatio > 0` | `- rate * productionRatio` per capital good |
+| Decay | `capitalEfficiencyDecay > 0` | `- stock * decay` per capital good |
+| Replenishment | losses exist && affordable | restores lost stock, spends money |
+| Investment | stock < `rate * 100` && affordable | `+ rate` (one level) per capital good per tick |
 
 ## Source
 

@@ -1,4 +1,3 @@
-
 export type IndustrialSectors = Readonly<{
     mine: number;
     oilRig: number;
@@ -34,7 +33,6 @@ export type IndustrialSectors = Readonly<{
     paperFactory: number;
     entertainmentIndustry: number;
     defense: number
-    spaceGoodsTransport: number
     militaryEquipment: number
     mobility: number
 }>
@@ -51,7 +49,7 @@ export type IndustrialMainSectors = Readonly<{
 
 export const industrialSubsectors = new Map<string, Set<keyof IndustrialSectors>>([
     ["energy", new Set(["powerPlant", "nuclearSector"])],
-    ["rawMaterials", new Set(["mine", "waterTreatment", "oilRig"])],
+    ["rawMaterials", new Set(["metalFactory", "waterTreatment", "oilRig"])],
     ["agriculture", new Set(["forestry", "farm", "fishery"])],
     ["environment", new Set(["environmentControl", "recycling"])],
     ["heavyIndustry", new Set(["metalFactory", "machineryFactory", "chemical", "construction"])],
@@ -60,7 +58,7 @@ export const industrialSubsectors = new Map<string, Set<keyof IndustrialSectors>
     ["publicServices", new Set(["government", "lawEnforcement", "education", "healthcare"])],
     ["military", new Set(["militaryEquipment", "defense"])],
     ["vehicleManufacturing", new Set(["automotive", "spaceShips"])],
-    ["mobility", new Set(["spaceGoodsTransport", "spaceInfrastructure", "mobility"])],
+    ["mobility", new Set(["spaceInfrastructure", "mobility"])],
 ]);
 
 export type ReadonlyIndustrialSectors = Readonly<IndustrialSectors>;

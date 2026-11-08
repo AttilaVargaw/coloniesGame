@@ -57,8 +57,10 @@ export class CanAffordInvestment extends Condition<CapitalBlackboard> {
         const current = bb.currentStock[key] ?? 0;
         const needed = targetStock - current;
         if(needed <= 0) return false;
-        const cost = needed * (bb.prices[key] ?? 0);
-        return bb.money - bb.moneySpent >= cost;
+        // One level of capital goods per tick
+        const toBuy = Math.min(needed, this.rate);
+        const cost = toBuy * (bb.prices[key] ?? 0);
+        return cost > 0 && bb.money - bb.moneySpent >= cost;
     }
 }
 

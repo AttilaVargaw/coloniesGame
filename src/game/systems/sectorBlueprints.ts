@@ -87,25 +87,6 @@ const workerReqStandard = { worker: 890, clerks: 50, engineer: 50, healtcarePers
 const usualNonEssentialGoods = new Set<keyof Goods>(["governance", "water", "vehicles", "energy", "services", "environmentFactor"])
 
 export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorBlueprint>([
-    ["mine", {
-        name: "mine",
-        goodsRequirements: {
-            energy: 50, governance: 20, environmentFactor: 20
-        },
-        workerRequirement: workerReqStandard,
-        goodsProduction: { ore: 15_000, waste: 20 },
-        efficiencyBonus: 0.01,
-        capitalGoods: { machinery: 0.5, buildings: 0.1, },
-        capitalEfficiency: 0.0005,
-        capitalEfficiencyDecay: 0.0008,
-        nonEssentialGoods: usualNonEssentialGoods,
-        productionMethods: new Map([
-            createMethod("dieselEngines", { desc: "Traditional machinery powered by onsite diesel motors" }),
-            createMethod("nuclear", { desc: "Laser mining lasers powered by onsite nuclear reactors" }),
-            createMethod("tylium", { desc: "Very high power mining lasers powered by onsite tylium reactors" }),
-            createMethod("robotized", { desc: "Very high power mining equipment handled by a robotic workforce, only few human supervisors are needed" }),
-        ])
-    }],
     ["oilRig", ({
         name: "oilRig", goodsRequirements: {
             environmentFactor: 20, energy: 10, governance: 20
@@ -201,7 +182,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "metalFactory", goodsRequirements: {
             environmentFactor: 30,
             energy: 200,
-            ore: 1000,
             governance: 20,
         }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
         goodsProduction: { metals: 100_000, waste: 10 },
@@ -260,7 +240,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             governance: 20,
             environmentFactor: 20,
         }, workerRequirement: { worker: 790, clerks: 50, engineer: 50, scientist: 100, healtcarePersonal: 10 },
-        goodsProduction: { spaceTransport: 50 },
+        goodsProduction: { spaceShips: 50 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.8, buildings: 0.1 },
         capitalEfficiency: 0.001,
@@ -270,7 +250,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["spaceShips", ({
         name: "spaceShipyard", goodsRequirements: { environmentFactor: 20, energy: 280, governance: 20 },
         workerRequirement: workerReqStandard,
-        goodsProduction: { spaceTransport: 8_000 },
+        goodsProduction: { spaceShips: 8_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 1, metals: 0.8, buildings: 0.1 },
         capitalEfficiency: 0.001,
@@ -404,9 +384,9 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["nuclearSector", ({
         name: "nuclearSector", goodsRequirements:
-            { ore: 200, energy: 100, governance: 20, environmentFactor: 10 },
+            { energy: 100, governance: 20, environmentFactor: 10 },
         workerRequirement: { scientist: 50, worker: 690, clerks: 50, engineer: 200, healtcarePersonal: 10 },
-        goodsProduction: { uranium: 1_000, waste: 30, energy: 10_000_000 },
+        goodsProduction: { fissionMaterial: 1_000, waste: 30, energy: 10_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 0.8, buildings: 0.1, },
         capitalEfficiency: 0.001,
@@ -528,30 +508,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalEfficiency: 0.0008,
         capitalEfficiencyDecay: 0.0008,
         nonEssentialGoods: usualNonEssentialGoods,
-    })],
-    ["spaceGoodsTransport", {
-        name: "spaceGoodsTransport",
-        goodsRequirements: {
-            environmentFactor: 20,
-            energy: 150,
-            governance: 20,
-        },
-        workerRequirement: {
-            worker: 340,
-            clerks: 50,
-            serviceWorker: 600,
-            healtcarePersonal: 10
-        },
-        goodsProduction: { waste: 10 },
-        capitalGoods: { vehicles: 0.5, machinery: 0.5, buildings: 0.1, },
-        capitalEfficiency: 0.001,
-        capitalEfficiencyDecay: 0.001,
-        nonEssentialGoods: usualNonEssentialGoods,
-        productionMethods: new Map([
-            createTraditional(),
-            createFullyRobotized("A merchant marine which is fully automated by AI.")
-        ])
-    }],
+    })]
 ])
 
 industrySectorBlueprints.forEach((sector) => {

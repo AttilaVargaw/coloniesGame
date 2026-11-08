@@ -16,12 +16,12 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         agriculturalGoods: 0,
         tylium: 0,
         metals: 0,
-        uranium: 0,
+        fissionMaterial: 0,
         machinery: 0,
         medicine: 0,
         lumber: 0,
         oil: 0,
-        spaceTransport: 0,
+        spaceShips: 0,
         nuclearWeapons: 0,
         vehicles: 0,
         environmentFactor: 0,
@@ -36,7 +36,6 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         paper: 0,
         entertainment: 0,
         education: 0,
-        ore: 0,
         defense: 0,
         monetaryServices: 0,
         militaryEquipment: 0,
@@ -127,11 +126,11 @@ describe("IndustryComponent", () => {
             {} as Record<keyof IndustrialSectors, Partial<Goods>>,
         )
 
-        expect(industry.capitalStock["powerPlant"]).toEqual({ machinery: 5, electronics: 1, buildings: 1 })
+        expect(industry.capitalStock["powerPlant"]).toEqual({ machinery: 5, buildings: 1 })
     })
 
     it("initializes starter money from constructor arg", () => {
-        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "mine"])
+        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "metalFactory"])
         const goods = makeGoods()
         const population = makePopulation()
         const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {
@@ -152,11 +151,11 @@ describe("IndustryComponent", () => {
         )
 
         expect(industry.money["powerPlant"]).toBe(500000)
-        expect(industry.money["mine"]).toBe(200000)
+        expect(industry.money["metalFactory"]).toBe(200000)
     })
 
     it("initializes all active sectors with zero utilization", () => {
-        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "mine", "farm"])
+        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "metalFactory", "farm"])
         const goods = makeGoods()
         const population = makePopulation()
 
@@ -173,12 +172,12 @@ describe("IndustryComponent", () => {
         )
 
         expect(industry.sectorUtilization["powerPlant"]).toBe(0)
-        expect(industry.sectorUtilization["mine"]).toBe(0)
+        expect(industry.sectorUtilization["metalFactory"]).toBe(0)
         expect(industry.sectorUtilization["farm"]).toBe(0)
     })
 
     it("initializes tech multipliers to 1 for all sectors", () => {
-        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "mine"])
+        const activeSectors: Set<keyof IndustrialSectors> = new Set(["powerPlant", "metalFactory"])
         const goods = makeGoods()
         const population = makePopulation()
 
@@ -195,7 +194,7 @@ describe("IndustryComponent", () => {
         )
 
         expect(industry.techMultipliers["powerPlant"]).toBe(1)
-        expect(industry.techMultipliers["mine"]).toBe(1)
+        expect(industry.techMultipliers["metalFactory"]).toBe(1)
     })
 
     it("initializes workerEfficiencyMultipliers to 1 for all population types", () => {
