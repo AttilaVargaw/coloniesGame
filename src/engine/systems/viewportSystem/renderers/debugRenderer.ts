@@ -55,7 +55,7 @@ export class DebugRenderer extends System {
         ctx.shadowBlur = 4
         ctx.textAlign = "left"
         ctx.textBaseline = "top"
-        ctx.fillText(`FPS: ${this.currentFps}`, 10, 10)
+        ctx.fillText(`FPS: ${this.currentFps}`, 10, 96)
         ctx.restore()
     }
 

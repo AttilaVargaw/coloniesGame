@@ -232,8 +232,8 @@ export class WebglRenderManager {
         gl.useProgram(this.toneMapBloomShader.program)
         gl.uniform1i(this.toneMapBloomShader.uniforms.hdrTexture, 0)
         gl.uniform1i(this.toneMapBloomShader.uniforms.bloomTexture, 1)
-        gl.uniform1f(this.toneMapBloomShader.uniforms.exposure, 1.0)
-        gl.uniform1f(this.toneMapBloomShader.uniforms.bloomIntensity, 1.0)
+        gl.uniform1f(this.toneMapBloomShader.uniforms.exposure, 1.15)
+        gl.uniform1f(this.toneMapBloomShader.uniforms.bloomIntensity, 1.25)
 
         gl.activeTexture(gl.TEXTURE0)
         gl.bindTexture(gl.TEXTURE_2D, this.hdrTexture)

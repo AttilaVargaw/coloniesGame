@@ -58,7 +58,7 @@ export class ViewportSystem extends System {
     private static clear(ctx: CanvasRenderingContext2D) {
         ctx.save()
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-        ctx.fillStyle = "#000008";
+        ctx.fillStyle = "#030510";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.restore()
     }
@@ -141,7 +141,7 @@ export class ViewportSystem extends System {
         if(!projected) return
 
         ctx.save()
-        ctx.strokeStyle = '#00ff00'
+        ctx.strokeStyle = '#22d3ee'
         ctx.lineWidth = 2
         ctx.beginPath()
         ctx.arc(projected.x, projected.y, projected.radius, 0, Math.PI * 2)

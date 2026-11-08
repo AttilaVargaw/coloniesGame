@@ -42,9 +42,9 @@ export function Screen() {
             const height = window.innerHeight
 
             canvasRef.current.width = width * dpr
-            canvasRef.current.height = (height - 76) * dpr
+            canvasRef.current.height = height * dpr
             canvasRef.current.style.width = `${width}px`
-            canvasRef.current.style.height = `${height - 76}px`
+            canvasRef.current.style.height = `${height}px`
             const ctx = canvasRef.current.getContext('2d')
             ctx?.resetTransform()
             ctx?.scale(dpr, dpr)
@@ -89,15 +89,14 @@ export function Screen() {
         game?.dispatchEvent?.(new ContextMenuEvent({ x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY }))
     }
 
-    return <>
-        <canvas
-            id="2dCanvas"
-            ref={canvasRef}
-            style={{ imageRendering: "crisp-edges" }}
-            onMouseMove={handleMouseMove}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onClick={handleClick}
-            onContextMenu={handleContextMenu} />
-    </>
+    return <canvas
+        id="2dCanvas"
+        ref={canvasRef}
+        style={{ imageRendering: "crisp-edges" }}
+        onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu} />
+
 }
