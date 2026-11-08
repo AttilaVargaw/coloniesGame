@@ -52,7 +52,7 @@ describe("economy stability", () => {
 
 		expect(validation.viable).toBe(true);
 		if(!validation.viable) {
-			console.log(`Failed at tick ${validation.ticksSurvived}`, 
+			console.log(`Failed at tick ${validation.ticksSurvived}`,
 				validation.failedGood ? `good: ${validation.failedGood.good} = ${validation.failedGood.value}` : ``,
 				validation.failedSector ? `sector: ${validation.failedSector.sector} = ${validation.failedSector.money}` : ``);
 		}
@@ -61,13 +61,14 @@ describe("economy stability", () => {
 	it("generates configs that pass basic stability for multiple seeds", () => {
 		const ret = new Map<string, Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>>()
 
+		let seed = 0
 		for(const { population, name } of words) {
 			let found = false;
-			for(let seed = 0; seed < 25_000 && !found; ++seed) {
+			for(; seed < 25_000 && !found; ++seed) {
 				const baseInput = generateRandomConfig(seed, population!);
 				const activeSectors = [...baseInput.activeSectors];
 
-				const { config, validation } = generateValidatedColonyConfig({
+				const { validation } = generateValidatedColonyConfig({
 					populationSize: population!,
 					activeSectors,
 					starterMoneyPerSector: 20_000_000,
@@ -78,8 +79,16 @@ describe("economy stability", () => {
 				if(validation.viable) {
 					const { capitalStock } = baseInput
 					ret.set(name, capitalStock)
-					console.log(`Found valid config for ${name} with seed ${seed}`)
+					console.log(`Found valid config for ${name} with seed ${++seed}`)
 					found = true;
+					break
+				} else {
+					// if(validation.failedGood) {
+					// 	console.log("Failed goods ", validation.failedGood)
+					// }
+					// if(validation.failedSector) {
+					// 	console.log("Failed sector ", validation.failedSector.sector)
+					// }
 				}
 			}
 		}
