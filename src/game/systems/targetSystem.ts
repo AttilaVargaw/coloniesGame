@@ -1,5 +1,4 @@
 import { Entity } from "@engine/entities/entity"
-import { SystemWithNodes } from "@game/systems/system"
 import { TargetableNode } from "../../engine/systems/targetNode"
 import { TargetableComponent } from "@/engine/components/targetableComponent"
 import { findPath, MapSystem } from "./mapSystem"
@@ -8,6 +7,7 @@ import { setShipPath, clearShipPath } from "@/game/systems/moveSystem"
 import { TargetChangedEvent } from "@/engine/lib/events"
 import { getAbsolute } from "@/engine/lib/getAbsolute"
 import { Engine } from "@/engine/core/engine"
+import { SystemWithNodes } from "@/engine/systems/system"
 
 export class TargetSystem extends SystemWithNodes<TargetableNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function

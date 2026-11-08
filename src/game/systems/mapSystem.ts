@@ -1,4 +1,3 @@
-import { SystemWithNodes } from "./system";
 import { PathComponent, PathNode } from "@game/components/pathComponent";
 import { init } from "@game/factories/mapBuilder";
 import { StartState } from "../data/StartState";
@@ -12,6 +11,7 @@ import { JumpGraphComponent, JumpNode, JumpNodeComponent } from "@game/component
 import { JUMP_GRAPH_MAX_DISTANCE, JUMP_HOP_PENALTY } from "../constants";
 import { createEntity } from "@/engine/lib/entityRegistry";
 import { terminateTextureWorkerPool } from "../factories/textureWorkerPool";
+import { SystemWithNodes } from "@/engine/systems/system";
 
 export function findPath(start: Entity, end: Entity): Entity[] {
     const startPath = start.getComponent(PathComponent)

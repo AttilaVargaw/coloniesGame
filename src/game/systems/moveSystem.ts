@@ -2,7 +2,6 @@ import { PositionComponent } from "@engine/components/position";
 import { RadiusComponent } from "@engine/components/radiusComponent";
 import { Entity } from "@engine/entities/entity";
 import { EntityNode } from "@engine/entities/entityNode";
-import { SystemWithNodes } from "@game/systems/system";
 import { JumpDriveComponent, SensorSuiteComponent, FuelComponent } from "@game/components/vessel";
 import { TargetSystem } from "./targetSystem";
 import { HourPassedEvent, EntityRemovedEvent } from "@/engine/lib/events";
@@ -15,6 +14,7 @@ import { StartState } from "../data/StartState";
 import { KEPLER_EPSILON, KEPLER_EPSILON_TIGHT, KEPLER_MAX_ITERATIONS, SHIP_ORBIT_BUFFER_RATIO, DEFAULT_ORBIT_INCLINATION_RANGE } from "../constants";
 import { Engine } from "@/engine/core/engine";
 import { generateRandomNumber } from "@/lib/generateRandomNumber";
+import { SystemWithNodes } from "@/engine/systems/system";
 
 function trueAnomalyToMeanAnomaly(trueAnomaly: number, e: number): number {
     if(e < KEPLER_EPSILON) return trueAnomaly
