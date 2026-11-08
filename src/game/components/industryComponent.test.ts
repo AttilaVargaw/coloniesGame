@@ -135,7 +135,7 @@ describe("IndustryComponent", () => {
         const population = makePopulation()
         const starterMoney: Partial<Record<keyof IndustrialSectors, number>> = {
             powerPlant: 500000,
-            mine: 200000,
+            metalFactory: 200000,
         }
 
         const industry = new IndustryComponent(

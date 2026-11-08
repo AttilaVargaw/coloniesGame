@@ -6,16 +6,25 @@ import { DebugModal } from "@/components/header/DebugModal"
 import { GovernmentModal } from "../governmentTab/government"
 import { useEffect, useState } from "react"
 import { Entity } from "@/engine/entities/entity"
+import { cn } from "cn"
+import { Button } from "../ui/button"
 
-const SPEEDS = [1, 10, 150, 500] as const
+const SPEEDS = [0, 1, 10, 150, 500] as const
 
 export function Header() {
     const time = useGameDate()
     const date = ColonialDate(time)
     const engine = useGameEngine()
+    const [multiplier, setMultiplier] = useState(1)
 
-    const setSpeed = (multiplier: number) => {
-        engine?.addCommand(new SetTimeScaleCommand(multiplier))
+    const setSpeed: React.MouseEventHandler<HTMLButtonElement> = ({ target }) => {
+        //@ts-ignore
+        const { id } = target
+
+        setMultiplier(() => {
+            engine?.addCommand(new SetTimeScaleCommand(Number.parseInt(id)))
+            return multiplier
+        })
     }
 
     const [colony, setColony] = useState<Entity>()
@@ -46,26 +55,15 @@ export function Header() {
             <h1 className="text-2xl font-bold"></h1>
             <nav>
                 <ul className="flex space-x-4 items-center">
-                    <li >
-                        <button
-                            onClick={() => {
-                                setSpeed(0)
-                            }}
-                            className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
-                        >
-                            ||
-                        </button>
-                    </li>
                     {SPEEDS.map(speed => (
                         <li key={speed}>
-                            <button
-                                onClick={() => {
-                                    setSpeed(speed)
-                                }}
-                                className="px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm"
+                            <Button
+                                id={`${speed}-button`}
+                                onClick={setSpeed}
+                                className={cn("px-2", "py-1", "rounded", "text-sm", multiplier === speed ? "bg-gray-900" : "bg-gray-800")}
                             >
-                                {speed}x
-                            </button>
+                                {speed || "||"}{speed > 0 && "x"}
+                            </Button>
                         </li>
                     ))}
                     <li>{date.year} {date.monthString} {date.day} {date.hour.toString().padStart(2, '0')}:{date.minute.toString().padStart(2, '0')}</li>
