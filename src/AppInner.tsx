@@ -13,7 +13,7 @@ export function AppInner({ sidebarCollapsed, setSidebarCollapsed }: {
     <ColoniesInforWindow />
     <Header />
     <div className="flex bg-black">
-      <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 54, bottom: 0, zIndex: 10 }}>
+      <div className={`transition-all duration-200 ${sidebarCollapsed ? "w-12" : "w-80"}`} style={{ position: "absolute", top: 64, bottom: 0, zIndex: 10 }}>
         <ProductionBar
           lines={[
             {

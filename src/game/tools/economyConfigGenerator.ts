@@ -62,6 +62,7 @@ export interface ColonyConfig {
 	starterMoneyPerSector: number;
 	capitalStockMultiplier: number;
 	initialGoodsMultiplier: number;
+	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>;
 }
 
 const DEFAULT_CONFIG: ColonyConfig = {
@@ -551,7 +552,31 @@ function seedCapitalStock(
 	return stock;
 }
 
-export function generateColonyConfig(config: Partial<ColonyConfig> = {}): IndustryTickInput {
+function getSectorsUsingCapitalGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
+	const result: (keyof IndustrialSectors)[] = [];
+	for(const [sector, config] of industrySectorBlueprints) {
+		if(config.capitalGoods?.[goodKey] !== undefined) {
+			result.push(sector);
+		}
+	}
+	return result;
+}
+
+function getSectorsMakingThisGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
+	const result: (keyof IndustrialSectors)[] = [];
+	for(const [sector, config] of industrySectorBlueprints) {
+		if(config.goodsProduction?.[goodKey] !== undefined) {
+			result.push(sector);
+		}
+	}
+	return result;
+}
+
+
+export function generateColonyConfig(
+	config: Partial<ColonyConfig> = {},
+	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>
+): IndustryTickInput {
 	const cfg = { ...DEFAULT_CONFIG, ...config };
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
 
@@ -570,7 +595,8 @@ export function generateColonyConfig(config: Partial<ColonyConfig> = {}): Indust
 
 	for(const sector of activeSectors) {
 		money[sector] = starterMoneyPerSector;
-		capitalStock[sector] = seedCapitalStock(sector, capitalStockMultiplier);
+		const sectorMultiplier = capitalStockMultipliers?.[sector] ?? capitalStockMultiplier;
+		capitalStock[sector] = seedCapitalStock(sector, sectorMultiplier);
 		techMultipliers[sector] = 1;
 		laborAssigned[sector] = 0;
 		sectorInvestment[sector] = 0;
@@ -634,7 +660,7 @@ export function validateColonyConfig(
 			const prevMin = minGoods[good] ?? Infinity;
 			if(value < prevMin) minGoods[good] = value;
 
-			if(value < 0) {
+			if(value <= 0) {
 				return {
 					viable: false,
 					ticksSurvived,
@@ -685,9 +711,10 @@ export function generateValidatedColonyConfig(
 	const { ticks = 20, essentialGoods, essentialSectors } = options;
 
 	let lastValidation: ColonyValidationResult | null = null;
+	const capitalStockMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
 
 	for(let attempt = 0; attempt < 20; attempt++) {
-		const input = generateColonyConfig(config);
+		const input = generateColonyConfig(config, capitalStockMultipliers);
 		const validation = validateColonyConfig(input, { ticks, essentialGoods, essentialSectors });
 		lastValidation = validation;
 
@@ -700,11 +727,20 @@ export function generateValidatedColonyConfig(
 			...base,
 			starterMoneyPerSector: base.starterMoneyPerSector * 2,
 			initialGoodsMultiplier: base.initialGoodsMultiplier * 2,
-			capitalStockMultiplier: base.capitalStockMultiplier * 2,
 		} as Partial<ColonyConfig>;
+
+		// Double capital goods for sectors that create a failed good
+		if(validation.failedGood) {
+			console.log("Failed good ", validation.failedGood)
+			const good = validation.failedGood.good;
+			const sectors = getSectorsMakingThisGood(good);
+			for(const sector of sectors) {
+				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 1.25;
+			}
+		}
 	}
 
-	return { config: generateColonyConfig(config), validation: lastValidation! };
+	return { config: generateColonyConfig(config, capitalStockMultipliers), validation: lastValidation! };
 }
 
 const numSectors = sectors.size;

@@ -8,7 +8,7 @@ import { MapCreationData } from "../data/gameData.ts";
 import { Goods } from "../data/Goods.ts";
 import { describe, expect, it } from "vitest";
 
-const TICKS = 18;
+const TICKS = 20;
 
 function getColoniesWithPopulation(root: BodyBlueprint) {
 	const colonies: BodyBlueprint[] = [];

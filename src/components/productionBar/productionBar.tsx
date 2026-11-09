@@ -53,10 +53,10 @@ export function ProductionBar({ lines, collapsed = false, onToggleCollapse, onAd
     ] : [];
 
     return (
-        <div className="relative flex h-full flex-col gap-4 overflow-hidden border border-neutral-700 bg-neutral-900 p-4 text-neutral-100 shadow-lg transition-all duration-200">
+        <div className={`relative flex h-full flex-col gap-4 overflow-hidden border border-neutral-700 p-4 text-neutral-100 shadow-lg transition-all duration-200 ${collapsed ? "opacity-70 backdrop-blur-xs" : ""}`}>
             {/* Expanded content */}
             <div
-                className={`absolute inset-0 flex h-full flex-col gap-4 overflow-y-auto p-4 transition-opacity duration-200 ${collapsed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"}`}
+                className={`absolute inset-0 flex h-full flex-col gap-4 overflow-y-auto p-4 transition-opacity duration-200 ${collapsed ? "pointer-events-none" : "pointer-events-auto opacity-100"}`}
             >
                 <div className="flex items-center justify-between">
                     <span className="text-lg font-semibold tracking-wide">Production</span>
