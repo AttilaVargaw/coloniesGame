@@ -1,6 +1,6 @@
 import { basePrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods.ts";
 import { Population } from "../data/Population.ts";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse.ts";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse.ts";
 import { createStarterPopulation } from "../data/getPopulationBreakdown.ts";
 import { industrySectorBlueprints } from "../systems/sectorBlueprints.ts";
 import type { IndustrialSectors } from "../components/Factories.ts";
@@ -408,8 +408,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	);
 
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
-	const colonyGoodsProduction = { ...createStarterWarehouse(0) };
-	const colonyGoodsRequirements = { ...createStarterWarehouse(0) };
+	const colonyGoodsProduction = createEmptyWarehouse();
+	const colonyGoodsRequirements = createEmptyWarehouse();
 	for(const [key, value] of Object.entries(colonyGoodsDelta)) {
 		if(value > 0) {
 			colonyGoodsProduction[key as keyof Goods] = value;
@@ -552,16 +552,6 @@ function seedCapitalStock(
 	return stock;
 }
 
-function getSectorsUsingCapitalGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
-	const result: (keyof IndustrialSectors)[] = [];
-	for(const [sector, config] of industrySectorBlueprints) {
-		if(config.capitalGoods?.[goodKey] !== undefined) {
-			result.push(sector);
-		}
-	}
-	return result;
-}
-
 function getSectorsMakingThisGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
 	const result: (keyof IndustrialSectors)[] = [];
 	for(const [sector, config] of industrySectorBlueprints) {
@@ -580,7 +570,7 @@ export function generateColonyConfig(
 	const cfg = { ...DEFAULT_CONFIG, ...config };
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
 
-	const goods = createStarterWarehouse(populationSize);
+	const goods = createEmptyWarehouse();
 	for(const key of Object.keys(goods) as (keyof Goods)[]) {
 		goods[key] *= cfg.initialGoodsMultiplier;
 	}
@@ -634,7 +624,7 @@ export function validateColonyConfig(
 	input: IndustryTickInput,
 	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[] } = {}
 ): ColonyValidationResult {
-	const { ticks = 20, essentialGoods = ESSENTIAL_GOODS, essentialSectors = ESSENTIAL_SECTORS } = options;
+	const { ticks = 100, essentialGoods = ESSENTIAL_GOODS, essentialSectors = ESSENTIAL_SECTORS } = options;
 
 	const state = createSimState();
 	let currentInput = { ...input };
@@ -708,7 +698,7 @@ export function generateValidatedColonyConfig(
 	config: Partial<ColonyConfig> = {},
 	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[], extraSectors?: string[] } = {}
 ): { config: IndustryTickInput; validation: ColonyValidationResult } {
-	const { ticks = 20, essentialGoods, essentialSectors } = options;
+	const { ticks = 100, essentialGoods, essentialSectors } = options;
 
 	let lastValidation: ColonyValidationResult | null = null;
 	const capitalStockMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
@@ -729,21 +719,18 @@ export function generateValidatedColonyConfig(
 			initialGoodsMultiplier: base.initialGoodsMultiplier * 2,
 		} as Partial<ColonyConfig>;
 
-		// Double capital goods for sectors that create a failed good
+		// Double capital goods for sectors that produce the failed good
 		if(validation.failedGood) {
-			console.log("Failed good ", validation.failedGood)
 			const good = validation.failedGood.good;
 			const sectors = getSectorsMakingThisGood(good);
 			for(const sector of sectors) {
-				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 1.25;
+				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 2;
 			}
 		}
 	}
 
 	return { config: generateColonyConfig(config, capitalStockMultipliers), validation: lastValidation! };
 }
-
-const numSectors = sectors.size;
 
 export function generateRandomConfig(seed: number, populationSize: number): IndustryTickInput {
 	let s = seed;
@@ -756,7 +743,7 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 	const capitalStockMultiplier = 1 + next() * 20;
 
 	const shuffled = [...sectors].sort(() => next() - 0.5);
-	const count = Math.floor(numSectors + next() * (shuffled.length - numSectors + 1));
+	const count = Math.floor(sectors.size + next() * (shuffled.length - sectors.size + 1));
 	const activeSectors = shuffled.slice(0, count);
 
 	return generateColonyConfig({

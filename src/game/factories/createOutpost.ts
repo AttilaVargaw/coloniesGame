@@ -1,6 +1,6 @@
 import { IndustrialSectors } from "../components/Factories";
 import { Goods } from "../data/Goods";
-import { createStarterWarehouse } from "./createStarterWarehouse";
+import { createEmptyWarehouse } from "./createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { ColonyType } from "../constants";
 
@@ -19,7 +19,7 @@ export function createOutpost(config: OutpostConfig) {
         sectors[key as keyof IndustrialSectors] = 1;
     }
 
-    const fullGoods = createStarterWarehouse(0) as Goods;
+    const fullGoods = createEmptyWarehouse();
     for(const [key, value] of Object.entries(goods)) {
         fullGoods[key as keyof Goods] = value;
     }

@@ -5,7 +5,7 @@ import type { SectorDecisions } from "../systems/sectorBehaviorTree/bt"
 import { basePrices } from "../data/Goods"
 import { baseSalaries } from "../data/Population"
 import { createStarterPopulation } from "../data/getPopulationBreakdown"
-import { createStarterWarehouse } from "../factories/createStarterWarehouse"
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse"
 import type { SectorBid } from "./SectorBid"
 
 const decisions: SectorDecisions = {
@@ -40,7 +40,7 @@ const population = createStarterPopulation(10000, {
     healtcarePersonal: 5,
 })
 
-const colonyGoods = createStarterWarehouse(0)
+const colonyGoods = createEmptyWarehouse()
 colonyGoods.oil = 10_000
 colonyGoods.environmentFactor = 10_000
 colonyGoods.governance = 10_000
@@ -189,7 +189,7 @@ describe("industry sector calculations", () => {
         })
 
         it("consumes full demand even when colony goods are low", () => {
-            const lowGoods = createStarterWarehouse(0)
+            const lowGoods = createEmptyWarehouse()
             lowGoods.oil = 70
             lowGoods.environmentFactor = 10
             lowGoods.governance = 10

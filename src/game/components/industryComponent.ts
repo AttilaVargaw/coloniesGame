@@ -1,7 +1,7 @@
 import { EntityComponent } from "@engine/entities/entityComponent";
 import { Goods } from "../data/Goods";
 import { Population, baseSalaries } from "../data/Population";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { ColonyType } from "../constants";
@@ -56,10 +56,10 @@ export class IndustryComponent extends EntityComponent {
         super()
 
         this.activeSectors = activeSectorKeys
-        this.goodsChange = createStarterWarehouse(0)
+        this.goodsChange = createEmptyWarehouse()
         this.populationChange = createStarterPopulation(0)
-        this.goodsRequirements = createStarterWarehouse(0)
-        this.goodsProduction = createStarterWarehouse(0)
+        this.goodsRequirements = createEmptyWarehouse()
+        this.goodsProduction = createEmptyWarehouse()
         this.workingWorkers = createStarterPopulation(0)
         this.freeWorkers = createStarterPopulation(0)
         this.sectorUtilization = Object.fromEntries(
@@ -110,7 +110,7 @@ export class IndustryComponent extends EntityComponent {
             Object.keys(population).map(key => [key, 1])
         ) as Record<keyof Population, number>;
         this.materialRequirementMultipliers = Object.fromEntries(
-            Object.keys(createStarterWarehouse(0)).map(key => [key, 1])
+            Object.keys(createEmptyWarehouse()).map(key => [key, 1])
         ) as Record<keyof Goods, number>;
         this.capitalMultipliers = Object.fromEntries(
             Array.from(activeSectorKeys).map(key => [key, 1])

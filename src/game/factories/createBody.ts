@@ -101,10 +101,11 @@ function createInteractionComponents(
         new SelectableComponent(clickSize, "red"),
     ]
 
+    const effectivePopulation = population ?? economies.get(body.id)?.population ?? 0
     const effectiveRatio = populationRatioOverride ?? populationRatio
 
-    if(population !== undefined) {
-        const starterSectors = createStarterIndustry(population * effectiveRatio);
+    if(effectivePopulation !== undefined && effectivePopulation > 0) {
+        const starterSectors = createStarterIndustry(effectivePopulation * effectiveRatio);
 
         const BUDGET_RUNWAY_DAYS = 500
         const starterCapitalStock: Partial<Record<keyof IndustrialSectors, Partial<Goods>>> = {}
@@ -122,10 +123,10 @@ function createInteractionComponents(
                 starterStock[sector] = {}
                 for(const [goodKey, rate] of Object.entries(config.capitalGoods)) {
                     //@ts-ignore
-                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, economies.get(body.id)?.[sector] * rate || 0)
+                    starterCapitalStock[sector][goodKey as keyof Goods] = Math.max(1, economies.get(body.id)?.capitalStock?.[sector] * rate || 0)
                 }
                 for(const [goodKey, rate] of Object.entries(config.goodsRequirements ?? {})) {
-                    starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * population / 1_000_000))
+                    starterStock[sector][goodKey as keyof Goods] = Math.max(1, Math.round(rate * effectivePopulation / 1_000_000))
                 }
             }
 
@@ -134,7 +135,7 @@ function createInteractionComponents(
             )
         }
 
-        const colonyTreasury = Math.max(50000, population * 10)
+        const colonyTreasury = Math.max(50000, effectivePopulation * 10)
 
         components.push(
             new ClickableComponent(true, clickSquare, createColonyClickHandler(engine, body), [{
@@ -149,8 +150,8 @@ function createInteractionComponents(
             }]),
             new IndustryComponent(
                 starterSectors,
-                createStarterWarehouse(population * effectiveRatio),
-                createStarterPopulation(population * effectiveRatio, occupationStarterRatioOverride),
+                economies.get(body.id)?.goods ?? createStarterWarehouse(effectivePopulation * effectiveRatio),
+                createStarterPopulation(effectivePopulation * effectiveRatio, occupationStarterRatioOverride),
                 "standard",
                 "colony",
                 starterMoney,

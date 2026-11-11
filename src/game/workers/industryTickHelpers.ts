@@ -2,7 +2,7 @@ import { Goods } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { getGoodRequirementsAndQoL, getRequirementsForQol } from "../data/Population";
 import { populationGrowth } from "../data/populationHelpers";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustrialSectors } from "../components/Factories";
 import type { IndustryTickResult } from "./IndustryTickResult";
 import type { SectorBid } from "./SectorBid";
@@ -171,7 +171,7 @@ export function computeColonyGoodsDelta(
     prices: Record<keyof Goods, number>,
     // updatedSectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
 ): Partial<Goods> {
-    const colonyGoodsDelta: Partial<Goods> = { ...createStarterWarehouse(0) };
+    const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
 
     for(const goodKey of Object.keys(goods)) {
         const bought = (goods[goodKey as keyof Goods] ?? 0) - (colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { computeColonyGoodsDelta, applyGoodsModifier, buySectorInputs } from "./industryTickHelpers"
-import { createStarterWarehouse } from "../factories/createStarterWarehouse"
+import { createEmptyWarehouse, createStarterWarehouse } from "../factories/createStarterWarehouse"
 import { basePrices } from "../data/Goods"
 import type { Goods } from "../data/Goods"
 import type { SectorBid } from "./SectorBid"
@@ -68,7 +68,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("subtracts bought goods from colony pool", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 1000
             goods.paper = 500
             const afterPurchase = { ...goods }
@@ -89,7 +89,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("adds produced goods to colony pool", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             const afterPurchase = { ...goods }
 
             const delta = computeColonyGoodsDelta(
@@ -106,7 +106,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("combines bought subtraction and production addition", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 1000
             const afterPurchase = { ...goods }
             afterPurchase.oil = 700 // 300 bought
@@ -125,7 +125,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("skips sectors with productionRatio <= 0", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             const afterPurchase = { ...goods }
 
             const delta = computeColonyGoodsDelta(
@@ -141,7 +141,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("merges replenishment delta into colony goods delta", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             const afterPurchase = { ...goods }
 
             const delta = computeColonyGoodsDelta(
@@ -159,7 +159,7 @@ describe("colony goods pool changes", () => {
 
     describe("applyGoodsModifier", () => {
         it("adds positive deltas to goods", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.energy = 100_000
 
             applyGoodsModifier(goods, { energy: 400_000, waste: 10 }, (cur, d) => cur + d)
@@ -169,7 +169,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("subtracts deltas from goods (requirements/consumption)", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 1000
 
             applyGoodsModifier(goods, { oil: 300 }, (cur, d) => Math.max(0, cur - d))
@@ -178,7 +178,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("floors at 0 when subtracting more than available", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 100
 
             applyGoodsModifier(goods, { oil: 500 }, (cur, d) => Math.max(0, cur - d))
@@ -187,7 +187,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("handles multiple goods deltas at once", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 1000
             goods.paper = 500
             goods.energy = 100_000
@@ -204,7 +204,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("does not create new goods keys for zero deltas", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             const beforeKeys = Object.keys(goods)
 
             applyGoodsModifier(goods, { oil: 0, energy: 0 }, (cur, d) => cur + d)
@@ -215,7 +215,7 @@ describe("colony goods pool changes", () => {
 
     describe("full colony pool flow", () => {
         it("computes net colony goods change from purchase + production", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 1000
             goods.energy = 0
 
@@ -246,7 +246,7 @@ describe("colony goods pool changes", () => {
         })
 
         it("handles production exceeding available stock (net add)", () => {
-            const goods = createStarterWarehouse(0)
+            const goods = createEmptyWarehouse()
             goods.oil = 100
 
             const afterPurchase = { ...goods }

@@ -1,13 +1,12 @@
 import { Goods } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse";
-import type { IndustrialSectors } from "../components/Factories";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { SectorBid } from "./SectorBid";
 import type { SectorExecutionResult } from "./SectorExecutionResult";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 
-const EMPTY_WAREHOUSE = createStarterWarehouse(0);
+const EMPTY_WAREHOUSE = createEmptyWarehouse();
 
 const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
 
@@ -49,7 +48,7 @@ export function executeSectors(
     const sumGoodsRequirements = { ...EMPTY_WAREHOUSE };
     const sumGoodsProduction = { ...EMPTY_WAREHOUSE };
     const workingWorkers = createStarterPopulation(0);
-    const remainingWorkers: Record<keyof Population, PopulationBreakdown> = { ...createStarterPopulation(0) };
+    const remainingWorkers: Record<keyof Population, PopulationBreakdown> = createStarterPopulation(0);
     for(const key of Object.keys(population) as (keyof Population)[]) {
         remainingWorkers[key] = { ...population[key] };
     }

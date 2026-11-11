@@ -5,7 +5,7 @@ import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { Engine } from "@/engine/core/engine";
 import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { IndustryWorkerPool } from "./industryWorkerPool";

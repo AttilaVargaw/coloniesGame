@@ -1,5 +1,43 @@
 import { Goods } from "../data/Goods";
 
+export function createEmptyWarehouse() {
+    return {
+        water: 0,
+        agriculturalGoods: 0,
+        consumerGoods: 0,
+        energy: 0,
+        machinery: 0,
+        medicine: 0,
+        oil: 0,
+        tylium: 0,
+        fissionMaterial: 0,
+        environmentFactor: 0,
+        metals: 0,
+        nuclearWeapons: 0,
+        services: 0,
+        spaceShips: 0,
+        tourism: 0,
+        lumber: 0,
+        food: 0,
+        healthcare: 0,
+        faith: 0,
+        lawEnforcement: 0,
+        chemicals: 0,
+        buildings: 0,
+        waste: 0,
+        governance: 0,
+        vehicles: 0,
+        logistics: 0,
+        paper: 0,
+        entertainment: 0,
+        education: 0,
+        defense: 0,
+        monetaryServices: 0,
+        mobility: 0,
+        militaryEquipment: 0
+    } satisfies Goods;
+}
+
 export function createStarterWarehouse(population: number) {
     return {
         water: population / 10,

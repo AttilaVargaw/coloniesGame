@@ -1,7 +1,7 @@
 import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
-import { createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustrialSectors } from "../components/Factories";
 import type { SectorBid } from "./SectorBid";
 import type { IndustryTickInput } from "./IndustryTickInput";
@@ -333,8 +333,8 @@ function processIndustry(
     );
 
     // Apply colony goods changes
-    const colonyGoodsProduction = { ...createStarterWarehouse(0) };
-    const colonyGoodsRequirements = { ...createStarterWarehouse(0) };
+    const colonyGoodsProduction = createEmptyWarehouse();
+    const colonyGoodsRequirements = createEmptyWarehouse();
     for(const [key, value] of Object.entries(colonyGoodsDelta)) {
         if(value > 0) {
             colonyGoodsProduction[key as keyof Goods] = value;
@@ -346,7 +346,7 @@ function processIndustry(
 
     const result: IndustryTickResult = {
         entityId,
-		goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption, ...negateReplenishmentDelta(replenishmentDelta) },
+        goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption, ...negateReplenishmentDelta(replenishmentDelta) },
         goodsProduction: sumGoodsProduction,
         workingWorkers: workingWorkers as Population,
         freeWorkers: remainingWorkers,
@@ -530,11 +530,11 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 // ReplenishmentDelta contains negative values (goods consumed from colony pool).
 // Negate them so they show as positive demand in goodsRequirements.
 function negateReplenishmentDelta(replenishmentDelta: Partial<Goods>): Partial<Goods> {
-	const out: Partial<Goods> = {};
-	for(const [key, value] of Object.entries(replenishmentDelta)) {
-		if(value < 0) {
-			out[key as keyof Goods] = -value;
-		}
-	}
-	return out;
+    const out: Partial<Goods> = {};
+    for(const [key, value] of Object.entries(replenishmentDelta)) {
+        if(value < 0) {
+            out[key as keyof Goods] = -value;
+        }
+    }
+    return out;
 };
