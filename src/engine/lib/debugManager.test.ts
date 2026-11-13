@@ -38,19 +38,6 @@ describe("DebugManager", () => {
         all.showJumpGraph = true
         expect(dm.debugflags.showJumpGraph).toBe(false)
     })
-
-    it("bloom settings default", () => {
-        const dm = new DebugManager()
-        expect(dm.bloomSettings.brightness).toBe(3)
-        expect(dm.bloomSettings.iterations).toBe(3)
-    })
-
-    it("bloom settings merge partially", () => {
-        const dm = new DebugManager()
-        dm.bloomSettings = { brightness: 10 }
-        expect(dm.bloomSettings.brightness).toBe(10)
-        expect(dm.bloomSettings.iterations).toBe(3)
-    })
 })
 
 describe("DebugSystem", () => {

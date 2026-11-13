@@ -31,6 +31,7 @@ import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 
 import { FaPray } from "react-icons/fa";
 import { ComponentType } from "react";
+import { renderMappedIcon } from "./iconRender";
 
 const ICON_MAP: Record<keyof Goods, ComponentType<LucideProps>> = {
     food: Cookie,
@@ -69,12 +70,7 @@ const ICON_MAP: Record<keyof Goods, ComponentType<LucideProps>> = {
 }
 
 export function ResourceIcon({ name, className }: { name: keyof Goods; className?: string }) {
-    const IconComponent = ICON_MAP[name]
-
-    if(!IconComponent) {
-        return name
-    }
-    return <IconComponent className={className} strokeWidth={1.5} size={16} />
+    return renderMappedIcon(ICON_MAP, name, className)
 }
 
 export const RESOURCE_NAMES: Record<string, string> = Object.fromEntries(

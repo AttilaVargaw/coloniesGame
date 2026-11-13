@@ -1,5 +1,4 @@
 import { useGameEngine } from "@/hooks/useGameContext";
-import { LabelComponent } from "@engine/components/label";
 import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent } from "@/engine/lib/events";
 import { TradeRouteCreatedEvent, TradeRouteCompletedEvent, TradeRouteCancelledEvent } from "@game/events/tradeEvents";
@@ -11,6 +10,7 @@ import { convertToReadable } from "@/lib/utils";
 import { CancelTradeRouteCommand } from "@game/commands/cancelTradeRouteCommand";
 import { TradeRouteNode } from "@/game/systems/TradeRouteNode";
 import { IndustryComponent } from "@/game/components/industryComponent";
+import { useEntityName, CancelRouteButton } from "./routeHelpers";
 
 type TradeRouteInfo = {
     routeEntityId: string;
@@ -55,11 +55,7 @@ export function TradeBreakdown({ industry: { entity } }: { industry: IndustryCom
     useGameEvent(TradeRouteCancelledEvent, collectRoutes);
     useGameEvent(DayPassedEvent, collectRoutes);
 
-    const getEntityName = useCallback((entityId: string) => {
-        if(!engine) return entityId;
-        const e = engine.getEntityById(entityId);
-        return e?.getComponent(LabelComponent)?.text || entityId;
-    }, [engine]);
+    const getEntityName = useEntityName();
 
     const handleCancel = useCallback((routeEntityId: string) => {
         if(!engine) return;
@@ -107,12 +103,7 @@ export function TradeBreakdown({ industry: { entity } }: { industry: IndustryCom
                             })}
                         </div>
                         {isSource && (
-                            <button
-                                onClick={() => handleCancel(route.routeEntityId)}
-                                className="px-2 py-1 text-xs bg-red-900/50 hover:bg-red-800/50 rounded border border-red-700/50"
-                            >
-                                Cancel Route
-                            </button>
+                            <CancelRouteButton onClick={() => handleCancel(route.routeEntityId)} />
                         )}
                     </div>
                 );

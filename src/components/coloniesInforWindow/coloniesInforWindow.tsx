@@ -9,7 +9,8 @@ import { useGameEvent } from "@/hooks/useGameEvent";
 import { DayPassedEvent, SelectionChangedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { useSelectionChanged } from "@/hooks/useSelectionChanged";
 import { DialogInner } from "./DialogInner";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { GameDialogTabs } from "./DialogTabs";
+import { TabsTrigger } from "../ui/tabs";
 
 export function ColoniesInforWindow() {
     const [industry, setIndustry] = useState<IndustryComponent | null>(null)
@@ -57,26 +58,18 @@ export function ColoniesInforWindow() {
                 height: "75vh",
             }}>
                 {info && <PatronGoodInfo info={info} />}
-                <Tabs defaultValue="overview" >
-                    <TabsList style={{
-                        height: "2em",
-                        width: "100%"
-                    }} >
-                        <TabsTrigger value="summary">Summary</TabsTrigger>
-                        <TabsTrigger value="population">Population</TabsTrigger>
-                        <TabsTrigger value="warehouse">Warehouse</TabsTrigger>
-                        <TabsTrigger value="industry">Industry</TabsTrigger>
-                        <TabsTrigger value="trade">Trade</TabsTrigger>
-                        <TabsTrigger value="migration">Migration</TabsTrigger>
-                    </TabsList>
-                    <div style={{
-                        height: "calc(75vh - 2em)",
-                        overflowY: "auto",
-                        padding: "1em",
-                    }}>
-                        {industry && <DialogInner industry={industry} />}
-                    </div>
-                </Tabs>
+                <GameDialogTabs
+                    triggers={[
+                        <TabsTrigger key="summary" value="summary">Summary</TabsTrigger>,
+                        <TabsTrigger key="population" value="population">Population</TabsTrigger>,
+                        <TabsTrigger key="warehouse" value="warehouse">Warehouse</TabsTrigger>,
+                        <TabsTrigger key="industry" value="industry">Industry</TabsTrigger>,
+                        <TabsTrigger key="trade" value="trade">Trade</TabsTrigger>,
+                        <TabsTrigger key="migration" value="migration">Migration</TabsTrigger>,
+                    ]}
+                >
+                    {industry && <DialogInner industry={industry} />}
+                </GameDialogTabs>
             </div>
         </DialogContent>
     </Dialog >

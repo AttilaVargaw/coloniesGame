@@ -10,25 +10,33 @@ import { TabsContent } from "../ui/tabs";
 
 export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
 
+function DialogPage({ value, children }: { value: DialogPage; children: ReactNode }) {
+    return (
+        <TabsContent style={{ overflowY: "auto" }} value={value}>
+            {children}
+        </TabsContent>
+    )
+}
+
 export function DialogInner({ industry }: { industry: IndustryComponent }): ReactNode {
     return <>
-        <TabsContent style={{ overflowY: "auto", }} value="summary">
+        <DialogPage value="summary">
             <ColonySummary industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="population">
+        </DialogPage>
+        <DialogPage value="population">
             <PopulationBreakdown industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="warehouse">
+        </DialogPage>
+        <DialogPage value="warehouse">
             <WarehouseBreakdown showPhysical industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="industry">
+        </DialogPage>
+        <DialogPage value="industry">
             <IndustryBreakdown industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="trade">
+        </DialogPage>
+        <DialogPage value="trade">
             <TradeBreakdown industry={industry} />
-        </TabsContent>
-        <TabsContent style={{ overflowY: "auto", }} value="migration">
+        </DialogPage>
+        <DialogPage value="migration">
             <MigrationBreakdown industry={industry} />
-        </TabsContent>
+        </DialogPage>
     </>
 }

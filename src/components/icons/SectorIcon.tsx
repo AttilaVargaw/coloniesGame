@@ -15,10 +15,8 @@ import {
     Recycle,
     Shield,
     ShipWheel,
-    Stone,
     Zap,
     UserGroupIcon,
-    GpuIcon,
     Ambulance,
     Fish,
     TreePine,
@@ -36,6 +34,7 @@ import { InfantryFightingVehicle } from "./InfantryFightingVehicle";
 import { FaOilCan } from "react-icons/fa6";
 import { GiGreekTemple, GiRifle } from "react-icons/gi";
 import { ComponentType } from "react";
+import { renderMappedIcon } from "./iconRender";
 
 const ICON_MAP = {
     automotive: Car,
@@ -77,10 +76,5 @@ const ICON_MAP = {
 console.log("sectorsN", Object.keys(ICON_MAP).length)
 
 export function SectorIcon({ name, className }: { name: keyof IndustrialSectors; className?: string }) {
-    const IconComponent = ICON_MAP[name]
-
-    if(!IconComponent) {
-        return name
-    }
-    return <IconComponent className={className} strokeWidth={1.5} size={16} />
+    return renderMappedIcon(ICON_MAP, name, className)
 }
