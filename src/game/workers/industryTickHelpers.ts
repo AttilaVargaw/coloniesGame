@@ -110,7 +110,7 @@ export function buySectorInputs(
             if(price === 0) {
                 toBuy = Math.min(demand, available);
             } else {
-                const canAfford = Math.floor(sectorMoney / price);
+                const canAfford = sectorMoney / price;
                 toBuy = Math.min(demand, available, canAfford);
             }
             if(toBuy <= 0) continue;
@@ -176,8 +176,6 @@ export function computeColonyGoodsDelta(
     colonyGoodsAfterPurchase: Goods,
     activeSectors: Iterable<keyof IndustrialSectors>,
     sectorResults: Record<string, { productionRatio: number; producedGoods: Record<string, number> }>,
-    replenishmentDelta: Record<string, number>,
-    // updatedSectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
 ): Partial<Goods> {
     const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
 
@@ -199,11 +197,6 @@ export function computeColonyGoodsDelta(
                 colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
             }
         }
-    }
-
-    // Merge capital replenishment into colony goods delta
-    for(const [goodKey, amount] of Object.entries(replenishmentDelta)) {
-        colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
     }
 
     return colonyGoodsDelta;

@@ -103,24 +103,37 @@ describe("allocatePopulationSales", () => {
         tourism: 300,
     };
 
-    const populationConsumption: Partial<Goods> = {
-        food: 150,  // demand for 150 food, total production is 200
-        water: 200, // demand for 200 water, total production is 100 (shortage)
+    const demandByPop: Record<string, Partial<Goods>> = {
+        worker: { food: 100, water: 100 },
+        clerks: { food: 50, water: 100 },
+    };
+
+    const cashByPop: Record<string, number> = {
+        worker: 10000,
+        clerks: 10000,
     };
 
     it("allocates revenue proportionally to production", () => {
         const result = allocatePopulationSales({
             sectorBids,
             sectorResults,
-            populationConsumption,
+            demandByPop,
+            cashByPop,
             prices,
         });
 
-        // Total food production = 200, demand = 150 → coverage = 0.75
-        // Each sector: 75 food * 10 = 750 food revenue
-        // Total water production = 100, demand = 200 → coverage = 1.0
-        // Each sector: 50 water * 5 = 250 water revenue
-        // Total per sector: 750 + 250 = 1000
+        // Food: worker buys 100, clerks buys 50, total 150 sold
+        //   sectorA share 50% → 75 food = 750 revenue
+        //   sectorB share 50% → 75 food = 750 revenue
+        // Water: worker buys 50, clerks buys 50, total 100 sold
+        //   sectorA share 50% → 25 water = 125 revenue
+        //   sectorB share 50% → 25 water = 125 revenue
+        // sectorA total: 750 + 125 = 875... NO. Per-group allocation:
+        //   worker food: sectorA gets (100/200)*100 = 50 food = 500 revenue
+        //   clerks food: sectorA gets (100/200)*50 = 25 food = 250 revenue
+        //   worker water: sectorA gets (50/100)*50 = 25 water = 125 revenue
+        //   clerks water: sectorA gets (50/100)*50 = 25 water = 125 revenue
+        //   sectorA total: 500 + 250 + 125 + 125 = 1000
         expect(result.sectorRevenue["sectorA"]).toBeCloseTo(1000, 0);
         expect(result.sectorRevenue["sectorB"]).toBeCloseTo(1000, 0);
     });
@@ -129,58 +142,89 @@ describe("allocatePopulationSales", () => {
         const result = allocatePopulationSales({
             sectorBids,
             sectorResults,
-            populationConsumption,
+            demandByPop,
+            cashByPop,
             prices,
         });
 
-        // Food: each sector produces 100, sells 75 → 25 unsold
+        // Food: sectorA produces 100, sells 75 total → unsold 25
         expect(result.unsoldQty["sectorA"]?.food).toBeCloseTo(25, 0);
         expect(result.unsoldQty["sectorB"]?.food).toBeCloseTo(25, 0);
 
-        // Water: each sector produces 50, sells 50 → 0 unsold
+        // Water: sectorA produces 50, sells 50 total → unsold 0
         expect(result.unsoldQty["sectorA"]?.water).toBeCloseTo(0, 0);
         expect(result.unsoldQty["sectorB"]?.water).toBeCloseTo(0, 0);
     });
 
-    it("tracks unmet demand", () => {
+    it("tracks unmet demand by population group", () => {
         const result = allocatePopulationSales({
             sectorBids,
             sectorResults,
-            populationConsumption,
+            demandByPop,
+            cashByPop,
             prices,
         });
 
-        // Water: demand = 200, production = 100 → 100 unmet
-        expect(result.unmetDemandQty?.water).toBeCloseTo(100, 0);
+        // Water: demand = 200, production = 100 → coverage = 0.5
+        // Worker unmet = 100 * 0.5 = 50, Clerk unmet = 100 * 0.5 = 50
+        expect(result.unmetDemandByPop.worker?.water).toBeCloseTo(50, 0);
+        expect(result.unmetDemandByPop.clerks?.water).toBeCloseTo(50, 0);
 
-        // Food: demand = 150, production = 200 → 0 unmet
-        expect(result.unmetDemandQty?.food).toBeUndefined();
+        // Food: demand = 150, production = 200 → all met
+        expect(result.unmetDemandByPop.worker?.food).toBeUndefined();
+        expect(result.unmetDemandByPop.clerks?.food).toBeUndefined();
+    });
+
+    it("limits purchases by available cash", () => {
+        const result = allocatePopulationSales({
+            sectorBids,
+            sectorResults,
+            demandByPop,
+            cashByPop: { worker: 100, clerks: 10000 } as any,
+            prices,
+        });
+
+        // Worker has only 100 cash. Food price = 10, water price = 5.
+        // Worker demands 100 food + 100 water = 1000 + 500 = 1500 desired spending
+        // Budget coverage = 100/1500 ≈ 0.0667
+        // Worker food: 100 * 0.75 * 0.0667 ≈ 5, cost = 50
+        // Worker water: 100 * 0.5 * 0.0667 ≈ 3.33, cost = 16.67
+        // Actually the budget constraint is applied through cash deduction per good.
+        // Let's just verify worker spending <= 100
+        expect(result.spendingByPop.worker).toBeLessThanOrEqual(100);
+        expect(result.spendingByPop.clerks).toBeGreaterThan(result.spendingByPop.worker);
     });
 
     it("handles zero production", () => {
         const result = allocatePopulationSales({
             sectorBids: [{ name: "empty" }],
             sectorResults: { empty: { producedGoods: {} } },
-            populationConsumption: { food: 100 },
+            demandByPop,
+            cashByPop,
             prices,
         });
 
         expect(result.sectorRevenue["empty"]).toBe(0);
-        expect(result.unmetDemandQty?.food).toBe(100);
+        // All demand unmet since no production and no stock
+        expect(result.unmetDemandByPop.worker?.food).toBeCloseTo(100, 0);
+        expect(result.unmetDemandByPop.worker?.water).toBeCloseTo(100, 0);
     });
 
     it("does not mutate inputs", () => {
-        const consumptionBefore = { ...populationConsumption };
+        const demandBefore = { ...demandByPop };
+        const cashBefore = { ...cashByPop };
         const resultsBefore = JSON.parse(JSON.stringify(sectorResults));
 
         allocatePopulationSales({
             sectorBids,
             sectorResults,
-            populationConsumption,
+            demandByPop,
+            cashByPop,
             prices,
         });
 
-        expect(populationConsumption).toEqual(consumptionBefore);
+        expect(demandByPop).toEqual(demandBefore);
+        expect(cashByPop).toEqual(cashBefore);
         expect(sectorResults).toEqual(resultsBefore);
     });
 });

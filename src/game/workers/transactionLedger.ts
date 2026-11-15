@@ -1,4 +1,5 @@
 import { Goods } from "../data/Goods.ts";
+import type { Population } from "../data/Population";
 
 export type TransactionType =
 	| "goods_purchase"
@@ -36,6 +37,22 @@ export class TransactionLedger {
 	private accountDeltas: Map<string, number> = new Map();
 
 	record(tx: EconomicTransaction) {
+		// Validate transaction record before accepting it
+		if(!Number.isFinite(tx.amount) || tx.amount < 0) {
+			throw new Error(`Invalid transaction amount: ${tx.amount}`);
+		}
+		if(tx.quantity !== undefined && (!Number.isFinite(tx.quantity) || tx.quantity < 0)) {
+			throw new Error(`Invalid transaction quantity: ${tx.quantity}`);
+		}
+		if(tx.unitPrice !== undefined && (!Number.isFinite(tx.unitPrice) || tx.unitPrice < 0)) {
+			throw new Error(`Invalid transaction unit price: ${tx.unitPrice}`);
+		}
+
+		// Internal transfers require both buyer and seller
+		if((tx.buyerId !== undefined) !== (tx.sellerId !== undefined)) {
+			throw new Error(`Transaction ${tx.type} has incomplete buyer/seller pair`);
+		}
+
 		this.transactions.push(tx);
 
 		// For internal transfers (buyer + seller both present),
@@ -100,39 +117,56 @@ export class TransactionLedger {
  * stock passed in (e.g. colony warehouse inventory). Zero-priced goods are
  * still physically sold; they simply produce zero revenue.
  *
+ * Household purchases are constrained per population group by available cash.
+ * Each group's purchases never exceed that group's remaining cash, deducted
+ * as goods are allocated across all demanded goods.
+ *
  * Returns:
- * - sectorRevenue: revenue per sector from population sales (zero-priced sales yield zero revenue)
+ * - spendingByPop: total money spent by each population group
+ * - purchasesByPop: actual quantity purchased by each group, by good
+ * - sectorRevenue: revenue per sector from population sales
  * - salesQty: actual quantity sold per sector per good (from sector production)
- * - warehouseSalesQty: quantity sold from available-for-sale stock (not attributed to any sector)
+ * - warehouseSalesQty: quantity sold from available-for-sale stock
+ * - warehouseRevenue: revenue from warehouse stock sales (credited to treasury)
+ * - unmetDemandByPop: demand not met by each population group, by good
  * - unsoldQty: unsold production per sector per good
- * - unmetDemandQty: population demand not met by any source
+ * - totalSpending: total household money spent
  */
 export function allocatePopulationSales({
 	sectorBids,
 	sectorResults,
-	populationConsumption,
+	demandByPop,
+	cashByPop,
 	prices,
 	availableStock = {} as Partial<Record<keyof Goods, number>>,
 }: {
 	sectorBids: { name: string }[];
 	sectorResults: Record<string, { producedGoods: Record<string, number> }>;
-	populationConsumption: Partial<Goods>;
+	demandByPop: Record<keyof Population, Partial<Goods>>;
+	cashByPop: Record<keyof Population, number>;
 	prices: Record<keyof Goods, number>;
 	availableStock?: Partial<Record<keyof Goods, number>>;
 }): {
+	spendingByPop: Record<keyof Population, number>;
+	purchasesByPop: Record<keyof Population, Partial<Record<keyof Goods, number>>>;
 	sectorRevenue: Record<string, number>;
 	salesQty: Record<string, Partial<Record<keyof Goods, number>>>;
 	warehouseSalesQty: Partial<Record<keyof Goods, number>>;
 	warehouseRevenue: number;
+	unmetDemandByPop: Record<keyof Population, Partial<Record<keyof Goods, number>>>;
 	unsoldQty: Record<string, Partial<Record<keyof Goods, number>>>;
-	unmetDemandQty: Partial<Record<keyof Goods, number>>;
+	totalSpending: number;
 } {
 	const sectorRevenue: Record<string, number> = {};
 	const salesQty: Record<string, Partial<Record<keyof Goods, number>>> = {};
 	const warehouseSalesQty: Partial<Record<keyof Goods, number>> = {};
 	let warehouseRevenue = 0;
 	const unsoldQty: Record<string, Partial<Record<keyof Goods, number>>> = {};
-	const unmetDemandQty: Partial<Record<keyof Goods, number>> = {};
+	const spendingByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+	const purchasesByPop: Record<keyof Population, Partial<Record<keyof Goods, number>>> = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
+	const unmetDemandByPop: Record<keyof Population, Partial<Record<keyof Goods, number>>> = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>;
+
+	const popKeys = Object.keys(demandByPop) as (keyof Population)[];
 
 	// Initialize per-sector tracking
 	for(const bid of sectorBids) {
@@ -141,14 +175,41 @@ export function allocatePopulationSales({
 		unsoldQty[bid.name] = {};
 	}
 
-	// For each good, allocate population demand to sectors and available stock proportionally
-	for(const [goodKey, demandQty] of Object.entries(populationConsumption)) {
-		if(!demandQty || demandQty <= 0) continue;
-		const gKey = goodKey as keyof Goods;
-		const price = prices[gKey] ?? 0;
-		if(!Number.isFinite(price) || price < 0) {
-			throw new Error(`Invalid price for ${gKey}: ${price}`);
+	// Initialize per-population tracking
+	for(const key of popKeys) {
+		spendingByPop[key] = 0;
+		purchasesByPop[key] = {};
+		unmetDemandByPop[key] = {};
+	}
+
+	// Remaining cash per group, deducted as purchases are made
+	const remainingCash: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+	for(const key of popKeys) {
+		remainingCash[key] = Math.max(0, cashByPop[key] ?? 0);
+	}
+
+	// Collect all goods that have demand
+	const demandedGoods = new Set<keyof Goods>();
+	for(const key of popKeys) {
+		for(const goodKey of Object.keys(demandByPop[key])) {
+			demandedGoods.add(goodKey as keyof Goods);
 		}
+	}
+
+	// For each good, allocate supply to population groups proportionally to demand,
+	// limited by each group's remaining cash
+	for(const goodKey of demandedGoods) {
+		const price = prices[goodKey] ?? 0;
+		if(!Number.isFinite(price) || price < 0) {
+			throw new Error(`Invalid price for ${goodKey}: ${price}`);
+		}
+
+		// Total demand across all population groups for this good
+		let totalDemand = 0;
+		for(const key of popKeys) {
+			totalDemand += (demandByPop[key][goodKey] ?? 0);
+		}
+		if(totalDemand <= 0) continue;
 
 		// Collect production per sector for this good
 		const sectorProduction: { sectorName: string; qty: number }[] = [];
@@ -157,49 +218,116 @@ export function allocatePopulationSales({
 		for(const bid of sectorBids) {
 			const result = sectorResults[bid.name];
 			if(!result) continue;
-			const produced = result.producedGoods[gKey] ?? 0;
+			const produced = result.producedGoods[goodKey] ?? 0;
 			if(produced > 0) {
 				sectorProduction.push({ sectorName: bid.name, qty: produced });
 				totalProduction += produced;
 			}
 		}
 
-		const stockAvailable = availableStock[gKey] ?? 0;
+		const stockAvailable = availableStock[goodKey] ?? 0;
 		const totalSupply = totalProduction + stockAvailable;
 
 		if(totalSupply <= 0) {
 			// No supply → all demand is unmet
-			unmetDemandQty[gKey] = (unmetDemandQty[gKey] ?? 0) + demandQty;
+			for(const key of popKeys) {
+				const d = demandByPop[key][goodKey] ?? 0;
+				if(d > 0) {
+					unmetDemandByPop[key][goodKey] = d;
+				}
+			}
 			continue;
 		}
 
-		// Proportional allocation: each source sells its share of demand, scaled by coverage
-		// coverage = min(1, demand / totalSupply)
-		// When demand <= totalSupply: coverage = demand/totalSupply < 1, all demand met
-		// When demand > totalSupply: coverage = 1, all supply sold, remainder unmet
-		const demandCoverage = Math.min(1, demandQty / totalSupply);
+		// Proportional coverage: fraction of demand that can be physically met
+		const coverage = Math.min(1, totalSupply / totalDemand);
 
+		// Each group's desired quantity after physical coverage, and affordable quantity after cash
+		const groupRequests: { key: keyof Population; desired: number; affordable: number }[] = [];
+		let totalRequested = 0;
+
+		for(const key of popKeys) {
+			const demand = demandByPop[key][goodKey] ?? 0;
+			if(demand <= 0) continue;
+			const desiredQty = demand * coverage;
+			let affordableQty: number;
+			if(price <= 0) {
+				// Free goods: limited by stock only
+				affordableQty = desiredQty;
+			} else {
+				affordableQty = remainingCash[key] / price;
+			}
+			const requestQty = Math.min(desiredQty, affordableQty);
+			if(requestQty > 0) {
+				groupRequests.push({ key, desired: desiredQty, affordable: affordableQty });
+				totalRequested += requestQty;
+			}
+		}
+
+		if(totalRequested <= 0) continue;
+
+		// If total requests exceed physical supply, scale down proportionally
+		let supplyScale = 1;
+		if(totalRequested > totalSupply) {
+			supplyScale = totalSupply / totalRequested;
+		}
+
+		// Allocate to each group
+		for(const { key, desired } of groupRequests) {
+			let allocatedQty = desired * supplyScale;
+			const unitPrice = prices[goodKey] ?? 0;
+
+			// Re-check affordability after supply scaling
+			if(unitPrice > 0) {
+				allocatedQty = Math.min(allocatedQty, remainingCash[key] / unitPrice);
+			}
+			if(allocatedQty <= 0) continue;
+
+			const cost = allocatedQty * unitPrice;
+			remainingCash[key] -= cost;
+			spendingByPop[key] = (spendingByPop[key] ?? 0) + cost;
+
+			purchasesByPop[key] = { ...(purchasesByPop[key] ?? {}), [goodKey]: allocatedQty };
+
+			// Split allocation between sector production and warehouse stock
+			const sectorShare = totalProduction > 0 ? totalProduction / totalSupply : 0;
+			const sectorQty = allocatedQty * sectorShare;
+			const warehouseQty = allocatedQty - sectorQty;
+
+			if(sectorQty > 0) {
+				// Allocate sectorQty proportionally among producing sectors
+				for(const { sectorName, qty: production } of sectorProduction) {
+					const sectorPortion = (production / totalProduction) * sectorQty;
+					salesQty[sectorName][goodKey] = (salesQty[sectorName][goodKey] ?? 0) + sectorPortion;
+					sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + sectorPortion * price;
+				}
+			}
+
+			if(warehouseQty > 0) {
+				warehouseSalesQty[goodKey] = (warehouseSalesQty[goodKey] ?? 0) + warehouseQty;
+				warehouseRevenue += warehouseQty * price;
+			}
+
+            // Track unmet demand for this group
+            const groupDemand = demandByPop[key][goodKey] ?? 0;
+            const unmet = groupDemand - allocatedQty;
+			if(unmet > 0) {
+				unmetDemandByPop[key][goodKey] = unmet;
+			}
+		}
+
+		// Compute unsold per sector after all groups have allocated for this good
 		for(const { sectorName, qty: production } of sectorProduction) {
-			const soldQty = production * demandCoverage;
-			const revenue = soldQty * price;
-
-			sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
-			salesQty[sectorName][gKey] = (salesQty[sectorName][gKey] ?? 0) + soldQty;
-			unsoldQty[sectorName][gKey] = (unsoldQty[sectorName][gKey] ?? 0) + (production - soldQty);
-		}
-
-		// Sell from available stock (colony warehouse inventory, not attributed to any sector)
-		const warehouseSold = stockAvailable * demandCoverage;
-		if(warehouseSold > 0) {
-			warehouseSalesQty[gKey] = (warehouseSalesQty[gKey] ?? 0) + warehouseSold;
-			warehouseRevenue += warehouseSold * price;
-		}
-
-		// Track unmet demand (if demand > total supply)
-		if(demandQty > totalSupply) {
-			unmetDemandQty[gKey] = (unmetDemandQty[gKey] ?? 0) + (demandQty - totalSupply);
+			const totalSold = salesQty[sectorName][goodKey] ?? 0;
+			unsoldQty[sectorName][goodKey] = Math.max(0, production - totalSold);
 		}
 	}
 
-	return { sectorRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unsoldQty, unmetDemandQty };
+	// Calculate total actual spending
+	let totalSpending = 0;
+	for(const key of popKeys) {
+		totalSpending += spendingByPop[key] ?? 0;
+	}
+
+	return { spendingByPop, purchasesByPop, sectorRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandByPop, unsoldQty, totalSpending };
 }

@@ -52,7 +52,7 @@ export class ReplenishLosses extends Action<CapitalBlackboard> {
                 // Free goods: limited by stock only
                 actualAmount = Math.min(amount, stockAvailable);
             } else {
-                const maxByMoney = Math.floor(moneyAvailable / price);
+                const maxByMoney = moneyAvailable / price;
                 actualAmount = Math.min(amount, stockAvailable, maxByMoney);
             }
             if(actualAmount <= 0) continue;
@@ -87,7 +87,7 @@ export class InvestCapital extends Action<CapitalBlackboard> {
         if(price <= 0) {
             maxAffordable = stockAvailable;
         } else {
-            maxAffordable = Math.floor(moneyAvailable / price);
+            maxAffordable = moneyAvailable / price;
         }
         const actualBuy = Math.min(toBuy, stockAvailable, maxAffordable);
         if(actualBuy <= 0) return "FAILURE";

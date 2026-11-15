@@ -61,9 +61,8 @@ describe("colony goods pool changes", () => {
                 goods,
                 [],
                 {},
-                {},
-                
             )
+
             expect(Object.values(delta).every((v) => v === 0)).toBe(true)
         })
 
@@ -80,8 +79,6 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 [],
                 {},
-                {},
-                
             )
 
             expect(delta.oil).toBe(-300)
@@ -97,8 +94,6 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
-                {},
-                
             )
 
             expect(delta.energy).toBe(400_000)
@@ -116,8 +111,6 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000 }) },
-                {},
-                
             )
 
             expect(delta.oil).toBe(-300)
@@ -133,14 +126,12 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 ["powerPlant"],
                 { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: 0 } },
-                {},
-                
             )
 
             expect(delta.energy).toBe(0)
         })
 
-        it("merges replenishment delta into colony goods delta", () => {
+        it("does not include capital replenishment in physical goods delta", () => {
             const goods = createEmptyWarehouse()
             const afterPurchase = { ...goods }
 
@@ -149,11 +140,9 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 [],
                 {},
-                { machinery: 50 },
-                
             )
 
-            expect(delta.machinery).toBe(50)
+            expect(delta.machinery).toBe(0)
         })
     })
 
@@ -227,8 +216,6 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
-                {},
-                
             )
 
             // oil: -300 (bought), electricity: +400000 (produced), waste: +10 (produced)
@@ -258,8 +245,6 @@ describe("colony goods pool changes", () => {
                 afterPurchase,
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000 }) },
-                {},
-                
             )
 
             expect(delta.oil).toBe(-100)

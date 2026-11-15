@@ -1,5 +1,5 @@
 import { basePrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods.ts";
-import { Population } from "../data/Population.ts";
+import { Population, PopulationBreakdown } from "../data/Population.ts";
 import { createEmptyWarehouse } from "../factories/createStarterWarehouse.ts";
 import { industrySectorBlueprints } from "../systems/sectorBlueprints.ts";
 import type { IndustrialSectors } from "../components/Factories.ts";
@@ -125,7 +125,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
-	const { populationConsumption, populationUpdates } = computePopulationConsumption(
+	const { desiredConsumptionByPop, populationUpdates } = computePopulationConsumption(
 		population,
 		adjustedSalaries,
 		prices
@@ -367,25 +367,36 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		sumGoodsProduction,
 	} = execResult!;
 
+	// Compute actual wages paid to each population category from sector employment
+	const wagesByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+	for(const bid of sectorBids) {
+		const result = sectorResults[bid.name];
+		if(!result) continue;
+		for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
+			const key = popType as keyof Population;
+			wagesByPop[key] = (wagesByPop[key] ?? 0) + (employed ?? 0) * (adjustedSalaries[key] ?? 0);
+		}
+	}
+
+	// Each group's available cash = starting wealth + wages earned this tick
+	const cashByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+	for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+		cashByPop[key] = (pop.wealth ?? 0) + (wagesByPop[key] ?? 0);
+	}
+
 	for(const key of ["stayAtHome"] as const) {
 		workingWorkers[key] = { ...workingWorkers[key], number: population[key].number };
 		remainingWorkers[key] = { ...remainingWorkers[key], number: 0 };
 	}
 
-	// Sector money: revenue minus labor costs
-	for(const bid of sectorBids) {
-		const sectorName = bid.name as keyof typeof startingMoney;
-		const revenue = sectorRevenue[sectorName] ?? 0;
-		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
-	}
-
 	// Allocate population spending based on actual sales
-	const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue } =
+	// Constrain per population group by available cash: starting wealth + wages
+	const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandByPop, spendingByPop } =
 		allocatePopulationSales({
 			sectorBids,
 			sectorResults,
-			populationConsumption,
+			demandByPop: desiredConsumptionByPop,
+			cashByPop,
 			prices: currentPrices,
 			availableStock: currentGoods,
 		});
@@ -403,20 +414,54 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			(fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
 	}
 
+	// Aggregate per-group unmet demand into goods-level shortfall
+	const unmetDemandQty: Partial<Goods> = {};
+	for(const key of Object.keys(unmetDemandByPop) as (keyof Population)[]) {
+		for(const [goodKey, qty] of Object.entries(unmetDemandByPop[key] ?? {})) {
+			unmetDemandQty[goodKey as keyof Goods] =
+				(unmetDemandQty[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+		}
+	}
+
 	// Credit treasury with warehouse sales revenue
 	newTreasury += warehouseRevenue;
 
 	// Household money settlement: wages in, spending out
 	const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
-	const totalActualSpending = Object.entries(fulfilledDemandQty).reduce((sum, [goodKey, qty]) => {
-		return sum + (qty ?? 0) * (currentPrices[goodKey as keyof Goods] ?? 0);
-	}, 0);
 
-	// Credit household money with wages (labor costs already deducted from sectors above)
-	newHouseholdMoney += totalLaborCosts;
+	// Wage reconciliation: calculated wages from employment must equal sector labor costs
+	const calculatedWageBill = Object.values(wagesByPop).reduce((sum, v) => sum + v, 0);
+	if(Math.abs(calculatedWageBill - totalLaborCosts) > 1e-6) {
+		console.error(`[IndustryTick] Wage bill mismatch for ${entityId}: calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`);
+	}
 
-	// Debit household money for actual spending
-	newHouseholdMoney -= totalActualSpending;
+	// Deduct labor costs from sector money
+	for(const name of activeSectors) {
+		newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
+	}
+
+	// Update population wealth based on actual income and spending (full cash balance, no smoothing)
+	for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+		const k = key as keyof Population;
+		const actualIncome = wagesByPop[k] ?? 0;
+		const actualSpending = spendingByPop[k] ?? 0;
+		const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
+
+		if(populationUpdates[k]) {
+			populationUpdates[k] = {
+				...populationUpdates[k],
+				wealth: Math.max(0, targetWealth),
+			};
+		}
+	}
+
+	// Derive aggregate household money from population wealth (authoritative source)
+	newHouseholdMoney = 0;
+	for(const [, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
+		if(update && update.wealth !== undefined) {
+			newHouseholdMoney += update.wealth;
+		}
+	}
 
 	// Reset sector revenue to actual-sales-only authority
 	for(const name of activeSectors) {
@@ -449,6 +494,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
 	}
 
+	// Clamp sector money at 0 — sectors cannot go into infinite debt in simulation
+	for(const name of activeSectors) {
+		newMoney[name] = Math.max(0, newMoney[name] ?? 0);
+	}
+
 	// remainingGoods is the authoritative inventory after capital purchases
 	const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
 
@@ -457,7 +507,6 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		postCapitalGoods,
 		activeSectors,
 		sectorResults,
-		replenishmentDelta,
 	);
 
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
@@ -482,17 +531,25 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	for(const [key, update] of Object.entries(populationUpdates)) {
 		const pop = updatedPopulation[key as keyof Population];
 		if(!pop) continue;
-		if(update.number !== undefined) {
-			updatedPopulation[key as keyof Population] = {
-				...pop,
-				number: update.number,
-			};
-		}
+		updatedPopulation[key as keyof Population] = {
+			...pop,
+			...(update.number !== undefined ? { number: update.number } : {}),
+			...(update.wealth !== undefined ? { wealth: update.wealth } : {}),
+		};
 	}
 
 	const result: IndustryTickResult = {
 		entityId,
-		goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption, ...negateReplenishmentDelta(replenishmentDelta) },
+		goodsRequirements: {
+			...sumGoodsRequirements,
+			...Object.entries(desiredConsumptionByPop).reduce((acc, [_, consumption]) => {
+				for(const [good, qty] of Object.entries(consumption)) {
+					acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
+				}
+				return acc;
+			}, {} as Partial<Goods>),
+			...negateReplenishmentDelta(replenishmentDelta),
+		},
 		goodsProduction: sumGoodsProduction,
 		workingWorkers: workingWorkers as Population,
 		freeWorkers: remainingWorkers,

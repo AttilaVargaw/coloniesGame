@@ -417,21 +417,32 @@ function processIndustry(
         sectorProfits[sectorName] = -(actualInputCost + laborCosts);
     }
 
-    // Sector money: input costs already deducted in buySectorInputs.
-    // Deduct labor costs (wages paid) only. Revenue comes from population sales below.
+    // PHASE 4: Allocate population spending based on actual sales (not production share)
+    // Constrain per population group by available cash: starting wealth + wages
+
+    // Compute actual wages paid to each population category from sector employment
+    const wagesByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
     for(const bid of finalSectorBids) {
-        const sectorName = bid.name as keyof IndustrialSectors;
-        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        newMoney[sectorName] = (newMoney[sectorName] ?? 0) - laborCosts;
+        const result = sectorResults[bid.name];
+        if(!result) continue;
+        for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
+            const key = popType as keyof Population;
+            wagesByPop[key] = (wagesByPop[key] ?? 0) + (employed ?? 0) * (finalSalaries[key] ?? 0);
+        }
     }
 
-    // PHASE 4: Allocate population spending based on actual sales (not production share)
-    // availableStock = colony warehouse goods remaining after sector purchases
-    const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandQty } =
+    // Each group's available cash = starting wealth + wages earned this tick
+    const cashByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        cashByPop[key] = (pop.wealth ?? 0) + (wagesByPop[key] ?? 0);
+    }
+
+    const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandByPop, spendingByPop } =
         allocatePopulationSales({
             sectorBids: finalSectorBids,
             sectorResults,
-            populationConsumption,
+            demandByPop: desiredConsumptionByPop,
+            cashByPop,
             prices: prices,
             availableStock: currentGoods,
         });
@@ -449,6 +460,15 @@ function processIndustry(
             (fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
     }
 
+    // Aggregate per-group unmet demand into goods-level shortfall for deprivation
+    const unmetDemandQty: Partial<Goods> = {};
+    for(const key of Object.keys(unmetDemandByPop) as (keyof Population)[]) {
+        for(const [goodKey, qty] of Object.entries(unmetDemandByPop[key] ?? {})) {
+            unmetDemandQty[goodKey as keyof Goods] =
+                (unmetDemandQty[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+        }
+    }
+
     // Deduct household warehouse purchases from goods available to capital
     // (reservation order: households first, then capital)
     const goodsForCapital: Goods = { ...currentGoods };
@@ -461,77 +481,43 @@ function processIndustry(
     newTreasury += totalSectorInputCosts;
 
     // PHASE 3.B: Settle household finances — actual wages and spending
-    const wealthSmoothing = 0.5;
+    // Wealth is a cash balance (no smoothing): full income minus actual spending
 
-    // Compute actual wages paid to each population category from sector employment
-    const wagesByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-    for(const bid of finalSectorBids) {
-        const result = sectorResults[bid.name];
-        if(!result) continue;
-        for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
-            const key = popType as keyof Population;
-            wagesByPop[key] = (wagesByPop[key] ?? 0) + (employed ?? 0) * (finalSalaries[key] ?? 0);
-        }
+    // Wage reconciliation: calculated wages from employment must equal sector labor costs
+    const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
+    const calculatedWageBill = Object.values(wagesByPop).reduce((sum, v) => sum + v, 0);
+    if(Math.abs(calculatedWageBill - totalLaborCosts) > 1e-6) {
+        console.error(`[IndustryTick] Wage bill mismatch for ${entityId}: calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`);
+        return null;
     }
 
-    // Compute total actual household spending from fulfilled demand
-    const totalActualSpending = Object.entries(fulfilledDemandQty).reduce((sum, [goodKey, qty]) => {
-        return sum + (qty ?? 0) * (prices[goodKey as keyof Goods] ?? 0);
-    }, 0);
-
-    // Distribute actual spending proportionally to each pop's desired consumption value
-    const desiredConsumptionValueByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-    let totalDesiredConsumptionValue = 0;
-    for(const [popType, consumption] of Object.entries(desiredConsumptionByPop)) {
-        const key = popType as keyof Population;
-        let value = 0;
-        for(const [goodKey, qty] of Object.entries(consumption)) {
-            value += (qty ?? 0) * (prices[goodKey as keyof Goods] ?? 0);
-        }
-        desiredConsumptionValueByPop[key] = value;
-        totalDesiredConsumptionValue += value;
+    // Deduct labor costs from sector money, credit household wealth
+    for(const name of activeSectors) {
+        newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
     }
 
-    const actualSpendingByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-    const popKeys = Object.keys(desiredConsumptionByPop) as (keyof Population)[];
-    for(const key of popKeys) {
-        const share = totalDesiredConsumptionValue > 0
-            ? desiredConsumptionValueByPop[key] / totalDesiredConsumptionValue
-            : 1 / Math.max(popKeys.length, 1);
-        actualSpendingByPop[key] = totalActualSpending * share;
-    }
-
-    // Update population wealth based on actual income and spending
+    // Update population wealth based on actual income and spending (full cash balance, no smoothing)
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
         const k = key as keyof Population;
         const actualIncome = wagesByPop[k] ?? 0;
-        const actualSpending = actualSpendingByPop[k] ?? 0;
-        const targetWealth = pop.wealth + actualIncome - actualSpending;
-        const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;
+        const actualSpending = spendingByPop[k] ?? 0;
+        const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
 
         if(populationUpdates[k]) {
             populationUpdates[k] = {
                 ...populationUpdates[k],
-                wealth: Math.max(0, smoothedWealth),
+                wealth: Math.max(0, targetWealth),
             };
         }
     }
 
-    // PHASE 3.C: Household money settlement — wages in, spending out
-    const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
-
-    // Wage reconciliation: wages paid to households must equal sector labor costs
-    // Use the actual labor costs from sector execution as the authoritative source
-    const actualWageBill = totalLaborCosts;
-
-    // Deduct labor costs from sector money, credit household money
-    for(const name of activeSectors) {
-        newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
+    // Derive aggregate household money from population wealth (authoritative source)
+    newHouseholdMoney = 0;
+    for(const [, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
+        if(update && update.wealth !== undefined) {
+            newHouseholdMoney += update.wealth;
+        }
     }
-    newHouseholdMoney += actualWageBill;
-
-    // Deduct household spending from household money
-    newHouseholdMoney -= totalActualSpending;
 
     // Credit treasury with warehouse sales revenue
     newTreasury += warehouseRevenue;
@@ -642,8 +628,6 @@ function processIndustry(
         postCapitalGoods,
         activeSectors,
         sectorResults,
-        {} as Record<string, number>,
-        // replenishmentDelta already reflected in postCapitalGoods; do not double-count
     );
 
     // Apply colony goods changes
@@ -741,7 +725,8 @@ function processIndustry(
 
     const conservation = ledger.verifyConservation(openingBalances, closingBalances);
     if(!conservation.valid) {
-        console.error(`[IndustryTick] Money conservation violated: error=${conservation.error}`, conservation.accountErrors);
+        console.error(`[IndustryTick] Money conservation violated for ${entityId}: error=${conservation.error}`, conservation.accountErrors);
+        return null;
     }
 
     const result: IndustryTickResult = {
@@ -772,6 +757,12 @@ function processIndustry(
         unmetDemand: unmetDemandQty,
         deprivation,
     };
+
+    // Phase 5.6: Validate all committed state before building patch
+    if(!validateTickResult(result)) {
+        console.error(`[IndustryTick] Invalid committed state for ${entityId}, rejecting tick`);
+        return null;
+    }
 
     const patch = buildPatch(last, result);
 
@@ -864,6 +855,76 @@ function finalizeGoods(
     }
 
     return finalGoods;
+}
+
+function validateTickResult(result: IndustryTickResult): boolean {
+    // Validate goods are finite and nonnegative
+    for(const [key, value] of Object.entries(result.goods)) {
+        if(!Number.isFinite(value) || value < 0) {
+            console.error(`[IndustryTick] Invalid goods value for ${result.entityId}.${key}: ${value}`);
+            return false;
+        }
+    }
+    for(const [key, value] of Object.entries(result.goodsRequirements)) {
+        if(!Number.isFinite(value) || value < 0) {
+            console.error(`[IndustryTick] Invalid goodsRequirements value for ${result.entityId}.${key}: ${value}`);
+            return false;
+        }
+    }
+    for(const [key, value] of Object.entries(result.goodsProduction)) {
+        if(!Number.isFinite(value) || value < 0) {
+            console.error(`[IndustryTick] Invalid goodsProduction value for ${result.entityId}.${key}: ${value}`);
+            return false;
+        }
+    }
+
+    // Validate money balances are finite and nonnegative
+    for(const [name, value] of Object.entries(result.money)) {
+        if(!Number.isFinite(value) || value < 0) {
+            console.error(`[IndustryTick] Invalid money value for ${result.entityId}.${name}: ${value}`);
+            return false;
+        }
+    }
+    if(!Number.isFinite(result.colonyTreasury) || result.colonyTreasury < 0) {
+        console.error(`[IndustryTick] Invalid colonyTreasury for ${result.entityId}: ${result.colonyTreasury}`);
+        return false;
+    }
+    if(!Number.isFinite(result.householdMoney) || result.householdMoney < 0) {
+        console.error(`[IndustryTick] Invalid householdMoney for ${result.entityId}: ${result.householdMoney}`);
+        return false;
+    }
+
+    // Validate capital stocks are finite and nonnegative
+    for(const [sectorName, stock] of Object.entries(result.capitalStock)) {
+        for(const [key, value] of Object.entries(stock)) {
+            if(!Number.isFinite(value) || value < 0) {
+                console.error(`[IndustryTick] Invalid capital stock for ${result.entityId}.${sectorName}.${key}: ${value}`);
+                return false;
+            }
+        }
+    }
+
+    // Validate population counts are finite and nonnegative
+    for(const [key, pop] of Object.entries(result.population)) {
+        if(!Number.isFinite(pop.number) || pop.number < 0) {
+            console.error(`[IndustryTick] Invalid population number for ${result.entityId}.${key}: ${pop.number}`);
+            return false;
+        }
+        if(!Number.isFinite(pop.wealth) || pop.wealth < 0) {
+            console.error(`[IndustryTick] Invalid population wealth for ${result.entityId}.${key}: ${pop.wealth}`);
+            return false;
+        }
+    }
+
+    // Validate prices are finite and nonnegative (wages)
+    for(const [key, value] of Object.entries(result.wages)) {
+        if(!Number.isFinite(value) || value < 0) {
+            console.error(`[IndustryTick] Invalid wage value for ${result.entityId}.${key}: ${value}`);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickResult): IndustryTickPatch | null {
