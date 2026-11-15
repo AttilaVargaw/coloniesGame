@@ -43,7 +43,8 @@ export function executeSectors(
     // inputSectorGoods: Record<keyof IndustrialSectors, Goods>,
     colonyGoods: Goods,
     prices: Record<keyof Goods, number>,
-    salaries: Record<keyof Population, number>
+    salaries: Record<keyof Population, number>,
+    laborAllocations?: Record<string, Partial<Record<keyof Population, number>>>,
 ): SectorExecutionResult {
     const sumGoodsRequirements = { ...EMPTY_WAREHOUSE };
     const sumGoodsProduction = { ...EMPTY_WAREHOUSE };
@@ -123,15 +124,24 @@ export function executeSectors(
         }
 
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
+        const sectorLaborAllocation = laborAllocations?.[bid.name];
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            const available = remainingWorkers[key as keyof Population].number;
             const demanded = value * actualScale;
-            const employed = Math.min(demanded, Math.max(0, available));
+            let employed: number;
+            if(sectorLaborAllocation) {
+                // Use pre-allocated labor (order-independent)
+                const alloc = sectorLaborAllocation[key as keyof Population] ?? 0;
+                employed = Math.min(demanded, Math.max(0, alloc));
+            } else {
+                // Sequential depletion (original behavior)
+                const available = remainingWorkers[key as keyof Population].number;
+                employed = Math.min(demanded, Math.max(0, available));
+                remainingWorkers[key as keyof Population] = {
+                    ...remainingWorkers[key as keyof Population],
+                    number: available - employed,
+                };
+            }
             workersEmployed[key as keyof Population] = employed;
-            remainingWorkers[key as keyof Population] = {
-                ...remainingWorkers[key as keyof Population],
-                number: available - employed,
-            };
             workingWorkers[key as keyof Population] = {
                 ...workingWorkers[key as keyof Population],
                 number: workingWorkers[key as keyof Population].number + employed,

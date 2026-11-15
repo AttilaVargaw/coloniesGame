@@ -14,6 +14,14 @@ function scaleMap(obj: Record<string, number>, factor: number): Record<string, n
     return result;
 }
 
+// Capital productivity: diminishing returns on capital adequacy.
+// capitalRatio is kept uncapped; capitalMultiplier applies diminishing returns.
+export const CAPITAL_ELASTICITY = 0.5;
+
+function capitalMultiplierFromRatio(capitalRatio: number): number {
+    return Math.pow(Math.max(capitalRatio, 0), CAPITAL_ELASTICITY);
+}
+
 function mergeMethodOverrides<T extends { goodsRequirements?: Record<string, number>; workerRequirement?: Record<string, number>, goodsProduction?: Record<string, number>, capitalGoods?: Record<string, number> }>(base: any, method: ProductionMethod | undefined): T {
     if(!method) return base;
     const out: T = { ...base };
@@ -152,8 +160,9 @@ export function buildSectorBid(
     }
 
     const capitalAdjustedWorkerDemand: Record<string, number> = {};
+    const capitalMult = capitalMultiplierFromRatio(capitalRatio);
     for(const [key, value] of Object.entries(scaledWorkerDemand)) {
-        capitalAdjustedWorkerDemand[key] = value * capitalRatio;
+        capitalAdjustedWorkerDemand[key] = value * capitalMult;
     }
 
     return {
@@ -164,8 +173,8 @@ export function buildSectorBid(
         inputCost,
         laborCost,
         idealWorkerDemand: capitalAdjustedWorkerDemand,
-        idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel * capitalRatio),
-        idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel),
+        idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel * capitalMult),
+        idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel * capitalMult),
         outputLevel,
         inputLevel,
     };

@@ -89,16 +89,19 @@ export function buySectorInputs(
     goods: Goods,
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
+    goodsAllocations?: Record<string, Partial<Record<keyof Goods, number>>>,
 ): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number> } {
     const colonyGoodsAfterPurchase = { ...goods };
     for(const bid of sectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
         let sectorMoney = newMoney[sectorName] ?? 0;
+        const allocation = goodsAllocations?.[sectorName];
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
 
-            const demand = demandPerTick * bid.actualScale;
+            const idealDemand = demandPerTick * bid.actualScale;
+            const demand = allocation ? Math.min(idealDemand, allocation[goodKey as keyof Goods] ?? 0) : idealDemand;
             const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
             const price = prices[goodKey as keyof Goods] ?? 0;
             if(available <= 0 || price <= 0) continue;

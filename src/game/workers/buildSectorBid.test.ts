@@ -44,49 +44,51 @@ function makeBid(sectorKey: string, capitalStock: Record<string, number>, money 
 describe("buildSectorBid capital adequacy scaling", () => {
     it("scales goods demand by capital adequacy when capital is abundant", () => {
         // powerPlant: capitalGoods = { machinery: 0.5, buildings: 0.1 }
-        // With stock { machinery: 5, electronics: 1, buildings: 1 }:
-        //   capitalRatio = min(5/0.5, 1/0.1, 1/0.1) = min(10, 10, 10) = 10
-        //   oil demand = 140 * 1 * 10 = 1400
+        // With stock { machinery: 5, buildings: 1 }:
+        //   capitalRatio = min(5/0.5, 1/0.1) = min(10, 10) = 10
+        //   capitalMultiplier = 10^0.5 ≈ 3.1623
+        //   oil demand = 140 * 3.1623 ≈ 442.72
         const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 })
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.oil).toBe(1400)
+        expect(bid!.idealGoodsDemand.oil).toBeCloseTo(442.72, 2)
     })
 
     it("limits goods demand when capital stock is scarce", () => {
-        // powerPlant with stock { machinery: 0.1, electronics: 0.01, buildings: 0.01 }:
-        //   capitalRatio = min(0.1/0.5, 0.01/0.1, 0.01/0.1) = min(0.2, 0.1, 0.1) = 0.1
-        //   oil demand = 140 * 1 * 0.1 = 14
+        // powerPlant with stock { machinery: 0.1, buildings: 0.01 }:
+        //   capitalRatio = min(0.1/0.5, 0.01/0.1) = min(0.2, 0.1) = 0.1
+        //   capitalMultiplier = 0.1^0.5 ≈ 0.3162
+        //   oil demand = 140 * 0.3162 ≈ 44.27
         const bid = makeBid("powerPlant", { machinery: 0.1, buildings: 0.01 })
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.oil).toBeCloseTo(14)
+        expect(bid!.idealGoodsDemand.oil).toBeCloseTo(44.27, 2)
     })
 
     it("scales goods demand to zero when capital stock is empty", () => {
-        // powerPlant with empty capital stock: stock/req = 0 for all goods → capitalRatio = 0
-        // No capital = no production capacity
+        // powerPlant with empty capital stock: capitalRatio = 0, capitalMultiplier = 0
         const bid = makeBid("powerPlant", {})
         expect(bid).not.toBeNull()
         expect(bid!.idealGoodsDemand.oil).toBe(0)
     })
 
-    it("scales all goods requirements equally by capitalRatio", () => {
-        // capitalRatio = 10: oil=140*10=1400, governance=20*10=200, environmentFactor=20*10=200
+    it("scales all goods requirements equally by capitalMultiplier", () => {
+        // capitalRatio = 10, capitalMultiplier = 10^0.5 ≈ 3.1623
+        // oil=140*3.1623≈442.72, governance=20*3.1623≈63.25, environmentFactor=20*3.1623≈63.25
         const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 }, 1_000_000)
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.governance).toBe(200)
-        expect(bid!.idealGoodsDemand.environmentFactor).toBe(200)
-        expect(bid!.idealGoodsDemand.oil).toBe(1400)
+        expect(bid!.idealGoodsDemand.governance).toBeCloseTo(63.25, 2)
+        expect(bid!.idealGoodsDemand.environmentFactor).toBeCloseTo(63.25, 2)
+        expect(bid!.idealGoodsDemand.oil).toBeCloseTo(442.72, 2)
     })
 
     it("scales worker demand by capital adequacy", () => {
-        // powerPlant workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }
-        // capitalRatio = 10: worker demand = 890 * 1 * 10 = 8900
+        // capitalRatio = 10, capitalMultiplier = 10^0.5 ≈ 3.1623
+        // worker demand = 890 * 3.1623 ≈ 2814.43
         const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 }, 1_000_000)
         expect(bid).not.toBeNull()
-        expect(bid!.idealWorkerDemand.worker).toBe(8900)
-        expect(bid!.idealWorkerDemand.clerks).toBe(500)
-        expect(bid!.idealWorkerDemand.engineer).toBe(500)
-        expect(bid!.idealWorkerDemand.healtcarePersonal).toBe(100)
+        expect(bid!.idealWorkerDemand.worker).toBeCloseTo(2814.43, 2)
+        expect(bid!.idealWorkerDemand.clerks).toBeCloseTo(158.11, 2)
+        expect(bid!.idealWorkerDemand.engineer).toBeCloseTo(158.11, 2)
+        expect(bid!.idealWorkerDemand.healtcarePersonal).toBeCloseTo(31.62, 2)
     })
 
     it("limits worker demand to zero when capital stock is empty", () => {
@@ -95,13 +97,15 @@ describe("buildSectorBid capital adequacy scaling", () => {
         expect(bid!.idealWorkerDemand.worker).toBe(0)
     })
 
-    it("uses capitalRatio of 1 for sectors without capital goods", () => {
-        // metalFactory has capitalGoods: { machinery: 0.08, buildings: 0.1 }
-        // With full stock: capitalRatio = min(8/0.08, 10/0.1) = min(100, 100) = 100
-        // environmentFactor demand = 30 * 100 = 3000
+    it("uses capitalMultiplier for sectors with abundant capital", () => {
+        // metalFactory: capitalGoods = { machinery: 0.08, buildings: 0.1 }
+        // With stock { machinery: 8, buildings: 10 }:
+        //   capitalRatio = min(8/0.08, 10/0.1) = min(100, 100) = 100
+        //   capitalMultiplier = 100^0.5 = 10
+        //   environmentFactor demand = 30 * 10 = 300
         const bid = makeBid("metalFactory", { machinery: 8, buildings: 10 })
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.environmentFactor).toBe(3000)
+        expect(bid!.idealGoodsDemand.environmentFactor).toBe(300)
     })
 
     it("applies inputLevel multiplier to goods demand", () => {

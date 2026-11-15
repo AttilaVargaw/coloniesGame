@@ -79,14 +79,16 @@ describe("industry sector calculations", () => {
             expect(bid!.idealGoodsProduction.waste).toBe(10)
         })
 
-        it("scales worker and goods demand by capitalRatio", () => {
+        it("scales worker and goods demand by capitalMultiplier", () => {
             // capitalRatio = min(5/0.5, 1/0.1) = 10
+            // capitalMultiplier = 10^0.5 ≈ 3.1623
             const bid = makePowerPlantBid({ machinery: 5, buildings: 1 })
             expect(bid).not.toBeNull()
-            expect(bid!.idealWorkerDemand.worker).toBe(8900)
-            expect(bid!.idealWorkerDemand.clerks).toBe(500)
-            expect(bid!.idealGoodsDemand.oil).toBe(1400)
-            expect(bid!.idealGoodsProduction.energy).toBe(400_000) // outputLevel unchanged = 1
+            expect(bid!.idealWorkerDemand.worker).toBeCloseTo(2814.43, 2)
+            expect(bid!.idealWorkerDemand.clerks).toBeCloseTo(158.11, 2)
+            expect(bid!.idealGoodsDemand.oil).toBeCloseTo(442.72, 2)
+            // Production also scales with capitalMultiplier
+            expect(bid!.idealGoodsProduction.energy).toBeCloseTo(1_264_911, 0)
         })
 
         it("sets budgetRatio = 1 when money is sufficient", () => {
