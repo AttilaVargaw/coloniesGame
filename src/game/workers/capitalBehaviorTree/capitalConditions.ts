@@ -25,10 +25,18 @@ export class HasDecay extends Condition<CapitalBlackboard> {
 export class BelowTargetStock extends Condition<CapitalBlackboard> {
     constructor(public goodKey: string, public rate: number) { super(); }
     check(bb: CapitalBlackboard): boolean {
+        if(!Number.isFinite(this.rate) || this.rate <= 0) {
+            return false;
+        }
+
         const key: keyof Goods = this.goodKey as keyof Goods;
-        const targetStock = this.rate * REFERENCE_STOCK_MULTIPLIER;
         const current = bb.currentStock[key] ?? 0;
-        return current < targetStock;
+
+        if(!Number.isFinite(current) || current < 0) {
+            return false;
+        }
+
+        return current < this.rate * REFERENCE_STOCK_MULTIPLIER;
     }
 }
 
@@ -36,16 +44,12 @@ export class CanAffordReplenishment extends Condition<CapitalBlackboard> {
     check(bb: CapitalBlackboard): boolean {
         // Aggregate wear+decay losses by good so combined requirements are respected
         const totalLossByGood: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
-        let totalCost = 0;
 
         for(const [goodKey, amount] of Object.entries(bb.wearAmounts)) {
             const key: keyof Goods = goodKey as keyof Goods;
             const amt = amount ?? 0;
             if(amt > 0) {
                 totalLossByGood[key] = (totalLossByGood[key] ?? 0) + amt;
-                const price = bb.prices[key] ?? 0;
-                if(!Number.isFinite(price) || price < 0) return false;
-                totalCost += amt * price;
             }
         }
         for(const [goodKey, amount] of Object.entries(bb.decayAmounts)) {
@@ -53,33 +57,33 @@ export class CanAffordReplenishment extends Condition<CapitalBlackboard> {
             const amt = amount ?? 0;
             if(amt > 0) {
                 totalLossByGood[key] = (totalLossByGood[key] ?? 0) + amt;
-                const price = bb.prices[key] ?? 0;
-                if(!Number.isFinite(price) || price < 0) return false;
-                totalCost += amt * price;
             }
         }
+
+        const moneyAvailable = Math.max(0, bb.money - bb.moneySpent);
 
         // Condition passes if there is any valid replenishment opportunity:
         // at least one loss quantity > 0 that can be partially covered by stock or money.
-        const moneyAvailable = bb.money - bb.moneySpent;
-        let anyOpportunity = false;
-
         for(const [goodKey, amount] of Object.entries(totalLossByGood)) {
             const key: keyof Goods = goodKey as keyof Goods;
             const amt = amount ?? 0;
-            const stockAvailable = bb.availableGoods[key] ?? 0;
-            const price = bb.prices[key] ?? 0;
+            if(amt <= 0) continue;
 
-            // Valid opportunity if stock or money can cover any positive amount
-            const maxByStock = stockAvailable > 0 ? stockAvailable : 0;
-            const maxByMoney = price > 0 ? Math.floor(moneyAvailable / price) : (stockAvailable > 0 ? amt : 0);
-            if(maxByStock > 0 || maxByMoney > 0) {
-                anyOpportunity = true;
-                break;
+            const price = bb.prices[key];
+            if(price === undefined) continue;
+            if(!Number.isFinite(price) || price < 0) continue;
+
+            const stockAvailable = bb.availableGoods[key] ?? 0;
+            const affordable = price === 0 ? amt : moneyAvailable / price;
+
+            // Valid opportunity if any positive amount can be purchased
+            const canBuy = Math.min(amt, stockAvailable, affordable);
+            if(canBuy > 0) {
+                return true;
             }
         }
 
-        return anyOpportunity && moneyAvailable >= 0;
+        return false;
     }
 }
 
@@ -90,8 +94,8 @@ export class CanAffordInvestment extends Condition<CapitalBlackboard> {
 
         // Validate inputs
         if(!Number.isFinite(this.rate) || this.rate <= 0) return false;
-        const price = bb.prices[key] ?? 0;
-        if(!Number.isFinite(price) || price < 0) return false;
+        const price = bb.prices[key];
+        if(price === undefined || !Number.isFinite(price) || price < 0) return false;
         const currentStock = bb.currentStock[key] ?? 0;
         if(!Number.isFinite(currentStock) || currentStock < 0) return false;
 
@@ -103,13 +107,13 @@ export class CanAffordInvestment extends Condition<CapitalBlackboard> {
         // One level of capital goods per tick
         const toBuy = Math.min(needed, this.rate);
         const stockAvailable = bb.availableGoods[key] ?? 0;
-        const moneyAvailable = bb.money - bb.moneySpent;
+        const moneyAvailable = Math.max(0, bb.money - bb.moneySpent);
 
-        if(stockAvailable < toBuy) return false;
-        if(price <= 0) {
-            return true; // Free goods, stock available
-        }
-        return moneyAvailable >= toBuy * price;
+        // Check if *any* amount can be purchased (aligned with InvestCapital action)
+        const affordable = price === 0 ? toBuy : moneyAvailable / price;
+        const canBuy = Math.min(toBuy, stockAvailable, affordable);
+
+        return canBuy > 0;
     }
 }
 

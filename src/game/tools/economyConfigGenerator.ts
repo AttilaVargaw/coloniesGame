@@ -318,12 +318,23 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			bid.actualScale = Math.min(bid.budgetRatio, workerRatio);
 		}
 
+		// Build goods allocations from ideal demand (capped by actualScale)
+		const goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
+		for(const bid of roundSectorBids) {
+			const allocation: Partial<Record<keyof Goods, number>> = {};
+			for(const [goodKey, demand] of Object.entries(bid.idealGoodsDemand)) {
+				allocation[goodKey as keyof Goods] = demand;
+			}
+			goodsAllocations[bid.name] = allocation;
+		}
+
 		// Sectors buy input goods from colony pool using their own money
 		const { colonyGoodsAfterPurchase, newMoney: roundNewMoney } = buySectorInputs(
 			roundSectorBids,
 			currentGoods,
 			roundMoney,
-			currentPrices
+			currentPrices,
+			goodsAllocations,
 		);
 		currentGoods = colonyGoodsAfterPurchase;
 		newMoney = roundNewMoney;
@@ -502,9 +513,17 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// remainingGoods is the authoritative inventory after capital purchases
 	const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
 
+	// Add warehouse sales back so the goods delta does not double-count them.
+	// Warehouse sales are deducted once through fulfilledDemandQty in finalizeGoods.
+	const goodsForDelta: Goods = { ...postCapitalGoods };
+	for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+		const key = goodKey as keyof Goods;
+		goodsForDelta[key] = (goodsForDelta[key] ?? 0) + (qty ?? 0);
+	}
+
 	const colonyGoodsDelta = computeColonyGoodsDelta(
 		goods,
-		postCapitalGoods,
+		goodsForDelta,
 		activeSectors,
 		sectorResults,
 	);

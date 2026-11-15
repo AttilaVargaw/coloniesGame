@@ -1,5 +1,5 @@
 import { industrySectorBlueprints } from "../systems/sectorBlueprints";
-import { getPrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods";
+import { getPrices, Goods, NON_CUMULATING_GOODS, basePrices } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustrialSectors } from "../components/Factories";
@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, applyGoodsModifier, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
 import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
@@ -146,15 +146,19 @@ function processIndustry(
         }
     }
 
-    // Validate population wealth values before constructing cashByPop
+    // Validate population counts and wealth values before constructing cashByPop
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        if(!Number.isFinite(pop.number) || pop.number < 0) {
+            throw new Error(`Invalid population count for ${entityId}.${key}: ${pop.number}`);
+        }
+
         const wealth = pop.wealth ?? 0;
         if(!Number.isFinite(wealth) || wealth < 0) {
             throw new Error(`Invalid population wealth for ${entityId}.${key}: ${wealth}`);
         }
     }
 
-    let currentPrices = prices;
+    const currentPrices = prices;
     let finalSalaries: Record<keyof Population, number> = adjustedSalaries;
     let finalWorkerMarketRatios: Record<keyof Population, number> = {} as Record<keyof Population, number>;
     let finalSectorBids: SectorBid[] = [];
@@ -423,6 +427,9 @@ function processIndustry(
                 }
                 const refund = unused * price;
                 newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
+                if(!Number.isFinite(newMoney[sectorName])) {
+                    throw new Error(`Sector money overflow for ${sectorName}`);
+                }
             }
         }
 
@@ -435,6 +442,9 @@ function processIndustry(
                 throw new Error(`Invalid consumption/price for ${sectorName}/${goodKey}`);
             }
             actualInputCost += qty * price;
+            if(!Number.isFinite(actualInputCost)) {
+                throw new Error(`Input cost overflow for ${sectorName}`);
+            }
         }
         sectorInputCosts[sectorName] = actualInputCost;
 
@@ -454,7 +464,17 @@ function processIndustry(
         if(!result) continue;
         for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
             const key = popType as keyof Population;
-            wagesByPop[key] = (wagesByPop[key] ?? 0) + (employed ?? 0) * (finalSalaries[key] ?? 0);
+            const wage = (employed ?? 0) * (finalSalaries[key] ?? 0);
+
+            if(!Number.isFinite(wage) || wage < 0) {
+                throw new Error(`Invalid wage payment for ${bid.name}/${key}: ${wage}`);
+            }
+
+            wagesByPop[key] = (wagesByPop[key] ?? 0) + wage;
+
+            if(!Number.isFinite(wagesByPop[key])) {
+                throw new Error(`Wage accumulation overflow for ${key}`);
+            }
         }
     }
 
@@ -547,6 +567,9 @@ function processIndustry(
     // Credit treasury for sector input purchases (money deducted in buySectorInputs)
     const totalSectorInputCosts = Object.values(sectorInputCosts).reduce((sum, v) => sum + v, 0);
     newTreasury += totalSectorInputCosts;
+    if(!Number.isFinite(newTreasury)) {
+        throw new Error(`Treasury overflow after input costs`);
+    }
 
     // PHASE 3.B: Settle household finances — actual wages and spending
     // Wealth is a cash balance (no smoothing): full income minus actual spending
@@ -555,16 +578,27 @@ function processIndustry(
     const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
     const calculatedWageBill = Object.values(wagesByPop).reduce((sum, v) => sum + v, 0);
     if(Math.abs(calculatedWageBill - totalLaborCosts) > 1e-6) {
-        console.error(`[IndustryTick] Wage bill mismatch for ${entityId}: calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`);
-        return null;
+        throw new Error(
+            `Wage bill mismatch for ${entityId}: ` +
+            `calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`,
+        );
     }
 
     // Deduct labor costs from sector money, credit household wealth
     for(const name of activeSectors) {
-        newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
+        const laborCost = sectorLaborCosts[name] ?? 0;
+        if(!Number.isFinite(laborCost) || laborCost < 0) {
+            throw new Error(`Invalid labor cost for ${name}: ${laborCost}`);
+        }
+        newMoney[name] = (newMoney[name] ?? 0) - laborCost;
+        if(!Number.isFinite(newMoney[name]) || newMoney[name] < -1e-6) {
+            throw new Error(`Sector money deficit for ${name}: ${newMoney[name]}`);
+        }
     }
 
     // Update population wealth based on actual income and spending (full cash balance, no smoothing)
+    const CASH_EPSILON = 1e-6;
+
     // Every population group gets a wealth update, even groups without a consumption update,
     // so no wage credit is lost.
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
@@ -573,15 +607,18 @@ function processIndustry(
         const actualSpending = spendingByPop[k] ?? 0;
         const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
 
-        if(!Number.isFinite(targetWealth) || targetWealth < -1e-6) {
+        if(!Number.isFinite(targetWealth) || targetWealth < -CASH_EPSILON) {
             throw new Error(
-                `Population ${k} overspent: resulting cash=${targetWealth}, income=${actualIncome}, spending=${actualSpending}`
+                `Population ${k} overspent: resulting cash=${targetWealth}, ` +
+                `income=${actualIncome}, spending=${actualSpending}`,
             );
         }
 
+        const closingWealth = targetWealth < 0 ? 0 : targetWealth;
+
         populationUpdates[k] = {
             ...populationUpdates[k],
-            wealth: Math.max(0, targetWealth),
+            wealth: closingWealth,
         };
     }
 
@@ -596,6 +633,9 @@ function processIndustry(
 
     // Credit treasury with warehouse sales revenue
     newTreasury += warehouseRevenue;
+    if(!Number.isFinite(newTreasury)) {
+        throw new Error(`Treasury overflow after warehouse revenue`);
+    }
 
     // Reset sector revenue to actual-sales-only authority
     for(const name of activeSectors) {
@@ -607,6 +647,9 @@ function processIndustry(
 
     for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
+        if(!Number.isFinite(newMoney[sectorName])) {
+            throw new Error(`Sector money overflow for ${sectorName}`);
+        }
         sectorRevenue[sectorName] = revenue;
         // Profit calculated once: revenue - actual input costs - labor costs
         const laborCosts = sectorLaborCosts[sectorName] ?? 0;
@@ -696,7 +739,7 @@ function processIndustry(
     }
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
+    const { newCapitalStock, moneySpent, remainingGoods } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
@@ -707,12 +750,22 @@ function processIndustry(
 
     // Deduct capital costs from sector money
     for(const name of activeSectors) {
-        newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
+        const capitalCost = moneySpent[name] ?? 0;
+        if(!Number.isFinite(capitalCost) || capitalCost < 0) {
+            throw new Error(`Invalid capital cost for ${name}: ${capitalCost}`);
+        }
+        newMoney[name] = (newMoney[name] ?? 0) - capitalCost;
+        if(!Number.isFinite(newMoney[name]) || newMoney[name] < -1e-6) {
+            throw new Error(`Sector money deficit for ${name}: ${newMoney[name]}`);
+        }
     }
 
     // Credit treasury for capital purchases
     const totalCapitalMoneySpent = Object.values(moneySpent).reduce((sum, v) => sum + v, 0);
     newTreasury += totalCapitalMoneySpent;
+    if(!Number.isFinite(newTreasury)) {
+        throw new Error(`Treasury overflow after capital purchases`);
+    }
 
     // remainingGoods is the authoritative inventory after capital purchases
     const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
@@ -754,6 +807,19 @@ function processIndustry(
             colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
         }
     }
+
+    // Reconcile reconstructed production against executeSectors() aggregate
+    for(const goodKey of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
+        const reconstructed = colonyGoodsProduction[goodKey] ?? 0;
+        const reported = sumGoodsProduction[goodKey] ?? 0;
+        if(Math.abs(reconstructed - reported) > 1e-6) {
+            throw new Error(
+                `Production reconciliation mismatch for ${goodKey}: ` +
+                `reconstructed=${reconstructed}, reported=${reported}`,
+            );
+        }
+    }
+
     const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
 
     // PHASE 7: Transaction ledger — record all economic transfers for audit
@@ -773,36 +839,75 @@ function processIndustry(
         }
     }
 
-    // Wage payments: sector pays, population receives
+    // Wage payments: sector pays each population category separately
     for(const name of activeSectors) {
-        const laborCost = sectorLaborCosts[name] ?? 0;
-        if(laborCost > 0) {
+        const result = sectorResults[name];
+        const workersEmployed = result?.workersEmployed ?? {};
+        for(const key of Object.keys(population) as (keyof Population)[]) {
+            const employed = workersEmployed[key] ?? 0;
+            const salary = finalSalaries[key] ?? 0;
+            const wage = employed * salary;
+
+            if(!Number.isFinite(wage) || wage < 0) {
+                throw new Error(`Invalid wage payment for ${name}/${key}: ${wage}`);
+            }
+
+            if(wage > 0) {
+                ledger.record({
+                    tick: 0,
+                    type: "wage_payment",
+                    buyerId: name,
+                    sellerId: `population:${key}`,
+                    amount: wage,
+                });
+            }
+        }
+    }
+
+    // Household sales: each population category pays, sector receives
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const spending = spendingByPop[key] ?? 0;
+        if(spending > 0) {
             ledger.record({
                 tick: 0,
-                type: "wage_payment",
-                buyerId: name,
-                sellerId: "population",
-                amount: laborCost,
+                type: "population_spending",
+                buyerId: `population:${key}`,
+                sellerId: "household_sales",
+                amount: spending,
             });
         }
     }
 
-    // Household sales: population pays, sector receives
+    // Sector revenue: household_sales pays each sector
     for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
         if(revenue > 0) {
             ledger.record({
                 tick: 0,
                 type: "population_spending",
-                buyerId: "population",
+                buyerId: "household_sales",
                 sellerId: sectorName,
                 amount: revenue,
             });
         }
     }
 
+    // Warehouse sales: household_sales pays colony treasury
+    if(warehouseRevenue > 0) {
+        ledger.record({
+            tick: 0,
+            type: "population_spending",
+            buyerId: "household_sales",
+            sellerId: "colony_treasury",
+            amount: warehouseRevenue,
+        });
+    }
+
     // Capital purchases: sector pays, colony treasury receives
     for(const name of activeSectors) {
         const capitalCost = moneySpent[name] ?? 0;
+        if(!Number.isFinite(capitalCost) || capitalCost < 0) {
+            throw new Error(`Invalid capital purchase cost for ${name}: ${capitalCost}`);
+        }
         if(capitalCost > 0) {
             ledger.record({
                 tick: 0,
@@ -814,17 +919,6 @@ function processIndustry(
         }
     }
 
-    // Warehouse sales: population pays, colony treasury receives
-    if(warehouseRevenue > 0) {
-        ledger.record({
-            tick: 0,
-            type: "population_spending",
-            buyerId: "population",
-            sellerId: "colony_treasury",
-            amount: warehouseRevenue,
-        });
-    }
-
     // Verify money conservation: closing balances = opening + deltas
     const openingBalances: Record<string, number> = {};
     const closingBalances: Record<string, number> = {};
@@ -834,8 +928,13 @@ function processIndustry(
     }
     openingBalances["colony_treasury"] = openingTreasury;
     closingBalances["colony_treasury"] = newTreasury;
-    openingBalances["population"] = openingHouseholdMoney;
-    closingBalances["population"] = newHouseholdMoney;
+    openingBalances["household_sales"] = 0;
+    closingBalances["household_sales"] = totalPopulationSpending;
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const account = `population:${key}`;
+        openingBalances[account] = population[key].wealth ?? 0;
+        closingBalances[account] = mortalityAdjustedPopulation[key].wealth ?? 0;
+    }
 
     const conservation = ledger.verifyConservation(openingBalances, closingBalances);
     if(!conservation.valid) {
@@ -845,7 +944,7 @@ function processIndustry(
 
     const result: IndustryTickResult = {
         entityId,
-        goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption, negateReplenishmentDelta(replenishmentDelta)),
+        goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption),
         goodsProduction: sumGoodsProduction,
         workingWorkers: workingWorkers as Population,
         freeWorkers: remainingWorkers,
@@ -950,33 +1049,90 @@ function finalizeGoods(
     populationConsumption: Partial<Goods>,
     population: Population
 ): Goods {
+    const epsilon = 1e-9;
     const finalGoods = { ...currentGoods } as Goods;
 
-    applyGoodsModifier(finalGoods, sumGoodsProduction, (cur, d) => cur + d);
-    applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) => cur - d);
-    applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => cur - d);
+    // Validate complete Goods schema — every good key must be present and valid
+    for(const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
+        const opening = currentGoods[goodKey] ?? 0;
+        const production = sumGoodsProduction[goodKey] ?? 0;
+        const requirements = sumGoodsRequirements[goodKey] ?? 0;
+        const consumption = populationConsumption[goodKey] ?? 0;
 
-    const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
-    const populationWaste = totalPopulation * wastePerPerson;
-
-    finalGoods.waste = Math.max(0, (finalGoods.waste || 0) + populationWaste - wasteDecayRate * (currentGoods.waste || 0));
-
-    for(const key in finalGoods) {
-        const goodKey = key as keyof Goods;
-        const value = finalGoods[goodKey] ?? 0;
-
-        if(!Number.isFinite(value)) {
-            throw new Error(`Invalid final inventory for ${goodKey}: ${value}`);
+        for(const [label, value] of [
+            ["opening inventory", opening],
+            ["production", production],
+            ["requirements", requirements],
+            ["population consumption", consumption],
+        ] as const) {
+            if(!Number.isFinite(value) || value < 0) {
+                throw new Error(`Invalid ${label} for ${goodKey}: ${value}`);
+            }
         }
 
-        if(NON_CUMULATING_GOODS.has(goodKey) && value < -1e-6) {
-            throw new Error(`Inventory deficit for ${goodKey}: ${value}`);
+        // Waste is handled separately below — exclude from main goods loop
+        if(goodKey === "waste") continue;
+
+        let closing: number;
+
+        if(NON_CUMULATING_GOODS.has(goodKey)) {
+            // Non-cumulative goods (services): opening inventory does not carry over.
+            // These are non-storable flows; closing = production - requirements.
+            closing = production - requirements;
+        } else {
+            // Cumulative goods (physical inventory): opening + production - requirements - consumption.
+            closing = opening + production - requirements - consumption;
         }
 
-        if(NON_CUMULATING_GOODS.has(goodKey) && value < 0) {
-            finalGoods[goodKey] = 0; // tolerate floating-point noise only
+        if(!Number.isFinite(closing)) {
+            throw new Error(`Inventory overflow for ${goodKey}`);
         }
+
+        if(closing < -epsilon) {
+            throw new Error(`Inventory deficit for ${goodKey}: ${closing}`);
+        }
+
+        finalGoods[goodKey] = Math.max(0, closing);
     }
+
+    // Waste calculation — validate inputs
+    const totalPopulation = Object.values(population).reduce((sum, pop) => {
+        if(!Number.isFinite(pop.number) || pop.number < 0) {
+            throw new Error("Invalid population while calculating waste");
+        }
+        return sum + pop.number;
+    }, 0);
+
+    if(!Number.isFinite(totalPopulation)) {
+        throw new Error("Total population overflow while calculating waste");
+    }
+
+    if(
+        !Number.isFinite(wastePerPerson) ||
+        wastePerPerson < 0 ||
+        !Number.isFinite(wasteDecayRate) ||
+        wasteDecayRate < 0 ||
+        wasteDecayRate > 1
+    ) {
+        throw new Error("Invalid waste generation or decay configuration");
+    }
+
+    const openingWaste = currentGoods.waste ?? 0;
+    if(!Number.isFinite(openingWaste) || openingWaste < 0) {
+        throw new Error("Invalid opening waste inventory");
+    }
+
+    const populationWaste = totalPopulation * wastePerPerson;
+    const closingWaste =
+        openingWaste +
+        populationWaste -
+        wasteDecayRate * openingWaste;
+
+    if(!Number.isFinite(closingWaste)) {
+        throw new Error("Waste inventory overflow");
+    }
+
+    finalGoods.waste = Math.max(0, closingWaste);
 
     return finalGoods;
 }
@@ -1171,15 +1327,3 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     self.postMessage({ type: "result", patches });
 }
-
-// ReplenishmentDelta contains negative values (goods consumed from colony pool).
-// Negate them so they show as positive demand in goodsRequirements.
-function negateReplenishmentDelta(replenishmentDelta: Partial<Goods>): Partial<Goods> {
-    const out: Partial<Goods> = {};
-    for(const [key, value] of Object.entries(replenishmentDelta)) {
-        if(value < 0) {
-            out[key as keyof Goods] = -value;
-        }
-    }
-    return out;
-};

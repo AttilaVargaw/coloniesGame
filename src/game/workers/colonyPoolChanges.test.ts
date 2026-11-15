@@ -35,20 +35,20 @@ describe("colony goods pool changes", () => {
     describe("buySectorInputs", () => {
         it("returns a copy of goods when no bids", () => {
             const goods = createStarterWarehouse(1000)
-            const result = buySectorInputs([], goods, {}, basePrices as any)
+            const result = buySectorInputs([], goods, {}, basePrices as any, {})
             expect(result.colonyGoodsAfterPurchase).toEqual(goods)
         })
 
         it("does not modify the original goods object", () => {
             const goods = createStarterWarehouse(1000)
             const oilBefore = goods.oil
-            buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any)
+            buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, {})
             expect(goods.oil).toBe(oilBefore)
         })
 
         it("returns colonyGoodsAfterPurchase identical to input when buying is disabled", () => {
             const goods = createStarterWarehouse(1000)
-            const result = buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any)
+            const result = buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, {})
             expect(result.colonyGoodsAfterPurchase.oil).toBe(goods.oil)
         })
     })

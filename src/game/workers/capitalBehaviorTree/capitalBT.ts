@@ -3,10 +3,10 @@ import type { Goods } from "../../data/Goods";
 export interface CapitalBlackboard {
     sectorName: string;
     currentStock: Partial<Goods>;
-    capitalGoods: Record<string, number>;
+    capitalGoods: Partial<Record<keyof Goods, number>>;
     productionRatio: number;
     decay: number;
-    prices: Record<string, number>;
+    prices: Partial<Record<keyof Goods, number>>;
     money: number;
     availableGoods: Partial<Record<keyof Goods, number>>;
 

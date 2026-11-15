@@ -82,47 +82,133 @@ export function buySectorInputs(
     goods: Goods,
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
-    goodsAllocations?: Record<string, Partial<Record<keyof Goods, number>>>,
+    goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>>,
 ): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number>; purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> } {
     const colonyGoodsAfterPurchase = { ...goods };
+    const updatedMoney = { ...newMoney };
     const purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
+
+    const validGoods = new Set(Object.keys(goods));
+    const seenSectors = new Set<string>();
+
+    // Validate starting inventory.
+    for(const [good, amount] of Object.entries(goods)) {
+        if(!Number.isFinite(amount) || amount < 0) {
+            throw new Error(`Invalid starting inventory for ${good}: ${amount}`);
+        }
+    }
+
     for(const bid of sectorBids) {
-        const sectorName = bid.name as keyof IndustrialSectors;
-        let sectorMoney = newMoney[sectorName] ?? 0;
-        const allocation = goodsAllocations?.[sectorName];
-        purchasedBySector[sectorName] = {};
+        const sectorName = bid.name;
 
-        for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
-            if(demandPerTick <= 0) continue;
+        if(!sectorName || seenSectors.has(sectorName)) {
+            throw new Error(`Invalid or duplicate sector: ${sectorName}`);
+        }
+        seenSectors.add(sectorName);
 
-            const idealDemand = demandPerTick * bid.actualScale;
-            const demand = allocation ? Math.min(idealDemand, allocation[goodKey as keyof Goods] ?? 0) : idealDemand;
-            const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
-            const price = prices[goodKey as keyof Goods] ?? 0;
+        const allocation = goodsAllocations[sectorName] ?? {};
 
-            // Reject negative or non-finite prices
-            if(!Number.isFinite(price) || price < 0) continue;
-            if(available <= 0) continue;
+        let sectorMoney = updatedMoney[sectorName] ?? 0;
 
-            // For zero-priced (free) goods, the sector can take the full requested demand
-            // without spending money. For priced goods, affordability caps the purchase.
-            let toBuy: number;
-            if(price === 0) {
-                toBuy = Math.min(demand, available);
-            } else {
-                const canAfford = sectorMoney / price;
-                toBuy = Math.min(demand, available, canAfford);
-            }
-            if(toBuy <= 0) continue;
-
-            sectorMoney -= toBuy * price;
-            colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
-            purchasedBySector[sectorName][goodKey as keyof Goods] = (purchasedBySector[sectorName][goodKey as keyof Goods] ?? 0) + toBuy;
+        if(!Number.isFinite(sectorMoney) || sectorMoney < 0) {
+            throw new Error(`Invalid cash balance for ${sectorName}`);
         }
 
-        newMoney[sectorName] = sectorMoney;
+        if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0) {
+            throw new Error(`Invalid actualScale for ${sectorName}`);
+        }
+
+        purchasedBySector[sectorName] = {};
+
+        for(const [goodName, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
+            if(!validGoods.has(goodName)) {
+                throw new Error(`Unknown input good: ${goodName}`);
+            }
+
+            if(!Number.isFinite(demandPerTick) || demandPerTick < 0) {
+                throw new Error(`Invalid demand for ${sectorName}/${goodName}`);
+            }
+
+            const key = goodName as keyof Goods;
+            const allocated = allocation[key] ?? 0;
+            const available = colonyGoodsAfterPurchase[key] ?? 0;
+            const price = prices[key];
+
+            if(!Number.isFinite(allocated) || allocated < 0) {
+                throw new Error(`Invalid allocation for ${sectorName}/${goodName}`);
+            }
+
+            if(!Number.isFinite(available) || available < 0) {
+                throw new Error(`Invalid inventory for ${goodName}`);
+            }
+
+            if(!Number.isFinite(price) || price < 0) {
+                throw new Error(`Invalid price for ${goodName}`);
+            }
+
+            const idealDemand = demandPerTick * bid.actualScale;
+
+            if(!Number.isFinite(idealDemand)) {
+                throw new Error(`Demand overflow for ${sectorName}/${goodName}`);
+            }
+
+            const demand = Math.min(idealDemand, allocated);
+
+            if(demand <= 0 || available <= 0) continue;
+
+            const affordableQuantity = price === 0
+                ? available
+                : sectorMoney / price;
+
+            let toBuy = Math.min(
+                demand,
+                available,
+                affordableQuantity,
+            );
+
+            if(!Number.isFinite(toBuy) || toBuy < 0) {
+                throw new Error(`Invalid purchase quantity for ${sectorName}/${goodName}`);
+            }
+
+            if(toBuy <= 0) continue;
+
+            let cost = toBuy * price;
+
+            if(!Number.isFinite(cost)) {
+                throw new Error(`Purchase cost overflow for ${sectorName}/${goodName}`);
+            }
+
+            // Correct only floating-point overshoot; throw on material overspending.
+            if(cost > sectorMoney) {
+                const excess = cost - sectorMoney;
+                const tolerance = 1e-9 * Math.max(1, sectorMoney);
+
+                if(excess > tolerance) {
+                    throw new Error(`${sectorName} cannot afford ${goodName}`);
+                }
+
+                toBuy = price === 0 ? toBuy : sectorMoney / price;
+                cost = toBuy * price;
+            }
+
+            sectorMoney = Math.max(0, sectorMoney - cost);
+
+            colonyGoodsAfterPurchase[key] = Math.max(
+                0,
+                available - toBuy,
+            );
+
+            purchasedBySector[sectorName][key] = toBuy;
+        }
+
+        updatedMoney[sectorName] = sectorMoney;
     }
-    return { colonyGoodsAfterPurchase, newMoney, purchasedBySector };
+
+    return {
+        colonyGoodsAfterPurchase,
+        newMoney: updatedMoney,
+        purchasedBySector,
+    };
 }
 
 export function distributePopulationSpending(
@@ -180,10 +266,18 @@ export function computeColonyGoodsDelta(
     const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
 
     for(const goodKey of Object.keys(goods)) {
-        const bought = (goods[goodKey as keyof Goods] ?? 0) - (colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0);
-        if(bought > 0) {
-            colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) - bought;
+        const key = goodKey as keyof Goods;
+        const before = goods[key] ?? 0;
+        const after = colonyGoodsAfterPurchase[key] ?? 0;
+
+        if(
+            !Number.isFinite(before) || before < 0 ||
+            !Number.isFinite(after) || after < 0
+        ) {
+            throw new Error(`Invalid inventory while computing delta: ${goodKey}`);
         }
+
+        colonyGoodsDelta[key] = after - before;
     }
 
     for(const name of activeSectors) {
@@ -191,10 +285,15 @@ export function computeColonyGoodsDelta(
         if(!sectorResult || sectorResult.productionRatio <= 0) continue;
 
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
-            if(amount > 0) {
-                // Prices determine valuation and sales, not whether physical
-                // production exists. Add all produced goods to the colony pool.
-                colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
+            const key = goodKey as keyof Goods;
+            const qty = amount ?? 0;
+
+            if(!Number.isFinite(qty) || qty < 0) {
+                throw new Error(`Invalid production quantity for ${name}/${goodKey}`);
+            }
+
+            if(qty > 0) {
+                colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
             }
         }
     }
