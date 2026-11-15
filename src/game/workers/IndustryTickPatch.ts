@@ -29,6 +29,8 @@ export interface IndustryTickPatch {
     sectorStopReason?: Partial<Record<keyof IndustrialSectors, string>>;
     capitalStock?: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>;
     money?: Partial<Record<keyof IndustrialSectors, number>>;
+    colonyTreasury?: number;
+    householdMoney?: number;
     sectorGoods?: Partial<Record<keyof IndustrialSectors, Goods>>;
     sectorResults?: {
         changed: Record<string, SectorResult>;

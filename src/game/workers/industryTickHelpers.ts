@@ -8,7 +8,6 @@ import type { IndustryTickResult } from "./IndustryTickResult";
 import type { SectorBid } from "./SectorBid";
 
 const qolSmoothing = 0.03;
-const wealthSmoothing = 0.5;
 const expectedQolSmoothing = 0.03;
 const maxDailyChangeSmoothing = 0.001;
 
@@ -23,12 +22,14 @@ export function computePopulationConsumption(
     prices: Record<keyof Goods, number>,
 ): {
     populationConsumption: Partial<Goods>;
+    desiredConsumptionByPop: Record<keyof Population, Partial<Goods>>;
+    requirementsByPop: Record<keyof Population, Record<keyof Goods, number>>;
     populationUpdates: IndustryTickResult["populationUpdates"];
-    populationProfits: Record<keyof Population, number>;
 } {
     const populationConsumption: Partial<Goods> = {};
+    const desiredConsumptionByPop: Record<keyof Population, Partial<Goods>> = {} as Record<keyof Population, Partial<Goods>>;
+    const requirementsByPop: Record<keyof Population, Record<keyof Goods, number>> = {} as Record<keyof Population, Record<keyof Goods, number>>;
     const populationUpdates = {} as IndustryTickResult["populationUpdates"];
-    const populationProfits: Record<keyof Population, number> = {} as Record<keyof Population, number>;
 
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
         const { qol: targetQol } = getGoodRequirementsAndQoL(
@@ -48,19 +49,13 @@ export function computePopulationConsumption(
         }
 
         for(const it in requirements) {
-            populationConsumption[it as keyof Goods] =
-                (requirements[it as keyof Goods] ?? 0) +
-                (populationConsumption[it as keyof Goods] ?? 0);
+            const good = it as keyof Goods;
+            const amount = requirements[good] ?? 0;
+            populationConsumption[good] = (populationConsumption[good] ?? 0) + amount;
+            desiredConsumptionByPop[key] = { ...(desiredConsumptionByPop[key] ?? {}), [good]: amount };
         }
 
-        const income = adjustedSalaries[key] * pop.number;
-        const expenses = Object.entries(requirements).reduce((sum, [good, amount]) => {
-            if(!amount) return sum;
-            return sum + amount * prices[good as keyof Goods];
-        }, 0);
-
-        const targetWealth = pop.wealth + income - expenses;
-        const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;
+        requirementsByPop[key] = requirements;
 
         const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
@@ -73,15 +68,13 @@ export function computePopulationConsumption(
             qol: smoothedQol,
             expectedQol,
             populationChange: clampedPopulationChange,
-            wealth: Math.max(0, smoothedWealth),
+            wealth: pop.wealth, // Not yet settled; will be updated after wage settlement
             number: clampedPopulationNumber,
             requirements: requirements as Record<string, number>,
         };
-
-        populationProfits[key] = income - expenses;
     }
 
-    return { populationConsumption, populationUpdates, populationProfits };
+    return { populationConsumption, desiredConsumptionByPop, requirementsByPop, populationUpdates };
 }
 
 export function buySectorInputs(

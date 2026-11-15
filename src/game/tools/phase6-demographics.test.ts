@@ -20,11 +20,13 @@ describe("computeDeprivation", () => {
         const result = computeDeprivation({
             previousDeprivation: {},
             goodsShortfall: { food: 50, water: 30 },
+            desiredDemand: { food: 50, water: 30, energy: 100 },
             essentialGoods,
         });
 
-        expect(result.food).toBe(50 * DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
-        expect(result.water).toBe(30 * DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
+        // Shortage ratio = 1 for both food and water → deprivation = 1 * 0.5 = 0.5
+        expect(result.food).toBe(DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
+        expect(result.water).toBe(DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
         expect(result.energy).toBe(0);
     });
 
@@ -33,6 +35,7 @@ describe("computeDeprivation", () => {
         const result = computeDeprivation({
             previousDeprivation: prevDeprivation,
             goodsShortfall: {},
+            desiredDemand: { food: 100, water: 50 },
             essentialGoods,
         });
 
@@ -44,6 +47,7 @@ describe("computeDeprivation", () => {
         const result = computeDeprivation({
             previousDeprivation: { food: 0 },
             goodsShortfall: {},
+            desiredDemand: { food: 100 },
             essentialGoods,
         });
 
@@ -56,9 +60,35 @@ describe("computeDeprivation", () => {
         computeDeprivation({
             previousDeprivation: prev,
             goodsShortfall: {},
+            desiredDemand: { food: 100 },
             essentialGoods,
         });
         expect(prev).toEqual(prevCopy);
+    });
+
+    it("normalizes shortage by demand (partial shortage)", () => {
+        // food: shortfall=30, desired=100 → shortageRatio=0.3 → deprivation=0.3*0.5=0.15
+        // water: shortfall=50, desired=50 → shortageRatio=1 → deprivation=1*0.5=0.5
+        const result = computeDeprivation({
+            previousDeprivation: {},
+            goodsShortfall: { food: 30, water: 50 },
+            desiredDemand: { food: 100, water: 50 },
+            essentialGoods,
+        });
+
+        expect(result.food).toBeCloseTo(0.3 * DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH, 4);
+        expect(result.water).toBe(DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
+    });
+
+    it("caps deprivation at MAX_DEPRIVATION", () => {
+        const result = computeDeprivation({
+            previousDeprivation: { food: DEMOGRAPHIC_CONFIG.MAX_DEPRIVATION },
+            goodsShortfall: { food: 1000 },
+            desiredDemand: { food: 100 },
+            essentialGoods,
+        });
+
+        expect(result.food).toBe(DEMOGRAPHIC_CONFIG.MAX_DEPRIVATION);
     });
 });
 

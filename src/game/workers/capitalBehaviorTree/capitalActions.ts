@@ -43,12 +43,25 @@ export class ReplenishLosses extends Action<CapitalBlackboard> {
         for(const [goodKey, amount] of Object.entries(totalLoss)) {
             if(!amount || amount <= 0) continue;
             const key: keyof Goods = goodKey as keyof Goods;
-            const cost = amount * (bb.prices[key] ?? 0);
-            if(bb.money - bb.moneySpent >= cost) {
-                bb.moneySpent += cost;
-                bb.replenishAmounts[key] = (bb.replenishAmounts[key] ?? 0) - amount;
-                bb.currentStock[key] = (bb.currentStock[key] ?? 0) + amount;
+            const price = bb.prices[key] ?? 0;
+            const stockAvailable = bb.availableGoods[key] ?? 0;
+            const moneyAvailable = bb.money - bb.moneySpent;
+
+            let actualAmount: number;
+            if(price <= 0) {
+                // Free goods: limited by stock only
+                actualAmount = Math.min(amount, stockAvailable);
+            } else {
+                const maxByMoney = Math.floor(moneyAvailable / price);
+                actualAmount = Math.min(amount, stockAvailable, maxByMoney);
             }
+            if(actualAmount <= 0) continue;
+
+            const actualCost = actualAmount * price;
+            bb.moneySpent += actualCost;
+            bb.replenishAmounts[key] = (bb.replenishAmounts[key] ?? 0) - actualAmount;
+            bb.currentStock[key] = (bb.currentStock[key] ?? 0) + actualAmount;
+            bb.availableGoods[key] = Math.max(0, stockAvailable - actualAmount);
         }
         return "SUCCESS";
     }
@@ -65,16 +78,25 @@ export class InvestCapital extends Action<CapitalBlackboard> {
         // One level of capital goods per tick
         const toBuy = Math.min(targetStock - current, this.rate);
         const price = bb.prices[key] ?? 0;
-        if(toBuy <= 0 || price <= 0) return "FAILURE";
+        if(toBuy <= 0) return "FAILURE";
 
-        const maxAffordable = Math.floor((bb.money - bb.moneySpent) / price);
-        const actualBuy = Math.min(toBuy, maxAffordable);
+        const stockAvailable = bb.availableGoods[key] ?? 0;
+        const moneyAvailable = bb.money - bb.moneySpent;
+
+        let maxAffordable: number;
+        if(price <= 0) {
+            maxAffordable = stockAvailable;
+        } else {
+            maxAffordable = Math.floor(moneyAvailable / price);
+        }
+        const actualBuy = Math.min(toBuy, stockAvailable, maxAffordable);
         if(actualBuy <= 0) return "FAILURE";
 
         const buyCost = actualBuy * price;
         bb.moneySpent += buyCost;
         bb.currentStock[key] = current + actualBuy;
         bb.investAmounts[key] = (bb.investAmounts[key] ?? 0) - actualBuy;
+        bb.availableGoods[key] = Math.max(0, stockAvailable - actualBuy);
         return "SUCCESS";
     }
 }

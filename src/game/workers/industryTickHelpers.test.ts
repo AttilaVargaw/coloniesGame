@@ -230,6 +230,100 @@ describe("allocatePopulationSales", () => {
         expect(result.unmetDemandQty.food).toBe(100)
         expect(result.sectorRevenue.sectorA).toBe(0)
     })
+
+    it("sells zero-priced goods with zero revenue", () => {
+        const zeroPrices: Record<string, number> = { food: 0, oil: 100 }
+        const bids = [makeBid("sectorA")]
+        // Sector produces 10 food, households demand 8, price is 0
+        const sectorResults = makeResult("sectorA", { food: 10 })
+        const populationConsumption = { food: 8 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: zeroPrices as any,
+        })
+
+        // 8 sold (all demand), 2 unsold, zero revenue, zero unmet
+        expect(result.salesQty.sectorA.food).toBe(8)
+        expect(result.unsoldQty.sectorA.food).toBe(2)
+        expect(result.sectorRevenue.sectorA).toBe(0)
+        expect(result.unmetDemandQty.food).toBeUndefined()
+    })
+
+    it("sells from available stock when there is no production", () => {
+        const bids = [makeBid("sectorA")]
+        // No production, but 50 food in warehouse stock, demand is 30
+        const sectorResults = makeResult("sectorA", { food: 0 })
+        const populationConsumption = { food: 30 }
+        const availableStock = { food: 50 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+            availableStock: availableStock as any,
+        })
+
+        // 30 sold from warehouse, 20 stock remains, zero unmet demand
+        expect(result.warehouseSalesQty.food).toBe(30)
+        expect(result.salesQty.sectorA.food).toBeUndefined()
+        expect(result.unmetDemandQty.food).toBeUndefined()
+        expect(result.sectorRevenue.sectorA).toBe(0)
+    })
+
+    it("allocates between production and warehouse stock proportionally", () => {
+        const bids = [makeBid("sectorA"), makeBid("sectorB")]
+        // Sector A produces 30, sector B produces 30, warehouse has 40
+        // Total supply = 100, demand = 100 → coverage = 1
+        // Each sector sells 30, warehouse sells 40
+        const sectorResults = {
+            sectorA: { producedGoods: { food: 30 } },
+            sectorB: { producedGoods: { food: 30 } },
+        }
+        const populationConsumption = { food: 100 }
+        const availableStock = { food: 40 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+            availableStock: availableStock as any,
+        })
+
+        expect(result.salesQty.sectorA.food).toBe(30)
+        expect(result.salesQty.sectorB.food).toBe(30)
+        expect(result.warehouseSalesQty.food).toBe(40)
+        expect(result.unmetDemandQty.food).toBeUndefined()
+
+        // Revenue only from sector production sales: (30 + 30) * 30 = 1800
+        expect(result.sectorRevenue.sectorA).toBeCloseTo(900, 4)
+        expect(result.sectorRevenue.sectorB).toBeCloseTo(900, 4)
+    })
+
+    it("shortfall splits unmet demand across all sources", () => {
+        const bids = [makeBid("sectorA")]
+        // Sector produces 10, warehouse has 10, total supply = 20, demand = 100
+        // coverage = min(1, 100/20) = 1 → all supply sold, 80 unmet
+        const sectorResults = makeResult("sectorA", { food: 10 })
+        const populationConsumption = { food: 100 }
+        const availableStock = { food: 10 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+            availableStock: availableStock as any,
+        })
+
+        expect(result.salesQty.sectorA.food).toBe(10)
+        expect(result.warehouseSalesQty.food).toBe(10)
+        expect(result.unmetDemandQty.food).toBe(80)
+    })
 })
 
 describe("pruneMemory", () => {

@@ -18,6 +18,7 @@ interface CapitalSystemResult {
     newCapitalStock: Record<string, Partial<Goods>>;
     replenishmentDelta: Partial<Goods>;
     moneySpent: Record<string, number>;
+    remainingGoods: Partial<Record<keyof Goods, number>>;
 }
 
 export function processCapital(
@@ -25,11 +26,13 @@ export function processCapital(
     capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>,
     sectorResults: Record<string, { productionRatio: number }>,
     prices: Record<keyof Goods, number>,
-    money: Record<string, number>
+    money: Record<string, number>,
+    availableGoods: Partial<Record<keyof Goods, number>>
 ): CapitalSystemResult {
     const newCapitalStock: Record<string, Partial<Goods>> = {};
     const replenishmentDelta: Partial<Goods> = {};
     const moneySpent: Record<string, number> = {};
+    const remainingGoods: Partial<Record<keyof Goods, number>> = { ...availableGoods };
 
     for(const name of activeSectors) {
         const config = industrySectorBlueprints.get(name);
@@ -52,6 +55,7 @@ export function processCapital(
         bb.decay = decay;
         bb.prices = prices;
         bb.money = sectorMoney;
+        bb.availableGoods = remainingGoods;
 
         if(productionRatio > 0) {
             new ApplyWear().tick(bb);
@@ -98,5 +102,5 @@ export function processCapital(
         }
     }
 
-    return { newCapitalStock, replenishmentDelta, moneySpent };
+    return { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods };
 }

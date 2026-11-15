@@ -23,6 +23,7 @@ export interface IndustryTickInput {
     capitalMultipliers: Record<keyof IndustrialSectors, number>;
     selectedMethod: Record<keyof IndustrialSectors, string | null>;
     colonyTreasury: number;
+    householdMoney: number;
     sectorInvestment: Record<keyof IndustrialSectors, number>;
     activeLaws: Set<string>;
 }

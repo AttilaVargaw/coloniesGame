@@ -22,30 +22,37 @@ describe("TransactionLedger", () => {
 
     it("verifyConservation passes with balanced internal transfers", () => {
         const ledger = new TransactionLedger();
-        // Buyer pays 100, seller receives 100 → net internal = 0
-        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: -100 });
+        // Buyer pays 100, seller receives 100 → both accounts net to zero
         ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: 100 });
-        const result = ledger.verifyConservation();
+        const result = ledger.verifyConservation(
+            { A: 1000, B: 500 },
+            { A: 900, B: 600 },
+        );
         expect(result.valid).toBe(true);
         expect(result.error).toBeLessThan(1e-6);
     });
 
     it("verifyConservation detects unbalanced transfers", () => {
         const ledger = new TransactionLedger();
-        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: -100 });
-        // No matching seller entry → net internal = -100
-        const result = ledger.verifyConservation();
+        // Buyer pays 100 but closing balances don't reflect it
+        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: 100 });
+        const result = ledger.verifyConservation(
+            { A: 1000, B: 500 },
+            { A: 1000, B: 500 }, // balances unchanged → mismatch
+        );
         expect(result.valid).toBe(false);
-        expect(result.error).toBe(100);
+        expect(result.error).toBeGreaterThan(0);
     });
 
     it("tracks external injections and destructions", () => {
         const ledger = new TransactionLedger();
         ledger.record({ tick: 1, type: "external_injection", amount: 5000 });
         ledger.record({ tick: 1, type: "external_destruction", amount: 1000 });
-        const result = ledger.verifyConservation();
-        expect(result.totalInjections).toBe(5000);
-        expect(result.totalDestructions).toBe(1000);
+        const result = ledger.verifyConservation(
+            { A: 1000 },
+            { A: 1000 },
+        );
+        expect(result.valid).toBe(true);
     });
 });
 

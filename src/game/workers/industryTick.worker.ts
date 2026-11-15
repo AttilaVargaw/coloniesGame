@@ -22,7 +22,7 @@ import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta,
 import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
-import { allocatePopulationSales } from "./transactionLedger";
+import { allocatePopulationSales, TransactionLedger } from "./transactionLedger";
 import { computeDeprivation, computeMortalityRates, applyMortality } from "./demographics";
 import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 
@@ -47,6 +47,8 @@ function processIndustry(
         laborAssigned,
         capitalStock,
         money: startingMoney,
+        colonyTreasury: startingTreasury,
+        householdMoney: startingHouseholdMoney,
         // sectorGoods,
         settlementType,
         workerEfficiencyMultipliers,
@@ -65,7 +67,7 @@ function processIndustry(
 
     const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
-    const { populationConsumption, populationUpdates, populationProfits } = computePopulationConsumption(
+    const { populationConsumption, desiredConsumptionByPop, populationUpdates } = computePopulationConsumption(
         population,
         adjustedSalaries,
         prices,
@@ -132,6 +134,8 @@ function processIndustry(
     let finalLaborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
     let finalGoodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
     let newMoney: Record<string, number> = { ...tickStartMoney };
+    let newTreasury: number = startingTreasury;
+    let newHouseholdMoney: number = startingHouseholdMoney;
     let currentGoods: Goods = { ...tickStartGoods };
     let previousDeprivation = { ...(colonyDeprivationMemory.get(entityId) ?? {}) };
 
@@ -422,14 +426,17 @@ function processIndustry(
     }
 
     // PHASE 4: Allocate population spending based on actual sales (not production share)
-    const { sectorRevenue: popSalesRevenue, salesQty, unmetDemandQty } = allocatePopulationSales({
-        sectorBids: finalSectorBids,
-        sectorResults,
-        populationConsumption,
-        prices: prices,
-    });
+    // availableStock = colony warehouse goods remaining after sector purchases
+    const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandQty } =
+        allocatePopulationSales({
+            sectorBids: finalSectorBids,
+            sectorResults,
+            populationConsumption,
+            prices: prices,
+            availableStock: currentGoods,
+        });
 
-    // Actual household consumption = sum of quantities actually sold across all sectors
+    // Actual household consumption = sector production sales + warehouse stock sales
     const fulfilledDemandQty: Partial<Goods> = {};
     for(const sectorSales of Object.values(salesQty)) {
         for(const [goodKey, qty] of Object.entries(sectorSales)) {
@@ -437,6 +444,97 @@ function processIndustry(
                 (fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
         }
     }
+    for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+        fulfilledDemandQty[goodKey as keyof Goods] =
+            (fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
+    }
+
+    // Deduct household warehouse purchases from goods available to capital
+    // (reservation order: households first, then capital)
+    const goodsForCapital: Goods = { ...currentGoods };
+    for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+        goodsForCapital[goodKey as keyof Goods] = Math.max(0, (goodsForCapital[goodKey as keyof Goods] ?? 0) - (qty ?? 0));
+    }
+
+    // Credit treasury for sector input purchases (money deducted in buySectorInputs)
+    const totalSectorInputCosts = Object.values(sectorInputCosts).reduce((sum, v) => sum + v, 0);
+    newTreasury += totalSectorInputCosts;
+
+    // PHASE 3.B: Settle household finances — actual wages and spending
+    const wealthSmoothing = 0.5;
+
+    // Compute actual wages paid to each population category from sector employment
+    const wagesByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    for(const bid of finalSectorBids) {
+        const result = sectorResults[bid.name];
+        if(!result) continue;
+        for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
+            const key = popType as keyof Population;
+            wagesByPop[key] = (wagesByPop[key] ?? 0) + (employed ?? 0) * (finalSalaries[key] ?? 0);
+        }
+    }
+
+    // Compute total actual household spending from fulfilled demand
+    const totalActualSpending = Object.entries(fulfilledDemandQty).reduce((sum, [goodKey, qty]) => {
+        return sum + (qty ?? 0) * (prices[goodKey as keyof Goods] ?? 0);
+    }, 0);
+
+    // Distribute actual spending proportionally to each pop's desired consumption value
+    const desiredConsumptionValueByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    let totalDesiredConsumptionValue = 0;
+    for(const [popType, consumption] of Object.entries(desiredConsumptionByPop)) {
+        const key = popType as keyof Population;
+        let value = 0;
+        for(const [goodKey, qty] of Object.entries(consumption)) {
+            value += (qty ?? 0) * (prices[goodKey as keyof Goods] ?? 0);
+        }
+        desiredConsumptionValueByPop[key] = value;
+        totalDesiredConsumptionValue += value;
+    }
+
+    const actualSpendingByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    const popKeys = Object.keys(desiredConsumptionByPop) as (keyof Population)[];
+    for(const key of popKeys) {
+        const share = totalDesiredConsumptionValue > 0
+            ? desiredConsumptionValueByPop[key] / totalDesiredConsumptionValue
+            : 1 / Math.max(popKeys.length, 1);
+        actualSpendingByPop[key] = totalActualSpending * share;
+    }
+
+    // Update population wealth based on actual income and spending
+    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        const k = key as keyof Population;
+        const actualIncome = wagesByPop[k] ?? 0;
+        const actualSpending = actualSpendingByPop[k] ?? 0;
+        const targetWealth = pop.wealth + actualIncome - actualSpending;
+        const smoothedWealth = Number.isFinite(targetWealth) ? pop.wealth + (targetWealth - pop.wealth) * wealthSmoothing : pop.wealth;
+
+        if(populationUpdates[k]) {
+            populationUpdates[k] = {
+                ...populationUpdates[k],
+                wealth: Math.max(0, smoothedWealth),
+            };
+        }
+    }
+
+    // PHASE 3.C: Household money settlement — wages in, spending out
+    const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
+
+    // Wage reconciliation: wages paid to households must equal sector labor costs
+    // Use the actual labor costs from sector execution as the authoritative source
+    const actualWageBill = totalLaborCosts;
+
+    // Deduct labor costs from sector money, credit household money
+    for(const name of activeSectors) {
+        newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
+    }
+    newHouseholdMoney += actualWageBill;
+
+    // Deduct household spending from household money
+    newHouseholdMoney -= totalActualSpending;
+
+    // Credit treasury with warehouse sales revenue
+    newTreasury += warehouseRevenue;
 
     // Reset sector revenue to actual-sales-only authority
     for(const name of activeSectors) {
@@ -459,6 +557,7 @@ function processIndustry(
     const deprivation = computeDeprivation({
         previousDeprivation,
         goodsShortfall: unmetDemandQty,
+        desiredDemand: populationConsumption,
         essentialGoods: ESSENTIAL_GOODS,
     });
 
@@ -517,12 +616,13 @@ function processIndustry(
     }
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, replenishmentDelta, moneySpent } = processCapital(
+    const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
         prices,
-        newMoney
+        newMoney,
+        goodsForCapital
     );
 
     // Deduct capital costs from sector money
@@ -530,13 +630,20 @@ function processIndustry(
         newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
     }
 
+    // Credit treasury for capital purchases
+    const totalCapitalMoneySpent = Object.values(moneySpent).reduce((sum, v) => sum + v, 0);
+    newTreasury += totalCapitalMoneySpent;
+
+    // remainingGoods is the authoritative inventory after capital purchases
+    const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
+
     const colonyGoodsDelta = computeColonyGoodsDelta(
         goods,
-        currentGoods,
+        postCapitalGoods,
         activeSectors,
         sectorResults,
-        replenishmentDelta,
-        // updatedSectorGoods,
+        {} as Record<string, number>,
+        // replenishmentDelta already reflected in postCapitalGoods; do not double-count
     );
 
     // Apply colony goods changes
@@ -551,6 +658,92 @@ function processIndustry(
     }
     const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
 
+    // PHASE 7: Transaction ledger — record all economic transfers for audit
+    const ledger = new TransactionLedger();
+
+    // Sector input purchases: sector pays, colony treasury receives
+    for(const name of activeSectors) {
+        const inputCost = sectorInputCosts[name] ?? 0;
+        if(inputCost > 0) {
+            ledger.record({
+                tick: 0,
+                type: "goods_purchase",
+                buyerId: name,
+                sellerId: "colony_treasury",
+                amount: inputCost,
+            });
+        }
+    }
+
+    // Wage payments: sector pays, population receives
+    for(const name of activeSectors) {
+        const laborCost = sectorLaborCosts[name] ?? 0;
+        if(laborCost > 0) {
+            ledger.record({
+                tick: 0,
+                type: "wage_payment",
+                buyerId: name,
+                sellerId: "population",
+                amount: laborCost,
+            });
+        }
+    }
+
+    // Household sales: population pays, sector receives
+    for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
+        if(revenue > 0) {
+            ledger.record({
+                tick: 0,
+                type: "population_spending",
+                buyerId: "population",
+                sellerId: sectorName,
+                amount: revenue,
+            });
+        }
+    }
+
+    // Capital purchases: sector pays, colony treasury receives
+    for(const name of activeSectors) {
+        const capitalCost = moneySpent[name] ?? 0;
+        if(capitalCost > 0) {
+            ledger.record({
+                tick: 0,
+                type: "capital_purchase",
+                buyerId: name,
+                sellerId: "colony_treasury",
+                amount: capitalCost,
+            });
+        }
+    }
+
+    // Warehouse sales: population pays, colony treasury receives
+    if(warehouseRevenue > 0) {
+        ledger.record({
+            tick: 0,
+            type: "population_spending",
+            buyerId: "population",
+            sellerId: "colony_treasury",
+            amount: warehouseRevenue,
+        });
+    }
+
+    // Verify money conservation: closing balances = opening + deltas
+    const openingBalances: Record<string, number> = {};
+    const closingBalances: Record<string, number> = {};
+    for(const name of activeSectors) {
+        openingBalances[name] = tickStartMoney[name] ?? 0;
+        closingBalances[name] = newMoney[name] ?? 0;
+    }
+    openingBalances["colony_treasury"] = startingTreasury;
+    closingBalances["colony_treasury"] = newTreasury;
+    openingBalances["population"] = startingHouseholdMoney;
+    closingBalances["population"] = newHouseholdMoney;
+
+    const conservation = ledger.verifyConservation(openingBalances, closingBalances);
+    if(!conservation.valid) {
+        console.error(`[IndustryTick] Money conservation violated: error=${conservation.error}`, conservation.accountErrors);
+    }
+
     const result: IndustryTickResult = {
         entityId,
         goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption, negateReplenishmentDelta(replenishmentDelta)),
@@ -564,13 +757,15 @@ function processIndustry(
         sectorRevenue,
         sectorLaborCosts,
         sectorInputCosts,
-        populationProfits,
+        populationProfits: {},
         sectorUtilization,
         sectorStopReason,
         wages: finalSalaries,
         sectorResults,
         capitalStock: newCapitalStock,
         money: newMoney,
+        colonyTreasury: newTreasury,
+        householdMoney: newHouseholdMoney,
         // sectorGoods: updatedSectorGoods,
         settlementType,
         allowedSectors,
@@ -709,6 +904,8 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     hasChanged = trySetPatchField(patch, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
     // hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
     hasChanged = trySetPatchField(patch, "money", last?.money, result.money, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch, "colonyTreasury", last?.colonyTreasury, result.colonyTreasury, Object.is) || hasChanged;
+    hasChanged = trySetPatchField(patch, "householdMoney", last?.householdMoney, result.householdMoney, Object.is) || hasChanged;
 
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
@@ -733,9 +930,28 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     const patches: IndustryTickPatch[] = [];
     for(const industry of event.data.industries) {
-        const patch = processIndustry(industry, colonyPriceMemory, lastResults);
-        if(patch) {
-            patches.push(patch);
+        try {
+            // Validate core inputs before processing
+            if(!industry.entityId || !industry.goods || !industry.population) {
+                console.error(`[IndustryTick] Invalid input for entity ${industry.entityId}: missing required fields`);
+                continue;
+            }
+            // Validate goods are finite and nonnegative
+            let goodsValid = true;
+            for(const [key, value] of Object.entries(industry.goods)) {
+                if(!Number.isFinite(value) || value < 0) {
+                    console.error(`[IndustryTick] Invalid goods value for ${industry.entityId}.${key}: ${value}`);
+                    goodsValid = false;
+                }
+            }
+            if(!goodsValid) continue;
+            const patch = processIndustry(industry, colonyPriceMemory, lastResults);
+            if(patch) {
+                patches.push(patch);
+            }
+        } catch(err) {
+            console.error(`[IndustryTick] Industry ${industry.entityId} failed:`, err);
+            // Continue processing other industries; this one keeps its previous state
         }
     }
 

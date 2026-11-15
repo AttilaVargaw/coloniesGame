@@ -41,6 +41,7 @@ export class IndustryComponent extends EntityComponent {
     public selectedMethod: Record<keyof IndustrialSectors, string | null>
     public sectorInvestment: Record<keyof IndustrialSectors, number>
     public activeLaws: Set<string>
+    public householdMoney: number = 0
 
     constructor(
         public activeSectorKeys: Set<keyof IndustrialSectors>,
@@ -54,6 +55,7 @@ export class IndustryComponent extends EntityComponent {
         public starterSectorGoods: Record<keyof IndustrialSectors, Partial<Goods>>
     ) {
         super()
+        this.householdMoney = 0;
 
         this.activeSectors = activeSectorKeys
         this.goodsChange = createEmptyWarehouse()

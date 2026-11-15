@@ -11,11 +11,11 @@ import { executeSectors } from "../workers/sectorExecution.ts";
 import {
 	computePopulationConsumption,
 	buySectorInputs,
-	distributePopulationSpending,
 	computeColonyGoodsDelta,
 	applyGoodsModifier,
 	computeMarketRatios,
 } from "../workers/industryTickHelpers.ts";
+import { allocatePopulationSales } from "../workers/transactionLedger.ts";
 import { processCapital } from "../workers/capitalSystem.ts";
 import { buildAdjustedSalaries, updateWageMemory } from "../workers/wageSystem.ts";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree.ts";
@@ -111,6 +111,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		laborAssigned,
 		capitalStock,
 		money: startingMoney,
+		colonyTreasury: startingTreasury,
+		householdMoney: startingHouseholdMoney,
 		settlementType,
 		allowedSectors,
 		workerEfficiencyMultipliers,
@@ -123,7 +125,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
-	const { populationConsumption, populationUpdates, populationProfits } = computePopulationConsumption(
+	const { populationConsumption, populationUpdates } = computePopulationConsumption(
 		population,
 		adjustedSalaries,
 		prices
@@ -191,6 +193,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	let sectorBids: SectorBid[] = [];
 	let execResult: ReturnType<typeof executeSectors> | null = null;
 	let newMoney: Record<string, number> = { ...startingMoney };
+	let newTreasury: number = startingTreasury;
+	let newHouseholdMoney: number = startingHouseholdMoney;
 	let investRemaining = industryBlackboard.investTotal;
 
 	for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
@@ -376,21 +380,68 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
 	}
 
-	newMoney = distributePopulationSpending(
-		sectorBids,
-		sectorResults,
-		populationConsumption,
-		currentPrices,
-		newMoney
-	);
+	// Allocate population spending based on actual sales
+	const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue } =
+		allocatePopulationSales({
+			sectorBids,
+			sectorResults,
+			populationConsumption,
+			prices: currentPrices,
+			availableStock: currentGoods,
+		});
+
+	// Actual household consumption = sector production sales + warehouse stock sales
+	const fulfilledDemandQty: Partial<Goods> = {};
+	for(const sectorSales of Object.values(salesQty)) {
+		for(const [goodKey, qty] of Object.entries(sectorSales)) {
+			fulfilledDemandQty[goodKey as keyof Goods] =
+				(fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
+		}
+	}
+	for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+		fulfilledDemandQty[goodKey as keyof Goods] =
+			(fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
+	}
+
+	// Credit treasury with warehouse sales revenue
+	newTreasury += warehouseRevenue;
+
+	// Household money settlement: wages in, spending out
+	const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
+	const totalActualSpending = Object.entries(fulfilledDemandQty).reduce((sum, [goodKey, qty]) => {
+		return sum + (qty ?? 0) * (currentPrices[goodKey as keyof Goods] ?? 0);
+	}, 0);
+
+	// Credit household money with wages (labor costs already deducted from sectors above)
+	newHouseholdMoney += totalLaborCosts;
+
+	// Debit household money for actual spending
+	newHouseholdMoney -= totalActualSpending;
+
+	// Reset sector revenue to actual-sales-only authority
+	for(const name of activeSectors) {
+		sectorRevenue[name] = 0;
+		const laborCosts = sectorLaborCosts[name] ?? 0;
+		const inputCosts = sectorInputCosts[name] ?? 0;
+		sectorProfits[name] = -(inputCosts + laborCosts);
+	}
+
+	for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
+		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
+		sectorRevenue[sectorName] = revenue;
+		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+		const inputCosts = sectorInputCosts[sectorName] ?? 0;
+		sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+	}
 
 	// Capital wear, decay, replenishment, investment
-	const { newCapitalStock, replenishmentDelta, moneySpent } = processCapital(
+	const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
 		Array.from(activeSectors),
 		capitalStock,
 		sectorResults,
 		currentPrices,
-		newMoney
+		newMoney,
+		currentGoods
 	);
 
 	// Deduct capital costs from sector money
@@ -398,9 +449,12 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
 	}
 
+	// remainingGoods is the authoritative inventory after capital purchases
+	const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
+
 	const colonyGoodsDelta = computeColonyGoodsDelta(
 		goods,
-		currentGoods,
+		postCapitalGoods,
 		activeSectors,
 		sectorResults,
 		replenishmentDelta,
@@ -420,7 +474,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		goods,
 		colonyGoodsProduction,
 		colonyGoodsRequirements,
-		populationConsumption,
+		fulfilledDemandQty,
 		population
 	);
 
@@ -449,13 +503,15 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		sectorRevenue,
 		sectorLaborCosts,
 		sectorInputCosts,
-		populationProfits,
+		populationProfits: {},
 		sectorUtilization,
 		sectorStopReason,
 		wages: adjustedSalaries,
 		sectorResults,
 		capitalStock: newCapitalStock,
 		money: newMoney,
+		colonyTreasury: newTreasury,
+		householdMoney: newHouseholdMoney,
 		settlementType,
 		allowedSectors,
 		unmetDemand: {},

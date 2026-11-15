@@ -11,7 +11,8 @@ export const DEMOGRAPHIC_CONFIG = {
     // Mortality response to deprivation
     DEPRIVATION_MORTALITY_RATE: 0.02, // 2% additional mortality per unit of deprivation
     DEPRIVATION_DECAY: 0.1,           // Deprivation decays 10% per tick when goods are available
-    DEPRIVATION_GROWTH: 0.5,          // Deprivation grows 50% of shortfall per tick
+    DEPRIVATION_GROWTH: 0.5,          // Deprivation grows 50% of shortage ratio per tick
+    MAX_DEPRIVATION: 10,              // Cap deprivation to prevent runaway mortality
     
     // QoL smoothing
     QOL_SMOOTHING: 0.03,
@@ -38,21 +39,28 @@ export interface DeprivationUpdate {
 export function computeDeprivation({
     previousDeprivation,
     goodsShortfall,
+    desiredDemand,
     essentialGoods,
 }: {
     previousDeprivation: Partial<Record<keyof Goods, number>>;
     goodsShortfall: Partial<Record<keyof Goods, number>>;
+    desiredDemand: Partial<Record<keyof Goods, number>>;
     essentialGoods: (keyof Goods)[];
 }): Partial<Record<keyof Goods, number>> {
     const deprivation: Partial<Record<keyof Goods, number>> = {};
 
     for(const good of essentialGoods) {
-        const shortfall = (goodsShortfall[good] ?? 0);
+        const unmet = (goodsShortfall[good] ?? 0);
+        const desired = (desiredDemand[good] ?? 0);
         const prev = (previousDeprivation[good] ?? 0);
 
-        if(shortfall > 0) {
-            // Deprivation grows with shortfall
-            deprivation[good] = prev + shortfall * DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH;
+        // Normalize shortage by demand to make it unit-scale independent
+        const shortageRatio = desired > 0 ? Math.min(1, unmet / desired) : 0;
+
+        if(shortageRatio > 0) {
+            // Deprivation grows with normalized shortage ratio
+            deprivation[good] = Math.min(DEMOGRAPHIC_CONFIG.MAX_DEPRIVATION,
+                prev + shortageRatio * DEMOGRAPHIC_CONFIG.DEPRIVATION_GROWTH);
         } else if(prev > 0) {
             // Deprivation decays when goods are available
             deprivation[good] = Math.max(0, prev * (1 - DEMOGRAPHIC_CONFIG.DEPRIVATION_DECAY));

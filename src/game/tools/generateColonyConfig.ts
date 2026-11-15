@@ -59,6 +59,7 @@ export function generateColonyConfig(
 		) as Record<keyof IndustrialSectors, number>,
 		selectedMethod,
 		colonyTreasury: 0,
+		householdMoney: 0,
 		sectorInvestment,
 		activeLaws: new Set(),
 	};

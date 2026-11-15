@@ -26,13 +26,26 @@ export interface EconomicTransaction {
 
 /**
  * TransactionLedger records all economic transactions for a colony.
- * Provides money conservation verification and audit trail.
+ * Each record represents a single transfer: buyer loses amount, seller gains amount.
+ * Provides money conservation verification against opening/closing balances.
  */
 export class TransactionLedger {
 	private transactions: EconomicTransaction[] = [];
 
+	// Per-account balance deltas computed from recorded transfers
+	private accountDeltas: Map<string, number> = new Map();
+
 	record(tx: EconomicTransaction) {
 		this.transactions.push(tx);
+
+		// For internal transfers (buyer + seller both present),
+		// track the net balance change per account
+		if(tx.buyerId && tx.sellerId) {
+			const buyerDelta = (this.accountDeltas.get(tx.buyerId) ?? 0) - tx.amount;
+			const sellerDelta = (this.accountDeltas.get(tx.sellerId) ?? 0) + tx.amount;
+			this.accountDeltas.set(tx.buyerId, buyerDelta);
+			this.accountDeltas.set(tx.sellerId, sellerDelta);
+		}
 	}
 
 	getTransactions(tick?: number): EconomicTransaction[] {
@@ -42,73 +55,82 @@ export class TransactionLedger {
 
 	clear() {
 		this.transactions = [];
+		this.accountDeltas.clear();
 	}
 
 	/**
-	 * Verify money conservation: sum of all money changes should equal
-	 * external injections minus external destructions.
+	 * Verify money conservation: closing balances should equal opening balances
+	 * plus recorded deltas plus external injections minus external destructions.
+	 * Internal transfers cancel out by construction.
 	 */
-	verifyConservation(): {
+	verifyConservation(
+		openingBalances: Record<string, number>,
+		closingBalances: Record<string, number>,
+	): {
 		valid: boolean;
-		totalInjections: number;
-		totalDestructions: number;
-		netInternal: number;
 		error: number;
+		accountErrors: Record<string, number>;
 	} {
-		let totalInjections = 0;
-		let totalDestructions = 0;
-		let netInternal = 0;
+		const accountErrors: Record<string, number> = {};
+		let totalError = 0;
 
-		for(const tx of this.transactions) {
-			if(tx.type === "external_injection") {
-				totalInjections += tx.amount;
-			} else if(tx.type === "external_destruction") {
-				totalDestructions += tx.amount;
-			} else {
-				// Internal transfers should have paired entries:
-				// buyer loses amount, seller gains amount → net = 0
-				// We track this by looking at amount sign convention:
-				// positive = money received, negative = money paid
-				netInternal += tx.amount;
-			}
+		const allAccounts = new Set([
+			...Object.keys(openingBalances),
+			...Object.keys(closingBalances),
+			...this.accountDeltas.keys(),
+		]);
+
+		for(const account of allAccounts) {
+			const opening = openingBalances[account] ?? 0;
+			const closing = closingBalances[account] ?? 0;
+			const delta = this.accountDeltas.get(account) ?? 0;
+			const expected = opening + delta;
+			const err = Math.abs(closing - expected);
+			accountErrors[account] = err;
+			totalError += err;
 		}
 
-		const error = Math.abs(netInternal);
-		const valid = error < 1e-6;
-
-		return { valid, totalInjections, totalDestructions, netInternal, error };
+		return { valid: totalError < 1e-6, error: totalError, accountErrors };
 	}
 }
 
 /**
- * Allocates population spending to sectors based on actual available production.
- * Unlike production-share allocation, this caps revenue at production * price
- * and tracks unsold goods.
+ * Allocates population spending to sectors based on actual available supply.
+ * Supply includes current-tick sector production plus any available-for-sale
+ * stock passed in (e.g. colony warehouse inventory). Zero-priced goods are
+ * still physically sold; they simply produce zero revenue.
  *
  * Returns:
- * - sectorRevenue: revenue per sector from population sales
- * - salesQty: actual quantity sold per sector per good
+ * - sectorRevenue: revenue per sector from population sales (zero-priced sales yield zero revenue)
+ * - salesQty: actual quantity sold per sector per good (from sector production)
+ * - warehouseSalesQty: quantity sold from available-for-sale stock (not attributed to any sector)
  * - unsoldQty: unsold production per sector per good
- * - unmetDemandQty: population demand not met by any sector
+ * - unmetDemandQty: population demand not met by any source
  */
 export function allocatePopulationSales({
 	sectorBids,
 	sectorResults,
 	populationConsumption,
 	prices,
+	availableStock = {} as Partial<Record<keyof Goods, number>>,
 }: {
 	sectorBids: { name: string }[];
 	sectorResults: Record<string, { producedGoods: Record<string, number> }>;
 	populationConsumption: Partial<Goods>;
 	prices: Record<keyof Goods, number>;
+	availableStock?: Partial<Record<keyof Goods, number>>;
 }): {
 	sectorRevenue: Record<string, number>;
 	salesQty: Record<string, Partial<Record<keyof Goods, number>>>;
+	warehouseSalesQty: Partial<Record<keyof Goods, number>>;
+	warehouseRevenue: number;
 	unsoldQty: Record<string, Partial<Record<keyof Goods, number>>>;
 	unmetDemandQty: Partial<Record<keyof Goods, number>>;
 } {
 	const sectorRevenue: Record<string, number> = {};
 	const salesQty: Record<string, Partial<Record<keyof Goods, number>>> = {};
+	const warehouseSalesQty: Partial<Record<keyof Goods, number>> = {};
+	let warehouseRevenue = 0;
 	const unsoldQty: Record<string, Partial<Record<keyof Goods, number>>> = {};
 	const unmetDemandQty: Partial<Record<keyof Goods, number>> = {};
 
@@ -119,12 +141,14 @@ export function allocatePopulationSales({
 		unsoldQty[bid.name] = {};
 	}
 
-	// For each good, allocate population demand to sectors proportionally
+	// For each good, allocate population demand to sectors and available stock proportionally
 	for(const [goodKey, demandQty] of Object.entries(populationConsumption)) {
 		if(!demandQty || demandQty <= 0) continue;
 		const gKey = goodKey as keyof Goods;
 		const price = prices[gKey] ?? 0;
-		if(price <= 0) continue;
+		if(!Number.isFinite(price) || price < 0) {
+			throw new Error(`Invalid price for ${gKey}: ${price}`);
+		}
 
 		// Collect production per sector for this good
 		const sectorProduction: { sectorName: string; qty: number }[] = [];
@@ -140,14 +164,20 @@ export function allocatePopulationSales({
 			}
 		}
 
-		if(totalProduction <= 0) {
-			// No production → all demand is unmet
+		const stockAvailable = availableStock[gKey] ?? 0;
+		const totalSupply = totalProduction + stockAvailable;
+
+		if(totalSupply <= 0) {
+			// No supply → all demand is unmet
 			unmetDemandQty[gKey] = (unmetDemandQty[gKey] ?? 0) + demandQty;
 			continue;
 		}
 
-		// Proportional allocation: each sector sells min(their production, their share of demand)
-		const demandCoverage = Math.min(1, demandQty / totalProduction);
+		// Proportional allocation: each source sells its share of demand, scaled by coverage
+		// coverage = min(1, demand / totalSupply)
+		// When demand <= totalSupply: coverage = demand/totalSupply < 1, all demand met
+		// When demand > totalSupply: coverage = 1, all supply sold, remainder unmet
+		const demandCoverage = Math.min(1, demandQty / totalSupply);
 
 		for(const { sectorName, qty: production } of sectorProduction) {
 			const soldQty = production * demandCoverage;
@@ -158,11 +188,18 @@ export function allocatePopulationSales({
 			unsoldQty[sectorName][gKey] = (unsoldQty[sectorName][gKey] ?? 0) + (production - soldQty);
 		}
 
-		// Track unmet demand (if demand > total production)
-		if(demandQty > totalProduction) {
-			unmetDemandQty[gKey] = (unmetDemandQty[gKey] ?? 0) + (demandQty - totalProduction);
+		// Sell from available stock (colony warehouse inventory, not attributed to any sector)
+		const warehouseSold = stockAvailable * demandCoverage;
+		if(warehouseSold > 0) {
+			warehouseSalesQty[gKey] = (warehouseSalesQty[gKey] ?? 0) + warehouseSold;
+			warehouseRevenue += warehouseSold * price;
+		}
+
+		// Track unmet demand (if demand > total supply)
+		if(demandQty > totalSupply) {
+			unmetDemandQty[gKey] = (unmetDemandQty[gKey] ?? 0) + (demandQty - totalSupply);
 		}
 	}
 
-	return { sectorRevenue, salesQty, unsoldQty, unmetDemandQty };
+	return { sectorRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unsoldQty, unmetDemandQty };
 }

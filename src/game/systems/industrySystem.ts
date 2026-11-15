@@ -104,6 +104,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 capitalMultipliers: industry.capitalMultipliers,
                 selectedMethod: industry.selectedMethod,
                 colonyTreasury: industry.colonyTreasury,
+                householdMoney: industry.householdMoney,
                 sectorInvestment: industry.sectorInvestment,
                 activeLaws: industry.activeLaws,
             };
@@ -160,6 +161,12 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
         for(const [key, value] of Object.entries(patch.money)) {
             industry.money[key as keyof IndustrialSectors] = value;
         }
+    }
+    if(patch.colonyTreasury !== undefined) {
+        industry.colonyTreasury = patch.colonyTreasury;
+    }
+    if(patch.householdMoney !== undefined) {
+        industry.householdMoney = patch.householdMoney;
     }
     // if(patch.sectorGoods) {
     //     for(const [key, goods] of Object.entries(patch.sectorGoods)) {

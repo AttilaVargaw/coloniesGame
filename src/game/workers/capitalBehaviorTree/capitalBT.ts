@@ -8,6 +8,7 @@ export interface CapitalBlackboard {
     decay: number;
     prices: Record<string, number>;
     money: number;
+    availableGoods: Partial<Record<keyof Goods, number>>;
 
     // Decision outputs
     wearAmounts: Partial<Goods>;
@@ -25,6 +26,7 @@ export const defaultCapitalBlackboard = (sectorName: string): CapitalBlackboard 
     decay: 0,
     prices: {},
     money: 0,
+    availableGoods: {},
     wearAmounts: {},
     decayAmounts: {},
     replenishAmounts: {},
