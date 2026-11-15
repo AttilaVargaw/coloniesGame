@@ -127,6 +127,33 @@ function processIndustry(
     const tickStartGoods = { ...goods };
     const tickStartMoney = { ...startingMoney };
 
+    // Normalize opening balances once — use these consistently for all calculations
+    const openingTreasury = startingTreasury ?? 0;
+    const openingHouseholdMoney = startingHouseholdMoney ?? 0;
+
+    // Validate opening balances before any economic processing
+    if(!Number.isFinite(openingTreasury) || openingTreasury < 0) {
+        throw new Error(`Invalid opening treasury for ${entityId}: ${openingTreasury}`);
+    }
+
+    if(!Number.isFinite(openingHouseholdMoney) || openingHouseholdMoney < 0) {
+        throw new Error(`Invalid opening household cash for ${entityId}: ${openingHouseholdMoney}`);
+    }
+
+    for(const [name, balance] of Object.entries(tickStartMoney)) {
+        if(!Number.isFinite(balance) || balance < 0) {
+            throw new Error(`Invalid opening sector money for ${entityId}.${name}: ${balance}`);
+        }
+    }
+
+    // Validate population wealth values before constructing cashByPop
+    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        const wealth = pop.wealth ?? 0;
+        if(!Number.isFinite(wealth) || wealth < 0) {
+            throw new Error(`Invalid population wealth for ${entityId}.${key}: ${wealth}`);
+        }
+    }
+
     let currentPrices = prices;
     let finalSalaries: Record<keyof Population, number> = adjustedSalaries;
     let finalWorkerMarketRatios: Record<keyof Population, number> = {} as Record<keyof Population, number>;
@@ -134,8 +161,8 @@ function processIndustry(
     let finalLaborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
     let finalGoodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
     let newMoney: Record<string, number> = { ...tickStartMoney };
-    let newTreasury: number = startingTreasury;
-    let newHouseholdMoney: number = startingHouseholdMoney;
+    let newTreasury = openingTreasury;
+    let newHouseholdMoney = openingHouseholdMoney;
     let currentGoods: Goods = { ...tickStartGoods };
     let previousDeprivation = { ...(colonyDeprivationMemory.get(entityId) ?? {}) };
 
@@ -437,6 +464,19 @@ function processIndustry(
         cashByPop[key] = (pop.wealth ?? 0) + (wagesByPop[key] ?? 0);
     }
 
+    // Reconcile opening household cash against population wealth before allocating sales.
+    // The ledger and allocator must agree on how much household money exists.
+    const actualStartingHouseholdMoney = Object.values(population).reduce(
+        (sum, pop) => sum + (pop.wealth ?? 0),
+        0,
+    );
+    if(Math.abs(actualStartingHouseholdMoney - openingHouseholdMoney) > 1e-6) {
+        throw new Error(
+            `Starting household cash mismatch: population=${actualStartingHouseholdMoney}, ` +
+            `householdMoney=${openingHouseholdMoney}`,
+        );
+    }
+
     const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandByPop, spendingByPop } =
         allocatePopulationSales({
             sectorBids: finalSectorBids,
@@ -445,7 +485,35 @@ function processIndustry(
             cashByPop,
             prices: prices,
             availableStock: currentGoods,
+            goodPriority: ESSENTIAL_GOODS,
         });
+
+    // Validate allocator results: total household spending must equal total sales revenue
+    const totalPopulationSpending = Object.values(spendingByPop)
+        .reduce((sum, value) => sum + value, 0);
+
+    const totalSalesRevenue =
+        Object.values(popSalesRevenue).reduce((sum, value) => sum + value, 0)
+        + warehouseRevenue;
+
+    if(Math.abs(totalPopulationSpending - totalSalesRevenue) > 1e-6) {
+        throw new Error(
+            `Household spending mismatch: spending=${totalPopulationSpending}, ` +
+            `sales=${totalSalesRevenue}`,
+        );
+    }
+
+    // Validate each group's spending is within its cash budget
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const spending = spendingByPop[key] ?? 0;
+        const available = cashByPop[key] ?? 0;
+
+        if(spending > available + 1e-6) {
+            throw new Error(
+                `Population ${key} exceeded cash budget: ${spending} > ${available}`,
+            );
+        }
+    }
 
     // Actual household consumption = sector production sales + warehouse stock sales
     const fulfilledDemandQty: Partial<Goods> = {};
@@ -497,27 +565,34 @@ function processIndustry(
     }
 
     // Update population wealth based on actual income and spending (full cash balance, no smoothing)
+    // Every population group gets a wealth update, even groups without a consumption update,
+    // so no wage credit is lost.
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
         const k = key as keyof Population;
         const actualIncome = wagesByPop[k] ?? 0;
         const actualSpending = spendingByPop[k] ?? 0;
         const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
 
-        if(populationUpdates[k]) {
-            populationUpdates[k] = {
-                ...populationUpdates[k],
-                wealth: Math.max(0, targetWealth),
-            };
+        if(!Number.isFinite(targetWealth) || targetWealth < -1e-6) {
+            throw new Error(
+                `Population ${k} overspent: resulting cash=${targetWealth}, income=${actualIncome}, spending=${actualSpending}`
+            );
         }
+
+        populationUpdates[k] = {
+            ...populationUpdates[k],
+            wealth: Math.max(0, targetWealth),
+        };
     }
 
-    // Derive aggregate household money from population wealth (authoritative source)
-    newHouseholdMoney = 0;
-    for(const [, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
-        if(update && update.wealth !== undefined) {
-            newHouseholdMoney += update.wealth;
-        }
-    }
+    // Derive aggregate household money from all population wealth (authoritative source).
+    // Use the final population state rather than relying on partial-update semantics.
+    newHouseholdMoney = Object.keys(population).reduce((sum, key) => {
+        const popKey = key as keyof Population;
+        const update = populationUpdates[popKey];
+        const wealth = update?.wealth ?? population[popKey].wealth ?? 0;
+        return sum + wealth;
+    }, 0);
 
     // Credit treasury with warehouse sales revenue
     newTreasury += warehouseRevenue;
@@ -549,14 +624,17 @@ function processIndustry(
 
     // Build grown population: apply natural growth from computePopulationConsumption
     // to the original population, then apply mortality to the grown result.
+    // Every group's wealth update is carried forward, even groups without a number update,
+    // so mortality operates on current wealth not stale wealth.
     const grownPopulation: Population = { ...population };
     for(const [key, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
-        if(update && update.number !== undefined) {
-            grownPopulation[key] = {
-                ...grownPopulation[key],
-                number: update.number,
-            };
-        }
+        if(!update) continue;
+
+        grownPopulation[key] = {
+            ...grownPopulation[key],
+            ...(update.number !== undefined ? { number: update.number } : {}),
+            ...(update.wealth !== undefined ? { wealth: update.wealth } : {}),
+        };
     }
 
     // Apply mortality to the grown population
@@ -578,26 +656,42 @@ function processIndustry(
     // populationUpdates already has smoothed qol, expectedQol, wealth, requirements
     // from computePopulationConsumption. Only update number and populationChange.
     // populationChange is calculated against the original tick-start population.
-    for(const [key, pop] of Object.entries(mortalityAdjustedPopulation) as [keyof Population, any][]) {
+    for(const [key, pop] of Object.entries(mortalityAdjustedPopulation) as [keyof Population, PopulationBreakdown][]) {
         const originalPop = population[key];
         if(!originalPop) continue;
 
-        if(populationUpdates[key]) {
-            populationUpdates[key] = {
-                ...populationUpdates[key],
-                number: pop.number,
-                populationChange: pop.number - originalPop.number,
-            };
-        } else {
-            // Category had no population update but experienced mortality
-            populationUpdates[key] = {
-                qol: originalPop.qol ?? 0,
-                expectedQol: originalPop.expectedQol ?? 0,
-                populationChange: pop.number - originalPop.number,
-                wealth: originalPop.wealth ?? 0,
-                number: pop.number,
-                requirements: {},
-            };
+        populationUpdates[key] = {
+            ...populationUpdates[key],
+            number: pop.number,
+            wealth: pop.wealth ?? 0,
+            populationChange: pop.number - originalPop.number,
+        };
+    }
+
+    // Mortality must not alter household cash — wealth is total cash per category,
+    // not per capita. Verify the final population wealth matches the derived
+    // householdMoney before continuing.
+    const finalPopulationCash = Object.values(mortalityAdjustedPopulation)
+        .reduce((sum, pop) => sum + (pop.wealth ?? 0), 0);
+
+    if(Math.abs(finalPopulationCash - newHouseholdMoney) > 1e-6) {
+        throw new Error(
+            `Household cash mismatch for ${entityId}: population=${finalPopulationCash}, ` +
+            `householdMoney=${newHouseholdMoney}`,
+        );
+    }
+
+    // Per-category wealth must match the update entry — mortality changes
+    // population count, not cash held by a category.
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const actualWealth = mortalityAdjustedPopulation[key].wealth ?? 0;
+        const expectedWealth = populationUpdates[key]?.wealth ?? 0;
+
+        if(Math.abs(actualWealth - expectedWealth) > 1e-6) {
+            throw new Error(
+                `Population wealth mismatch for ${entityId}.${key}: ` +
+                `population=${actualWealth}, update=${expectedWealth}`,
+            );
         }
     }
 
@@ -623,9 +717,29 @@ function processIndustry(
     // remainingGoods is the authoritative inventory after capital purchases
     const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
 
+    // Reject negative closing sector balances — only floating-point noise tolerated
+    for(const [name, balance] of Object.entries(newMoney)) {
+        if(!Number.isFinite(balance) || balance < -1e-6) {
+            throw new Error(
+                `Invalid closing sector balance for ${entityId}.${name}: ${balance}`,
+            );
+        }
+        if(balance < 0) {
+            newMoney[name] = 0;
+        }
+    }
+
+    // Add warehouse sales back so the goods delta does not double-count them.
+    // Warehouse sales are deducted once through fulfilledDemandQty in finalizeGoods.
+    const goodsForDelta: Goods = { ...postCapitalGoods };
+    for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+        const key = goodKey as keyof Goods;
+        goodsForDelta[key] = (goodsForDelta[key] ?? 0) + (qty ?? 0);
+    }
+
     const colonyGoodsDelta = computeColonyGoodsDelta(
         goods,
-        postCapitalGoods,
+        goodsForDelta,
         activeSectors,
         sectorResults,
     );
@@ -718,9 +832,9 @@ function processIndustry(
         openingBalances[name] = tickStartMoney[name] ?? 0;
         closingBalances[name] = newMoney[name] ?? 0;
     }
-    openingBalances["colony_treasury"] = startingTreasury;
+    openingBalances["colony_treasury"] = openingTreasury;
     closingBalances["colony_treasury"] = newTreasury;
-    openingBalances["population"] = startingHouseholdMoney;
+    openingBalances["population"] = openingHouseholdMoney;
     closingBalances["population"] = newHouseholdMoney;
 
     const conservation = ledger.verifyConservation(openingBalances, closingBalances);
@@ -849,8 +963,18 @@ function finalizeGoods(
 
     for(const key in finalGoods) {
         const goodKey = key as keyof Goods;
-        if(NON_CUMULATING_GOODS.has(goodKey)) {
-            finalGoods[goodKey] = Math.max(0, finalGoods[goodKey] ?? 0);
+        const value = finalGoods[goodKey] ?? 0;
+
+        if(!Number.isFinite(value)) {
+            throw new Error(`Invalid final inventory for ${goodKey}: ${value}`);
+        }
+
+        if(NON_CUMULATING_GOODS.has(goodKey) && value < -1e-6) {
+            throw new Error(`Inventory deficit for ${goodKey}: ${value}`);
+        }
+
+        if(NON_CUMULATING_GOODS.has(goodKey) && value < 0) {
+            finalGoods[goodKey] = 0; // tolerate floating-point noise only
         }
     }
 
@@ -912,6 +1036,35 @@ function validateTickResult(result: IndustryTickResult): boolean {
         }
         if(!Number.isFinite(pop.wealth) || pop.wealth < 0) {
             console.error(`[IndustryTick] Invalid population wealth for ${result.entityId}.${key}: ${pop.wealth}`);
+            return false;
+        }
+    }
+
+    // Validate aggregate household money matches sum of population wealth
+    const populationCash = Object.values(result.population)
+        .reduce((sum, pop) => sum + pop.wealth, 0);
+
+    if(Math.abs(populationCash - result.householdMoney) > 1e-6) {
+        console.error(
+            `[IndustryTick] Household cash does not match population wealth for ${result.entityId}: ` +
+            `population=${populationCash}, householdMoney=${result.householdMoney}`,
+        );
+        return false;
+    }
+
+    // Validate populationUpdates fields
+    for(const [key, update] of Object.entries(result.populationUpdates)) {
+        if(!update) continue;
+
+        if(update.wealth !== undefined &&
+            (!Number.isFinite(update.wealth) || update.wealth < 0)) {
+            console.error(`[IndustryTick] Invalid population update wealth for ${result.entityId}.${key}`);
+            return false;
+        }
+
+        if(update.number !== undefined &&
+            (!Number.isFinite(update.number) || update.number < 0)) {
+            console.error(`[IndustryTick] Invalid population update number for ${result.entityId}.${key}`);
             return false;
         }
     }

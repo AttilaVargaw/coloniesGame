@@ -46,13 +46,17 @@ describe("TransactionLedger", () => {
 
     it("tracks external injections and destructions", () => {
         const ledger = new TransactionLedger();
-        ledger.record({ tick: 1, type: "external_injection", amount: 5000 });
-        ledger.record({ tick: 1, type: "external_destruction", amount: 1000 });
+        // External injection: sellerId is the account receiving money
+        ledger.record({ tick: 1, type: "external_injection", sellerId: "A", amount: 5000 });
+        // External destruction: buyerId is the account losing money
+        ledger.record({ tick: 1, type: "external_destruction", buyerId: "A", amount: 1000 });
+        // Net: A goes from 1000 + 5000 - 1000 = 5000
         const result = ledger.verifyConservation(
             { A: 1000 },
-            { A: 1000 },
+            { A: 5000 },
         );
         expect(result.valid).toBe(true);
+        expect(result.error).toBeLessThan(1e-6);
     });
 });
 
