@@ -228,7 +228,7 @@ function computeLayout(techsRecord: Record<string, typeof techs[string]>): {
     edges: { points: { x: number; y: number }[] }[]
     maxLevelWidth: number
 } {
-    const ageOrder: Age[] = ["earlySpaceTravel", "rediscovery", "imperial", "techRevolution", "unification", "night"]
+    const ageOrder: Age[] = ["earlySpaceTravel", "rediscovery", "imperial", "techRevolution", "unification"]
     const ageIndex = (age: Age) => ageOrder.indexOf(age)
     const allIds = Object.keys(techsRecord)
 
@@ -319,14 +319,7 @@ function computeLayout(techsRecord: Record<string, typeof techs[string]>): {
     return { sortedLevels, positions, edges, maxLevelWidth }
 }
 
-export function Research({ colony }: { colony: Entity | null }) {
-    if(!colony) {
-        return (
-            <div className="p-4 text-center text-gray-400">
-                No colony selected
-            </div>
-        )
-    }
+export function Research({ colony }: { colony: Entity }) {
     const research = colony.getComponent(TechResearchComponent)
     const engine = useGameEngine()
     const [, setTick] = useState(0)

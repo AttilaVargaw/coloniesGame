@@ -118,12 +118,12 @@ describe("getGoodRequirementsAndQoL", () => {
         expect(result.requirements).toEqual({})
     })
 
-    // it("returns QOL 0 with level 0 requirements when salary covers level 0", () => {
-    //     const result = getGoodRequirementsAndQoL(700, basePrices, breakdown(5, 0))
-    //     expect(result.qol).toBeGreaterThanOrEqual(0)
-    //     expect(result.requirements.food).toBeGreaterThan(0)
-    //     expect(Object.keys(result.requirements).length).toBeGreaterThan(0)
-    // })
+    it("returns QOL 0 with level 0 requirements when salary covers level 0", () => {
+        const result = getGoodRequirementsAndQoL(800, basePrices, breakdown(5, 0))
+        expect(result.qol).toBeGreaterThanOrEqual(0)
+        expect(result.requirements.food).toBeGreaterThan(0)
+        expect(Object.keys(result.requirements).length).toBeGreaterThan(0)
+    })
 
     it("higher salary produces higher QOL", () => {
         const low = getGoodRequirementsAndQoL(100, basePrices, breakdown(1, 0))

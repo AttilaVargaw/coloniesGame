@@ -8,7 +8,7 @@ import { TradeBreakdown } from "./tradeBreakdown";
 import { MigrationBreakdown } from "./migrationBreakdown";
 import { TabsContent } from "../ui/tabs";
 
-export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
+type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
 
 function DialogPage({ value, children }: { value: DialogPage; children: ReactNode }) {
     return (

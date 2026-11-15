@@ -34,7 +34,7 @@ type RingInstance = {
     outerRadius: number
 }
 
-export class WebGLRingNode extends RenderableNode {
+class WebGLRingNode extends RenderableNode {
     constructor(
         entity: Entity,
         public position: PositionComponent,

@@ -7,8 +7,6 @@ import { Research } from "./research";
 import { LawsPanel } from "./lawsPanel";
 import { IndustryPolicyPanel } from "./industryPolicyPanel";
 
-export type DialogPage = "summary" | "population" | "warehouse" | "industry" | "trade" | "migration";
-
 export function DialogInner({ industry, colony }: { industry: IndustryComponent; colony: Entity }): ReactNode {
     return <>
         <TabsContent style={{ overflowY: "auto", }} value="religion">

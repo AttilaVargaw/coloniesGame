@@ -1,5 +1,5 @@
 
-export type QueueOptions<Data> = {
+type QueueOptions<Data> = {
     capacity?: number
     onOverflow?: (dropped: Data) => void
 }

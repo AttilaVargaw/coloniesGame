@@ -7,7 +7,7 @@ export type TechEffect =
     | { type: "unlock_good"; good: string };
 
 export type TechType = "archeological" | "technological" | "military" | "diplomatic";
-export type Age = "rediscovery" | "imperial" | "techRevolution" | "unification" | "earlySpaceTravel" | "night"
+export type Age = "rediscovery" | "imperial" | "techRevolution" | "unification" | "earlySpaceTravel"
 
 export type TechDefinition = {
     id: string;
@@ -35,7 +35,6 @@ export const techLevels = new Map<Age, TechLevel>([
     ["imperial", { previous: "rediscovery", minTechs: new Set(["automation"]) }],
     ["techRevolution", { previous: "imperial", minTechs: new Set(["robotics"]) }],
     ["unification", { previous: "techRevolution", minTechs: new Set(["synteticLifeformUnit"]) }],
-    ["night", { previous: "unification", minTechs: new Set([""]) }]
 ])
 
 export const techs: Record<string, TechDefinition> = {
@@ -706,44 +705,14 @@ export const techs: Record<string, TechDefinition> = {
         adoptionModel: "instant",
         adoptionSpeed: 28,
         researchedText: "These automatic turrets can fire reliably and accurately in space. We use a combination of traditional chemical propellant to make the shell moving which is further accelerated by a railgun system. This way we can fire shells at high speeds without the need for a complicated barrel."
-    },
-    "commandNavigationSystem": {
-        type: "technological",
-        age: "night",
-        id: "commandNavigationSystem",
-        name: "Command Navigation System",
-        description: "We need to maximalize the computing capabilities of our ships. By unifying the all of the computer systems of our ships we can get the maximum out of our ships.",
-        cost: { researchPoints: 10000, days: 28 },
-        effects: [
-
-        ],
-        prerequisites: new Set([""]),
-        adoptionModel: "instant",
-        adoptionSpeed: 28,
-        researchedText: "This new highly effective operating system can multiply the performance of any system of our ships. High ratio of automation can lower the crew requirements of our ships."
-    },
-    "warMemorial": {
-        type: "technological",
-        age: "night",
-        id: "warMuseum",
-        name: "War Museum",
-        description: "Although the war is long over, we must not forget why so many sacrificed so much for freedom. For historical purposes, we should build a war memorial, but not a usual one. There is one particular ship that is not worth updating. Instead of scrapping it, we should build a war museum out of it.",
-        cost: { researchPoints: 10000, days: 28 },
-        effects: [
-
-        ],
-        prerequisites: new Set(["commandNavigationSystem"]),
-        adoptionModel: "instant",
-        adoptionSpeed: 28,
-        researchedText: "Everything is finished. We collected and restored all the old decommissioned fighters we could find to their former glory. We have all the memorabilia we could find. We even found original Centurions in a small tourist trap on Canceron. Since we kept the old Galactica, we will use it as a museum to house everything. Even the commander is a relic from the war. It's ironic that the first ship of its class will last the longest."
-    },
+    }
 } as const
 
 export const TECHS = new Map<string, TechDefinition>((Object.entries(techs)).map(([key, value]) => {
     return [key, value]
 }))
 
-export const techTypes = new Map<TechType, Set<string>>()
+const techTypes = new Map<TechType, Set<string>>()
 
 TECHS.forEach((tech, key) => {
     if(!techTypes.has(tech.type)) {

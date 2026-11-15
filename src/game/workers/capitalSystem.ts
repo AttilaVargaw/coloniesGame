@@ -14,7 +14,7 @@ import {
 } from "./capitalBehaviorTree/capitalActions";
 import { defaultCapitalBlackboard } from "./capitalBehaviorTree/capitalBT";
 
-export interface CapitalSystemResult {
+interface CapitalSystemResult {
     newCapitalStock: Record<string, Partial<Goods>>;
     replenishmentDelta: Partial<Goods>;
     moneySpent: Record<string, number>;

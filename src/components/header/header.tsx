@@ -65,7 +65,7 @@ export function Header() {
                             <Button
                                 id={`${speed}-button`}
                                 onClick={setSpeed}
-                                className={cn("px-2", "py-0.5", "rounded-sm", "text-[10px]", "bg-white/5", "border border-white/10", "hover:bg-white/10", "transition-colors", multiplier === speed ? "bg-white/20 text-white" : "text-white/40")}
+                                className={cn("px-2 py-0.5 rounded-sm text-[10px] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors", multiplier === speed ? "bg-white/20 text-white" : "text-white/40")}
                             >
                                 {speed || "||"}{speed > 0 && "x"}
                             </Button>

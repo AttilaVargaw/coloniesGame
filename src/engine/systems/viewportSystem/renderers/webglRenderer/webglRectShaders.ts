@@ -1,7 +1,7 @@
 import { buildShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram } from "./ShaderProgram"
 
-export const VERTEX_SHADER_SOURCE = `#version 300 es
+const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 aPosition;
 in vec2 aTexCoord;
 

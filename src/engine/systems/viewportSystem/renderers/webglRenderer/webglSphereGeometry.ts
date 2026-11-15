@@ -6,7 +6,7 @@ export interface SphereMesh {
     indices: Uint16Array | Uint32Array
 }
 
-export interface AsteroidMesh extends SphereMesh {
+interface AsteroidMesh extends SphereMesh {
     meshIndex: number
 }
 

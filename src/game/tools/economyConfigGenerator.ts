@@ -1,10 +1,8 @@
 import { basePrices, Goods, NON_CUMULATING_GOODS } from "../data/Goods.ts";
 import { Population } from "../data/Population.ts";
 import { createEmptyWarehouse } from "../factories/createStarterWarehouse.ts";
-import { createStarterPopulation } from "../data/getPopulationBreakdown.ts";
 import { industrySectorBlueprints } from "../systems/sectorBlueprints.ts";
 import type { IndustrialSectors } from "../components/Factories.ts";
-import { SettlementType } from "../components/industryComponent.ts";
 import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import type { SectorBid } from "../workers/SectorBid.ts";
@@ -24,6 +22,7 @@ import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree
 import { createIndustryTree } from "../workers/industryBehaviorTree/industryTree.ts";
 import { defaultIndustryBlackboard } from "../workers/industryBehaviorTree/industryBT.ts";
 import { PER_CAPITA_SECTOR_RATIOS } from "../factories/createStarterIndustry.ts";
+import { generateColonyConfig } from "./generateColonyConfig.ts";
 
 export const sectors = new Set<keyof IndustrialSectors>(
 	(Object.keys(PER_CAPITA_SECTOR_RATIOS) as unknown) as (keyof IndustrialSectors)[]
@@ -65,7 +64,7 @@ export interface ColonyConfig {
 	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>;
 }
 
-const DEFAULT_CONFIG: ColonyConfig = {
+export const DEFAULT_CONFIG: ColonyConfig = {
 	populationSize: 50_000_000,
 	activeSectors: Array.from(sectors),
 	starterMoneyPerSector: 50_000_000,
@@ -538,7 +537,7 @@ function finalizeGoods(
 	return finalGoods;
 }
 
-function seedCapitalStock(
+export function seedCapitalStock(
 	sector: keyof IndustrialSectors,
 	multiplier: number
 ): Partial<Goods> {
@@ -562,63 +561,6 @@ function getSectorsMakingThisGood(goodKey: keyof Goods): (keyof IndustrialSector
 	return result;
 }
 
-
-export function generateColonyConfig(
-	config: Partial<ColonyConfig> = {},
-	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>
-): IndustryTickInput {
-	const cfg = { ...DEFAULT_CONFIG, ...config };
-	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
-
-	const goods = createEmptyWarehouse();
-	for(const key of Object.keys(goods) as (keyof Goods)[]) {
-		goods[key] *= cfg.initialGoodsMultiplier;
-	}
-	const population = createStarterPopulation(populationSize);
-
-	const money: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-	const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
-	const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-	const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-	const sectorInvestment: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-	const selectedMethod: Record<keyof IndustrialSectors, string | null> = {} as Record<keyof IndustrialSectors, string | null>;
-
-	for(const sector of activeSectors) {
-		money[sector] = starterMoneyPerSector;
-		const sectorMultiplier = capitalStockMultipliers?.[sector] ?? capitalStockMultiplier;
-		capitalStock[sector] = seedCapitalStock(sector, sectorMultiplier);
-		techMultipliers[sector] = 1;
-		laborAssigned[sector] = 0;
-		sectorInvestment[sector] = 0;
-		selectedMethod[sector] = null;
-	}
-
-	return {
-		entityId: "test-colony",
-		activeSectors: new Set(activeSectors),
-		goods,
-		population,
-		techMultipliers,
-		laborAssigned,
-		capitalStock,
-		money,
-		settlementType: "colony" as SettlementType,
-		allowedSectors: [...activeSectors],
-		workerEfficiencyMultipliers: Object.fromEntries(
-			Object.keys(population).map((k) => [k, 1])
-		) as Record<keyof Population, number>,
-		materialRequirementMultipliers: Object.fromEntries(
-			Object.keys(goods).map((k) => [k, 1])
-		) as Record<keyof Goods, number>,
-		capitalMultipliers: Object.fromEntries(
-			Array.from(activeSectors).map((k) => [k, 1])
-		) as Record<keyof IndustrialSectors, number>,
-		selectedMethod,
-		colonyTreasury: 0,
-		sectorInvestment,
-		activeLaws: new Set(),
-	};
-}
 
 export function validateColonyConfig(
 	input: IndustryTickInput,
@@ -711,13 +653,6 @@ export function generateValidatedColonyConfig(
 		if(validation.viable) {
 			return { config: input, validation };
 		}
-
-		const base = config as ColonyConfig;
-		config = {
-			...base,
-			starterMoneyPerSector: base.starterMoneyPerSector * 2,
-			initialGoodsMultiplier: base.initialGoodsMultiplier * 2,
-		} as Partial<ColonyConfig>;
 
 		// Double capital goods for sectors that produce the failed good
 		if(validation.failedGood) {

@@ -1,7 +1,3 @@
-export function sumValues(o: { [key: string]: number }) {
-    return Object.values(o).reduce((acc, value) => acc + value, 0)
-}
-
 export function convertToReadable(n: number) {
     const abs = Math.abs(n);
 

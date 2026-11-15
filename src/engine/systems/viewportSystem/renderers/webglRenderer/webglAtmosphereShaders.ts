@@ -2,7 +2,7 @@ import { buildShaderProgram } from "./webglSphereShaders"
 import type { ShaderProgram, ShaderProgramAttribs, ShaderProgramUniforms } from "./ShaderProgram"
 import { PI } from "./common";
 
-export const ATMOSPHERE_VERTEX_SHADER_SOURCE = `#version 300 es
+const ATMOSPHERE_VERTEX_SHADER_SOURCE = `#version 300 es
 in vec3 aPosition;
 in vec3 aNormal;
 
@@ -35,7 +35,7 @@ void main() {
     gl_Position = uProjection * uView * worldPos;
 }`;
 
-export const ATMOSPHERE_FRAGMENT_SHADER_SOURCE = `#version 300 es
+const ATMOSPHERE_FRAGMENT_SHADER_SOURCE = `#version 300 es
 precision mediump float;
 
 ${PI}
