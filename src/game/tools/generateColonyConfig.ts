@@ -3,7 +3,7 @@ import { SettlementType } from "../components/industryComponent";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
-import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
+import { createEmptyWarehouse, createStarterWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustryTickInput } from "../workers/IndustryTickInput";
 import { ColonyConfig, DEFAULT_CONFIG, seedCapitalStock } from "./economyConfigGenerator";
 
@@ -14,9 +14,9 @@ export function generateColonyConfig(
 	const cfg = { ...DEFAULT_CONFIG, ...config };
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
 
-	const goods = createEmptyWarehouse();
+	const goods = createStarterWarehouse(populationSize);
 	for(const key of Object.keys(goods) as (keyof Goods)[]) {
-		goods[key] *= cfg.initialGoodsMultiplier;
+		goods[key] *= cfg.initialGoodsMultipliers.get(key) ?? 50_000;
 	}
 	const population = createStarterPopulation(populationSize);
 
@@ -28,8 +28,8 @@ export function generateColonyConfig(
 	const selectedMethod: Record<keyof IndustrialSectors, string | null> = {} as Record<keyof IndustrialSectors, string | null>;
 
 	for(const sector of activeSectors) {
-		money[sector] = starterMoneyPerSector;
 		const sectorMultiplier = capitalStockMultipliers?.[sector] ?? capitalStockMultiplier;
+		money[sector] = starterMoneyPerSector * sectorMultiplier;
 		capitalStock[sector] = seedCapitalStock(sector, sectorMultiplier);
 		techMultipliers[sector] = 1;
 		laborAssigned[sector] = 0;

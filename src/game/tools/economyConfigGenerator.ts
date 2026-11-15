@@ -60,8 +60,8 @@ export interface ColonyConfig {
 	activeSectors: (keyof IndustrialSectors)[];
 	starterMoneyPerSector: number;
 	capitalStockMultiplier: number;
-	initialGoodsMultiplier: number;
-	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>;
+	initialGoodsMultipliers: Map<keyof Goods, number>;
+	capitalStockMultipliers: Map<keyof IndustrialSectors, number>;
 }
 
 export const DEFAULT_CONFIG: ColonyConfig = {
@@ -69,7 +69,8 @@ export const DEFAULT_CONFIG: ColonyConfig = {
 	activeSectors: Array.from(sectors),
 	starterMoneyPerSector: 50_000_000,
 	capitalStockMultiplier: 1,
-	initialGoodsMultiplier: 50_000,
+	initialGoodsMultipliers: new Map(),
+	capitalStockMultipliers: new Map()
 } as const;
 
 export interface ColonyValidationResult {
@@ -660,6 +661,8 @@ export function generateValidatedColonyConfig(
 			const sectors = getSectorsMakingThisGood(good);
 			for(const sector of sectors) {
 				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 2;
+
+				config.initialGoodsMultipliers!.set(good, (config.initialGoodsMultipliers?.get(good) ?? 1) * 2)
 			}
 		}
 	}
@@ -674,19 +677,17 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 		return s / 4294967296;
 	};
 
-	const starterMoneyPerSector = Math.round(1_000_000 + next() * 10_000_000);
+	const starterMoneyPerSector = Math.round(10_000_000 + next() * 100_000_000);
 	const capitalStockMultiplier = 1 + next() * 20;
 
-	const shuffled = [...sectors].sort(() => next() - 0.5);
-	const count = Math.floor(sectors.size + next() * (shuffled.length - sectors.size + 1));
-	const activeSectors = shuffled.slice(0, count);
+	// const shuffled = [...sectors].sort(() => next() - 0.5);
+	// const count = Math.floor(sectors.size + next() * (shuffled.length - sectors.size + 1));
 
 	return generateColonyConfig({
 		populationSize,
-		activeSectors,
+		activeSectors: [...sectors],
 		starterMoneyPerSector,
 		capitalStockMultiplier,
-		initialGoodsMultiplier: 500,
 	});
 }
 
