@@ -404,7 +404,6 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		activeSectors,
 		sectorResults,
 		replenishmentDelta,
-		currentPrices
 	);
 
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
@@ -459,6 +458,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		money: newMoney,
 		settlementType,
 		allowedSectors,
+		unmetDemand: {},
+		deprivation: {},
 	};
 
 	state.lastResult = result;

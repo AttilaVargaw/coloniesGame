@@ -7,9 +7,12 @@ export class ApplyWear extends Action<CapitalBlackboard> {
         bb.wearAmounts = {};
         for(const [goodKey, rate] of Object.entries(bb.capitalGoods)) {
             const key: keyof Goods = goodKey as keyof Goods;
-            const consumed = rate * bb.productionRatio;
-            bb.wearAmounts[key] = consumed;
-            bb.currentStock[key] = Math.max(0, (bb.currentStock[key] ?? 0) - consumed);
+            const desiredWear = rate * bb.productionRatio;
+            const available = bb.currentStock[key] ?? 0;
+            // Cap wear at actual available stock
+            const actualWear = Math.min(desiredWear, available);
+            bb.wearAmounts[key] = actualWear;
+            bb.currentStock[key] = Math.max(0, available - actualWear);
         }
         return "SUCCESS";
     }

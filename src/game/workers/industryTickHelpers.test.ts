@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { allocatePopulationSales } from "./transactionLedger"
 import { distributePopulationSpending, pruneMemory, trySetPatchField } from "./industryTickHelpers"
 import { shallowDiff } from "./shallowDiff"
 import type { SectorBid } from "./SectorBid"
@@ -120,6 +121,114 @@ describe("distributePopulationSpending", () => {
 
         // food: spending = 100 * 30 = 3000, sectorA produces all 100 → gets 3000
         expect(result.sectorA).toBe(8000)
+    })
+})
+
+describe("allocatePopulationSales", () => {
+    const prices: Record<string, number> = { food: 30, oil: 100 }
+
+    function makeResult(name: string, produced: Record<string, number>) {
+        return { [name]: { producedGoods: produced } }
+    }
+
+    it("caps sales at actual production when demand exceeds supply", () => {
+        const bids = [makeBid("sectorA")]
+        // Population demands 100 food, but sector only produces 60
+        const sectorResults = makeResult("sectorA", { food: 60 })
+        const populationConsumption = { food: 100 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+        })
+
+        // Actual sales = 60 (production), not 100 (demand)
+        const totalSales = Object.values(result.salesQty).reduce(
+            (sum, sq) => sum + Object.values(sq).reduce((a, b) => a + b, 0),
+            0
+        )
+        expect(totalSales).toBe(60)
+
+        // Unmet demand = 100 - 60 = 40
+        expect(result.unmetDemandQty.food).toBe(40)
+
+        // Revenue = 60 * 30 = 1800
+        expect(result.sectorRevenue.sectorA).toBeCloseTo(1800, 4)
+    })
+
+    it("fulfilled demand equals sum of salesQty across all sectors", () => {
+        const bids = [makeBid("sectorA"), makeBid("sectorB")]
+        // Two sectors produce 30 food each = 60 total; demand is 100
+        const sectorResults = {
+            sectorA: { producedGoods: { food: 30 } },
+            sectorB: { producedGoods: { food: 30 } },
+        }
+        const populationConsumption = { food: 100 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+        })
+
+        // Each sector sells 30 (proportional: 30/60 * 100 = 50 each... wait)
+        // demandCoverage = min(1, 100/60) = 1
+        // soldQty = production * 1 = production for each
+        // So sectorA sells 30, sectorB sells 30
+        expect(result.salesQty.sectorA.food).toBe(30)
+        expect(result.salesQty.sectorB.food).toBe(30)
+
+        // Total fulfilled = 60
+        const fulfilledDemandQty: Record<string, number> = {}
+        for(const sectorSales of Object.values(result.salesQty)) {
+            for(const [goodKey, qty] of Object.entries(sectorSales)) {
+                fulfilledDemandQty[goodKey] = (fulfilledDemandQty[goodKey] ?? 0) + qty
+            }
+        }
+        expect(fulfilledDemandQty.food).toBe(60)
+
+        // Unmet = 40
+        expect(result.unmetDemandQty.food).toBe(40)
+    })
+
+    it("sells full demand when production exceeds demand", () => {
+        const bids = [makeBid("sectorA")]
+        // Sector produces 150 food, demand is 100
+        const sectorResults = makeResult("sectorA", { food: 150 })
+        const populationConsumption = { food: 100 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+        })
+
+        // Sells exactly demand (100), not all production (150)
+        expect(result.salesQty.sectorA.food).toBe(100)
+        expect(result.unsoldQty.sectorA.food).toBe(50)
+        expect(result.unmetDemandQty.food).toBeUndefined()
+        expect(result.sectorRevenue.sectorA).toBeCloseTo(3000, 4) // 100 * 30
+    })
+
+    it("no production means all demand is unmet", () => {
+        const bids = [makeBid("sectorA")]
+        const sectorResults = makeResult("sectorA", { food: 0 })
+        const populationConsumption = { food: 100 }
+
+        const result = allocatePopulationSales({
+            sectorBids: bids,
+            sectorResults,
+            populationConsumption: populationConsumption as any,
+            prices: prices as any,
+        })
+
+        expect(result.salesQty.sectorA.food).toBeUndefined()
+        expect(result.unmetDemandQty.food).toBe(100)
+        expect(result.sectorRevenue.sectorA).toBe(0)
     })
 })
 

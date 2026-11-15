@@ -80,17 +80,14 @@ describe("computeMortalityRates", () => {
         serviceMan: { number: 50, wealth: 0, wealthLevel: 0, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 200, birthRate: 0.6 },
     };
 
-    const essentialGoods: (keyof Goods)[] = ["food", "water", "energy"];
-
     it("returns zero mortality with no deprivation", () => {
         const result = computeMortalityRates({
             deprivation: {},
             population,
-            essentialGoods,
         });
 
         // All mortality rates should be finite and non-negative
-        for(const [key, rate] of Object.entries(result.mortalityRate)) {
+        for(const [, rate] of Object.entries(result.mortalityRate)) {
             expect(rate).toBeGreaterThanOrEqual(0);
             expect(rate).toBeLessThanOrEqual(1);
         }
@@ -101,13 +98,11 @@ describe("computeMortalityRates", () => {
         const noDeprivation = computeMortalityRates({
             deprivation: {},
             population,
-            essentialGoods,
         });
 
         const highDeprivation = computeMortalityRates({
             deprivation: { food: 1000, water: 1000 },
             population,
-            essentialGoods,
         });
 
         expect(highDeprivation.totalDeaths).toBeGreaterThan(noDeprivation.totalDeaths);
@@ -118,7 +113,6 @@ describe("computeMortalityRates", () => {
         computeMortalityRates({
             deprivation: { food: 100 },
             population,
-            essentialGoods,
         });
         expect(population).toEqual(popCopy);
     });

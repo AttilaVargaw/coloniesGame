@@ -62,7 +62,7 @@ describe("colony goods pool changes", () => {
                 [],
                 {},
                 {},
-                basePrices as any,
+                
             )
             expect(Object.values(delta).every((v) => v === 0)).toBe(true)
         })
@@ -81,7 +81,7 @@ describe("colony goods pool changes", () => {
                 [],
                 {},
                 {},
-                basePrices as any,
+                
             )
 
             expect(delta.oil).toBe(-300)
@@ -98,7 +98,7 @@ describe("colony goods pool changes", () => {
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
                 {},
-                basePrices as any,
+                
             )
 
             expect(delta.energy).toBe(400_000)
@@ -117,7 +117,7 @@ describe("colony goods pool changes", () => {
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000 }) },
                 {},
-                basePrices as any,
+                
             )
 
             expect(delta.oil).toBe(-300)
@@ -134,7 +134,7 @@ describe("colony goods pool changes", () => {
                 ["powerPlant"],
                 { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: 0 } },
                 {},
-                basePrices as any,
+                
             )
 
             expect(delta.energy).toBe(0)
@@ -150,7 +150,7 @@ describe("colony goods pool changes", () => {
                 [],
                 {},
                 { machinery: 50 },
-                basePrices as any,
+                
             )
 
             expect(delta.machinery).toBe(50)
@@ -228,7 +228,7 @@ describe("colony goods pool changes", () => {
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000, waste: 10 }) },
                 {},
-                basePrices as any,
+                
             )
 
             // oil: -300 (bought), electricity: +400000 (produced), waste: +10 (produced)
@@ -259,7 +259,7 @@ describe("colony goods pool changes", () => {
                 ["powerPlant"],
                 { powerPlant: emptySectorResult({ energy: 400_000 }) },
                 {},
-                basePrices as any,
+                
             )
 
             expect(delta.oil).toBe(-100)

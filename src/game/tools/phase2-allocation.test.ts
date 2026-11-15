@@ -4,6 +4,9 @@ import { allocateGoods } from "../workers/goodsAllocation";
 import { allocateBudget } from "../workers/budgetAllocation";
 import { Population } from "../data/Population.ts";
 import { Goods } from "../data/Goods.ts";
+import type { IndustrialSectors } from "../components/Factories.ts";
+
+const SectorId = (id: string) => id as keyof IndustrialSectors;
 
 const availableWorkers: Record<keyof Population, number> = {
     farmer: 100,
@@ -60,30 +63,25 @@ const availableGoods: Record<keyof Goods, number> = {
 
 describe("laborAllocation", () => {
     it("allocates full demand when supply is sufficient", () => {
-        const requests = [
-            { sectorId: "farm" as const, idealDemand: { worker: 50 }, priority: 1 },
-            { sectorId: "farm" as const, idealDemand: { worker: 50 }, priority: 1 },
-        ];
-        // Actually use two different sectors
         const reqs = [
-            { sectorId: "powerPlant" as const, idealDemand: { worker: 50, engineer: 10 }, priority: 1 },
-            { sectorId: "farm" as const, idealDemand: { worker: 50, farmer: 30 }, priority: 1 },
+            { sectorId: SectorId("powerPlant"), idealDemand: { worker: 50, engineer: 10 }, priority: 1 },
+            { sectorId: SectorId("farm"), idealDemand: { worker: 50, farmer: 30 }, priority: 1 },
         ];
 
         const result = allocateLabor({ availableWorkers, sectorRequests: reqs });
 
-        expect(result.allocation["powerPlant"]?.worker).toBe(50);
-        expect(result.allocation["powerPlant"]?.engineer).toBe(10);
-        expect(result.allocation["farm"]?.worker).toBe(50);
-        expect(result.allocation["farm"]?.farmer).toBe(30);
-        expect(result.unmetDemand["powerPlant"]).toEqual({});
-        expect(result.unmetDemand["farm"]).toEqual({});
+        expect(result.allocation[SectorId("powerPlant")]?.worker).toBe(50);
+        expect(result.allocation[SectorId("powerPlant")]?.engineer).toBe(10);
+        expect(result.allocation[SectorId("farm")]?.worker).toBe(50);
+        expect(result.allocation[SectorId("farm")]?.farmer).toBe(30);
+        expect(result.unmetDemand[SectorId("powerPlant")]).toEqual({});
+        expect(result.unmetDemand[SectorId("farm")]).toEqual({});
     });
 
     it("allocates proportionally when demand exceeds supply", () => {
         const reqs = [
-            { sectorId: "sectorA" as const, idealDemand: { worker: 100 }, priority: 1 },
-            { sectorId: "sectorB" as const, idealDemand: { worker: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorA"), idealDemand: { worker: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorB"), idealDemand: { worker: 100 }, priority: 1 },
         ];
 
         const result = allocateLabor({
@@ -92,16 +90,16 @@ describe("laborAllocation", () => {
         });
 
         // 100 workers split equally: 50 each
-        expect(result.allocation["sectorA"]?.worker).toBe(50);
-        expect(result.allocation["sectorB"]?.worker).toBe(50);
-        expect(result.unmetDemand["sectorA"]?.worker).toBe(50);
-        expect(result.unmetDemand["sectorB"]?.worker).toBe(50);
+        expect(result.allocation[SectorId("sectorA")]?.worker).toBe(50);
+        expect(result.allocation[SectorId("sectorB")]?.worker).toBe(50);
+        expect(result.unmetDemand[SectorId("sectorA")]?.worker).toBe(50);
+        expect(result.unmetDemand[SectorId("sectorB")]?.worker).toBe(50);
     });
 
     it("respects priority in proportional allocation", () => {
         const reqs = [
-            { sectorId: "high" as const, idealDemand: { worker: 100 }, priority: 2 },
-            { sectorId: "low" as const, idealDemand: { worker: 100 }, priority: 1 },
+            { sectorId: SectorId("high"), idealDemand: { worker: 100 }, priority: 2 },
+            { sectorId: SectorId("low"), idealDemand: { worker: 100 }, priority: 1 },
         ];
 
         const result = allocateLabor({
@@ -110,25 +108,27 @@ describe("laborAllocation", () => {
         });
 
         // High priority gets 2/3, low gets 1/3
-        expect(result.allocation["high"]?.worker).toBeGreaterThan(result.allocation["low"]?.worker ?? 0);
-        expect(result.allocation["high"]?.worker + result.allocation["low"]?.worker).toBe(100);
+        const highWorkers = result.allocation[SectorId("high")]?.worker ?? 0;
+        const lowWorkers = result.allocation[SectorId("low")]?.worker ?? 0;
+        expect(highWorkers).toBeGreaterThan(lowWorkers);
+        expect(highWorkers + lowWorkers).toBe(100);
     });
 
     it("returns zero allocation for zero demand", () => {
         const reqs = [
-            { sectorId: "empty" as const, idealDemand: {}, priority: 1 },
+            { sectorId: SectorId("empty"), idealDemand: {}, priority: 1 },
         ];
 
         const result = allocateLabor({ availableWorkers, sectorRequests: reqs });
 
-        expect(result.allocation["empty"]).toEqual({});
-        expect(result.unmetDemand["empty"]).toEqual({});
+        expect(result.allocation[SectorId("empty")]).toEqual({});
+        expect(result.unmetDemand[SectorId("empty")]).toEqual({});
     });
 
     it("does not mutate input", () => {
         const workersBefore = { ...availableWorkers };
         const reqs = [
-            { sectorId: "farm" as const, idealDemand: { worker: 50 }, priority: 1 },
+            { sectorId: SectorId("farm"), idealDemand: { worker: 50 }, priority: 1 },
         ];
 
         allocateLabor({ availableWorkers, sectorRequests: reqs });
@@ -140,22 +140,22 @@ describe("laborAllocation", () => {
 describe("goodsAllocation", () => {
     it("allocates full demand when supply is sufficient", () => {
         const reqs = [
-            { sectorId: "farm" as const, idealDemand: { water: 100, energy: 50 }, priority: 1 },
-            { sectorId: "factory" as const, idealDemand: { metals: 50, oil: 30 }, priority: 1 },
+            { sectorId: SectorId("farm"), idealDemand: { water: 100, energy: 50 }, priority: 1 },
+            { sectorId: SectorId("factory"), idealDemand: { metals: 50, oil: 30 }, priority: 1 },
         ];
 
         const result = allocateGoods({ availableGoods, sectorRequests: reqs });
 
-        expect(result.allocation["farm"]?.water).toBe(100);
-        expect(result.allocation["farm"]?.energy).toBe(50);
-        expect(result.allocation["factory"]?.metals).toBe(50);
-        expect(result.allocation["factory"]?.oil).toBe(30);
+        expect(result.allocation[SectorId("farm")]?.water).toBe(100);
+        expect(result.allocation[SectorId("farm")]?.energy).toBe(50);
+        expect(result.allocation[SectorId("factory")]?.metals).toBe(50);
+        expect(result.allocation[SectorId("factory")]?.oil).toBe(30);
     });
 
     it("allocates proportionally when demand exceeds supply", () => {
         const reqs = [
-            { sectorId: "sectorA" as const, idealDemand: { food: 100 }, priority: 1 },
-            { sectorId: "sectorB" as const, idealDemand: { food: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 100 }, priority: 1 },
         ];
 
         const result = allocateGoods({
@@ -163,14 +163,14 @@ describe("goodsAllocation", () => {
             sectorRequests: reqs,
         });
 
-        expect(result.allocation["sectorA"]?.food).toBe(50);
-        expect(result.allocation["sectorB"]?.food).toBe(50);
+        expect(result.allocation[SectorId("sectorA")]?.food).toBe(50);
+        expect(result.allocation[SectorId("sectorB")]?.food).toBe(50);
     });
 
     it("respects priority in proportional allocation", () => {
         const reqs = [
-            { sectorId: "high" as const, idealDemand: { food: 100 }, priority: 3 },
-            { sectorId: "low" as const, idealDemand: { food: 100 }, priority: 1 },
+            { sectorId: SectorId("high"), idealDemand: { food: 100 }, priority: 3 },
+            { sectorId: SectorId("low"), idealDemand: { food: 100 }, priority: 1 },
         ];
 
         const result = allocateGoods({
@@ -178,13 +178,15 @@ describe("goodsAllocation", () => {
             sectorRequests: reqs,
         });
 
-        expect(result.allocation["high"]?.food).toBeGreaterThan(result.allocation["low"]?.food ?? 0);
-        expect(result.allocation["high"]?.food + result.allocation["low"]?.food).toBe(100);
+        const highFood = result.allocation[SectorId("high")]?.food ?? 0;
+        const lowFood = result.allocation[SectorId("low")]?.food ?? 0;
+        expect(highFood).toBeGreaterThan(lowFood);
+        expect(highFood + lowFood).toBe(100);
     });
 
     it("tracks unmet demand", () => {
         const reqs = [
-            { sectorId: "sectorA" as const, idealDemand: { food: 200 }, priority: 1 },
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 200 }, priority: 1 },
         ];
 
         const result = allocateGoods({
@@ -192,14 +194,14 @@ describe("goodsAllocation", () => {
             sectorRequests: reqs,
         });
 
-        expect(result.allocation["sectorA"]?.food).toBe(50);
-        expect(result.unmetDemand["sectorA"]?.food).toBe(150);
+        expect(result.allocation[SectorId("sectorA")]?.food).toBe(50);
+        expect(result.unmetDemand[SectorId("sectorA")]?.food).toBe(150);
     });
 
     it("does not mutate input", () => {
         const goodsBefore = { ...availableGoods };
         const reqs = [
-            { sectorId: "farm" as const, idealDemand: { water: 100 }, priority: 1 },
+            { sectorId: SectorId("farm"), idealDemand: { water: 100 }, priority: 1 },
         ];
 
         allocateGoods({ availableGoods, sectorRequests: reqs });
@@ -211,43 +213,43 @@ describe("goodsAllocation", () => {
 describe("budgetAllocation", () => {
     it("computes budgetRatio correctly", () => {
         const reqs = [
-            { sectorId: "rich" as const, sectorMoney: 1000, sectorInvestment: 0, costPerUnit: 100 },
-            { sectorId: "poor" as const, sectorMoney: 50, sectorInvestment: 0, costPerUnit: 100 },
-            { sectorId: "broke" as const, sectorMoney: 0, sectorInvestment: 0, costPerUnit: 100 },
+            { sectorId: SectorId("rich"), sectorMoney: 1000, sectorInvestment: 0, costPerUnit: 100 },
+            { sectorId: SectorId("poor"), sectorMoney: 50, sectorInvestment: 0, costPerUnit: 100 },
+            { sectorId: SectorId("broke"), sectorMoney: 0, sectorInvestment: 0, costPerUnit: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
 
-        expect(result.allocation["rich"]?.budgetRatio).toBe(1);
-        expect(result.allocation["rich"]?.availableBudget).toBe(1000);
-        expect(result.allocation["poor"]?.budgetRatio).toBe(0.5);
-        expect(result.allocation["broke"]?.budgetRatio).toBe(0);
+        expect(result.allocation[SectorId("rich")]?.budgetRatio).toBe(1);
+        expect(result.allocation[SectorId("rich")]?.availableBudget).toBe(1000);
+        expect(result.allocation[SectorId("poor")]?.budgetRatio).toBe(0.5);
+        expect(result.allocation[SectorId("broke")]?.budgetRatio).toBe(0);
     });
 
     it("includes investment in available budget", () => {
         const reqs = [
-            { sectorId: "sector" as const, sectorMoney: 100, sectorInvestment: 400, costPerUnit: 100 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, sectorInvestment: 400, costPerUnit: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
 
-        expect(result.allocation["sector"]?.budgetRatio).toBe(1);
-        expect(result.allocation["sector"]?.availableBudget).toBe(500);
+        expect(result.allocation[SectorId("sector")]?.budgetRatio).toBe(1);
+        expect(result.allocation[SectorId("sector")]?.availableBudget).toBe(500);
     });
 
     it("handles zero costPerUnit", () => {
         const reqs = [
-            { sectorId: "free" as const, sectorMoney: 0, sectorInvestment: 0, costPerUnit: 0 },
+            { sectorId: SectorId("free"), sectorMoney: 0, sectorInvestment: 0, costPerUnit: 0 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
 
-        expect(result.allocation["free"]?.budgetRatio).toBe(1);
+        expect(result.allocation[SectorId("free")]?.budgetRatio).toBe(1);
     });
 
     it("does not mutate input", () => {
         const reqs = [
-            { sectorId: "sector" as const, sectorMoney: 100, sectorInvestment: 0, costPerUnit: 50 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, sectorInvestment: 0, costPerUnit: 50 },
         ];
         const reqsCopy = JSON.parse(JSON.stringify(reqs));
 

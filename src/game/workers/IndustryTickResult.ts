@@ -34,4 +34,6 @@ export interface IndustryTickResult {
     settlementType: SettlementType;
     allowedSectors: (keyof IndustrialSectors)[] | undefined;
     population: Population;
+    unmetDemand: Partial<Goods>;
+    deprivation: Partial<Record<keyof Goods, number>>;
 }

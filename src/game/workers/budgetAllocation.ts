@@ -8,7 +8,7 @@ export interface BudgetAllocationRequest {
 }
 
 export interface BudgetAllocationResult {
-    allocation: Record<keyof IndustrialSectors, { budgetRatio: number; availableBudget: number }>;
+    allocation: Partial<Record<keyof IndustrialSectors, { budgetRatio: number; availableBudget: number }>>;
 }
 
 /**
@@ -24,7 +24,7 @@ export function allocateBudget({
 }: {
     sectorRequests: BudgetAllocationRequest[];
 }): BudgetAllocationResult {
-    const allocation: Record<keyof IndustrialSectors, { budgetRatio: number; availableBudget: number }> = {};
+    const allocation: Partial<Record<keyof IndustrialSectors, { budgetRatio: number; availableBudget: number }>> = {};
 
     for (const req of sectorRequests) {
         const availableBudget = req.sectorMoney + req.sectorInvestment;

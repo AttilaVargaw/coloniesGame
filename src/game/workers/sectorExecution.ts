@@ -45,6 +45,7 @@ export function executeSectors(
     prices: Record<keyof Goods, number>,
     salaries: Record<keyof Population, number>,
     laborAllocations?: Record<string, Partial<Record<keyof Population, number>>>,
+    purchasedBySector?: Record<string, Partial<Record<keyof Goods, number>>>,
 ): SectorExecutionResult {
     const sumGoodsRequirements = { ...EMPTY_WAREHOUSE };
     const sumGoodsProduction = { ...EMPTY_WAREHOUSE };
@@ -68,17 +69,36 @@ export function executeSectors(
     for(const bid of sectorBids) {
         const actualScale = bid.actualScale;
 
-        // Goods availability: colony pool + sector inventory combined (for stop reason)
-        let goodsRatio = 1;
-        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            if(value <= 0) continue;
-            const gKey = key as keyof Goods;
-            // const sectorInv = sectorGoods[bid.name as keyof IndustrialSectors]?.[gKey] ?? 0;
-            const colonyAvail = colonyGoods[gKey] ?? 0;
-            const totalAvailable = colonyAvail;
-            const ratio = value > 0 ? totalAvailable / value : 1;
-            goodsRatio = Math.min(goodsRatio, ratio);
+        // Compute scale from actual purchases (goods constraint from what was bought, not allocated)
+        let purchasedScale = 1;
+        let materialShortageRatio = 1;
+        const sectorPurchases = purchasedBySector?.[bid.name];
+        if(sectorPurchases) {
+            for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
+                if(demandPerTick <= 0) continue;
+                const gKey = goodKey as keyof Goods;
+                const idealQty = demandPerTick * actualScale;
+                const purchasedQty = sectorPurchases[gKey] ?? 0;
+                if(idealQty > 0) {
+                    const ratio = purchasedQty / idealQty;
+                    purchasedScale = Math.min(purchasedScale, ratio);
+                    materialShortageRatio = Math.min(materialShortageRatio, ratio);
+                }
+            }
+        } else {
+            // Fallback: use colony goods availability when purchase data is unavailable
+            for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
+                if(value <= 0) continue;
+                const gKey = key as keyof Goods;
+                const colonyAvail = colonyGoods[gKey] ?? 0;
+                const ratio = value > 0 ? colonyAvail / value : 1;
+                materialShortageRatio = Math.min(materialShortageRatio, ratio);
+            }
         }
+
+        // Final scale: actualScale already includes budget + labor constraints;
+        // purchasedScale adds the real goods constraint from what was actually purchased
+        const finalScale = Math.min(actualScale, purchasedScale);
 
         // Worker availability based on remaining workers (for stop reason)
         let workerRatio = 1;
@@ -92,21 +112,21 @@ export function executeSectors(
 
         // Determine stop reason
         let stopReason = "";
-        if(actualScale <= 0) {
+        if(finalScale <= 0) {
             if(bid.budgetRatio <= 0) stopReason = "No money";
             else if(workerRatio <= 0) stopReason = "No workers";
-            else if(goodsRatio <= 0) stopReason = "No materials";
+            else if(materialShortageRatio <= 0) stopReason = "No materials";
             else stopReason = "Bottlenecked";
-        } else if(bid.budgetRatio < 1 && bid.budgetRatio < actualScale) {
+        } else if(bid.budgetRatio < 1 && bid.budgetRatio < finalScale) {
             stopReason = "Low budget";
-        } else if(workerRatio < 1 && workerRatio < goodsRatio && workerRatio < actualScale) {
+        } else if(workerRatio < 1 && workerRatio < materialShortageRatio && workerRatio < finalScale) {
             stopReason = "Worker shortage";
-        } else if(goodsRatio < 1 && goodsRatio < workerRatio && goodsRatio < actualScale) {
+        } else if(materialShortageRatio < 1 && materialShortageRatio < workerRatio && materialShortageRatio < finalScale) {
             stopReason = "Material shortage";
         }
         sectorStopReason[bid.name] = stopReason;
 
-        if(actualScale <= 0) {
+        if(finalScale <= 0) {
             sectorResults[bid.name] = {
                 name: bid.name,
                 consumedGoods: {},
@@ -126,7 +146,7 @@ export function executeSectors(
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
         const sectorLaborAllocation = laborAllocations?.[bid.name];
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            const demanded = value * actualScale;
+            const demanded = value * finalScale;
             let employed: number;
             if(sectorLaborAllocation) {
                 // Use pre-allocated labor (order-independent)
@@ -136,11 +156,13 @@ export function executeSectors(
                 // Sequential depletion (original behavior)
                 const available = remainingWorkers[key as keyof Population].number;
                 employed = Math.min(demanded, Math.max(0, available));
-                remainingWorkers[key as keyof Population] = {
-                    ...remainingWorkers[key as keyof Population],
-                    number: available - employed,
-                };
             }
+            // Always deduct employed workers from remaining (works for both allocation paths)
+            const available = remainingWorkers[key as keyof Population].number;
+            remainingWorkers[key as keyof Population] = {
+                ...remainingWorkers[key as keyof Population],
+                number: available - employed,
+            };
             workersEmployed[key as keyof Population] = employed;
             workingWorkers[key as keyof Population] = {
                 ...workingWorkers[key as keyof Population],
@@ -151,7 +173,7 @@ export function executeSectors(
         // const sectorInventory = { ...(sectorGoods[bid.name as keyof IndustrialSectors] ?? EMPTY_WAREHOUSE) };
         const consumedGoods: Partial<Goods> = {};
         for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            const consumed = value * actualScale;
+            const consumed = value * finalScale;
             consumedGoods[key as keyof Goods] = consumed;
             // sectorInventory[key as keyof Goods] = Math.max(0, (sectorInventory[key as keyof Goods] ?? 0) - consumed);
             sumGoodsRequirements[key as keyof Goods] = (sumGoodsRequirements[key as keyof Goods] ?? 0) + consumed;
@@ -159,7 +181,7 @@ export function executeSectors(
 
         const producedGoods: Partial<Goods> = {};
         for(const [key, value] of Object.entries(bid.idealGoodsProduction)) {
-            const produced = value * actualScale;
+            const produced = value * finalScale;
             producedGoods[key as keyof Goods] = produced;
             // sectorInventory[key as keyof Goods] = (sectorInventory[key as keyof Goods] ?? 0) + produced;
             sumGoodsProduction[key as keyof Goods] = (sumGoodsProduction[key as keyof Goods] ?? 0) + produced;
@@ -167,9 +189,8 @@ export function executeSectors(
 
         // sectorGoods[bid.name as keyof IndustrialSectors] = sectorInventory;
 
-        const revenue = Object.entries(producedGoods).reduce((sum, [key, amount]) => {
-            return sum + (amount) * prices[key as keyof Goods];
-        }, 0);
+        // Revenue comes from actual sales (allocatePopulationSales), not from production volume.
+        // Unsold goods generate no revenue.
         const inputCosts = Object.entries(consumedGoods).reduce((sum, [key, amount]) => {
             return sum + (amount) * prices[key as keyof Goods];
         }, 0);
@@ -182,15 +203,16 @@ export function executeSectors(
             consumedGoods,
             producedGoods,
             workersEmployed,
-            productionRatio: actualScale,
+            productionRatio: finalScale,
             inputLevel: bid.inputLevel,
             outputLevel: bid.outputLevel,
         };
-        sectorProfits[bid.name] = revenue - inputCosts - laborCosts;
-        sectorRevenue[bid.name] = revenue;
+        // Profit starts as negative costs; revenue from population sales is added later in industryTick.worker.ts
+        sectorProfits[bid.name] = -(inputCosts + laborCosts);
+        sectorRevenue[bid.name] = 0;
         sectorLaborCosts[bid.name] = laborCosts;
         sectorInputCosts[bid.name] = inputCosts;
-        sectorUtilization[bid.name] = actualScale;
+        sectorUtilization[bid.name] = finalScale;
     }
 
     // Finalize always-working sectors (stayAtHome)

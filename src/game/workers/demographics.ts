@@ -27,7 +27,7 @@ export const DEMOGRAPHIC_CONFIG = {
 
 export interface DeprivationUpdate {
     deprivation: Partial<Record<keyof Goods, number>>;
-    mortalityRate: Record<keyof Population, number>;
+    mortalityRate: Partial<Record<keyof Population, number>>;
     totalDeaths: number;
 }
 
@@ -74,8 +74,8 @@ export function computeMortalityRates({
 }: {
     deprivation: Partial<Record<keyof Goods, number>>;
     population: Population;
-}): { mortalityRate: Record<keyof Population, number>; totalDeaths: number } {
-    const mortalityRate: Record<keyof Population, number> = {};
+}): { mortalityRate: Partial<Record<keyof Population, number>>; totalDeaths: number } {
+    const mortalityRate: Partial<Record<keyof Population, number>> = {};
     let totalDeaths = 0;
 
     // Aggregate deprivation across all essential goods
@@ -106,7 +106,7 @@ export function applyMortality({
     mortalityRate,
 }: {
     population: Population;
-    mortalityRate: Record<keyof Population, number>;
+    mortalityRate: Partial<Record<keyof Population, number>>;
 }): Population {
     const updated: Population = { ...population };
 

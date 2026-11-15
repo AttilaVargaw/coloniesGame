@@ -23,19 +23,18 @@ import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
 import { allocatePopulationSales } from "./transactionLedger";
+import { computeDeprivation, computeMortalityRates, applyMortality } from "./demographics";
+import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
+
+const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "healthcare", "agriculturalGoods"];
 
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 const colonyWageMemory = new Map<string, Partial<Record<keyof Population, number>>>();
+const colonyDeprivationMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
 const wasteDecayRate = 0.05;
 const wastePerPerson = 0.05;
-
-const alwaysWorking: ReadonlySet<keyof Population> = new Set(["stayAtHome"]);
-
-// PHASE 5: Configurable iteration settings
-const MAX_ITERATIONS = 8;
-const CONVERGENCE_THRESHOLD = 0.001;
 
 function processIndustry(
     {
@@ -59,7 +58,7 @@ function processIndustry(
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
     const memory = { ...(priceMemory.get(entityId) ?? {}) };
-    const prices = getPrices(goods, memory);
+    const prices = validatePrices(getPrices(goods, memory));
 
     const wageMemory = { ...(colonyWageMemory.get(entityId) ?? {}) };
     const adjustedSalaries = buildAdjustedSalaries(wageMemory);
@@ -78,8 +77,6 @@ function processIndustry(
     const previousSectorLaborCosts: Record<string, number> = last?.sectorLaborCosts ?? {};
     const previousSectorInputCosts: Record<string, number> = last?.sectorInputCosts ?? {};
     const previousSectorUtilization: Record<string, number> = last?.sectorUtilization ?? {};
-
-    let sectorBids: SectorBid[] = [];
 
     const industryBlackboard = defaultIndustryBlackboard(entityId, settlementType);
 
@@ -121,232 +118,226 @@ function processIndustry(
     const industryTree = createIndustryTree(industryBlackboard);
     industryTree.tick(industryBlackboard);
 
-    let investRemaining = industryBlackboard.investTotal;
+    // === SECTOR ALLOCATION (single pass) ===
+    // Prices and wages are frozen per tick, so one allocation pass suffices.
+    // Goods and money are committed once from the final allocation.
 
-    // === ITERATIVE SECTOR ALLOCATION ===
-    // Run bid → buy → execute multiple times. Each round starts with carried-forward
-    // sector money, goods carry forward and are depleted, so prices get recomputed
-    // to reflect real scarcity. Only the final round's results are committed downstream.
+    const tickStartGoods = { ...goods };
+    const tickStartMoney = { ...startingMoney };
 
-    let currentGoods = { ...goods };
     let currentPrices = prices;
+    let finalSalaries: Record<keyof Population, number> = adjustedSalaries;
+    let finalWorkerMarketRatios: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    let finalSectorBids: SectorBid[] = [];
+    let finalLaborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
+    let finalGoodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
+    let newMoney: Record<string, number> = { ...tickStartMoney };
+    let currentGoods: Goods = { ...tickStartGoods };
+    let previousDeprivation = { ...(colonyDeprivationMemory.get(entityId) ?? {}) };
 
-    let execResult: ReturnType<typeof executeSectors> | null = null;
-    let newMoney: Record<string, number> = { ...startingMoney };
-
-    for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-        const goodsBeforeIteration = { ...currentGoods };
-
-        // Carry forward money from previous round (starts as startingMoney)
-        const roundMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-        for(const name of activeSectors) {
-            roundMoney[name] = newMoney[name] ?? startingMoney[name] ?? 0;
-        }
-
-        let roundInvestRemaining = investRemaining;
-
-        // === SECTOR-LEVEL BEHAVIOR TREES ===
-        const roundSectorBids: SectorBid[] = [];
-        const sectorDecisions: Record<string, typeof import("./systems/sectorBehaviorTree/bt").SectorDecisions> = {};
-
-        for(const name of activeSectors) {
-            if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
-                continue;
-            }
-
-            // Industry-wide emergency stop: skip all sectors
-            if(industryBlackboard.emergencyStopAll) {
-                continue;
-            }
-
-            // Industry-wide sector shutdown: skip unprofitable sectors
-            if(industryBlackboard.shutdownSectors.has(name)) {
-                continue;
-            }
-
-            // Run behavior tree to make sector-level decisions
-            const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
-            const sectorMoney = roundMoney[name] ?? 0;
-            const investPriority = industryBlackboard.investmentPriority[name] ?? 0.5;
-            const blackboard = buildBlackboard(
-                name,
-                sectorMoney,
-                capitalStock[name] ?? {},
-                previousSectorProfits[name] ?? 0,
-                previousSectorRevenue[name] ?? 0,
-                previousSectorLaborCosts[name] ?? 0,
-                previousSectorInputCosts[name] ?? 0,
-                previousSectorUtilization[name] ?? 0,
-                laborAssigned[name] ?? 0,
-                population.worker.number,
-                currentPrices,
-                adjustedSalaries,
-                {}, // workerMarketRatios not yet computed at this stage
-                config?.capitalGoods,
-                config?.workerRequirement,
-                config?.goodsProduction,
-                0, // outputLevel
-                0, // inputLevel
-                investPriority,
-                roundInvestRemaining,
-            );
-            const tree = createSectorTree(blackboard);
-            tree.tick(blackboard);
-
-            // Store decisions for budget allocation
-            sectorDecisions[name] = { ...blackboard.decisions };
-
-            // Track remaining investment budget across sectors
-            roundInvestRemaining = blackboard.investRemaining;
-
-            // Apply behavior tree decisions
-            if(blackboard.decisions.stopProduction) {
-                continue; // skip this sector entirely
-            }
-
-            const techMultiplier = techMultipliers[name] ?? 1;
-            let laborAssignedVal = blackboard.decisions.laborAssigned > 0
-                ? blackboard.decisions.laborAssigned
-                : (laborAssigned[name] ?? 0);
-            const capitalStockVal = capitalStock[name] ?? {};
-
-            const bid = buildSectorBid(name, currentPrices, techMultiplier, laborAssignedVal, capitalStockVal, adjustedSalaries, previousSectorProfits[name] ?? 0, blackboard.decisions, {
-                workerEfficiencyMultipliers,
-                materialRequirementMultipliers,
-                capitalMultipliers,
-                selectedMethod: selectedMethod[name] ?? null,
-                sectorStartingMoney: sectorMoney,
-            });
-            if(bid) {
-                roundSectorBids.push(bid);
-            }
-        }
-
-        const { workerMarketRatios } = calculateMarketRatios(roundSectorBids, population);
-
-        updateWageMemory(wageMemory, workerMarketRatios);
-
-        // === PHASE 2: CENTRALIZED RESOURCE ALLOCATION ===
-        // Build available workers from population
-        const availableWorkers: Record<keyof Population, number> = {};
-        for(const key of Object.keys(population) as (keyof Population)[]) {
-            availableWorkers[key] = population[key].number;
-        }
-
-        // Build allocation requests from sector bids
-        const laborRequests = roundSectorBids.map(bid => ({
-            sectorId: bid.name as keyof IndustrialSectors,
-            idealDemand: bid.idealWorkerDemand as Partial<Record<keyof Population, number>>,
-            priority: industryBlackboard.investmentPriority[bid.name as keyof IndustrialSectors] ?? 0.5,
-        }));
-
-        const goodsRequests = roundSectorBids.map(bid => ({
-            sectorId: bid.name as keyof IndustrialSectors,
-            idealDemand: bid.idealGoodsDemand as Partial<Record<keyof Goods, number>>,
-            priority: industryBlackboard.investmentPriority[bid.name as keyof IndustrialSectors] ?? 0.5,
-        }));
-
-        const budgetRequests = roundSectorBids.map(bid => ({
-            sectorId: bid.name as keyof IndustrialSectors,
-            sectorMoney: roundMoney[bid.name as keyof IndustrialSectors] ?? 0,
-            sectorInvestment: (sectorDecisions[bid.name]?.sectorInvestment ?? 0),
-            costPerUnit: bid.inputCost + bid.laborCost,
-        }));
-
-        // Run centralized allocations
-        const laborResult = allocateLabor({
-            availableWorkers,
-            sectorRequests: laborRequests,
-        });
-
-        const goodsResult = allocateGoods({
-            availableGoods: currentGoods,
-            sectorRequests: goodsRequests,
-        });
-
-        const budgetResult = allocateBudget({
-            sectorRequests: budgetRequests,
-        });
-
-        // Build allocation maps and compute actualScale per bid
-        const laborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
-        const goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
-
-        for(const bid of roundSectorBids) {
-            const sectorId = bid.name as keyof IndustrialSectors;
-            laborAllocations[bid.name] = laborResult.allocation[sectorId] ?? {};
-            goodsAllocations[bid.name] = goodsResult.allocation[sectorId] ?? {};
-
-            // Compute worker ratio from allocation
-            let workerRatio = 1;
-            const idealWorkerDemand = bid.idealWorkerDemand as Partial<Record<keyof Population, number>>;
-            for(const [popType, demand] of Object.entries(idealWorkerDemand)) {
-                if(demand > 0) {
-                    const allocated = laborResult.allocation[sectorId]?.[popType as keyof Population] ?? 0;
-                    workerRatio = Math.min(workerRatio, allocated / demand);
-                }
-            }
-
-            // Compute goods ratio from allocation
-            let goodsRatio = 1;
-            const idealGoodsDemand = bid.idealGoodsDemand as Partial<Record<keyof Goods, number>>;
-            for(const [goodKey, demand] of Object.entries(idealGoodsDemand)) {
-                if(demand > 0) {
-                    const allocated = goodsResult.allocation[sectorId]?.[goodKey as keyof Goods] ?? 0;
-                    goodsRatio = Math.min(goodsRatio, allocated / demand);
-                }
-            }
-
-            const budgetRatio = budgetResult.allocation[sectorId]?.budgetRatio ?? bid.budgetRatio;
-            bid.actualScale = Math.min(budgetRatio, workerRatio, goodsRatio);
-        }
-
-        // Sectors buy allocated input goods from colony pool using their own money
-        const { colonyGoodsAfterPurchase, newMoney: roundNewMoney } = buySectorInputs(
-            roundSectorBids,
-            currentGoods,
-            roundMoney,
-            currentPrices,
-            goodsAllocations,
-        );
-        currentGoods = colonyGoodsAfterPurchase;
-        newMoney = roundNewMoney;
-
-        // Execute sectors with pre-allocated labor
-        execResult = executeSectors(
-            roundSectorBids,
-            population,
-            currentGoods,
-            currentPrices,
-            adjustedSalaries,
-            laborAllocations,
-        );
-
-        // Recompute prices for next iteration based on remaining goods
-        currentPrices = getPrices(currentGoods, memory);
-
-        sectorBids = roundSectorBids;
-        investRemaining = roundInvestRemaining;
-
-        // Convergence check: stop if goods barely changed this round
-        if(iteration > 0) {
-            let goodsDelta = 0;
-            let totalScale = 0;
-            for(const key of Object.keys(currentGoods)) {
-                const cur = (currentGoods as Record<string, number>)[key] ?? 0;
-                const prev = (goodsBeforeIteration as Record<string, number>)[key] ?? 0;
-                goodsDelta += Math.abs(cur - prev);
-                totalScale += Math.abs(prev);
-            }
-            if(totalScale > 0 && goodsDelta / totalScale < CONVERGENCE_THRESHOLD) {
-                break;
-            }
+    // Reserve population consumption goods before sector allocation
+    const populationConsumptionQty: Partial<Goods> = {};
+    for(const [goodKey, amount] of Object.entries(populationConsumption)) {
+        if(amount > 0) {
+            populationConsumptionQty[goodKey as keyof Goods] = amount;
         }
     }
 
-    // PHASE 5: Commit candidate memory to persistent state once per tick
-    priceMemory.set(entityId, memory);
-    colonyWageMemory.set(entityId, wageMemory);
+    // === SECTOR-LEVEL BEHAVIOR TREES ===
+    // Single pass: prices and wages are frozen per tick, so one allocation
+    // produces the final candidate. Candidate/commit separation is preserved
+    // so genuine iterative clearing can be added later.
+
+    const roundMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
+    for(const name of activeSectors) {
+        roundMoney[name] = tickStartMoney[name] ?? 0;
+    }
+
+    const roundSalaries = adjustedSalaries;
+    let roundInvestRemaining = industryBlackboard.investTotal;
+
+    const roundSectorBids: SectorBid[] = [];
+    const sectorDecisions: Record<string, SectorDecisions> = {};
+
+    for(const name of activeSectors) {
+        if((settlementType === "outpost" || settlementType === "hydrocarbonRefinery") && !allowedSectorsSet.has(name)) {
+            continue;
+        }
+
+        if(industryBlackboard.emergencyStopAll) {
+            continue;
+        }
+
+        if(industryBlackboard.shutdownSectors.has(name)) {
+            continue;
+        }
+
+        const config = industrySectorBlueprints.get(name as keyof IndustrialSectors);
+        const sectorMoney = roundMoney[name] ?? 0;
+        const investPriority = industryBlackboard.investmentPriority[name] ?? 0.5;
+        const blackboard = buildBlackboard(
+            name,
+            sectorMoney,
+            capitalStock[name] ?? {},
+            previousSectorProfits[name] ?? 0,
+            previousSectorRevenue[name] ?? 0,
+            previousSectorLaborCosts[name] ?? 0,
+            previousSectorInputCosts[name] ?? 0,
+            previousSectorUtilization[name] ?? 0,
+            laborAssigned[name] ?? 0,
+            population.worker.number,
+            currentPrices,
+            roundSalaries,
+            {}, // workerMarketRatios not yet computed at this stage
+            config?.capitalGoods,
+            config?.workerRequirement,
+            config?.goodsProduction,
+            0, // outputLevel
+            0, // inputLevel
+            investPriority,
+            roundInvestRemaining,
+        );
+        const tree = createSectorTree(blackboard);
+        tree.tick(blackboard);
+
+        sectorDecisions[name] = { ...blackboard.decisions };
+        roundInvestRemaining = blackboard.investRemaining;
+
+        if(blackboard.decisions.stopProduction) {
+            continue;
+        }
+
+        const techMultiplier = techMultipliers[name] ?? 1;
+        let laborAssignedVal = blackboard.decisions.laborAssigned > 0
+            ? blackboard.decisions.laborAssigned
+            : (laborAssigned[name] ?? 0);
+        const capitalStockVal = capitalStock[name] ?? {};
+
+        const bid = buildSectorBid(name, currentPrices, techMultiplier, laborAssignedVal, capitalStockVal, roundSalaries, previousSectorProfits[name] ?? 0, blackboard.decisions, {
+            workerEfficiencyMultipliers,
+            materialRequirementMultipliers,
+            capitalMultipliers,
+            selectedMethod: selectedMethod[name] ?? null,
+            sectorStartingMoney: sectorMoney,
+        });
+        if(bid) {
+            roundSectorBids.push(bid);
+        }
+    }
+
+    const { workerMarketRatios } = calculateMarketRatios(roundSectorBids, population);
+    finalWorkerMarketRatios = workerMarketRatios;
+
+    // === PHASE 2: CENTRALIZED RESOURCE ALLOCATION ===
+    const availableWorkers: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        availableWorkers[key] = population[key].number;
+    }
+
+    const laborRequests = roundSectorBids.map(bid => ({
+        sectorId: bid.name as keyof IndustrialSectors,
+        idealDemand: bid.idealWorkerDemand as Partial<Record<keyof Population, number>>,
+        priority: industryBlackboard.investmentPriority[bid.name as keyof IndustrialSectors] ?? 0.5,
+    }));
+
+    const goodsRequests = roundSectorBids.map(bid => ({
+        sectorId: bid.name as keyof IndustrialSectors,
+        idealDemand: bid.idealGoodsDemand as Partial<Record<keyof Goods, number>>,
+        priority: industryBlackboard.investmentPriority[bid.name as keyof IndustrialSectors] ?? 0.5,
+    }));
+
+    const budgetRequests = roundSectorBids.map(bid => ({
+        sectorId: bid.name as keyof IndustrialSectors,
+        sectorMoney: roundMoney[bid.name as keyof IndustrialSectors] ?? 0,
+        sectorInvestment: (sectorDecisions[bid.name]?.sectorInvestment ?? 0),
+        costPerUnit: bid.inputCost + bid.laborCost,
+    }));
+
+    // Reserve population consumption goods before sector allocation
+    const goodsForSectors = { ...tickStartGoods };
+    for(const [goodKey, amount] of Object.entries(populationConsumptionQty)) {
+        const available = goodsForSectors[goodKey as keyof Goods] ?? 0;
+        goodsForSectors[goodKey as keyof Goods] = Math.max(0, available - amount);
+    }
+
+    const laborResult = allocateLabor({
+        availableWorkers,
+        sectorRequests: laborRequests,
+    });
+
+    const goodsResult = allocateGoods({
+        availableGoods: goodsForSectors,
+        sectorRequests: goodsRequests,
+    });
+
+    const budgetResult = allocateBudget({
+        sectorRequests: budgetRequests,
+    });
+
+    const laborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
+    const goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
+
+    for(const bid of roundSectorBids) {
+        const sectorId = bid.name as keyof IndustrialSectors;
+        laborAllocations[bid.name] = laborResult.allocation[sectorId] ?? {};
+        goodsAllocations[bid.name] = goodsResult.allocation[sectorId] ?? {};
+
+        let workerRatio = 1;
+        const idealWorkerDemand = bid.idealWorkerDemand as Partial<Record<keyof Population, number>>;
+        for(const [popType, demand] of Object.entries(idealWorkerDemand)) {
+            if(demand > 0) {
+                const allocated = laborResult.allocation[sectorId]?.[popType as keyof Population] ?? 0;
+                workerRatio = Math.min(workerRatio, allocated / demand);
+            }
+        }
+
+        let goodsRatio = 1;
+        const idealGoodsDemand = bid.idealGoodsDemand as Partial<Record<keyof Goods, number>>;
+        for(const [goodKey, demand] of Object.entries(idealGoodsDemand)) {
+            if(demand > 0) {
+                const allocated = goodsResult.allocation[sectorId]?.[goodKey as keyof Goods] ?? 0;
+                goodsRatio = Math.min(goodsRatio, allocated / demand);
+            }
+        }
+
+        const budgetRatio = budgetResult.allocation[sectorId]?.budgetRatio ?? bid.budgetRatio;
+        bid.actualScale = Math.min(budgetRatio, workerRatio, goodsRatio);
+
+        if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0) {
+            bid.actualScale = 0;
+        }
+    }
+
+    // Capture final candidate
+    finalSectorBids = roundSectorBids;
+    finalLaborAllocations = laborAllocations;
+    finalGoodsAllocations = goodsAllocations;
+    finalSalaries = adjustedSalaries;
+
+    // === COMMIT FINAL CANDIDATE (MILESTONE 1: commit once) ===
+
+    // One real purchase with final converged state
+    // Use the exact prices and salaries from the selected candidate
+    const { colonyGoodsAfterPurchase, newMoney: roundNewMoney, purchasedBySector } = buySectorInputs(
+        finalSectorBids,
+        tickStartGoods,
+        tickStartMoney,
+        prices,
+        finalGoodsAllocations,
+    );
+    newMoney = roundNewMoney;
+    currentGoods = colonyGoodsAfterPurchase;
+
+    // Execute sectors once with final allocations
+    const execResult = executeSectors(
+        finalSectorBids,
+        population,
+        colonyGoodsAfterPurchase,
+        prices,
+        finalSalaries,
+        finalLaborAllocations,
+        purchasedBySector,
+    );
 
     const {
         sectorResults,
@@ -360,40 +351,169 @@ function processIndustry(
         remainingWorkers,
         sumGoodsRequirements,
         sumGoodsProduction,
-    } = execResult!;
+    } = execResult;
 
-    for(const key of alwaysWorking) {
-        const key2 = key as keyof Population;
-        workingWorkers[key2] = {
-            ...workingWorkers[key2],
-            number: population[key2].number
-        };
-        remainingWorkers[key as keyof Population] = {
-            ...remainingWorkers[key2],
-            number: 0
-        };
+    // Reconcile purchases vs actual consumption at finalScale.
+    // Any input purchased but not consumed is returned to the colony and
+    // its cost is refunded to the sector.
+    for(const bid of finalSectorBids) {
+        const sectorName = bid.name as keyof IndustrialSectors;
+        const purchases = purchasedBySector?.[sectorName] ?? {};
+        const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
+
+        for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
+            const gKey = goodKey as keyof Goods;
+            const purchased = Number(purchasedQty);
+            const consumedQty = Number(consumed[gKey] ?? 0);
+
+            // Invariant: consumption cannot exceed purchase
+            const epsilon = 1e-8;
+            if(!Number.isFinite(purchased) || !Number.isFinite(consumedQty) || purchased < 0 || consumedQty < 0) {
+                throw new Error(
+                    `Invalid purchase/consumption for ${sectorName}/${gKey}: ` +
+                    `purchased=${purchased}, consumed=${consumedQty}`
+                );
+            }
+            if(consumedQty > purchased + epsilon) {
+                throw new Error(
+                    `${sectorName} consumed more ${gKey} than it purchased: ` +
+                    `${consumedQty} > ${purchased}`
+                );
+            }
+
+            const unused = purchased - consumedQty;
+            if(unused > epsilon) {
+                // Return unused goods to colony warehouse
+                currentGoods[gKey] = (currentGoods[gKey] ?? 0) + unused;
+                // Refund unused purchase cost to sector
+                const price = prices[gKey] ?? 0;
+                if(!Number.isFinite(price) || price < 0) {
+                    throw new Error(`Invalid price for ${gKey}: ${price}`);
+                }
+                const refund = unused * price;
+                newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
+            }
+        }
+
+        // Recompute input costs based on actual consumption (not purchase)
+        let actualInputCost = 0;
+        for(const [goodKey, consumedQty] of Object.entries(consumed)) {
+            const qty = Number(consumedQty);
+            const price = prices[goodKey as keyof Goods] ?? 0;
+            if(!Number.isFinite(qty) || qty < 0 || !Number.isFinite(price) || price < 0) {
+                throw new Error(`Invalid consumption/price for ${sectorName}/${goodKey}`);
+            }
+            actualInputCost += qty * price;
+        }
+        sectorInputCosts[sectorName] = actualInputCost;
+
+        // Profit is calculated once, after population sales revenue is known.
+        // Set to negative costs for now; revenue is added below.
+        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+        sectorProfits[sectorName] = -(actualInputCost + laborCosts);
     }
 
-    // Sector money: revenue minus labor costs go into per-sector money pools.
-    // Input costs were already deducted during the buying loop above, so we add
-    // revenue - laborCosts (not full profit which re-subtracts input costs).
-    for(const bid of sectorBids) {
+    // Sector money: input costs already deducted in buySectorInputs.
+    // Deduct labor costs (wages paid) only. Revenue comes from population sales below.
+    for(const bid of finalSectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
-        const revenue = sectorRevenue[sectorName] ?? 0;
         const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue - laborCosts;
+        newMoney[sectorName] = (newMoney[sectorName] ?? 0) - laborCosts;
     }
 
     // PHASE 4: Allocate population spending based on actual sales (not production share)
-    const { sectorRevenue: popSalesRevenue } = allocatePopulationSales({
-        sectorBids: roundSectorBids,
+    const { sectorRevenue: popSalesRevenue, salesQty, unmetDemandQty } = allocatePopulationSales({
+        sectorBids: finalSectorBids,
         sectorResults,
         populationConsumption,
-        prices: currentPrices,
+        prices: prices,
     });
+
+    // Actual household consumption = sum of quantities actually sold across all sectors
+    const fulfilledDemandQty: Partial<Goods> = {};
+    for(const sectorSales of Object.values(salesQty)) {
+        for(const [goodKey, qty] of Object.entries(sectorSales)) {
+            fulfilledDemandQty[goodKey as keyof Goods] =
+                (fulfilledDemandQty[goodKey as keyof Goods] ?? 0) + qty;
+        }
+    }
+
+    // Reset sector revenue to actual-sales-only authority
+    for(const name of activeSectors) {
+        sectorRevenue[name] = 0;
+        const laborCosts = sectorLaborCosts[name] ?? 0;
+        const inputCosts = sectorInputCosts[name] ?? 0;
+        sectorProfits[name] = -(inputCosts + laborCosts);
+    }
 
     for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
+        sectorRevenue[sectorName] = revenue;
+        // Profit calculated once: revenue - actual input costs - labor costs
+        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+        const inputCosts = sectorInputCosts[sectorName] ?? 0;
+        sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+    }
+
+    // PHASE 5: Deprivation and mortality from unmet demand
+    const deprivation = computeDeprivation({
+        previousDeprivation,
+        goodsShortfall: unmetDemandQty,
+        essentialGoods: ESSENTIAL_GOODS,
+    });
+
+    // Build grown population: apply natural growth from computePopulationConsumption
+    // to the original population, then apply mortality to the grown result.
+    const grownPopulation: Population = { ...population };
+    for(const [key, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
+        if(update && update.number !== undefined) {
+            grownPopulation[key] = {
+                ...grownPopulation[key],
+                number: update.number,
+            };
+        }
+    }
+
+    // Apply mortality to the grown population
+    const mortalityRateMap: Partial<Record<keyof Population, number>> = {};
+    const { mortalityRate } = computeMortalityRates({
+        deprivation,
+        population: grownPopulation,
+    });
+    for(const [key, rate] of Object.entries(mortalityRate)) {
+        mortalityRateMap[key as keyof Population] = rate;
+    }
+
+    const mortalityAdjustedPopulation = applyMortality({
+        population: grownPopulation,
+        mortalityRate: mortalityRateMap,
+    });
+
+    // Apply mortality-adjusted numbers back to populationUpdates.
+    // populationUpdates already has smoothed qol, expectedQol, wealth, requirements
+    // from computePopulationConsumption. Only update number and populationChange.
+    // populationChange is calculated against the original tick-start population.
+    for(const [key, pop] of Object.entries(mortalityAdjustedPopulation) as [keyof Population, any][]) {
+        const originalPop = population[key];
+        if(!originalPop) continue;
+
+        if(populationUpdates[key]) {
+            populationUpdates[key] = {
+                ...populationUpdates[key],
+                number: pop.number,
+                populationChange: pop.number - originalPop.number,
+            };
+        } else {
+            // Category had no population update but experienced mortality
+            populationUpdates[key] = {
+                qol: originalPop.qol ?? 0,
+                expectedQol: originalPop.expectedQol ?? 0,
+                populationChange: pop.number - originalPop.number,
+                wealth: originalPop.wealth ?? 0,
+                number: pop.number,
+                requirements: {},
+            };
+        }
     }
 
     // Capital wear, decay, replenishment, investment
@@ -401,7 +521,7 @@ function processIndustry(
         activeSectors,
         capitalStock,
         sectorResults,
-        currentPrices,
+        prices,
         newMoney
     );
 
@@ -416,7 +536,6 @@ function processIndustry(
         activeSectors,
         sectorResults,
         replenishmentDelta,
-        currentPrices,
         // updatedSectorGoods,
     );
 
@@ -430,15 +549,15 @@ function processIndustry(
             colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
         }
     }
-    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, populationConsumption, population);
+    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
 
     const result: IndustryTickResult = {
         entityId,
-        goodsRequirements: { ...sumGoodsRequirements, ...populationConsumption, ...negateReplenishmentDelta(replenishmentDelta) },
+        goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption, negateReplenishmentDelta(replenishmentDelta)),
         goodsProduction: sumGoodsProduction,
         workingWorkers: workingWorkers as Population,
         freeWorkers: remainingWorkers,
-        population,
+        population: mortalityAdjustedPopulation,
         populationUpdates,
         goods: colonyGoodsChanges,
         sectorProfits,
@@ -448,22 +567,57 @@ function processIndustry(
         populationProfits,
         sectorUtilization,
         sectorStopReason,
-        wages: adjustedSalaries,
+        wages: finalSalaries,
         sectorResults,
         capitalStock: newCapitalStock,
         money: newMoney,
         // sectorGoods: updatedSectorGoods,
         settlementType,
         allowedSectors,
+        unmetDemand: unmetDemandQty,
+        deprivation,
     };
 
     const patch = buildPatch(last, result);
-    if(patch) {
-        return patch;
+
+    // Commit persistent memory only after successful processing
+    // Update wage memory once with final market ratios (wages frozen per tick)
+    updateWageMemory(wageMemory, finalWorkerMarketRatios);
+    priceMemory.set(entityId, prices);
+    colonyWageMemory.set(entityId, wageMemory);
+    colonyDeprivationMemory.set(entityId, deprivation);
+    results.set(entityId, result);
+
+    return patch;
+}
+
+function validatePrices(
+    prices: Record<keyof Goods, number>
+): Record<keyof Goods, number> {
+    const validated = { ...prices };
+
+    for(const key of Object.keys(validated) as (keyof Goods)[]) {
+        const value = validated[key];
+
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid price for ${key}: ${value}`);
+        }
     }
 
-    results.set(entityId, result);
-    return null;
+    return validated;
+}
+
+function aggregateGoodsRequirements(
+    ...sources: Partial<Goods>[]
+): Partial<Goods> {
+    const result: Partial<Goods> = {};
+    for(const source of sources) {
+        for(const [key, amount] of Object.entries(source)) {
+            const goodKey = key as keyof Goods;
+            result[goodKey] = (result[goodKey] ?? 0) + (amount ?? 0);
+        }
+    }
+    return result;
 }
 
 function calculateMarketRatios(
@@ -471,14 +625,10 @@ function calculateMarketRatios(
     population: Population,
 ): { workerMarketRatios: Record<keyof Population, number> } {
     const totalIdealWorkerDemand = {} as Record<keyof Population, number>;
-    const totalIdealGoodsDemand = {} as Record<keyof Goods, number>;
 
     for(const bid of sectorBids) {
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
             totalIdealWorkerDemand[key as keyof Population] = (totalIdealWorkerDemand[key as keyof Population] ?? 0) + value;
-        }
-        for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-            totalIdealGoodsDemand[key as keyof Goods] = (totalIdealGoodsDemand[key as keyof Goods] ?? 0) + value;
         }
     }
 
@@ -503,8 +653,8 @@ function finalizeGoods(
     const finalGoods = { ...currentGoods } as Goods;
 
     applyGoodsModifier(finalGoods, sumGoodsProduction, (cur, d) => cur + d);
-    applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) => Math.max(0, cur - d));
-    applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => Math.max(0, cur - d));
+    applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) => cur - d);
+    applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => cur - d);
 
     const totalPopulation = Object.values(population).reduce((sum, pop) => sum + pop.number, 0);
     const populationWaste = totalPopulation * wastePerPerson;
@@ -578,6 +728,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
 
     pruneMemory(colonyPriceMemory, activeEntityIds);
     pruneMemory(colonyWageMemory, activeEntityIds);
+    pruneMemory(colonyDeprivationMemory, activeEntityIds);
     pruneMemory(lastResults, activeEntityIds);
 
     const patches: IndustryTickPatch[] = [];

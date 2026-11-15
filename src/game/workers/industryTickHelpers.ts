@@ -90,12 +90,14 @@ export function buySectorInputs(
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
     goodsAllocations?: Record<string, Partial<Record<keyof Goods, number>>>,
-): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number> } {
+): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number>; purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> } {
     const colonyGoodsAfterPurchase = { ...goods };
+    const purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
     for(const bid of sectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
         let sectorMoney = newMoney[sectorName] ?? 0;
         const allocation = goodsAllocations?.[sectorName];
+        purchasedBySector[sectorName] = {};
 
         for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(demandPerTick <= 0) continue;
@@ -104,19 +106,30 @@ export function buySectorInputs(
             const demand = allocation ? Math.min(idealDemand, allocation[goodKey as keyof Goods] ?? 0) : idealDemand;
             const available = colonyGoodsAfterPurchase[goodKey as keyof Goods] ?? 0;
             const price = prices[goodKey as keyof Goods] ?? 0;
-            if(available <= 0 || price <= 0) continue;
 
-            const canAfford = Math.floor(sectorMoney / price);
-            const toBuy = Math.min(demand, available, canAfford);
+            // Reject negative or non-finite prices
+            if(!Number.isFinite(price) || price < 0) continue;
+            if(available <= 0) continue;
+
+            // For zero-priced (free) goods, the sector can take the full requested demand
+            // without spending money. For priced goods, affordability caps the purchase.
+            let toBuy: number;
+            if(price === 0) {
+                toBuy = Math.min(demand, available);
+            } else {
+                const canAfford = Math.floor(sectorMoney / price);
+                toBuy = Math.min(demand, available, canAfford);
+            }
             if(toBuy <= 0) continue;
 
             sectorMoney -= toBuy * price;
             colonyGoodsAfterPurchase[goodKey as keyof Goods] = Math.max(0, available - toBuy);
+            purchasedBySector[sectorName][goodKey as keyof Goods] = (purchasedBySector[sectorName][goodKey as keyof Goods] ?? 0) + toBuy;
         }
 
         newMoney[sectorName] = sectorMoney;
     }
-    return { colonyGoodsAfterPurchase, newMoney };
+    return { colonyGoodsAfterPurchase, newMoney, purchasedBySector };
 }
 
 export function distributePopulationSpending(
@@ -171,7 +184,6 @@ export function computeColonyGoodsDelta(
     activeSectors: Iterable<keyof IndustrialSectors>,
     sectorResults: Record<string, { productionRatio: number; producedGoods: Record<string, number> }>,
     replenishmentDelta: Record<string, number>,
-    prices: Record<keyof Goods, number>,
     // updatedSectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
 ): Partial<Goods> {
     const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
@@ -189,18 +201,9 @@ export function computeColonyGoodsDelta(
 
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             if(amount > 0) {
-                const price = prices[goodKey as keyof Goods] ?? 0;
-                if(price > 0) {
-                    colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
-                    // Remove from sector inventory since goods were sold to colony pool
-                    // const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                    // sectorInv[goodKey as keyof Goods] = Math.max(0, (sectorInv[goodKey as keyof Goods] ?? 0) - amount);
-                    // updatedSectorGoods[name] = sectorInv;
-                } else {
-                    // const sectorInv = { ...(updatedSectorGoods[name] ?? createStarterWarehouse(0)) };
-                    // sectorInv[goodKey as keyof Goods] = (sectorInv[goodKey as keyof Goods] ?? 0) + amount;
-                    // updatedSectorGoods[name] = sectorInv;
-                }
+                // Prices determine valuation and sales, not whether physical
+                // production exists. Add all produced goods to the colony pool.
+                colonyGoodsDelta[goodKey as keyof Goods] = (colonyGoodsDelta[goodKey as keyof Goods] ?? 0) + amount;
             }
         }
     }

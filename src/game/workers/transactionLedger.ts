@@ -15,8 +15,8 @@ export interface EconomicTransaction {
 	buyerId?: string;
 	sellerId?: string;
 	goodId?: keyof Goods;
-	quantity: number;
-	unitPrice: number;
+	quantity?: number;
+	unitPrice?: number;
 	amount: number;
 	buyerWealthBefore?: number;
 	buyerWealthAfter?: number;

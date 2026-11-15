@@ -202,9 +202,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -226,7 +226,7 @@ describe("executeSectors", () => {
         expect(result.remainingWorkers.clerks.number).toBe(90)
     })
 
-    it("calculates revenue from produced goods with prices", () => {
+    it("does not auto-generate revenue from production (revenue comes from sales)", () => {
         const bid = makeSectorBid({
             name: "oilRig",
             actualScale: 1,
@@ -240,18 +240,19 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
-        // Revenue = 50 * 100 = 5000
-        expect(result.sectorRevenue["oilRig"]).toBeCloseTo(5000)
-        expect(result.sectorProfits["oilRig"]).toBeCloseTo(5000) // no costs
+        // Revenue comes from actual sales (allocatePopulationSales), not production volume
+        expect(result.sectorRevenue["oilRig"]).toBeCloseTo(0)
+        // Profit starts as negative costs (no input or labor costs here)
+        expect(result.sectorProfits["oilRig"]).toBeCloseTo(0)
     })
 
-    it("calculates profit = revenue - inputCosts - laborCosts", () => {
+    it("calculates costs-only profit (revenue added later from sales)", () => {
         const bid = makeSectorBid({
             name: "factory",
             actualScale: 1,
@@ -267,20 +268,20 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
-        // Revenue = 100 * 20 = 2000
+        // Revenue = 0 (comes from allocatePopulationSales later)
         // Input costs = 10 * 100 = 1000
         // Labor costs = 5 * 200 = 1000
-        // Profit = 2000 - 1000 - 1000 = 0
-        expect(result.sectorRevenue["factory"]).toBeCloseTo(2000)
+        // Profit = -(1000 + 1000) = -2000 (revenue added later)
+        expect(result.sectorRevenue["factory"]).toBeCloseTo(0)
         expect(result.sectorInputCosts["factory"]).toBeCloseTo(1000)
         expect(result.sectorLaborCosts["factory"]).toBeCloseTo(1000)
-        expect(result.sectorProfits["factory"]).toBeCloseTo(0)
+        expect(result.sectorProfits["factory"]).toBeCloseTo(-2000)
     })
 
     it("stopped sector (actualScale = 0) produces no goods and has stop reason", () => {
@@ -300,9 +301,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -331,9 +332,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -356,9 +357,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -381,9 +382,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -404,9 +405,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -429,9 +430,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -454,9 +455,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -485,9 +486,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid1, bid2],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -519,9 +520,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid1, bid2],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -551,9 +552,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid1, bid2],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -575,9 +576,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -603,9 +604,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 
@@ -633,9 +634,9 @@ describe("executeSectors", () => {
         const result = executeSectors(
             [bid],
             population,
-            // inputSectorGoods,
             colonyGoods,
-            basePrices as any,
+            // inputSectorGoods,
+                        basePrices as any,
             baseSalaries as any,
         )
 

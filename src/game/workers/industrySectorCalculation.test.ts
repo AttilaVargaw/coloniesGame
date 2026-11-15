@@ -158,20 +158,20 @@ describe("industry sector calculations", () => {
             expect(result.sectorUtilization["powerPlant"]).toBe(1)
         })
 
-        it("calculates revenue, input costs, labor costs and profit", () => {
+        it("calculates costs-only profit (revenue added later from sales)", () => {
             const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()
 
             const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
 
-            // revenue = energy(400000 * 20) + waste(10 * 2) = 8_000_020
-            expect(result.sectorRevenue["powerPlant"]).toBe(8_000_020)
+            // Revenue = 0 (comes from allocatePopulationSales later)
+            expect(result.sectorRevenue["powerPlant"]).toBe(0)
             // inputCosts = oil(140*100) + envFactor(20*50) + governance(20*40) = 15800
             expect(result.sectorInputCosts["powerPlant"]).toBe(15_800)
             // laborCosts = worker(890*200) + clerks(50*500) + engineer(50*500) + health(10*500) = 233000
             expect(result.sectorLaborCosts["powerPlant"]).toBe(233_000)
-            // profit = revenue - inputCosts - laborCosts = 8_000_020 - 15_800 - 233_000 = 7_751_220
-            expect(result.sectorProfits["powerPlant"]).toBe(7_751_220)
+            // profit = -(inputCosts + laborCosts) = -(15_800 + 233_000) = -248800
+            expect(result.sectorProfits["powerPlant"]).toBe(-248_800)
         })
 
         it("limits workers employed when workers are insufficient", () => {
@@ -231,11 +231,13 @@ describe("industry sector calculations", () => {
             // Goods produced scale proportionally
             expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
 
-            // Revenue, costs and profit all scale proportionally
-            expect(result.sectorRevenue["powerPlant"]).toBeCloseTo(8_000_020 * bid!.budgetRatio, 0)
+            // Revenue = 0 (comes from allocatePopulationSales later)
+            expect(result.sectorRevenue["powerPlant"]).toBe(0)
+            // Costs scale proportionally
             expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(15_800 * bid!.budgetRatio, 1)
             expect(result.sectorLaborCosts["powerPlant"]).toBeCloseTo(233_000 * bid!.budgetRatio, 1)
-            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(7_751_220 * bid!.budgetRatio, 0)
+            // Profit = -(costs) scales proportionally
+            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(-248_800 * bid!.budgetRatio, 0)
 
             // Stop reason reflects low budget
             expect(result.sectorStopReason["powerPlant"]).toBe("")

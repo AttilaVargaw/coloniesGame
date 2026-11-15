@@ -8,8 +8,8 @@ export interface GoodsAllocationRequest {
 }
 
 export interface GoodsAllocationResult {
-    allocation: Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>;
-    unmetDemand: Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>;
+    allocation: Partial<Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>>;
+    unmetDemand: Partial<Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>>;
 }
 
 /**
@@ -28,10 +28,10 @@ export function allocateGoods({
     availableGoods: Record<keyof Goods, number>;
     sectorRequests: GoodsAllocationRequest[];
 }): GoodsAllocationResult {
-    const allocation: Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>> = {};
-    const unmetDemand: Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>> = {};
+    const allocation: Partial<Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>> = {};
+    const unmetDemand: Partial<Record<keyof IndustrialSectors, Partial<Record<keyof Goods, number>>>> = {};
 
-    // Initialize
+    // Initialize requested sectors
     for (const req of sectorRequests) {
         allocation[req.sectorId] = {};
         unmetDemand[req.sectorId] = {};
@@ -58,7 +58,7 @@ export function allocateGoods({
         if (totalDemand <= available) {
             // Enough goods for everyone
             for (const { sectorId, demand } of demands) {
-                allocation[sectorId][goodKey] = demand;
+                (allocation[sectorId] ??= {})[goodKey] = demand;
             }
         } else {
             // Proportional allocation weighted by priority
@@ -75,16 +75,16 @@ export function allocateGoods({
 
                 // Last sector gets the remainder to avoid rounding drift
                 const allocated = i === demands.length - 1 ? remaining : Math.floor(share);
-                allocation[sectorId][goodKey] = allocated;
+                (allocation[sectorId] ??= {})[goodKey] = allocated;
                 remaining -= allocated;
             }
 
             // Compute unmet demand
             for (const { sectorId, demand } of demands) {
-                const alloc = allocation[sectorId][goodKey] ?? 0;
+                const alloc = (allocation[sectorId] ?? {})[goodKey] ?? 0;
                 const unmet = demand - alloc;
                 if (unmet > 0) {
-                    unmetDemand[sectorId][goodKey] = unmet;
+                    (unmetDemand[sectorId] ??= {})[goodKey] = unmet;
                 }
             }
         }
