@@ -739,7 +739,7 @@ function processIndustry(
     }
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, moneySpent, remainingGoods } = processCapital(
+    const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
@@ -969,6 +969,29 @@ function processIndustry(
         allowedSectors,
         unmetDemand: unmetDemandQty,
         deprivation,
+        accounting: {
+            householdSalesByGood: (() => {
+                const byGood: Partial<Goods> = {};
+                for(const sectorSales of Object.values(salesQty)) {
+                    for(const [goodKey, qty] of Object.entries(sectorSales)) {
+                        byGood[goodKey as keyof Goods] =
+                            (byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+                    }
+                }
+                for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+                    byGood[goodKey as keyof Goods] =
+                        (byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+                }
+                return byGood;
+            })(),
+            capitalPurchasesByGood: Object.fromEntries(
+                Object.entries(replenishmentDelta ?? {}).map(
+                    ([key, val]) => [key, -(val ?? 0)],
+                ),
+            ),
+            wagesByPop,
+            spendingByPop,
+        },
     };
 
     // Phase 5.6: Validate all committed state before building patch

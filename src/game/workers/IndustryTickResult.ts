@@ -38,4 +38,12 @@ export interface IndustryTickResult {
     population: Population;
     unmetDemand: Partial<Goods>;
     deprivation: Partial<Record<keyof Goods, number>>;
+
+    // Accounting summary for deterministic tick verification
+    accounting: {
+        householdSalesByGood: Partial<Goods>;
+        capitalPurchasesByGood: Partial<Goods>;
+        wagesByPop: Record<keyof Population, number>;
+        spendingByPop: Record<keyof Population, number>;
+    };
 }

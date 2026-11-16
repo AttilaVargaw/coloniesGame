@@ -490,6 +490,13 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
 	}
 
+	// Credit treasury for sector input purchases (money deducted in buySectorInputs)
+	const totalSectorInputCosts = Object.values(sectorInputCosts).reduce(
+		(sum, v) => sum + v,
+		0,
+	);
+	newTreasury += totalSectorInputCosts;
+
 	// Capital wear, decay, replenishment, investment
 	const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
 		Array.from(activeSectors),
@@ -509,6 +516,13 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	for(const name of activeSectors) {
 		newMoney[name] = Math.max(0, newMoney[name] ?? 0);
 	}
+
+	// Credit treasury for capital purchases (money deducted above)
+	const totalCapitalMoneySpent = Object.values(moneySpent).reduce(
+		(sum, v) => sum + v,
+		0,
+	);
+	newTreasury += totalCapitalMoneySpent;
 
 	// remainingGoods is the authoritative inventory after capital purchases
 	const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
@@ -592,6 +606,29 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		allowedSectors,
 		unmetDemand: {},
 		deprivation: {},
+		accounting: {
+			householdSalesByGood: (() => {
+				const byGood: Partial<Goods> = {};
+				for(const sectorSales of Object.values(salesQty)) {
+					for(const [goodKey, qty] of Object.entries(sectorSales)) {
+						byGood[goodKey as keyof Goods] =
+							(byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+					}
+				}
+				for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+					byGood[goodKey as keyof Goods] =
+						(byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+				}
+				return byGood;
+			})(),
+			capitalPurchasesByGood: Object.fromEntries(
+				Object.entries(replenishmentDelta ?? {}).map(
+					([key, val]) => [key, -(val ?? 0)],
+				),
+			),
+			wagesByPop,
+			spendingByPop,
+		},
 	};
 
 	state.lastResult = result;
@@ -634,13 +671,17 @@ function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): 
 }
 
 function finalizeGoods(
-	currentGoods: Goods,
-	sumGoodsProduction: Goods,
-	sumGoodsRequirements: Goods,
-	populationConsumption: Partial<Goods>,
-	population: Population
+    currentGoods: Goods,
+    sumGoodsProduction: Goods,
+    sumGoodsRequirements: Goods,
+    populationConsumption: Partial<Goods>,
+    population: Population
 ): Goods {
-	const finalGoods = { ...currentGoods } as Goods;
+    console.log("DEBUG_GOODS: currentGoods.water:", currentGoods.water);
+    console.log("DEBUG_GOODS: sumGoodsProduction.water:", sumGoodsProduction.water);
+    console.log("DEBUG_GOODS: sumGoodsRequirements.water:", sumGoodsRequirements.water);
+    console.log("DEBUG_GOODS: populationConsumption.water:", populationConsumption.water);
+    const finalGoods = { ...currentGoods } as Goods;
 
 	// Apply cumulative goods changes additively
 	applyGoodsModifier(finalGoods, sumGoodsProduction, (cur, d) => cur + d);
