@@ -43,6 +43,10 @@ export interface IndustryTickResult {
     accounting: {
         householdSalesByGood: Partial<Goods>;
         capitalPurchasesByGood: Partial<Goods>;
+        sectorSalesByGood?: Partial<Goods>;
+        sectorInputsConsumedByGood?: Partial<Goods>;
+        sectorProductionByGood?: Partial<Goods>;
+
         wagesByPop: Record<keyof Population, number>;
         spendingByPop: Record<keyof Population, number>;
     };

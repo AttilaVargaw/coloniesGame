@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { allocatePopulationSales } from "./transactionLedger"
-import { distributePopulationSpending, pruneMemory, trySetPatchField } from "./industryTickHelpers"
+import { pruneMemory, trySetPatchField } from "./industryTickHelpers"
 import { shallowDiff } from "./shallowDiff"
 import type { SectorBid } from "./SectorBid"
 
@@ -19,110 +19,6 @@ function makeBid(name: string): SectorBid {
         inputLevel: 1,
     }
 }
-
-describe("distributePopulationSpending", () => {
-    const prices: Record<string, number> = { food: 30, oil: 100, energy: 20 }
-
-    it("returns newMoney unchanged when there are no bids", () => {
-        const bids: SectorBid[] = []
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {}
-        const populationConsumption = { food: 100, oil: 50 }
-        const newMoney = { sectorA: 1000 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        expect(result).toEqual({ sectorA: 1000 })
-    })
-
-    it("returns newMoney unchanged when sector has no result", () => {
-        const bids = [makeBid("sectorA")]
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {}
-        const populationConsumption = { food: 100 }
-        const newMoney = { sectorA: 1000 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        expect(result).toEqual({ sectorA: 1000 })
-    })
-
-    it("distributes population spending proportionally to sector production share", () => {
-        const bids = [
-            makeBid("sectorA"),
-            makeBid("sectorB"),
-        ]
-        // Total production: food = 200 (sectorA: 150, sectorB: 50)
-        // Population spending on food = 100 * 30 = 3000
-        // sectorA share = 3000 * (150/200) = 2250
-        // sectorB share = 3000 * (50/200) = 750
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { food: 150 } },
-            sectorB: { producedGoods: { food: 50 } },
-        }
-        const populationConsumption = { food: 100 }
-        const newMoney = { sectorA: 0, sectorB: 0 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        expect(result.sectorA).toBeCloseTo(2250, 4)
-        expect(result.sectorB).toBeCloseTo(750, 4)
-    })
-
-    it("skips goods with zero or negative production", () => {
-        const bids = [makeBid("sectorA")]
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { food: 0, oil: -10, energy: 100 } },
-        }
-        const populationConsumption = { energy: 50 }
-        const newMoney = { sectorA: 1000 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        // electricity: spending = 50 * 20 = 1000, sectorA produces all 100 → gets full 1000
-        expect(result.sectorA).toBeCloseTo(2000, 4)
-    })
-
-    it("does not create new money entries for sectors with no revenue", () => {
-        const bids = [makeBid("sectorA"), makeBid("sectorB")]
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { food: 100 } },
-            // sectorB produces nothing
-        }
-        const populationConsumption = { food: 100 }
-        const newMoney = { sectorA: 100, sectorB: 200 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        expect(result.sectorA).toBeGreaterThan(100)
-        expect(result.sectorB).toBe(200) // unchanged
-    })
-
-    it("ignores goods with no population spending", () => {
-        const bids = [makeBid("sectorA")]
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { oil: 100 } },
-        }
-        const populationConsumption = { food: 100 } // no oil consumption
-        const newMoney = { sectorA: 1000 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        expect(result.sectorA).toBe(1000) // unchanged
-    })
-
-    it("adds to existing sector money", () => {
-        const bids = [makeBid("sectorA")]
-        const sectorResults: Record<string, { producedGoods: Record<string, number> }> = {
-            sectorA: { producedGoods: { food: 100 } },
-        }
-        const populationConsumption = { food: 100 }
-        const newMoney = { sectorA: 5000 }
-
-        const result = distributePopulationSpending(bids, sectorResults, populationConsumption, prices as any, newMoney)
-
-        // food: spending = 100 * 30 = 3000, sectorA produces all 100 → gets 3000
-        expect(result.sectorA).toBe(8000)
-    })
-})
 
 describe("allocatePopulationSales", () => {
     const prices: Record<string, number> = { food: 30, oil: 100 }

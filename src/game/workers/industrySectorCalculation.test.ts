@@ -190,7 +190,7 @@ describe("industry sector calculations", () => {
             expect(sectorResult!.workersEmployed.worker).toBe(3) // only 3 workers available
         })
 
-        it("consumes full demand even when colony goods are low", () => {
+        it("scales down when colony goods are insufficient", () => {
             const lowGoods = createEmptyWarehouse()
             lowGoods.oil = 70
             lowGoods.environmentFactor = 10
@@ -201,11 +201,12 @@ describe("industry sector calculations", () => {
 
             const result = executeSectors([bid!], population, lowGoods, basePrices as any, baseSalaries as any)
 
-            // productionRatio stays at 1; goods are consumed at full demand (scaling happens upstream)
+            // With only 70 oil available and demand of 140 at full scale,
+            // the sector scales down to 0.5
             const sectorResult = result.sectorResults["powerPlant"]
-            expect(sectorResult!.productionRatio).toBe(1)
-            expect(sectorResult!.consumedGoods.oil).toBe(140)
-            expect(sectorResult!.producedGoods.energy).toBe(400_000)
+            expect(sectorResult!.productionRatio).toBeCloseTo(0.5, 6)
+            expect(sectorResult!.consumedGoods.oil).toBeCloseTo(70, 6)
+            expect(sectorResult!.producedGoods.energy).toBeCloseTo(200_000, 0)
         })
 
         it("scales everything proportionally when money is insufficient", () => {

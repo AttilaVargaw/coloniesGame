@@ -197,6 +197,13 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	let newHouseholdMoney: number = startingHouseholdMoney;
 	let investRemaining = industryBlackboard.investTotal;
 
+	// Accumulate real sector flows across every iteration of the tick.
+	// Inputs consumed accumulate because purchases are deducted from the colony
+	// pool every iteration. Production is taken from the final iteration only,
+	// since that is what gets committed to closing inventory.
+	const accumulatedInputsConsumed: Partial<Goods> = {};
+	let finalProduction: Partial<Goods> = {};
+
 	for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
 		// Reset currentGoods to opening inventory for each iteration.
 		// Each iteration independently evaluates what sectors would buy given
@@ -334,7 +341,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 
 		// Sectors buy input goods from colony pool using their own money
-		const { colonyGoodsAfterPurchase, newMoney: roundNewMoney } = buySectorInputs(
+		const {
+			colonyGoodsAfterPurchase,
+			newMoney: roundNewMoney,
+			purchasedBySector: roundPurchasedBySector,
+		} = buySectorInputs(
 			roundSectorBids,
 			currentGoods,
 			roundMoney,
@@ -344,8 +355,39 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		currentGoods = colonyGoodsAfterPurchase;
 		newMoney = roundNewMoney;
 
-		// Execute sectors
-		execResult = executeSectors(roundSectorBids, population, currentGoods, currentPrices, adjustedSalaries);
+		// Build labor allocations from ideal demand (capped by actualScale)
+		const laborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
+		for(const bid of roundSectorBids) {
+			const allocation: Partial<Record<keyof Population, number>> = {};
+			for(const [popKey, demand] of Object.entries(bid.idealWorkerDemand)) {
+				allocation[popKey as keyof Population] = demand;
+			}
+			laborAllocations[bid.name] = allocation;
+		}
+
+		// Execute sectors — pass purchasedBySector so goods constraints use
+		// actual purchases rather than falling back to raw colony inventory.
+		execResult = executeSectors(
+			roundSectorBids,
+			population,
+			currentGoods,
+			currentPrices,
+			adjustedSalaries,
+			laborAllocations,
+			roundPurchasedBySector,
+		);
+
+		// Accumulate actual inputs consumed this iteration (at finalScale),
+		// not gross purchases — unused purchases are returned to the colony
+		// in the reconciliation step.
+		for(const [key, val] of Object.entries(execResult.sumGoodsRequirements ?? {})) {
+			accumulatedInputsConsumed[key as keyof Goods] =
+				(accumulatedInputsConsumed[key as keyof Goods] ?? 0) + (val ?? 0);
+		}
+
+		// Remember this iteration's production; the final iteration's values
+		// are the ones committed to closing inventory.
+		finalProduction = execResult.sumGoodsProduction ?? {};
 
 		// Recompute prices for next iteration based on remaining goods
 		currentPrices = getPrices(currentGoods, state.priceMemory);
@@ -612,6 +654,16 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		unmetDemand: {},
 		deprivation: {},
 		accounting: {
+			sectorSalesByGood: (() => {
+				const byGood: Partial<Goods> = {};
+				for(const sectorSales of Object.values(salesQty)) {
+					for(const [goodKey, qty] of Object.entries(sectorSales)) {
+						byGood[goodKey as keyof Goods] =
+							(byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+					}
+				}
+				return byGood;
+			})(),
 			householdSalesByGood: (() => {
 				const byGood: Partial<Goods> = {};
 				for(const sectorSales of Object.values(salesQty)) {
@@ -631,6 +683,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 					([key, val]) => [key, -(val ?? 0)],
 				),
 			),
+			sectorInputsConsumedByGood: accumulatedInputsConsumed,
+			sectorProductionByGood: finalProduction,
 			wagesByPop,
 			spendingByPop,
 		},

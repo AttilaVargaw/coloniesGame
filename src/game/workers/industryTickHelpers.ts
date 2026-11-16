@@ -98,6 +98,44 @@ export function buySectorInputs(
         }
     }
 
+    // Preflight: validate allocation completeness when allocations are provided.
+    // The allocator contract is expected to return explicit entries for every
+    // sector and demanded good (including zeros). Missing entries are treated
+    // as zero allocation here, but if allocations exist they must be complete.
+    const hasAllocations = Object.keys(goodsAllocations).length > 0;
+
+    if(hasAllocations) {
+        for(const bid of sectorBids) {
+            const sectorName = bid.name;
+
+            if(!Object.hasOwn(goodsAllocations, sectorName)) {
+                throw new Error(`Missing goods allocation for ${sectorName}`);
+            }
+        }
+
+        for(const bid of sectorBids) {
+            const sectorName = bid.name;
+            const allocation = goodsAllocations[sectorName] ?? {};
+
+            for(const goodName of Object.keys(bid.idealGoodsDemand)) {
+                if(!validGoods.has(goodName)) {
+                    throw new Error(`Unknown input good: ${goodName}`);
+                }
+
+                const key = goodName as keyof Goods;
+
+                if(!Object.hasOwn(allocation, key)) {
+                    throw new Error(`Missing goods allocation for ${sectorName}/${key}`);
+                }
+
+                const allocated = allocation[key] ?? 0;
+                if(!Number.isFinite(allocated) || allocated < 0) {
+                    throw new Error(`Invalid allocation for ${sectorName}/${key}`);
+                }
+            }
+        }
+    }
+
     for(const bid of sectorBids) {
         const sectorName = bid.name;
 
@@ -211,52 +249,6 @@ export function buySectorInputs(
     };
 }
 
-export function distributePopulationSpending(
-    sectorBids: SectorBid[],
-    sectorResults: Record<string, { producedGoods: Record<string, number> }>,
-    populationConsumption: Partial<Goods>,
-    prices: Record<keyof Goods, number>,
-    newMoney: Record<string, number>,
-): Record<string, number> {
-    const totalProductionPerGood: Partial<Record<keyof Goods, number>> = {};
-    for(const bid of sectorBids) {
-        const result = sectorResults[bid.name];
-        if(!result) continue;
-        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
-            if(amount > 0) {
-                totalProductionPerGood[goodKey as keyof Goods] =
-                    (totalProductionPerGood[goodKey as keyof Goods] ?? 0) + amount;
-            }
-        }
-    }
-
-    const populationSpending: Partial<Record<keyof Goods, number>> = {};
-    for(const [goodKey, amount] of Object.entries(populationConsumption)) {
-        if(amount > 0) {
-            populationSpending[goodKey as keyof Goods] = amount * (prices[goodKey as keyof Goods] ?? 0);
-        }
-    }
-
-    for(const bid of sectorBids) {
-        const sectorName = bid.name as keyof IndustrialSectors;
-        const result = sectorResults[sectorName];
-        if(!result) continue;
-        let sectorPopulationRevenue = 0;
-        for(const [goodKey, amount] of Object.entries(result.producedGoods)) {
-            if(amount <= 0) continue;
-            const totalProd = totalProductionPerGood[goodKey as keyof Goods] ?? 0;
-            if(totalProd <= 0) continue;
-            const spending = populationSpending[goodKey as keyof Goods] ?? 0;
-            if(spending <= 0) continue;
-            sectorPopulationRevenue += spending * (amount / totalProd);
-        }
-        if(sectorPopulationRevenue > 0) {
-            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + sectorPopulationRevenue;
-        }
-    }
-    return newMoney;
-}
-
 export function computeColonyGoodsDelta(
     goods: Goods,
     colonyGoodsAfterPurchase: Goods,
@@ -283,6 +275,15 @@ export function computeColonyGoodsDelta(
     for(const name of activeSectors) {
         const sectorResult = sectorResults[name];
         if(!sectorResult || sectorResult.productionRatio <= 0) continue;
+
+        if(
+            !Number.isFinite(sectorResult.productionRatio) ||
+            sectorResult.productionRatio < 0
+        ) {
+            throw new Error(
+                `Invalid production ratio for ${name}: ${sectorResult.productionRatio}`,
+            );
+        }
 
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             const key = goodKey as keyof Goods;

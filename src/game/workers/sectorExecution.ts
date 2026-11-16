@@ -86,13 +86,26 @@ export function executeSectors(
                 }
             }
         } else {
-            // Fallback: use colony goods availability when purchase data is unavailable
-            for(const [key, value] of Object.entries(bid.idealGoodsDemand)) {
-                if(value <= 0) continue;
-                const gKey = key as keyof Goods;
-                const colonyAvail = colonyGoods[gKey] ?? 0;
-                const ratio = value > 0 ? colonyAvail / value : 1;
-                materialShortageRatio = Math.min(materialShortageRatio, ratio);
+            // Fallback: use colony goods availability when purchase data is unavailable.
+            // materialShortageRatio reflects availability at full demand (for stop reason),
+            // while purchasedScale is constrained by availability at actualScale.
+            for (const [key, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
+                if (demandPerTick <= 0) continue;
+                const goodKey = key as keyof Goods;
+                const available = colonyGoods[goodKey] ?? 0;
+
+                // Material shortage ratio at full demand (for stop reason)
+                const fullRatio = demandPerTick > 0
+                    ? Math.min(1, available / demandPerTick)
+                    : 1;
+                materialShortageRatio = Math.min(materialShortageRatio, fullRatio);
+
+                // purchasedScale constrained by availability at actualScale
+                const required = demandPerTick * actualScale;
+                const actualRatio = required > 0
+                    ? Math.min(1, available / required)
+                    : 1;
+                purchasedScale = Math.min(purchasedScale, actualRatio);
             }
         }
 
@@ -121,7 +134,7 @@ export function executeSectors(
             stopReason = "Low budget";
         } else if(workerRatio < 1 && workerRatio < materialShortageRatio && workerRatio < finalScale) {
             stopReason = "Worker shortage";
-        } else if(materialShortageRatio < 1 && materialShortageRatio < workerRatio && materialShortageRatio < finalScale) {
+        } else if(materialShortageRatio < 1 && materialShortageRatio < workerRatio && materialShortageRatio <= finalScale) {
             stopReason = "Material shortage";
         }
         sectorStopReason[bid.name] = stopReason;
@@ -151,7 +164,24 @@ export function executeSectors(
             if(sectorLaborAllocation) {
                 // Use pre-allocated labor (order-independent)
                 const alloc = sectorLaborAllocation[key as keyof Population] ?? 0;
-                employed = Math.min(demanded, Math.max(0, alloc));
+
+                if(!Number.isFinite(alloc) || alloc < 0) {
+                    throw new Error(
+                        `Invalid labor allocation for ${bid.name}, ${key}: ${alloc}`,
+                    );
+                }
+
+                // If labor allocations are authoritative, every demanded worker
+                // must be allocated. Producing goods without the required labor
+                // would violate the model.
+                if(alloc + 1e-9 < demanded) {
+                    throw new Error(
+                        `Labor allocation insufficient for ${bid.name}, ${key}: ` +
+                        `allocated ${alloc}, required ${demanded}`,
+                    );
+                }
+
+                employed = demanded;
             } else {
                 // Sequential depletion (original behavior)
                 const available = remainingWorkers[key as keyof Population].number;

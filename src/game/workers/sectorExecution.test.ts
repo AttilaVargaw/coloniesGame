@@ -620,7 +620,7 @@ describe("executeSectors", () => {
     })
 
     it("does not consume more goods than available in inventory", () => {
-        // demand=1000 but only 100 oil available in sector inventory
+        // demand=1000 but 0 oil available in colony goods
         const bid = makeSectorBid({
             name: "powerPlant",
             actualScale: 1,
@@ -628,21 +628,85 @@ describe("executeSectors", () => {
         })
 
         const population = makePopulation()
-        const colonyGoods = makeGoods()
-        // const inputSectorGoods = { powerPlant: makeGoods({ oil: 100 }) } as any
+        const colonyGoods = makeGoods() // oil: 0
 
         const result = executeSectors(
             [bid],
             population,
             colonyGoods,
-            // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
-        // consumedGoods still reports 1000 even though only 100 was available
-        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({ oil: 1000 })
-        // But sector inventory is drained to 0
-        // expect(result.sectorGoods["powerPlant"]?.oil).toBe(0)
+        // With zero inventory, the sector cannot execute at all
+        expect(result.sectorResults["powerPlant"]?.consumedGoods).toEqual({})
+        expect(result.sectorResults["powerPlant"]?.productionRatio).toBe(0)
+        expect(result.sectorStopReason["powerPlant"]).toBe("No materials")
+    })
+
+    it("aggregate sumGoodsRequirements matches per-sector consumedGoods", () => {
+        // Reconciles the aggregate accounting fields against individual
+        // sector results, catching any divergence between sumGoodsRequirements
+        // / sumGoodsProduction and the per-sector consumedGoods / producedGoods.
+        const bids = [
+            makeSectorBid({
+                name: "powerPlant",
+                actualScale: 1,
+                idealGoodsDemand: { oil: 100 },
+                idealGoodsProduction: { energy: 50 },
+                idealWorkerDemand: { worker: 10 },
+            }),
+            makeSectorBid({
+                name: "factory",
+                actualScale: 0.5,
+                idealGoodsDemand: { oil: 200 },
+                idealGoodsProduction: { consumerGoods: 30 },
+                idealWorkerDemand: { worker: 20 },
+            }),
+        ]
+
+        const population = makePopulation()
+        const colonyGoods = makeGoods({ oil: 100000 })
+        const result = executeSectors(
+            bids,
+            population,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+        )
+
+        const consumed: Partial<Goods> = {}
+        const produced: Partial<Goods> = {}
+
+        for (const sector of Object.values(result.sectorResults)) {
+            for (const [key, amount] of Object.entries(
+                sector.consumedGoods ?? {},
+            )) {
+                const good = key as keyof Goods
+                consumed[good] = (consumed[good] ?? 0) + (amount ?? 0)
+            }
+            for (const [key, amount] of Object.entries(
+                sector.producedGoods ?? {},
+            )) {
+                const good = key as keyof Goods
+                produced[good] = (produced[good] ?? 0) + (amount ?? 0)
+            }
+        }
+
+        const requirementKeys = Object.keys(result.sumGoodsRequirements) as (keyof Goods)[]
+        for (const key of requirementKeys) {
+            expect(result.sumGoodsRequirements[key] ?? 0).toBeCloseTo(
+                consumed[key] ?? 0,
+                8,
+            )
+        }
+
+        const productionKeys = Object.keys(result.sumGoodsProduction) as (keyof Goods)[]
+        for (const key of productionKeys) {
+            expect(result.sumGoodsProduction[key] ?? 0).toBeCloseTo(
+                produced[key] ?? 0,
+                8,
+            )
+        }
     })
 })

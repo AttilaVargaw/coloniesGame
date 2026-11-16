@@ -739,7 +739,7 @@ function processIndustry(
     }
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
+    const { newCapitalStock, moneySpent, remainingGoods } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
@@ -970,6 +970,20 @@ function processIndustry(
         unmetDemand: unmetDemandQty,
         deprivation,
         accounting: {
+            // Sector-only sales deducted from closing inventory. Warehouse sales
+            // net to zero (added back in goodsForDelta, then subtracted again via
+            // fulfilledDemandQty in finalizeGoods), so they are tracked separately
+            // in householdSalesByGood and must NOT be double-subtracted here.
+            sectorSalesByGood: (() => {
+                const byGood: Partial<Goods> = {};
+                for(const sectorSales of Object.values(salesQty)) {
+                    for(const [goodKey, qty] of Object.entries(sectorSales)) {
+                        byGood[goodKey as keyof Goods] =
+                            (byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+                    }
+                }
+                return byGood;
+            })(),
             householdSalesByGood: (() => {
                 const byGood: Partial<Goods> = {};
                 for(const sectorSales of Object.values(salesQty)) {
@@ -984,11 +998,33 @@ function processIndustry(
                 }
                 return byGood;
             })(),
-            capitalPurchasesByGood: Object.fromEntries(
-                Object.entries(replenishmentDelta ?? {}).map(
-                    ([key, val]) => [key, -(val ?? 0)],
-                ),
-            ),
+            // Actual inputs consumed by sectors (committed at finalScale), not
+            // gross purchases — unused purchases are returned to the colony in
+            // the reconciliation step above.
+            sectorInputsConsumedByGood: sumGoodsRequirements,
+            // Total goods produced by sectors (committed production).
+            sectorProductionByGood: sumGoodsProduction,
+            // Actual capital goods removed from warehouse stock by processCapital,
+            // measured directly as before/after inventory (not derived from
+            // replenishmentDelta, which is an accounting delta not a quantity).
+            capitalPurchasesByGood: (() => {
+                const byGood: Partial<Goods> = {};
+                for(const key of Object.keys(goodsForCapital) as (keyof Goods)[]) {
+                    const purchased =
+                        (goodsForCapital[key] ?? 0) -
+                        (remainingGoods[key] ?? 0);
+                    if(!Number.isFinite(purchased) || purchased < -1e-9) {
+                        throw new Error(
+                            `Invalid capital goods consumption for ${key}: ${purchased}`,
+                        );
+                    }
+                    const qty = Math.max(0, purchased);
+                    if(qty > 0) {
+                        byGood[key] = qty;
+                    }
+                }
+                return byGood;
+            })(),
             wagesByPop,
             spendingByPop,
         },
@@ -1255,6 +1291,28 @@ function validateTickResult(result: IndustryTickResult): boolean {
         if(!Number.isFinite(value) || value < 0) {
             console.error(`[IndustryTick] Invalid wage value for ${result.entityId}.${key}: ${value}`);
             return false;
+        }
+    }
+
+    // Validate accounting fields are finite and nonnegative
+    const accountingFields: Record<string, Record<string, number> | undefined> = {
+        sectorProductionByGood: result.accounting.sectorProductionByGood,
+        sectorInputsConsumedByGood: result.accounting.sectorInputsConsumedByGood,
+        householdSalesByGood: result.accounting.householdSalesByGood,
+        sectorSalesByGood: result.accounting.sectorSalesByGood,
+        capitalPurchasesByGood: result.accounting.capitalPurchasesByGood,
+        wagesByPop: result.accounting.wagesByPop,
+        spendingByPop: result.accounting.spendingByPop,
+    };
+    for(const [fieldName, field] of Object.entries(accountingFields)) {
+        if(!field) continue;
+        for(const [key, value] of Object.entries(field)) {
+            if(!Number.isFinite(value) || value < 0) {
+                console.error(
+                    `[IndustryTick] Invalid accounting value for ${result.entityId}.${fieldName}.${key}: ${value}`,
+                );
+                return false;
+            }
         }
     }
 
