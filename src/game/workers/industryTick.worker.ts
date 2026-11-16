@@ -1146,9 +1146,11 @@ function finalizeGoods(
     }
 
     const populationWaste = totalPopulation * wastePerPerson;
+    const productionWaste = sumGoodsProduction.waste ?? 0;
     const closingWaste =
         openingWaste +
-        populationWaste -
+        populationWaste +
+        productionWaste -
         wasteDecayRate * openingWaste;
 
     if(!Number.isFinite(closingWaste)) {

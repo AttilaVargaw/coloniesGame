@@ -345,13 +345,10 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         const totalSpending = sumValues(
             Object.values(result.accounting.spendingByPop),
         );
-        const totalWages = sumValues(
-            Object.values(result.accounting.wagesByPop),
-        );
 
         expect(totalSpending).toBeCloseTo(0, 8);
 
-        for(const [key, pop] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const wages = result.accounting.wagesByPop[popKey] ?? 0;
             const spending = result.accounting.spendingByPop[popKey] ?? 0;
@@ -382,7 +379,3 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         }
     });
 });
-
-function closingInventory(result: IndustryTickResult, goodKey: string): number {
-    return result.goods[goodKey as keyof typeof result.goods] ?? 0;
-}

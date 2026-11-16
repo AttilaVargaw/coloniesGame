@@ -198,6 +198,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	let investRemaining = industryBlackboard.investTotal;
 
 	for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+		// Reset currentGoods to opening inventory for each iteration.
+		// Each iteration independently evaluates what sectors would buy given
+		// current prices and full stock. Only the final iteration's purchases
+		// are committed downstream.
+		const iterationGoods = { ...goods };
 		const goodsBeforeIteration = { ...currentGoods };
 
 		// Carry forward money from previous round (starts as startingMoney)
