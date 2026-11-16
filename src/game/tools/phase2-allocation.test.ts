@@ -135,6 +135,75 @@ describe("laborAllocation", () => {
 
         expect(availableWorkers).toEqual(workersBefore);
     });
+
+    it("redistributes excess when high-priority sector reaches demand cap", () => {
+        const reqs = [
+            { sectorId: SectorId("high"), idealDemand: { worker: 2 }, priority: 100 },
+            { sectorId: SectorId("low"), idealDemand: { worker: 100 }, priority: 1 },
+        ];
+
+        const result = allocateLabor({
+            availableWorkers: { ...availableWorkers, worker: 10 },
+            sectorRequests: reqs,
+        });
+
+        // High priority gets its full demand of 2, low gets remaining 8
+        expect(result.allocation[SectorId("high")]?.worker).toBe(2);
+        expect(result.allocation[SectorId("low")]?.worker).toBe(8);
+    });
+
+    it("preserves fractional allocations for fractional stock", () => {
+        const reqs = [
+            { sectorId: SectorId("sectorA"), idealDemand: { worker: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorB"), idealDemand: { worker: 100 }, priority: 1 },
+        ];
+
+        const result = allocateLabor({
+            availableWorkers: { ...availableWorkers, worker: 99.5 },
+            sectorRequests: reqs,
+        });
+
+        const a = result.allocation[SectorId("sectorA")]?.worker ?? 0;
+        const b = result.allocation[SectorId("sectorB")]?.worker ?? 0;
+        expect(a + b).toBeCloseTo(99.5, 8);
+    });
+
+    it("results are identical when request order is reversed", () => {
+        const reqsForward = [
+            { sectorId: SectorId("sectorA"), idealDemand: { worker: 100 }, priority: 2 },
+            { sectorId: SectorId("sectorB"), idealDemand: { worker: 100 }, priority: 1 },
+        ];
+        const reqsReverse = [
+            { sectorId: SectorId("sectorB"), idealDemand: { worker: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorA"), idealDemand: { worker: 100 }, priority: 2 },
+        ];
+
+        const forward = allocateLabor({ availableWorkers: { ...availableWorkers, worker: 100 }, sectorRequests: reqsForward });
+        const reverse = allocateLabor({ availableWorkers: { ...availableWorkers, worker: 100 }, sectorRequests: reqsReverse });
+
+        expect(forward.allocation[SectorId("sectorA")]?.worker ?? 0).toBeCloseTo(reverse.allocation[SectorId("sectorA")]?.worker ?? 0, 8);
+        expect(forward.allocation[SectorId("sectorB")]?.worker ?? 0).toBeCloseTo(reverse.allocation[SectorId("sectorB")]?.worker ?? 0, 8);
+    });
+
+    it("never allocates more than available workers or ideal demand", () => {
+        const reqs = [
+            { sectorId: SectorId("sectorA"), idealDemand: { worker: 1000 }, priority: 10 },
+            { sectorId: SectorId("sectorB"), idealDemand: { worker: 1000 }, priority: 1 },
+        ];
+
+        const result = allocateLabor({
+            availableWorkers: { ...availableWorkers, worker: 150 },
+            sectorRequests: reqs,
+        });
+
+        const totalAllocated =
+            (result.allocation[SectorId("sectorA")]?.worker ?? 0) +
+            (result.allocation[SectorId("sectorB")]?.worker ?? 0);
+
+        expect(totalAllocated).toBeLessThanOrEqual(150);
+        expect(result.allocation[SectorId("sectorA")]?.worker).toBeLessThanOrEqual(1000);
+        expect(result.allocation[SectorId("sectorB")]?.worker).toBeLessThanOrEqual(1000);
+    });
 });
 
 describe("goodsAllocation", () => {
@@ -208,14 +277,83 @@ describe("goodsAllocation", () => {
 
         expect(availableGoods).toEqual(goodsBefore);
     });
+
+    it("redistributes excess when high-priority sector reaches demand cap", () => {
+        const reqs = [
+            { sectorId: SectorId("high"), idealDemand: { food: 2 }, priority: 100 },
+            { sectorId: SectorId("low"), idealDemand: { food: 100 }, priority: 1 },
+        ];
+
+        const result = allocateGoods({
+            availableGoods: { ...availableGoods, food: 10 },
+            sectorRequests: reqs,
+        });
+
+        // High priority gets its full demand of 2, low gets remaining 8
+        expect(result.allocation[SectorId("high")]?.food).toBe(2);
+        expect(result.allocation[SectorId("low")]?.food).toBe(8);
+    });
+
+    it("preserves fractional allocations for fractional stock", () => {
+        const reqs = [
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 100 }, priority: 1 },
+        ];
+
+        const result = allocateGoods({
+            availableGoods: { ...availableGoods, food: 99.5 },
+            sectorRequests: reqs,
+        });
+
+        const a = result.allocation[SectorId("sectorA")]?.food ?? 0;
+        const b = result.allocation[SectorId("sectorB")]?.food ?? 0;
+        expect(a + b).toBeCloseTo(99.5, 8);
+    });
+
+    it("results are identical when request order is reversed", () => {
+        const reqsForward = [
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 100 }, priority: 2 },
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 100 }, priority: 1 },
+        ];
+        const reqsReverse = [
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 100 }, priority: 1 },
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 100 }, priority: 2 },
+        ];
+
+        const forward = allocateGoods({ availableGoods: { ...availableGoods, food: 100 }, sectorRequests: reqsForward });
+        const reverse = allocateGoods({ availableGoods: { ...availableGoods, food: 100 }, sectorRequests: reqsReverse });
+
+        expect(forward.allocation[SectorId("sectorA")]?.food ?? 0).toBeCloseTo(reverse.allocation[SectorId("sectorA")]?.food ?? 0, 8);
+        expect(forward.allocation[SectorId("sectorB")]?.food ?? 0).toBeCloseTo(reverse.allocation[SectorId("sectorB")]?.food ?? 0, 8);
+    });
+
+    it("never allocates more than available stock or ideal demand", () => {
+        const reqs = [
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 1000 }, priority: 10 },
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 1000 }, priority: 1 },
+        ];
+
+        const result = allocateGoods({
+            availableGoods: { ...availableGoods, food: 150 },
+            sectorRequests: reqs,
+        });
+
+        const totalAllocated =
+            (result.allocation[SectorId("sectorA")]?.food ?? 0) +
+            (result.allocation[SectorId("sectorB")]?.food ?? 0);
+
+        expect(totalAllocated).toBeLessThanOrEqual(150);
+        expect(result.allocation[SectorId("sectorA")]?.food).toBeLessThanOrEqual(1000);
+        expect(result.allocation[SectorId("sectorB")]?.food).toBeLessThanOrEqual(1000);
+    });
 });
 
 describe("budgetAllocation", () => {
     it("computes budgetRatio correctly", () => {
         const reqs = [
-            { sectorId: SectorId("rich"), sectorMoney: 1000, sectorInvestment: 0, costPerUnit: 100 },
-            { sectorId: SectorId("poor"), sectorMoney: 50, sectorInvestment: 0, costPerUnit: 100 },
-            { sectorId: SectorId("broke"), sectorMoney: 0, sectorInvestment: 0, costPerUnit: 100 },
+            { sectorId: SectorId("rich"), sectorMoney: 1000, inputCostPerUnit: 100 },
+            { sectorId: SectorId("poor"), sectorMoney: 50, inputCostPerUnit: 100 },
+            { sectorId: SectorId("broke"), sectorMoney: 0, inputCostPerUnit: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
@@ -226,20 +364,20 @@ describe("budgetAllocation", () => {
         expect(result.allocation[SectorId("broke")]?.budgetRatio).toBe(0);
     });
 
-    it("includes investment in available budget", () => {
+    it("excludes investment from available budget", () => {
         const reqs = [
-            { sectorId: SectorId("sector"), sectorMoney: 100, sectorInvestment: 400, costPerUnit: 100 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, inputCostPerUnit: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
 
         expect(result.allocation[SectorId("sector")]?.budgetRatio).toBe(1);
-        expect(result.allocation[SectorId("sector")]?.availableBudget).toBe(500);
+        expect(result.allocation[SectorId("sector")]?.availableBudget).toBe(100);
     });
 
-    it("handles zero costPerUnit", () => {
+    it("handles zero inputCostPerUnit", () => {
         const reqs = [
-            { sectorId: SectorId("free"), sectorMoney: 0, sectorInvestment: 0, costPerUnit: 0 },
+            { sectorId: SectorId("free"), sectorMoney: 0, inputCostPerUnit: 0 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
@@ -249,7 +387,7 @@ describe("budgetAllocation", () => {
 
     it("does not mutate input", () => {
         const reqs = [
-            { sectorId: SectorId("sector"), sectorMoney: 100, sectorInvestment: 0, costPerUnit: 50 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, inputCostPerUnit: 50 },
         ];
         const reqsCopy = JSON.parse(JSON.stringify(reqs));
 

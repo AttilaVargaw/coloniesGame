@@ -23,6 +23,7 @@ function makeBid(
         actualScale,
         inputCost: 0,
         laborCost: 0,
+        capitalMultiplier: 1,
         idealWorkerDemand: {},
         idealGoodsDemand: idealGoodsDemand as Partial<Record<string, number>>,
         idealGoodsProduction: {},

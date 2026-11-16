@@ -3,8 +3,7 @@ import type { IndustrialSectors } from "../components/Factories.ts";
 export interface BudgetAllocationRequest {
     sectorId: keyof IndustrialSectors;
     sectorMoney: number;
-    sectorInvestment: number;
-    costPerUnit: number;
+    inputCostPerUnit: number;
 }
 
 export interface BudgetAllocationResult {
@@ -12,10 +11,13 @@ export interface BudgetAllocationResult {
 }
 
 /**
- * Centralized budget allocation.
+ * Centralized input budget allocation.
  *
- * Computes budgetRatio for each sector based on available money and investment.
- * budgetRatio = min(1, (sectorMoney + sectorInvestment) / costPerUnit).
+ * Computes budgetRatio for each sector based on available operating cash
+ * and capital-adjusted input costs. Labor affordability is handled separately
+ * by the labor allocator; investment money is reserved for capital purchases.
+ *
+ * budgetRatio = min(1, sectorMoney / inputCostPerUnit)
  *
  * Returns budgetRatio and availableBudget per sector.
  */
@@ -27,8 +29,8 @@ export function allocateBudget({
     const allocation: Partial<Record<keyof IndustrialSectors, { budgetRatio: number; availableBudget: number }>> = {};
 
     for (const req of sectorRequests) {
-        const availableBudget = req.sectorMoney + req.sectorInvestment;
-        const budgetRatio = req.costPerUnit > 0 ? Math.min(1, availableBudget / Math.max(req.costPerUnit, 1)) : 1;
+        const availableBudget = req.sectorMoney;
+        const budgetRatio = req.inputCostPerUnit > 0 ? Math.min(1, availableBudget / req.inputCostPerUnit) : 1;
 
         allocation[req.sectorId] = {
             budgetRatio,

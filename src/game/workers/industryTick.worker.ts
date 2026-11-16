@@ -284,8 +284,7 @@ function processIndustry(
     const budgetRequests = roundSectorBids.map(bid => ({
         sectorId: bid.name as keyof IndustrialSectors,
         sectorMoney: roundMoney[bid.name as keyof IndustrialSectors] ?? 0,
-        sectorInvestment: (sectorDecisions[bid.name]?.sectorInvestment ?? 0),
-        costPerUnit: bid.inputCost + bid.laborCost,
+        inputCostPerUnit: bid.inputCost * bid.capitalMultiplier,
     }));
 
     // Reserve population consumption goods before sector allocation

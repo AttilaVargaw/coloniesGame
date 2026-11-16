@@ -147,6 +147,27 @@ export function buildSectorBid(
 
     if(!config) return null;
 
+    if(!Number.isFinite(techMultiplier) || techMultiplier < 0) {
+        throw new Error(`Invalid tech multiplier for ${name}: ${techMultiplier}`);
+    }
+
+    const sectorMoney = options?.sectorStartingMoney ?? 0;
+    if(!Number.isFinite(sectorMoney) || sectorMoney < 0) {
+        throw new Error(`Invalid sector starting money for ${name}: ${sectorMoney}`);
+    }
+
+    for(const [key, value] of Object.entries(prices)) {
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid price for ${key}: ${value}`);
+        }
+    }
+
+    for(const [key, value] of Object.entries(salaries)) {
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid salary for ${key}: ${value}`);
+        }
+    }
+
     let method: ProductionMethod | undefined;
     if(options?.selectedMethod) {
         method = config.productionMethods?.get(options.selectedMethod);
@@ -162,6 +183,24 @@ export function buildSectorBid(
     const workerRequirement = effective.workerRequirement || {};
     const goodsRequirements = effective.goodsRequirements || {};
     const goodsProduction = effective.goodsProduction || {};
+
+    for(const [key, value] of Object.entries(workerRequirement)) {
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid worker requirement for ${name}/${key}: ${value}`);
+        }
+    }
+
+    for(const [key, value] of Object.entries(goodsRequirements)) {
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid goods requirement for ${name}/${key}: ${value}`);
+        }
+    }
+
+    for(const [key, value] of Object.entries(goodsProduction)) {
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid goods production for ${name}/${key}: ${value}`);
+        }
+    }
 
     const adjustedWorkerRequirement = adjustWorkerRequirements(workerRequirement, options ?? {}, method);
     const adjustedGoodsRequirements = adjustGoodsRequirements(goodsRequirements, options ?? {}, method);
@@ -184,21 +223,8 @@ export function buildSectorBid(
         inputLevel,
     );
 
-    const sectorMoney = Math.max(options?.sectorStartingMoney ?? 0, 0);
-
-    // Input affordability: operating cash only — investment money is reserved
-    // for capital purchases and must not silently subsidize operating expenses.
-    const inputBudgetRatio = inputCost > 0
-        ? Math.min(1, sectorMoney / Math.max(inputCost, 1))
-        : 1;
-
-    // Labor affordability is handled separately by the wage/labor allocation system.
-    // budgetRatio reflects input affordability only.
-    const budgetRatio = inputBudgetRatio;
-
-    const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel);
-
     // Capital goods scaling: more capital = more employable workers, less = fewer
+    // Calculated before budget so the capital-adjusted input cost is accounted for.
     let capitalRatio = 1;
     const capitalGoods = effective.capitalGoods ?? {};
     if(Object.keys(capitalGoods).length > 0) {
@@ -221,8 +247,23 @@ export function buildSectorBid(
         if(capitalRatio === Infinity) capitalRatio = 1;
     }
 
-    const capitalAdjustedWorkerDemand: Record<string, number> = {};
     const capitalMult = capitalMultiplierFromRatio(capitalRatio);
+
+    // Input affordability: operating cash only — investment money is reserved
+    // for capital purchases and must not silently subsidize operating expenses.
+    // Use capital-adjusted input cost so the budget reflects actual demand.
+    const capitalAdjustedInputCost = inputCost * capitalMult;
+    const inputBudgetRatio = capitalAdjustedInputCost > 0
+        ? Math.min(1, sectorMoney / capitalAdjustedInputCost)
+        : 1;
+
+    // Labor affordability is handled separately by the wage/labor allocation system.
+    // budgetRatio reflects input affordability only.
+    const budgetRatio = inputBudgetRatio;
+
+    const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel);
+
+    const capitalAdjustedWorkerDemand: Record<string, number> = {};
     for(const [key, value] of Object.entries(scaledWorkerDemand)) {
         capitalAdjustedWorkerDemand[key] = value * capitalMult;
     }
@@ -234,6 +275,7 @@ export function buildSectorBid(
         actualScale: budgetRatio,
         inputCost,
         laborCost,
+        capitalMultiplier: capitalMult,
         idealWorkerDemand: capitalAdjustedWorkerDemand,
         idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel * capitalMult),
         idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel * capitalMult),

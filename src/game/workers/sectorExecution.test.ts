@@ -101,6 +101,7 @@ function makeSectorBid(overrides: Partial<SectorBid> = {}): SectorBid {
         actualScale: 1,
         inputCost: 0,
         laborCost: 0,
+        capitalMultiplier: 1,
         idealWorkerDemand: {},
         idealGoodsDemand: {},
         idealGoodsProduction: {},
