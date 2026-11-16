@@ -40,16 +40,67 @@ describe("colony goods pool changes", () => {
         })
 
         it("does not modify the original goods object", () => {
-            const goods = createStarterWarehouse(1000)
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
             const oilBefore = goods.oil
-            buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, {})
+            buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, { powerPlant: { oil: 10000 } })
             expect(goods.oil).toBe(oilBefore)
         })
 
         it("returns colonyGoodsAfterPurchase identical to input when buying is disabled", () => {
-            const goods = createStarterWarehouse(1000)
-            const result = buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, {})
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            const result = buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, { powerPlant: { oil: 10000 } })
             expect(result.colonyGoodsAfterPurchase.oil).toBe(goods.oil)
+        })
+
+        it("throws when sector is missing from allocations", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            expect(() => buySectorInputs([makeBid("powerPlant", { oil: 100 })], goods, {}, basePrices as any, {}))
+                .toThrow("Missing goods allocation for powerPlant")
+        })
+
+        it("throws when demanded good is missing from allocation", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            expect(() => buySectorInputs([makeBid("powerPlant", { oil: 100, energy: 50 })], goods, {}, basePrices as any, { powerPlant: { oil: 1000 } }))
+                .toThrow("Missing goods allocation for powerPlant/energy")
+        })
+
+        it("purchases zero when allocation is zero", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            const result = buySectorInputs([makeBid("powerPlant", { oil: 1000 })], goods, {}, basePrices as any, { powerPlant: { oil: 0 } as Partial<Record<keyof Goods, number>> })
+            expect(result.purchasedBySector.powerPlant?.oil ?? 0).toBe(0)
+            expect(result.colonyGoodsAfterPurchase.oil).toBe(1000)
+        })
+
+        it("purchases fractional quantity when cash is insufficient", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 10000
+            const result = buySectorInputs(
+                [makeBid("powerPlant", { oil: 1000 })],
+                goods,
+                { powerPlant: 50 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                { powerPlant: { oil: 10000 } },
+            )
+            expect(result.purchasedBySector.powerPlant?.oil).toBeCloseTo(0.5, 8)
+        })
+
+        it("zero-price input purchases limited by allocation and stock", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 100
+            const result = buySectorInputs(
+                [makeBid("powerPlant", { oil: 100000 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                { oil: 0 } as Record<keyof Goods, number>,
+                { powerPlant: { oil: 50 } as Partial<Record<keyof Goods, number>> },
+            )
+            expect(result.purchasedBySector.powerPlant?.oil).toBe(50)
+            expect(result.colonyGoodsAfterPurchase.oil).toBe(50)
         })
     })
 
@@ -129,6 +180,42 @@ describe("colony goods pool changes", () => {
             )
 
             expect(delta.energy).toBe(0)
+        })
+
+        it("throws on NaN production ratio", () => {
+            const goods = createEmptyWarehouse()
+            const afterPurchase = { ...goods }
+
+            expect(() => computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: NaN } },
+            )).toThrow("Invalid production ratio")
+        })
+
+        it("throws on negative production ratio", () => {
+            const goods = createEmptyWarehouse()
+            const afterPurchase = { ...goods }
+
+            expect(() => computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: -0.5 } },
+            )).toThrow("Invalid production ratio")
+        })
+
+        it("throws on unknown produced good", () => {
+            const goods = createEmptyWarehouse()
+            const afterPurchase = { ...goods }
+
+            expect(() => computeColonyGoodsDelta(
+                goods,
+                afterPurchase,
+                ["powerPlant"],
+                { powerPlant: { ...emptySectorResult({ unknownGood: 100 } as unknown as Partial<Goods>) } },
+            )).toThrow("Unknown produced good")
         })
 
         it("does not include capital replenishment in physical goods delta", () => {

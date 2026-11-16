@@ -1,6 +1,6 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
 import { industrialSubsectors, } from "@/game/components/Factories";
-import { type Goods } from "@/game/data/Goods";
+import type { Goods } from "@/game/data/Goods";
 import type { Population } from "@/game/data/Population";
 import { POPULATION_NAMES } from "@/components/icons/PopulationIcon";
 import { SectorRow } from "./sectorRow";

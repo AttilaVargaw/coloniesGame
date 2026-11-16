@@ -14,12 +14,19 @@ function scaleMap(obj: Record<string, number>, factor: number): Record<string, n
     return result;
 }
 
-// Capital productivity: diminishing returns on capital adequacy.
-// capitalRatio is kept uncapped; capitalMultiplier applies diminishing returns.
 export const CAPITAL_ELASTICITY = 0.5;
 
+export const MAX_CAPITAL_MULTIPLIER = 100;
+
 function capitalMultiplierFromRatio(capitalRatio: number): number {
-    return Math.pow(Math.max(capitalRatio, 0), CAPITAL_ELASTICITY);
+    if(!Number.isFinite(capitalRatio) || capitalRatio < 0) {
+        throw new Error(`Invalid capital ratio: ${capitalRatio}`);
+    }
+
+    return Math.min(
+        MAX_CAPITAL_MULTIPLIER,
+        Math.pow(capitalRatio, CAPITAL_ELASTICITY),
+    );
 }
 
 function mergeMethodOverrides<T extends { goodsRequirements?: Record<string, number>; workerRequirement?: Record<string, number>, goodsProduction?: Record<string, number>, capitalGoods?: Record<string, number> }>(base: any, method: ProductionMethod | undefined): T {
@@ -38,12 +45,25 @@ function adjustWorkerRequirements(
     method: ProductionMethod | undefined,
 ): Record<string, number> {
     const workerEff = (options.workerEfficiencyMultipliers ?? {}) as Record<keyof Population, number>;
+
+    for(const [key, mult] of Object.entries(workerEff)) {
+        if(!Number.isFinite(mult) || mult <= 0) {
+            throw new Error(`Invalid worker efficiency multiplier for ${key}: ${mult}`);
+        }
+    }
+
+    const workerMethodMult = method?.workerMultiplier ?? 1;
+    if(!Number.isFinite(workerMethodMult) || workerMethodMult <= 0) {
+        throw new Error(
+            `Invalid worker multiplier for selected production method: ${workerMethodMult}`,
+        );
+    }
+
     const adjusted: Record<string, number> = {};
     for(const [key, value] of Object.entries(workerRequirement)) {
         const mult = workerEff[key as keyof Population] ?? 1;
         adjusted[key] = value / Math.max(mult, 0.01);
     }
-    const workerMethodMult = method?.workerMultiplier ?? 1;
     for(const key of Object.keys(adjusted)) {
         adjusted[key] = adjusted[key] / Math.max(workerMethodMult, 0.01);
     }
@@ -56,12 +76,25 @@ function adjustGoodsRequirements(
     method: ProductionMethod | undefined,
 ): Record<string, number> {
     const materialMult = (options.materialRequirementMultipliers ?? {}) as Record<keyof Goods, number>;
+
+    for(const [key, mult] of Object.entries(materialMult)) {
+        if(!Number.isFinite(mult) || mult <= 0) {
+            throw new Error(`Invalid material requirement multiplier for ${key}: ${mult}`);
+        }
+    }
+
+    const materialMethodMult = method?.materialMultiplier ?? 1;
+    if(!Number.isFinite(materialMethodMult) || materialMethodMult <= 0) {
+        throw new Error(
+            `Invalid material multiplier for selected production method: ${materialMethodMult}`,
+        );
+    }
+
     const adjusted: Record<string, number> = {};
     for(const [key, value] of Object.entries(goodsRequirements)) {
         const mult = materialMult[key as keyof Goods] ?? 1;
         adjusted[key] = value * mult;
     }
-    const materialMethodMult = method?.materialMultiplier ?? 1;
     for(const key of Object.keys(adjusted)) {
         adjusted[key] = adjusted[key] * materialMethodMult;
     }
@@ -89,7 +122,6 @@ function calculateCosts(
 function scaleLaborDemand(
     adjustedWorkerRequirement: Record<string, number>,
     inputLevel: number,
-    _laborAssigned: number,
 ): Record<string, number> {
     return scaleMap(adjustedWorkerRequirement, inputLevel);
 }
@@ -98,7 +130,7 @@ export function buildSectorBid(
     name: keyof IndustrialSectors,
     prices: Record<keyof Goods, number>,
     techMultiplier: number,
-    laborAssigned: number,
+    _laborAssigned: number,
     capitalStock: Partial<Goods>,
     salaries: Record<keyof Population, number>,
     _previousProfit: number,
@@ -115,7 +147,16 @@ export function buildSectorBid(
 
     if(!config) return null;
 
-    const method = options?.selectedMethod ? config.productionMethods?.get(options.selectedMethod) : undefined;
+    let method: ProductionMethod | undefined;
+    if(options?.selectedMethod) {
+        method = config.productionMethods?.get(options.selectedMethod);
+        if(!method) {
+            throw new Error(
+                `Unknown production method ${options.selectedMethod} for ${name}`,
+            );
+        }
+    }
+
     const effective = mergeMethodOverrides(config, method);
 
     const workerRequirement = effective.workerRequirement || {};
@@ -128,9 +169,14 @@ export function buildSectorBid(
     // BT-driven levels (no compounding constraint math)
     const inputLevel = decisions.stopProduction ? 0 : 1;
     const effMult = method?.efficiencyMultiplier ?? 1;
-    const outputLevel = decisions.stopProduction ? 0 : techMultiplier * (effMult > 0 ? effMult : 1);
+    if(!Number.isFinite(effMult) || effMult <= 0) {
+        throw new Error(
+            `Invalid efficiency multiplier for selected production method: ${effMult}`,
+        );
+    }
+    const outputLevel = decisions.stopProduction ? 0 : techMultiplier * effMult;
 
-    const { inputCost, laborCost, costPerUnit } = calculateCosts(
+    const { inputCost, laborCost } = calculateCosts(
         adjustedWorkerRequirement,
         adjustedGoodsRequirements,
         prices,
@@ -138,11 +184,19 @@ export function buildSectorBid(
         inputLevel,
     );
 
-    const sectorInvestment = decisions.sectorInvestment ?? 0;
     const sectorMoney = Math.max(options?.sectorStartingMoney ?? 0, 0);
-    const budgetRatio = costPerUnit > 0 ? Math.min(1, (sectorMoney + sectorInvestment) / Math.max(costPerUnit, 1)) : 1;
 
-    const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel, laborAssigned);
+    // Input affordability: operating cash only — investment money is reserved
+    // for capital purchases and must not silently subsidize operating expenses.
+    const inputBudgetRatio = inputCost > 0
+        ? Math.min(1, sectorMoney / Math.max(inputCost, 1))
+        : 1;
+
+    // Labor affordability is handled separately by the wage/labor allocation system.
+    // budgetRatio reflects input affordability only.
+    const budgetRatio = inputBudgetRatio;
+
+    const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel);
 
     // Capital goods scaling: more capital = more employable workers, less = fewer
     let capitalRatio = 1;
@@ -153,6 +207,14 @@ export function buildSectorBid(
             const gKey = goodKey as keyof Goods;
             const stock = capitalStock[gKey] ?? 0;
             const req = requiredPerUnit ?? 0;
+
+            if(!Number.isFinite(stock) || stock < 0) {
+                throw new Error(`Invalid capital stock for ${name}/${gKey}: ${stock}`);
+            }
+            if(!Number.isFinite(req) || req < 0) {
+                throw new Error(`Invalid capital requirement for ${name}/${gKey}: ${req}`);
+            }
+
             const ratio = req > 0 ? stock / req : Infinity;
             capitalRatio = Math.min(capitalRatio, ratio);
         }

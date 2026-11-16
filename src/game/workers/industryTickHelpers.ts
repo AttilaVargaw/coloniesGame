@@ -32,11 +32,34 @@ export function computePopulationConsumption(
     const populationUpdates = {} as IndustryTickResult["populationUpdates"];
 
     for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+        if(
+            !Number.isFinite(pop.number) ||
+            pop.number < 0 ||
+            !Number.isFinite(pop.wealth) ||
+            pop.wealth < 0 ||
+            !Number.isFinite(pop.qol) ||
+            !Number.isFinite(pop.birthRate) ||
+            pop.birthRate < 0
+        ) {
+            throw new Error(`Invalid population data for ${key}`);
+        }
+
+        if(
+            pop.expectedQol !== undefined &&
+            !Number.isFinite(pop.expectedQol)
+        ) {
+            throw new Error(`Invalid expected QoL for ${key}`);
+        }
+
         const { qol: targetQol } = getGoodRequirementsAndQoL(
             adjustedSalaries[key],
             prices,
             pop
         );
+
+        if(!Number.isFinite(targetQol)) {
+            throw new Error(`Invalid target QoL for ${key}`);
+        }
 
         const smoothedQol = Math.max(0, Math.min(80, pop.qol + (targetQol - pop.qol) * qolSmoothing));
         const requirements = getRequirementsForQol(smoothedQol, pop.number);
@@ -48,12 +71,24 @@ export function computePopulationConsumption(
             }
         }
 
+        for(const [goodKey, amount] of Object.entries(requirements)) {
+            if(!Object.hasOwn(requirements, goodKey)) continue;
+            const gKey = goodKey as keyof Goods;
+            if(!Number.isFinite(amount) || amount < 0) {
+                throw new Error(`Invalid requirement for ${key}/${gKey}: ${amount}`);
+            }
+        }
+
+        const desired: Partial<Goods> = {};
+
         for(const it in requirements) {
             const good = it as keyof Goods;
             const amount = requirements[good] ?? 0;
             populationConsumption[good] = (populationConsumption[good] ?? 0) + amount;
-            desiredConsumptionByPop[key] = { ...(desiredConsumptionByPop[key] ?? {}), [good]: amount };
+            desired[good] = amount;
         }
+
+        desiredConsumptionByPop[key] = desired;
 
         requirementsByPop[key] = requirements;
 
@@ -98,40 +133,33 @@ export function buySectorInputs(
         }
     }
 
-    // Preflight: validate allocation completeness when allocations are provided.
+    // Preflight: validate allocation completeness.
     // The allocator contract is expected to return explicit entries for every
-    // sector and demanded good (including zeros). Missing entries are treated
-    // as zero allocation here, but if allocations exist they must be complete.
-    const hasAllocations = Object.keys(goodsAllocations).length > 0;
+    // sector and demanded good (including zeros). Missing entries are not
+    // silently treated as zero — they are a contract violation.
+    for(const bid of sectorBids) {
+        const sectorName = bid.name;
 
-    if(hasAllocations) {
-        for(const bid of sectorBids) {
-            const sectorName = bid.name;
-
-            if(!Object.hasOwn(goodsAllocations, sectorName)) {
-                throw new Error(`Missing goods allocation for ${sectorName}`);
-            }
+        if(!Object.hasOwn(goodsAllocations, sectorName)) {
+            throw new Error(`Missing goods allocation for ${sectorName}`);
         }
 
-        for(const bid of sectorBids) {
-            const sectorName = bid.name;
-            const allocation = goodsAllocations[sectorName] ?? {};
+        const allocation = goodsAllocations[sectorName];
 
-            for(const goodName of Object.keys(bid.idealGoodsDemand)) {
-                if(!validGoods.has(goodName)) {
-                    throw new Error(`Unknown input good: ${goodName}`);
-                }
+        for(const goodName of Object.keys(bid.idealGoodsDemand)) {
+            if(!validGoods.has(goodName)) {
+                throw new Error(`Unknown input good: ${goodName}`);
+            }
 
-                const key = goodName as keyof Goods;
+            const key = goodName as keyof Goods;
 
-                if(!Object.hasOwn(allocation, key)) {
-                    throw new Error(`Missing goods allocation for ${sectorName}/${key}`);
-                }
+            if(!Object.hasOwn(allocation, key)) {
+                throw new Error(`Missing goods allocation for ${sectorName}/${key}`);
+            }
 
-                const allocated = allocation[key] ?? 0;
-                if(!Number.isFinite(allocated) || allocated < 0) {
-                    throw new Error(`Invalid allocation for ${sectorName}/${key}`);
-                }
+            const allocated = allocation[key] ?? 0;
+            if(!Number.isFinite(allocated) || allocated < 0) {
+                throw new Error(`Invalid allocation for ${sectorName}/${key}`);
             }
         }
     }
@@ -144,7 +172,7 @@ export function buySectorInputs(
         }
         seenSectors.add(sectorName);
 
-        const allocation = goodsAllocations[sectorName] ?? {};
+        const allocation = goodsAllocations[sectorName];
 
         let sectorMoney = updatedMoney[sectorName] ?? 0;
 
@@ -274,7 +302,7 @@ export function computeColonyGoodsDelta(
 
     for(const name of activeSectors) {
         const sectorResult = sectorResults[name];
-        if(!sectorResult || sectorResult.productionRatio <= 0) continue;
+        if(!sectorResult) continue;
 
         if(
             !Number.isFinite(sectorResult.productionRatio) ||
@@ -285,12 +313,19 @@ export function computeColonyGoodsDelta(
             );
         }
 
+        if(sectorResult.productionRatio === 0) continue;
+
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             const key = goodKey as keyof Goods;
+
+            if(!Object.hasOwn(goods, key)) {
+                throw new Error(`Unknown produced good: ${name}/${key}`);
+            }
+
             const qty = amount ?? 0;
 
             if(!Number.isFinite(qty) || qty < 0) {
-                throw new Error(`Invalid production quantity for ${name}/${goodKey}`);
+                throw new Error(`Invalid production quantity for ${name}/${key}`);
             }
 
             if(qty > 0) {
@@ -308,8 +343,24 @@ export function applyGoodsModifier(
     modifier: (current: number, delta: number) => number,
 ): void {
     for(const key in deltas) {
-        const goodKey = key as keyof Goods;
-        goods[goodKey] = modifier(goods[goodKey] ?? 0, deltas[goodKey] ?? 0);
+        if(!Object.hasOwn(goods, key)) {
+            throw new Error(`Unknown good in modifier: ${key}`);
+        }
+
+        const delta = deltas[key];
+
+        if(!Number.isFinite(delta)) {
+            throw new Error(`Invalid modifier delta for ${key}`);
+        }
+
+        const current = goods[key as keyof Goods] ?? 0;
+        const result = modifier(current, delta);
+
+        if(!Number.isFinite(result) || result < 0) {
+            throw new Error(`Invalid modified inventory for ${key}`);
+        }
+
+        goods[key as keyof Goods] = result;
     }
 }
 
@@ -323,20 +374,31 @@ export function pruneMemory<T>(
         }
     }
 }
-
 export function computeMarketRatios<TKey extends string | number | symbol>(
     demands: Record<TKey, number>,
     available: Record<TKey, number>,
 ): Record<TKey, number> {
     const ratios = {} as Record<TKey, number>;
-    for(const key of Object.keys(demands)) {
-        const totalDemand = demands[key as TKey];
-        const avail = available[key as TKey] ?? 0;
-        ratios[key as TKey] = totalDemand > 0 ? Math.min(1, avail / totalDemand) : 1;
+
+    for(const key of Object.keys(demands) as TKey[]) {
+        const demand = demands[key];
+        const supply = available[key] ?? 0;
+
+        if(!Number.isFinite(demand) || demand < 0) {
+            throw new Error(`Invalid demand for ${String(key)}`);
+        }
+
+        if(!Number.isFinite(supply) || supply < 0) {
+            throw new Error(`Invalid availability for ${String(key)}`);
+        }
+
+        ratios[key] = demand > 0
+            ? Math.min(1, supply / demand)
+            : 1;
     }
+
     return ratios;
 }
-
 export function trySetPatchField<T>(
     patch: any,
     field: string,

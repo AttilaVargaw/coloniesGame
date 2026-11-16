@@ -210,9 +210,8 @@ describe("industry sector calculations", () => {
         })
 
         it("scales everything proportionally when money is insufficient", () => {
-            // costPerUnit = inputCost(15800) + laborCost(233000) = 248800
-            // budgetRatio = 100000 / 248800 ≈ 0.4019
-            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 100_000)
+            // inputCost = 15800, budgetRatio (input affordability only) = 7900 / 15800 = 0.5
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 7900)
             expect(bid).not.toBeNull()
             expect(bid!.budgetRatio).toBeLessThan(1)
             expect(bid!.actualScale).toBe(bid!.budgetRatio)

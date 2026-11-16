@@ -1,5 +1,5 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
-import { type IndustrialSectors } from "@/game/components/Factories";
+import type { IndustrialSectors } from "@/game/components/Factories";
 import { Goods, getPrices, godsCategories, basePrices } from "@/game/data/Goods";
 import { Population, baseSalaries } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";

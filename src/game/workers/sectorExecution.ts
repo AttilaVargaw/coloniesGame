@@ -24,16 +24,11 @@ export function applyGoodConstraint(
         ? Math.min(currentConstraint, 0.5 + 0.75 * ratio)
         : Math.min(currentConstraint, ratio);
 
-    // Sector inventory constraint: can't consume more than available
+    // Sector inventory constraint: hard cap — can't consume more than available
     const available = sectorInventory[goodKey] ?? 0;
     const maxScaleFromInventory = demandPerTick > 0 ? available / demandPerTick : 1;
+    const inventoryConstraint = maxScaleFromInventory;
 
-    // Sector inventory fully covers this tick's demand — colony pool constraint doesn't apply
-    if(maxScaleFromInventory >= 1) return currentConstraint;
-
-    const inventoryConstraint = isNonEssential
-        ? Math.max(0.5, maxScaleFromInventory)
-        : maxScaleFromInventory;
     return Math.min(marketConstraint, inventoryConstraint);
 }
 
@@ -69,52 +64,56 @@ export function executeSectors(
     for(const bid of sectorBids) {
         const actualScale = bid.actualScale;
 
-        // Compute scale from actual purchases (goods constraint from what was bought, not allocated)
-        let purchasedScale = 1;
-        let materialShortageRatio = 1;
-        const sectorPurchases = purchasedBySector?.[bid.name];
-        if(sectorPurchases) {
-            for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
-                if(demandPerTick <= 0) continue;
-                const gKey = goodKey as keyof Goods;
-                const idealQty = demandPerTick * actualScale;
-                const purchasedQty = sectorPurchases[gKey] ?? 0;
-                if(idealQty > 0) {
-                    const ratio = purchasedQty / idealQty;
-                    purchasedScale = Math.min(purchasedScale, ratio);
-                    materialShortageRatio = Math.min(materialShortageRatio, ratio);
-                }
-            }
-        } else {
-            // Fallback: use colony goods availability when purchase data is unavailable.
-            // materialShortageRatio reflects availability at full demand (for stop reason),
-            // while purchasedScale is constrained by availability at actualScale.
-            for (const [key, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
-                if (demandPerTick <= 0) continue;
-                const goodKey = key as keyof Goods;
-                const available = colonyGoods[goodKey] ?? 0;
+    // Validate actualScale before material scaling
+    if(
+        !Number.isFinite(actualScale) ||
+        actualScale < 0 ||
+        actualScale > 1
+    ) {
+        throw new Error(`Invalid actualScale for ${bid.name}: ${actualScale}`);
+    }
 
-                // Material shortage ratio at full demand (for stop reason)
-                const fullRatio = demandPerTick > 0
-                    ? Math.min(1, available / demandPerTick)
-                    : 1;
-                materialShortageRatio = Math.min(materialShortageRatio, fullRatio);
+    // Compute material ratio: what fraction of the sector's input demand can
+    // actually be met at this scale. finalScale = actualScale * materialRatio.
+    let materialRatio = 1;
+    const sectorPurchases = purchasedBySector?.[bid.name];
 
-                // purchasedScale constrained by availability at actualScale
-                const required = demandPerTick * actualScale;
-                const actualRatio = required > 0
-                    ? Math.min(1, available / required)
-                    : 1;
-                purchasedScale = Math.min(purchasedScale, actualRatio);
-            }
+    for(const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
+        if(!Number.isFinite(demandPerTick) || demandPerTick < 0) {
+            throw new Error(`Invalid input demand for ${bid.name}/${goodKey}`);
+        }
+        if(demandPerTick === 0) continue;
+
+        const key = goodKey as keyof Goods;
+        const scaleForMaterial = actualScale > 0 ? actualScale : 1;
+        const required = demandPerTick * scaleForMaterial;
+
+        if(!Number.isFinite(required)) {
+            throw new Error(`Input requirement overflow for ${bid.name}/${goodKey}`);
         }
 
-        // Final scale: actualScale already includes budget + labor constraints;
-        // purchasedScale adds the real goods constraint from what was actually purchased
-        const finalScale = Math.min(actualScale, purchasedScale);
+        let available: number;
+        if(sectorPurchases) {
+            available = sectorPurchases[key] ?? 0;
+        } else {
+            available = colonyGoods[goodKey as keyof Goods] ?? 0;
+        }
 
-        // Worker availability based on remaining workers (for stop reason)
-        let workerRatio = 1;
+        if(!Number.isFinite(available) || available < 0) {
+            throw new Error(`Invalid available input for ${bid.name}/${goodKey}`);
+        }
+
+        const ratio = required > 0
+            ? Math.min(1, available / required)
+            : 1;
+
+        materialRatio = Math.min(materialRatio, ratio);
+    }
+
+    const finalScale = actualScale * materialRatio;
+
+    // Worker availability based on remaining workers (for stop reason)
+    let workerRatio = 1;
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
             if(value > 0) {
                 const available = remainingWorkers[key as keyof Population].number;
@@ -128,13 +127,13 @@ export function executeSectors(
         if(finalScale <= 0) {
             if(bid.budgetRatio <= 0) stopReason = "No money";
             else if(workerRatio <= 0) stopReason = "No workers";
-            else if(materialShortageRatio <= 0) stopReason = "No materials";
+            else if(materialRatio <= 0) stopReason = "No materials";
             else stopReason = "Bottlenecked";
         } else if(bid.budgetRatio < 1 && bid.budgetRatio < finalScale) {
             stopReason = "Low budget";
-        } else if(workerRatio < 1 && workerRatio < materialShortageRatio && workerRatio < finalScale) {
+        } else if(workerRatio < 1 && workerRatio < materialRatio && workerRatio < finalScale) {
             stopReason = "Worker shortage";
-        } else if(materialShortageRatio < 1 && materialShortageRatio < workerRatio && materialShortageRatio <= finalScale) {
+        } else if(materialRatio < 1 && materialRatio < workerRatio && materialRatio <= finalScale) {
             stopReason = "Material shortage";
         }
         sectorStopReason[bid.name] = stopReason;
@@ -153,6 +152,7 @@ export function executeSectors(
             sectorRevenue[bid.name] = 0;
             sectorLaborCosts[bid.name] = 0;
             sectorInputCosts[bid.name] = 0;
+            sectorUtilization[bid.name] = 0;
             continue;
         }
 
@@ -189,6 +189,11 @@ export function executeSectors(
             }
             // Always deduct employed workers from remaining (works for both allocation paths)
             const available = remainingWorkers[key as keyof Population].number;
+            if(employed > available + 1e-9) {
+                throw new Error(
+                    `Worker allocation exceeds available population for ${bid.name}/${key}`,
+                );
+            }
             remainingWorkers[key as keyof Population] = {
                 ...remainingWorkers[key as keyof Population],
                 number: available - employed,

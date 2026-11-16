@@ -146,9 +146,9 @@ describe("applyGoodConstraint", () => {
         expect(result).toBeCloseTo(0.1)
     })
 
-    it("applies floor of 0.5 for non-essential goods with inventory constraint", () => {
+    it("applies inventory constraint for non-essential goods (no floor)", () => {
         const result = applyGoodConstraint(1, "oil", 100, emptyMarketRatios, { oil: 10 } as any, true)
-        expect(result).toBeCloseTo(0.5)
+        expect(result).toBeCloseTo(0.1)
     })
 
     it("takes minimum of marketConstraint and inventoryConstraint", () => {
@@ -312,8 +312,8 @@ describe("executeSectors", () => {
         expect(result.sectorResults["stoppedPlant"]?.producedGoods).toEqual({})
         expect(result.sectorResults["stoppedPlant"]?.workersEmployed).toEqual({})
         expect(result.sectorStopReason["stoppedPlant"]).toBe("No money")
-        // sectorUtilization is not set for stopped sectors (actualScale <= 0)
-        expect(result.sectorUtilization["stoppedPlant"]).toBeUndefined()
+        // sectorUtilization is 0 for stopped sectors (actualScale <= 0)
+        expect(result.sectorUtilization["stoppedPlant"]).toBe(0)
     })
 
     it("determines stop reason as No workers when zero workers available", () => {
@@ -708,5 +708,140 @@ describe("executeSectors", () => {
                 8,
             )
         }
+    })
+
+    it("deterministic partial purchase: two inputs scaled proportionally", () => {
+        // Sector demands 10 oil + 5 machinery per tick at full scale, produces 500 paper.
+        // Partial purchase: 5 oil + 2.5 machinery (50% each) → materialRatio = 0.5,
+        // finalScale = actualScale(1) * materialRatio(0.5) = 0.5.
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 1,
+            idealGoodsDemand: { oil: 10, machinery: 5 },
+            idealGoodsProduction: { paper: 500 },
+            idealWorkerDemand: { worker: 5 },
+        })
+
+        const population = makePopulation({ worker: createBreakdownHelper(1000) })
+        const colonyGoods = makeGoods({ oil: 1000, machinery: 1000 })
+
+        const purchasedBySector = {
+            factory: { oil: 5, machinery: 2.5 },
+        } as Record<string, Partial<Record<keyof Goods, number>>>
+
+        const result = executeSectors(
+            [bid],
+            population,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+            undefined,
+            purchasedBySector,
+        )
+
+        const sectorResult = result.sectorResults["factory"]
+
+        // Material ratio = min(5/10, 2.5/5) = 0.5
+        expect(sectorResult.productionRatio).toBeCloseTo(0.5, 8)
+        expect(result.sectorUtilization["factory"]).toBeCloseTo(0.5, 8)
+
+        // Consumed goods scaled by finalScale: demand * 0.5
+        expect(sectorResult.consumedGoods.oil).toBeCloseTo(5, 8)
+        expect(sectorResult.consumedGoods.machinery).toBeCloseTo(2.5, 8)
+
+        // Produced goods scaled by finalScale: output * 0.5
+        expect(sectorResult.producedGoods.paper).toBeCloseTo(250, 8)
+
+        // Aggregate sums match per-sector values
+        expect(result.sumGoodsRequirements.oil).toBeCloseTo(5, 8)
+        expect(result.sumGoodsRequirements.machinery).toBeCloseTo(2.5, 8)
+        expect(result.sumGoodsProduction.paper).toBeCloseTo(250, 8)
+
+        // No unaccounted goods in aggregates
+        for (const key of Object.keys(result.sumGoodsRequirements) as (keyof Goods)[]) {
+            if (key === "oil" || key === "machinery") continue
+            expect(result.sumGoodsRequirements[key]).toBeCloseTo(0, 8)
+        }
+        for (const key of Object.keys(result.sumGoodsProduction) as (keyof Goods)[]) {
+            if (key === "paper") continue
+            expect(result.sumGoodsProduction[key]).toBeCloseTo(0, 8)
+        }
+    })
+
+    it("deterministic full purchase: two inputs consumed at full scale", () => {
+        // Full purchase → materialRatio = 1, finalScale = actualScale(1) * 1 = 1.
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 1,
+            idealGoodsDemand: { oil: 10, machinery: 5 },
+            idealGoodsProduction: { paper: 500 },
+            idealWorkerDemand: { worker: 5 },
+        })
+
+        const population = makePopulation({ worker: createBreakdownHelper(1000) })
+        const colonyGoods = makeGoods({ oil: 1000, machinery: 1000 })
+
+        const purchasedBySector = {
+            factory: { oil: 10, machinery: 5 },
+        } as Record<string, Partial<Record<keyof Goods, number>>>
+
+        const result = executeSectors(
+            [bid],
+            population,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+            undefined,
+            purchasedBySector,
+        )
+
+        const sectorResult = result.sectorResults["factory"]
+
+        expect(sectorResult.productionRatio).toBeCloseTo(1, 8)
+        expect(sectorResult.consumedGoods.oil).toBeCloseTo(10, 8)
+        expect(sectorResult.consumedGoods.machinery).toBeCloseTo(5, 8)
+        expect(sectorResult.producedGoods.paper).toBeCloseTo(500, 8)
+        expect(result.sumGoodsRequirements.oil).toBeCloseTo(10, 8)
+        expect(result.sumGoodsRequirements.machinery).toBeCloseTo(5, 8)
+        expect(result.sumGoodsProduction.paper).toBeCloseTo(500, 8)
+    })
+
+    it("deterministic bottleneck: one input limiting, finalScale reflects bottleneck", () => {
+        // oil at 50%, machinery at 100% → materialRatio = 0.5 (oil limits)
+        const bid = makeSectorBid({
+            name: "factory",
+            actualScale: 1,
+            budgetRatio: 1,
+            idealGoodsDemand: { oil: 10, machinery: 5 },
+            idealGoodsProduction: { paper: 500 },
+            idealWorkerDemand: { worker: 5 },
+        })
+
+        const population = makePopulation({ worker: createBreakdownHelper(1000) })
+        const colonyGoods = makeGoods({ oil: 1000, machinery: 1000 })
+
+        const purchasedBySector = {
+            factory: { oil: 5, machinery: 5 },
+        } as Record<string, Partial<Record<keyof Goods, number>>>
+
+        const result = executeSectors(
+            [bid],
+            population,
+            colonyGoods,
+            basePrices as any,
+            baseSalaries as any,
+            undefined,
+            purchasedBySector,
+        )
+
+        const sectorResult = result.sectorResults["factory"]
+
+        // oil: 5/10 = 0.5, machinery: 5/5 = 1 → materialRatio = min(0.5, 1) = 0.5
+        expect(sectorResult.productionRatio).toBeCloseTo(0.5, 8)
+        expect(sectorResult.consumedGoods.oil).toBeCloseTo(5, 8)
+        expect(sectorResult.consumedGoods.machinery).toBeCloseTo(2.5, 8)
+        expect(sectorResult.producedGoods.paper).toBeCloseTo(250, 8)
     })
 })

@@ -388,6 +388,28 @@ function processIndustry(
         sumGoodsProduction,
     } = execResult;
 
+    // Reconcile aggregate consumption against individual sector results.
+    // sumGoodsRequirements is the aggregate accounting field; each sector's
+    // consumedGoods is the source of truth. They must match exactly.
+    const reconstructedConsumption: Partial<Goods> = {};
+    for(const result of Object.values(sectorResults)) {
+        for(const [key, amount] of Object.entries(result?.consumedGoods ?? {})) {
+            const good = key as keyof Goods;
+            reconstructedConsumption[good] =
+                (reconstructedConsumption[good] ?? 0) + (amount ?? 0);
+        }
+    }
+    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+        const reported = sumGoodsRequirements[key] ?? 0;
+        const reconstructed = reconstructedConsumption[key] ?? 0;
+        if(Math.abs(reported - reconstructed) > 1e-6) {
+            throw new Error(
+                `Consumption reconciliation mismatch for ${key}: ` +
+                `reported=${reported}, reconstructed=${reconstructed}`,
+            );
+        }
+    }
+
     // Reconcile purchases vs actual consumption at finalScale.
     // Any input purchased but not consumed is returned to the colony and
     // its cost is refunded to the sector.
@@ -561,7 +583,17 @@ function processIndustry(
     // (reservation order: households first, then capital)
     const goodsForCapital: Goods = { ...currentGoods };
     for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
-        goodsForCapital[goodKey as keyof Goods] = Math.max(0, (goodsForCapital[goodKey as keyof Goods] ?? 0) - (qty ?? 0));
+        const key = goodKey as keyof Goods;
+        const available = goodsForCapital[key] ?? 0;
+        const sold = qty ?? 0;
+
+        if(!Number.isFinite(sold) || sold < 0 || sold > available + 1e-6) {
+            throw new Error(
+                `Invalid warehouse sale for ${key}: sold=${sold}, available=${available}`,
+            );
+        }
+
+        goodsForCapital[key] = Math.max(0, available - sold);
     }
 
     // Credit treasury for sector input purchases (money deducted in buySectorInputs)
@@ -748,6 +780,22 @@ function processIndustry(
         goodsForCapital
     );
 
+    // Compute capital purchases as actual goods removed from warehouse stock.
+    const capitalPurchasesByGood: Partial<Goods> = {};
+    for(const key of Object.keys(goodsForCapital) as (keyof Goods)[]) {
+        const purchased =
+            (goodsForCapital[key] ?? 0) - (remainingGoods[key] ?? 0);
+        if(!Number.isFinite(purchased) || purchased < -1e-9) {
+            throw new Error(
+                `Invalid capital goods consumption for ${key}: ${purchased}`,
+            );
+        }
+        const qty = Math.max(0, purchased);
+        if(qty > 0) {
+            capitalPurchasesByGood[key] = qty;
+        }
+    }
+
     // Deduct capital costs from sector money
     for(const name of activeSectors) {
         const capitalCost = moneySpent[name] ?? 0;
@@ -808,19 +856,63 @@ function processIndustry(
         }
     }
 
-    // Reconcile reconstructed production against executeSectors() aggregate
-    for(const goodKey of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
-        const reconstructed = colonyGoodsProduction[goodKey] ?? 0;
-        const reported = sumGoodsProduction[goodKey] ?? 0;
-        if(Math.abs(reconstructed - reported) > 1e-6) {
+    // Reconcile reconstructed production against executeSectors() aggregate.
+    // NOTE: colonyGoodsProduction is reconstructed from colonyGoodsDelta which is a net change,
+    // not gross production. Gross-production reconciliation uses actual per-sector quantities
+    // from sectorResults entries instead (to be added later). Do not compare gross production
+    // with net inventory changes.
+    // Reconcile reconstructed production against executeSectors() aggregate.
+    // Check the union of both key sets so a good present in one but absent
+    // from the other is caught.
+    // const productionKeys = new Set([
+    //     ...Object.keys(sumGoodsProduction),
+    //     ...Object.keys(colonyGoodsProduction),
+    // ]);
+    // for(const key of productionKeys) {
+    //     const good = key as keyof Goods;
+    //     const reconstructed = colonyGoodsProduction[good] ?? 0;
+    //     const reported = sumGoodsProduction[good] ?? 0;
+    //     if(Math.abs(reconstructed - reported) > 1e-6) {
+    //         throw new Error(
+    //             `Production reconciliation mismatch for ${good}: ` +
+    //             `reconstructed=${reconstructed}, reported=${reported}`,
+    //         );
+    //     }
+    // }
+
+    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
+
+    // Direct inventory conservation invariant.
+    // Closing inventory must equal opening + production - consumption - sales - capital purchases,
+    // using independently-tracked flows rather than reconstructed deltas.
+    const epsilon = 1e-6;
+    for(const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
+        if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+            continue;
+        }
+
+        const opening = tickStartGoods[goodKey] ?? 0;
+        const production = sumGoodsProduction[goodKey] ?? 0;
+        const inputsConsumed = sumGoodsRequirements[goodKey] ?? 0;
+        const householdSales = fulfilledDemandQty[goodKey] ?? 0;
+        const capitalPurchases = capitalPurchasesByGood[goodKey] ?? 0;
+
+        const expectedClosing =
+            opening + production - inputsConsumed - householdSales - capitalPurchases;
+
+        const actualClosing = colonyGoodsChanges[goodKey] ?? 0;
+
+        if(
+            !Number.isFinite(expectedClosing) ||
+            !Number.isFinite(actualClosing) ||
+            Math.abs(actualClosing - expectedClosing) > epsilon
+        ) {
             throw new Error(
-                `Production reconciliation mismatch for ${goodKey}: ` +
-                `reconstructed=${reconstructed}, reported=${reported}`,
+                `Inventory conservation failed for ${goodKey}: ` +
+                `expected=${expectedClosing}, actual=${actualClosing}`,
             );
         }
     }
-
-    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
 
     // PHASE 7: Transaction ledger — record all economic transfers for audit
     const ledger = new TransactionLedger();
@@ -929,7 +1021,7 @@ function processIndustry(
     openingBalances["colony_treasury"] = openingTreasury;
     closingBalances["colony_treasury"] = newTreasury;
     openingBalances["household_sales"] = 0;
-    closingBalances["household_sales"] = totalPopulationSpending;
+    closingBalances["household_sales"] = 0;
     for(const key of Object.keys(population) as (keyof Population)[]) {
         const account = `population:${key}`;
         openingBalances[account] = population[key].wealth ?? 0;
@@ -1054,11 +1146,13 @@ function validatePrices(
 ): Record<keyof Goods, number> {
     const validated = { ...prices };
 
-    for(const key of Object.keys(validated) as (keyof Goods)[]) {
+    // Validate every good in the authoritative schema has a finite, nonnegative price.
+    // A missing price must be an error, not silently treated as a free good.
+    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
         const value = validated[key];
 
         if(!Number.isFinite(value) || value < 0) {
-            throw new Error(`Invalid price for ${key}: ${value}`);
+            throw new Error(`Invalid or missing price for ${key}: ${value}`);
         }
     }
 
