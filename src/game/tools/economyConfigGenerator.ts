@@ -46,21 +46,12 @@ const SERVICE_GOODS = new Set<keyof Goods>([
 	"faith",
 ]);
 
-// Sectors that produce service goods as primary output
+// Sectors that produce service goods as primary output, plus sectors
+// that produce critical inputs needed by service producers (oil, water, paper, chemicals).
+// DISABLED: Two-phase execution causes input supply chain issues.
+// Revert to single-phase execution for now.
 const SERVICE_PRODUCING_SECTORS = new Set<keyof IndustrialSectors>([
-	"powerPlant",      // produces energy
-	"services",        // produces services
-	"government",      // produces governance
-	"healthcare",      // produces healthcare
-	"education",       // produces education
-	"lawEnforcement",  // produces lawEnforcement
-	"forestry",        // produces environmentFactor
-	"tourism",         // produces tourism
-	"entertainmentIndustry", // produces entertainment
-	"logistics",       // produces logistics
-	"bank",            // produces monetaryServices
-	"religion",        // produces faith
-	"defense",         // produces defense
+	// Empty - all sectors run in single phase
 ]);
 
 function isServiceProducingSector(sectorName: string): sectorName is keyof IndustrialSectors {

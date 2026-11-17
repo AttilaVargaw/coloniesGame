@@ -405,7 +405,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["government", ({
         name: "government",
-        goodsRequirements: { services: 50, environmentFactor: 10 },
+        goodsRequirements: { environmentFactor: 10, energy: 100, paper: 10 },
         workerRequirement: { clerks: 790, worker: 200, healtcarePersonal: 10 },
         goodsProduction: { governance: 150_000 },
         efficiencyBonus: 0.01,

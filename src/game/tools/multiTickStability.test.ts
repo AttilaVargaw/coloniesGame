@@ -7,6 +7,18 @@ import type { Population } from "../data/Population.ts";
 import type { Goods } from "../data/Goods.ts";
 import { NON_CUMULATING_GOODS } from "../data/Goods.ts";
 import { basePrices } from "../data/Goods.ts";
+import { IndustrialSectors } from "../components/Factories";
+
+// Minimum viable sectors for non-cumulative goods validation
+const minimalViableSectors: (keyof IndustrialSectors)[] = [
+	"powerPlant",
+	"farm",
+	"waterTreatment",
+	"foodFactory",
+	"forestry",
+	"government",
+	"paperFactory",
+];
 
 function sumValues(values: Iterable<number>): number {
 	return [...values].reduce((sum, value) => sum + value, 0);
@@ -109,11 +121,34 @@ function runMultiTick(
 		goods: Partial<Goods>;
 	}> = {}
 ): { results: IndustryTickResult[]; openingMoney: number; openingGoods: Goods } {
+	const completeActiveSectors = [
+		"powerPlant",
+		"farm",
+		"waterTreatment",
+		"foodFactory",
+		"oilRig",
+		"forestry",
+		"government",
+		"services",
+		"healthcare",
+		"education",
+		"lawEnforcement",
+		"logistics",
+		"tourism",
+		"entertainmentIndustry",
+		"bank",
+		"religion",
+		"defense",
+		"chemical",
+		"recycling",
+		"paperFactory",
+	] as (keyof IndustrialSectors)[];
+
 	const state = createSimState();
 	let input = generateColonyConfig(
 		{
 			populationSize: overrides.populationSize ?? 100_000,
-			activeSectors: overrides.activeSectors ?? ["farm", "foodFactory", "waterTreatment"],
+			activeSectors: overrides.activeSectors ?? completeActiveSectors,
 			starterMoneyPerSector: overrides.starterMoneyPerSector ?? 1_000_000_000,
 			capitalStockMultiplier: overrides.capitalStockMultiplier ?? 1,
 		},
@@ -276,9 +311,9 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			expect(results.length).toBe(365);
 		});
 
-		it("1000 ticks with minimal sectors (farm only)", () => {
+		it("1000 ticks with minimal viable sectors", () => {
 			const { results } = runMultiTick(1000, {
-				activeSectors: ["farm"],
+				activeSectors: minimalViableSectors,
 				starterMoneyPerSector: 1_000_000_000,
 			});
 			expect(results.length).toBe(1000);
@@ -286,7 +321,15 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 
 		it("1000 ticks with many sectors", () => {
 			const { results } = runMultiTick(1000, {
-				activeSectors: ["farm", "foodFactory", "waterTreatment", "powerPlant", "chemical"],
+				activeSectors: [
+					"farm",
+					"foodFactory",
+					"waterTreatment",
+					"powerPlant",
+					"chemical",
+					"forestry",
+					"government",
+				],
 				starterMoneyPerSector: 1_000_000_000,
 			});
 			expect(results.length).toBe(1000);
@@ -367,7 +410,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 0,
-					activeSectors: ["farm"],
+					activeSectors: minimalViableSectors,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -384,7 +427,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["farm"],
+					activeSectors: minimalViableSectors,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -402,7 +445,11 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["powerPlant"],
+					activeSectors: [
+						"powerPlant",
+						"forestry",
+						"government",
+					],
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -426,7 +473,11 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["powerPlant"],
+					activeSectors: [
+						"powerPlant",
+						"forestry",
+						"government",
+					],
 					starterMoneyPerSector: 1_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -445,7 +496,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["farm"],
+					activeSectors: minimalViableSectors,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 0,
 				},

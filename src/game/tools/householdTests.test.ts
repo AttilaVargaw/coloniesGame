@@ -5,6 +5,7 @@ import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import type { Population } from "../data/Population.ts";
 import type { Goods } from "../data/Goods.ts";
+import type { IndustrialSectors } from "../components/Factories.ts";
 
 function sumValues(values: Iterable<number>): number {
 	return [...values].reduce((sum, value) => sum + value, 0);
@@ -17,26 +18,59 @@ function sumPopulationWealth(population: Population): number {
 	);
 }
 
-function runTick(
-	overrides: Partial<{
-		populationSize: number;
-		activeSectors: (keyof import("../components/Factories").IndustrialSectors)[];
-		starterMoneyPerSector: number;
-		capitalStockMultiplier: number;
-		goods: Partial<Goods>;
-		zeroWealth: boolean;
-	}> = {}
-): { input: IndustryTickInput; result: IndustryTickResult } {
+// Complete sector set that provides full supply chain for non-cumulative goods
+const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
+	"powerPlant",
+	"farm",
+	"waterTreatment",
+	"foodFactory",
+	"oilRig",
+	"forestry",
+	"government",
+	"services",
+	"healthcare",
+	"education",
+	"lawEnforcement",
+	"logistics",
+	"tourism",
+	"entertainmentIndustry",
+	"bank",
+	"religion",
+	"defense",
+	"chemical",
+	"recycling",
+];
+
+// Population ratios to ensure all sectors have required workers
+const TEST_OCCUPATION_RATIOS = {
+	serviceMan: 20,
+	healtcarePersonal: 20,
+	engineer: 20,
+	clerks: 20,
+	farmer: 20,
+	worker: 20,
+};
+
+function createCompleteEconomyInput(overrides: Partial<{
+	populationSize: number;
+	activeSectors: (keyof IndustrialSectors)[];
+	starterMoneyPerSector: number;
+	capitalStockMultiplier: number;
+	goods: Partial<Goods>;
+	zeroWealth: boolean;
+}> = {}): { input: IndustryTickInput; result: IndustryTickResult } {
 	const state = createSimState();
 	const input = generateColonyConfig(
 		{
-			populationSize: overrides.populationSize ?? 100_000,
-			activeSectors: overrides.activeSectors ?? ["farm"],
+			populationSize: overrides.populationSize ?? 500_000,
+			activeSectors: overrides.activeSectors ?? COMPLETE_SECTORS,
 			starterMoneyPerSector: overrides.starterMoneyPerSector ?? 1_000_000_000,
 			capitalStockMultiplier: overrides.capitalStockMultiplier ?? 1,
 		},
 		{},
+		TEST_OCCUPATION_RATIOS
 	);
+
 	if (overrides.goods) {
 		for (const [key, value] of Object.entries(overrides.goods)) {
 			input.goods[key as keyof Goods] = value;
@@ -54,9 +88,7 @@ function runTick(
 describe("Household economics — per-group cash and mortality", () => {
 	describe("Per-group spending limited to own cash", () => {
 		it("each group: spending <= opening wealth + wages earned this tick", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { input, result } = createCompleteEconomyInput();
 
 			const openingWealthByPop = Object.fromEntries(
 				Object.entries(input.population).map(
@@ -77,7 +109,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("group with zero opening wealth and zero wages spends nothing", () => {
-			const { input, result } = runTick({ zeroWealth: true });
+			const { input, result } = createCompleteEconomyInput({ zeroWealth: true });
 
 			for (const [key] of Object.entries(input.population)) {
 				const popKey = key as keyof Population;
@@ -89,9 +121,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("group cannot spend another group's cash", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { input, result } = createCompleteEconomyInput();
 
 			// Capture opening wealth per group
 			const openingWealthByPop = Object.fromEntries(
@@ -114,9 +144,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("total household spending >= sector sales revenue (difference is warehouse revenue to treasury)", () => {
-			const { result } = runTick({
-				activeSectors: ["farm", "foodFactory"],
-			});
+			const { result } = createCompleteEconomyInput({ activeSectors: COMPLETE_SECTORS.filter(s => s !== "farm" && s !== "foodFactory") });
 
 			const totalSpending = sumValues(
 				Object.values(result.accounting.spendingByPop),
@@ -138,9 +166,7 @@ describe("Household economics — per-group cash and mortality", () => {
 
 	describe("Per-group cash reconciliation", () => {
 		it("closing wealth = opening wealth + wages - spending for every group", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { input, result } = createCompleteEconomyInput();
 
 			const openingWealthByPop = Object.fromEntries(
 				Object.entries(input.population).map(
@@ -164,9 +190,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("aggregate household money equals sum of population wealth", () => {
-			const { result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { result } = createCompleteEconomyInput();
 
 			const populationCash = sumPopulationWealth(result.population);
 			expect(Math.abs(populationCash - result.householdMoney)).toBeLessThan(
@@ -175,7 +199,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("population wealth is finite and nonnegative for every group", () => {
-			const { result } = runTick({});
+			const { result } = createCompleteEconomyInput();
 
 			for (const [, pop] of Object.entries(result.population)) {
 				expect(Number.isFinite(pop.wealth)).toBe(true);
@@ -188,10 +212,7 @@ describe("Household economics — per-group cash and mortality", () => {
 
 	describe("Mortality does not destroy category cash", () => {
 		it("wealth stays with the category after mortality — closing wealth = opening + wages - spending", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-				goods: { food: 0 }, // scarce food to trigger deprivation/mortality
-			});
+			const { input, result } = createCompleteEconomyInput({ goods: { food: 0 } });
 
 			const openingWealthByPop = Object.fromEntries(
 				Object.entries(input.population).map(
@@ -217,10 +238,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("population count may decrease but category wealth is preserved", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-				goods: { food: 0 }, // trigger mortality via scarcity
-			});
+			const { input, result } = createCompleteEconomyInput({ goods: { food: 0 } });
 
 			for (const [key] of Object.entries(input.population)) {
 				const popKey = key as keyof Population;
@@ -241,10 +259,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("mortality rate produces finite, nonnegative values for all groups", () => {
-			const { result } = runTick({
-				activeSectors: ["farm"],
-				goods: { food: 0 },
-			});
+			const { result } = createCompleteEconomyInput({ goods: { food: 0 } });
 
 			expect(result.deprivation).toBeDefined();
 			for (const [, value] of Object.entries(result.deprivation)) {
@@ -256,9 +271,7 @@ describe("Household economics — per-group cash and mortality", () => {
 
 	describe("Wage attribution to correct population group", () => {
 		it("wages are paid to the population category that performed the work", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { input, result } = createCompleteEconomyInput();
 
 			const wagesByPop = result.accounting.wagesByPop;
 			const sectorLaborCosts = result.sectorLaborCosts;
@@ -278,9 +291,7 @@ describe("Household economics — per-group cash and mortality", () => {
 		});
 
 		it("groups not employed by any sector receive zero wages", () => {
-			const { input, result } = runTick({
-				activeSectors: ["farm"],
-			});
+			const { input, result } = createCompleteEconomyInput();
 
 			const wagesByPop = result.accounting.wagesByPop;
 
@@ -312,9 +323,7 @@ describe("Household economics — per-group cash and mortality", () => {
 
 	describe("Spending by pop group finite and nonnegative", () => {
 		it("every group's spending is finite and nonnegative", () => {
-			const { result } = runTick({
-				activeSectors: ["farm", "foodFactory"],
-			});
+			const { result } = createCompleteEconomyInput();
 
 			for (const [key] of Object.entries(result.accounting.spendingByPop)) {
 				const popKey = key as keyof Population;

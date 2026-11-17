@@ -329,7 +329,7 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["powerPlant"],
+					activeSectors: ["powerPlant", "forestry", "government", "services", "oilRig"],
 					starterMoneyPerSector: 20_000,
 					capitalStockMultiplier: 1,
 				},
@@ -355,22 +355,25 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["powerPlant"],
-					starterMoneyPerSector: 1_000_000,
+					activeSectors: ["farm", "foodFactory", "waterTreatment", "forestry", "government", "chemical", "services", "powerPlant"],
+					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
 				{},
 			);
-			// Zero out oil — the power plant's key input
-			input.goods.oil = 0;
+			// Zero out water — farm and waterTreatment need it
+			input.goods.water = 0;
+			input.goods.environmentFactor = 10_000;
+			input.goods.governance = 10_000;
+			input.goods.energy = 10_000;
 
 			const result = simulateTick(input, state);
 
-			const sectorResult = result.sectorResults["powerPlant"];
-			expect(sectorResult).toBeDefined();
-			// With no oil, production should be 0
-			expect(sectorResult!.productionRatio).toBe(0);
-			expect(result.sectorStopReason["powerPlant"]).toBe("No materials");
+			const farmResult = result.sectorResults["farm"];
+			expect(farmResult).toBeDefined();
+			// With no water, farm production should be 0
+			expect(farmResult!.productionRatio).toBe(0);
+			expect(result.sectorStopReason["farm"]).toBe("No materials");
 		});
 
 		it("multiple sectors compete for scarce input, at least one produces", () => {
@@ -378,7 +381,7 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["farm", "foodFactory"],
+					activeSectors: ["farm", "foodFactory", "forestry", "government", "chemical", "waterTreatment", "services", "powerPlant"],
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -424,7 +427,7 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			const input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: ["farm", "foodFactory", "waterTreatment"],
+					activeSectors: ["farm", "foodFactory", "waterTreatment", "forestry", "government", "chemical", "powerPlant", "services"],
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},

@@ -10,6 +10,16 @@ import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
 import { Goods } from "../data/Goods.ts";
 import { Population } from "../data/Population.ts";
 
+// Population ratios to ensure all sectors have required workers
+const TEST_OCCUPATION_RATIOS = {
+	serviceMan: 20,
+	healtcarePersonal: 20,
+	engineer: 20,
+	clerks: 20,
+	farmer: 20,
+	worker: 20,
+};
+
 function cloneInput(input: IndustryTickInput): IndustryTickInput {
 	return {
 		...input,
@@ -33,11 +43,33 @@ function createBaselineInput(): IndustryTickInput {
 	return generateColonyConfig(
 		{
 			populationSize: 50_000_000,
-			activeSectors: ["powerPlant", "farm", "waterTreatment", "foodFactory", "oilRig"],
+			activeSectors: [
+				"powerPlant",
+				"farm",
+				"waterTreatment",
+				"foodFactory",
+				"oilRig",
+				"forestry",
+				"government",
+				"services",
+				"healthcare",
+				"education",
+				"lawEnforcement",
+				"logistics",
+				"tourism",
+				"entertainmentIndustry",
+				"bank",
+				"religion",
+				"defense",
+				"chemical",
+				"recycling",
+				"paperFactory",
+			],
 			starterMoneyPerSector: 50_000_000,
 			capitalStockMultiplier: 5,
 		},
-		{}
+		{},
+		TEST_OCCUPATION_RATIOS
 	);
 }
 

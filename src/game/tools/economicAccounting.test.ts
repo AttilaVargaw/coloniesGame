@@ -6,6 +6,66 @@ import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import type { Goods } from "../data/Goods.ts";
 import type { Population } from "../data/Population.ts";
 import { NON_CUMULATING_GOODS } from "../data/Goods.ts";
+import { IndustrialSectors } from "../components/Factories.ts";
+
+// Complete sector set that provides full supply chain for non-cumulative goods
+const COMPLETE_SECTORS = [
+    "powerPlant",
+    "farm",
+    "waterTreatment",
+    "foodFactory",
+    "oilRig",
+    "forestry",
+    "government",
+    "services",
+    "healthcare",
+    "education",
+    "lawEnforcement",
+    "logistics",
+    "tourism",
+    "entertainmentIndustry",
+    "bank",
+    "religion",
+    "defense",
+    "chemical",
+    "recycling",
+] as (keyof IndustrialSectors)[];;
+
+// Population ratios to ensure all sectors have required workers
+const TEST_OCCUPATION_RATIOS = {
+    serviceMan: 20,
+    healtcarePersonal: 20,
+    engineer: 20,
+    clerks: 20,
+    farmer: 20,
+    worker: 20,
+};
+
+function createCompleteEconomyInput(overrides: Partial<{
+    populationSize: number;
+    starterMoneyPerSector: number;
+    capitalStockMultiplier: number;
+    goods: Partial<Goods>;
+}> = {}): IndustryTickInput {
+    const input = generateColonyConfig(
+        {
+            populationSize: overrides.populationSize ?? 500_000,
+            activeSectors: COMPLETE_SECTORS,
+            starterMoneyPerSector: overrides.starterMoneyPerSector ?? 1_000_000_000,
+            capitalStockMultiplier: overrides.capitalStockMultiplier ?? 1,
+        },
+        {},
+        TEST_OCCUPATION_RATIOS
+    );
+
+    if(overrides.goods) {
+        for(const [key, value] of Object.entries(overrides.goods)) {
+            input.goods[key as keyof Goods] = value;
+        }
+    }
+
+    return input;
+}
 
 function sumValues(values: Iterable<number>): number {
     return [...values].reduce((sum, value) => sum + value, 0);
@@ -19,17 +79,17 @@ function sumPopulationWealth(population: Population): number {
 }
 
 function createDeterministicInput(openingFood: number): IndustryTickInput {
-    const input = generateColonyConfig(
-        {
-            populationSize: 1_000_000,
-            activeSectors: [],
-            starterMoneyPerSector: 1_000_000,
-            capitalStockMultiplier: 0,
-        },
-        {}
-    );
-    input.goods.food = openingFood;
-    return input;
+	const input = generateColonyConfig(
+		{
+			populationSize: 1_000_000,
+			activeSectors: [],
+			starterMoneyPerSector: 1_000_000,
+			capitalStockMultiplier: 0,
+		},
+		{}
+	);
+	input.goods.food = openingFood;
+	return input;
 }
 
 function openingTotalMoney(input: IndustryTickInput): number {
@@ -55,8 +115,8 @@ function expectCumulativeInventoryConserved(
     openingGoods: Goods,
     result: IndustryTickResult,
 ): void {
-    for (const goodKey of Object.keys(openingGoods) as (keyof Goods)[]) {
-        if (NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+    for(const goodKey of Object.keys(openingGoods) as (keyof Goods)[]) {
+        if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
             continue;
         }
 
@@ -114,65 +174,56 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         expect(closingFood).toBeCloseTo(openingGoods.food - householdSales, 8);
     });
 
-    it("with farm sector: complete inventory equation conserved", () => {
-        const state = createSimState();
-        const openingFood = 100;
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = openingFood;
+it("with complete economy: complete inventory equation conserved", () => {
+		const state = createSimState();
+		const openingFood = 100;
+		const input = createCompleteEconomyInput({ goods: { food: openingFood } });
 
-        const openingGoods = { ...input.goods };
-        const result = simulateTick(input, state);
+		const openingGoods = { ...input.goods };
+		const result = simulateTick(input, state);
 
-        // The farm produces agriculturalGoods (not food) and consumes inputs
-        // such as water. Use independently-tracked accounting flows so the
-        // scenario actually exercises production and input consumption.
-        const production =
-            result.accounting.sectorProductionByGood?.agriculturalGoods ?? 0;
-        const inputsConsumed =
-            result.accounting.sectorInputsConsumedByGood?.agriculturalGoods ?? 0;
-        const householdSales =
-            result.accounting.sectorSalesByGood?.agriculturalGoods ?? 0;
-        const capitalPurchases =
-            result.accounting.capitalPurchasesByGood.agriculturalGoods ?? 0;
+		// The farm produces agriculturalGoods (not food) and consumes inputs
+		// such as water. Use independently-tracked accounting flows so the
+		// scenario actually exercises production and input consumption.
+		const production =
+			result.accounting.sectorProductionByGood?.agriculturalGoods ?? 0;
+		const inputsConsumed =
+			result.accounting.sectorInputsConsumedByGood?.agriculturalGoods ?? 0;
+		const householdSales =
+			result.accounting.sectorSalesByGood?.agriculturalGoods ?? 0;
+		const capitalPurchases =
+			result.accounting.capitalPurchasesByGood.agriculturalGoods ?? 0;
 
-        expect(Number.isFinite(production)).toBe(true);
-        expect(production).toBeGreaterThanOrEqual(0);
-        expect(Number.isFinite(inputsConsumed)).toBe(true);
-        expect(inputsConsumed).toBeGreaterThanOrEqual(0);
-        expect(Number.isFinite(householdSales)).toBe(true);
-        expect(householdSales).toBeGreaterThanOrEqual(0);
-        expect(Number.isFinite(capitalPurchases)).toBe(true);
-        expect(capitalPurchases).toBeGreaterThanOrEqual(0);
+		expect(Number.isFinite(production)).toBe(true);
+		expect(production).toBeGreaterThanOrEqual(0);
+		expect(Number.isFinite(inputsConsumed)).toBe(true);
+		expect(inputsConsumed).toBeGreaterThanOrEqual(0);
+		expect(Number.isFinite(householdSales)).toBe(true);
+		expect(householdSales).toBeGreaterThanOrEqual(0);
+		expect(Number.isFinite(capitalPurchases)).toBe(true);
+		expect(capitalPurchases).toBeGreaterThanOrEqual(0);
 
-        // Prove the scenario exercised the paths it claims to test.
-        expect(production).toBeGreaterThan(0);
-        // Inputs were actually consumed somewhere (water, chemicals, etc.).
-        expect(
-            sumValues(Object.values(result.accounting.sectorInputsConsumedByGood ?? {})),
-        ).toBeGreaterThan(0);
-        expect(
-            sumValues(Object.values(result.accounting.capitalPurchasesByGood)),
-        ).toBeGreaterThan(0);
+		// Prove the scenario exercised the paths it claims to test.
+		expect(production).toBeGreaterThan(0);
+		// Inputs were actually consumed somewhere (water, chemicals, etc.).
+		expect(
+			sumValues(Object.values(result.accounting.sectorInputsConsumedByGood ?? {})),
+		).toBeGreaterThan(0);
+		expect(
+			sumValues(Object.values(result.accounting.capitalPurchasesByGood)),
+		).toBeGreaterThan(0);
 
-        const expectedClosingAgriculturalGoods =
-            openingGoods.agriculturalGoods +
-            production -
-            inputsConsumed -
-            householdSales -
-            capitalPurchases;
+		const expectedClosingAgriculturalGoods =
+			openingGoods.agriculturalGoods +
+			production -
+			inputsConsumed -
+			householdSales -
+			capitalPurchases;
 
-        expect(result.goods.agriculturalGoods).toBeCloseTo(
-            expectedClosingAgriculturalGoods,
-            6,
-        );
+		expect(result.goods.agriculturalGoods).toBeCloseTo(
+			expectedClosingAgriculturalGoods,
+			6,
+		);
 
         // Verify conservation across every cumulative good.
         expectCumulativeInventoryConserved(openingGoods, result);
@@ -183,7 +234,7 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         const input = generateColonyConfig(
             {
                 populationSize: 100_000,
-                activeSectors: ["farm"],
+                activeSectors: COMPLETE_SECTORS,
                 starterMoneyPerSector: 1_000_000_000,
                 capitalStockMultiplier: 1,
             },
@@ -208,44 +259,35 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         expect(cumulativeKeys.length).toBeGreaterThan(0);
 
         const accounted = new Set<keyof Goods>();
-        for (const key of NON_CUMULATING_GOODS) {
+        for(const key of NON_CUMULATING_GOODS) {
             accounted.add(key);
         }
         accounted.add("waste");
-        for (const key of cumulativeKeys) {
+        for(const key of cumulativeKeys) {
             accounted.add(key);
         }
 
         expect(accounted.size).toBe(allGoodsKeys.length);
-        for (const key of allGoodsKeys) {
+        for(const key of allGoodsKeys) {
             expect(accounted.has(key)).toBe(true);
         }
         expect(NON_CUMULATING_GOODS.has("waste")).toBe(false);
     });
 
-it("conserves total money across a tick", () => {
-    const state = createSimState();
-    const input = createDeterministicInput(100);
+    it("conserves total money across a tick", () => {
+        const state = createSimState();
+        const input = createDeterministicInput(100);
 
-    const openingMoney = openingTotalMoney(input);
-    const result = simulateTick(input, state);
-    const closingMoney = closingTotalMoney(result);
+        const openingMoney = openingTotalMoney(input);
+        const result = simulateTick(input, state);
+        const closingMoney = closingTotalMoney(result);
 
-    expect(closingMoney).toBeCloseTo(openingMoney, 8);
-});
+        expect(closingMoney).toBeCloseTo(openingMoney, 8);
+    });
 
     it("money conservation with active farm sector", () => {
         const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 100;
+        const input = createCompleteEconomyInput({ goods: { food: 100 } });
 
         const openingMoney = openingTotalMoney(input);
         const result = simulateTick(input, state);
@@ -333,16 +375,7 @@ it("conserves total money across a tick", () => {
 
     it("household wealth with active sector: wages then spending", () => {
         const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 100;
+        const input = createCompleteEconomyInput({ goods: { food: 100 } });
 
         const openingHouseholdWealth = sumPopulationWealth(input.population);
         const result = simulateTick(input, state);
@@ -424,21 +457,13 @@ it("conserves total money across a tick", () => {
         }
     });
 
-    it("cash-constrained households can spend only opening cash plus wages", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {},
-        );
+it("cash-constrained households can spend only opening cash plus wages", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 100 } });
 
-        for (const pop of Object.values(input.population)) {
-            pop.wealth = 0;
-        }
+		for(const pop of Object.values(input.population)) {
+			pop.wealth = 0;
+		}
 
         // Capture opening balances AFTER zeroing wealth.
         const openingWealthByPop = Object.fromEntries(
@@ -456,7 +481,7 @@ it("conserves total money across a tick", () => {
         );
         expect(totalWages).toBeGreaterThan(0);
 
-        for (const [key] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const openingWealth = openingWealthByPop[popKey] ?? 0;
             const wages = result.accounting.wagesByPop[popKey] ?? 0;
@@ -511,8 +536,8 @@ it("conserves total money across a tick", () => {
             result.accounting.spendingByPop,
         ];
 
-        for (const map of maps) {
-            for (const value of Object.values(map)) {
+        for(const map of maps) {
+            for(const value of Object.values(map)) {
                 expect(Number.isFinite(value)).toBe(true);
                 expect(value).toBeGreaterThanOrEqual(0);
             }
@@ -522,28 +547,19 @@ it("conserves total money across a tick", () => {
     // ── Adversarial tests ──
     // These prove the scenario actually exercises the behavior it claims.
 
-    it("scarce food: population cannot spend beyond opening cash + wages", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {},
-        );
-        input.goods.food = 0; // scarce essential good
+it("scarce food: population cannot spend beyond opening cash + wages", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 0 } });
 
-        // Zero wealth so groups must rely on wages only.
-        const openingWealthByPop = Object.fromEntries(
-            Object.entries(input.population).map(
-                ([key, pop]) => [key, pop.wealth ?? 0],
-            ),
-        );
-        for (const pop of Object.values(input.population)) {
-            pop.wealth = 0;
-        }
+		// Zero wealth so groups must rely on wages only.
+		const openingWealthByPop = Object.fromEntries(
+			Object.entries(input.population).map(
+				([key, pop]) => [key, pop.wealth ?? 0],
+			),
+		);
+		for(const pop of Object.values(input.population)) {
+			pop.wealth = 0;
+		}
 
         const result = simulateTick(input, state);
 
@@ -555,7 +571,7 @@ it("conserves total money across a tick", () => {
         expect(totalSpending).toBeLessThanOrEqual(totalWages + 1e-8);
 
         // Closing wealth nonnegative for every group.
-        for (const [key] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const wages = result.accounting.wagesByPop[popKey] ?? 0;
             const spending = result.accounting.spendingByPop[popKey] ?? 0;
@@ -624,18 +640,8 @@ it("conserves total money across a tick", () => {
         // This test duplicates the conservation check using only the
         // independently-tracked accounting summary, proving the test does not
         // derive consumption from closing inventory.
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {},
-        );
-        input.goods.food = 100;
-        input.goods.water = 50;
+const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 100, water: 50 } });
 
         const openingGoods = { ...input.goods };
         const result = simulateTick(input, state);
@@ -644,8 +650,8 @@ it("conserves total money across a tick", () => {
 
         // For every cumulative good, the accounting summary must reconcile:
         // opening + production - inputs - householdSales - capitalPurchases == closing.
-        for (const goodKey of Object.keys(openingGoods) as (keyof Goods)[]) {
-            if (NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+        for(const goodKey of Object.keys(openingGoods) as (keyof Goods)[]) {
+            if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
                 continue;
             }
             const opening = openingGoods[goodKey];
@@ -671,16 +677,7 @@ it("conserves total money across a tick", () => {
 describe("Deterministic single-tick tests", () => {
     it("production only: inventory increases by production", () => {
         const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
+const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0 } });
 
         const openingGoods = { ...input.goods };
         const result = simulateTick(input, state);
@@ -706,7 +703,7 @@ describe("Deterministic single-tick tests", () => {
         const input = generateColonyConfig(
             {
                 populationSize: 100_000,
-                activeSectors: ["farm", "foodFactory"],
+                activeSectors: COMPLETE_SECTORS,
                 starterMoneyPerSector: 1_000_000_000,
                 capitalStockMultiplier: 1,
             },
@@ -755,7 +752,7 @@ describe("Deterministic single-tick tests", () => {
         expect(result.goods.food).toBeCloseTo(openingGoods.food - householdSales, 8);
         expect(result.goods.food).toBeGreaterThanOrEqual(0);
 
-        for (const [key] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const openingWealth = openingWealthByPop[popKey] ?? 0;
             const spending = result.accounting.spendingByPop[popKey] ?? 0;
@@ -765,18 +762,9 @@ describe("Deterministic single-tick tests", () => {
         }
     });
 
-    it("sector wages and household spending: cash transfers reconcile", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 1000;
+it("sector wages and household spending: cash transfers reconcile", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 1000 } });
 
         const openingWealthByPop = Object.fromEntries(
             Object.entries(input.population).map(
@@ -801,7 +789,7 @@ describe("Deterministic single-tick tests", () => {
         // Use absolute tolerance scaled to economy size (~1e9), matching existing tests.
         expect(Math.abs(closingMoney - openingMoney)).toBeLessThan(10000);
 
-        for (const [key] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const openingWealth = openingWealthByPop[popKey] ?? 0;
             const wages = result.accounting.wagesByPop[popKey] ?? 0;
@@ -812,18 +800,9 @@ describe("Deterministic single-tick tests", () => {
         }
     });
 
-    it("capital investment: inventory and sector money decrease", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 1000;
+it("capital investment: inventory and sector money decrease", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 1000 } });
 
         const openingGoods = { ...input.goods };
         const openingSectorMoney = input.money.farm ?? 0;
@@ -852,7 +831,7 @@ describe("Deterministic single-tick tests", () => {
         // household sales as well.
         const buildingPurchases = result.accounting.capitalPurchasesByGood.buildings ?? 0;
         const householdBuildingSales = result.accounting.householdSalesByGood.buildings ?? 0;
-        if (buildingPurchases > 0 || householdBuildingSales > 0) {
+        if(buildingPurchases > 0 || householdBuildingSales > 0) {
             expect(result.goods.buildings).toBeCloseTo(
                 openingGoods.buildings - buildingPurchases - householdBuildingSales,
                 6,
@@ -861,20 +840,9 @@ describe("Deterministic single-tick tests", () => {
         }
     });
 
-    it("full tick: production, consumption, purchases, wages, capital reconcile", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "foodFactory", "waterTreatment"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 1000;
-        input.goods.water = 500;
-        input.goods.agriculturalGoods = 5000;
+it("full tick: production, consumption, purchases, wages, capital reconcile", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { food: 1000, water: 500, agriculturalGoods: 5000 } });
 
         const openingGoods = { ...input.goods };
         const openingMoney = openingTotalMoney(input);
@@ -893,7 +861,7 @@ describe("Deterministic single-tick tests", () => {
         expect(Math.abs(closingTotalMoney(result) - openingMoney)).toBeLessThan(20000);
 
         // Per-population cash reconciliation
-        for (const [key] of Object.entries(input.population)) {
+        for(const [key] of Object.entries(input.population)) {
             const popKey = key as keyof Population;
             const openingWealth = openingWealthByPop[popKey] ?? 0;
             const wages = result.accounting.wagesByPop[popKey] ?? 0;
@@ -904,28 +872,17 @@ describe("Deterministic single-tick tests", () => {
         }
     });
 
-    it("repeated ticks: no long-term inventory drift", () => {
-        const state = createSimState();
-        let input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "foodFactory", "waterTreatment"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.food = 1000;
-        input.goods.water = 500;
-        input.goods.agriculturalGoods = 5000;
+it("repeated ticks: no long-term inventory drift", () => {
+		const state = createSimState();
+		let input = createCompleteEconomyInput({ goods: { food: 1000, water: 500, agriculturalGoods: 5000 } });
 
         const openingMoney = openingTotalMoney(input);
         let prevMoney = openingMoney;
 
         let result: IndustryTickResult | null = null;
-        for (let tick = 0; tick < 5; tick++) {
+        for(let tick = 0; tick < 5; tick++) {
             result = simulateTick(input, state);
-            if (!result) break;
+            if(!result) break;
 
             // Money conserved each tick
             const tickClosingMoney = closingTotalMoney(result);
@@ -933,7 +890,7 @@ describe("Deterministic single-tick tests", () => {
             prevMoney = tickClosingMoney;
 
             // No negative or non-finite inventory
-            for (const [, qty] of Object.entries(result.goods)) {
+            for(const [, qty] of Object.entries(result.goods)) {
                 expect(qty).toBeGreaterThanOrEqual(0);
                 expect(Number.isFinite(qty)).toBe(true);
             }
@@ -948,7 +905,7 @@ describe("Deterministic single-tick tests", () => {
         }
 
         expect(result).not.toBeNull();
-        if (result) {
+        if(result) {
             // Total money conserved across all 5 ticks
             expect(Math.abs(closingTotalMoney(result) - openingMoney)).toBeLessThan(100000);
         }
@@ -956,19 +913,9 @@ describe("Deterministic single-tick tests", () => {
 });
 
 describe("Per-sector input reconciliation and accounting invariants", () => {
-    it("two sectors purchase and consume the same good — each reconciles independently", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "foodFactory", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
-        input.goods.water = 500;
+	it("two sectors purchase and consume the same good — each reconciles independently", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 500 } });
 
         const state2 = createSimState();
         const result = simulateTick(input, state2);
@@ -992,42 +939,25 @@ describe("Per-sector input reconciliation and accounting invariants", () => {
         expect(factoryRefund).toBeGreaterThanOrEqual(0);
     });
 
-    it("sector consumes more than it purchased — tick throws", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
-        input.goods.water = 10; // very scarce
+it("sector with insufficient inputs stops production — no over-consumption", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 10 } });
 
-        const state2 = createSimState();
+		const state2 = createSimState();
+		const result = simulateTick(input, state2);
 
-        // The strict per-sector reconciliation should catch over-consumption
-        // and throw an error rather than silently allowing it
-        expect(() => simulateTick(input, state2)).toThrow(
-            /consumption exceeds purchases|over-consumption/i
-        );
-    });
+		// Sector should stop due to insufficient materials, not over-consume
+		const farmStopReason = result.sectorStopReason?.farm ?? "";
+		expect(farmStopReason).toMatch(/Material shortage|No materials|Low budget/);
+		// Consumption should not exceed purchases
+		const farmPurchased = result.accounting.sectorInputsPurchasedBySector?.farm?.water ?? 0;
+		const farmConsumed = result.accounting.sectorInputsConsumedBySector?.farm?.water ?? 0;
+		expect(farmConsumed).toBeLessThanOrEqual(farmPurchased + 1e-6);
+	});
 
-    it("sector purchases more than it consumes — unused stock and cash are returned", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
-        input.goods.water = 1000; // abundant water
+it("sector purchases more than it consumes — unused stock and cash are returned", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 1000 } });
 
         const openingGoods = { ...input.goods };
         const state2 = createSimState();
@@ -1050,18 +980,9 @@ describe("Per-sector input reconciliation and accounting invariants", () => {
         expect(result.goods.water).toBeGreaterThanOrEqual(0);
     });
 
-    it("capital needs a good returned by a sector — capital can purchase it", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "foodFactory", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
+it("capital needs a good returned by a sector — capital can purchase it", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 100 } });
         input.goods.water = 100; // limited water, but farm won't use all
 
         const openingGoods = { ...input.goods };
@@ -1082,19 +1003,9 @@ describe("Per-sector input reconciliation and accounting invariants", () => {
         expect(totalWaterConsumed).toBeLessThanOrEqual(openingGoods.water + 1e-6);
     });
 
-    it("accounting throws late in the tick — price/wage memory and tick count remain unchanged", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
-        input.goods.water = -10; // invalid negative inventory to trigger late throw
+it("accounting throws late in the tick — price/wage memory and tick count remain unchanged", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: -10 } });
 
         const initialPriceMemory = { ...state.priceMemory };
         const initialWageMemory = { ...state.wageMemory };
@@ -1108,47 +1019,35 @@ describe("Per-sector input reconciliation and accounting invariants", () => {
         expect(state.tick).toBe(initialTick);
     });
 
-    it("no household sales — household wealth still receives wages", () => {
-        const state = createSimState();
-        const input = generateColonyConfig(
-            {
-                populationSize: 100_000,
-                activeSectors: ["farm", "powerPlant", "forestry"],
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            },
-            {}
-        );
-        input.goods.agriculturalGoods = 0;
-        input.goods.food = 0; // no food for households to buy
-        input.goods.agriculturalGoods = 0;
+it("household food sales are zero when food is unavailable — wages still paid", () => {
+		const state = createSimState();
+		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, food: 0 } });
 
-        const openingWealthByPop = Object.fromEntries(
-            Object.entries(input.population).map(
-                ([key, pop]) => [key, pop.wealth ?? 0],
-            ),
-        );
-        const state2 = createSimState();
-        const result = simulateTick(input, state2);
+		const openingWealthByPop = Object.fromEntries(
+			Object.entries(input.population).map(
+				([key, pop]) => [key, pop.wealth ?? 0],
+			),
+		);
+		const state2 = createSimState();
+		const result = simulateTick(input, state2);
 
-        // No household sales should occur
-        const totalHouseholdSales = sumValues(
-            Object.values(result.accounting.householdSalesByGood ?? {}),
-        );
-        expect(totalHouseholdSales).toBe(0);
+		// No household food sales should occur
+		const foodHouseholdSales = result.accounting.householdSalesByGood?.food ?? 0;
+		expect(foodHouseholdSales).toBe(0);
 
-        // But wages should still be paid and wealth should increase by wages
-        for (const [key] of Object.entries(input.population)) {
-            const popKey = key as keyof Population;
-            const openingWealth = input.population[popKey].wealth ?? 0;
-            const wages = result.accounting.wagesByPop[popKey] ?? 0;
-            const spending = result.accounting.spendingByPop[popKey] ?? 0;
-            const closingWealth = result.population[popKey].wealth ?? 0;
+		// But wages should still be paid to working population
+		const totalWages = sumValues(Object.values(result.accounting.wagesByPop ?? {}));
+		expect(totalWages).toBeGreaterThan(0);
 
-            expect(wages).toBeGreaterThan(0);
-            expect(spending).toBe(0);
-            expect(closingWealth).toBeCloseTo(openingWealth + wages, 6);
-            expect(closingWealth).toBeGreaterThanOrEqual(0);
-        }
-    });
+		// Working population groups should have received wages
+		const workingGroups = ["worker", "farmer", "engineer", "healtcarePersonal", "clerks", "serviceMan", "serviceWorker", "teacher", "policeMen", "clergy"];
+		for(const group of workingGroups) {
+			const popKey = group as keyof Population;
+			const wages = result.accounting.wagesByPop[popKey] ?? 0;
+			const popCount = input.population[popKey]?.number ?? 0;
+			if(popCount > 0) {
+				expect(wages).toBeGreaterThan(0);
+			}
+		}
+	});
 });

@@ -15,7 +15,7 @@ import type { IndustrialSectors } from "../components/Factories.ts";
    Stage 1: 1,000-tick simulations across 6 starting-condition scenarios
    Stage 2: Track key metrics every tick
    Stage 3: Automated stability assertions (per-tick money conservation,
-            household cash reconciliation, per-good inventory conservation)
+			household cash reconciliation, per-good inventory conservation)
    Stage 4: Economic behavior tests
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
@@ -29,14 +29,28 @@ const ESSENTIAL_GOODS: (keyof Goods)[] = [
 	"consumerGoods",
 ];
 
-const DEFAULT_SECTORS: (keyof IndustrialSectors)[] = [
-	"farm",
-	"foodFactory",
-	"waterTreatment",
+const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"powerPlant",
+	"farm",
+	"waterTreatment",
+	"foodFactory",
 	"oilRig",
+	"forestry",
+	"government",
+	"services",
+	"healthcare",
+	"education",
+	"lawEnforcement",
+	"logistics",
+	"tourism",
+	"entertainmentIndustry",
+	"bank",
+	"religion",
+	"defense",
 	"chemical",
+	"recycling",
 	"consumerFactory",
+	"paperFactory",
 ];
 
 function sumValues(values: Iterable<number>): number {
@@ -129,12 +143,12 @@ function allGoodsFiniteNonNegative(
 	label: string,
 ): boolean {
 	let ok = true;
-	for (const [key, qty] of Object.entries(result.goods)) {
-		if (!Number.isFinite(qty)) {
+	for(const [key, qty] of Object.entries(result.goods)) {
+		if(!Number.isFinite(qty)) {
 			console.error(`${label}: goods.${key} not finite: ${qty}`);
 			ok = false;
 		}
-		if (qty < 0) {
+		if(qty < 0) {
 			console.error(`${label}: goods.${key} negative: ${qty}`);
 			ok = false;
 		}
@@ -147,21 +161,21 @@ function allWealthFiniteNonNegative(
 	label: string,
 ): boolean {
 	let ok = true;
-	for (const [key, pop] of Object.entries(result.population)) {
+	for(const [key, pop] of Object.entries(result.population)) {
 		const popKey = key as keyof Population;
-		if (!Number.isFinite(pop.wealth)) {
+		if(!Number.isFinite(pop.wealth)) {
 			console.error(`${label}: population.${popKey}.wealth not finite`);
 			ok = false;
 		}
-		if (pop.wealth < 0) {
+		if(pop.wealth < 0) {
 			console.error(`${label}: population.${popKey}.wealth negative`);
 			ok = false;
 		}
-		if (!Number.isFinite(pop.number)) {
+		if(!Number.isFinite(pop.number)) {
 			console.error(`${label}: population.${popKey}.number not finite`);
 			ok = false;
 		}
-		if (pop.number < 0) {
+		if(pop.number < 0) {
 			console.error(`${label}: population.${popKey}.number negative`);
 			ok = false;
 		}
@@ -174,12 +188,12 @@ function allMoneyFiniteNonNegative(
 	label: string,
 ): boolean {
 	let ok = true;
-	for (const [key, balance] of Object.entries(result.money)) {
-		if (!Number.isFinite(balance)) {
+	for(const [key, balance] of Object.entries(result.money)) {
+		if(!Number.isFinite(balance)) {
 			console.error(`${label}: money.${key} not finite: ${balance}`);
 			ok = false;
 		}
-		if (balance < 0) {
+		if(balance < 0) {
 			console.error(`${label}: money.${key} negative: ${balance}`);
 			ok = false;
 		}
@@ -193,16 +207,16 @@ function checkEmploymentDoesNotExceedPopulation(
 	label: string,
 ): boolean {
 	let ok = true;
-	for (const [key] of Object.entries(input.population)) {
+	for(const [key] of Object.entries(input.population)) {
 		const popKey = key as keyof Population;
 		const available = input.population[popKey].number;
 		let employed = 0;
-		for (const name of input.activeSectors) {
+		for(const name of input.activeSectors) {
 			const sectorResult = result.sectorResults[name];
 			const workersEmployed = sectorResult?.workersEmployed ?? {};
 			employed += workersEmployed[popKey] ?? 0;
 		}
-		if (employed > available + 1e-9) {
+		if(employed > available + 1e-9) {
 			console.error(
 				`${label}: ${popKey} employed ${employed} > available ${available}`,
 			);
@@ -233,8 +247,8 @@ function assertInventoryConserved(
 	label: string,
 ): void {
 	const goodsKeys = Object.keys(input.goods) as (keyof Goods)[];
-	for (const goodKey of goodsKeys) {
-		if (NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+	for(const goodKey of goodsKeys) {
+		if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
 			continue;
 		}
 		const opening = input.goods[goodKey] ?? 0;
@@ -353,7 +367,7 @@ function captureMetrics(
 	result: IndustryTickResult,
 ): SimMetrics {
 	const mortalityByCategory: Record<string, number> = {};
-	for (const [key, pop] of Object.entries(result.population)) {
+	for(const [key, pop] of Object.entries(result.population)) {
 		const popKey = key as keyof Population;
 		mortalityByCategory[popKey] = pop.mortality ?? 0;
 	}
@@ -414,12 +428,32 @@ function runSimulation(
 		capitalMultipliers[k] = v;
 	});
 
+	const completeActiveSectors = [
+		"powerPlant",
+		"farm",
+		"waterTreatment",
+		"foodFactory",
+		"oilRig",
+		"forestry",
+		"government",
+		"services",
+		"healthcare",
+		"education",
+		"lawEnforcement",
+		"logistics",
+		"tourism",
+		"entertainmentIndustry",
+		"bank",
+		"religion",
+		"defense",
+		"chemical",
+		"recycling",
+	] as (keyof IndustrialSectors)[];;
+
 	let input = generateColonyConfig(
 		{
 			populationSize: config.populationSize ?? 100_000,
-			activeSectors:
-				config.activeSectors ??
-				["farm", "foodFactory", "waterTreatment", "powerPlant"],
+			activeSectors: config.activeSectors ?? completeActiveSectors,
 			starterMoneyPerSector: config.starterMoneyPerSector ?? 1_000_000,
 			capitalStockMultiplier: config.capitalStockMultiplier ?? 1,
 			initialGoodsMultipliers:
@@ -438,7 +472,7 @@ function runSimulation(
 	const tickInputs: IndustryTickInput[] = [];
 	const moneyDeltas: number[] = [];
 
-	for (let tick = 0; tick < tickCount; tick++) {
+	for(let tick = 0; tick < tickCount; tick++) {
 		// Snapshot the opening state before this tick.
 		const tickInput = structuredClone(input);
 		tickInputs.push(tickInput);
@@ -446,7 +480,7 @@ function runSimulation(
 		const openingMoneyThisTick = totalMoney(tickInput);
 
 		const result = simulateTick(input, state);
-		if (!result) break;
+		if(!result) break;
 
 		// --- Money accounting ---
 		const closingMoney = totalMoneyResult(result);
@@ -505,7 +539,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 		it("runs 1,000 ticks with standard starting conditions", () => {
 			const run = runSimulation("normal", 1000, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
@@ -521,7 +555,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -534,11 +568,11 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			input.goods.fissionMaterial = 100;
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `low-resources tick ${tick + 1}`);
@@ -548,9 +582,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(1000);
@@ -563,7 +597,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 10_000,
 					capitalStockMultiplier: 1,
 				},
@@ -571,11 +605,11 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			);
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `low-cash tick ${tick + 1}`);
@@ -585,9 +619,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(1000);
@@ -600,7 +634,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 0,
 				},
@@ -616,11 +650,11 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			expect(initialCapital).toBe(0);
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `no-capital tick ${tick + 1}`);
@@ -630,9 +664,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(1000);
@@ -645,23 +679,23 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
 				{},
 			);
 			// Zero out birth rates for all categories
-			for (const pop of Object.values(input.population)) {
+			for(const pop of Object.values(input.population)) {
 				pop.birthRate = 0;
 			}
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `no-growth tick ${tick + 1}`);
@@ -671,9 +705,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(1000);
@@ -686,7 +720,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -695,11 +729,11 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 
 			// Run 100 ticks normally
 			let ticksBeforeShock = 0;
-			for (let tick = 0; tick < 100; tick++) {
+			for(let tick = 0; tick < 100; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksBeforeShock++;
 
 				assertTickStable(tickInput, result, `pre-shock tick ${tick + 1}`);
@@ -709,9 +743,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksBeforeShock).toBe(100);
@@ -722,11 +756,11 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 
 			// Continue for 900 more ticks
 			let ticksAfterShock = 0;
-			for (let tick = 0; tick < 900; tick++) {
+			for(let tick = 0; tick < 900; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksAfterShock++;
 
 				assertTickStable(tickInput, result, `post-shock tick ${tick + 1}`);
@@ -736,9 +770,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksAfterShock).toBe(900);
@@ -755,12 +789,12 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 		it("every tick: no NaN, no negative balances, no population collapse", () => {
 			const run = runSimulation("normal-assertions", 1000, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
 
-			for (const m of run.metrics) {
+			for(const m of run.metrics) {
 				expect(Number.isFinite(m.totalPopulation)).toBe(true);
 				expect(m.totalPopulation).toBeGreaterThanOrEqual(0);
 
@@ -769,12 +803,12 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 
 				expect(m.goodsTotal).toBeGreaterThanOrEqual(0);
 
-				for (const [, qty] of Object.entries(m.goodsByCategory)) {
+				for(const [, qty] of Object.entries(m.goodsByCategory)) {
 					expect(Number.isFinite(qty)).toBe(true);
 					expect(qty).toBeGreaterThanOrEqual(0);
 				}
 
-				for (const [, pop] of Object.entries(
+				for(const [, pop] of Object.entries(
 					run.results[m.tick]?.population ?? {},
 				)) {
 					expect(Number.isFinite(pop.wealth)).toBe(true);
@@ -783,7 +817,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 					expect(pop.number).toBeGreaterThanOrEqual(0);
 				}
 
-				for (const [, balance] of Object.entries(m.moneyBySector)) {
+				for(const [, balance] of Object.entries(m.moneyBySector)) {
 					expect(Number.isFinite(balance)).toBe(true);
 					expect(balance).toBeGreaterThanOrEqual(0);
 				}
@@ -810,7 +844,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 		it("money and inventory remain bounded over 1,000 ticks", () => {
 			const run = runSimulation("normal-bounded", 1000, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
@@ -825,7 +859,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			const closingGoods = goodsTotalResult(
 				run.results[run.results.length - 1],
 			);
-			if (openingGoods > 0) {
+			if(openingGoods > 0) {
 				expect(closingGoods).toBeLessThan(openingGoods * 100 + 1_000_000);
 			}
 		});
@@ -833,7 +867,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 		it("money destruction rate does not grow over 1,000 ticks (no drift)", () => {
 			const run = runSimulation("money-drift", 1000, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
@@ -842,7 +876,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			expect(deltas.length).toBe(1000);
 
 			// Per-tick destruction must be bounded
-			for (let i = 0; i < deltas.length; i++) {
+			for(let i = 0; i < deltas.length; i++) {
 				expect(deltas[i]).toBeGreaterThanOrEqual(-run.openingMoney * 1e-9); // no creation
 				expect(deltas[i]).toBeLessThan(10_000_000);
 			}
@@ -862,7 +896,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 		it("population does not collapse over 1,000 ticks", () => {
 			const run = runSimulation("normal-population", 1000, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
@@ -881,7 +915,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -892,11 +926,11 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			input.goods.tylium = 50;
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 500; tick++) {
+			for(let tick = 0; tick < 500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `low-resources tick ${tick + 1}`);
@@ -906,9 +940,9 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(500);
@@ -921,7 +955,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 10_000,
 					capitalStockMultiplier: 1,
 				},
@@ -929,11 +963,11 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			);
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 500; tick++) {
+			for(let tick = 0; tick < 500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `low-cash tick ${tick + 1}`);
@@ -943,9 +977,9 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(500);
@@ -958,7 +992,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			let input = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 0,
 				},
@@ -974,11 +1008,11 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			expect(initialCapital).toBe(0);
 
 			let ticksSurvived = 0;
-			for (let tick = 0; tick < 500; tick++) {
+			for(let tick = 0; tick < 500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksSurvived++;
 
 				assertTickStable(tickInput, result, `no-capital tick ${tick + 1}`);
@@ -988,9 +1022,9 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksSurvived).toBe(500);
@@ -1053,27 +1087,27 @@ describe("Long-run simulation validation — economic behavior", () => {
 			let input = generateColonyConfig(
 				{
 					populationSize: 1_000_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 10_000_000_000,
 					capitalStockMultiplier: 1,
 				},
 				{},
 			);
 			// Give households meaningful wealth so they can afford goods
-			for (const pop of Object.values(input.population)) {
+			for(const pop of Object.values(input.population)) {
 				pop.wealth = 10_000_000;
 			}
 
 			let ticksCompleted = 0;
 			let firstResult: IndustryTickResult | null = null;
 			let allSpending = 0;
-			for (let tick = 0; tick < 100; tick++) {
+			for(let tick = 0; tick < 100; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
-				if (!result) break;
+				if(!result) break;
 				ticksCompleted++;
-				if (!firstResult) firstResult = result;
+				if(!firstResult) firstResult = result;
 				allSpending += sumValues(
 					Object.values(result.accounting.spendingByPop),
 				);
@@ -1085,9 +1119,9 @@ describe("Long-run simulation validation — economic behavior", () => {
 					goods: result.goods,
 					money: result.money,
 					capitalStock: result.capitalStock,
-			population: result.population ?? input.population,
-			colonyTreasury: result.colonyTreasury,
-		} as IndustryTickInput;
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
 			}
 
 			expect(ticksCompleted).toBe(100);
@@ -1119,7 +1153,7 @@ describe("Long-run simulation validation — economic behavior", () => {
 			const inputA = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 0.1,
 				},
@@ -1131,7 +1165,7 @@ describe("Long-run simulation validation — economic behavior", () => {
 			const inputB = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 10,
 				},
@@ -1157,10 +1191,10 @@ describe("Long-run simulation validation — economic behavior", () => {
 			let totalProductionB = 0;
 			let ticksCompleted = 0;
 
-			for (let tick = 0; tick < 100; tick++) {
+			for(let tick = 0; tick < 100; tick++) {
 				const resultA = simulateTick(inputACur, stateA);
 				const resultB = simulateTick(inputBCur, stateB);
-				if (!resultA || !resultB) break;
+				if(!resultA || !resultB) break;
 
 				ticksCompleted++;
 				totalProductionA += totalProduction(resultA);
@@ -1197,7 +1231,7 @@ describe("Long-run simulation validation — economic behavior", () => {
 			const inputA = generateColonyConfig(
 				{
 					populationSize: 100_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -1208,7 +1242,7 @@ describe("Long-run simulation validation — economic behavior", () => {
 			const inputB = generateColonyConfig(
 				{
 					populationSize: 50_000,
-					activeSectors: DEFAULT_SECTORS,
+					activeSectors: COMPLETE_SECTORS,
 					starterMoneyPerSector: 1_000_000_000,
 					capitalStockMultiplier: 1,
 				},
@@ -1221,10 +1255,10 @@ describe("Long-run simulation validation — economic behavior", () => {
 			let totalWagesB = 0;
 			let ticksCompleted = 0;
 
-			for (let tick = 0; tick < 100; tick++) {
+			for(let tick = 0; tick < 100; tick++) {
 				const resultA = simulateTick(inputACur, stateA);
 				const resultB = simulateTick(inputBCur, stateB);
-				if (!resultA || !resultB) break;
+				if(!resultA || !resultB) break;
 
 				ticksCompleted++;
 				totalWagesA += totalWages(resultA);
@@ -1259,13 +1293,13 @@ describe("Long-run simulation validation — economic behavior", () => {
 		it("sector input costs remain finite and nonnegative over time", () => {
 			const run = runSimulation("input-cost-stability", 500, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
 
-			for (const result of run.results) {
-				for (const [, cost] of Object.entries(
+			for(const result of run.results) {
+				for(const [, cost] of Object.entries(
 					result.sectorInputCosts,
 				)) {
 					expect(Number.isFinite(cost)).toBe(true);
@@ -1279,12 +1313,12 @@ describe("Long-run simulation validation — economic behavior", () => {
 		it("no sector employs more workers than available population", () => {
 			const run = runSimulation("sector-constraints", 500, {
 				populationSize: 100_000,
-				activeSectors: DEFAULT_SECTORS,
+				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
 
-			for (let i = 0; i < run.results.length; i++) {
+			for(let i = 0; i < run.results.length; i++) {
 				expect(
 					checkEmploymentDoesNotExceedPopulation(
 						run.tickInputs[i],

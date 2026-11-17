@@ -8,6 +8,18 @@ import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import { validateEconomicInvariants, validateLongRunSimulation } from "./economicInvariants.ts";
 import { Goods } from "../data/Goods.ts";
+import { IndustrialSectors } from "../components/Factories";
+
+// Minimum viable sectors for non-cumulative goods validation
+const minimalViableSectors: (keyof IndustrialSectors)[] = [
+	"powerPlant",
+	"farm",
+	"waterTreatment",
+	"foodFactory",
+	"forestry",
+	"government",
+	"paperFactory",
+];
 
 function advanceTick(input: IndustryTickInput, result: IndustryTickResult): IndustryTickInput {
 	return {
@@ -30,7 +42,27 @@ function createHealthyInput(): IndustryTickInput {
 	return generateColonyConfig(
 		{
 			populationSize: 50_000_000,
-			activeSectors: ["powerPlant", "farm", "waterTreatment", "foodFactory", "oilRig"],
+			activeSectors: [
+				"powerPlant",
+				"farm",
+				"waterTreatment",
+				"foodFactory",
+				"oilRig",
+				"forestry",
+				"government",
+				"services",
+				"healthcare",
+				"education",
+				"lawEnforcement",
+				"logistics",
+				"tourism",
+				"entertainmentIndustry",
+				"bank",
+				"religion",
+				"defense",
+				"chemical",
+				"recycling",
+			],
 			starterMoneyPerSector: 100_000_000,
 			capitalStockMultiplier: 10,
 		},
@@ -94,7 +126,7 @@ describe("Milestone 6 — Validation and long-run testing", () => {
 		let input = generateColonyConfig(
 			{
 				populationSize: 10_000_000,
-				activeSectors: ["powerPlant", "farm"],
+				activeSectors: minimalViableSectors,
 				starterMoneyPerSector: 50_000_000,
 				capitalStockMultiplier: 0, // No capital
 			},
@@ -122,7 +154,7 @@ describe("Milestone 6 — Validation and long-run testing", () => {
 		let input = generateColonyConfig(
 			{
 				populationSize: 10_000_000,
-				activeSectors: ["powerPlant", "farm"],
+				activeSectors: minimalViableSectors,
 				starterMoneyPerSector: 100_000_000,
 				capitalStockMultiplier: 10,
 			},
@@ -153,7 +185,7 @@ describe("Milestone 6 — Validation and long-run testing", () => {
 		let input = generateColonyConfig(
 			{
 				populationSize: 1_000_000, // Very small population
-				activeSectors: ["powerPlant", "farm", "waterTreatment", "foodFactory", "oilRig"],
+				activeSectors: minimalViableSectors,
 				starterMoneyPerSector: 100_000_000,
 				capitalStockMultiplier: 10,
 			},
@@ -173,7 +205,7 @@ describe("Milestone 6 — Validation and long-run testing", () => {
 		let input2 = generateColonyConfig(
 			{
 				populationSize: 1_000_000,
-				activeSectors: ["oilRig", "foodFactory", "waterTreatment", "farm", "powerPlant"],
+				activeSectors: [...minimalViableSectors].reverse(),
 				starterMoneyPerSector: 100_000_000,
 				capitalStockMultiplier: 10,
 			},
@@ -202,7 +234,7 @@ describe("Milestone 6 — Validation and long-run testing", () => {
 		let input = generateColonyConfig(
 			{
 				populationSize: 100_000_000, // Large population
-				activeSectors: ["farm"],
+				activeSectors: minimalViableSectors,
 				starterMoneyPerSector: 1_000_000, // Very little money
 				capitalStockMultiplier: 1,
 			},
