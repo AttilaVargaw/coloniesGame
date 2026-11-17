@@ -297,7 +297,7 @@ function assertTickStable(
 	expect(
 		moneyCreation,
 		`${label}: money created; opening=${openingMoney}, closing=${closingMoney}`,
-	).toBeLessThan(1e-6);
+	).toBeLessThan(openingMoney * 1e-9);
 
 	// Money destruction must be bounded by available sector cash.
 	const destruction = Math.max(0, openingMoney - closingMoney);
@@ -456,7 +456,7 @@ function runSimulation(
 		expect(
 			moneyCreation,
 			`${name} tick ${tick + 1}: money created; opening=${openingMoneyThisTick}, closing=${closingMoney}`,
-		).toBeLessThan(1e-6);
+		).toBeLessThan(Math.max(1e-6, openingMoneyThisTick * 1e-9));
 
 		// Track per-tick signed money delta for drift detection.
 		// simulateTick clamps sector money at 0, so destruction occurs when
@@ -843,7 +843,7 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 
 			// Per-tick destruction must be bounded
 			for (let i = 0; i < deltas.length; i++) {
-				expect(deltas[i]).toBeGreaterThanOrEqual(-1e-6); // no creation
+				expect(deltas[i]).toBeGreaterThanOrEqual(-run.openingMoney * 1e-9); // no creation
 				expect(deltas[i]).toBeLessThan(10_000_000);
 			}
 

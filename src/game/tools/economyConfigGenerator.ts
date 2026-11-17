@@ -35,7 +35,7 @@ export const ESSENTIAL_GOODS: (keyof Goods)[] = [
 	"agriculturalGoods",
 	"oil",
 	"buildings",
-	"consumerGoods"
+	"consumerGoods",
 ];
 
 export const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = [
@@ -52,7 +52,7 @@ export const ESSENTIAL_SECTORS: (keyof IndustrialSectors)[] = [
 	"healthcare",
 	"paperFactory",
 	"logistics",
-	"services"
+	"services",
 ];
 
 export interface ColonyConfig {
@@ -70,7 +70,7 @@ export const DEFAULT_CONFIG: ColonyConfig = {
 	starterMoneyPerSector: 50_000_000,
 	capitalStockMultiplier: 1,
 	initialGoodsMultipliers: new Map(),
-	capitalStockMultipliers: new Map()
+	capitalStockMultipliers: new Map(),
 } as const;
 
 export interface ColonyValidationResult {
@@ -101,6 +101,39 @@ export function createSimState(): SimState {
 	};
 }
 
+/**
+ * Throws if any sector money balance goes negative after all deductions.
+ * Sectors cannot overspend — purchases are constrained by available cash.
+ */
+function validateSectorMoney(
+	newMoney: Record<string, number>,
+	activeSectors: Iterable<keyof IndustrialSectors>,
+	entityId: string,
+): void {
+	for(const name of activeSectors) {
+		const balance = newMoney[name] ?? 0;
+		if(!Number.isFinite(balance) || balance < -1e-6) {
+			throw new Error(
+				`Invalid sector cash balance for ${entityId}.${name}: ${balance}`,
+			);
+		}
+		newMoney[name] = Math.max(0, balance);
+	}
+}
+
+/**
+ * Subtracts a consumption amount from inventory, throwing on meaningful deficit.
+ */
+function subtractChecked(current: number, amount: number, good: keyof Goods): number {
+	const result = current - amount;
+	if(!Number.isFinite(result) || result < -1e-6) {
+		throw new Error(
+			`Inventory deficit for ${good}: opening=${current}, consumed=${amount}`,
+		);
+	}
+	return Math.max(0, result);
+}
+
 export function simulateTick(input: IndustryTickInput, state: SimState): IndustryTickResult {
 	const {
 		entityId,
@@ -118,15 +151,22 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		capitalMultipliers,
 		selectedMethod,
 	} = input;
-	const prices = getPrices(goods, state.priceMemory);
-	const adjustedSalaries = buildAdjustedSalaries(state.wageMemory);
+
+	// Use temp memory copies for this tick; commit once at the end.
+	// Prevents price/wage memory from being updated multiple times per tick
+	// by the iterative allocation loop.
+	const tempPriceMemory = { ...state.priceMemory };
+	const tempWageMemory = { ...state.wageMemory };
+
+	const prices = getPrices(goods, tempPriceMemory);
+	const adjustedSalaries = buildAdjustedSalaries(tempWageMemory);
 
 	const allowedSectorsSet = new Set(allowedSectors ?? Array.from(activeSectors));
 
 	const { desiredConsumptionByPop, populationUpdates } = computePopulationConsumption(
 		population,
 		adjustedSalaries,
-		prices
+		prices,
 	);
 
 	const last = state.lastResult;
@@ -160,7 +200,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	for(const [key, pop] of Object.entries(population) as [keyof Population, any][]) {
 		industryBlackboard.totalPopulation += pop.number;
 		if(key === "worker") {
-			industryBlackboard.totalFreeWorkers = pop.number;
+			industryBlackboard.totalFreeWorkers += pop.number;
 		}
 	}
 
@@ -178,45 +218,30 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	industryTree.tick(industryBlackboard);
 
 	// === ITERATIVE SECTOR ALLOCATION ===
-	// Run bid → buy → execute multiple times. Each round starts with fresh
-	// sector money but goods carry forward and are depleted, so prices get
-	// recomputed to reflect real scarcity. Only the final round's results are
-	// committed downstream (money, capital, goods delta).
+	// Each iteration is a TRIAL: it starts from the OPENING goods and money.
+	// Only the final iteration's results are committed downstream.
+	// Prices evolve across iterations via the temp price memory (damping).
 	const MAX_ITERATIONS = 3;
 	const CONVERGENCE_THRESHOLD = 0.005;
 
-	let currentGoods = { ...goods };
 	let currentPrices = prices;
 
-	let sectorBids: SectorBid[] = [];
-	let execResult: ReturnType<typeof executeSectors> | null = null;
-	let newMoney: Record<string, number> = { ...startingMoney };
-	let newTreasury: number = startingTreasury;
-	let newHouseholdMoney: number = Object.values(population).reduce(
-		(sum, pop) => sum + (pop.wealth ?? 0),
-		0,
-	);
-	let investRemaining = industryBlackboard.investTotal;
-
-	// Accumulate real sector flows across every iteration of the tick.
-	// Inputs consumed accumulate because purchases are deducted from the colony
-	// pool every iteration. Production is taken from the final iteration only,
-	// since that is what gets committed to closing inventory.
-	const accumulatedInputsConsumed: Partial<Goods> = {};
-	let finalProduction: Partial<Goods> = {};
+	let finalSectorBids: SectorBid[] = [];
+	let finalExecResult: ReturnType<typeof executeSectors> | null = null;
+	let finalPurchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
+	let finalGoodsAfterPurchase: Goods = { ...goods };
+	let finalNewMoney: Record<string, number> = { ...startingMoney };
+	let finalWorkerMarketRatios: Record<string, number> = {};
 
 	for(let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-		// Reset currentGoods to opening inventory for each iteration.
-		// Each iteration independently evaluates what sectors would buy given
-		// current prices and full stock. Only the final iteration's purchases
-		// are committed downstream.
-		const iterationGoods = { ...goods };
-		const goodsBeforeIteration = { ...currentGoods };
+		// Each iteration is an independent trial starting from OPENING state.
+		let investRemaining = 0;
 
-		// Carry forward money from previous round (starts as startingMoney)
+		// Each iteration starts from OPENING state — not depleted by previous rounds.
+		const iterationGoods = { ...goods };
 		const roundMoney: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 		for(const name of activeSectors) {
-			roundMoney[name] = newMoney[name] ?? startingMoney[name] ?? 0;
+			roundMoney[name] = startingMoney[name] ?? 0;
 		}
 
 		let roundInvestRemaining = investRemaining;
@@ -252,7 +277,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 				previousSectorLaborCosts[name] ?? 0,
 				previousSectorInputCosts[name] ?? 0,
 				previousSectorUtilization[name] ?? 0,
-				0,
+				0, // outputLevel
 				population.worker.number,
 				currentPrices,
 				adjustedSalaries,
@@ -293,7 +318,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 					capitalMultipliers,
 					selectedMethod: selectedMethod[name] ?? null,
 					sectorStartingMoney: sectorMoney,
-				}
+				},
 			);
 			if(bid) {
 				roundSectorBids.push(bid);
@@ -313,7 +338,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 		const workerMarketRatios = computeMarketRatios(totalIdealWorkerDemand, workerAvailable);
 
-		updateWageMemory(state.wageMemory, workerMarketRatios as Record<keyof Population, number>);
+		// Capture final round's market ratios for wage memory commit after the loop.
+		finalWorkerMarketRatios = workerMarketRatios;
 
 		// Compute actual production scale per bid (worker constrained)
 		for(const bid of roundSectorBids) {
@@ -328,78 +354,70 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			bid.actualScale = Math.min(bid.budgetRatio, workerRatio);
 		}
 
-		// Build goods allocations from ideal demand (capped by actualScale)
+		// Build goods allocations CAPPED BY actualScale.
+		// A sector operating at 40% scale cannot purchase its full input bundle.
 		const goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>> = {};
 		for(const bid of roundSectorBids) {
 			const allocation: Partial<Record<keyof Goods, number>> = {};
 			for(const [goodKey, demand] of Object.entries(bid.idealGoodsDemand)) {
-				allocation[goodKey as keyof Goods] = demand;
+				allocation[goodKey as keyof Goods] = demand * bid.actualScale;
 			}
 			goodsAllocations[bid.name] = allocation;
 		}
 
-		// Sectors buy input goods from colony pool using their own money
+		// Sectors buy input goods from OPENING colony pool using their own money.
+		// Each iteration starts from iterationGoods (opening state), not depleted goods.
 		const {
 			colonyGoodsAfterPurchase,
 			newMoney: roundNewMoney,
 			purchasedBySector: roundPurchasedBySector,
 		} = buySectorInputs(
 			roundSectorBids,
-			currentGoods,
+			iterationGoods,
 			roundMoney,
 			currentPrices,
 			goodsAllocations,
 		);
-		currentGoods = colonyGoodsAfterPurchase;
-		newMoney = roundNewMoney;
 
-		// Build labor allocations from ideal demand (capped by actualScale)
+		// Build labor allocations CAPPED BY actualScale.
 		const laborAllocations: Record<string, Partial<Record<keyof Population, number>>> = {};
 		for(const bid of roundSectorBids) {
 			const allocation: Partial<Record<keyof Population, number>> = {};
 			for(const [popKey, demand] of Object.entries(bid.idealWorkerDemand)) {
-				allocation[popKey as keyof Population] = demand;
+				allocation[popKey as keyof Population] = demand * bid.actualScale;
 			}
 			laborAllocations[bid.name] = allocation;
 		}
 
-		// Execute sectors — pass purchasedBySector so goods constraints use
-		// actual purchases rather than falling back to raw colony inventory.
-		execResult = executeSectors(
+		// Execute sectors using purchased goods as available inventory.
+		const execResult = executeSectors(
 			roundSectorBids,
 			population,
-			currentGoods,
+			iterationGoods,
 			currentPrices,
 			adjustedSalaries,
 			laborAllocations,
 			roundPurchasedBySector,
 		);
 
-		// Accumulate actual inputs consumed this iteration (at finalScale),
-		// not gross purchases — unused purchases are returned to the colony
-		// in the reconciliation step.
-		for(const [key, val] of Object.entries(execResult.sumGoodsRequirements ?? {})) {
-			accumulatedInputsConsumed[key as keyof Goods] =
-				(accumulatedInputsConsumed[key as keyof Goods] ?? 0) + (val ?? 0);
-		}
+		// Record this iteration's results — only the final iteration is committed.
+		finalSectorBids = roundSectorBids;
+		finalExecResult = execResult;
+		finalPurchasedBySector = roundPurchasedBySector;
+		finalGoodsAfterPurchase = colonyGoodsAfterPurchase;
+		finalNewMoney = roundNewMoney;
 
-		// Remember this iteration's production; the final iteration's values
-		// are the ones committed to closing inventory.
-		finalProduction = execResult.sumGoodsProduction ?? {};
-
-		// Recompute prices for next iteration based on remaining goods
-		currentPrices = getPrices(currentGoods, state.priceMemory);
-
-		sectorBids = roundSectorBids;
-		investRemaining = roundInvestRemaining;
+		// Recompute prices from OPENING goods with fresh memory each iteration
+		// so prices are consistent across trial rounds (no cumulative damping).
+		currentPrices = getPrices(goods, {});
 
 		// Convergence check: stop if goods barely changed this round
 		if(iteration > 0) {
 			let goodsDelta = 0;
 			let totalScale = 0;
-			for(const key of Object.keys(currentGoods)) {
-				const cur = (currentGoods as Record<string, number>)[key] ?? 0;
-				const prev = (goodsBeforeIteration as Record<string, number>)[key] ?? 0;
+			for(const key of Object.keys(finalGoodsAfterPurchase)) {
+				const cur = (finalGoodsAfterPurchase as Record<string, number>)[key] ?? 0;
+				const prev = (iterationGoods as Record<string, number>)[key] ?? 0;
 				goodsDelta += Math.abs(cur - prev);
 				totalScale += Math.abs(prev);
 			}
@@ -408,6 +426,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			}
 		}
 	}
+
+	// Commit price and wage memory once per tick — not per iteration.
+	state.priceMemory = tempPriceMemory;
+	updateWageMemory(tempWageMemory, finalWorkerMarketRatios as Record<keyof Population, number>);
+	state.wageMemory = tempWageMemory;
 
 	const {
 		sectorResults,
@@ -421,11 +444,11 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		remainingWorkers,
 		sumGoodsRequirements,
 		sumGoodsProduction,
-	} = execResult!;
+	} = finalExecResult!;
 
 	// Compute actual wages paid to each population category from sector employment
 	const wagesByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-	for(const bid of sectorBids) {
+	for(const bid of finalSectorBids) {
 		const result = sectorResults[bid.name];
 		if(!result) continue;
 		for(const [popType, employed] of Object.entries(result.workersEmployed ?? {})) {
@@ -445,17 +468,44 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		remainingWorkers[key] = { ...remainingWorkers[key], number: 0 };
 	}
 
-	// Allocate population spending based on actual sales
-	// Constrain per population group by available cash: starting wealth + wages
-	const { sectorRevenue: popSalesRevenue, salesQty, warehouseSalesQty, warehouseRevenue, unmetDemandByPop, spendingByPop } =
-		allocatePopulationSales({
-			sectorBids,
-			sectorResults,
-			demandByPop: desiredConsumptionByPop,
-			cashByPop,
-			prices: currentPrices,
-			availableStock: currentGoods,
-		});
+	// Allocate population spending based on actual sales.
+	// Constrain per population group by available cash: starting wealth + wages.
+	const {
+		sectorRevenue: popSalesRevenue,
+		salesQty,
+		warehouseSalesQty,
+		warehouseRevenue,
+		unmetDemandByPop,
+		spendingByPop,
+	} = allocatePopulationSales({
+		sectorBids: finalSectorBids,
+		sectorResults,
+		demandByPop: desiredConsumptionByPop,
+		cashByPop,
+		prices: currentPrices,
+		availableStock: finalGoodsAfterPurchase,
+	});
+
+	// Household wealth settlement: wages in, spending out.
+	// Each group's available cash = opening wealth + wages earned this tick.
+	// Deduct spending from each group's wealth.
+	for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+		const k = key as keyof Population;
+		const actualIncome = wagesByPop[k] ?? 0;
+		const actualSpending = spendingByPop[k] ?? 0;
+		const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
+		if(!Number.isFinite(targetWealth) || targetWealth < -1e-6) {
+			throw new Error(
+				`Invalid household wealth for ${k}: ${targetWealth}`,
+			);
+		}
+		if(populationUpdates[k]) {
+			populationUpdates[k] = {
+				...populationUpdates[k],
+				wealth: Math.max(0, targetWealth),
+			};
+		}
+	}
 
 	// Actual household consumption = sector production sales + warehouse stock sales
 	const fulfilledDemandQty: Partial<Goods> = {};
@@ -480,114 +530,181 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	}
 
 	// Credit treasury with warehouse sales revenue
-	newTreasury += warehouseRevenue;
+	let newTreasury = startingTreasury + warehouseRevenue;
 
 	// Household money settlement: wages in, spending out
 	const totalLaborCosts = Object.values(sectorLaborCosts).reduce((sum, v) => sum + v, 0);
 
-	// Wage reconciliation: calculated wages from employment must equal sector labor costs
+	// Wage reconciliation: calculated wages from employment must equal sector labor costs.
+	// This is a core financial invariant — fail hard, not a silent warning.
 	const calculatedWageBill = Object.values(wagesByPop).reduce((sum, v) => sum + v, 0);
-	if(Math.abs(calculatedWageBill - totalLaborCosts) > 1e-6) {
-		console.error(`[IndustryTick] Wage bill mismatch for ${entityId}: calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`);
+	if(
+		!Number.isFinite(calculatedWageBill) ||
+		!Number.isFinite(totalLaborCosts) ||
+		Math.abs(calculatedWageBill - totalLaborCosts) > 1e-6
+	) {
+		throw new Error(
+			`Wage bill mismatch for ${entityId}: ` +
+			`calculated=${calculatedWageBill}, sector costs=${totalLaborCosts}`,
+		);
 	}
 
 	// Deduct labor costs from sector money
+	const newMoney: Record<string, number> = { ...finalNewMoney };
 	for(const name of activeSectors) {
-		newMoney[name] = (newMoney[name] ?? 0) - (sectorLaborCosts[name] ?? 0);
+		const before = newMoney[name] ?? 0;
+		newMoney[name] = before - (sectorLaborCosts[name] ?? 0);
 	}
 
-	// Update population wealth based on actual income and spending (full cash balance, no smoothing)
-	for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
-		const k = key as keyof Population;
-		const actualIncome = wagesByPop[k] ?? 0;
-		const actualSpending = spendingByPop[k] ?? 0;
-		const targetWealth = (pop.wealth ?? 0) + actualIncome - actualSpending;
-
-		if(populationUpdates[k]) {
-			populationUpdates[k] = {
-				...populationUpdates[k],
-				wealth: Math.max(0, targetWealth),
-			};
-		}
-	}
-
-	// Derive aggregate household money from population wealth (authoritative source)
-	newHouseholdMoney = 0;
-	for(const [, update] of Object.entries(populationUpdates) as [keyof Population, any][]) {
-		if(update && update.wealth !== undefined) {
-			newHouseholdMoney += update.wealth;
-		}
-	}
-
-	// Reset sector revenue to actual-sales-only authority
-	for(const name of activeSectors) {
-		sectorRevenue[name] = 0;
-		const laborCosts = sectorLaborCosts[name] ?? 0;
-		const inputCosts = sectorInputCosts[name] ?? 0;
-		sectorProfits[name] = -(inputCosts + laborCosts);
-	}
-
+	// Add sector revenue to sector money
 	for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
 		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
-		sectorRevenue[sectorName] = revenue;
-		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-		const inputCosts = sectorInputCosts[sectorName] ?? 0;
-		sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
 	}
 
-	// Credit treasury for sector input purchases (money deducted in buySectorInputs)
-	const totalSectorInputCosts = Object.values(sectorInputCosts).reduce(
-		(sum, v) => sum + v,
-		0,
-	);
-	newTreasury += totalSectorInputCosts;
+	// === CAPITAL PROCESSING ===
+	// Capital processing sees the full post-purchase goods inventory.
+	// Household warehouse sales are accounted for separately via goodsForDelta
+	// (added back) and populationConsumption (deducted in finalizeGoods) —
+	// they cancel out, so no double-counting occurs.
+	// Capital processing must not consume inventory already promised to
+	// households via warehouse sales. Reserve those goods first.
+	const goodsForCapital: Goods = { ...finalGoodsAfterPurchase };
+	for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+		const key = goodKey as keyof Goods;
+		goodsForCapital[key] = (goodsForCapital[key] ?? 0) - (qty ?? 0);
+		if(goodsForCapital[key] < -1e-6) {
+			throw new Error(
+				`Household warehouse sales exceed stock of ${key}: ` +
+				`available=${finalGoodsAfterPurchase[key] ?? 0}, sold=${qty ?? 0}`,
+			);
+		}
+		goodsForCapital[key] = Math.max(0, goodsForCapital[key] ?? 0);
+	}
 
-	// Capital wear, decay, replenishment, investment
-	const { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods } = processCapital(
+	const {
+		newCapitalStock,
+		replenishmentDelta,
+		moneySpent,
+		remainingGoods
+	} = processCapital(
 		Array.from(activeSectors),
 		capitalStock,
 		sectorResults,
 		currentPrices,
 		newMoney,
-		currentGoods
+		goodsForCapital
 	);
 
 	// Deduct capital costs from sector money
 	for(const name of activeSectors) {
-		newMoney[name] = (newMoney[name] ?? 0) - (moneySpent[name] ?? 0);
+		const before = newMoney[name] ?? 0;
+		newMoney[name] = before - (moneySpent[name] ?? 0);
 	}
 
-	// Clamp sector money at 0 — sectors cannot go into infinite debt in simulation
-	for(const name of activeSectors) {
-		newMoney[name] = Math.max(0, newMoney[name] ?? 0);
-	}
+	// Validate sector money — prevent overspending rather than clamping.
+	validateSectorMoney(newMoney, activeSectors, entityId);
 
-	// Credit treasury for capital purchases (money deducted above)
+	// Credit treasury with sector input purchases (money deducted in buySectorInputs)
+	const totalSectorInputCosts = Object.values(sectorInputCosts).reduce(
+		(sum, v) => sum + v,
+		0
+	);
+	newTreasury += totalSectorInputCosts;
+
+	// Credit treasury with capital purchases (money deducted above)
 	const totalCapitalMoneySpent = Object.values(moneySpent).reduce(
 		(sum, v) => sum + v,
-		0,
+		0
 	);
 	newTreasury += totalCapitalMoneySpent;
 
-	// remainingGoods is the authoritative inventory after capital purchases
+	// === RECONCILE PURCHASED INPUTS vs ACTUAL CONSUMPTION ===
+	// buySectorInputs removed purchased goods from iterationGoods.
+	// executeSectors reports actual consumption (capped by finalScale).
+	// Unused purchased goods remain with the sector (not returned to colony);
+	// unused purchase cost is refunded to sector money.
+	const purchasedBySector = finalPurchasedBySector;
+	const consumedGoods = sumGoodsRequirements;
+
+	// Compute returned goods per good: purchased - consumed (never negative)
+	const returnedGoods: Partial<Goods> = {};
+	for(const goodKey of Object.keys(goods) as (keyof Goods)[]) {
+		let totalPurchased = 0;
+		for(const sectorName of Object.keys(purchasedBySector)) {
+			totalPurchased += (purchasedBySector[sectorName]?.[goodKey] ?? 0);
+		}
+		let totalConsumed = consumedGoods[goodKey] ?? 0;
+		if(!Number.isFinite(totalConsumed) || totalConsumed < 0) {
+			totalConsumed = 0;
+		}
+		const returned = Math.max(0, totalPurchased - totalConsumed);
+		if(returned > 0) {
+			returnedGoods[goodKey] = returned;
+		}
+	}
+
+	// Refund unused purchase cost to sector money.
+	// buySectorInputs charged full purchase cost; sectorInputCosts is actual
+	// consumption cost. The difference is returned to the sector.
+	const refundBySector: Record<string, number> = {};
+	for(const sectorName of Object.keys(purchasedBySector)) {
+		let purchaseCost = 0;
+		for(const [goodKey, qty] of Object.entries(purchasedBySector[sectorName] ?? {})) {
+			purchaseCost += (qty ?? 0) * (currentPrices[goodKey as keyof Goods] ?? 0);
+		}
+		const actualCost = sectorInputCosts[sectorName] ?? 0;
+		const refund = Math.max(0, purchaseCost - actualCost);
+		if(refund > 0) {
+			refundBySector[sectorName] = refund;
+		}
+	}
+
+	// remainingGoods is after capital purchases. Return unused purchased goods
+	// to colony inventory so they are not lost.
 	const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
+	for(const [goodKey, qty] of Object.entries(returnedGoods)) {
+		const key = goodKey as keyof Goods;
+		postCapitalGoods[key] = (postCapitalGoods[key] ?? 0) + qty;
+	}
+
+	// Apply refunds to sector money after capital deduction.
+	for(const [sectorName, refund] of Object.entries(refundBySector)) {
+		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
+	}
 
 	// Add warehouse sales back so the goods delta does not double-count them.
 	// Warehouse sales are deducted once through fulfilledDemandQty in finalizeGoods.
 	const goodsForDelta: Goods = { ...postCapitalGoods };
 	for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
 		const key = goodKey as keyof Goods;
-		goodsForDelta[key] = (goodsForDelta[key] ?? 0) + (qty ?? 0);
+		goodsForDelta[key] = (goodsForDelta[key] ?? 0) + qty;
+	}
+
+	// Compute capital purchases from actual inventory removed (not replenishmentDelta).
+	// capitalPurchasesByGood = goodsForCapital - remainingGoods (per good).
+	const capitalPurchasesByGood: Partial<Goods> = {};
+	for(const goodKey of Object.keys(goodsForCapital) as (keyof Goods)[]) {
+		const removed = (goodsForCapital[goodKey] ?? 0) - (remainingGoods[goodKey] ?? 0);
+		if(removed < -1e-6) {
+			throw new Error(
+				`Capital processing increased inventory of ${goodKey}: ` +
+				`before=${goodsForCapital[goodKey] ?? 0}, after=${remainingGoods[goodKey] ?? 0}`,
+			);
+		}
+		if(removed > 0) {
+			capitalPurchasesByGood[goodKey] = Math.max(0, removed);
+		}
 	}
 
 	const colonyGoodsDelta = computeColonyGoodsDelta(
 		goods,
 		goodsForDelta,
 		activeSectors,
-		sectorResults,
+		sectorResults
 	);
 
 	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
+	// Uses checked subtraction so inventory deficits throw rather than silently clamping.
 	const colonyGoodsProduction = createEmptyWarehouse();
 	const colonyGoodsRequirements = createEmptyWarehouse();
 	for(const [key, value] of Object.entries(colonyGoodsDelta)) {
@@ -597,6 +714,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
 		}
 	}
+
 	const colonyGoodsChanges = finalizeGoods(
 		goods,
 		colonyGoodsProduction,
@@ -616,10 +734,37 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		};
 	}
 
+	// Validate household wealth: no category may end with negative cash.
+	// AllocatePopulationSales should constrain spending by available cash;
+	// negative wealth indicates an allocator bug.
+	for(const [key, pop] of Object.entries(updatedPopulation)) {
+		const popKey = key as keyof Population;
+		if(!Number.isFinite(pop.wealth) || pop.wealth < -1e-6) {
+			throw new Error(
+				`Invalid household wealth for ${popKey}: ${pop.wealth}`,
+			);
+		}
+	}
+
+	// Derive aggregate household money from the FINAL returned population.
+	// This guarantees householdMoney == sum of population wealth.
+	const newHouseholdMoney = Object.values(updatedPopulation).reduce(
+		(sum, pop) => sum + pop.wealth,
+		0
+	);
+
+	// Reset sector revenue to actual-sales-only authority
+	for(const name of activeSectors) {
+		sectorRevenue[name] = 0;
+		const laborCosts = sectorLaborCosts[name] ?? 0;
+		const inputCosts = sectorInputCosts[name] ?? 0;
+		sectorProfits[name] = -(inputCosts + laborCosts);
+	}
+
+
 	const result: IndustryTickResult = {
 		entityId,
 		goodsRequirements: {
-			...sumGoodsRequirements,
 			...Object.entries(desiredConsumptionByPop).reduce((acc, [_, consumption]) => {
 				for(const [good, qty] of Object.entries(consumption)) {
 					acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
@@ -676,17 +821,14 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 				}
 				return byGood;
 			})(),
-			capitalPurchasesByGood: Object.fromEntries(
-				Object.entries(replenishmentDelta ?? {}).map(
-					([key, val]) => [key, -(val ?? 0)],
-				),
-			),
-			sectorInputsConsumedByGood: accumulatedInputsConsumed,
-			sectorProductionByGood: finalProduction,
+			capitalPurchasesByGood,
+			sectorInputsConsumedByGood: sumGoodsRequirements,
+			sectorProductionByGood: sumGoodsProduction,
 			wagesByPop,
 			spendingByPop,
-		},
-	};
+		}
+	}
+
 
 	state.lastResult = result;
 	state.tick++;
@@ -728,18 +870,24 @@ function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): 
 }
 
 function finalizeGoods(
-    currentGoods: Goods,
-    sumGoodsProduction: Goods,
-    sumGoodsRequirements: Goods,
-    populationConsumption: Partial<Goods>,
-    population: Population
+	currentGoods: Goods,
+	sumGoodsProduction: Goods,
+	sumGoodsRequirements: Goods,
+	populationConsumption: Partial<Goods>,
+	population: Population
 ): Goods {
-    const finalGoods = { ...currentGoods } as Goods;
+	const finalGoods = { ...currentGoods } as Goods;
 
-	// Apply cumulative goods changes additively
+	// Apply cumulative goods changes additively.
+	// Inputs consumed and household consumption use checked subtraction
+	// so inventory deficits throw rather than silently clamping.
 	applyGoodsModifier(finalGoods, sumGoodsProduction, (cur, d) => cur + d);
-	applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) => Math.max(0, cur - d));
-	applyGoodsModifier(finalGoods, populationConsumption, (cur, d) => Math.max(0, cur - d));
+	applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) =>
+		subtractChecked(cur, d, "goods" as keyof Goods)
+	);
+	applyGoodsModifier(finalGoods, populationConsumption, (cur, d) =>
+		subtractChecked(cur, d, "goods" as keyof Goods)
+	);
 
 	// For non-cumulative goods, replace with net production (matches live worker pipeline)
 	for(const key in finalGoods) {
@@ -778,17 +926,6 @@ export function seedCapitalStock(
 	}
 	return stock;
 }
-
-function getSectorsMakingThisGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
-	const result: (keyof IndustrialSectors)[] = [];
-	for(const [sector, config] of industrySectorBlueprints) {
-		if(config.goodsProduction?.[goodKey] !== undefined) {
-			result.push(sector);
-		}
-	}
-	return result;
-}
-
 
 export function validateColonyConfig(
 	input: IndustryTickInput,
@@ -847,10 +984,12 @@ export function validateColonyConfig(
 			}
 		}
 
+		// Carry ALL state forward, including treasury.
 		currentInput.goods = result.goods;
 		currentInput.money = result.money;
 		currentInput.capitalStock = result.capitalStock;
 		currentInput.population = result.population ?? currentInput.population;
+		currentInput.colonyTreasury = result.colonyTreasury;
 	}
 
 	return {
@@ -863,17 +1002,27 @@ export function validateColonyConfig(
 
 export function generateValidatedColonyConfig(
 	config: Partial<ColonyConfig> = {},
-	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[], extraSectors?: string[] } = {}
+	options: { ticks?: number; essentialGoods?: (keyof Goods)[]; essentialSectors?: (keyof IndustrialSectors)[]; extraSectors?: string[] } = {}
 ): { config: IndustryTickInput; validation: ColonyValidationResult } {
 	const { ticks = 100, essentialGoods, essentialSectors } = options;
 
 	let lastValidation: ColonyValidationResult | null = null;
+	let lastInput: IndustryTickInput | null = null;
 	const capitalStockMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
+	let workingConfig = config;
+
+	// Initialize local map before the loop to avoid non-null assertion issues.
+	const initialGoodsMultipliers = new Map(config.initialGoodsMultipliers ?? []);
 
 	for(let attempt = 0; attempt < 20; attempt++) {
-		const input = generateColonyConfig(config, capitalStockMultipliers);
+		workingConfig = {
+			...config,
+			initialGoodsMultipliers,
+		};
+		const input = generateColonyConfig(workingConfig, capitalStockMultipliers);
 		const validation = validateColonyConfig(input, { ticks, essentialGoods, essentialSectors });
 		lastValidation = validation;
+		lastInput = input;
 
 		if(validation.viable) {
 			return { config: input, validation };
@@ -885,13 +1034,17 @@ export function generateValidatedColonyConfig(
 			const sectors = getSectorsMakingThisGood(good);
 			for(const sector of sectors) {
 				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 2;
-
-				config.initialGoodsMultipliers!.set(good, (config.initialGoodsMultipliers?.get(good) ?? 1) * 2)
+				initialGoodsMultipliers.set(good, (initialGoodsMultipliers.get(good) ?? 1) * 2);
 			}
 		}
 	}
 
-	return { config: generateColonyConfig(config, capitalStockMultipliers), validation: lastValidation! };
+	// Return the last generated input with its matching validation result.
+	if(lastInput && lastValidation) {
+		return { config: lastInput, validation: lastValidation };
+	}
+
+	throw new Error("generateValidatedColonyConfig: no config was generated");
 }
 
 export function generateRandomConfig(seed: number, populationSize: number): IndustryTickInput {
@@ -903,9 +1056,6 @@ export function generateRandomConfig(seed: number, populationSize: number): Indu
 
 	const starterMoneyPerSector = Math.round(10_000_000 + next() * 100_000_000);
 	const capitalStockMultiplier = 1 + next() * 20;
-
-	// const shuffled = [...sectors].sort(() => next() - 0.5);
-	// const count = Math.floor(sectors.size + next() * (shuffled.length - sectors.size + 1));
 
 	return generateColonyConfig({
 		populationSize,
@@ -925,4 +1075,14 @@ function negateReplenishmentDelta(replenishmentDelta: Partial<Goods>): Partial<G
 		}
 	}
 	return out;
+}
+
+function getSectorsMakingThisGood(goodKey: keyof Goods): (keyof IndustrialSectors)[] {
+	const result: (keyof IndustrialSectors)[] = [];
+	for(const [sector, config] of industrySectorBlueprints) {
+		if(config.goodsProduction?.[goodKey] !== undefined) {
+			result.push(sector);
+		}
+	}
+	return result;
 }

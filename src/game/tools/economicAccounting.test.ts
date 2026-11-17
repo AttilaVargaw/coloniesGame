@@ -223,16 +223,16 @@ describe("Economic accounting — complete tick inventory conservation", () => {
         expect(NON_CUMULATING_GOODS.has("waste")).toBe(false);
     });
 
-    it("conserves total money across a tick", () => {
-        const state = createSimState();
-        const input = createDeterministicInput(100);
+it("conserves total money across a tick", () => {
+    const state = createSimState();
+    const input = createDeterministicInput(100);
 
-        const openingMoney = openingTotalMoney(input);
-        const result = simulateTick(input, state);
-        const closingMoney = closingTotalMoney(result);
+    const openingMoney = openingTotalMoney(input);
+    const result = simulateTick(input, state);
+    const closingMoney = closingTotalMoney(result);
 
-        expect(closingMoney).toBeCloseTo(openingMoney, 8);
-    });
+    expect(closingMoney).toBeCloseTo(openingMoney, 8);
+});
 
     it("money conservation with active farm sector", () => {
         const state = createSimState();
@@ -847,11 +847,14 @@ describe("Deterministic single-tick tests", () => {
         // Total money conserved (sector decrease = treasury increase)
         expect(Math.abs(closingTotalMoney(result) - openingMoney)).toBeLessThan(10000);
 
-        // Buildings: farm buys buildings as capital, doesn't produce or consume them
+        // Buildings: farm buys buildings as capital, doesn't produce or consume them.
+        // Households may also buy buildings from warehouse stock, so subtract
+        // household sales as well.
         const buildingPurchases = result.accounting.capitalPurchasesByGood.buildings ?? 0;
-        if (buildingPurchases > 0) {
+        const householdBuildingSales = result.accounting.householdSalesByGood.buildings ?? 0;
+        if (buildingPurchases > 0 || householdBuildingSales > 0) {
             expect(result.goods.buildings).toBeCloseTo(
-                openingGoods.buildings - buildingPurchases,
+                openingGoods.buildings - buildingPurchases - householdBuildingSales,
                 6,
             );
             expect(result.goods.buildings).toBeGreaterThanOrEqual(0);

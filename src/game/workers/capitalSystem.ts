@@ -73,6 +73,11 @@ export function processCapital(
     const moneySpent: Record<string, number> = {};
     const remainingGoods: Partial<Record<keyof Goods, number>> = { ...availableGoods };
 
+    // DEBUG: Check money at start of processCapital
+    for (const name of activeSectors) {
+        console.error(`DEBUG CAPITAL-IN: sector=${name} money[name]=${money[name] ?? 0}`);
+    }
+
     // Validate all availableGoods entries once
     for(const [goodKey, qty] of Object.entries(remainingGoods)) {
         requireNonNegativeFinite(
@@ -162,6 +167,11 @@ export function processCapital(
 
         newCapitalStock[name] = bb.currentStock;
         moneySpent[name] = bb.moneySpent;
+
+        // DEBUG: Check if money was modified by processCapital
+        for (const name of activeSectors) {
+            console.error(`DEBUG CAPITAL-OUT: sector=${name} money[name]=${money[name] ?? 0} moneySpent[name]=${moneySpent[name] ?? 0}`);
+        }
 
         // Aggregate capital deltas with overflow validation
         for(const [goodKey, amount] of Object.entries(bb.replenishAmounts)) {
