@@ -62,7 +62,7 @@ export function allocateGoods({
         unmetDemand[req.sectorId] = {};
 
         for (const [key, demand] of Object.entries(req.idealDemand)) {
-            if (!(key in availableGoods)) {
+            if (!Object.hasOwn(availableGoods, key)) {
                 throw new Error(`Unknown good in demand: ${key}`);
             }
 
@@ -71,6 +71,9 @@ export function allocateGoods({
                     `Invalid demand for ${req.sectorId}/${key}: ${demand}`,
                 );
             }
+
+            const goodKey = key as keyof Goods;
+            allocation[req.sectorId]![goodKey] = 0;
         }
     }
 
@@ -86,6 +89,7 @@ export function allocateGoods({
         const demands = sectorRequests
             .map(req => ({
                 sectorId: req.sectorId,
+                originalDemand: req.idealDemand[goodKey] ?? 0,
                 remaining: req.idealDemand[goodKey] ?? 0,
                 priority: req.priority,
             }))
@@ -98,6 +102,10 @@ export function allocateGoods({
             (sum, item) => sum + item.remaining,
             0,
         );
+
+        if (!Number.isFinite(totalDemand)) {
+            throw new Error(`Total demand overflow for ${String(goodKey)}`);
+        }
 
         if (totalDemand === 0) continue;
 
@@ -172,12 +180,7 @@ export function allocateGoods({
             const allocated =
                 allocation[item.sectorId]?.[goodKey] ?? 0;
 
-            const originalDemand =
-                sectorRequests.find(
-                    req => req.sectorId === item.sectorId,
-                )?.idealDemand[goodKey] ?? 0;
-
-            const unmet = originalDemand - allocated;
+            const unmet = Math.max(0, item.originalDemand - allocated);
 
             if (unmet > EPSILON) {
                 unmetDemand[item.sectorId]![goodKey] = unmet;

@@ -202,6 +202,22 @@ export function buildSectorBid(
         }
     }
 
+    // Validate requirement keys exist in prices and salaries
+    const validGoods = new Set(Object.keys(prices) as (keyof Goods)[]);
+    const validPopulation = new Set(Object.keys(salaries) as (keyof Population)[]);
+
+    for(const key of Object.keys(goodsRequirements)) {
+        if(!validGoods.has(key as keyof Goods)) {
+            throw new Error(`Unknown required good for ${name}: ${key}`);
+        }
+    }
+
+    for(const key of Object.keys(workerRequirement)) {
+        if(!validPopulation.has(key as keyof Population)) {
+            throw new Error(`Unknown worker category for ${name}: ${key}`);
+        }
+    }
+
     const adjustedWorkerRequirement = adjustWorkerRequirements(workerRequirement, options ?? {}, method);
     const adjustedGoodsRequirements = adjustGoodsRequirements(goodsRequirements, options ?? {}, method);
 
@@ -215,6 +231,10 @@ export function buildSectorBid(
     }
     const outputLevel = decisions.stopProduction ? 0 : techMultiplier * effMult;
 
+    if(!Number.isFinite(outputLevel) || outputLevel < 0) {
+        throw new Error(`Invalid output level for ${name}: ${outputLevel}`);
+    }
+
     const { inputCost, laborCost } = calculateCosts(
         adjustedWorkerRequirement,
         adjustedGoodsRequirements,
@@ -222,6 +242,15 @@ export function buildSectorBid(
         salaries,
         inputLevel,
     );
+
+    if(
+        !Number.isFinite(inputCost) ||
+        inputCost < 0 ||
+        !Number.isFinite(laborCost) ||
+        laborCost < 0
+    ) {
+        throw new Error(`Invalid operating costs for ${name}: inputCost=${inputCost}, laborCost=${laborCost}`);
+    }
 
     // Capital goods scaling: more capital = more employable workers, less = fewer
     // Calculated before budget so the capital-adjusted input cost is accounted for.
@@ -249,17 +278,15 @@ export function buildSectorBid(
 
     const capitalMult = capitalMultiplierFromRatio(capitalRatio);
 
-    // Input affordability: operating cash only — investment money is reserved
-    // for capital purchases and must not silently subsidize operating expenses.
-    // Use capital-adjusted input cost so the budget reflects actual demand.
-    const capitalAdjustedInputCost = inputCost * capitalMult;
-    const inputBudgetRatio = capitalAdjustedInputCost > 0
-        ? Math.min(1, sectorMoney / capitalAdjustedInputCost)
-        : 1;
+    // Total operating cost: inputs + wages, capital-adjusted.
+    // The budget must cover both goods purchases and wage payments.
+    const totalOperatingCostAtFullScale = (inputCost + laborCost) * capitalMult;
 
-    // Labor affordability is handled separately by the wage/labor allocation system.
-    // budgetRatio reflects input affordability only.
-    const budgetRatio = inputBudgetRatio;
+    // Input + labor affordability: operating cash only — investment money is
+    // reserved for capital purchases and must not silently subsidize operations.
+    const budgetRatio = totalOperatingCostAtFullScale > 0
+        ? Math.min(1, sectorMoney / totalOperatingCostAtFullScale)
+        : 1;
 
     const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel);
 

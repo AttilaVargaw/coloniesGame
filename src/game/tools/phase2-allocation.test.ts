@@ -136,6 +136,25 @@ describe("laborAllocation", () => {
         expect(availableWorkers).toEqual(workersBefore);
     });
 
+    it("excludes stayAtHome population from labor allocation", () => {
+        // stayAtHome workers are excluded from the available pool (set to 0)
+        const workersWithoutStayAtHome = {
+            ...availableWorkers,
+            stayAtHome: 0,
+        };
+        const reqs = [
+            { sectorId: SectorId("farm"), idealDemand: { stayAtHome: 100 }, priority: 1 },
+        ];
+
+        const result = allocateLabor({
+            availableWorkers: workersWithoutStayAtHome,
+            sectorRequests: reqs,
+        });
+
+        expect(result.allocation[SectorId("farm")]?.stayAtHome ?? 0).toBe(0);
+        expect(result.unmetDemand[SectorId("farm")]?.stayAtHome).toBe(100);
+    });
+
     it("redistributes excess when high-priority sector reaches demand cap", () => {
         const reqs = [
             { sectorId: SectorId("high"), idealDemand: { worker: 2 }, priority: 100 },
@@ -346,14 +365,36 @@ describe("goodsAllocation", () => {
         expect(result.allocation[SectorId("sectorA")]?.food).toBeLessThanOrEqual(1000);
         expect(result.allocation[SectorId("sectorB")]?.food).toBeLessThanOrEqual(1000);
     });
+
+    it("zero stock: every requested good has a zero allocation entry", () => {
+        const reqs = [
+            { sectorId: SectorId("sectorA"), idealDemand: { food: 100, water: 50 }, priority: 1 },
+            { sectorId: SectorId("sectorB"), idealDemand: { food: 100 }, priority: 1 },
+        ];
+
+        const result = allocateGoods({
+            availableGoods: { ...availableGoods, food: 0, water: 0 },
+            sectorRequests: reqs,
+        });
+
+        // Every demanded good must have an entry, even when zero stock
+        expect(result.allocation[SectorId("sectorA")]?.food).toBe(0);
+        expect(result.allocation[SectorId("sectorA")]?.water).toBe(0);
+        expect(result.allocation[SectorId("sectorB")]?.food).toBe(0);
+
+        // Full demand is unmet
+        expect(result.unmetDemand[SectorId("sectorA")]?.food).toBe(100);
+        expect(result.unmetDemand[SectorId("sectorA")]?.water).toBe(50);
+        expect(result.unmetDemand[SectorId("sectorB")]?.food).toBe(100);
+    });
 });
 
 describe("budgetAllocation", () => {
     it("computes budgetRatio correctly", () => {
         const reqs = [
-            { sectorId: SectorId("rich"), sectorMoney: 1000, inputCostPerUnit: 100 },
-            { sectorId: SectorId("poor"), sectorMoney: 50, inputCostPerUnit: 100 },
-            { sectorId: SectorId("broke"), sectorMoney: 0, inputCostPerUnit: 100 },
+            { sectorId: SectorId("rich"), sectorMoney: 1000, totalOperatingCostAtFullScale: 100 },
+            { sectorId: SectorId("poor"), sectorMoney: 50, totalOperatingCostAtFullScale: 100 },
+            { sectorId: SectorId("broke"), sectorMoney: 0, totalOperatingCostAtFullScale: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
@@ -366,7 +407,7 @@ describe("budgetAllocation", () => {
 
     it("excludes investment from available budget", () => {
         const reqs = [
-            { sectorId: SectorId("sector"), sectorMoney: 100, inputCostPerUnit: 100 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, totalOperatingCostAtFullScale: 100 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
@@ -375,9 +416,9 @@ describe("budgetAllocation", () => {
         expect(result.allocation[SectorId("sector")]?.availableBudget).toBe(100);
     });
 
-    it("handles zero inputCostPerUnit", () => {
+    it("handles zero totalOperatingCostAtFullScale", () => {
         const reqs = [
-            { sectorId: SectorId("free"), sectorMoney: 0, inputCostPerUnit: 0 },
+            { sectorId: SectorId("free"), sectorMoney: 0, totalOperatingCostAtFullScale: 0 },
         ];
 
         const result = allocateBudget({ sectorRequests: reqs });
@@ -387,12 +428,53 @@ describe("budgetAllocation", () => {
 
     it("does not mutate input", () => {
         const reqs = [
-            { sectorId: SectorId("sector"), sectorMoney: 100, inputCostPerUnit: 50 },
+            { sectorId: SectorId("sector"), sectorMoney: 100, totalOperatingCostAtFullScale: 50 },
         ];
         const reqsCopy = JSON.parse(JSON.stringify(reqs));
 
         allocateBudget({ sectorRequests: reqs });
 
         expect(reqs).toEqual(reqsCopy);
+    });
+
+    it("rejects duplicate sector ID", () => {
+        const reqs = [
+            { sectorId: SectorId("sector"), sectorMoney: 100, totalOperatingCostAtFullScale: 50 },
+            { sectorId: SectorId("sector"), sectorMoney: 50, totalOperatingCostAtFullScale: 25 },
+        ];
+
+        expect(() => allocateBudget({ sectorRequests: reqs })).toThrow(
+            "Duplicate budget request for sector",
+        );
+    });
+
+    it("rejects negative sector money", () => {
+        const reqs = [
+            { sectorId: SectorId("sector"), sectorMoney: -50, totalOperatingCostAtFullScale: 100 },
+        ];
+
+        expect(() => allocateBudget({ sectorRequests: reqs })).toThrow(
+            "Invalid operating cash",
+        );
+    });
+
+    it("rejects non-finite sector money", () => {
+        const reqs = [
+            { sectorId: SectorId("sector"), sectorMoney: NaN, totalOperatingCostAtFullScale: 100 },
+        ];
+
+        expect(() => allocateBudget({ sectorRequests: reqs })).toThrow(
+            "Invalid operating cash",
+        );
+    });
+
+    it("rejects negative operating cost", () => {
+        const reqs = [
+            { sectorId: SectorId("sector"), sectorMoney: 100, totalOperatingCostAtFullScale: -25 },
+        ];
+
+        expect(() => allocateBudget({ sectorRequests: reqs })).toThrow(
+            "Invalid operating cost",
+        );
     });
 });

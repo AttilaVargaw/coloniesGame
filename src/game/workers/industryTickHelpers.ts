@@ -72,7 +72,6 @@ export function computePopulationConsumption(
         }
 
         for(const [goodKey, amount] of Object.entries(requirements)) {
-            if(!Object.hasOwn(requirements, goodKey)) continue;
             const gKey = goodKey as keyof Goods;
             if(!Number.isFinite(amount) || amount < 0) {
                 throw new Error(`Invalid requirement for ${key}/${gKey}: ${amount}`);
@@ -81,9 +80,8 @@ export function computePopulationConsumption(
 
         const desired: Partial<Goods> = {};
 
-        for(const it in requirements) {
-            const good = it as keyof Goods;
-            const amount = requirements[good] ?? 0;
+        for(const [goodKey, amount] of Object.entries(requirements)) {
+            const good = goodKey as keyof Goods;
             populationConsumption[good] = (populationConsumption[good] ?? 0) + amount;
             desired[good] = amount;
         }
@@ -94,9 +92,18 @@ export function computePopulationConsumption(
 
         const expectedQol = (pop.expectedQol ?? smoothedQol) + (smoothedQol - (pop.expectedQol ?? smoothedQol)) * expectedQolSmoothing;
 
+        if(!Number.isFinite(expectedQol)) {
+            throw new Error(`Invalid expected QoL for ${key}: ${expectedQol}`);
+        }
+
         const rawPopulationChange = populationGrowth(expectedQol) * pop.number / 365 * pop.birthRate;
+
+        if(!Number.isFinite(rawPopulationChange)) {
+            throw new Error(`Invalid population change for ${key}`);
+        }
+
         const maxDailyChange = pop.number * maxDailyChangeSmoothing;
-        const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, Number.isFinite(rawPopulationChange) ? rawPopulationChange : 0));
+        const clampedPopulationChange = Math.max(-maxDailyChange, Math.min(maxDailyChange, rawPopulationChange));
         const clampedPopulationNumber = Math.max(0, pop.number + clampedPopulationChange);
 
         populationUpdates[key] = {
@@ -302,18 +309,19 @@ export function computeColonyGoodsDelta(
 
     for(const name of activeSectors) {
         const sectorResult = sectorResults[name];
+        // Some sectors legitimately have no result (e.g., stopped production,
+        // insufficient budget). Skip them — they contribute nothing to the delta.
         if(!sectorResult) continue;
 
         if(
             !Number.isFinite(sectorResult.productionRatio) ||
-            sectorResult.productionRatio < 0
+            sectorResult.productionRatio < 0 ||
+            sectorResult.productionRatio > 1 + 1e-9
         ) {
             throw new Error(
                 `Invalid production ratio for ${name}: ${sectorResult.productionRatio}`,
             );
         }
-
-        if(sectorResult.productionRatio === 0) continue;
 
         for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
             const key = goodKey as keyof Goods;
@@ -328,9 +336,11 @@ export function computeColonyGoodsDelta(
                 throw new Error(`Invalid production quantity for ${name}/${key}`);
             }
 
-            if(qty > 0) {
-                colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
+            if(sectorResult.productionRatio === 0 && qty > 1e-9) {
+                throw new Error(`Sector ${name} produced goods at zero production scale`);
             }
+
+            colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
         }
     }
 

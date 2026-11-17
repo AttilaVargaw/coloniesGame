@@ -110,33 +110,56 @@ export function executeSectors(
         materialRatio = Math.min(materialRatio, ratio);
     }
 
-    const finalScale = actualScale * materialRatio;
-
-    // Worker availability based on remaining workers (for stop reason)
+    // Worker availability: use centralized labor allocation when provided,
+    // otherwise fall back to remaining workers for the stop-reason diagnostic.
     let workerRatio = 1;
-        for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
-            if(value > 0) {
-                const available = remainingWorkers[key as keyof Population].number;
-                const r = available / value;
-                workerRatio = Math.min(workerRatio, r);
-            }
+    const sectorLaborAllocation = laborAllocations?.[bid.name];
+    for(const [key, demandPerTick] of Object.entries(bid.idealWorkerDemand)) {
+        if(!Number.isFinite(demandPerTick) || demandPerTick < 0) {
+            throw new Error(`Invalid worker demand for ${bid.name}/${key}`);
+        }
+        if(demandPerTick === 0 || actualScale === 0) continue;
+
+        const popType = key as keyof Population;
+        const required = demandPerTick * actualScale;
+
+        if(!Number.isFinite(required)) {
+            throw new Error(`Worker requirement overflow for ${bid.name}/${popType}`);
         }
 
-        // Determine stop reason
-        let stopReason = "";
-        if(finalScale <= 0) {
-            if(bid.budgetRatio <= 0) stopReason = "No money";
-            else if(workerRatio <= 0) stopReason = "No workers";
-            else if(materialRatio <= 0) stopReason = "No materials";
-            else stopReason = "Bottlenecked";
-        } else if(bid.budgetRatio < 1 && bid.budgetRatio < finalScale) {
-            stopReason = "Low budget";
-        } else if(workerRatio < 1 && workerRatio < materialRatio && workerRatio < finalScale) {
-            stopReason = "Worker shortage";
-        } else if(materialRatio < 1 && materialRatio < workerRatio && materialRatio <= finalScale) {
-            stopReason = "Material shortage";
+        let available: number;
+        if(sectorLaborAllocation) {
+            available = sectorLaborAllocation[popType] ?? 0;
+        } else {
+            available = remainingWorkers[popType].number;
         }
-        sectorStopReason[bid.name] = stopReason;
+
+        if(!Number.isFinite(available) || available < 0) {
+            throw new Error(`Invalid available labor for ${bid.name}/${popType}`);
+        }
+
+        workerRatio = Math.min(workerRatio, Math.min(1, available / required));
+    }
+
+    // Apply both material and labor constraints to actualScale.
+    const constrainedScale = actualScale * Math.min(materialRatio, workerRatio);
+    const finalScale = Math.max(0, Math.min(actualScale, constrainedScale));
+
+    // Determine stop reason based on the most restrictive resource constraint.
+    let stopReason = "";
+    if(finalScale <= 0) {
+        if(bid.budgetRatio <= 0) stopReason = "No money";
+        else if(workerRatio <= 0) stopReason = "No workers";
+        else if(materialRatio <= 0) stopReason = "No materials";
+        else stopReason = "Bottlenecked";
+    } else if(materialRatio < 1 && materialRatio < workerRatio) {
+        stopReason = "Material shortage";
+    } else if(workerRatio < 1 && workerRatio <= materialRatio) {
+        stopReason = "Worker shortage";
+    } else if(bid.budgetRatio < 1 && bid.budgetRatio <= finalScale) {
+        stopReason = "Low budget";
+    }
+    sectorStopReason[bid.name] = stopReason;
 
         if(finalScale <= 0) {
             sectorResults[bid.name] = {
@@ -157,7 +180,6 @@ export function executeSectors(
         }
 
         const workersEmployed: Partial<Record<keyof Population, number>> = {};
-        const sectorLaborAllocation = laborAllocations?.[bid.name];
         for(const [key, value] of Object.entries(bid.idealWorkerDemand)) {
             const demanded = value * finalScale;
             let employed: number;

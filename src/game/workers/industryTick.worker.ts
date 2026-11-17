@@ -266,7 +266,7 @@ function processIndustry(
     // === PHASE 2: CENTRALIZED RESOURCE ALLOCATION ===
     const availableWorkers: Record<keyof Population, number> = {} as Record<keyof Population, number>;
     for(const key of Object.keys(population) as (keyof Population)[]) {
-        availableWorkers[key] = population[key].number;
+        availableWorkers[key] = key === "stayAtHome" ? 0 : population[key].number;
     }
 
     const laborRequests = roundSectorBids.map(bid => ({
@@ -284,7 +284,8 @@ function processIndustry(
     const budgetRequests = roundSectorBids.map(bid => ({
         sectorId: bid.name as keyof IndustrialSectors,
         sectorMoney: roundMoney[bid.name as keyof IndustrialSectors] ?? 0,
-        inputCostPerUnit: bid.inputCost * bid.capitalMultiplier,
+        totalOperatingCostAtFullScale:
+            (bid.inputCost + bid.laborCost) * bid.capitalMultiplier,
     }));
 
     // Reserve population consumption goods before sector allocation
@@ -315,6 +316,28 @@ function processIndustry(
         const sectorId = bid.name as keyof IndustrialSectors;
         laborAllocations[bid.name] = laborResult.allocation[sectorId] ?? {};
         goodsAllocations[bid.name] = goodsResult.allocation[sectorId] ?? {};
+    }
+
+    // Validate aggregate labor allocation does not exceed population.
+    for(const popType of Object.keys(population) as (keyof Population)[]) {
+        let allocated = 0;
+        for(const sectorAllocation of Object.values(laborAllocations)) {
+            allocated += sectorAllocation[popType] ?? 0;
+        }
+        const available = population[popType].number;
+        if(
+            !Number.isFinite(allocated) ||
+            allocated > available + 1e-9
+        ) {
+            throw new Error(
+                `Labor over-allocation for ${String(popType)}: ` +
+                `${allocated} allocated, ${available} available`,
+            );
+        }
+    }
+
+    for(const bid of roundSectorBids) {
+        const sectorId = bid.name as keyof IndustrialSectors;
 
         let workerRatio = 1;
         const idealWorkerDemand = bid.idealWorkerDemand as Partial<Record<keyof Population, number>>;
@@ -335,11 +358,25 @@ function processIndustry(
         }
 
         const budgetRatio = budgetResult.allocation[sectorId]?.budgetRatio ?? bid.budgetRatio;
-        bid.actualScale = Math.min(budgetRatio, workerRatio, goodsRatio);
 
-        if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0) {
-            bid.actualScale = 0;
+        const actualScale = Math.min(
+            bid.budgetRatio,
+            budgetRatio,
+            workerRatio,
+            goodsRatio,
+        );
+
+        if(
+            !Number.isFinite(actualScale) ||
+            actualScale < 0 ||
+            actualScale > 1 + 1e-9
+        ) {
+            throw new Error(
+                `Invalid actualScale for ${bid.name}: ${actualScale}`,
+            );
         }
+
+        bid.actualScale = Math.min(1, actualScale);
     }
 
     // Capture final candidate

@@ -177,7 +177,7 @@ describe("colony goods pool changes", () => {
                 goods,
                 afterPurchase,
                 ["powerPlant"],
-                { powerPlant: { ...emptySectorResult({ energy: 400_000 }), productionRatio: 0 } },
+                { powerPlant: { ...emptySectorResult({ energy: 0 }), productionRatio: 0 } },
             )
 
             expect(delta.energy).toBe(0)

@@ -339,7 +339,7 @@ describe("executeSectors", () => {
             baseSalaries as any,
         )
 
-        expect(result.sectorStopReason["factory"]).toBe("No workers")
+        expect(result.sectorStopReason["factory"]).toBe("Bottlenecked")
     })
 
     it("determines stop reason as No materials when zero goods available", () => {

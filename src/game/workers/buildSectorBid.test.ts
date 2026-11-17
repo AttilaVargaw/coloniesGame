@@ -17,6 +17,7 @@ const prices: Record<string, number> = {
     governance: 40,
     machinery: 50,
     buildings: 20,
+    energy: 20,
 }
 
 const salaries: Record<string, number> = {

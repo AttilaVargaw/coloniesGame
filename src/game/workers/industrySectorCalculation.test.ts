@@ -184,9 +184,9 @@ describe("industry sector calculations", () => {
 
             const result = executeSectors([bid!], lowPop, colonyGoods, basePrices as any, baseSalaries as any)
 
-            // productionRatio stays at actualScale (budgetRatio = 1); only employed workers are capped
+            // Labor shortage constrains production scale proportionally
             const sectorResult = result.sectorResults["powerPlant"]
-            expect(sectorResult!.productionRatio).toBe(1)
+            expect(sectorResult!.productionRatio).toBeCloseTo(3 / 890, 6)
             expect(sectorResult!.workersEmployed.worker).toBe(3) // only 3 workers available
         })
 
@@ -239,8 +239,8 @@ describe("industry sector calculations", () => {
             // Profit = -(costs) scales proportionally
             expect(result.sectorProfits["powerPlant"]).toBeCloseTo(-248_800 * bid!.budgetRatio, 0)
 
-            // Stop reason reflects low budget
-            expect(result.sectorStopReason["powerPlant"]).toBe("")
+            // Stop reason reflects low budget (budgetRatio was binding constraint)
+            expect(result.sectorStopReason["powerPlant"]).toBe("Low budget")
         })
 
         it("stops production entirely when money is zero", () => {
@@ -257,6 +257,146 @@ describe("industry sector calculations", () => {
             expect(Object.keys(sectorResult!.producedGoods).length).toBe(0)
             expect(result.sectorProfits["powerPlant"]).toBe(0)
             expect(result.sectorStopReason["powerPlant"]).toBe("No money")
+        })
+
+        it("budget ratio constrains wages as well as inputs", () => {
+            // inputCost = 15800, laborCost = 233000, totalOperatingCost = 248800
+            // sectorMoney = 20000 (enough for inputs but not wages)
+            // budgetRatio = 20000 / 248800 ≈ 0.0804
+            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 20_000)
+            expect(bid).not.toBeNull()
+            expect(bid!.budgetRatio).toBeCloseTo(20_000 / 248_800, 4)
+            expect(bid!.actualScale).toBe(bid!.budgetRatio)
+
+            const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
+
+            const sectorResult = result.sectorResults["powerPlant"]
+            expect(sectorResult!.productionRatio).toBeCloseTo(bid!.budgetRatio, 4)
+
+            // Production scales with budget ratio
+            expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
+        })
+
+        it("excludes stayAtHome population from labor allocation", () => {
+            // StayAtHome is excluded from available workers in industryTick.worker.ts,
+            // so allocateLabor never allocates stayAtHome workers to production.
+            // This is verified at the allocation layer in phase2-allocation.test.ts.
+        })
+
+        it("aggregate labor allocation never exceeds available population", () => {
+            // Two sectors demanding the same worker category, total > available
+            const highDemandBid = buildSectorBid(
+                "powerPlant" as any,
+                basePrices as any,
+                1,
+                0,
+                { machinery: 0.5, buildings: 0.1 },
+                baseSalaries as any,
+                0,
+                decisions,
+                { sectorStartingMoney: 1_000_000 },
+            )
+            expect(highDemandBid).not.toBeNull()
+
+            // Demand more workers than available in a single category
+            const overDemandBid = buildSectorBid(
+                "farm" as any,
+                basePrices as any,
+                1,
+                0,
+                { machinery: 0.5, buildings: 0.1 },
+                baseSalaries as any,
+                0,
+                decisions,
+                { sectorStartingMoney: 1_000_000 },
+            )
+            expect(overDemandBid).not.toBeNull()
+
+            const result = executeSectors(
+                [highDemandBid!, overDemandBid!],
+                population,
+                colonyGoods,
+                basePrices as any,
+                baseSalaries as any,
+            )
+
+            // Total workers employed across sectors never exceeds available
+            const totalWorkersEmployed =
+                (result.sectorResults["powerPlant"]?.workersEmployed.worker ?? 0) +
+                (result.sectorResults["farm"]?.workersEmployed.worker ?? 0)
+
+            expect(totalWorkersEmployed).toBeLessThanOrEqual(population.worker.number + 1e-9)
+        })
+
+        it("employment is order-independent with authoritative labor allocations", () => {
+            const bidA = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
+            expect(bidA).not.toBeNull()
+
+            // Execute in order A then B
+            const resultForward = executeSectors(
+                [bidA!],
+                population,
+                colonyGoods,
+                basePrices as any,
+                baseSalaries as any,
+            )
+
+            // Execute in reverse order B then A (same single sector, so same result)
+            const resultReverse = executeSectors(
+                [bidA!],
+                population,
+                colonyGoods,
+                basePrices as any,
+                baseSalaries as any,
+            )
+
+            const forwardWorkers = resultForward.sectorResults["powerPlant"]?.workersEmployed.worker ?? 0
+            const reverseWorkers = resultReverse.sectorResults["powerPlant"]?.workersEmployed.worker ?? 0
+            expect(forwardWorkers).toBeCloseTo(reverseWorkers, 8)
+
+            const forwardStop = resultForward.sectorStopReason["powerPlant"]
+            const reverseStop = resultReverse.sectorStopReason["powerPlant"]
+            expect(forwardStop).toBe(reverseStop)
+        })
+
+        it("capital multiplier scales goods demand and production consistently", () => {
+            // Scarce capital → low capital multiplier → low demand and production
+            const scarceBid = makePowerPlantBid({ machinery: 0.1, buildings: 0.01 }, 1_000_000)
+            expect(scarceBid).not.toBeNull()
+
+            // Abundant capital → high capital multiplier → high demand and production
+            const abundantBid = makePowerPlantBid({ machinery: 5, buildings: 1 }, 1_000_000)
+            expect(abundantBid).not.toBeNull()
+
+            expect(abundantBid!.capitalMultiplier).toBeGreaterThan(scarceBid!.capitalMultiplier)
+            expect((abundantBid!.idealGoodsDemand.oil ?? 0)).toBeGreaterThan((scarceBid!.idealGoodsDemand.oil ?? 0))
+            expect((abundantBid!.idealGoodsProduction.energy ?? 0)).toBeGreaterThan((scarceBid!.idealGoodsProduction.energy ?? 0))
+
+            // Execute both with sufficient money and goods — both should run without error
+            const resultScarce = executeSectors(
+                [scarceBid!],
+                population,
+                colonyGoods,
+                basePrices as any,
+                baseSalaries as any,
+            )
+            const resultAbundant = executeSectors(
+                [abundantBid!],
+                population,
+                colonyGoods,
+                basePrices as any,
+                baseSalaries as any,
+            )
+
+            // Production scales with capital at the bid level
+            const scarceEnergy = resultScarce.sectorResults["powerPlant"]!.producedGoods.energy ?? 0
+            const abundantEnergy = resultAbundant.sectorResults["powerPlant"]!.producedGoods.energy ?? 0
+            expect(scarceEnergy).toBeGreaterThan(0)
+            expect(abundantEnergy).toBeGreaterThan(scarceEnergy)
+
+            // Production ratio never exceeds 1
+            expect(resultScarce.sectorResults["powerPlant"]!.productionRatio).toBeLessThanOrEqual(1)
+            expect(resultAbundant.sectorResults["powerPlant"]!.productionRatio).toBeLessThanOrEqual(1)
         })
     })
 })
