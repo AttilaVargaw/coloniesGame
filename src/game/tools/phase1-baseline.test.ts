@@ -17,7 +17,6 @@ function cloneInput(input: IndustryTickInput): IndustryTickInput {
 		goods: { ...input.goods },
 		population: { ...input.population },
 		techMultipliers: { ...input.techMultipliers },
-		laborAssigned: { ...input.laborAssigned },
 		capitalStock: { ...input.capitalStock },
 		money: { ...input.money },
 		workerEfficiencyMultipliers: { ...input.workerEfficiencyMultipliers },
@@ -103,7 +102,6 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					colonyTreasury: baseInput.colonyTreasury,
 					sectorInvestment: baseInput.sectorInvestment,
 					activeLaws: baseInput.activeLaws,
-					laborAssigned: { ...baseInput.laborAssigned },
 				};
 			}
 
@@ -286,7 +284,6 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 				colonyTreasury: baseInput.colonyTreasury,
 				sectorInvestment: baseInput.sectorInvestment,
 				activeLaws: baseInput.activeLaws,
-				laborAssigned: { ...baseInput.laborAssigned },
 			};
 
 			if ((t + 1) % 10 === 0) {

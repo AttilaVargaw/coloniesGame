@@ -45,9 +45,6 @@ function closeTickForNext(
 		money: result.money,
 		capitalStock: result.capitalStock,
 		population: result.population ?? input.population,
-		laborAssigned: Object.fromEntries(
-			Array.from(input.activeSectors).map((k) => [k, 0])
-		) as Record<string, number>,
 	} as IndustryTickInput;
 }
 

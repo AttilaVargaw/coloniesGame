@@ -23,7 +23,6 @@ export function generateColonyConfig(
 	const money: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 	const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
 	const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-	const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 	const sectorInvestment: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 	const selectedMethod: Record<keyof IndustrialSectors, string | null> = {} as Record<keyof IndustrialSectors, string | null>;
 
@@ -32,7 +31,6 @@ export function generateColonyConfig(
 		money[sector] = starterMoneyPerSector * sectorMultiplier;
 		capitalStock[sector] = seedCapitalStock(sector, sectorMultiplier);
 		techMultipliers[sector] = 1;
-		laborAssigned[sector] = 0;
 		sectorInvestment[sector] = 0;
 		selectedMethod[sector] = null;
 	}
@@ -43,7 +41,6 @@ export function generateColonyConfig(
 		goods,
 		population,
 		techMultipliers,
-		laborAssigned,
 		capitalStock,
 		money,
 		settlementType: "colony" as SettlementType,
@@ -59,7 +56,6 @@ export function generateColonyConfig(
 		) as Record<keyof IndustrialSectors, number>,
 		selectedMethod,
 		colonyTreasury: 0,
-		householdMoney: 0,
 		sectorInvestment,
 		activeLaws: new Set(),
 	};

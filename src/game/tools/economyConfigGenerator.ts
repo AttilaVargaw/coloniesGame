@@ -108,11 +108,9 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		goods,
 		population,
 		techMultipliers,
-		laborAssigned,
 		capitalStock,
 		money: startingMoney,
 		colonyTreasury: startingTreasury,
-		householdMoney: startingHouseholdMoney,
 		settlementType,
 		allowedSectors,
 		workerEfficiencyMultipliers,
@@ -194,7 +192,10 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	let execResult: ReturnType<typeof executeSectors> | null = null;
 	let newMoney: Record<string, number> = { ...startingMoney };
 	let newTreasury: number = startingTreasury;
-	let newHouseholdMoney: number = startingHouseholdMoney;
+	let newHouseholdMoney: number = Object.values(population).reduce(
+		(sum, pop) => sum + (pop.wealth ?? 0),
+		0,
+	);
 	let investRemaining = industryBlackboard.investTotal;
 
 	// Accumulate real sector flows across every iteration of the tick.
@@ -251,7 +252,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 				previousSectorLaborCosts[name] ?? 0,
 				previousSectorInputCosts[name] ?? 0,
 				previousSectorUtilization[name] ?? 0,
-				laborAssigned[name] ?? 0,
+				0,
 				population.worker.number,
 				currentPrices,
 				adjustedSalaries,
@@ -274,10 +275,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			}
 
 			const techMultiplier = techMultipliers[name] ?? 1;
-			let laborAssignedVal =
-				blackboard.decisions.laborAssigned > 0
-					? blackboard.decisions.laborAssigned
-					: laborAssigned[name] ?? 0;
+			const laborAssignedVal = 0;
 			const capitalStockVal = capitalStock[name] ?? {};
 
 			const bid = buildSectorBid(
@@ -853,9 +851,6 @@ export function validateColonyConfig(
 		currentInput.money = result.money;
 		currentInput.capitalStock = result.capitalStock;
 		currentInput.population = result.population ?? currentInput.population;
-		currentInput.laborAssigned = Object.fromEntries(
-			Array.from(currentInput.activeSectors).map((k) => [k, 0])
-		) as Record<string, number>;
 	}
 
 	return {

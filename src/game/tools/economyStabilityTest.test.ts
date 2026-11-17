@@ -40,7 +40,6 @@ function debugFoodTrace(config: Partial<IndustryTickInput>, ticks: number) {
         input.money = result.money;
         input.capitalStock = result.capitalStock;
         input.population = result.population ?? input.population;
-        input.laborAssigned = Object.fromEntries(Array.from(input.activeSectors).map((k) => [k, 0])) as Record<string, number>;
     }
 }
 

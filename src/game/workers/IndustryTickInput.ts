@@ -10,7 +10,6 @@ export interface IndustryTickInput {
     goods: Goods;
     population: Population;
     techMultipliers: Record<keyof IndustrialSectors, number>;
-    laborAssigned: Record<keyof IndustrialSectors, number>;
     capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>;
     money: Record<keyof IndustrialSectors, number>;
     // sectorGoods: Record<keyof IndustrialSectors, Goods>;
@@ -23,7 +22,6 @@ export interface IndustryTickInput {
     capitalMultipliers: Record<keyof IndustrialSectors, number>;
     selectedMethod: Record<keyof IndustrialSectors, string | null>;
     colonyTreasury: number;
-    householdMoney: number;
     sectorInvestment: Record<keyof IndustrialSectors, number>;
     activeLaws: Set<string>;
 }

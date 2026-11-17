@@ -44,11 +44,9 @@ function processIndustry(
         population,
         allowedSectors,
         techMultipliers,
-        laborAssigned,
         capitalStock,
         money: startingMoney,
         colonyTreasury: startingTreasury,
-        householdMoney: startingHouseholdMoney,
         // sectorGoods,
         settlementType,
         workerEfficiencyMultipliers,
@@ -129,7 +127,10 @@ function processIndustry(
 
     // Normalize opening balances once — use these consistently for all calculations
     const openingTreasury = startingTreasury ?? 0;
-    const openingHouseholdMoney = startingHouseholdMoney ?? 0;
+    const openingHouseholdMoney = Object.values(population).reduce(
+        (sum, pop) => sum + (pop.wealth ?? 0),
+        0,
+    );
 
     // Validate opening balances before any economic processing
     if(!Number.isFinite(openingTreasury) || openingTreasury < 0) {
@@ -219,7 +220,7 @@ function processIndustry(
             previousSectorLaborCosts[name] ?? 0,
             previousSectorInputCosts[name] ?? 0,
             previousSectorUtilization[name] ?? 0,
-            laborAssigned[name] ?? 0,
+            0,
             population.worker.number,
             currentPrices,
             roundSalaries,
@@ -245,7 +246,7 @@ function processIndustry(
         const techMultiplier = techMultipliers[name] ?? 1;
         let laborAssignedVal = blackboard.decisions.laborAssigned > 0
             ? blackboard.decisions.laborAssigned
-            : (laborAssigned[name] ?? 0);
+            : 0;
         const capitalStockVal = capitalStock[name] ?? {};
 
         const bid = buildSectorBid(name, currentPrices, techMultiplier, laborAssignedVal, capitalStockVal, roundSalaries, previousSectorProfits[name] ?? 0, blackboard.decisions, {
