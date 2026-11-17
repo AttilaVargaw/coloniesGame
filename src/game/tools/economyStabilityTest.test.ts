@@ -31,13 +31,11 @@ function debugFoodTrace(config: Partial<IndustryTickInput>, ticks: number) {
     const state = createSimState();
     let input = generateColonyConfig(config as any, {});
     const farmPresent = input.activeSectors.has("farm");
-    console.log(`  DEBUG TRACE activeSectors=${JSON.stringify(input.activeSectors)} farm=${farmPresent} initialFood=${input.goods.food ?? 0} pop=${totalPopulation(input.population)}`);
     for(let i = 0; i < ticks; i++) {
         const result = simulateTick(input, state);
         const foodConsumed = result.goodsRequirements.food ?? 0;
         const foodProduced = result.goodsProduction.food ?? 0;
         const foodAfter = result.goods.food ?? 0;
-        console.log(`  tick ${i+1}: foodProd=${foodProduced.toFixed(0)} foodConsumed=${foodConsumed.toFixed(0)} foodAfter=${foodAfter.toFixed(0)} pop=${totalPopulation(result.population)} farmRatio=?`);
         input.goods = result.goods;
         input.money = result.money;
         input.capitalStock = result.capitalStock;
@@ -61,7 +59,6 @@ describe("economy stability", () => {
             let found = false;
             let failedSector = ""
 
-            console.log(`Validating ${name} with seed ${seed}`)
             for(; seed < 25_000 && !found; ++seed) {
                 const baseInput = generateRandomConfig(seed, population!);
                 const activeSectors = [...baseInput.activeSectors];

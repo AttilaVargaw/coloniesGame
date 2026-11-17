@@ -736,10 +736,6 @@ function finalizeGoods(
     populationConsumption: Partial<Goods>,
     population: Population
 ): Goods {
-    console.log("DEBUG_GOODS: currentGoods.water:", currentGoods.water);
-    console.log("DEBUG_GOODS: sumGoodsProduction.water:", sumGoodsProduction.water);
-    console.log("DEBUG_GOODS: sumGoodsRequirements.water:", sumGoodsRequirements.water);
-    console.log("DEBUG_GOODS: populationConsumption.water:", populationConsumption.water);
     const finalGoods = { ...currentGoods } as Goods;
 
 	// Apply cumulative goods changes additively
