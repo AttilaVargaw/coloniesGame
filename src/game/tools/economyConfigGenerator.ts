@@ -684,11 +684,15 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// capitalPurchasesByGood = goodsForCapital - remainingGoods (per good).
 	const capitalPurchasesByGood: Partial<Goods> = {};
 	for(const goodKey of Object.keys(goodsForCapital) as (keyof Goods)[]) {
-		const removed = (goodsForCapital[goodKey] ?? 0) - (remainingGoods[goodKey] ?? 0);
-		if(removed < -1e-6) {
+		const before = goodsForCapital[goodKey] ?? 0;
+		const after = remainingGoods[goodKey] ?? 0;
+		const removed = before - after;
+		// Allow tiny floating-point increase (relative tolerance)
+		const tolerance = Math.max(1e-6, before * 1e-9);
+		if(removed < -tolerance) {
 			throw new Error(
 				`Capital processing increased inventory of ${goodKey}: ` +
-				`before=${goodsForCapital[goodKey] ?? 0}, after=${remainingGoods[goodKey] ?? 0}`,
+				`before=${before}, after=${after}, diff=${-removed}, tolerance=${tolerance}`,
 			);
 		}
 		if(removed > 0) {
