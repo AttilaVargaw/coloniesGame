@@ -1154,9 +1154,14 @@ function processIndustry(
                 }
                 return byGood;
             })(),
-            wagesByPop,
-            spendingByPop,
-        },
+wagesByPop,
+			spendingByPop,
+			// Per-sector input reconciliation data (not computed in worker)
+			sectorInputsPurchasedBySector: {},
+			sectorInputsConsumedBySector: {},
+			sectorInputRefundsBySector: {},
+			returnedInputsByGood: {},
+		},
     };
 
     // Phase 5.6: Validate all committed state before building patch

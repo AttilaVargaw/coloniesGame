@@ -9,7 +9,8 @@ import { ColonyConfig, DEFAULT_CONFIG, seedCapitalStock } from "./economyConfigG
 
 export function generateColonyConfig(
 	config: Partial<ColonyConfig> = {},
-	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>
+	capitalStockMultipliers?: Partial<Record<keyof IndustrialSectors, number>>,
+	occupationStarterRatioOverride?: Partial<Record<keyof Population, number>>
 ): IndustryTickInput {
 	const cfg = { ...DEFAULT_CONFIG, ...config };
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
@@ -18,7 +19,7 @@ export function generateColonyConfig(
 	for(const key of Object.keys(goods) as (keyof Goods)[]) {
 		goods[key] *= cfg.initialGoodsMultipliers.get(key) ?? 50_000;
 	}
-	const population = createStarterPopulation(populationSize);
+	const population = createStarterPopulation(populationSize, occupationStarterRatioOverride);
 
 	const money: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
 	const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;

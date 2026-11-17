@@ -23,6 +23,7 @@ export const heliosGamma = {
             name: "Scorpia",
             archetype: "kobol",
             population: 450000000,
+            rings: [{ innerRadius: 0.3 * SOLAR_UNIT, outerRadius: 0.5 * SOLAR_UNIT, color: "#22222aaa", name: "Acheron" }],
         }],
     }, {
         bodies: [{

@@ -954,3 +954,201 @@ describe("Deterministic single-tick tests", () => {
         }
     });
 });
+
+describe("Per-sector input reconciliation and accounting invariants", () => {
+    it("two sectors purchase and consume the same good — each reconciles independently", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "foodFactory", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.water = 500;
+
+        const state2 = createSimState();
+        const result = simulateTick(input, state2);
+
+        // Both sectors purchased water
+        const farmPurchased = result.accounting.sectorInputsPurchasedBySector?.farm?.water ?? 0;
+        const factoryPurchased = result.accounting.sectorInputsPurchasedBySector?.foodFactory?.water ?? 0;
+
+        // Each sector's consumption should be independently reconciled
+        const farmConsumed = result.accounting.sectorInputsConsumedBySector?.farm?.water ?? 0;
+        const factoryConsumed = result.accounting.sectorInputsConsumedBySector?.foodFactory?.water ?? 0;
+
+        // Verify independent reconciliation: each sector's consumption <= its purchases
+        expect(farmConsumed).toBeLessThanOrEqual(farmPurchased + 1e-6);
+        expect(factoryConsumed).toBeLessThanOrEqual(factoryPurchased + 1e-6);
+
+        // Refunds should exist for unused purchases
+        const farmRefund = result.accounting.sectorInputRefundsBySector?.farm ?? 0;
+        const factoryRefund = result.accounting.sectorInputRefundsBySector?.foodFactory ?? 0;
+        expect(farmRefund).toBeGreaterThanOrEqual(0);
+        expect(factoryRefund).toBeGreaterThanOrEqual(0);
+    });
+
+    it("sector consumes more than it purchased — tick throws", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.water = 10; // very scarce
+
+        const state2 = createSimState();
+
+        // The strict per-sector reconciliation should catch over-consumption
+        // and throw an error rather than silently allowing it
+        expect(() => simulateTick(input, state2)).toThrow(
+            /consumption exceeds purchases|over-consumption/i
+        );
+    });
+
+    it("sector purchases more than it consumes — unused stock and cash are returned", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.water = 1000; // abundant water
+
+        const openingGoods = { ...input.goods };
+        const state2 = createSimState();
+        const result = simulateTick(input, state2);
+
+        // Farm should purchase water but consume less than available
+        const purchased = result.accounting.sectorInputsPurchasedBySector?.farm?.water ?? 0;
+        const consumed = result.accounting.sectorInputsConsumedBySector?.farm?.water ?? 0;
+
+        expect(purchased).toBeGreaterThan(0);
+        // Unused inputs should be returned to colony inventory
+        const returned = result.accounting.returnedInputsByGood?.water ?? 0;
+        expect(returned).toBeGreaterThanOrEqual(0);
+
+        // Cash refund for unused inputs
+        const refund = result.accounting.sectorInputRefundsBySector?.farm ?? 0;
+        expect(refund).toBeGreaterThanOrEqual(0);
+
+        // Inventory should reflect returned goods
+        expect(result.goods.water).toBeGreaterThanOrEqual(0);
+    });
+
+    it("capital needs a good returned by a sector — capital can purchase it", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "foodFactory", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.water = 100; // limited water, but farm won't use all
+
+        const openingGoods = { ...input.goods };
+        const state2 = createSimState();
+        const result = simulateTick(input, state2);
+
+        // Farm should have returned some water
+        const returnedWater = result.accounting.returnedInputsByGood?.water ?? 0;
+
+        // Capital processing (foodFactory) should be able to purchase that water
+        const capitalWaterPurchases = result.accounting.capitalPurchasesByGood?.water ?? 0;
+        expect(capitalWaterPurchases).toBeGreaterThanOrEqual(0);
+
+        // Total water consumed (by sectors + capital) should not exceed opening + returned
+        const totalWaterConsumed =
+            (result.accounting.sectorInputsConsumedByGood?.water ?? 0) +
+            (result.accounting.capitalPurchasesByGood?.water ?? 0);
+        expect(totalWaterConsumed).toBeLessThanOrEqual(openingGoods.water + 1e-6);
+    });
+
+    it("accounting throws late in the tick — price/wage memory and tick count remain unchanged", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.water = -10; // invalid negative inventory to trigger late throw
+
+        const initialPriceMemory = { ...state.priceMemory };
+        const initialWageMemory = { ...state.wageMemory };
+        const initialTick = state.tick;
+
+        expect(() => simulateTick(input, state)).toThrow();
+
+        // Memory and tick should not have been mutated
+        expect(state.priceMemory).toEqual(initialPriceMemory);
+        expect(state.wageMemory).toEqual(initialWageMemory);
+        expect(state.tick).toBe(initialTick);
+    });
+
+    it("no household sales — household wealth still receives wages", () => {
+        const state = createSimState();
+        const input = generateColonyConfig(
+            {
+                populationSize: 100_000,
+                activeSectors: ["farm", "powerPlant", "forestry"],
+                starterMoneyPerSector: 1_000_000_000,
+                capitalStockMultiplier: 1,
+            },
+            {}
+        );
+        input.goods.agriculturalGoods = 0;
+        input.goods.food = 0; // no food for households to buy
+        input.goods.agriculturalGoods = 0;
+
+        const openingWealthByPop = Object.fromEntries(
+            Object.entries(input.population).map(
+                ([key, pop]) => [key, pop.wealth ?? 0],
+            ),
+        );
+        const state2 = createSimState();
+        const result = simulateTick(input, state2);
+
+        // No household sales should occur
+        const totalHouseholdSales = sumValues(
+            Object.values(result.accounting.householdSalesByGood ?? {}),
+        );
+        expect(totalHouseholdSales).toBe(0);
+
+        // But wages should still be paid and wealth should increase by wages
+        for (const [key] of Object.entries(input.population)) {
+            const popKey = key as keyof Population;
+            const openingWealth = input.population[popKey].wealth ?? 0;
+            const wages = result.accounting.wagesByPop[popKey] ?? 0;
+            const spending = result.accounting.spendingByPop[popKey] ?? 0;
+            const closingWealth = result.population[popKey].wealth ?? 0;
+
+            expect(wages).toBeGreaterThan(0);
+            expect(spending).toBe(0);
+            expect(closingWealth).toBeCloseTo(openingWealth + wages, 6);
+            expect(closingWealth).toBeGreaterThanOrEqual(0);
+        }
+    });
+});

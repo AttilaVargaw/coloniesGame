@@ -49,5 +49,11 @@ export interface IndustryTickResult {
 
         wagesByPop: Record<keyof Population, number>;
         spendingByPop: Record<keyof Population, number>;
+
+        // Per-sector input reconciliation data
+        sectorInputsPurchasedBySector: Record<string, Partial<Goods>>;
+        sectorInputsConsumedBySector: Record<string, Partial<Goods>>;
+        sectorInputRefundsBySector: Record<string, number>;
+        returnedInputsByGood: Partial<Goods>;
     };
 }
