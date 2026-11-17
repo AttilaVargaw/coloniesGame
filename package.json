@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest run",
+    "test:fast": "vitest run --config vitest.no-isolate.config.ts",
+    "test:dom": "vitest run --config vitest.config.ts",
     "coverage": "vitest run --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

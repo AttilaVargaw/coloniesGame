@@ -4,15 +4,16 @@ import { defineConfig } from 'vitest/config'
 const dirname = import.meta.dirname
 
 export default defineConfig({
-    test: {
-        coverage: {
-            provider: 'v8',
-            //reporter: ['text', 'text-summary'],
+	test: {
+		maxForks: 8,
+		coverage: {
+			provider: 'v8',
+			//reporter: ['text', 'text-summary'],
 
-        },
-        include: ["src/**/*.{test,spec}.{ts,tsx}"],
-        exclude: ["e2e/**/*.spec.ts"]
-    },
+		},
+		include: ["src/**/*.{test,spec}.{ts,tsx}"],
+		exclude: ["e2e/**/*.spec.ts"]
+	},
     resolve: {
         alias: {
             "@": path.resolve(dirname, "./src"),
