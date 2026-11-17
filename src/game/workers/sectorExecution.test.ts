@@ -345,7 +345,6 @@ describe("executeSectors", () => {
     it("determines stop reason as No materials when zero goods available", () => {
         const bid = makeSectorBid({
             name: "factory",
-            actualScale: 0,
             budgetRatio: 1,
             idealGoodsDemand: { oil: 100 },
             idealWorkerDemand: {},

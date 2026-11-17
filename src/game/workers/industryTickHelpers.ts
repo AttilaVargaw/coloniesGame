@@ -17,16 +17,24 @@ const extraRequirements = {
 } as Readonly<Record<keyof Population, Partial<Goods>>>;
 
 export function computePopulationConsumption(
-    population: Population,
-    adjustedSalaries: Record<keyof Population, number>,
-    prices: Record<keyof Goods, number>,
+	population: Population,
+	adjustedSalaries: Record<keyof Population, number>,
+	prices: Record<keyof Goods, number>,
 ): {
-    populationConsumption: Partial<Goods>;
-    desiredConsumptionByPop: Record<keyof Population, Partial<Goods>>;
-    requirementsByPop: Record<keyof Population, Record<keyof Goods, number>>;
-    populationUpdates: IndustryTickResult["populationUpdates"];
+	populationConsumption: Partial<Goods>;
+	desiredConsumptionByPop: Record<keyof Population, Partial<Goods>>;
+	requirementsByPop: Record<keyof Population, Record<keyof Goods, number>>;
+	populationUpdates: IndustryTickResult["populationUpdates"];
 } {
-    const populationConsumption: Partial<Goods> = {};
+	// Validate adjustedSalaries before any computation.
+	for(const key of Object.keys(population) as (keyof Population)[]) {
+		const salary = adjustedSalaries[key];
+		if(!Number.isFinite(salary) || salary < 0) {
+			throw new Error(`Invalid adjusted salary for ${key}: ${salary}`);
+		}
+	}
+
+	const populationConsumption: Partial<Goods> = {};
     const desiredConsumptionByPop: Record<keyof Population, Partial<Goods>> = {} as Record<keyof Population, Partial<Goods>>;
     const requirementsByPop: Record<keyof Population, Record<keyof Goods, number>> = {} as Record<keyof Population, Record<keyof Goods, number>>;
     const populationUpdates = {} as IndustryTickResult["populationUpdates"];
@@ -187,9 +195,9 @@ export function buySectorInputs(
             throw new Error(`Invalid cash balance for ${sectorName}`);
         }
 
-        if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0) {
-            throw new Error(`Invalid actualScale for ${sectorName}`);
-        }
+if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0 || bid.actualScale > 1 + 1e-9) {
+			throw new Error(`Invalid actualScale for ${sectorName}: ${bid.actualScale}`);
+		}
 
         purchasedBySector[sectorName] = {};
 
@@ -277,74 +285,144 @@ export function buySectorInputs(
         updatedMoney[sectorName] = sectorMoney;
     }
 
-    return {
-        colonyGoodsAfterPurchase,
-        newMoney: updatedMoney,
-        purchasedBySector,
-    };
+return {
+		colonyGoodsAfterPurchase,
+		newMoney: updatedMoney,
+		purchasedBySector,
+	};
+}
+
+export function reconcileSectorInputs(
+	purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>>,
+	consumedBySector: Record<string, Partial<Record<keyof Goods, number>>>,
+	prices: Record<keyof Goods, number>,
+	colonyGoods: Goods,
+	sectorMoney: Record<string, number>,
+): {
+	goods: Goods;
+	money: Record<string, number>;
+	returnedBySector: Record<string, Partial<Record<keyof Goods, number>>>;
+	refundedBySector: Record<string, number>;
+} {
+	const returnedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
+
+	const refundedBySector: Record<string, number> = {};
+
+	const updatedGoods = { ...colonyGoods };
+	const updatedMoney = { ...sectorMoney };
+
+	for(const [sector, purchases] of Object.entries(purchasedBySector)) {
+		const consumed = consumedBySector[sector] ?? {};
+		returnedBySector[sector] = {};
+
+		let refund = 0;
+
+		for(const [goodName, purchased] of Object.entries(purchases)) {
+			const good = goodName as keyof Goods;
+			const used = consumed[good] ?? 0;
+
+			if(
+				!Number.isFinite(purchased) ||
+				purchased < 0 ||
+				!Number.isFinite(used) ||
+				used < 0 ||
+				used > purchased + 1e-6
+			) {
+				throw new Error(
+					`Invalid input reconciliation: ${sector}/${good}`
+				);
+			}
+
+			const returned = Math.max(0, purchased - used);
+
+			returnedBySector[sector][good] = returned;
+			updatedGoods[good] = (updatedGoods[good] ?? 0) + returned;
+
+			refund += returned * prices[good];
+		}
+
+		if(!Number.isFinite(refund)) {
+			throw new Error(`Invalid input refund for ${sector}`);
+		}
+
+		updatedMoney[sector] = (updatedMoney[sector] ?? 0) + refund;
+		refundedBySector[sector] = refund;
+	}
+
+	return {
+		goods: updatedGoods,
+		money: updatedMoney,
+		returnedBySector,
+		refundedBySector,
+	};
 }
 
 export function computeColonyGoodsDelta(
-    goods: Goods,
-    colonyGoodsAfterPurchase: Goods,
-    activeSectors: Iterable<keyof IndustrialSectors>,
-    sectorResults: Record<string, { productionRatio: number; producedGoods: Record<string, number> }>,
+	openingGoods: Goods,
+	goodsAfterInputSettlement: Goods,
+	activeSectors: Iterable<keyof IndustrialSectors>,
+	sectorResults: Record<string, { productionRatio: number; producedGoods: Record<string, number> }>,
 ): Partial<Goods> {
-    const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
+	// Contract: goodsAfterInputSettlement must reflect inventory AFTER all input
+	// purchases have been reconciled (unused purchases returned, refunds issued).
+	// This function then adds sector production to compute the net delta.
+	const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
 
-    for(const goodKey of Object.keys(goods)) {
-        const key = goodKey as keyof Goods;
-        const before = goods[key] ?? 0;
-        const after = colonyGoodsAfterPurchase[key] ?? 0;
+	// Use canonical goods keys from the type to avoid missing keys.
+	const goodsKeys = Object.keys(openingGoods) as (keyof Goods)[];
 
-        if(
-            !Number.isFinite(before) || before < 0 ||
-            !Number.isFinite(after) || after < 0
-        ) {
-            throw new Error(`Invalid inventory while computing delta: ${goodKey}`);
-        }
+	for(const key of goodsKeys) {
+		const before = openingGoods[key] ?? 0;
+		const after = goodsAfterInputSettlement[key] ?? 0;
 
-        colonyGoodsDelta[key] = after - before;
-    }
+		if(
+			!Number.isFinite(before) || before < 0 ||
+			!Number.isFinite(after) || after < 0
+		) {
+			throw new Error(`Invalid inventory while computing delta: ${key}`);
+		}
 
-    for(const name of activeSectors) {
-        const sectorResult = sectorResults[name];
-        // Some sectors legitimately have no result (e.g., stopped production,
-        // insufficient budget). Skip them — they contribute nothing to the delta.
-        if(!sectorResult) continue;
+		colonyGoodsDelta[key] = after - before;
+	}
 
-        if(
-            !Number.isFinite(sectorResult.productionRatio) ||
-            sectorResult.productionRatio < 0 ||
-            sectorResult.productionRatio > 1 + 1e-9
-        ) {
-            throw new Error(
-                `Invalid production ratio for ${name}: ${sectorResult.productionRatio}`,
-            );
-        }
+	for(const name of activeSectors) {
+		const sectorResult = sectorResults[name];
+		// Some sectors legitimately have no result (e.g., stopped production,
+		// insufficient budget). Skip them — they contribute nothing to the delta.
+		if(!sectorResult) continue;
 
-        for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
-            const key = goodKey as keyof Goods;
+		if(
+			!Number.isFinite(sectorResult.productionRatio) ||
+			sectorResult.productionRatio < 0 ||
+			sectorResult.productionRatio > 1 + 1e-9
+		) {
+			throw new Error(
+				`Invalid production ratio for ${name}: ${sectorResult.productionRatio}`,
+			);
+		}
 
-            if(!Object.hasOwn(goods, key)) {
-                throw new Error(`Unknown produced good: ${name}/${key}`);
-            }
+		for(const [goodKey, amount] of Object.entries(sectorResult.producedGoods)) {
+			const key = goodKey as keyof Goods;
 
-            const qty = amount ?? 0;
+			if(!Object.hasOwn(openingGoods, key)) {
+				throw new Error(`Unknown produced good: ${name}/${key}`);
+			}
 
-            if(!Number.isFinite(qty) || qty < 0) {
-                throw new Error(`Invalid production quantity for ${name}/${key}`);
-            }
+			const qty = amount ?? 0;
 
-            if(sectorResult.productionRatio === 0 && qty > 1e-9) {
-                throw new Error(`Sector ${name} produced goods at zero production scale`);
-            }
+			if(!Number.isFinite(qty) || qty < 0) {
+				throw new Error(`Invalid production quantity for ${name}/${key}`);
+			}
 
-            colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
-        }
-    }
+			if(sectorResult.productionRatio === 0 && qty > 1e-9) {
+				throw new Error(`Sector ${name} produced goods at zero production scale`);
+			}
 
-    return colonyGoodsDelta;
+			colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
+		}
+	}
+
+	return colonyGoodsDelta;
 }
 
 export function applyGoodsModifier(
@@ -385,29 +463,37 @@ export function pruneMemory<T>(
     }
 }
 export function computeMarketRatios<TKey extends string | number | symbol>(
-    demands: Record<TKey, number>,
-    available: Record<TKey, number>,
+	demands: Record<TKey, number>,
+	available: Record<TKey, number>,
 ): Record<TKey, number> {
-    const ratios = {} as Record<TKey, number>;
+	const ratios = {} as Record<TKey, number>;
 
-    for(const key of Object.keys(demands) as TKey[]) {
-        const demand = demands[key];
-        const supply = available[key] ?? 0;
+	// Validate all availability keys for finiteness and non-negativity.
+	for(const key of Object.keys(available) as TKey[]) {
+		const supply = available[key];
+		if(!Number.isFinite(supply) || supply < 0) {
+			throw new Error(`Invalid availability for ${String(key)}`);
+		}
+	}
 
-        if(!Number.isFinite(demand) || demand < 0) {
-            throw new Error(`Invalid demand for ${String(key)}`);
-        }
+	for(const key of Object.keys(demands) as TKey[]) {
+		const demand = demands[key];
+		const supply = available[key] ?? 0;
 
-        if(!Number.isFinite(supply) || supply < 0) {
-            throw new Error(`Invalid availability for ${String(key)}`);
-        }
+		if(!Number.isFinite(demand) || demand < 0) {
+			throw new Error(`Invalid demand for ${String(key)}`);
+		}
 
-        ratios[key] = demand > 0
-            ? Math.min(1, supply / demand)
-            : 1;
-    }
+		if(!Number.isFinite(supply) || supply < 0) {
+			throw new Error(`Invalid availability for ${String(key)}`);
+		}
 
-    return ratios;
+		ratios[key] = demand > 0
+			? Math.min(1, supply / demand)
+			: 1;
+	}
+
+	return ratios;
 }
 export function trySetPatchField<T>(
     patch: any,

@@ -61,24 +61,19 @@ function requireNonNegativeFinite(value: number, label: string): number {
 }
 
 export function processCapital(
-    activeSectors: Iterable<keyof IndustrialSectors>,
-    capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>,
-    sectorResults: Record<string, { productionRatio: number }>,
-    prices: Record<keyof Goods, number>,
-    money: Record<string, number>,
-    availableGoods: Partial<Record<keyof Goods, number>>
+	activeSectors: Iterable<keyof IndustrialSectors>,
+	capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>,
+	sectorResults: Record<string, { productionRatio: number }>,
+	prices: Record<keyof Goods, number>,
+	money: Record<string, number>,
+	availableGoods: Partial<Record<keyof Goods, number>>
 ): CapitalSystemResult {
-    const newCapitalStock: Record<string, Partial<Goods>> = {};
-    const replenishmentDelta: Partial<Goods> = {};
-    const moneySpent: Record<string, number> = {};
-    const remainingGoods: Partial<Record<keyof Goods, number>> = { ...availableGoods };
+	const newCapitalStock: Record<string, Partial<Goods>> = {};
+	const replenishmentDelta: Partial<Goods> = {};
+	const moneySpent: Record<string, number> = {};
+	const remainingGoods: Partial<Record<keyof Goods, number>> = { ...availableGoods };
 
-    // DEBUG: Check money at start of processCapital
-    for (const name of activeSectors) {
-        console.error(`DEBUG CAPITAL-IN: sector=${name} money[name]=${money[name] ?? 0}`);
-    }
-
-    // Validate all availableGoods entries once
+	// Validate all availableGoods entries once
     for(const [goodKey, qty] of Object.entries(remainingGoods)) {
         requireNonNegativeFinite(
             qty,
@@ -97,8 +92,12 @@ export function processCapital(
 
         const sectorResult = sectorResults[name];
         const productionRatio = sectorResult?.productionRatio ?? 0;
-        const decay = config.capitalEfficiencyDecay ?? 0;
-        const sectorMoney = Math.max(0, money[name] ?? 0);
+const decay = config.capitalEfficiencyDecay ?? 0;
+		const rawMoney = money[name] ?? 0;
+		if(!Number.isFinite(rawMoney) || rawMoney < -1e-6) {
+			throw new Error(`Invalid sector cash balance for ${name}: ${rawMoney}`);
+		}
+		const sectorMoney = Math.max(0, rawMoney);
 
         // Validate sector inputs before running capital actions
         if(!Number.isFinite(productionRatio) || productionRatio < 0) {
@@ -165,24 +164,34 @@ export function processCapital(
             }
         }
 
-        newCapitalStock[name] = bb.currentStock;
-        moneySpent[name] = bb.moneySpent;
+newCapitalStock[name] = bb.currentStock;
+		moneySpent[name] = bb.moneySpent;
 
-        // DEBUG: Check if money was modified by processCapital
-        for (const name of activeSectors) {
-            console.error(`DEBUG CAPITAL-OUT: sector=${name} money[name]=${money[name] ?? 0} moneySpent[name]=${moneySpent[name] ?? 0}`);
-        }
+		// Validate moneySpent doesn't exceed available money for this sector.
+		const availableMoney = Math.max(0, money[name] ?? 0);
+		if(bb.moneySpent > availableMoney + 1e-6) {
+			throw new Error(
+				`Sector ${name} spent ${bb.moneySpent} but only ${availableMoney} available`,
+			);
+		}
 
-        // Aggregate capital deltas with overflow validation
+		// Aggregate capital deltas with overflow validation
         for(const [goodKey, amount] of Object.entries(bb.replenishAmounts)) {
             const key = goodKey as keyof Goods;
             addCapitalDelta(replenishmentDelta, key, amount ?? 0, name);
         }
-        for(const [goodKey, amount] of Object.entries(bb.investAmounts)) {
-            const key = goodKey as keyof Goods;
-            addCapitalDelta(replenishmentDelta, key, amount ?? 0, name);
-        }
-    }
+for(const [goodKey, amount] of Object.entries(bb.investAmounts)) {
+		const key = goodKey as keyof Goods;
+		addCapitalDelta(replenishmentDelta, key, amount ?? 0, name);
+	}
+	}
 
-    return { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods };
+	// Validate remainingGoods are non-negative after all sectors processed.
+	for(const [goodKey, qty] of Object.entries(remainingGoods)) {
+		if(!Number.isFinite(qty) || qty < -1e-6) {
+			throw new Error(`Invalid remaining goods for ${goodKey}: ${qty}`);
+		}
+	}
+
+	return { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods };
 }
