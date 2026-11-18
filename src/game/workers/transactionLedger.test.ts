@@ -608,4 +608,21 @@ describe("allocatePopulationSales revenue reconciliation", () => {
 		const totalSectorRevenue = Object.values(result.sectorRevenue).reduce((s, v) => s + v, 0)
 		expect(totalSpending).toBeCloseTo(totalSectorRevenue, 4)
 	})
+
+	it("does not mutate account deltas when metadata validation fails", () => {
+		const ledger = new TransactionLedger();
+
+		expect(() => ledger.record({
+			tick: 1,
+			type: "wage_payment",
+			buyerId: "sector",
+			sellerId: "workers",
+			amount: 100,
+			buyerWealthBefore: 500,
+			buyerWealthAfter: 450, // Incorrect: should be 400
+		})).toThrow();
+
+		expect(ledger.getAccountDeltas().size).toBe(0);
+		expect(ledger.getTransactions()).toHaveLength(0);
+	});
 })

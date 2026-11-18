@@ -548,18 +548,18 @@ function runSimulation(
    STAGE 1 — 1,000-TICK SIMULATIONS ACROSS 6 SCENARIOS
    ══════════════════════════════════════════════════════════════════════════════════ */
 
-describe("Long-run simulation validation — 1,000-tick scenarios", () => {
+describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	describe("Scenario: Normal economy", () => {
 		it("runs 1,000 ticks with standard starting conditions", () => {
-			const run = runSimulation("normal", 1000, {
+			const run = runSimulation("normal", 1200, {
 				populationSize: 100_000,
 				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
 
-			expect(run.results.length).toBe(1000);
-			expect(run.metrics.length).toBe(1000);
+			expect(run.results.length).toBe(1200);
+			expect(run.metrics.length).toBe(1200);
 		});
 	});
 
@@ -582,7 +582,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			input.goods.fissionMaterial = 100;
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1200; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -601,7 +601,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1000);
+			expect(ticksSurvived).toBe(1200);
 		});
 	});
 
@@ -619,7 +619,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			);
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1200; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -638,7 +638,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1000);
+			expect(ticksSurvived).toBe(1200);
 		});
 	});
 
@@ -664,7 +664,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			expect(initialCapital).toBe(0);
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1200; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -683,7 +683,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1000);
+			expect(ticksSurvived).toBe(1200);
 		});
 	});
 
@@ -705,7 +705,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			}
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1200; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -724,7 +724,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1000);
+			expect(ticksSurvived).toBe(1200);
 		});
 	});
 
@@ -769,7 +769,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 
 			// Continue for 900 more ticks
 			let ticksAfterShock = 0;
-			for(let tick = 0; tick < 900; tick++) {
+			for(let tick = 0; tick < 1100; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -788,7 +788,7 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksAfterShock).toBe(900);
+			expect(ticksAfterShock).toBe(1100);
 		});
 	});
 });
