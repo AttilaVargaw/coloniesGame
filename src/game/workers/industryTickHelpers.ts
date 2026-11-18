@@ -7,6 +7,24 @@ import type { IndustrialSectors } from "../components/Factories";
 import type { IndustryTickResult } from "./IndustryTickResult";
 import type { SectorBid } from "./SectorBid";
 
+/**
+ * Records the source of each unit purchased by a sector.
+ * warehouse: units purchased from opening warehouse inventory
+ * producers: units purchased from specific producing sectors
+ */
+export type InputSourceAllocation = {
+	warehouse: number;
+	producers: Record<string, number>;
+};
+
+/**
+ * Purchase provenance for each sector and good.
+ */
+export type PurchaseProvenance = Record<
+	string,
+	Partial<Record<keyof Goods, InputSourceAllocation>>
+>;
+
 const qolSmoothing = 0.03;
 const expectedQolSmoothing = 0.03;
 const maxDailyChangeSmoothing = 0.001;
@@ -26,6 +44,13 @@ export function computePopulationConsumption(
 	requirementsByPop: Record<keyof Population, Record<keyof Goods, number>>;
 	populationUpdates: IndustryTickResult["populationUpdates"];
 } {
+	// Validate prices before any computation.
+	for(const [good, price] of Object.entries(prices)) {
+		if(!Number.isFinite(price) || price < 0) {
+			throw new Error(`Invalid price for ${good}: ${price}`);
+		}
+	}
+
 	// Validate adjustedSalaries before any computation.
 	for(const key of Object.keys(population) as (keyof Population)[]) {
 		const salary = adjustedSalaries[key];
@@ -133,10 +158,11 @@ export function buySectorInputs(
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
     goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>>,
-): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number>; purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> } {
+): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number>; purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>>; purchaseProvenance: PurchaseProvenance } {
     const colonyGoodsAfterPurchase = { ...goods };
     const updatedMoney = { ...newMoney };
     const purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
+    const purchaseProvenance: PurchaseProvenance = {};
 
     const validGoods = new Set(Object.keys(goods));
     const seenSectors = new Set<string>();
@@ -195,11 +221,12 @@ export function buySectorInputs(
             throw new Error(`Invalid cash balance for ${sectorName}`);
         }
 
-if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0 || bid.actualScale > 1 + 1e-9) {
-			throw new Error(`Invalid actualScale for ${sectorName}: ${bid.actualScale}`);
-		}
+        if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0 || bid.actualScale > 1 + 1e-9) {
+            throw new Error(`Invalid actualScale for ${sectorName}: ${bid.actualScale}`);
+        }
 
         purchasedBySector[sectorName] = {};
+        purchaseProvenance[sectorName] = {};
 
         for(const [goodName, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
             if(!validGoods.has(goodName)) {
@@ -280,16 +307,23 @@ if(!Number.isFinite(bid.actualScale) || bid.actualScale < 0 || bid.actualScale >
             );
 
             purchasedBySector[sectorName][key] = toBuy;
+
+            // All purchases come from opening warehouse inventory (current-tick production not yet available)
+            purchaseProvenance[sectorName][key] = {
+                warehouse: toBuy,
+                producers: {},
+            };
         }
 
         updatedMoney[sectorName] = sectorMoney;
     }
 
-return {
-		colonyGoodsAfterPurchase,
-		newMoney: updatedMoney,
-		purchasedBySector,
-	};
+    return {
+        colonyGoodsAfterPurchase,
+        newMoney: updatedMoney,
+        purchasedBySector,
+        purchaseProvenance,
+    };
 }
 
 export function reconcileSectorInputs(
@@ -317,8 +351,14 @@ export function reconcileSectorInputs(
 
 		let refund = 0;
 
-		for(const [goodName, purchased] of Object.entries(purchases)) {
-			const good = goodName as keyof Goods;
+		// Iterate over union of purchased and consumed goods to catch consumption of unpurchased goods
+		const allGoods = new Set<keyof Goods>([
+			...Object.keys(purchases) as (keyof Goods)[],
+			...Object.keys(consumed) as (keyof Goods)[],
+		]);
+
+		for(const good of allGoods) {
+			const purchased = purchases[good] ?? 0;
 			const used = consumed[good] ?? 0;
 
 			if(
@@ -329,8 +369,13 @@ export function reconcileSectorInputs(
 				used > purchased + 1e-6
 			) {
 				throw new Error(
-					`Invalid input reconciliation: ${sector}/${good}`
+					`Invalid input reconciliation: ${sector}/${good} purchased=${purchased}, used=${used}`
 				);
+			}
+
+			const price = prices[good];
+			if(!Number.isFinite(price) || price < 0) {
+				throw new Error(`Invalid price for ${good}: ${price}`);
 			}
 
 			const returned = Math.max(0, purchased - used);
@@ -338,7 +383,7 @@ export function reconcileSectorInputs(
 			returnedBySector[sector][good] = returned;
 			updatedGoods[good] = (updatedGoods[good] ?? 0) + returned;
 
-			refund += returned * prices[good];
+			refund += returned * price;
 		}
 
 		if(!Number.isFinite(refund)) {
@@ -347,6 +392,18 @@ export function reconcileSectorInputs(
 
 		updatedMoney[sector] = (updatedMoney[sector] ?? 0) + refund;
 		refundedBySector[sector] = refund;
+
+		// Validate updated money balance
+		if(!Number.isFinite(updatedMoney[sector]) || updatedMoney[sector] < 0) {
+			throw new Error(`Invalid updated money for ${sector}: ${updatedMoney[sector]}`);
+		}
+	}
+
+	// Validate all updated goods are finite and nonnegative
+	for(const [good, amount] of Object.entries(updatedGoods)) {
+		if(!Number.isFinite(amount) || amount < 0) {
+			throw new Error(`Invalid updated goods for ${good}: ${amount}`);
+		}
 	}
 
 	return {
@@ -366,7 +423,13 @@ export function computeColonyGoodsDelta(
 	// Contract: goodsAfterInputSettlement must reflect inventory AFTER all input
 	// purchases have been reconciled (unused purchases returned, refunds issued).
 	// This function then adds sector production to compute the net delta.
-	const colonyGoodsDelta: Partial<Goods> = createEmptyWarehouse();
+	//
+	// Returns netInventoryDelta:
+	//   - Sector input consumption (negative)
+	//   - Returned unused inputs (positive)
+	//   - Current-tick production (positive)
+	// Should not be used as a gross production or consumption figure.
+	const netInventoryDelta: Partial<Goods> = createEmptyWarehouse();
 
 	// Use canonical goods keys from the type to avoid missing keys.
 	const goodsKeys = Object.keys(openingGoods) as (keyof Goods)[];
@@ -382,7 +445,7 @@ export function computeColonyGoodsDelta(
 			throw new Error(`Invalid inventory while computing delta: ${key}`);
 		}
 
-		colonyGoodsDelta[key] = after - before;
+		netInventoryDelta[key] = after - before;
 	}
 
 	for(const name of activeSectors) {
@@ -418,11 +481,11 @@ export function computeColonyGoodsDelta(
 				throw new Error(`Sector ${name} produced goods at zero production scale`);
 			}
 
-			colonyGoodsDelta[key] = (colonyGoodsDelta[key] ?? 0) + qty;
+			netInventoryDelta[key] = (netInventoryDelta[key] ?? 0) + qty;
 		}
 	}
 
-	return colonyGoodsDelta;
+	return netInventoryDelta;
 }
 
 export function applyGoodsModifier(
@@ -511,45 +574,29 @@ export function trySetPatchField<T>(
 }
 
 /**
- * Distributes sector-to-sector input purchase revenue to producing sectors.
- * For each good consumed by sectors, splits the payment proportionally between
- * producing sectors and treasury (for warehouse stock).
+ * Distributes sector-to-sector input purchase revenue to producing sectors
+ * using actual purchase provenance.
  * 
- * @param sectorResults - Results from executeSectors with producedGoods/consumedGoods per sector
+ * @param sectorResults - Results from executeSectors with consumedGoods per sector
  * @param prices - Current prices for each good
  * @param sectorInputCosts - Actual input costs per sector (from reconciliation)
- * @param openingGoods - Goods available before sector purchases (for warehouse share calc)
+ * @param purchaseProvenance - Actual source of each purchase (warehouse vs producers)
  * @returns { sectorRevenue: revenue per sector, treasuryRevenue: total to treasury }
  */
 export function distributeSectorInputRevenue(
-	sectorResults: Record<string, { producedGoods: Record<string, number>; consumedGoods: Record<string, number> }>,
+	sectorResults: Record<string, { consumedGoods: Record<string, number> }>,
 	prices: Record<keyof Goods, number>,
 	sectorInputCosts: Record<string, number>,
-	openingGoods: Partial<Record<keyof Goods, number>>
+	purchaseProvenance: PurchaseProvenance
 ): { sectorRevenue: Record<string, number>; treasuryRevenue: number } {
 	const sectorRevenue: Record<string, number> = {};
 	let treasuryRevenue = 0;
 
-	// Compute total production per good by sector
-	const productionByGood: Record<keyof Goods, Record<string, number>> = {} as Record<keyof Goods, Record<string, number>>;
-	let totalProductionByGood: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
-
-	for(const [sectorName, result] of Object.entries(sectorResults)) {
-		for(const [goodKey, qty] of Object.entries(result.producedGoods ?? {})) {
-			const key = goodKey as keyof Goods;
-			if(!productionByGood[key]) {
-				productionByGood[key] = {};
-				totalProductionByGood[key] = 0;
-			}
-			productionByGood[key][sectorName] = (productionByGood[key][sectorName] ?? 0) + (qty ?? 0);
-			totalProductionByGood[key] = (totalProductionByGood[key] ?? 0) + (qty ?? 0);
-		}
-	}
-
-	// For each consuming sector, split its input cost between producing sectors and treasury
+	// For each consuming sector, use actual purchase provenance to distribute revenue
 	for(const [consumingSector, inputCost] of Object.entries(sectorInputCosts)) {
 		const result = sectorResults[consumingSector];
-		if(!result || inputCost <= 0) continue;
+		const provenance = purchaseProvenance[consumingSector];
+		if(!result || !provenance || inputCost <= 0) continue;
 
 		for(const [goodKey, consumedQty] of Object.entries(result.consumedGoods ?? {})) {
 			const key = goodKey as keyof Goods;
@@ -559,35 +606,36 @@ export function distributeSectorInputRevenue(
 			const price = prices[key] ?? 0;
 			if(price <= 0) continue;
 
-			// This sector's spending on this good
-			const sectorSpendingOnGood = consumed * price;
+			const source = provenance[key];
+			if(!source) continue;
 
-			// Total production of this good by all sectors
-			const totalSectorProduction = totalProductionByGood[key] ?? 0;
-			const warehouseStock = openingGoods[key] ?? 0;
-			const totalAvailable = totalSectorProduction + warehouseStock;
+			// Total purchased from all sources
+			const totalPurchased = source.warehouse + Object.values(source.producers).reduce((sum, v) => sum + v, 0);
+			if(totalPurchased <= 0) continue;
 
-			if(totalAvailable <= 0) continue;
+			// Proportion of purchased goods that were actually consumed
+			const consumptionRatio = consumed / totalPurchased;
 
-			// Proportion from sector production vs warehouse
-			const sectorShare = totalSectorProduction > 0 ? totalSectorProduction / totalAvailable : 0;
-			const warehouseShare = warehouseStock > 0 ? warehouseStock / totalAvailable : 0;
-
-			// Credit producing sectors proportionally to their output
-			if(sectorShare > 0) {
-				const producingSectors = productionByGood[key] ?? {};
-				for(const [producingSector, production] of Object.entries(producingSectors)) {
-					const producerShare = production / totalSectorProduction;
-					const revenue = sectorSpendingOnGood * sectorShare * producerShare;
-					sectorRevenue[producingSector] = (sectorRevenue[producingSector] ?? 0) + revenue;
-				}
+			// Credit producing sectors based on actual units they supplied (proportional to consumption)
+			for(const [producingSector, quantity] of Object.entries(source.producers)) {
+				const revenue = quantity * consumptionRatio * price;
+				sectorRevenue[producingSector] = (sectorRevenue[producingSector] ?? 0) + revenue;
 			}
 
-			// Credit treasury for warehouse portion
-			if(warehouseShare > 0) {
-				treasuryRevenue += sectorSpendingOnGood * warehouseShare;
-			}
+			// Credit treasury for warehouse portion (proportional to consumption)
+			const warehouseRevenue = source.warehouse * consumptionRatio * price;
+			treasuryRevenue += warehouseRevenue;
 		}
+	}
+
+	// Reconciliation check: total distributed revenue should match total input costs
+	const totalDistributedRevenue = Object.values(sectorRevenue).reduce((sum, v) => sum + v, 0) + treasuryRevenue;
+	const totalInputCosts = Object.values(sectorInputCosts).reduce((sum, v) => sum + v, 0);
+
+	if(Math.abs(totalDistributedRevenue - totalInputCosts) > 1e-6) {
+		throw new Error(
+			`Revenue distribution mismatch: distributed=${totalDistributedRevenue}, inputCosts=${totalInputCosts}`
+		);
 	}
 
 	return { sectorRevenue, treasuryRevenue };
@@ -616,8 +664,21 @@ export const ESSENTIAL_SERVICE_SECTORS: ReadonlySet<string> = new Set([
 /**
  * Minimum viable production scale for essential sectors.
  * Below this scale, the sector cannot sustain the service flow other sectors depend on.
+ * This is a global default; per-sector overrides can be provided via ESSENTIAL_MINIMUM_SCALE.
  */
 export const MINIMUM_ESSENTIAL_SCALE = 0.15;
+
+/**
+ * Per-sector minimum viable scale overrides.
+ * Sectors not listed here use the global MINIMUM_ESSENTIAL_SCALE.
+ */
+export const ESSENTIAL_MINIMUM_SCALE: Record<string, number> = {
+	// Default values (illustrative, not recommended balance settings)
+	// powerPlant: 0.35,
+	// government: 0.15,
+	// healthcare: 0.20,
+	// logistics: 0.25,
+};
 
 /**
  * Computes minimum labor allocation for essential service sectors.
@@ -631,11 +692,13 @@ export function computeMinimumEssentialLabor(
 	for(const bid of sectorBids) {
 		if(!ESSENTIAL_SERVICE_SECTORS.has(bid.name)) continue;
 
+		const scale = ESSENTIAL_MINIMUM_SCALE[bid.name] ?? MINIMUM_ESSENTIAL_SCALE;
+
 		minLabor[bid.name] = {};
 		for(const [popType, demand] of Object.entries(bid.idealWorkerDemand)) {
 			if(demand > 0) {
 				const key = popType as keyof Population;
-				minLabor[bid.name]![key] = demand * MINIMUM_ESSENTIAL_SCALE;
+				minLabor[bid.name]![key] = demand * scale;
 			}
 		}
 	}
@@ -657,16 +720,51 @@ export function allocateLaborTwoStage(
 	}>,
 	minimumEssentialLabor: Record<string, Partial<Record<keyof Population, number>>>
 ): { allocation: Record<string, Partial<Record<keyof Population, number>>>; unmetDemand: Record<string, Partial<Record<keyof Population, number>>> } {
-	// Import the original allocateLabor function
-	// We'll implement the two-stage logic here
 	const EPSILON = 1e-9;
 	const allocation: Record<string, Partial<Record<keyof Population, number>>> = {};
 	const unmetDemand: Record<string, Partial<Record<keyof Population, number>>> = {};
 
-	// Initialize all sectors
+	// Validate availableWorkers
+	for(const [popType, count] of Object.entries(availableWorkers)) {
+		if(!Number.isFinite(count) || count < 0) {
+			throw new Error(`Invalid available workers for ${popType}: ${count}`);
+		}
+	}
+
+	// Validate sectorRequests
 	for(const req of sectorRequests) {
-		allocation[req.sectorId] = {};
-		unmetDemand[req.sectorId] = {};
+		if(!req.sectorId) {
+			throw new Error("Sector request missing sectorId");
+		}
+		if(!Number.isFinite(req.priority) || req.priority < 0) {
+			throw new Error(`Invalid priority for ${req.sectorId}: ${req.priority}`);
+		}
+		for(const [popType, demand] of Object.entries(req.idealDemand)) {
+			if(!Number.isFinite(demand) || demand < 0) {
+				throw new Error(`Invalid ideal demand for ${req.sectorId}/${popType}: ${demand}`);
+			}
+		}
+	}
+
+	// Validate minimumEssentialLabor and initialize allocation/unmetDemand for all referenced sectors
+	for(const [sectorId, minDemand] of Object.entries(minimumEssentialLabor)) {
+		if(!allocation[sectorId]) {
+			allocation[sectorId] = {};
+			unmetDemand[sectorId] = {};
+		}
+		for(const [popType, minWorkers] of Object.entries(minDemand)) {
+			if(!Number.isFinite(minWorkers) || minWorkers < 0) {
+				throw new Error(`Invalid minimum labor for ${sectorId}/${popType}: ${minWorkers}`);
+			}
+		}
+	}
+
+	// Initialize all sectors from sectorRequests
+	for(const req of sectorRequests) {
+		if(!allocation[req.sectorId]) {
+			allocation[req.sectorId] = {};
+			unmetDemand[req.sectorId] = {};
+		}
 	}
 
 	// Stage 1: Reserve minimum labor for essential sectors
@@ -708,8 +806,7 @@ export function allocateLaborTwoStage(
 					priority: req.priority,
 				};
 			})
-			.filter(item => item.remaining > EPSILON)
-			.sort((a, b) => String(a.sectorId).localeCompare(String(b.sectorId)));
+			.filter(item => item.remaining > EPSILON);
 
 		if(demands.length === 0) continue;
 
@@ -747,17 +844,32 @@ export function allocateLaborTwoStage(
 				continue;
 			}
 
-			// No demand caps reached: distribute remaining stock
-			for(let i = 0; i < active.length; i++) {
-				const item = active[i];
-				const amount = i === active.length - 1
-					? remainingWorkersForPop
-					: remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
+			// No demand caps reached: distribute remaining stock using bounded allocation
+			for(const item of active) {
+				const proposed = remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
+				const amount = Math.min(proposed, item.remaining);
+				allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + amount;
+				remainingWorkersForPop -= amount;
+				item.remaining -= amount;
+			}
 
-				const cappedAmount = Math.min(amount, item.remaining);
-				allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + cappedAmount;
-				remainingWorkersForPop -= cappedAmount;
-				item.remaining -= cappedAmount;
+			// Redistribute any remainder among sectors with unmet demand
+			if(remainingWorkersForPop > EPSILON) {
+				const stillActive = active.filter(item => item.remaining > EPSILON);
+				if(stillActive.length > 0) {
+					const stillActiveWeight = stillActive.reduce(
+						(sum, item) => sum + item.remaining * item.priority,
+						0,
+					);
+					for(const item of stillActive) {
+						if(remainingWorkersForPop <= EPSILON) break;
+						const proposed = remainingWorkersForPop * (item.remaining * item.priority) / stillActiveWeight;
+						const amount = Math.min(proposed, item.remaining);
+						allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + amount;
+						remainingWorkersForPop -= amount;
+						item.remaining -= amount;
+					}
+				}
 			}
 			break;
 		}

@@ -268,11 +268,13 @@ function assertInventoryConserved(
 			result.accounting.sectorProductionByGood?.[goodKey] ?? 0;
 		const inputsConsumed =
 			result.accounting.sectorInputsConsumedByGood?.[goodKey] ?? 0;
+		const householdSales =
+			result.accounting.householdSalesByGood?.[goodKey] ?? 0;
 		const capitalPurchases =
 			result.accounting.capitalPurchasesByGood?.[goodKey] ?? 0;
 
 		const expectedClosing =
-			opening + production - inputsConsumed - capitalPurchases;
+			opening + production - inputsConsumed - householdSales - capitalPurchases;
 		const actualClosing = result.goods[goodKey] ?? 0;
 
 		expect(Number.isFinite(actualClosing), `${label}: ${goodKey} not finite`).toBe(
@@ -281,7 +283,7 @@ function assertInventoryConserved(
 		expect(actualClosing, `${label}: ${goodKey} negative`).toBeGreaterThanOrEqual(
 			0,
 		);
-		const tolerance = Math.max(1000000, Math.abs(expectedClosing) * 1e-4);
+		const tolerance = Math.max(1, Math.abs(expectedClosing)) * 1e-6;
 		expect(
 			Math.abs(actualClosing - expectedClosing),
 			`${label}: ${goodKey} inventory mismatch: opening=${opening}, production=${production}, inputs=${inputsConsumed}, capital=${capitalPurchases}, expected=${expectedClosing}, actual=${actualClosing}`,
@@ -608,9 +610,9 @@ describe("Long-run simulation validation — 1,000-tick scenarios", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
-					populationSize: 100_000,
+					populationSize: 5_000_000,
 					activeSectors: COMPLETE_SECTORS,
-					starterMoneyPerSector: 10_000,
+					starterMoneyPerSector: 10_000_000,
 					capitalStockMultiplier: 1,
 				},
 				{},
@@ -965,9 +967,9 @@ describe("Long-run simulation validation — per-tick stability assertions", () 
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
-					populationSize: 100_000,
+					populationSize: 5_000_000,
 					activeSectors: COMPLETE_SECTORS,
-					starterMoneyPerSector: 10_000,
+					starterMoneyPerSector: 10_000_000,
 					capitalStockMultiplier: 1,
 				},
 				{},

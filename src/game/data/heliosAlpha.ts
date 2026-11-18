@@ -1,4 +1,3 @@
-import { IndustrialSectors } from "../components/Factories";
 import { BodyBlueprint } from "./BodyBlueprint";
 import { SOLAR_UNIT, STAR_SIZE } from "@game/constants"
 

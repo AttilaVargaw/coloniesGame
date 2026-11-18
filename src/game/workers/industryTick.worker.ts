@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE, type PurchaseProvenance } from "./industryTickHelpers";
 import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
@@ -393,7 +393,7 @@ function processIndustry(
 
     // One real purchase with final converged state
     // Use the exact prices and salaries from the selected candidate
-    const { colonyGoodsAfterPurchase, newMoney: roundNewMoney, purchasedBySector } = buySectorInputs(
+    const { colonyGoodsAfterPurchase, newMoney: roundNewMoney, purchasedBySector, purchaseProvenance } = buySectorInputs(
         finalSectorBids,
         tickStartGoods,
         tickStartMoney,
@@ -519,7 +519,7 @@ function processIndustry(
     // Distribute sector-to-sector input purchase revenue to producing sectors
     // instead of crediting all to treasury.
     const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
-        distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, tickStartGoods);
+        distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance);
 
     // Credit producing sectors with revenue from sector-to-sector sales
     for(const [sectorName, revenue] of Object.entries(sectorInputRevenue)) {

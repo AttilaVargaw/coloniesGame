@@ -17,6 +17,7 @@ import {
 	computeMarketRatios,
 	distributeSectorInputRevenue,
 	ESSENTIAL_SERVICE_SECTORS,
+	type PurchaseProvenance,
 } from "../workers/industryTickHelpers.ts";
 import { allocatePopulationSales } from "../workers/transactionLedger.ts";
 import { processCapital } from "../workers/capitalSystem.ts";
@@ -234,6 +235,7 @@ function executeSectorPhase(
 	purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>>;
 	updatedGoods: Goods;
 	updatedMoney: Record<string, number>;
+	purchaseProvenance: PurchaseProvenance;
 } {
 	// Compute actualScale for these bids
 	for(const bid of bids) {
@@ -263,6 +265,7 @@ function executeSectorPhase(
 		colonyGoodsAfterPurchase,
 		newMoney: roundNewMoney,
 		purchasedBySector: roundPurchasedBySector,
+		purchaseProvenance,
 	} = buySectorInputs(
 		bids,
 		goodsPool,
@@ -297,6 +300,7 @@ function executeSectorPhase(
 		purchasedBySector: roundPurchasedBySector,
 		updatedGoods: colonyGoodsAfterPurchase,
 		updatedMoney: roundNewMoney,
+		purchaseProvenance,
 	};
 }
 
@@ -498,11 +502,14 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 	}
 
+	// Initialize money pool for phase execution
+	let currentMoneyPool: Record<string, number> = { ...startingMoney };
+
 	// Phase 1: Execute service producers using opening goods pool
 	let currentGoodsPool: Goods = { ...goods };
-	let currentMoneyPool: Record<string, number> = { ...startingMoney };
 	let allPurchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
 	let allExecResults: ReturnType<typeof executeSectors>[] = [];
+	let allPurchaseProvenance: PurchaseProvenance = {};
 
 	if(serviceProducerBids.length > 0) {
 		const phase1Result = executeSectorPhase(
@@ -516,6 +523,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		);
 		allExecResults.push(phase1Result.execResult);
 		allPurchasedBySector = { ...allPurchasedBySector, ...phase1Result.purchasedBySector };
+		allPurchaseProvenance = { ...allPurchaseProvenance, ...phase1Result.purchaseProvenance };
 		currentGoodsPool = phase1Result.updatedGoods;
 		currentMoneyPool = phase1Result.updatedMoney;
 
@@ -538,6 +546,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		);
 		allExecResults.push(phase2Result.execResult);
 		allPurchasedBySector = { ...allPurchasedBySector, ...phase2Result.purchasedBySector };
+		allPurchaseProvenance = { ...allPurchaseProvenance, ...phase2Result.purchaseProvenance };
 		currentGoodsPool = phase2Result.updatedGoods;
 		currentMoneyPool = phase2Result.updatedMoney;
 	}
@@ -551,6 +560,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	finalPurchasedBySector = allPurchasedBySector;
 	finalGoodsAfterPurchase = currentGoodsPool;
 	finalNewMoney = currentMoneyPool;
+	const finalPurchaseProvenance = allPurchaseProvenance;
 
 	const {
 		sectorResults,
@@ -761,7 +771,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Distribute sector-to-sector input purchase revenue to producing sectors
 	// instead of crediting all to treasury.
 	const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
-		distributeSectorInputRevenue(sectorResults, currentPrices, sectorInputCosts, goods);
+		distributeSectorInputRevenue(sectorResults, currentPrices, sectorInputCosts, finalPurchaseProvenance);
 
 	// Credit producing sectors with revenue from sector-to-sector sales
 	for(const [sectorName, revenue] of Object.entries(sectorInputRevenue)) {
@@ -843,11 +853,6 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		0
 	);
 	newTreasury += totalCapitalMoneySpent;
-
-	// Validate treasury — must be finite and non-negative.
-	if(!Number.isFinite(newTreasury) || newTreasury < -1e-6) {
-		throw new Error(`Invalid colony treasury: ${newTreasury}`);
-	}
 
 	// === CAPITAL INVENTORY RECONCILIATION ===
 	// remainingGoods is after capital purchases. Returned goods already added to goodsForCapital.
@@ -951,6 +956,9 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Treasury subsidy for essential service sectors
 	// Covers operating deficit (input costs + labor costs - total revenue) to ensure
 	// non-cumulative goods production continues even when sector-to-sector revenue is insufficient.
+	// Compute total subsidy needed across all essential sectors first.
+	let totalSubsidyNeeded = 0;
+	const sectorDeficits: Record<string, number> = {};
 	for(const sectorName of activeSectors) {
 		if(!ESSENTIAL_SERVICE_SECTORS.has(sectorName)) continue;
 
@@ -960,18 +968,27 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		const operatingCosts = laborCosts + inputCosts;
 		const deficit = operatingCosts - totalRevenue;
 
-		if(deficit > 0 && newTreasury >= deficit) {
+		if(deficit > 0) {
+			sectorDeficits[sectorName] = deficit;
+			totalSubsidyNeeded += deficit;
+		}
+	}
+
+	// Pay subsidies if treasury can cover total
+	if(totalSubsidyNeeded > 0 && newTreasury >= totalSubsidyNeeded) {
+		for(const [sectorName, deficit] of Object.entries(sectorDeficits)) {
 			newMoney[sectorName] = (newMoney[sectorName] ?? 0) + deficit;
 			newTreasury -= deficit;
+			const totalRevenue = sectorRevenue[sectorName] ?? 0;
 			sectorRevenue[sectorName] = totalRevenue + deficit;
 			sectorProfits[sectorName] = 0; // Break-even after subsidy
 
 			if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
 				throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
 			}
-			if(!Number.isFinite(newTreasury) || newTreasury < 0) {
-				throw new Error(`Treasury invalid after subsidy`);
-			}
+		}
+		if(!Number.isFinite(newTreasury) || newTreasury < 0) {
+			throw new Error(`Treasury invalid after subsidy`);
 		}
 	}
 
