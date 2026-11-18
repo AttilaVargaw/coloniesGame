@@ -118,6 +118,23 @@ export class TransactionLedger {
 				if (tx.unitPrice === undefined || !Number.isFinite(tx.unitPrice) || tx.unitPrice < 0) {
 					throw new Error(`goods_purchase requires valid unitPrice: ${tx.unitPrice}`);
 				}
+				// Verify amount equals quantity * unitPrice with scale-aware tolerance
+				const expectedAmount = tx.quantity * tx.unitPrice;
+
+				if(!Number.isFinite(expectedAmount)) {
+					throw new Error(
+						`goods_purchase cost overflow: quantity=${tx.quantity}, ` +
+						`unitPrice=${tx.unitPrice}`
+					);
+				}
+
+				const tolerance = 1e-9 + 1e-12 * Math.max(1, Math.abs(expectedAmount));
+				if(Math.abs(tx.amount - expectedAmount) > tolerance) {
+					throw new Error(
+						`goods_purchase amount mismatch: amount=${tx.amount}, ` +
+						`quantity * unitPrice=${expectedAmount}`
+					);
+				}
 			}
 
 			changes.push(
@@ -128,6 +145,45 @@ export class TransactionLedger {
 			throw new Error(`Unknown transaction type: ${tx.type}`);
 		}
 
+		// Validate balance metadata if provided — before any ledger mutation
+		if(tx.buyerWealthBefore !== undefined && tx.buyerWealthAfter !== undefined) {
+			const expectedAfter = tx.buyerWealthBefore - tx.amount;
+
+			if(!Number.isFinite(expectedAfter)) {
+				throw new Error(
+					`Buyer balance metadata overflow: before=${tx.buyerWealthBefore}, amount=${tx.amount}`
+				);
+			}
+
+			const tolerance = 1e-9 + 1e-12 * Math.max(1, Math.abs(expectedAfter));
+			if(Math.abs(tx.buyerWealthAfter - expectedAfter) > tolerance) {
+				throw new Error(
+					`Buyer balance metadata mismatch for ${tx.buyerId}: ` +
+					`before=${tx.buyerWealthBefore}, amount=${tx.amount}, ` +
+					`expectedAfter=${expectedAfter}, actualAfter=${tx.buyerWealthAfter}`
+				);
+			}
+		}
+		if(tx.sellerMoneyBefore !== undefined && tx.sellerMoneyAfter !== undefined) {
+			const expectedAfter = tx.sellerMoneyBefore + tx.amount;
+
+			if(!Number.isFinite(expectedAfter)) {
+				throw new Error(
+					`Seller balance metadata overflow: before=${tx.sellerMoneyBefore}, amount=${tx.amount}`
+				);
+			}
+
+			const tolerance = 1e-9 + 1e-12 * Math.max(1, Math.abs(expectedAfter));
+			if(Math.abs(tx.sellerMoneyAfter - expectedAfter) > tolerance) {
+				throw new Error(
+					`Seller balance metadata mismatch for ${tx.sellerId}: ` +
+					`before=${tx.sellerMoneyBefore}, amount=${tx.amount}, ` +
+					`expectedAfter=${expectedAfter}, actualAfter=${tx.sellerMoneyAfter}`
+				);
+			}
+		}
+
+		// Only mutate after every validation has passed.
 		this.applyDeltas(changes);
 
 		// Store a copy so callers cannot mutate ledger history
@@ -194,6 +250,10 @@ export class TransactionLedger {
 		return selected.map(tx => ({ ...tx }));
 	}
 
+	getAccountDeltas(): ReadonlyMap<string, number> {
+		return new Map(this.accountDeltas);
+	}
+
 	clear() {
 		this.transactions = [];
 		this.accountDeltas.clear();
@@ -221,6 +281,22 @@ export class TransactionLedger {
 			...Object.keys(closingBalances),
 			...this.accountDeltas.keys(),
 		]);
+
+		// Validate complete account set: all accounts must appear in both opening and closing.
+		// This catches accidentally omitted accounts.
+		const missingInOpening = new Set<string>();
+		const missingInClosing = new Set<string>();
+		for(const account of allAccounts) {
+			if(!(account in openingBalances)) missingInOpening.add(account);
+			if(!(account in closingBalances)) missingInClosing.add(account);
+		}
+		if(missingInOpening.size > 0 || missingInClosing.size > 0) {
+			throw new Error(
+				`Account set mismatch in verifyConservation: ` +
+				(missingInOpening.size > 0 ? ` missing in opening: ${[...missingInOpening].join(", ")}` : "") +
+				(missingInClosing.size > 0 ? ` missing in closing: ${[...missingInClosing].join(", ")}` : "")
+			);
+		}
 
 		for(const account of allAccounts) {
 			const opening = openingBalances[account] ?? 0;
@@ -611,9 +687,12 @@ export function allocatePopulationSales({
 			// Clamp cost to available cash — floating-point noise can make
 			// allocatedQty * price slightly exceed remainingCash even though
 			// allocateProportionallyWithCash capped at affordable = cash / price.
-			if(cost > remainingCash[key] + 1e-6) {
+			// Use scale-aware tolerance
+			const cashTolerance = 1e-9 + 1e-12 * Math.max(1, Math.abs(remainingCash[key]));
+			if(cost > remainingCash[key] + cashTolerance) {
 				throw new Error(
-					`Allocation exceeded available cash for ${String(key)}`,
+					`Allocation exceeded available cash for ${String(key)}: ` +
+					`cost=${cost}, cash=${remainingCash[key]}`
 				);
 			}
 
@@ -632,11 +711,11 @@ export function allocatePopulationSales({
 
 			remainingCash[key] -= cost;
 
-			if(remainingCash[key] < 0 && remainingCash[key] > -1e-6) {
+			if(remainingCash[key] < 0 && remainingCash[key] > -1e-9) {
 				remainingCash[key] = 0;
 			}
 
-			if(remainingCash[key] < -1e-6) {
+			if(remainingCash[key] < -1e-9) {
 				throw new Error(`Negative remaining cash for ${String(key)}`);
 			}
 
@@ -658,6 +737,23 @@ export function allocatePopulationSales({
 			const sectorQty = allocatedQty * sectorShare;
 			const warehouseQty = allocatedQty - sectorQty; // kept aligned with prior logic
 
+			// Validate source split doesn't exceed supply
+			const allocatedSectorSales = sectorQty;
+			const allocatedWarehouseSales = warehouseQty;
+
+			if(allocatedSectorSales > totalProduction + 1e-9) {
+				throw new Error(
+					`Sales source allocation exceeded production for ${goodKey}: ` +
+					`allocated=${allocatedSectorSales}, production=${totalProduction}`
+				);
+			}
+			if(allocatedWarehouseSales > stockAvailable + 1e-9) {
+				throw new Error(
+					`Sales source allocation exceeded warehouse stock for ${goodKey}: ` +
+					`allocated=${allocatedWarehouseSales}, stock=${stockAvailable}`
+				);
+			}
+
 			if(sectorQty > 0) {
 				// Allocate sectorQty proportionally among producing sectors
 				for(const { sectorName, qty: production } of sectorProduction) {
@@ -671,12 +767,16 @@ export function allocatePopulationSales({
 					throw new Error(`Sector revenue overflow for ${sectorName}`);
 				}
 
-				// Decrease unsold as sales occur
-					unsoldQty[sectorName][goodKey] = Math.max(
-						0,
-						(unsoldQty[sectorName][goodKey] ?? production) - sectorPortion,
+// Decrease unsold as sales occur
+				const remaining = (unsoldQty[sectorName][goodKey] ?? production) - sectorPortion;
+				if(remaining < -1e-9) {
+					throw new Error(
+						`Sector sales exceeded production: ${sectorName}/${goodKey} ` +
+						`(sold=${sectorPortion}, produced=${production}, remaining=${remaining})`
 					);
 				}
+				unsoldQty[sectorName][goodKey] = Math.max(0, remaining);
+			}
 			}
 
 			if(warehouseQty > 0) {
@@ -725,7 +825,24 @@ export function allocatePopulationSales({
 		}
 	}
 
-		// Reconciliation: household sales cannot exceed physical supply
+	// Verify final cash balances match expected (opening - spending)
+	for(const key of popKeys) {
+		const expectedCash = (cashByPop[key] ?? 0) - (spendingByPop[key] ?? 0);
+		const actualCash = remainingCash[key];
+
+		if(
+			!Number.isFinite(actualCash) ||
+			!Number.isFinite(expectedCash) ||
+			Math.abs(actualCash - expectedCash) > 1e-6
+		) {
+			throw new Error(
+				`Household cash reconciliation failed for ${String(key)}: ` +
+				`expected=${expectedCash}, actual=${actualCash}`
+			);
+		}
+	}
+
+	// Reconciliation: household sales cannot exceed physical supply
 		for(const goodKey of demandedGoods) {
 			const soldFromSectors = Object.values(salesQty).reduce(
 				(sum, goods) => sum + (goods[goodKey] ?? 0),

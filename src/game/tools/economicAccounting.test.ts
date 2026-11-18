@@ -913,12 +913,10 @@ it("repeated ticks: no long-term inventory drift", () => {
 });
 
 describe("Per-sector input reconciliation and accounting invariants", () => {
-	it("two sectors purchase and consume the same good — each reconciles independently", () => {
-		const state = createSimState();
+it("two sectors purchase and consume the same good — each reconciles independently", () => {
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 500 } });
-
-        const state2 = createSimState();
-        const result = simulateTick(input, state2);
+		const state = createSimState();
+		const result = simulateTick(input, state);
 
         // Both sectors purchased water
         const farmPurchased = result.accounting.sectorInputsPurchasedBySector?.farm?.water ?? 0;
@@ -940,11 +938,9 @@ describe("Per-sector input reconciliation and accounting invariants", () => {
     });
 
 it("sector with insufficient inputs stops production — no over-consumption", () => {
-		const state = createSimState();
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 10 } });
-
-		const state2 = createSimState();
-		const result = simulateTick(input, state2);
+		const state = createSimState();
+		const result = simulateTick(input, state);
 
 		// Sector should stop due to insufficient materials, not over-consume
 		const farmStopReason = result.sectorStopReason?.farm ?? "";
@@ -956,12 +952,9 @@ it("sector with insufficient inputs stops production — no over-consumption", (
 	});
 
 it("sector purchases more than it consumes — unused stock and cash are returned", () => {
-		const state = createSimState();
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 1000 } });
-
-        const openingGoods = { ...input.goods };
-        const state2 = createSimState();
-        const result = simulateTick(input, state2);
+		const state = createSimState();
+		const result = simulateTick(input, state);
 
         // Farm should purchase water but consume less than available
         const purchased = result.accounting.sectorInputsPurchasedBySector?.farm?.water ?? 0;
@@ -981,13 +974,11 @@ it("sector purchases more than it consumes — unused stock and cash are returne
     });
 
 it("capital needs a good returned by a sector — capital can purchase it", () => {
-		const state = createSimState();
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 100 } });
         input.goods.water = 100; // limited water, but farm won't use all
-
         const openingGoods = { ...input.goods };
-        const state2 = createSimState();
-        const result = simulateTick(input, state2);
+		const state = createSimState();
+		const result = simulateTick(input, state);
 
         // Farm should have returned some water
         const returnedWater = result.accounting.returnedInputsByGood?.water ?? 0;
@@ -1021,10 +1012,9 @@ it("accounting throws late in the tick — price/wage memory and tick count rema
     });
 
 it("household food sales are zero when food is unavailable — wages still paid", () => {
-		const state = createSimState();
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, food: 0 } });
-		const state2 = createSimState();
-		const result = simulateTick(input, state2);
+		const state = createSimState();
+		const result = simulateTick(input, state);
 
 		// No household food sales should occur
 		const foodHouseholdSales = result.accounting.householdSalesByGood?.food ?? 0;

@@ -49,8 +49,8 @@ function getPurchaseCapacity(
     const stock = bb.availableGoods[key] ?? 0;
     const money = bb.money;
 
-    if(price === undefined || !Number.isFinite(price) || price < 0) {
-        throw new Error(`Invalid capital goods price: ${key}`);
+    if(price === undefined || !Number.isFinite(price) || price <= 0) {
+        throw new Error(`Invalid or zero capital goods price: ${key} = ${price}`);
     }
 
     if(!Number.isFinite(stock) || stock < 0) {
@@ -65,7 +65,7 @@ function getPurchaseCapacity(
         throw new Error(`Invalid requested capital quantity: ${requested}`);
     }
 
-    const affordable = price === 0 ? requested : money / price;
+    const affordable = money / price;
 
     return Math.min(requested, stock, affordable);
 }
@@ -108,14 +108,14 @@ export class BelowTargetStock extends Condition<CapitalBlackboard> {
     constructor(public goodKey: string, public rate: number) { super(); }
     check(bb: CapitalBlackboard): boolean {
         if(!Number.isFinite(this.rate) || this.rate <= 0) {
-            return false;
+            throw new Error(`Invalid investment rate for ${this.goodKey}: ${this.rate}`);
         }
 
         const key: keyof Goods = this.goodKey as keyof Goods;
         const current = bb.currentStock[key] ?? 0;
 
         if(!Number.isFinite(current) || current < 0) {
-            return false;
+            throw new Error(`Invalid capital stock for ${key}: ${current}`);
         }
 
         const targetStock = this.rate * REFERENCE_STOCK_MULTIPLIER;
@@ -149,19 +149,24 @@ export class CanAffordInvestment extends Condition<CapitalBlackboard> {
     check(bb: CapitalBlackboard): boolean {
         const key: keyof Goods = this.goodKey as keyof Goods;
 
-        // Validate inputs
-        if(!Number.isFinite(this.rate) || this.rate <= 0) return false;
+        // Validate configuration — throw on invalid setup
+        if(!Number.isFinite(this.rate) || this.rate <= 0) {
+            throw new Error(`Invalid investment rate for ${this.goodKey}: ${this.rate}`);
+        }
         const price = bb.prices[key];
-        if(price === undefined || !Number.isFinite(price) || price < 0) return false;
+        if(price === undefined || !Number.isFinite(price) || price < 0) {
+            throw new Error(`Invalid capital goods price for ${key}: ${price}`);
+        }
         const currentStock = bb.currentStock[key] ?? 0;
-        if(!Number.isFinite(currentStock) || currentStock < 0) return false;
+        if(!Number.isFinite(currentStock) || currentStock < 0) {
+            throw new Error(`Invalid capital stock for ${key}: ${currentStock}`);
+        }
 
         const targetStock = this.rate * REFERENCE_STOCK_MULTIPLIER;
         if(!Number.isFinite(targetStock)) {
             throw new Error(`Capital target stock overflow for ${this.goodKey}`);
         }
-        const current = currentStock;
-        const needed = targetStock - current;
+        const needed = targetStock - currentStock;
         if(needed <= 0) return false;
 
         // One level of capital goods per tick

@@ -12,7 +12,6 @@ import { executeSectors } from "../workers/sectorExecution.ts";
 import {
 	computePopulationConsumption,
 	buySectorInputs,
-	computeColonyGoodsDelta,
 	applyGoodsModifier,
 	computeMarketRatios,
 	distributeSectorInputRevenue,

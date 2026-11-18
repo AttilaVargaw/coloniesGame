@@ -60,6 +60,11 @@ function getPurchaseInputs(
     }
 
     const price = requireNonNegativeFinite(rawPrice, `price for ${key}`);
+
+    if(price <= 0) {
+        throw new Error(`Zero or negative capital goods price not allowed: ${key} = ${price}`);
+    }
+
     const stock = requireNonNegativeFinite(
         bb.availableGoods[key] ?? 0,
         `available stock for ${key}`,

@@ -18,8 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE, type PurchaseProvenance, type InputPaymentBreakdown } from "./industryTickHelpers";
-import { allocateLabor } from "./laborAllocation";
+import { computePopulationConsumption, buySectorInputs, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS } from "./industryTickHelpers";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
 import { allocatePopulationSales, TransactionLedger } from "./transactionLedger";
@@ -909,21 +908,6 @@ function processIndustry(
         }
     }
 
-    // Add warehouse sales back so the goods delta does not double-count them.
-    // Warehouse sales are deducted once through fulfilledDemandQty in finalizeGoods.
-    const goodsForDelta: Goods = { ...postCapitalGoods };
-    for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
-        const key = goodKey as keyof Goods;
-        goodsForDelta[key] = (goodsForDelta[key] ?? 0) + (qty ?? 0);
-    }
-
-    const colonyGoodsDelta = computeColonyGoodsDelta(
-        goods,
-        goodsForDelta,
-        activeSectors,
-        sectorResults,
-    );
-
     // Build total requirements = sector consumption + capital purchases
     const totalGoodsRequirements: Goods = createEmptyWarehouse();
     for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
@@ -934,12 +918,13 @@ function processIndustry(
 
     // Use GROSS production and total requirements (sector + capital) for finalization.
     // This preserves offsetting production and consumption rather than erasing them.
+    // Pass mortality-adjusted population so waste is generated from end-of-tick population.
     const colonyGoodsChanges = finalizeGoods(
         goods,
         sumGoodsProduction,
         totalGoodsRequirements,
         fulfilledDemandQty,
-        population
+        mortalityAdjustedPopulation
     );
 
     // Direct inventory conservation invariant.
@@ -974,57 +959,49 @@ function processIndustry(
         }
     }
 
+    // Non-cumulative goods flow invariant:
+    // closing = production - requirements - household consumption
+    // (no opening inventory carried over)
+    for(const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
+        if(!NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+            continue;
+        }
+
+        const production = sumGoodsProduction[goodKey] ?? 0;
+        const requirements = sumGoodsRequirements[goodKey] ?? 0;
+        const householdConsumption = fulfilledDemandQty[goodKey] ?? 0;
+
+        const expectedClosing = production - requirements - householdConsumption;
+        const actualClosing = colonyGoodsChanges[goodKey] ?? 0;
+
+        if(
+            !Number.isFinite(expectedClosing) ||
+            !Number.isFinite(actualClosing) ||
+            actualClosing < -epsilon ||
+            Math.abs(actualClosing - expectedClosing) > epsilon
+        ) {
+            throw new Error(
+                `Non-cumulative flow invariant failed for ${goodKey}: ` +
+                `expected=${expectedClosing}, actual=${actualClosing}, ` +
+                `production=${production}, requirements=${requirements}, consumption=${householdConsumption}`
+            );
+        }
+    }
+
     // PHASE 7: Transaction ledger — record all economic transfers for audit
     const ledger = new TransactionLedger();
 
-    // Sector input purchases: record per-good transfers from purchase provenance
-    // Uses actual consumption ratio (consumed/purchased) to attribute payments
-    for(const [consumingSector, provenance] of Object.entries(purchaseProvenance)) {
-        const result = sectorResults[consumingSector];
-        if(!result) continue;
-
-        for(const [goodKey, source] of Object.entries(provenance)) {
-            const key = goodKey as keyof Goods;
-            const consumed = Number(result.consumedGoods?.[key] ?? 0);
-            if(consumed <= 0) continue;
-
-            const price = prices[key] ?? 0;
-            if(price <= 0) continue;
-
-            const totalPurchased = source.warehouse + Object.values(source.producers).reduce((sum, v) => sum + v, 0);
-            if(totalPurchased <= 0) continue;
-
-            const consumptionRatio = consumed / totalPurchased;
-
-            // Record payments to each producing sector
-            for(const [producingSector, quantity] of Object.entries(source.producers)) {
-                const revenue = quantity * consumptionRatio * price;
-                if(revenue > 0) {
-                    ledger.record({
-                        tick,
-                        type: "goods_purchase",
-                        buyerId: consumingSector,
-                        sellerId: producingSector,
-                        amount: revenue,
-                        goodId: key,
-                        quantity: quantity * consumptionRatio,
-                        unitPrice: price,
-                    });
-                }
-            }
-
-            // Record payment to treasury (warehouse portion)
-            const warehouseRevenue = source.warehouse * consumptionRatio * price;
-            if(warehouseRevenue > 0) {
+    // Sector input purchases: record from sectorInputPaymentBreakdown
+    // This is the authoritative payment breakdown from distributeSectorInputRevenue
+    for(const [consumingSector, sellerPayments] of Object.entries(sectorInputPaymentBreakdown)) {
+        for(const [producingSector, amount] of Object.entries(sellerPayments)) {
+            if(amount > 0) {
                 ledger.record({
                     tick,
                     type: "goods_purchase",
                     buyerId: consumingSector,
-                    sellerId: "colony_treasury",
-                    amount: warehouseRevenue,
-                    goodId: key,
-                    quantity: source.warehouse * consumptionRatio,
-                    unitPrice: price,
+                    sellerId: producingSector,
+                    amount,
                 });
             }
         }
@@ -1126,9 +1103,18 @@ function processIndustry(
     // Verify money conservation: closing balances = opening + deltas
     const openingBalances: Record<string, number> = {};
     const closingBalances: Record<string, number> = {};
-    for(const name of activeSectors) {
-        openingBalances[name] = tickStartMoney[name] ?? 0;
-        closingBalances[name] = newMoney[name] ?? 0;
+
+    // Include all accounts that can receive or pay money — union of
+    // tickStartMoney (persisted), newMoney (after tick), and activeSectors.
+    const sectorAccounts = new Set<string>([
+        ...Object.keys(tickStartMoney),
+        ...Object.keys(newMoney),
+        ...activeSectors,
+    ]);
+
+    for(const name of sectorAccounts) {
+        openingBalances[name] = (tickStartMoney as Record<string, number>)[name] ?? 0;
+        closingBalances[name] = (newMoney as Record<string, number>)[name] ?? 0;
     }
     openingBalances["colony_treasury"] = openingTreasury;
     closingBalances["colony_treasury"] = newTreasury;
@@ -1142,7 +1128,21 @@ function processIndustry(
 
     const conservation = ledger.verifyConservation(openingBalances, closingBalances);
     if(!conservation.valid) {
-        console.error(`[IndustryTick] Money conservation violated for ${entityId}: error=${conservation.error}`, conservation.accountErrors);
+        const largestErrors = Object.entries(conservation.accountErrors)
+            .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+            .slice(0, 10);
+
+        console.error(
+            `[IndustryTick] Money conservation violated for ${entityId}`,
+            {
+                totalError: conservation.error,
+                largestAccountErrors: largestErrors,
+                openingBalances,
+                closingBalances,
+                transactionDeltas: Object.fromEntries(ledger.getAccountDeltas()),
+            }
+        );
+
         return null;
     }
 
@@ -1184,9 +1184,8 @@ function processIndustry(
         deprivation,
         accounting: {
             // Sector-only sales deducted from closing inventory. Warehouse sales
-            // net to zero (added back in goodsForDelta, then subtracted again via
-            // fulfilledDemandQty in finalizeGoods), so they are tracked separately
-            // in householdSalesByGood and must NOT be double-subtracted here.
+            // are tracked separately in householdSalesByGood and must NOT be
+            // double-subtracted here (finalizeGoods subtracts total household sales once).
             sectorSalesByGood: (() => {
                 const byGood: Partial<Goods> = {};
                 for(const sectorSales of Object.values(salesQty)) {
