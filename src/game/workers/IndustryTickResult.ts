@@ -5,6 +5,8 @@ import { Population } from "../data/Population";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import type { InputPaymentBreakdown } from "./industryTickHelpers";
 
+export type { SectorResult } from "../systems/generateIndustrialSector";
+
 export interface IndustryTickResult {
     entityId: string;
     goodsRequirements: Partial<Goods>;

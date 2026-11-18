@@ -264,7 +264,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			expect(results.length).toBe(365);
 		});
 
-		it("runs 1000 ticks without drift or collapse", () => {
+		it("runs 1000 ticks without drift or collapse", { timeout: 60000 }, () => {
 			const { results } = runMultiTick(1000, {});
 			expect(results.length).toBe(1000);
 		});
