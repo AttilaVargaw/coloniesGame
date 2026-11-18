@@ -8,7 +8,8 @@ export type TransactionType =
 	| "capital_purchase"
 	| "population_spending"
 	| "external_injection"
-	| "external_destruction";
+	| "external_destruction"
+	| "treasury_subsidy";
 
 export interface EconomicTransaction {
 	tick: number;

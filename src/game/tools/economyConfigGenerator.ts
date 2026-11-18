@@ -222,6 +222,7 @@ workingWorkers: createStarterPopulation(0),
 
 // === SECTOR EXECUTION HELPER ===
 // Executes a set of sector bids using the given goods pool and returns results + updated goods.
+// Also returns production by sector for warehouse composition tracking.
 function executeSectorPhase(
 	bids: SectorBid[],
 	goodsPool: Goods,
@@ -230,12 +231,16 @@ function executeSectorPhase(
 	adjustedSalaries: Record<keyof Population, number>,
 	workerMarketRatios: Record<string, number>,
 	population: Population,
+	// Composition of goodsPool by producer (good -> producer -> quantity).
+	// Used to attribute input purchases to actual producers.
+	warehouseComposition?: Partial<Record<keyof Goods, Record<string, number>>>,
 ): {
 	execResult: ReturnType<typeof executeSectors>;
 	purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>>;
 	updatedGoods: Goods;
 	updatedMoney: Record<string, number>;
 	purchaseProvenance: PurchaseProvenance;
+	productionBySector: Record<string, Partial<Goods>>; // sector -> good -> quantity produced
 } {
 	// Compute actualScale for these bids
 	for(const bid of bids) {
@@ -272,6 +277,7 @@ function executeSectorPhase(
 		startingMoney,
 		prices,
 		goodsAllocations,
+		warehouseComposition,
 	);
 
 	// Build labor allocations CAPPED BY actualScale.
@@ -295,12 +301,19 @@ function executeSectorPhase(
 		roundPurchasedBySector,
 	);
 
+	// Extract production by sector from execResult
+	const productionBySector: Record<string, Partial<Goods>> = {};
+	for(const [sectorName, result] of Object.entries(execResult.sectorResults)) {
+		productionBySector[sectorName] = result.producedGoods;
+	}
+
 	return {
 		execResult,
 		purchasedBySector: roundPurchasedBySector,
 		updatedGoods: colonyGoodsAfterPurchase,
 		updatedMoney: roundNewMoney,
 		purchaseProvenance,
+		productionBySector,
 	};
 }
 
@@ -505,8 +518,17 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Initialize money pool for phase execution
 	let currentMoneyPool: Record<string, number> = { ...startingMoney };
 
+	// Build initial warehouse composition: all opening inventory attributed to "colony_treasury"
+	const initialWarehouseComposition: Partial<Record<keyof Goods, Record<string, number>>> = {};
+	for(const [goodKey, qty] of Object.entries(goods)) {
+		if(qty > 0) {
+			initialWarehouseComposition[goodKey as keyof Goods] = { "colony_treasury": qty };
+		}
+	}
+
 	// Phase 1: Execute service producers using opening goods pool
 	let currentGoodsPool: Goods = { ...goods };
+	let currentWarehouseComposition = initialWarehouseComposition;
 	let allPurchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
 	let allExecResults: ReturnType<typeof executeSectors>[] = [];
 	let allPurchaseProvenance: PurchaseProvenance = {};
@@ -520,12 +542,25 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			adjustedSalaries,
 			workerMarketRatios,
 			population,
+			currentWarehouseComposition,
 		);
 		allExecResults.push(phase1Result.execResult);
 		allPurchasedBySector = { ...allPurchasedBySector, ...phase1Result.purchasedBySector };
 		allPurchaseProvenance = { ...allPurchaseProvenance, ...phase1Result.purchaseProvenance };
 		currentGoodsPool = phase1Result.updatedGoods;
 		currentMoneyPool = phase1Result.updatedMoney;
+
+		// Build warehouse composition for Phase 2: opening inventory + Phase 1 production
+		currentWarehouseComposition = { ...initialWarehouseComposition };
+		for(const [sectorName, production] of Object.entries(phase1Result.productionBySector)) {
+			for(const [goodKey, qty] of Object.entries(production)) {
+				if(qty > 0) {
+					const key = goodKey as keyof Goods;
+					currentWarehouseComposition[key] = currentWarehouseComposition[key] ?? {};
+					currentWarehouseComposition[key][sectorName] = (currentWarehouseComposition[key][sectorName] ?? 0) + qty;
+				}
+			}
+		}
 
 		// Note: We do NOT add Phase 1 service production to currentGoodsPool here.
 		// Non-cumulative goods are handled in finalizeGoods which computes
@@ -543,6 +578,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			adjustedSalaries,
 			workerMarketRatios,
 			population,
+			currentWarehouseComposition,
 		);
 		allExecResults.push(phase2Result.execResult);
 		allPurchasedBySector = { ...allPurchasedBySector, ...phase2Result.purchasedBySector };
@@ -770,7 +806,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 
 	// Distribute sector-to-sector input purchase revenue to producing sectors
 	// instead of crediting all to treasury.
-	const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
+	const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue, paymentBreakdown: sectorInputPaymentBreakdown } =
 		distributeSectorInputRevenue(sectorResults, currentPrices, sectorInputCosts, finalPurchaseProvenance);
 
 	// Credit producing sectors with revenue from sector-to-sector sales
@@ -780,9 +816,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			throw new Error(`Sector money overflow for ${sectorName} from input revenue`);
 		}
 		sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
-		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-		const inputCosts = sectorInputCosts[sectorName] ?? 0;
-		sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+		// sectorProfits will be computed once at the end after all revenue and subsidies
 	}
 
 	// remainingGoods is after capital purchases. Return unused purchased goods
@@ -946,11 +980,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Add population sales revenue to existing sector revenue (from sector-to-sector sales)
 	for(const name of activeSectors) {
 		const revenue = popSalesRevenue[name] ?? 0;
-		const laborCosts = sectorLaborCosts[name] ?? 0;
-		const inputCosts = sectorInputCosts[name] ?? 0;
-
 		sectorRevenue[name] = (sectorRevenue[name] ?? 0) + revenue;
-		sectorProfits[name] = (sectorRevenue[name] ?? 0) - laborCosts - inputCosts;
+		// sectorProfits will be computed once at the end after all revenue and subsidies
 	}
 
 	// Treasury subsidy for essential service sectors
@@ -974,6 +1005,9 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 	}
 
+	// Track subsidies paid for accounting
+	const subsidiesPaid: Record<string, number> = {};
+
 	// Pay subsidies if treasury can cover total
 	if(totalSubsidyNeeded > 0 && newTreasury >= totalSubsidyNeeded) {
 		for(const [sectorName, deficit] of Object.entries(sectorDeficits)) {
@@ -981,7 +1015,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			newTreasury -= deficit;
 			const totalRevenue = sectorRevenue[sectorName] ?? 0;
 			sectorRevenue[sectorName] = totalRevenue + deficit;
-			sectorProfits[sectorName] = 0; // Break-even after subsidy
+			subsidiesPaid[sectorName] = deficit;
 
 			if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
 				throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
@@ -990,6 +1024,15 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		if(!Number.isFinite(newTreasury) || newTreasury < 0) {
 			throw new Error(`Treasury invalid after subsidy`);
 		}
+	}
+
+	// Compute sector profits once after all revenue sources and subsidies are settled.
+	// Net profit = total revenue (sector-to-sector + population sales + subsidies) - input costs - labor costs
+	for(const name of activeSectors) {
+		const totalRevenue = sectorRevenue[name] ?? 0;
+		const laborCosts = sectorLaborCosts[name] ?? 0;
+		const inputCosts = sectorInputCosts[name] ?? 0;
+		sectorProfits[name] = totalRevenue - inputCosts - laborCosts;
 	}
 
 
@@ -1068,6 +1111,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			})(),
 			sectorInputRefundsBySector: refundBySector,
 			returnedInputsByGood: returnedGoods,
+			sectorInputPaymentBreakdown,
+			treasurySubsidiesPaid: subsidiesPaid,
 		}
 	}
 

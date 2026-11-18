@@ -3,6 +3,7 @@ import { SettlementType } from "../components/industryComponent";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import type { SectorResult } from "../systems/generateIndustrialSector";
+import type { InputPaymentBreakdown } from "./industryTickHelpers";
 
 export interface IndustryTickResult {
     entityId: string;
@@ -55,5 +56,7 @@ export interface IndustryTickResult {
         sectorInputsConsumedBySector: Record<string, Partial<Goods>>;
         sectorInputRefundsBySector: Record<string, number>;
         returnedInputsByGood: Partial<Goods>;
+        sectorInputPaymentBreakdown: InputPaymentBreakdown;
+        treasurySubsidiesPaid: Record<string, number>;
     };
 }

@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE, type PurchaseProvenance } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE, type PurchaseProvenance, type InputPaymentBreakdown } from "./industryTickHelpers";
 import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
@@ -450,10 +450,13 @@ function processIndustry(
         }
     }
 
-    // Reconcile purchases vs actual consumption at finalScale.
-    // Any input purchased but not consumed is returned to the colony and
-    // its cost is refunded to the sector.
-    for(const bid of finalSectorBids) {
+// Reconcile purchases vs actual consumption at finalScale.
+	// Any input purchased but not consumed is returned to the colony and
+	// its cost is refunded to the sector.
+	// Track refunds and returned goods for accounting.
+	const refundBySector: Record<string, number> = {};
+	const returnedGoods: Partial<Goods> = {};
+	for(const bid of finalSectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
         const purchases = purchasedBySector?.[sectorName] ?? {};
         const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
@@ -482,6 +485,7 @@ function processIndustry(
             if(unused > epsilon) {
                 // Return unused goods to colony warehouse
                 currentGoods[gKey] = (currentGoods[gKey] ?? 0) + unused;
+                returnedGoods[gKey] = (returnedGoods[gKey] ?? 0) + unused;
                 // Refund unused purchase cost to sector
                 const price = prices[gKey] ?? 0;
                 if(!Number.isFinite(price) || price < 0) {
@@ -489,6 +493,7 @@ function processIndustry(
                 }
                 const refund = unused * price;
                 newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
+                refundBySector[sectorName] = (refundBySector[sectorName] ?? 0) + refund;
                 if(!Number.isFinite(newMoney[sectorName])) {
                     throw new Error(`Sector money overflow for ${sectorName}`);
                 }
@@ -510,16 +515,15 @@ function processIndustry(
         }
         sectorInputCosts[sectorName] = actualInputCost;
 
-        // Profit is calculated once, after population sales revenue is known.
-        // Set to negative costs for now; revenue is added below.
-        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        sectorProfits[sectorName] = -(actualInputCost + laborCosts);
+        // Profit will be computed once at the end after all revenue and subsidies.
+        // Initialize to 0 for now.
+        sectorProfits[sectorName] = 0;
     }
 
-    // Distribute sector-to-sector input purchase revenue to producing sectors
-    // instead of crediting all to treasury.
-    const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
-        distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance);
+// Distribute sector-to-sector input purchase revenue to producing sectors
+	// instead of crediting all to treasury.
+	const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue, paymentBreakdown: sectorInputPaymentBreakdown } =
+		distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance);
 
     // Credit producing sectors with revenue from sector-to-sector sales
     for(const [sectorName, revenue] of Object.entries(sectorInputRevenue)) {
@@ -528,9 +532,7 @@ function processIndustry(
             throw new Error(`Sector money overflow for ${sectorName} from input revenue`);
         }
         sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
-        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        const inputCosts = sectorInputCosts[sectorName] ?? 0;
-        sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+        // sectorProfits will be computed once at the end after all revenue and subsidies
     }
 
     // PHASE 4: Allocate population spending based on actual sales (not production share)
@@ -733,38 +735,37 @@ function processIndustry(
             throw new Error(`Sector money overflow for ${sectorName}`);
         }
         sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
-        // Profit = total revenue (sector-to-sector + population) - input costs - labor costs
-        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        const inputCosts = sectorInputCosts[sectorName] ?? 0;
-        sectorProfits[sectorName] = (sectorRevenue[sectorName] ?? 0) - inputCosts - laborCosts;
+        // sectorProfits will be computed once at the end after all revenue and subsidies
     }
 
-    // Treasury subsidy for essential service sectors
-    // Covers operating deficit (input costs + labor costs - total revenue) to ensure
-    // non-cumulative goods production continues even when sector-to-sector revenue is insufficient.
-    for(const sectorName of activeSectors) {
-        if(!ESSENTIAL_SERVICE_SECTORS.has(sectorName)) continue;
+	// Treasury subsidy for essential service sectors
+	// Covers operating deficit (input costs + labor costs - total revenue) to ensure
+	// non-cumulative goods production continues even when sector-to-sector revenue is insufficient.
+	// Track subsidies for ledger recording.
+	const subsidies: Array<{ sectorName: string; amount: number }> = [];
+	for(const sectorName of activeSectors) {
+		if(!ESSENTIAL_SERVICE_SECTORS.has(sectorName)) continue;
 
-        const totalRevenue = sectorRevenue[sectorName] ?? 0;
-        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
-        const inputCosts = sectorInputCosts[sectorName] ?? 0;
-        const operatingCosts = laborCosts + inputCosts;
-        const deficit = operatingCosts - totalRevenue;
+		const totalRevenue = sectorRevenue[sectorName] ?? 0;
+		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+		const inputCosts = sectorInputCosts[sectorName] ?? 0;
+		const operatingCosts = laborCosts + inputCosts;
+		const deficit = operatingCosts - totalRevenue;
 
-        if(deficit > 0 && newTreasury >= deficit) {
-            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + deficit;
-            newTreasury -= deficit;
-            sectorRevenue[sectorName] = totalRevenue + deficit;
-            sectorProfits[sectorName] = 0; // Break-even after subsidy
+		if(deficit > 0 && newTreasury >= deficit) {
+			newMoney[sectorName] = (newMoney[sectorName] ?? 0) + deficit;
+			newTreasury -= deficit;
+			sectorRevenue[sectorName] = totalRevenue + deficit;
+			subsidies.push({ sectorName, amount: deficit });
 
-            if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
-                throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
-            }
-            if(!Number.isFinite(newTreasury) || newTreasury < 0) {
-                throw new Error(`Treasury invalid after subsidy`);
-            }
-        }
-    }
+			if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
+				throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
+			}
+			if(!Number.isFinite(newTreasury) || newTreasury < 0) {
+				throw new Error(`Treasury invalid after subsidy`);
+			}
+		}
+	}
 
     // PHASE 5: Deprivation and mortality from unmet demand
     const deprivation = computeDeprivation({
@@ -994,16 +995,31 @@ function processIndustry(
     // PHASE 7: Transaction ledger — record all economic transfers for audit
     const ledger = new TransactionLedger();
 
-    // Sector input purchases: sector pays, colony treasury receives
-    for(const name of activeSectors) {
-        const inputCost = sectorInputCosts[name] ?? 0;
-        if(inputCost > 0) {
+    // Sector input purchases: use payment breakdown from distributeSectorInputRevenue
+    // Records per-buyer, per-seller transfers (producing sectors + colony_treasury for warehouse)
+    for(const [consumingSector, sellerPayments] of Object.entries(sectorInputPaymentBreakdown)) {
+        for(const [producingSector, amount] of Object.entries(sellerPayments)) {
+            if(amount > 0) {
+                ledger.record({
+                    tick: 0,
+                    type: "goods_purchase",
+                    buyerId: consumingSector,
+                    sellerId: producingSector,
+                    amount,
+                });
+            }
+        }
+    }
+
+    // Treasury subsidies: colony_treasury pays essential sectors
+    for(const { sectorName, amount } of subsidies) {
+        if(amount > 0) {
             ledger.record({
                 tick: 0,
-                type: "goods_purchase",
-                buyerId: name,
-                sellerId: "colony_treasury",
-                amount: inputCost,
+                type: "treasury_subsidy",
+                buyerId: "colony_treasury",
+                sellerId: sectorName,
+                amount,
             });
         }
     }
@@ -1111,6 +1127,15 @@ function processIndustry(
         return null;
     }
 
+    // Compute sector profits once after all revenue sources and subsidies are settled.
+    // Net profit = total revenue (sector-to-sector + population sales + subsidies) - input costs - labor costs
+    for(const name of activeSectors) {
+        const totalRevenue = sectorRevenue[name] ?? 0;
+        const laborCosts = sectorLaborCosts[name] ?? 0;
+        const inputCosts = sectorInputCosts[name] ?? 0;
+        sectorProfits[name] = totalRevenue - inputCosts - laborCosts;
+    }
+
     const result: IndustryTickResult = {
         entityId,
         goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption),
@@ -1192,16 +1217,24 @@ function processIndustry(
                         byGood[key] = qty;
                     }
                 }
-                return byGood;
+return byGood;
             })(),
-wagesByPop,
-			spendingByPop,
-			// Per-sector input reconciliation data (not computed in worker)
-			sectorInputsPurchasedBySector: {},
-			sectorInputsConsumedBySector: {},
-			sectorInputRefundsBySector: {},
-			returnedInputsByGood: {},
-		},
+            wagesByPop,
+            spendingByPop,
+            // Per-sector input reconciliation data
+            sectorInputsPurchasedBySector: purchasedBySector,
+            sectorInputsConsumedBySector: (() => {
+                const bySector: Record<string, Partial<Goods>> = {};
+                for(const bid of finalSectorBids) {
+                    bySector[bid.name] = sectorResults[bid.name]?.consumedGoods ?? {};
+                }
+                return bySector;
+            })(),
+            sectorInputRefundsBySector: refundBySector,
+            returnedInputsByGood: returnedGoods,
+            sectorInputPaymentBreakdown,
+            treasurySubsidiesPaid: Object.fromEntries(subsidies.map(s => [s.sectorName, s.amount])),
+        },
     };
 
     // Phase 5.6: Validate all committed state before building patch

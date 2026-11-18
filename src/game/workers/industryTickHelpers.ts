@@ -19,10 +19,20 @@ export type InputSourceAllocation = {
 
 /**
  * Purchase provenance for each sector and good.
+ * Also tracks the warehouse composition by producer for attribution.
  */
 export type PurchaseProvenance = Record<
 	string,
 	Partial<Record<keyof Goods, InputSourceAllocation>>
+>;
+
+/**
+ * Per-buyer, per-seller breakdown of input purchase payments.
+ * Used for accurate ledger recording.
+ */
+export type InputPaymentBreakdown = Record<
+	string, // consuming sector
+	Record<string, number> // producing sector -> amount paid (including "colony_treasury" for warehouse)
 >;
 
 const qolSmoothing = 0.03;
@@ -158,6 +168,9 @@ export function buySectorInputs(
     newMoney: Record<string, number>,
     prices: Record<keyof Goods, number>,
     goodsAllocations: Record<string, Partial<Record<keyof Goods, number>>>,
+    // Optional: composition of warehouse by producer (good -> producer -> quantity).
+    // If not provided, all attributed to "colony_treasury" (opening inventory).
+    warehouseComposition?: Partial<Record<keyof Goods, Record<string, number>>>
 ): { colonyGoodsAfterPurchase: Goods; newMoney: Record<string, number>; purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>>; purchaseProvenance: PurchaseProvenance } {
     const colonyGoodsAfterPurchase = { ...goods };
     const updatedMoney = { ...newMoney };
@@ -308,10 +321,30 @@ export function buySectorInputs(
 
             purchasedBySector[sectorName][key] = toBuy;
 
-            // All purchases come from opening warehouse inventory (current-tick production not yet available)
+            // Attribute purchase to producers based on warehouse composition.
+            const composition = warehouseComposition?.[key] ?? { "colony_treasury": available };
+            const totalInWarehouse = Object.values(composition).reduce((sum, v) => sum + v, 0);
+            const producers: Record<string, number> = {};
+            let warehousePortion = 0;
+
+            if(totalInWarehouse > 0) {
+                for(const [producer, qty] of Object.entries(composition)) {
+                    const share = qty / totalInWarehouse;
+                    const attributed = toBuy * share;
+                    if(producer === "colony_treasury") {
+                        warehousePortion = attributed;
+                    } else {
+                        producers[producer] = attributed;
+                    }
+                }
+            } else {
+                // Fallback: no warehouse composition known, attribute all to treasury
+                warehousePortion = toBuy;
+            }
+
             purchaseProvenance[sectorName][key] = {
-                warehouse: toBuy,
-                producers: {},
+                warehouse: warehousePortion,
+                producers,
             };
         }
 
@@ -581,22 +614,25 @@ export function trySetPatchField<T>(
  * @param prices - Current prices for each good
  * @param sectorInputCosts - Actual input costs per sector (from reconciliation)
  * @param purchaseProvenance - Actual source of each purchase (warehouse vs producers)
- * @returns { sectorRevenue: revenue per sector, treasuryRevenue: total to treasury }
+ * @returns { sectorRevenue: revenue per sector, treasuryRevenue: total to treasury, paymentBreakdown: per-buyer per-seller breakdown }
  */
 export function distributeSectorInputRevenue(
 	sectorResults: Record<string, { consumedGoods: Record<string, number> }>,
 	prices: Record<keyof Goods, number>,
 	sectorInputCosts: Record<string, number>,
 	purchaseProvenance: PurchaseProvenance
-): { sectorRevenue: Record<string, number>; treasuryRevenue: number } {
+): { sectorRevenue: Record<string, number>; treasuryRevenue: number; paymentBreakdown: InputPaymentBreakdown } {
 	const sectorRevenue: Record<string, number> = {};
 	let treasuryRevenue = 0;
+	const paymentBreakdown: InputPaymentBreakdown = {};
 
 	// For each consuming sector, use actual purchase provenance to distribute revenue
 	for(const [consumingSector, inputCost] of Object.entries(sectorInputCosts)) {
 		const result = sectorResults[consumingSector];
 		const provenance = purchaseProvenance[consumingSector];
 		if(!result || !provenance || inputCost <= 0) continue;
+
+		paymentBreakdown[consumingSector] = {};
 
 		for(const [goodKey, consumedQty] of Object.entries(result.consumedGoods ?? {})) {
 			const key = goodKey as keyof Goods;
@@ -620,11 +656,13 @@ export function distributeSectorInputRevenue(
 			for(const [producingSector, quantity] of Object.entries(source.producers)) {
 				const revenue = quantity * consumptionRatio * price;
 				sectorRevenue[producingSector] = (sectorRevenue[producingSector] ?? 0) + revenue;
+				paymentBreakdown[consumingSector][producingSector] = (paymentBreakdown[consumingSector][producingSector] ?? 0) + revenue;
 			}
 
 			// Credit treasury for warehouse portion (proportional to consumption)
 			const warehouseRevenue = source.warehouse * consumptionRatio * price;
 			treasuryRevenue += warehouseRevenue;
+			paymentBreakdown[consumingSector]["colony_treasury"] = (paymentBreakdown[consumingSector]["colony_treasury"] ?? 0) + warehouseRevenue;
 		}
 	}
 
@@ -638,7 +676,7 @@ export function distributeSectorInputRevenue(
 		);
 	}
 
-	return { sectorRevenue, treasuryRevenue };
+	return { sectorRevenue, treasuryRevenue, paymentBreakdown };
 }
 
 /**
