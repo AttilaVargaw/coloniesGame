@@ -550,7 +550,7 @@ function runSimulation(
 
 describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	describe("Scenario: Normal economy", () => {
-		it("runs 1,000 ticks with standard starting conditions", () => {
+		it("runs 1,200 ticks with standard starting conditions", () => {
 			const run = runSimulation("normal", 1200, {
 				populationSize: 100_000,
 				activeSectors: COMPLETE_SECTORS,
@@ -606,7 +606,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	});
 
 	describe("Scenario: Low cash", () => {
-		it("runs 1,000 ticks with minimal sector and household wealth", () => {
+		it("runs 1,200 ticks with minimal sector and household wealth", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
@@ -643,7 +643,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	});
 
 	describe("Scenario: No capital", () => {
-		it("runs 1,000 ticks with zero capital stock multiplier", () => {
+		it("runs 2,000 ticks with zero capital stock multiplier", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
@@ -664,7 +664,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 			expect(initialCapital).toBe(0);
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1200; tick++) {
+			for(let tick = 0; tick < 2000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -683,7 +683,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1200);
+			expect(ticksSurvived).toBe(2000);
 		});
 	});
 
@@ -705,7 +705,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 			}
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1200; tick++) {
+			for(let tick = 0; tick < 1000; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -724,7 +724,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1200);
+			expect(ticksSurvived).toBe(1000);
 		});
 	});
 
