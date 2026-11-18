@@ -289,6 +289,14 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 		for (let t = 0; t < 100; t++) {
 			const result = simulateTick(input, state);
 
+			if (t >= 50 && t < 100) {
+				console.log(`Tick ${t+1}: powerPlant money=${result.money?.powerPlant}, productionRatio=${result.sectorResults?.powerPlant?.productionRatio}`);
+				console.log(`Tick ${t+1}: government money=${result.money?.government}, productionRatio=${result.sectorResults?.government?.productionRatio}`);
+				console.log(`Tick ${t+1}: forestry money=${result.money?.forestry}, productionRatio=${result.sectorResults?.forestry?.productionRatio}`);
+				console.log(`Tick ${t+1}: paperFactory money=${result.money?.paperFactory}, productionRatio=${result.sectorResults?.paperFactory?.productionRatio}`);
+				console.log(`Tick ${t+1}: treasury=${result.colonyTreasury}, totalSectorMoney=${Object.values(result.money).reduce((a,b)=>a+b,0)}`);
+			}
+
 			const totalGoods = Object.values(result.goods).reduce((a, b) => a + b, 0);
 			const totalMoney = Object.values(result.money).reduce((a, b) => a + b, 0);
 			const totalPopulation = Object.values(result.population).reduce((a, b) => a + (b as any).number, 0);

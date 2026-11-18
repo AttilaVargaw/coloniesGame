@@ -18,7 +18,7 @@ import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, computeColonyGoodsDelta, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, MINIMUM_ESSENTIAL_SCALE } from "./industryTickHelpers";
 import { allocateLabor } from "./laborAllocation";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
@@ -296,10 +296,13 @@ function processIndustry(
         goodsForSectors[goodKey as keyof Goods] = Math.max(0, available - amount);
     }
 
-    const laborResult = allocateLabor({
+    // Two-stage labor allocation: protect essential service sectors
+    const minimumEssentialLabor = computeMinimumEssentialLabor(roundSectorBids);
+    const laborResult = allocateLaborTwoStage(
         availableWorkers,
-        sectorRequests: laborRequests,
-    });
+        laborRequests,
+        minimumEssentialLabor
+    );
 
     const goodsResult = allocateGoods({
         availableGoods: goodsForSectors,
@@ -513,6 +516,23 @@ function processIndustry(
         sectorProfits[sectorName] = -(actualInputCost + laborCosts);
     }
 
+    // Distribute sector-to-sector input purchase revenue to producing sectors
+    // instead of crediting all to treasury.
+    const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
+        distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, tickStartGoods);
+
+    // Credit producing sectors with revenue from sector-to-sector sales
+    for(const [sectorName, revenue] of Object.entries(sectorInputRevenue)) {
+        newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
+        if(!Number.isFinite(newMoney[sectorName])) {
+            throw new Error(`Sector money overflow for ${sectorName} from input revenue`);
+        }
+        sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
+        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+        const inputCosts = sectorInputCosts[sectorName] ?? 0;
+        sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+    }
+
     // PHASE 4: Allocate population spending based on actual sales (not production share)
     // Constrain per population group by available cash: starting wealth + wages
 
@@ -633,9 +653,9 @@ function processIndustry(
         goodsForCapital[key] = Math.max(0, available - sold);
     }
 
-    // Credit treasury for sector input purchases (money deducted in buySectorInputs)
-    const totalSectorInputCosts = Object.values(sectorInputCosts).reduce((sum, v) => sum + v, 0);
-    newTreasury += totalSectorInputCosts;
+    // Credit treasury for sector input purchases from warehouse stock only
+    // (producer revenue already credited above via distributeSectorInputRevenue)
+    newTreasury += sectorInputTreasuryRevenue;
     if(!Number.isFinite(newTreasury)) {
         throw new Error(`Treasury overflow after input costs`);
     }
@@ -706,24 +726,44 @@ function processIndustry(
         throw new Error(`Treasury overflow after warehouse revenue`);
     }
 
-    // Reset sector revenue to actual-sales-only authority
-    for(const name of activeSectors) {
-        sectorRevenue[name] = 0;
-        const laborCosts = sectorLaborCosts[name] ?? 0;
-        const inputCosts = sectorInputCosts[name] ?? 0;
-        sectorProfits[name] = -(inputCosts + laborCosts);
-    }
-
+    // Add population sales revenue to existing sector revenue (from sector-to-sector sales)
     for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
         newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
         if(!Number.isFinite(newMoney[sectorName])) {
             throw new Error(`Sector money overflow for ${sectorName}`);
         }
-        sectorRevenue[sectorName] = revenue;
-        // Profit calculated once: revenue - actual input costs - labor costs
+        sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
+        // Profit = total revenue (sector-to-sector + population) - input costs - labor costs
         const laborCosts = sectorLaborCosts[sectorName] ?? 0;
         const inputCosts = sectorInputCosts[sectorName] ?? 0;
-        sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+        sectorProfits[sectorName] = (sectorRevenue[sectorName] ?? 0) - inputCosts - laborCosts;
+    }
+
+    // Treasury subsidy for essential service sectors
+    // Covers operating deficit (input costs + labor costs - total revenue) to ensure
+    // non-cumulative goods production continues even when sector-to-sector revenue is insufficient.
+    for(const sectorName of activeSectors) {
+        if(!ESSENTIAL_SERVICE_SECTORS.has(sectorName)) continue;
+
+        const totalRevenue = sectorRevenue[sectorName] ?? 0;
+        const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+        const inputCosts = sectorInputCosts[sectorName] ?? 0;
+        const operatingCosts = laborCosts + inputCosts;
+        const deficit = operatingCosts - totalRevenue;
+
+        if(deficit > 0 && newTreasury >= deficit) {
+            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + deficit;
+            newTreasury -= deficit;
+            sectorRevenue[sectorName] = totalRevenue + deficit;
+            sectorProfits[sectorName] = 0; // Break-even after subsidy
+
+            if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
+                throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
+            }
+            if(!Number.isFinite(newTreasury) || newTreasury < 0) {
+                throw new Error(`Treasury invalid after subsidy`);
+            }
+        }
     }
 
     // PHASE 5: Deprivation and mortality from unmet demand

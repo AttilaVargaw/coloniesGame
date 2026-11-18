@@ -509,3 +509,266 @@ export function trySetPatchField<T>(
     }
     return false;
 }
+
+/**
+ * Distributes sector-to-sector input purchase revenue to producing sectors.
+ * For each good consumed by sectors, splits the payment proportionally between
+ * producing sectors and treasury (for warehouse stock).
+ * 
+ * @param sectorResults - Results from executeSectors with producedGoods/consumedGoods per sector
+ * @param prices - Current prices for each good
+ * @param sectorInputCosts - Actual input costs per sector (from reconciliation)
+ * @param openingGoods - Goods available before sector purchases (for warehouse share calc)
+ * @returns { sectorRevenue: revenue per sector, treasuryRevenue: total to treasury }
+ */
+export function distributeSectorInputRevenue(
+	sectorResults: Record<string, { producedGoods: Record<string, number>; consumedGoods: Record<string, number> }>,
+	prices: Record<keyof Goods, number>,
+	sectorInputCosts: Record<string, number>,
+	openingGoods: Partial<Record<keyof Goods, number>>
+): { sectorRevenue: Record<string, number>; treasuryRevenue: number } {
+	const sectorRevenue: Record<string, number> = {};
+	let treasuryRevenue = 0;
+
+	// Compute total production per good by sector
+	const productionByGood: Record<keyof Goods, Record<string, number>> = {} as Record<keyof Goods, Record<string, number>>;
+	let totalProductionByGood: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
+
+	for(const [sectorName, result] of Object.entries(sectorResults)) {
+		for(const [goodKey, qty] of Object.entries(result.producedGoods ?? {})) {
+			const key = goodKey as keyof Goods;
+			if(!productionByGood[key]) {
+				productionByGood[key] = {};
+				totalProductionByGood[key] = 0;
+			}
+			productionByGood[key][sectorName] = (productionByGood[key][sectorName] ?? 0) + (qty ?? 0);
+			totalProductionByGood[key] = (totalProductionByGood[key] ?? 0) + (qty ?? 0);
+		}
+	}
+
+	// For each consuming sector, split its input cost between producing sectors and treasury
+	for(const [consumingSector, inputCost] of Object.entries(sectorInputCosts)) {
+		const result = sectorResults[consumingSector];
+		if(!result || inputCost <= 0) continue;
+
+		for(const [goodKey, consumedQty] of Object.entries(result.consumedGoods ?? {})) {
+			const key = goodKey as keyof Goods;
+			const consumed = Number(consumedQty) ?? 0;
+			if(consumed <= 0) continue;
+
+			const price = prices[key] ?? 0;
+			if(price <= 0) continue;
+
+			// This sector's spending on this good
+			const sectorSpendingOnGood = consumed * price;
+
+			// Total production of this good by all sectors
+			const totalSectorProduction = totalProductionByGood[key] ?? 0;
+			const warehouseStock = openingGoods[key] ?? 0;
+			const totalAvailable = totalSectorProduction + warehouseStock;
+
+			if(totalAvailable <= 0) continue;
+
+			// Proportion from sector production vs warehouse
+			const sectorShare = totalSectorProduction > 0 ? totalSectorProduction / totalAvailable : 0;
+			const warehouseShare = warehouseStock > 0 ? warehouseStock / totalAvailable : 0;
+
+			// Credit producing sectors proportionally to their output
+			if(sectorShare > 0) {
+				const producingSectors = productionByGood[key] ?? {};
+				for(const [producingSector, production] of Object.entries(producingSectors)) {
+					const producerShare = production / totalSectorProduction;
+					const revenue = sectorSpendingOnGood * sectorShare * producerShare;
+					sectorRevenue[producingSector] = (sectorRevenue[producingSector] ?? 0) + revenue;
+				}
+			}
+
+			// Credit treasury for warehouse portion
+			if(warehouseShare > 0) {
+				treasuryRevenue += sectorSpendingOnGood * warehouseShare;
+			}
+		}
+	}
+
+	return { sectorRevenue, treasuryRevenue };
+}
+
+/**
+ * Essential sectors that produce non-cumulative goods required by other sectors.
+ * These must receive minimum labor allocation to prevent economic collapse.
+ */
+export const ESSENTIAL_SERVICE_SECTORS: ReadonlySet<string> = new Set([
+	"powerPlant",      // energy
+	"government",      // governance
+	"forestry",        // environmentFactor
+	"services",        // services
+	"healthcare",      // healthcare
+	"education",       // education
+	"lawEnforcement",  // lawEnforcement
+	"logistics",       // logistics
+	"tourism",         // tourism
+	"entertainmentIndustry", // entertainment
+	"bank",            // monetaryServices
+	"religion",        // faith
+	"defense",         // defense
+]);
+
+/**
+ * Minimum viable production scale for essential sectors.
+ * Below this scale, the sector cannot sustain the service flow other sectors depend on.
+ */
+export const MINIMUM_ESSENTIAL_SCALE = 0.15;
+
+/**
+ * Computes minimum labor allocation for essential service sectors.
+ * Returns a map of sector -> population type -> minimum workers needed.
+ */
+export function computeMinimumEssentialLabor(
+	sectorBids: { name: string; idealWorkerDemand: Record<string, number> }[]
+): Record<string, Partial<Record<keyof Population, number>>> {
+	const minLabor: Record<string, Partial<Record<keyof Population, number>>> = {};
+
+	for(const bid of sectorBids) {
+		if(!ESSENTIAL_SERVICE_SECTORS.has(bid.name)) continue;
+
+		minLabor[bid.name] = {};
+		for(const [popType, demand] of Object.entries(bid.idealWorkerDemand)) {
+			if(demand > 0) {
+				const key = popType as keyof Population;
+				minLabor[bid.name]![key] = demand * MINIMUM_ESSENTIAL_SCALE;
+			}
+		}
+	}
+
+	return minLabor;
+}
+
+/**
+ * Two-stage labor allocation:
+ * 1. Reserve minimum labor for essential sectors
+ * 2. Allocate remaining workers proportionally by priority
+ */
+export function allocateLaborTwoStage(
+	availableWorkers: Record<keyof Population, number>,
+	sectorRequests: Array<{
+		sectorId: string;
+		idealDemand: Partial<Record<keyof Population, number>>;
+		priority: number;
+	}>,
+	minimumEssentialLabor: Record<string, Partial<Record<keyof Population, number>>>
+): { allocation: Record<string, Partial<Record<keyof Population, number>>>; unmetDemand: Record<string, Partial<Record<keyof Population, number>>> } {
+	// Import the original allocateLabor function
+	// We'll implement the two-stage logic here
+	const EPSILON = 1e-9;
+	const allocation: Record<string, Partial<Record<keyof Population, number>>> = {};
+	const unmetDemand: Record<string, Partial<Record<keyof Population, number>>> = {};
+
+	// Initialize all sectors
+	for(const req of sectorRequests) {
+		allocation[req.sectorId] = {};
+		unmetDemand[req.sectorId] = {};
+	}
+
+	// Stage 1: Reserve minimum labor for essential sectors
+	const remainingWorkers: Record<keyof Population, number> = { ...availableWorkers };
+
+	for(const [sectorId, minDemand] of Object.entries(minimumEssentialLabor)) {
+		for(const [popType, minWorkers] of Object.entries(minDemand)) {
+			const key = popType as keyof Population;
+			const available = remainingWorkers[key] ?? 0;
+			const allocated = Math.min(minWorkers, available);
+
+			if(allocated > 0) {
+				allocation[sectorId]![key] = allocated;
+				remainingWorkers[key] = available - allocated;
+			}
+
+			// Track unmet essential demand
+			if(minWorkers > allocated + EPSILON) {
+				unmetDemand[sectorId]![key] = minWorkers - allocated;
+			}
+		}
+	}
+
+	// Stage 2: Proportional allocation of remaining workers for ALL sectors
+	// (including essential sectors for additional capacity beyond minimum)
+	for(const popType of Object.keys(availableWorkers) as (keyof Population)[]) {
+		const available = remainingWorkers[popType] ?? 0;
+		if(available <= EPSILON) continue;
+
+		// Build demands for this population type (full demand minus already allocated)
+		const demands = sectorRequests
+			.map(req => {
+				const idealDemand = req.idealDemand[popType] ?? 0;
+				const alreadyAllocated = allocation[req.sectorId]?.[popType] ?? 0;
+				const remainingDemand = Math.max(0, idealDemand - alreadyAllocated);
+				return {
+					sectorId: req.sectorId,
+					remaining: remainingDemand,
+					priority: req.priority,
+				};
+			})
+			.filter(item => item.remaining > EPSILON)
+			.sort((a, b) => String(a.sectorId).localeCompare(String(b.sectorId)));
+
+		if(demands.length === 0) continue;
+
+		let remainingWorkersForPop = available;
+
+		// Weighted allocation with demand caps and redistribution
+		let active = demands;
+
+		while(active.length > 0 && remainingWorkersForPop > EPSILON) {
+			const totalWeight = active.reduce(
+				(sum, item) => sum + item.remaining * item.priority,
+				0,
+			);
+
+			if(totalWeight <= 0 || !Number.isFinite(totalWeight)) {
+				throw new Error(`Invalid labor allocation weights for ${String(popType)}`);
+			}
+
+			const saturated = active.filter(item => {
+				const proposed = remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
+				return proposed >= item.remaining - EPSILON;
+			});
+
+			if(saturated.length > 0) {
+				const saturatedIds = new Set(saturated.map(item => item.sectorId));
+
+				for(const item of saturated) {
+					const amount = Math.min(item.remaining, remainingWorkersForPop);
+					allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + amount;
+					remainingWorkersForPop -= amount;
+					item.remaining -= amount;
+				}
+
+				active = active.filter(item => !saturatedIds.has(item.sectorId));
+				continue;
+			}
+
+			// No demand caps reached: distribute remaining stock
+			for(let i = 0; i < active.length; i++) {
+				const item = active[i];
+				const amount = i === active.length - 1
+					? remainingWorkersForPop
+					: remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
+
+				const cappedAmount = Math.min(amount, item.remaining);
+				allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + cappedAmount;
+				remainingWorkersForPop -= cappedAmount;
+				item.remaining -= cappedAmount;
+			}
+			break;
+		}
+
+		// Track unmet demand
+		for(const item of demands) {
+			if(item.remaining > EPSILON) {
+				unmetDemand[item.sectorId]![popType] = (unmetDemand[item.sectorId]![popType] ?? 0) + item.remaining;
+			}
+		}
+	}
+
+	return { allocation, unmetDemand };
+}

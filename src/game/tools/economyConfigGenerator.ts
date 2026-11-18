@@ -15,6 +15,8 @@ import {
 	computeColonyGoodsDelta,
 	applyGoodsModifier,
 	computeMarketRatios,
+	distributeSectorInputRevenue,
+	ESSENTIAL_SERVICE_SECTORS,
 } from "../workers/industryTickHelpers.ts";
 import { allocatePopulationSales } from "../workers/transactionLedger.ts";
 import { processCapital } from "../workers/capitalSystem.ts";
@@ -756,6 +758,23 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 	}
 
+	// Distribute sector-to-sector input purchase revenue to producing sectors
+	// instead of crediting all to treasury.
+	const { sectorRevenue: sectorInputRevenue, treasuryRevenue: sectorInputTreasuryRevenue } =
+		distributeSectorInputRevenue(sectorResults, currentPrices, sectorInputCosts, goods);
+
+	// Credit producing sectors with revenue from sector-to-sector sales
+	for(const [sectorName, revenue] of Object.entries(sectorInputRevenue)) {
+		newMoney[sectorName] = (newMoney[sectorName] ?? 0) + revenue;
+		if(!Number.isFinite(newMoney[sectorName])) {
+			throw new Error(`Sector money overflow for ${sectorName} from input revenue`);
+		}
+		sectorRevenue[sectorName] = (sectorRevenue[sectorName] ?? 0) + revenue;
+		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+		const inputCosts = sectorInputCosts[sectorName] ?? 0;
+		sectorProfits[sectorName] = revenue - inputCosts - laborCosts;
+	}
+
 	// remainingGoods is after capital purchases. Return unused purchased goods
 	// to colony inventory so they are not lost.
 	// Note: we don't have remainingGoods yet (capital not processed), so we'll
@@ -814,12 +833,9 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Validate sector money — prevent overspending rather than clamping.
 	validateSectorMoney(newMoney, activeSectors, entityId);
 
-	// Credit treasury with sector input purchases (money deducted in buySectorInputs)
-	const totalSectorInputCosts = Object.values(sectorInputCosts).reduce(
-		(sum, v) => sum + v,
-		0
-	);
-	newTreasury += totalSectorInputCosts;
+	// Credit treasury with sector input purchases from warehouse stock only
+	// (producer revenue already credited above via distributeSectorInputRevenue)
+	newTreasury += sectorInputTreasuryRevenue;
 
 	// Credit treasury with capital purchases (money deducted above)
 	const totalCapitalMoneySpent = Object.values(moneySpent).reduce(
@@ -922,15 +938,41 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		0
 	);
 
-	// Set sector revenue and profit from actual transactions.
-	// Revenue comes from popSalesRevenue; profit = revenue - laborCosts - inputCosts.
+	// Add population sales revenue to existing sector revenue (from sector-to-sector sales)
 	for(const name of activeSectors) {
 		const revenue = popSalesRevenue[name] ?? 0;
 		const laborCosts = sectorLaborCosts[name] ?? 0;
 		const inputCosts = sectorInputCosts[name] ?? 0;
 
-		sectorRevenue[name] = revenue;
-		sectorProfits[name] = revenue - laborCosts - inputCosts;
+		sectorRevenue[name] = (sectorRevenue[name] ?? 0) + revenue;
+		sectorProfits[name] = (sectorRevenue[name] ?? 0) - laborCosts - inputCosts;
+	}
+
+	// Treasury subsidy for essential service sectors
+	// Covers operating deficit (input costs + labor costs - total revenue) to ensure
+	// non-cumulative goods production continues even when sector-to-sector revenue is insufficient.
+	for(const sectorName of activeSectors) {
+		if(!ESSENTIAL_SERVICE_SECTORS.has(sectorName)) continue;
+
+		const totalRevenue = sectorRevenue[sectorName] ?? 0;
+		const laborCosts = sectorLaborCosts[sectorName] ?? 0;
+		const inputCosts = sectorInputCosts[sectorName] ?? 0;
+		const operatingCosts = laborCosts + inputCosts;
+		const deficit = operatingCosts - totalRevenue;
+
+		if(deficit > 0 && newTreasury >= deficit) {
+			newMoney[sectorName] = (newMoney[sectorName] ?? 0) + deficit;
+			newTreasury -= deficit;
+			sectorRevenue[sectorName] = totalRevenue + deficit;
+			sectorProfits[sectorName] = 0; // Break-even after subsidy
+
+			if(!Number.isFinite(newMoney[sectorName]) || newMoney[sectorName] < 0) {
+				throw new Error(`Sector money invalid after subsidy for ${sectorName}`);
+			}
+			if(!Number.isFinite(newTreasury) || newTreasury < 0) {
+				throw new Error(`Treasury invalid after subsidy`);
+			}
+		}
 	}
 
 

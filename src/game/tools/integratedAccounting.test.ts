@@ -74,6 +74,7 @@ function createCompleteEconomyInput(overrides: Partial<{
 	starterMoneyPerSector: number;
 	capitalStockMultiplier: number;
 	goods: Partial<Goods>;
+	population: Population;
 }> = {}): { input: IndustryTickInput; result: IndustryTickResult } {
 	const state = createSimState();
 	const input = generateColonyConfig(
@@ -86,6 +87,10 @@ function createCompleteEconomyInput(overrides: Partial<{
 		{},
 		TEST_OCCUPATION_RATIOS
 	);
+
+	if (overrides.population) {
+		input.population = overrides.population;
+	}
 
 	if (overrides.goods) {
 		for (const [key, value] of Object.entries(overrides.goods)) {
