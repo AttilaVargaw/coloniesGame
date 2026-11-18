@@ -53,6 +53,7 @@ function processIndustry(
         materialRequirementMultipliers,
         capitalMultipliers,
         selectedMethod,
+        tick,
     }: IndustryTickInput,
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
@@ -487,9 +488,9 @@ function processIndustry(
                 currentGoods[gKey] = (currentGoods[gKey] ?? 0) + unused;
                 returnedGoods[gKey] = (returnedGoods[gKey] ?? 0) + unused;
                 // Refund unused purchase cost to sector
-                const price = prices[gKey] ?? 0;
-                if(!Number.isFinite(price) || price < 0) {
-                    throw new Error(`Invalid price for ${gKey}: ${price}`);
+                const price = prices[gKey];
+                if(price === undefined || !Number.isFinite(price) || price < 0) {
+                    throw new Error(`Invalid or missing price for ${gKey}: ${price}`);
                 }
                 const refund = unused * price;
                 newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
@@ -923,42 +924,23 @@ function processIndustry(
         sectorResults,
     );
 
-    // Apply colony goods changes
-    const colonyGoodsProduction = createEmptyWarehouse();
-    const colonyGoodsRequirements = createEmptyWarehouse();
-    for(const [key, value] of Object.entries(colonyGoodsDelta)) {
-        if(value > 0) {
-            colonyGoodsProduction[key as keyof Goods] = value;
-        } else if(value < 0) {
-            colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
-        }
+    // Build total requirements = sector consumption + capital purchases
+    const totalGoodsRequirements: Goods = createEmptyWarehouse();
+    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+        totalGoodsRequirements[key] =
+            (sumGoodsRequirements[key] ?? 0) +
+            (capitalPurchasesByGood[key] ?? 0);
     }
 
-    // Reconcile reconstructed production against executeSectors() aggregate.
-    // NOTE: colonyGoodsProduction is reconstructed from colonyGoodsDelta which is a net change,
-    // not gross production. Gross-production reconciliation uses actual per-sector quantities
-    // from sectorResults entries instead (to be added later). Do not compare gross production
-    // with net inventory changes.
-    // Reconcile reconstructed production against executeSectors() aggregate.
-    // Check the union of both key sets so a good present in one but absent
-    // from the other is caught.
-    // const productionKeys = new Set([
-    //     ...Object.keys(sumGoodsProduction),
-    //     ...Object.keys(colonyGoodsProduction),
-    // ]);
-    // for(const key of productionKeys) {
-    //     const good = key as keyof Goods;
-    //     const reconstructed = colonyGoodsProduction[good] ?? 0;
-    //     const reported = sumGoodsProduction[good] ?? 0;
-    //     if(Math.abs(reconstructed - reported) > 1e-6) {
-    //         throw new Error(
-    //             `Production reconciliation mismatch for ${good}: ` +
-    //             `reconstructed=${reconstructed}, reported=${reported}`,
-    //         );
-    //     }
-    // }
-
-    const colonyGoodsChanges = finalizeGoods(goods, colonyGoodsProduction, colonyGoodsRequirements, fulfilledDemandQty, population);
+    // Use GROSS production and total requirements (sector + capital) for finalization.
+    // This preserves offsetting production and consumption rather than erasing them.
+    const colonyGoodsChanges = finalizeGoods(
+        goods,
+        sumGoodsProduction,
+        totalGoodsRequirements,
+        fulfilledDemandQty,
+        population
+    );
 
     // Direct inventory conservation invariant.
     // Closing inventory must equal opening + production - consumption - sales - capital purchases,
@@ -995,17 +977,54 @@ function processIndustry(
     // PHASE 7: Transaction ledger — record all economic transfers for audit
     const ledger = new TransactionLedger();
 
-    // Sector input purchases: use payment breakdown from distributeSectorInputRevenue
-    // Records per-buyer, per-seller transfers (producing sectors + colony_treasury for warehouse)
-    for(const [consumingSector, sellerPayments] of Object.entries(sectorInputPaymentBreakdown)) {
-        for(const [producingSector, amount] of Object.entries(sellerPayments)) {
-            if(amount > 0) {
+    // Sector input purchases: record per-good transfers from purchase provenance
+    // Uses actual consumption ratio (consumed/purchased) to attribute payments
+    for(const [consumingSector, provenance] of Object.entries(purchaseProvenance)) {
+        const result = sectorResults[consumingSector];
+        if(!result) continue;
+
+        for(const [goodKey, source] of Object.entries(provenance)) {
+            const key = goodKey as keyof Goods;
+            const consumed = Number(result.consumedGoods?.[key] ?? 0);
+            if(consumed <= 0) continue;
+
+            const price = prices[key] ?? 0;
+            if(price <= 0) continue;
+
+            const totalPurchased = source.warehouse + Object.values(source.producers).reduce((sum, v) => sum + v, 0);
+            if(totalPurchased <= 0) continue;
+
+            const consumptionRatio = consumed / totalPurchased;
+
+            // Record payments to each producing sector
+            for(const [producingSector, quantity] of Object.entries(source.producers)) {
+                const revenue = quantity * consumptionRatio * price;
+                if(revenue > 0) {
+                    ledger.record({
+                        tick,
+                        type: "goods_purchase",
+                        buyerId: consumingSector,
+                        sellerId: producingSector,
+                        amount: revenue,
+                        goodId: key,
+                        quantity: quantity * consumptionRatio,
+                        unitPrice: price,
+                    });
+                }
+            }
+
+            // Record payment to treasury (warehouse portion)
+            const warehouseRevenue = source.warehouse * consumptionRatio * price;
+            if(warehouseRevenue > 0) {
                 ledger.record({
-                    tick: 0,
+                    tick,
                     type: "goods_purchase",
                     buyerId: consumingSector,
-                    sellerId: producingSector,
-                    amount,
+                    sellerId: "colony_treasury",
+                    amount: warehouseRevenue,
+                    goodId: key,
+                    quantity: source.warehouse * consumptionRatio,
+                    unitPrice: price,
                 });
             }
         }
@@ -1015,7 +1034,7 @@ function processIndustry(
     for(const { sectorName, amount } of subsidies) {
         if(amount > 0) {
             ledger.record({
-                tick: 0,
+                tick,
                 type: "treasury_subsidy",
                 buyerId: "colony_treasury",
                 sellerId: sectorName,
@@ -1039,7 +1058,7 @@ function processIndustry(
 
             if(wage > 0) {
                 ledger.record({
-                    tick: 0,
+                    tick,
                     type: "wage_payment",
                     buyerId: name,
                     sellerId: `population:${key}`,
@@ -1054,7 +1073,7 @@ function processIndustry(
         const spending = spendingByPop[key] ?? 0;
         if(spending > 0) {
             ledger.record({
-                tick: 0,
+                tick,
                 type: "population_spending",
                 buyerId: `population:${key}`,
                 sellerId: "household_sales",
@@ -1067,7 +1086,7 @@ function processIndustry(
     for(const [sectorName, revenue] of Object.entries(popSalesRevenue)) {
         if(revenue > 0) {
             ledger.record({
-                tick: 0,
+                tick,
                 type: "population_spending",
                 buyerId: "household_sales",
                 sellerId: sectorName,
@@ -1079,7 +1098,7 @@ function processIndustry(
     // Warehouse sales: household_sales pays colony treasury
     if(warehouseRevenue > 0) {
         ledger.record({
-            tick: 0,
+            tick,
             type: "population_spending",
             buyerId: "household_sales",
             sellerId: "colony_treasury",
@@ -1095,7 +1114,7 @@ function processIndustry(
         }
         if(capitalCost > 0) {
             ledger.record({
-                tick: 0,
+                tick,
                 type: "capital_purchase",
                 buyerId: name,
                 sellerId: "colony_treasury",
@@ -1345,8 +1364,9 @@ function finalizeGoods(
 
         if(NON_CUMULATING_GOODS.has(goodKey)) {
             // Non-cumulative goods (services): opening inventory does not carry over.
-            // These are non-storable flows; closing = production - requirements.
-            closing = production - requirements;
+            // These are non-storable flows; closing = production - requirements - household consumption.
+            // Household consumption represents services consumed by population during the tick.
+            closing = production - requirements - consumption;
         } else {
             // Cumulative goods (physical inventory): opening + production - requirements - consumption.
             closing = opening + production - requirements - consumption;

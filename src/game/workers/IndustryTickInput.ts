@@ -24,4 +24,7 @@ export interface IndustryTickInput {
     colonyTreasury: number;
     sectorInvestment: Record<keyof IndustrialSectors, number>;
     activeLaws: Set<string>;
+
+    // Current tick number for ledger transactions
+    tick: number;
 }

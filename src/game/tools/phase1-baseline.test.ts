@@ -134,6 +134,7 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					colonyTreasury: baseInput.colonyTreasury,
 					sectorInvestment: baseInput.sectorInvestment,
 					activeLaws: baseInput.activeLaws,
+					tick: (input.tick ?? 0) + 1,
 				};
 			}
 
@@ -324,6 +325,7 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 				colonyTreasury: baseInput.colonyTreasury,
 				sectorInvestment: baseInput.sectorInvestment,
 				activeLaws: baseInput.activeLaws,
+				tick: (input.tick ?? 0) + 1,
 			};
 
 			if ((t + 1) % 10 === 0) {

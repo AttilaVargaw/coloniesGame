@@ -17,6 +17,7 @@ function requireNonNegativeFinite(value: number, label: string): number {
 /**
  * Shared cash-debit helper with validation.
  * Updates bb.money (remaining balance) and bb.moneySpent (cumulative spent).
+ * Assumes cost has already been validated to not exceed bb.money.
  */
 function debitCapitalMoney(
     bb: CapitalBlackboard,
@@ -24,10 +25,10 @@ function debitCapitalMoney(
     label: string,
 ): void {
     requireNonNegativeFinite(cost, `${label} cost`);
-    requireNonNegativeFinite(bb.money, `${label} opening balance`);
+    requireNonNegativeFinite(bb.money, `${label} remaining balance`);
     requireNonNegativeFinite(bb.moneySpent, `${label} previous spending`);
 
-    if(cost > bb.money + CASH_EPSILON) {
+    if(cost > bb.money) {
         throw new Error(
             `${label} exceeds available cash: cost=${cost}, cash=${bb.money}`,
         );
@@ -41,7 +42,7 @@ function debitCapitalMoney(
     }
 
     bb.moneySpent = nextSpent;
-    bb.money = nextMoney < 0 ? 0 : nextMoney;
+    bb.money = nextMoney; // cost already validated <= bb.money
 }
 
 /**
@@ -158,8 +159,9 @@ export class ReplenishLosses extends Action<CapitalBlackboard> {
             const key: keyof Goods = goodKey as keyof Goods;
             const { price, stock, remainingMoney } = getPurchaseInputs(bb, key);
 
-            const affordable = price === 0 ? amount : remainingMoney / price;
-            const actualAmount = Math.min(amount, stock, affordable);
+            // Calculate max affordable so cost cannot exceed remainingMoney
+            const maxAffordable = price === 0 ? amount : remainingMoney / price;
+            const actualAmount = Math.min(amount, stock, maxAffordable);
             const cost = actualAmount * price;
 
             if(!Number.isFinite(cost)) {
@@ -168,7 +170,12 @@ export class ReplenishLosses extends Action<CapitalBlackboard> {
 
             debitCapitalMoney(bb, cost, `Capital replenishment ${key}`);
             bb.replenishAmounts[key] = -actualAmount;
-            bb.currentStock[key] = (bb.currentStock[key] ?? 0) + actualAmount;
+
+            const nextStock = (bb.currentStock[key] ?? 0) + actualAmount;
+            if(!Number.isFinite(nextStock)) {
+                throw new Error(`Capital stock overflow: ${key}`);
+            }
+            bb.currentStock[key] = nextStock;
             bb.availableGoods[key] = stock - actualAmount;
         }
         return "SUCCESS";
@@ -202,8 +209,10 @@ export class InvestCapital extends Action<CapitalBlackboard> {
         if(toBuy <= 0) return "SUCCESS";
 
         const { price, stock, remainingMoney } = getPurchaseInputs(bb, key);
-        const affordable = price === 0 ? toBuy : remainingMoney / price;
-        const actualBuy = Math.min(toBuy, stock, affordable);
+
+        // Calculate max affordable so cost cannot exceed remainingMoney
+        const maxAffordable = price === 0 ? toBuy : remainingMoney / price;
+        const actualBuy = Math.min(toBuy, stock, maxAffordable);
 
         if(actualBuy <= 0) return "SUCCESS";
 
@@ -213,7 +222,12 @@ export class InvestCapital extends Action<CapitalBlackboard> {
         }
 
         debitCapitalMoney(bb, cost, `Capital investment ${key}`);
-        bb.currentStock[key] = current + actualBuy;
+
+        const nextStock = (bb.currentStock[key] ?? 0) + actualBuy;
+        if(!Number.isFinite(nextStock)) {
+            throw new Error(`Capital stock overflow: ${key}`);
+        }
+        bb.currentStock[key] = nextStock;
         bb.investAmounts[key] = -actualBuy;
         bb.availableGoods[key] = stock - actualBuy;
 

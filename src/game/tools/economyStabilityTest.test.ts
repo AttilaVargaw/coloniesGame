@@ -48,7 +48,6 @@ describe("economy stability", () => {
         let seed = 0
         for(const { population, name } of words) {
             let found = false;
-            let failedSector = ""
 
             for(; seed < 25_000 && !found; ++seed) {
                 const baseInput = generateRandomConfig(seed, population!);

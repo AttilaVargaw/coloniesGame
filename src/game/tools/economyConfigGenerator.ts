@@ -903,29 +903,21 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		}
 	}
 
-	const colonyGoodsDelta = computeColonyGoodsDelta(
-		goods,
-		goodsForDelta,
-		activeSectors,
-		sectorResults
-	);
 
-	// Apply colony goods changes (additive for cumulative, net replacement for non-cumulative)
-	// Uses checked subtraction so inventory deficits throw rather than silently clamping.
-	const colonyGoodsProduction = createEmptyWarehouse();
-	const colonyGoodsRequirements = createEmptyWarehouse();
-	for(const [key, value] of Object.entries(colonyGoodsDelta)) {
-		if(value > 0) {
-			colonyGoodsProduction[key as keyof Goods] = value;
-		} else if(value < 0) {
-			colonyGoodsRequirements[key as keyof Goods] = Math.abs(value);
-		}
+	// Build total requirements = sector consumption + capital purchases
+	const totalGoodsRequirements: Goods = createEmptyWarehouse();
+	for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+		totalGoodsRequirements[key] =
+			(sumGoodsRequirements[key] ?? 0) +
+			(capitalPurchasesByGood[key] ?? 0);
 	}
 
+	// Use GROSS production and total requirements (sector + capital) for finalization.
+	// This preserves offsetting production and consumption rather than erasing them.
 	const colonyGoodsChanges = finalizeGoods(
 		goods,
-		colonyGoodsProduction,
-		colonyGoodsRequirements,
+		sumGoodsProduction,
+		totalGoodsRequirements,
 		fulfilledDemandQty,
 		population
 	);

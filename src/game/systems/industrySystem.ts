@@ -17,6 +17,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     }
 
     private workerPool: IndustryWorkerPool | null = null;
+    private tickCounter = 0;
 
     private ensureWorkerPool() {
         if(!this.workerPool) {
@@ -50,6 +51,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
     private onDayPassed = () => {
         this.ensureWorkerPool();
+        this.tickCounter++;
 
         const industries = this.nodes.map(({ entity, industry }) => {
             const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
@@ -106,6 +108,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 householdMoney: industry.householdMoney,
                 sectorInvestment: industry.sectorInvestment,
                 activeLaws: industry.activeLaws,
+                tick: this.tickCounter,
             };
         });
 

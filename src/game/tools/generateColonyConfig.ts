@@ -3,7 +3,7 @@ import { SettlementType } from "../components/industryComponent";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
-import { createEmptyWarehouse, createStarterWarehouse } from "../factories/createStarterWarehouse";
+import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustryTickInput } from "../workers/IndustryTickInput";
 import { ColonyConfig, DEFAULT_CONFIG, seedCapitalStock } from "./economyConfigGenerator";
 
@@ -59,5 +59,6 @@ export function generateColonyConfig(
 		colonyTreasury: 0,
 		sectorInvestment,
 		activeLaws: new Set(),
+		tick: 0,
 	};
 }

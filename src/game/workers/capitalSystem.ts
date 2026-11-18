@@ -103,7 +103,10 @@ export function processCapital(
         }
 
         const sectorResult = sectorResults[name];
-        const productionRatio = sectorResult?.productionRatio ?? 0;
+        if(!sectorResult) {
+            throw new Error(`Missing sector result for active sector ${name}`);
+        }
+        const productionRatio = sectorResult.productionRatio;
         const decay = config.capitalEfficiencyDecay ?? 0;
         const rawMoney = money[name] ?? 0;
         if(!Number.isFinite(rawMoney) || rawMoney < -1e-6) {
@@ -227,6 +230,24 @@ export function processCapital(
             );
         }
 
+        // Independent cash-cost check: reportedSpent must match actual capital goods purchased at prices.
+        let expectedCapitalCost = 0;
+        for(const [goodKey, amount] of Object.entries(bb.replenishAmounts)) {
+            const key = goodKey as keyof Goods;
+            expectedCapitalCost += -(amount ?? 0) * prices[key];
+        }
+        for(const [goodKey, amount] of Object.entries(bb.investAmounts)) {
+            const key = goodKey as keyof Goods;
+            expectedCapitalCost += -(amount ?? 0) * prices[key];
+        }
+        const costTolerance = Math.max(1e-6, expectedCapitalCost * 1e-9);
+        if(Math.abs(reportedSpent - expectedCapitalCost) > costTolerance) {
+            throw new Error(
+                `Capital purchase cost mismatch for ${name}: ` +
+                `reported=${reportedSpent}, expected=${expectedCapitalCost}`,
+            );
+        }
+
         // Validate final capital stock
         for(const [goodKey, qty] of Object.entries(bb.currentStock)) {
             requireNonNegativeFinite(
@@ -258,7 +279,14 @@ export function processCapital(
     }
 
     // Independent inventory reconciliation: opening - closing must equal recorded purchases.
-    for(const goodKey of Object.keys(openingAvailableGoods) as (keyof Goods)[]) {
+    // Use union of all relevant keys so a good purchased that was absent from opening inventory is still checked.
+    const inventoryKeys = new Set<keyof Goods>([
+        ...Object.keys(openingAvailableGoods) as (keyof Goods)[],
+        ...Object.keys(remainingGoods) as (keyof Goods)[],
+        ...Object.keys(replenishmentDelta) as (keyof Goods)[],
+    ]);
+
+    for(const goodKey of inventoryKeys) {
         const opening = openingAvailableGoods[goodKey] ?? 0;
         const closing = remainingGoods[goodKey] ?? 0;
         const consumed = opening - closing;
@@ -273,7 +301,8 @@ export function processCapital(
         if(Math.abs(consumed - recorded) > tolerance) {
             throw new Error(
                 `Capital inventory does not reconcile for ${goodKey}: ` +
-                `consumed=${consumed}, recorded=${recorded}, tolerance=${tolerance}`,
+                `opening=${opening}, closing=${closing}, ` +
+                `consumed=${consumed}, recorded=${recorded}`,
             );
         }
     }

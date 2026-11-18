@@ -142,7 +142,6 @@ describe("Integrated accounting — complete tick reconciliation", () => {
 		});
 
 		it("total money conserved with zero-opening household wealth", () => {
-			const state = createSimState();
 			const { input, result } = createCompleteEconomyInput();
 
 			// Zero wealth BEFORE simulating the tick — not after.
@@ -240,7 +239,7 @@ describe("Integrated accounting — complete tick reconciliation", () => {
 		});
 
 		it("group with zero opening wealth spends at most its wages", () => {
-			const { input, result } = createCompleteEconomyInput({});
+			const { input } = createCompleteEconomyInput({});
 
 			// Zero out all opening wealth
 			for (const pop of Object.values(input.population)) {
