@@ -32,23 +32,6 @@ export const sectors = new Set<keyof IndustrialSectors>(
 	(Object.keys(PER_CAPITA_SECTOR_RATIOS) as unknown) as (keyof IndustrialSectors)[]
 );
 
-// Non-cumulative goods that are services (produced and consumed within same tick)
-const SERVICE_GOODS = new Set<keyof Goods>([
-	"energy",
-	"services",
-	"governance",
-	"healthcare",
-	"education",
-	"lawEnforcement",
-	"environmentFactor",
-	"defense",
-	"entertainment",
-	"logistics",
-	"monetaryServices",
-	"tourism",
-	"faith",
-]);
-
 // Sectors that produce service goods as primary output, plus sectors
 // that produce critical inputs needed by service producers (oil, water, paper, chemicals).
 // DISABLED: Two-phase execution causes input supply chain issues.

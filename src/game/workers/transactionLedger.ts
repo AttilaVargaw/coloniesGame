@@ -101,11 +101,24 @@ export class TransactionLedger {
 			tx.type === "population_consumption" ||
 			tx.type === "wage_payment" ||
 			tx.type === "capital_purchase" ||
-			tx.type === "population_spending"
+			tx.type === "population_spending" ||
+			tx.type === "treasury_subsidy"
 		) {
 			// Internal transfers require both buyer and seller
 			this.validateAccountId(tx.buyerId, "buyerId");
 			this.validateAccountId(tx.sellerId, "sellerId");
+
+			if (tx.type === "goods_purchase") {
+				if (tx.goodId === undefined) {
+					throw new Error("goods_purchase requires goodId");
+				}
+				if (tx.quantity === undefined || !Number.isFinite(tx.quantity) || tx.quantity < 0) {
+					throw new Error(`goods_purchase requires valid quantity: ${tx.quantity}`);
+				}
+				if (tx.unitPrice === undefined || !Number.isFinite(tx.unitPrice) || tx.unitPrice < 0) {
+					throw new Error(`goods_purchase requires valid unitPrice: ${tx.unitPrice}`);
+				}
+			}
 
 			changes.push(
 				[tx.buyerId!, -tx.amount],
@@ -201,6 +214,7 @@ export class TransactionLedger {
 	} {
 		const accountErrors: Record<string, number> = Object.create(null);
 		let totalError = 0;
+		let valid = true;
 
 		const allAccounts = new Set([
 			...Object.keys(openingBalances),
@@ -245,9 +259,21 @@ export class TransactionLedger {
 			if(!Number.isFinite(totalError)) {
 				throw new Error("Ledger conservation overflow");
 			}
+
+			// Scale-aware per-account tolerance
+			const tolerance = 1e-6 + 1e-10 * Math.max(
+				1,
+				Math.abs(opening),
+				Math.abs(closing),
+				Math.abs(expectedClosing),
+			);
+
+			if (Math.abs(signedError) > tolerance) {
+				valid = false;
+			}
 		}
 
-		return { valid: totalError < 1e-6, error: totalError, accountErrors };
+		return { valid, error: totalError, accountErrors };
 	}
 }
 

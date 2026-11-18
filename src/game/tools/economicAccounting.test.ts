@@ -991,6 +991,7 @@ it("capital needs a good returned by a sector — capital can purchase it", () =
 
         // Farm should have returned some water
         const returnedWater = result.accounting.returnedInputsByGood?.water ?? 0;
+        expect(returnedWater).toBeGreaterThanOrEqual(0);
 
         // Capital processing (foodFactory) should be able to purchase that water
         const capitalWaterPurchases = result.accounting.capitalPurchasesByGood?.water ?? 0;
@@ -1022,12 +1023,6 @@ it("accounting throws late in the tick — price/wage memory and tick count rema
 it("household food sales are zero when food is unavailable — wages still paid", () => {
 		const state = createSimState();
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, food: 0 } });
-
-		const openingWealthByPop = Object.fromEntries(
-			Object.entries(input.population).map(
-				([key, pop]) => [key, pop.wealth ?? 0],
-			),
-		);
 		const state2 = createSimState();
 		const result = simulateTick(input, state2);
 

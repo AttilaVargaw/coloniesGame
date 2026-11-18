@@ -23,19 +23,11 @@ function getColoniesWithPopulation(root: BodyBlueprint) {
     return colonies;
 }
 
-function totalPopulation(pop: Record<string, any>) {
-    return Object.values(pop).reduce((sum, p) => sum + (p.number ?? 0), 0);
-}
-
 function debugFoodTrace(config: Partial<IndustryTickInput>, ticks: number) {
     const state = createSimState();
     let input = generateColonyConfig(config as any, {});
-    const farmPresent = input.activeSectors.has("farm");
     for(let i = 0; i < ticks; i++) {
         const result = simulateTick(input, state);
-        const foodConsumed = result.goodsRequirements.food ?? 0;
-        const foodProduced = result.goodsProduction.food ?? 0;
-        const foodAfter = result.goods.food ?? 0;
         input.goods = result.goods;
         input.money = result.money;
         input.capitalStock = result.capitalStock;
@@ -62,7 +54,7 @@ describe("economy stability", () => {
                 const baseInput = generateRandomConfig(seed, population!);
                 const activeSectors = [...baseInput.activeSectors];
 
-                const { validation, config } = generateValidatedColonyConfig({
+                const { validation } = generateValidatedColonyConfig({
                     populationSize: population!,
                     activeSectors,
                     starterMoneyPerSector: 20_000_000,
@@ -82,7 +74,6 @@ describe("economy stability", () => {
                     }
                     if(validation.failedSector) {
                         console.log("Failed sector ", validation.failedSector.sector)
-                        failedSector = validation.failedSector.sector
                     }
                 }
             }

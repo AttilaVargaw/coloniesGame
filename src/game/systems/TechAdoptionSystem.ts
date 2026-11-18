@@ -7,7 +7,6 @@ import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { TechAdoptionProgressEvent, TechFullyAdoptedEvent } from "@game/events/techEvents";
 import { getTech } from "@game/data/Techs";
 import { IndustryComponent } from "@game/components/industryComponent";
-import { createEmptyWarehouse } from "@game/factories/createStarterWarehouse";
 import { Queue } from "@/engine/lib/commandQueue";
 import type { IndustrialSectors } from "../components/Factories";
 import type { Population } from "../data/Population";

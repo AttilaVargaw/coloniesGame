@@ -591,7 +591,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
 
     describe("Stored goods retain inventory when no production", () => {
         it("stored goods retain inventory when no production or consumption", () => {
-            const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
                 starterMoneyPerSector: 1_000_000_000,
@@ -616,7 +615,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
 
     describe("Environmental index semantics", () => {
         it("environmentFactor follows non-cumulative flow semantics", () => {
-            const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
                 starterMoneyPerSector: 1_000_000_000,
@@ -627,7 +625,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.energy = 1000;
             input.goods.governance = 1000;
 
-            const openingGoods = { ...input.goods };
             const result = simulateTick(input, createSimState());
 
             const envProduction = result.accounting.sectorProductionByGood?.environmentFactor ?? 0;
@@ -642,7 +639,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
 
     describe("Sector-level accounting invariants", () => {
         it("sector profits = revenue - labor - inputs", () => {
-            const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
                 starterMoneyPerSector: 1_000_000_000,
@@ -668,7 +664,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
         });
 
         it("sector utilization equals actualScale", () => {
-            const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
                 starterMoneyPerSector: 1_000_000_000,

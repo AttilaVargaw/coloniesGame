@@ -31,7 +31,7 @@ function getSectorCostPerUnit(
         }, 0) * techMult
         : 0;
 
-    const sectorResult = industry.sectorResults?.[sectorKey];
+    const sectorResult = industry.sectorResults?.get(sectorKey);
     const producedGoods = sectorResult?.producedGoods ?? {} as Record<keyof Goods, number>;
     const totalProduced = Object.entries(producedGoods).reduce((sum: number, [, v]) => sum + (v ?? 0), 0);
     return totalProduced > 0 ? (goodsCost + laborCost) / totalProduced : 0;
@@ -41,7 +41,7 @@ function getGoodCostPerUnit(
     goodKey: keyof Goods,
     industry: Pick<IndustryComponent, "techMultipliers" | "sectorResults">,
 ): number {
-    for(const [sectorKey, sectorResult] of Object.entries(industry.sectorResults ?? {})) {
+    for(const [sectorKey, sectorResult] of industry.sectorResults ?? new Map()) {
         const producedGoods = (sectorResult as { producedGoods?: Record<keyof Goods, number> }).producedGoods ?? {} as Record<keyof Goods, number>;
         if((producedGoods[goodKey] ?? 0) > 0) {
             return getSectorCostPerUnit(sectorKey as keyof IndustrialSectors, industry);

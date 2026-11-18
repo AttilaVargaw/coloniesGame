@@ -99,7 +99,7 @@ describe("IndustryComponent", () => {
         expect(industry.colonyType).toBe("standard")
         expect(industry.sectorUtilization["powerPlant"]).toBe(0)
         expect(industry.sectorStopReason["powerPlant"]).toBe("")
-        expect(industry.sectorResults).toEqual({})
+        expect(industry.sectorResults.size).toBe(0)
         expect(industry.sectorProfits["powerPlant"]).toBe(0)
         expect(industry.sectorRevenue["powerPlant"]).toBe(0)
         expect(industry.capitalStock["powerPlant"]).toEqual({})

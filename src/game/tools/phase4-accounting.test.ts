@@ -23,7 +23,7 @@ describe("TransactionLedger", () => {
     it("verifyConservation passes with balanced internal transfers", () => {
         const ledger = new TransactionLedger();
         // Buyer pays 100, seller receives 100 → both accounts net to zero
-        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: 100 });
+        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", goodId: "food", quantity: 10, unitPrice: 10, amount: 100 });
         const result = ledger.verifyConservation(
             { A: 1000, B: 500 },
             { A: 900, B: 600 },
@@ -35,7 +35,7 @@ describe("TransactionLedger", () => {
     it("verifyConservation detects unbalanced transfers", () => {
         const ledger = new TransactionLedger();
         // Buyer pays 100 but closing balances don't reflect it
-        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", quantity: 10, unitPrice: 10, amount: 100 });
+        ledger.record({ tick: 1, type: "goods_purchase", buyerId: "A", sellerId: "B", goodId: "food", quantity: 10, unitPrice: 10, amount: 100 });
         const result = ledger.verifyConservation(
             { A: 1000, B: 500 },
             { A: 1000, B: 500 }, // balances unchanged → mismatch

@@ -57,6 +57,7 @@ describe("TransactionLedger", () => {
 			buyerId: "population",
 			sellerId: "sectorA",
 			amount: 1000,
+			goodId: "food",
 			quantity: 50,
 			unitPrice: 20,
 		})
@@ -113,6 +114,9 @@ describe("TransactionLedger", () => {
 			buyerId: "accountA",
 			sellerId: "accountA",
 			amount: 500,
+			goodId: "food",
+			quantity: 25,
+			unitPrice: 20,
 		})
 
 		const result = ledger.verifyConservation(
@@ -132,6 +136,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("Invalid transaction tick")
 
 		expect(() => ledger.record({
@@ -140,6 +147,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("Invalid transaction tick")
 	})
 
@@ -151,6 +161,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: -50,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("Invalid transaction amount")
 	})
 
@@ -194,6 +207,9 @@ describe("TransactionLedger", () => {
 			type: "goods_purchase",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("buyerId cannot be empty")
 	})
 
@@ -205,6 +221,9 @@ describe("TransactionLedger", () => {
 			buyerId: "",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("cannot be empty")
 	})
 
@@ -216,6 +235,9 @@ describe("TransactionLedger", () => {
 			buyerId: " treasury ",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		})).toThrow("cannot contain surrounding whitespace")
 	})
 
@@ -227,6 +249,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 			buyerWealthBefore: -10,
 		})).toThrow("Invalid buyerWealthBefore")
 
@@ -236,6 +261,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 			sellerMoneyAfter: Infinity,
 		})).toThrow("Invalid sellerMoneyAfter")
 	})
@@ -248,6 +276,9 @@ describe("TransactionLedger", () => {
 			buyerId: "A",
 			sellerId: "B",
 			amount: 100,
+			goodId: "food",
+			quantity: 1,
+			unitPrice: 100,
 		}
 		ledger.record(tx)
 

@@ -28,7 +28,7 @@ export function SectorRow({
     const techMultiplier = industry.techMultipliers[sectorKey] ?? 1
 
     const config = industrySectorBlueprints.get(sectorKey);
-    const sectorResult = industry.sectorResults?.[sectorKey];
+    const sectorResult = industry.sectorResults?.get(sectorKey);
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     const hasData = !!sectorResult;
     const isStopped = sectorResult?.productionRatio === 0;
