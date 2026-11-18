@@ -520,7 +520,7 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
     });
 
     describe("Non-cumulative goods validation", () => {
-        it("zero production + positive consumption throws for genuinely non-cumulative good", () => {
+        it("zero production + positive consumption clamps to zero for non-cumulative goods", () => {
             const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
@@ -537,8 +537,25 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.governance = 10000;
 
             const state2 = createSimState();
-            // Test that some non-cumulative good throws
-            expect(() => simulateTick(input, createSimState())).toThrow(/Non-cumulative good (energy|governance|services)/);
+            // With the fix matching worker pipeline, non-cumulative goods with
+            // requirements > production are clamped to 0 instead of throwing.
+            // This allows cascade failures to propagate naturally.
+            const result = simulateTick(input, state2);
+            expect(result).not.toBeNull();
+            
+            // Non-cumulative goods with no production should be 0 after consumption
+            expect(result.goods.energy).toBe(0);
+            expect(result.goods.governance).toBe(0);
+            
+            // In the FIRST tick, sectors can buy from opening stock so they run.
+            // They only stop with "No materials" in subsequent ticks when stock is depleted.
+            // Verify they produced/consumed in this tick.
+            const energyDependentSectors = ["healthcare", "education", "lawEnforcement", "entertainmentIndustry", "logistics"];
+            for(const sector of energyDependentSectors) {
+                const res = result.sectorResults[sector];
+                expect(res).toBeDefined();
+                expect(res.productionRatio).toBeGreaterThan(0);
+            }
         });
 
         it("production equal to consumption leaves zero closing flow", () => {

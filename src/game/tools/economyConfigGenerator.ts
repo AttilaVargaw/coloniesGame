@@ -1161,25 +1161,19 @@ function finalizeGoods(
 	);
 
 	// For non-cumulative goods, replace with net production minus all consumption
-	// (matches live worker pipeline). Sector requirements must not exceed available flow.
-	// Household demand can be unmet (no production = no consumption).
+	// (matches live worker pipeline). If requirements exceed production, the
+	// excess demand is simply unmet (clamped to 0). This allows cascade
+	// failures (e.g., power plant stops → energy-dependent sectors stop) to
+	// propagate naturally without throwing.
 	for(const key in finalGoods) {
 		const goodKey = key as keyof Goods;
 		if(NON_CUMULATING_GOODS.has(goodKey)) {
 			const production = sumGoodsProduction[goodKey] ?? 0;
 			const requirements = sumGoodsRequirements[goodKey] ?? 0;
 			const householdConsumption = populationConsumption[goodKey] ?? 0;
-			const availableFlow = production;
-
-			if(requirements > availableFlow + 1e-6) {
-				throw new Error(
-					`Non-cumulative good ${goodKey} sector requirements exceed production: ` +
-					`production=${production}, requirements=${requirements}`,
-				);
-			}
 
 			const totalConsumption = requirements + householdConsumption;
-			finalGoods[goodKey] = Math.max(0, availableFlow - totalConsumption);
+			finalGoods[goodKey] = Math.max(0, production - totalConsumption);
 		}
 	}
 

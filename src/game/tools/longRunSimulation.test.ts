@@ -550,21 +550,21 @@ function runSimulation(
 
 describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	describe("Scenario: Normal economy", () => {
-		it("runs 1,200 ticks with standard starting conditions", () => {
-			const run = runSimulation("normal", 1200, {
+		it("runs 1,500 ticks with standard starting conditions", () => {
+			const run = runSimulation("normal", 1500, {
 				populationSize: 100_000,
 				activeSectors: COMPLETE_SECTORS,
 				starterMoneyPerSector: 1_000_000_000,
 				capitalStockMultiplier: 1,
 			});
 
-			expect(run.results.length).toBe(1200);
-			expect(run.metrics.length).toBe(1200);
+			expect(run.results.length).toBe(1500);
+			expect(run.metrics.length).toBe(1500);
 		});
 	});
 
 	describe("Scenario: Low resources", () => {
-		it("runs 1,000 ticks with scarce raw materials", () => {
+		it("runs 1,500 ticks with scarce raw materials", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
@@ -582,7 +582,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 			input.goods.fissionMaterial = 100;
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1200; tick++) {
+			for(let tick = 0; tick < 1500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -601,12 +601,12 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1200);
+			expect(ticksSurvived).toBe(1500);
 		});
 	});
 
 	describe("Scenario: Low cash", () => {
-		it("runs 1,200 ticks with minimal sector and household wealth", () => {
+		it("runs 1,500 ticks with minimal sector and household wealth", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
@@ -619,7 +619,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 			);
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1200; tick++) {
+			for(let tick = 0; tick < 1500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -638,7 +638,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1200);
+			expect(ticksSurvived).toBe(1500);
 		});
 	});
 
@@ -688,7 +688,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	});
 
 	describe("Scenario: No population growth", () => {
-		it("runs 1,000 ticks with zero birth rates", () => {
+		it("runs 1,500 ticks with zero birth rates", () => {
 			const state = createSimState();
 			let input = generateColonyConfig(
 				{
@@ -705,7 +705,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 			}
 
 			let ticksSurvived = 0;
-			for(let tick = 0; tick < 1000; tick++) {
+			for(let tick = 0; tick < 1500; tick++) {
 				const tickInput = structuredClone(input);
 
 				const result = simulateTick(input, state);
@@ -724,7 +724,7 @@ describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 				} as IndustryTickInput;
 			}
 
-			expect(ticksSurvived).toBe(1000);
+			expect(ticksSurvived).toBe(1500);
 		});
 	});
 
