@@ -4,10 +4,10 @@ import {
 	simulateTick,
 } from "./economyConfigGenerator.ts";
 import { generateColonyConfig } from "./generateColonyConfig.ts";
-import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
+import type { IndustryTickInput, PriceSnapshot } from "../workers/IndustryTickInput.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import { validateEconomicInvariants, validateLongRunSimulation } from "./economicInvariants.ts";
-import { Goods } from "../data/Goods.ts";
+import { Goods, basePrices } from "../data/Goods.ts";
 import { IndustrialSectors } from "../components/Factories";
 
 // Minimum viable sectors for non-cumulative goods validation
@@ -22,6 +22,13 @@ const minimalViableSectors: (keyof IndustrialSectors)[] = [
 ];
 
 function advanceTick(input: IndustryTickInput, result: IndustryTickResult): IndustryTickInput {
+	const prices: PriceSnapshot = {
+		entityId: input.entityId,
+		sourceTick: input.tick ?? 0,
+		effectiveTick: (input.tick ?? 0) + 1,
+		prices: input.prices?.prices ?? { ...basePrices },
+	};
+
 	return {
 		...result,
 		activeSectors: new Set(input.activeSectors),
@@ -37,6 +44,7 @@ function advanceTick(input: IndustryTickInput, result: IndustryTickResult): Indu
 		activeLaws: input.activeLaws,
 		tick: (input.tick ?? 0) + 1,
 		producerInventories: input.producerInventories ?? {},
+		prices,
 	} as IndustryTickInput;
 }
 

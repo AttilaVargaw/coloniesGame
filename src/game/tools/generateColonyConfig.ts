@@ -1,10 +1,10 @@
 import type { IndustrialSectors } from "../components/Factories";
 import { SettlementType } from "../components/industryComponent";
 import { createStarterPopulation } from "../data/getPopulationBreakdown";
-import { Goods } from "../data/Goods";
+import { Goods, basePrices } from "../data/Goods";
 import { Population } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
-import type { IndustryTickInput } from "../workers/IndustryTickInput";
+import type { IndustryTickInput, PriceSnapshot } from "../workers/IndustryTickInput";
 import { ColonyConfig, DEFAULT_CONFIG, seedCapitalStock } from "./economyConfigGenerator";
 
 export function generateColonyConfig(
@@ -36,6 +36,13 @@ export function generateColonyConfig(
 		selectedMethod[sector] = null;
 	}
 
+	const prices: PriceSnapshot = {
+		entityId: "test-colony",
+		sourceTick: 0,
+		effectiveTick: 1,
+		prices: { ...basePrices },
+	};
+
 	return {
 		entityId: "test-colony",
 		activeSectors: new Set(activeSectors),
@@ -61,5 +68,6 @@ export function generateColonyConfig(
 		activeLaws: new Set(),
 		tick: 0,
 		producerInventories: {},
+		prices,
 	};
 }

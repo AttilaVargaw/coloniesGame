@@ -4,13 +4,15 @@ import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
 import { IndustryTickCompletedEvent } from "@/engine/lib/events/IndustryTickCompletedEvent";
 import { Engine } from "@/engine/core/engine";
-import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
+import { Goods, NON_CUMULATING_GOODS, basePrices } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import { IndustryWorkerPool } from "./industryWorkerPool";
+import { MarketPriceSystem } from "./MarketPriceSystem";
 import type { IndustrialSectors } from "../components/Factories";
 import { laws } from "./laws";
+import { PriceSnapshot } from "../workers/IndustryTickInput";
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -30,6 +32,34 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             });
             this.workerPool.start();
         }
+    }
+
+    private getPriceSnapshot(entityId: string): PriceSnapshot {
+        const marketPriceSystem = this.engine?.getSystem(MarketPriceSystem);
+        if (!marketPriceSystem) {
+            // Fallback to base prices if MarketPriceSystem not registered
+            return {
+                entityId,
+                sourceTick: 0,
+                effectiveTick: 1,
+                prices: { ...basePrices },
+            };
+        }
+        const committed = marketPriceSystem.getCommittedPrices(entityId);
+        if (committed) {
+            return {
+                entityId: committed.entityId,
+                sourceTick: committed.sourceTick,
+                effectiveTick: committed.effectiveTick,
+                prices: committed.prices,
+            };
+        }
+        return {
+            entityId,
+            sourceTick: 0,
+            effectiveTick: 1,
+            prices: { ...basePrices },
+        };
     }
 
     private handleWorkerMessage = (event: { type: string; tick: number; patches: IndustryTickPatch[] }) => {
@@ -128,6 +158,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 activeLaws: industry.activeLaws,
                 tick: this.tickCounter,
                 producerInventories: industry.producerInventories ?? {},
+                prices: this.getPriceSnapshot(entity.id),
             };
         });
 

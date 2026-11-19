@@ -6,8 +6,8 @@ import {
 } from "./economyConfigGenerator.ts";
 import type { SimState } from "./economyConfigGenerator.ts";
 import { generateColonyConfig } from "./generateColonyConfig.ts";
-import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
-import { Goods } from "../data/Goods.ts";
+import type { IndustryTickInput, PriceSnapshot } from "../workers/IndustryTickInput.ts";
+import { Goods, basePrices } from "../data/Goods.ts";
 import { Population } from "../data/Population.ts";
 
 // Population ratios to ensure all sectors have required workers
@@ -21,6 +21,13 @@ const TEST_OCCUPATION_RATIOS = {
 };
 
 function cloneInput(input: IndustryTickInput): IndustryTickInput {
+	const prices: PriceSnapshot = {
+		entityId: input.entityId,
+		sourceTick: input.tick ?? 0,
+		effectiveTick: (input.tick ?? 0) + 1,
+		prices: input.prices?.prices ?? { ...basePrices },
+	};
+
 	return {
 		...input,
 		activeSectors: new Set(input.activeSectors),
@@ -37,6 +44,7 @@ function cloneInput(input: IndustryTickInput): IndustryTickInput {
 		sectorInvestment: { ...input.sectorInvestment },
 		activeLaws: new Set(input.activeLaws),
 		producerInventories: input.producerInventories ?? {},
+		prices,
 	};
 }
 
@@ -122,6 +130,12 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 			for (let t = 0; t < 10; t++) {
 				const result = simulateTick(input, state);
 				snapshots.push(result);
+				const prices: PriceSnapshot = {
+					entityId: input.entityId,
+					sourceTick: input.tick ?? 0,
+					effectiveTick: (input.tick ?? 0) + 1,
+					prices: input.prices?.prices ?? { ...basePrices },
+				};
 				input = {
 					...result,
 					activeSectors: new Set(baseInput.activeSectors),
@@ -137,6 +151,7 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					activeLaws: baseInput.activeLaws,
 					tick: (input.tick ?? 0) + 1,
 					producerInventories: input.producerInventories ?? {},
+					prices,
 				};
 			}
 
@@ -329,6 +344,12 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 				activeLaws: baseInput.activeLaws,
 				tick: (input.tick ?? 0) + 1,
 				producerInventories: input.producerInventories ?? {},
+				prices: {
+					entityId: input.entityId,
+					sourceTick: input.tick ?? 0,
+					effectiveTick: (input.tick ?? 0) + 1,
+					prices: input.prices?.prices ?? { ...basePrices },
+				},
 			};
 
 			if ((t + 1) % 10 === 0) {
