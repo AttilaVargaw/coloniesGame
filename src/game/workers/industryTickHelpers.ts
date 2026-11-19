@@ -1,4 +1,4 @@
-import { Goods } from "../data/Goods";
+import { Goods, basePrices } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { getGoodRequirementsAndQoL, getRequirementsForQol } from "../data/Population";
 import { populationGrowth } from "../data/populationHelpers";
@@ -1270,4 +1270,20 @@ export function allocateLaborTwoStage(
 	}
 
 	return { allocation, unmetDemand };
+}
+
+export function validatePrices(
+    prices: Record<keyof Goods, number>
+): Record<keyof Goods, number> {
+    const validated = { ...prices };
+
+    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+        const value = validated[key];
+
+        if(!Number.isFinite(value) || value < 0) {
+            throw new Error(`Invalid or missing price for ${key}: ${value}`);
+        }
+    }
+
+    return validated;
 }
