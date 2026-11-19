@@ -2,7 +2,55 @@ import type { IndustrialSectors } from "../components/Factories";
 import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import type { SectorResult } from "../systems/generateIndustrialSector";
+import type { InputPaymentBreakdown } from "./industryTickHelpers";
+import type { PurchaseProvenance } from "./industryTickHelpers";
 
+export interface IndustryTickMetricsData {
+    populationUpdates: Record<keyof Population, {
+        qol: number;
+        expectedQol: number;
+        populationChange: number;
+        wealth: number;
+        number: number;
+        requirements: Record<string, number>;
+    }>;
+    workingWorkers: Population;
+    freeWorkers: Population;
+
+    goodsProduction: Partial<Goods>;
+    goodsRequirements: Partial<Goods>;
+
+    sectorResults: Record<string, SectorResult>;
+    sectorUtilization: Record<string, number>;
+    sectorLaborCosts: Record<string, number>;
+    sectorInputCosts: Record<string, number>;
+
+    accounting: {
+        householdSalesByGood: Partial<Goods>;
+        capitalPurchasesByGood: Partial<Goods>;
+        sectorProductionSalesByGood: Partial<Goods>;
+        sectorInputsConsumedByGood?: Partial<Goods>;
+        sectorProductionByGood?: Partial<Goods>;
+
+        wagesByPop: Record<keyof Population, number>;
+        spendingByPop: Record<keyof Population, number>;
+
+        sectorInputsPurchasedBySector: Record<string, Partial<Goods>>;
+        sectorInputsConsumedBySector: Record<string, Partial<Goods>>;
+        sectorInputRefundsBySector: Record<string, number>;
+
+        sectorInputRefundQuantitiesBySector: Record<string, Partial<Goods>>;
+        sectorInputRefundAmountsBySector: Record<string, number>;
+
+        returnedInputsByGood: Partial<Goods>;
+        sectorInputPaymentBreakdown: InputPaymentBreakdown;
+        purchaseProvenance: PurchaseProvenance;
+        treasurySubsidiesPaid: Record<string, number>;
+    };
+
+    money: Record<string, number>;
+    colonyTreasury: number;
+}
 
 export interface IndustryTickPatch {
     entityId: string;
@@ -37,4 +85,6 @@ export interface IndustryTickPatch {
         changed: Record<string, SectorResult>;
         removed: string[];
     };
+    // Metrics data for economic history (only populated on completed ticks)
+    metrics?: IndustryTickMetricsData;
 }

@@ -385,6 +385,7 @@ export function executeNonCumulativeFlow(
 					sectorUtilization[node.sectorName] = 0;
 					sectorStopReason[node.sectorName] = "No materials";
 					executedInSCC.add(node.sectorName);
+					executedSectors.add(node.sectorName);
 					hasProgress = true;
 					continue;
 				}
@@ -418,6 +419,7 @@ export function executeNonCumulativeFlow(
 					sectorUtilization[node.sectorName] = 0;
 					sectorStopReason[node.sectorName] = "No materials";
 					executedInSCC.add(node.sectorName);
+					executedSectors.add(node.sectorName);
 					hasProgress = true;
 					continue;
 				}

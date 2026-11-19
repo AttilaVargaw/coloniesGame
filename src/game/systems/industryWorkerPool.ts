@@ -7,15 +7,22 @@ export interface WorkerPoolMessage {
     patches: IndustryTickPatch[];
 }
 
+interface PendingBatch {
+    tick: number;
+    expectedResponses: number;
+    receivedPatches: IndustryTickPatch[];
+    resolved: boolean;
+}
+
 export class IndustryWorkerPool {
     private workers: Worker[] = [];
     private batches: IndustryTickInput[][] = [];
-    private pendingCount = 0;
-    private allPatches: IndustryTickPatch[] = [];
+    private pendingBatches: Map<number, PendingBatch> = new Map();
     private onMessage: (event: WorkerPoolMessage) => void;
     private onError?: (message: string) => void;
     private workerCount: number;
     private started = false;
+    private nextTickId = 1;
 
     constructor(options: {
         workerCount?: number;
@@ -43,12 +50,19 @@ export class IndustryWorkerPool {
         }
     }
 
-    tick(industries: IndustryTickInput[], tick: number) {
+    tick(industries: IndustryTickInput[]) {
         if (!this.started) this.start();
         
+        const tick = this.nextTickId++;
+        
         this.batches = Array.from({ length: this.workerCount }, () => []);
-        this.allPatches = [];
-        this.pendingCount = this.workerCount;
+        const pendingBatch: PendingBatch = {
+            tick,
+            expectedResponses: this.workerCount,
+            receivedPatches: [],
+            resolved: false,
+        };
+        this.pendingBatches.set(tick, pendingBatch);
 
         for (const industry of industries) {
             const hash = IndustryWorkerPool.hashString(industry.entityId);
@@ -64,11 +78,26 @@ export class IndustryWorkerPool {
     private handleMessage(_workerIndex: number, event: MessageEvent<WorkerPoolMessage>) {
         if (event.data.type !== "result") return;
         
-        this.allPatches.push(...event.data.patches);
-        this.pendingCount--;
+        const { tick, patches } = event.data;
+        const batch = this.pendingBatches.get(tick);
+        
+        if (!batch) {
+            console.warn(`Received result for unknown tick ${tick}`);
+            return;
+        }
+        
+        if (batch.resolved) {
+            console.warn(`Batch ${tick} already resolved, ignoring duplicate response`);
+            return;
+        }
 
-        if (this.pendingCount === 0) {
-            this.onMessage({ type: "result", tick: event.data.tick, patches: this.allPatches });
+        batch.receivedPatches.push(...patches);
+        batch.expectedResponses--;
+
+        if (batch.expectedResponses === 0) {
+            batch.resolved = true;
+            this.pendingBatches.delete(tick);
+            this.onMessage({ type: "result", tick, patches: batch.receivedPatches });
         }
     }
 
@@ -87,5 +116,6 @@ export class IndustryWorkerPool {
         }
         this.workers.length = 0;
         this.started = false;
+        this.pendingBatches.clear();
     }
 }

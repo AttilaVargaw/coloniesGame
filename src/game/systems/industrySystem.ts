@@ -2,6 +2,7 @@ import { IndustryComponent } from "@game/components/industryComponent";
 import { IndustryNode } from "@game/systems/IndustryNode";
 import { SystemWithNodes } from "@engine/systems/system";
 import { DayPassedEvent, IndustryUpdatedEvent } from "@/engine/lib/events";
+import { IndustryTickCompletedEvent } from "@/engine/lib/events/IndustryTickCompletedEvent";
 import { Engine } from "@/engine/core/engine";
 import { Goods, NON_CUMULATING_GOODS } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
@@ -53,6 +54,19 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             applyPatch(industry, patch);
             this.latestAppliedTick.set(entity.id, patch.tick);
             this.engine?.reindexEntity(entity);
+
+            // Emit tick-completed event with metrics for economic history
+            if (patch.metrics) {
+                this.engine?.dispatchEvent(
+                    new IndustryTickCompletedEvent({
+                        entity,
+                        tick: patch.tick,
+                        metrics: patch.metrics,
+                    })
+                );
+            }
+
+            // Emit general update event for UI/reactivity
             this.engine?.dispatchEvent(new IndustryUpdatedEvent(entity));
         }
     };
@@ -117,7 +131,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             };
         });
 
-        this.workerPool?.tick(industries, this.tickCounter);
+        this.workerPool?.tick(industries);
     };
 
     removeFromEngine(): this {

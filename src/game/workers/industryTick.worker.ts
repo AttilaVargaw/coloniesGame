@@ -1883,6 +1883,23 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }
 
+    // Include metrics data for economic history (only on completed ticks)
+    patch.metrics = {
+        populationUpdates: result.populationUpdates,
+        workingWorkers: result.workingWorkers,
+        freeWorkers: result.freeWorkers,
+        goodsProduction: result.goodsProduction,
+        goodsRequirements: result.goodsRequirements,
+        sectorResults: result.sectorResults,
+        sectorUtilization: result.sectorUtilization,
+        sectorLaborCosts: result.sectorLaborCosts,
+        sectorInputCosts: result.sectorInputCosts,
+        accounting: result.accounting,
+        money: result.money,
+        colonyTreasury: result.colonyTreasury,
+    };
+    hasChanged = true;
+
     return hasChanged ? patch : null;
 }
 
