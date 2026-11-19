@@ -22,6 +22,7 @@ import { computePopulationConsumption, buySectorInputs, pruneMemory, trySetPatch
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
 import { allocatePopulationSales, TransactionLedger } from "./transactionLedger";
+import type { PurchaseProvenance } from "./industryTickHelpers";
 import { computeDeprivation, computeMortalityRates, applyMortality } from "./demographics";
 import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 
@@ -927,10 +928,27 @@ function processIndustry(
         mortalityAdjustedPopulation
     );
 
+    // Scale-aware comparison for inventory validation.
+    // Uses both absolute and relative tolerance to handle values at different scales.
+    function nearlyEqual(
+        actual: number,
+        expected: number,
+        absoluteTolerance: number = 1e-6,
+        relativeTolerance: number = 1e-9,
+    ): boolean {
+        if(!Number.isFinite(actual) || !Number.isFinite(expected)) {
+            return false;
+        }
+        const tolerance = Math.max(
+            absoluteTolerance,
+            relativeTolerance * Math.max(1, Math.abs(actual), Math.abs(expected)),
+        );
+        return Math.abs(actual - expected) <= tolerance;
+    }
+
     // Direct inventory conservation invariant.
     // Closing inventory must equal opening + production - consumption - sales - capital purchases,
     // using independently-tracked flows rather than reconstructed deltas.
-    const epsilon = 1e-6;
     for(const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
         if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
             continue;
@@ -950,7 +968,7 @@ function processIndustry(
         if(
             !Number.isFinite(expectedClosing) ||
             !Number.isFinite(actualClosing) ||
-            Math.abs(actualClosing - expectedClosing) > epsilon
+            !nearlyEqual(actualClosing, expectedClosing)
         ) {
             throw new Error(
                 `Inventory conservation failed for ${goodKey}: ` +
@@ -977,8 +995,8 @@ function processIndustry(
         if(
             !Number.isFinite(expectedClosing) ||
             !Number.isFinite(actualClosing) ||
-            actualClosing < -epsilon ||
-            Math.abs(actualClosing - expectedClosing) > epsilon
+            actualClosing < -1e-6 ||
+            !nearlyEqual(actualClosing, expectedClosing)
         ) {
             throw new Error(
                 `Non-cumulative flow invariant failed for ${goodKey}: ` +
@@ -991,18 +1009,41 @@ function processIndustry(
     // PHASE 7: Transaction ledger — record all economic transfers for audit
     const ledger = new TransactionLedger();
 
-    // Sector input purchases: record from sectorInputPaymentBreakdown
-    // This is the authoritative payment breakdown from distributeSectorInputRevenue
-    for(const [consumingSector, sellerPayments] of Object.entries(sectorInputPaymentBreakdown)) {
-        for(const [producingSector, amount] of Object.entries(sellerPayments)) {
-            if(amount > 0) {
+    // Sector input purchases: record from purchaseProvenance (per-good, per-producer)
+    // This provides full audit trail with goodId, quantity, unitPrice
+    for(const [consumingSector, goodProvenance] of Object.entries(purchaseProvenance)) {
+        for(const [goodKey, sourceAllocation] of Object.entries(goodProvenance)) {
+            const good = goodKey as keyof Goods;
+            const price = currentPrices[good] ?? 0;
+            
+            // Record purchases from warehouse (colony_treasury)
+            if(sourceAllocation.warehouse > 0) {
                 ledger.record({
                     tick,
                     type: "goods_purchase",
                     buyerId: consumingSector,
-                    sellerId: producingSector,
-                    amount,
+                    sellerId: "colony_treasury",
+                    goodId: good,
+                    quantity: sourceAllocation.warehouse,
+                    unitPrice: price,
+                    amount: sourceAllocation.warehouse * price,
                 });
+            }
+            
+            // Record purchases from producing sectors
+            for(const [producingSector, quantity] of Object.entries(sourceAllocation.producers)) {
+                if(quantity > 0) {
+                    ledger.record({
+                        tick,
+                        type: "goods_purchase",
+                        buyerId: consumingSector,
+                        sellerId: producingSector,
+                        goodId: good,
+                        quantity,
+                        unitPrice: price,
+                        amount: quantity * price,
+                    });
+                }
             }
         }
     }
@@ -1083,21 +1124,29 @@ function processIndustry(
         });
     }
 
-    // Capital purchases: sector pays, colony treasury receives
-    for(const name of activeSectors) {
-        const capitalCost = moneySpent[name] ?? 0;
-        if(!Number.isFinite(capitalCost) || capitalCost < 0) {
-            throw new Error(`Invalid capital purchase cost for ${name}: ${capitalCost}`);
-        }
-        if(capitalCost > 0) {
-            ledger.record({
-                tick,
-                type: "capital_purchase",
-                buyerId: name,
-                sellerId: "colony_treasury",
-                amount: capitalCost,
-            });
-        }
+    // Capital purchases: record per-good purchases from colony treasury
+    // Use the capitalPurchasesByGood computed earlier (line 863)
+    // Note: We don't know which sector bought which capital good from the aggregate.
+    // For now, record as aggregate from colony_treasury with total amount.
+    // TODO: Track per-sector capital goods purchases for full audit trail.
+    for(const [goodKey, qtyVal] of Object.entries(capitalPurchasesByGood)) {
+        const good = goodKey as keyof Goods;
+        const qty = Number(qtyVal);
+        if(!Number.isFinite(qty) || qty <= 0) continue;
+        
+        const price = currentPrices[good] ?? 0;
+        if(!Number.isFinite(price) || price < 0) continue;
+        
+        ledger.record({
+            tick,
+            type: "goods_purchase",
+            buyerId: "capital_investment", // aggregate buyer
+            sellerId: "colony_treasury",
+            goodId: good,
+            quantity: qty,
+            unitPrice: price,
+            amount: qty * price,
+        });
     }
 
     // Verify money conservation: closing balances = opening + deltas
@@ -1186,7 +1235,7 @@ function processIndustry(
             // Sector-only sales deducted from closing inventory. Warehouse sales
             // are tracked separately in householdSalesByGood and must NOT be
             // double-subtracted here (finalizeGoods subtracts total household sales once).
-            sectorSalesByGood: (() => {
+            sectorProductionSalesByGood: (() => {
                 const byGood: Partial<Goods> = {};
                 for(const sectorSales of Object.values(salesQty)) {
                     for(const [goodKey, qty] of Object.entries(sectorSales)) {
@@ -1251,6 +1300,7 @@ return byGood;
             sectorInputRefundsBySector: refundBySector,
             returnedInputsByGood: returnedGoods,
             sectorInputPaymentBreakdown,
+            purchaseProvenance,
             treasurySubsidiesPaid: Object.fromEntries(subsidies.map(s => [s.sectorName, s.amount])),
         },
     };
@@ -1527,7 +1577,7 @@ function validateTickResult(result: IndustryTickResult): boolean {
         sectorProductionByGood: result.accounting.sectorProductionByGood,
         sectorInputsConsumedByGood: result.accounting.sectorInputsConsumedByGood,
         householdSalesByGood: result.accounting.householdSalesByGood,
-        sectorSalesByGood: result.accounting.sectorSalesByGood,
+        sectorProductionSalesByGood: result.accounting.sectorProductionSalesByGood,
         capitalPurchasesByGood: result.accounting.capitalPurchasesByGood,
         wagesByPop: result.accounting.wagesByPop,
         spendingByPop: result.accounting.spendingByPop,

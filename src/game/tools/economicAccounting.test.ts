@@ -190,7 +190,7 @@ it("with complete economy: complete inventory equation conserved", () => {
 		const inputsConsumed =
 			result.accounting.sectorInputsConsumedByGood?.agriculturalGoods ?? 0;
 		const householdSales =
-			result.accounting.sectorSalesByGood?.agriculturalGoods ?? 0;
+			result.accounting.sectorProductionSalesByGood?.agriculturalGoods ?? 0;
 		const capitalPurchases =
 			result.accounting.capitalPurchasesByGood.agriculturalGoods ?? 0;
 
@@ -528,7 +528,7 @@ it("cash-constrained households can spend only opening cash plus wages", () => {
 
         const maps = [
             result.accounting.householdSalesByGood,
-            result.accounting.sectorSalesByGood ?? {},
+            result.accounting.sectorProductionSalesByGood ?? {},
             result.accounting.capitalPurchasesByGood,
             result.accounting.sectorInputsConsumedByGood ?? {},
             result.accounting.sectorProductionByGood ?? {},
@@ -607,7 +607,7 @@ it("scarce food: population cannot spend beyond opening cash + wages", () => {
             Object.values(result.accounting.sectorInputsConsumedByGood ?? {}),
         );
         const sectorSales = sumValues(
-            Object.values(result.accounting.sectorSalesByGood ?? {}),
+            Object.values(result.accounting.sectorProductionSalesByGood ?? {}),
         );
         const capitalPurchases = sumValues(
             Object.values(result.accounting.capitalPurchasesByGood),
@@ -684,7 +684,7 @@ const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0 } });
 
         const production = result.accounting.sectorProductionByGood?.agriculturalGoods ?? 0;
         const inputsConsumed = result.accounting.sectorInputsConsumedByGood?.agriculturalGoods ?? 0;
-        const sectorSales = result.accounting.sectorSalesByGood?.agriculturalGoods ?? 0;
+        const sectorSales = result.accounting.sectorProductionSalesByGood?.agriculturalGoods ?? 0;
         const capitalPurchases = result.accounting.capitalPurchasesByGood.agriculturalGoods ?? 0;
 
         expect(production).toBeGreaterThan(0);
@@ -716,7 +716,7 @@ const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0 } });
 
         const production = result.accounting.sectorProductionByGood?.agriculturalGoods ?? 0;
         const inputsConsumed = result.accounting.sectorInputsConsumedByGood?.agriculturalGoods ?? 0;
-        const sectorSales = result.accounting.sectorSalesByGood?.agriculturalGoods ?? 0;
+        const sectorSales = result.accounting.sectorProductionSalesByGood?.agriculturalGoods ?? 0;
         const capitalPurchases = result.accounting.capitalPurchasesByGood.agriculturalGoods ?? 0;
 
         expect(production).toBeGreaterThan(0);

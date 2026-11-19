@@ -334,6 +334,18 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		prices,
 	);
 
+	// Reserve household consumption from opening goods pool before sector purchases.
+	// This ensures households get priority access to goods up to their desired consumption.
+	// Use desired consumption as the reservation upper bound (actual fulfilled <= desired).
+	const goodsForSectors: Goods = { ...goods };
+	for(const [goodKey, amount] of Object.entries(desiredConsumptionByPop)) {
+		const gKey = goodKey as keyof Goods;
+		const totalDesired = Object.values(desiredConsumptionByPop)
+			.reduce((sum, d) => sum + (d[gKey] ?? 0), 0);
+		const available = goodsForSectors[gKey] ?? 0;
+		goodsForSectors[gKey] = Math.max(0, available - totalDesired);
+	}
+
 	const last = state.lastResult;
 	const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
 	const previousSectorRevenue: Record<string, number> = last?.sectorRevenue ?? {};
@@ -500,16 +512,16 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	// Initialize money pool for phase execution
 	let currentMoneyPool: Record<string, number> = { ...startingMoney };
 
-	// Build initial warehouse composition: all opening inventory attributed to "colony_treasury"
+	// Build initial warehouse composition: all opening inventory (after household reservation) attributed to "colony_treasury"
 	const initialWarehouseComposition: Partial<Record<keyof Goods, Record<string, number>>> = {};
-	for(const [goodKey, qty] of Object.entries(goods)) {
+	for(const [goodKey, qty] of Object.entries(goodsForSectors)) {
 		if(qty > 0) {
 			initialWarehouseComposition[goodKey as keyof Goods] = { "colony_treasury": qty };
 		}
 	}
 
-	// Phase 1: Execute service producers using opening goods pool
-	let currentGoodsPool: Goods = { ...goods };
+	// Phase 1: Execute service producers using goods pool AFTER household reservation
+	let currentGoodsPool: Goods = { ...goodsForSectors };
 	let currentWarehouseComposition = initialWarehouseComposition;
 	let allPurchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
 	let allExecResults: ReturnType<typeof executeSectors>[] = [];
@@ -1013,12 +1025,22 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 	const result: IndustryTickResult = {
 		entityId,
 		goodsRequirements: {
-			...Object.entries(desiredConsumptionByPop).reduce((acc, [_, consumption]) => {
-				for(const [good, qty] of Object.entries(consumption)) {
-					acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
-				}
+			// Sector input requirements (actual consumption at finalScale)
+			...Object.entries(sumGoodsRequirements).reduce((acc, [good, qty]) => {
+				acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
 				return acc;
 			}, {} as Partial<Goods>),
+			// Capital goods purchases
+			...Object.entries(capitalPurchasesByGood).reduce((acc, [good, qty]) => {
+				acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
+				return acc;
+			}, {} as Partial<Goods>),
+			// Household consumption (fulfilled demand)
+			...Object.entries(fulfilledDemandQty).reduce((acc, [good, qty]) => {
+				acc[good as keyof Goods] = (acc[good as keyof Goods] ?? 0) + qty;
+				return acc;
+			}, {} as Partial<Goods>),
+			// Replenishment delta (negative for goods replenished)
 			...negateReplenishmentDelta(replenishmentDelta),
 		},
 		goodsProduction: sumGoodsProduction,
@@ -1045,7 +1067,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		unmetDemand: {},
 		deprivation: {},
 		accounting: {
-			sectorSalesByGood: (() => {
+			sectorProductionSalesByGood: (() => {
 				const byGood: Partial<Goods> = {};
 				for(const sectorSales of Object.values(salesQty)) {
 					for(const [goodKey, qty] of Object.entries(sectorSales)) {
@@ -1086,6 +1108,7 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 			sectorInputRefundsBySector: refundBySector,
 			returnedInputsByGood: returnedGoods,
 			sectorInputPaymentBreakdown,
+			purchaseProvenance: finalPurchaseProvenance,
 			treasurySubsidiesPaid: subsidiesPaid,
 		}
 	}
@@ -1144,7 +1167,7 @@ function finalizeGoods(
 	currentGoods: Goods,
 	sumGoodsProduction: Goods,
 	sumGoodsRequirements: Goods,
-	populationConsumption: Partial<Goods>,
+	householdConsumption: Partial<Goods>,
 	population: Population
 ): Goods {
 	const finalGoods = { ...currentGoods } as Goods;
@@ -1156,7 +1179,7 @@ function finalizeGoods(
 	applyGoodsModifier(finalGoods, sumGoodsRequirements, (cur, d) =>
 		subtractChecked(cur, d, "goods" as keyof Goods)
 	);
-	applyGoodsModifier(finalGoods, populationConsumption, (cur, d) =>
+	applyGoodsModifier(finalGoods, householdConsumption, (cur, d) =>
 		subtractChecked(cur, d, "goods" as keyof Goods)
 	);
 
@@ -1170,9 +1193,9 @@ function finalizeGoods(
 		if(NON_CUMULATING_GOODS.has(goodKey)) {
 			const production = sumGoodsProduction[goodKey] ?? 0;
 			const requirements = sumGoodsRequirements[goodKey] ?? 0;
-			const householdConsumption = populationConsumption[goodKey] ?? 0;
+			const hhConsumption = householdConsumption[goodKey] ?? 0;
 
-			const totalConsumption = requirements + householdConsumption;
+			const totalConsumption = requirements + hhConsumption;
 			finalGoods[goodKey] = Math.max(0, production - totalConsumption);
 		}
 	}

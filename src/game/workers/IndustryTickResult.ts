@@ -4,6 +4,7 @@ import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 import type { SectorResult } from "../systems/generateIndustrialSector";
 import type { InputPaymentBreakdown } from "./industryTickHelpers";
+import type { PurchaseProvenance } from "./industryTickHelpers";
 
 export type { SectorResult } from "../systems/generateIndustrialSector";
 
@@ -46,7 +47,7 @@ export interface IndustryTickResult {
     accounting: {
         householdSalesByGood: Partial<Goods>;
         capitalPurchasesByGood: Partial<Goods>;
-        sectorSalesByGood?: Partial<Goods>;
+        sectorProductionSalesByGood: Partial<Goods>;
         sectorInputsConsumedByGood?: Partial<Goods>;
         sectorProductionByGood?: Partial<Goods>;
 
@@ -59,6 +60,7 @@ export interface IndustryTickResult {
         sectorInputRefundsBySector: Record<string, number>;
         returnedInputsByGood: Partial<Goods>;
         sectorInputPaymentBreakdown: InputPaymentBreakdown;
+        purchaseProvenance: PurchaseProvenance;
         treasurySubsidiesPaid: Record<string, number>;
     };
 }

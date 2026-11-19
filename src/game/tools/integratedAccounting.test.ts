@@ -422,7 +422,7 @@ describe("Integrated accounting — complete tick reconciliation", () => {
 
 			const maps = [
 				result.accounting.householdSalesByGood,
-				result.accounting.sectorSalesByGood ?? {},
+				result.accounting.sectorProductionSalesByGood ?? {},
 				result.accounting.capitalPurchasesByGood,
 				result.accounting.sectorInputsConsumedByGood ?? {},
 				result.accounting.sectorProductionByGood ?? {},

@@ -264,10 +264,10 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             const totalInputCosts = sumValues(Object.values(result.accounting.sectorInputsConsumedByGood ?? {}));
             const totalLaborCosts = sumValues(Object.values(result.sectorLaborCosts ?? {}));
             const totalCapitalCosts = sumValues(Object.values(result.accounting.capitalPurchasesByGood ?? {}));
-            const totalRevenue = sumValues(Object.values(result.accounting.sectorSalesByGood ?? {}));
+            const totalRevenue = sumValues(Object.values(result.accounting.sectorProductionSalesByGood ?? {}));
             const totalRefunds = sumValues(Object.values(result.accounting.sectorInputRefundsBySector ?? {}));
 
-            const expectedClosing = openingSectorMoney - totalInputCosts - totalLaborCosts - totalCapitalCosts + sumValues(Object.values(result.accounting.sectorSalesByGood ?? {})) + sumValues(Object.values(result.accounting.sectorInputRefundsBySector ?? {}));
+            const expectedClosing = openingSectorMoney - totalInputCosts - totalLaborCosts - totalCapitalCosts + sumValues(Object.values(result.accounting.sectorProductionSalesByGood ?? {})) + sumValues(Object.values(result.accounting.sectorInputRefundsBySector ?? {}));
 
             // Use relative tolerance for large values
             const tolerance = Math.max(1000, Math.abs(openingSectorMoney) * 1e-9);
