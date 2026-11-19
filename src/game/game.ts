@@ -29,6 +29,7 @@ import { DayPassedEvent, EntityRemovedEvent, } from "@/engine/lib/events"
 import { createEntity } from "@/engine/lib/entityRegistry"
 import { terminateTextureWorkerPool } from "./factories/textureWorkerPool"
 import { clearTextureCache } from "./factories/textureCache"
+import { MarketPriceSystem } from "./systems/MarketPriceSystem"
 
 export class Game {
     readonly engine: World
@@ -41,6 +42,7 @@ export class Game {
         this.engine
             .addSystem(LawSystem)
             .addSystem(IndustryPolicySystem)
+            .addSystem(MarketPriceSystem)
             .addSystem(IndustrySystem)
             .addSystem(EconomicMetricsSystem)
             .addSystem(TradeSystem)
