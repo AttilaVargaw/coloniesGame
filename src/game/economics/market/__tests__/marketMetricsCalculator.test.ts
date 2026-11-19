@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { marketMetricsCalculator } from "../marketMetricsCalculator";
 import { Goods, basePrices, NON_CUMULATING_GOODS } from "@game/data/Goods";
-import { Population } from "@game/data/Population";
-import { SectorBid } from "@game/workers/SectorBid";
-import { createEmptyWarehouse } from "@game/factories/createStarterWarehouse";
 
 function createMockInput() {
     const allPrices: Partial<Record<keyof Goods, number>> = {};

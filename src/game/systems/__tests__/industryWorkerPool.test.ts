@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { IndustryWorkerPool, WorkerPoolMessage } from "../industryWorkerPool";
+import { WorkerPoolMessage } from "../industryWorkerPool";
 
 describe("WorkerPoolMessage", () => {
     it("includes tick field", () => {

@@ -1,24 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MarketPriceSystem } from "../MarketPriceSystem";
 import { World } from "@engine/core/world";
-import { IndustryTickCompletedEvent } from "@/engine/lib/events/IndustryTickCompletedEvent";
-import { IndustryTickCompletedData, IndustryTickMetricsData } from "@/engine/lib/events/IndustryTickCompletedEvent";
-import { Entity } from "@engine/entities/entity";
-import { Goods } from "@game/data/Goods";
-import { Population } from "@game/data/Population";
-import { SectorBid } from "@game/workers/SectorBid";
 import { basePrices } from "@game/data/Goods";
 
 describe("MarketPriceSystem", () => {
     let engine: World;
     let system: MarketPriceSystem;
-    let mockEntity: Entity;
 
     beforeEach(() => {
         engine = new World();
         system = new MarketPriceSystem();
         system.addToEngine(engine);
-        mockEntity = new Entity("test-entity");
     });
 
     it("initializes prices from basePrices", () => {

@@ -1,7 +1,4 @@
 import type { Goods } from "@game/data/Goods";
-import type { SectorBid } from "@game/workers/SectorBid";
-import type { InputPaymentBreakdown } from "@game/workers/industryTickHelpers";
-import type { PurchaseProvenance } from "@game/workers/industryTickHelpers";
 
 export interface GoodMarketMetrics {
     good: keyof Goods;

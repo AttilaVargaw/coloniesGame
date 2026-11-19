@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { PriceAdjustmentConfig, validateConfig, MarketDemandSnapshot, SectorDesiredDemand } from "../priceAdjustmentConfig";
-import { Goods } from "@game/data/Goods";
 import { calculateImbalance, NonCumulativeMarketFlow } from "../marketTypes";
 
 describe("PriceAdjustmentConfig", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Goods, basePrices, NON_CUMULATING_GOODS } from "@game/data/Goods";
+import { Goods, basePrices } from "@game/data/Goods";
 import { calculateNewPrice, DEFAULT_PRICE_CONFIG } from "../priceAdjustmentCalculator";
 import { calculateImbalance } from "../marketTypes";
 import { marketMetricsCalculator } from "../marketMetricsCalculator";

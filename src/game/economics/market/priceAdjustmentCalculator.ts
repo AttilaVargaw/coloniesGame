@@ -1,6 +1,6 @@
 import { Goods } from "@game/data/Goods";
 import { basePrices } from "@game/data/Goods";
-import { PriceAdjustmentConfig, DEFAULT_PRICE_CONFIG, validateConfig, calculateImbalance, clamp } from "./marketTypes";
+import { PriceAdjustmentConfig, DEFAULT_PRICE_CONFIG, validateConfig, clamp } from "./marketTypes";
 
 export { DEFAULT_PRICE_CONFIG } from "./marketTypes";
 

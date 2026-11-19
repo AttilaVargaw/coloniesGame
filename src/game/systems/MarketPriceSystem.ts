@@ -9,8 +9,6 @@ import { validatePrices } from "@game/workers/industryTickHelpers";
 import { IndustryComponent } from "@game/components/industryComponent";
 import { Goods } from "@game/data/Goods";
 import { SectorBid } from "@game/workers/SectorBid";
-import { Population } from "@game/data/Population";
-import { NonCumulativeMarketFlow } from "@game/economics/market/marketTypes";
 
 interface CommittedMarketPrices {
     entityId: string;
@@ -141,7 +139,6 @@ export class MarketPriceSystem extends System {
 
     private calculateMetrics(data: IndustryTickCompletedData, oldPrices: Record<keyof Goods, number>): any[] {
         // Build explicit MarketMetricsInput from completed event data
-        const industry = data.entity.getComponent(IndustryComponent);
         // sectorBids are not stored on IndustryComponent; they're created per-tick in the worker
         // For now, use empty array - sector demand will come from accounting data
         const sectorBids: SectorBid[] = [];
@@ -208,7 +205,7 @@ export class MarketPriceSystem extends System {
     // Serialization for save/load
     serialize(): PriceMemoryState[] {
         const result: PriceMemoryState[] = [];
-        for (const [entityId, entry] of this.priceMemory) {
+        for (const [, entry] of this.priceMemory) {
             if (entry.committed) {
                 result.push({
                     version: 1,
