@@ -165,6 +165,9 @@ const priceDamping = 0.3;
 const priceMinMultiplier = 0.1;
 const priceMaxMultiplier = 10;
 
+/**
+ * @deprecated Use MarketPriceSystem for authoritative prices. This function is kept for backward compatibility only.
+ */
 export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): Record<keyof Goods, number> {
     const prices = {} as Record<keyof Goods, number>;
 
