@@ -18,6 +18,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
     private workerPool: IndustryWorkerPool | null = null;
     private tickCounter = 0;
+    private latestAppliedTick = new Map<string, number>();
 
     private ensureWorkerPool() {
         if(!this.workerPool) {
@@ -30,7 +31,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
         }
     }
 
-    private handleWorkerMessage = (event: { type: string; patches: IndustryTickPatch[] }) => {
+    private handleWorkerMessage = (event: { type: string; tick: number; patches: IndustryTickPatch[] }) => {
         if(event.type !== "result") {
             return
         }
@@ -43,7 +44,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 continue
             }
 
+            // Reject stale patches from previous ticks
+            const lastTick = this.latestAppliedTick.get(entity.id) ?? -1;
+            if(patch.tick <= lastTick) {
+                continue;
+            }
+
             applyPatch(industry, patch);
+            this.latestAppliedTick.set(entity.id, patch.tick);
             this.engine?.reindexEntity(entity);
             this.engine?.dispatchEvent(new IndustryUpdatedEvent(entity));
         }
@@ -55,7 +63,6 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
         const industries = this.nodes.map(({ entity, industry }) => {
             const techMultipliers: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
-            const laborAssigned: Record<keyof IndustrialSectors, number> = {} as Record<keyof IndustrialSectors, number>;
             const capitalStock: Record<keyof IndustrialSectors, Partial<Goods>> = {} as Record<keyof IndustrialSectors, Partial<Goods>>;
             const money = industry.money;
             const sectorGoods = {} as Record<keyof IndustrialSectors, Goods>;
@@ -82,7 +89,6 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 
             for(const sectorKey of effectiveActiveSectors) {
                 techMultipliers[sectorKey] = (industry.techMultipliers[sectorKey] ?? 1) * (lawMultiplier[sectorKey] ?? 1);
-                laborAssigned[sectorKey] = industry.laborAssigned[sectorKey] ?? 0;
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
                 //@ts-ignore
                 // sectorGoods[sectorKey] = industry.sectorGoods[sectorKey] ?? createStarterWarehouse(0);
@@ -94,7 +100,6 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 goods: industry.goods,
                 population: industry.population,
                 techMultipliers,
-                laborAssigned,
                 capitalStock,
                 money,
                 sectorGoods,
@@ -105,15 +110,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 capitalMultipliers: industry.capitalMultipliers,
                 selectedMethod: industry.selectedMethod,
                 colonyTreasury: industry.colonyTreasury,
-                householdMoney: industry.householdMoney,
                 sectorInvestment: industry.sectorInvestment,
                 activeLaws: industry.activeLaws,
                 tick: this.tickCounter,
-                producerInventories: {},
+                producerInventories: industry.producerInventories ?? {},
             };
         });
 
-        this.workerPool?.tick(industries);
+        this.workerPool?.tick(industries, this.tickCounter);
     };
 
     removeFromEngine(): this {
@@ -140,15 +144,20 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
 }
 
 function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
-    for(const key in patch.goods) {
-        if(!NON_CUMULATING_GOODS.has(key as keyof Goods)) {
-            continue
+    // Handle non-cumulative goods: compute net flow from production - requirements
+    // Do NOT mutate the incoming patch
+    const goodsUpdate: Partial<Goods> = { ...patch.goods };
+    if(goodsUpdate) {
+        for(const key in goodsUpdate) {
+            if(NON_CUMULATING_GOODS.has(key as keyof Goods)) {
+                goodsUpdate[key as keyof Goods] = 
+                    (patch.goodsProduction?.[key as keyof Goods] ?? 0) - 
+                    (patch.goodsRequirements?.[key as keyof Goods] ?? 0);
+            }
         }
-
-        patch.goods[key as keyof Goods] = (patch.goodsProduction?.[key as keyof Goods] || 0) - (patch.goodsRequirements?.[key as keyof Goods] || 0)
     }
+    mergeRecord(industry.goods, goodsUpdate);
 
-    mergeRecord(industry.goods, patch.goods)
     mergeRecord(industry.goodsRequirements, patch.goodsRequirements)
     mergeRecord(industry.goodsProduction, patch.goodsProduction)
     mergeRecord(industry.sectorProfits, patch.sectorProfits)
@@ -171,11 +180,6 @@ function applyPatch(industry: IndustryComponent, patch: IndustryTickPatch) {
     if(patch.householdMoney !== undefined) {
         industry.householdMoney = patch.householdMoney;
     }
-    // if(patch.sectorGoods) {
-    //     for(const [key, goods] of Object.entries(patch.sectorGoods)) {
-    //         industry.sectorGoods[key as keyof IndustrialSectors] = goods;
-    //     }
-    // }
 
     mergeWorkerRecord(industry.workingWorkers, patch.workingWorkers)
     mergeWorkerRecord(industry.freeWorkers, patch.freeWorkers)
@@ -231,11 +235,10 @@ function applyPopulationPatch(
         if(update.populationChange !== undefined) pop.populationChange = update.populationChange
         if(update.wealth !== undefined) pop.wealth = update.wealth
         if(update.number !== undefined) pop.number = update.number
-    }
 
-    industry.populationRequirements = {} as Record<keyof Population, Partial<Record<keyof Goods, number>>>
-    for(const [key, update] of Object.entries(updates)) {
-        industry.populationRequirements[key as keyof Population] = update.requirements ?? {}
+        if(update.requirements !== undefined) {
+            industry.populationRequirements[key as keyof Population] = update.requirements;
+        }
     }
 }
 

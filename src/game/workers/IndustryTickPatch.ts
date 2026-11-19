@@ -6,6 +6,7 @@ import type { SectorResult } from "../systems/generateIndustrialSector";
 
 export interface IndustryTickPatch {
     entityId: string;
+    tick: number;
     goods?: Partial<Goods>;
     goodsRequirements?: Partial<Goods>;
     goodsProduction?: Partial<Goods>;

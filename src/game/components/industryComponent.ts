@@ -10,6 +10,10 @@ import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 
 export type SettlementType = "colony" | "outpost" | "hydrocarbonRefinery";
 
+// Producer inventories track goods produced by each sector for source-aware procurement
+// Key: producer sector name, Value: goods quantities
+export type ProducerInventories = Record<string, Partial<Record<keyof Goods, number>>>;
+
 export class IndustryComponent extends EntityComponent {
     public goodsChange: Goods
     public populationChange: Population
@@ -33,6 +37,9 @@ export class IndustryComponent extends EntityComponent {
     public capitalStock: Record<keyof IndustrialSectors, Partial<Goods>>
     public money: Record<keyof IndustrialSectors, number>
     // public sectorGoods: Partial<Record<keyof IndustrialSectors, Partial<Goods>>>
+
+    // Producer inventories for source-aware procurement
+    public producerInventories: ProducerInventories = {};
 
     // ---- Gamification fields ----
     public workerEfficiencyMultipliers: Record<keyof Population, number>
@@ -124,5 +131,6 @@ export class IndustryComponent extends EntityComponent {
             Array.from(activeSectorKeys).map(key => [key, 0])
         ) as Record<keyof IndustrialSectors, number>;
         this.activeLaws = new Set();
+        this.producerInventories = {};
     }
 }

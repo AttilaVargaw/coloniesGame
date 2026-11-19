@@ -1441,7 +1441,7 @@ function processIndustry(
                         const refundedQty = purchased - consumedQty;
                         if (refundedQty > 1e-9) {
                             const price = prices[gKey] ?? 0;
-                            sectorRefundAmount += refunded * price;
+                            sectorRefundAmount += refundedQty * price;
                         }
                     }
                     if (sectorRefundAmount > 0) {
@@ -1463,7 +1463,7 @@ function processIndustry(
         return null;
     }
 
-    const patch = buildPatch(last, result);
+    const patch = buildPatch(last, result, tick);
 
     // Commit persistent memory only after successful processing
     // Update wage memory once with final market ratios (wages frozen per tick)
@@ -1831,8 +1831,8 @@ function validateTickResult(result: IndustryTickResult): boolean {
     return true;
 }
 
-function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickResult): IndustryTickPatch | null {
-    const patch: IndustryTickPatch = { entityId: result.entityId };
+function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickResult, tick: number): IndustryTickPatch | null {
+    const patch: IndustryTickPatch = { entityId: result.entityId, tick };
     let hasChanged = false;
 
     hasChanged = trySetPatchField(patch as any, "goods", last?.goods, result.goods, shallowDiff) || hasChanged;

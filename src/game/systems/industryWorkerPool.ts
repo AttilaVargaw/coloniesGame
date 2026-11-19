@@ -3,6 +3,7 @@ import type { IndustryTickInput } from "../workers/IndustryTickInput";
 
 export interface WorkerPoolMessage {
     type: string;
+    tick: number;
     patches: IndustryTickPatch[];
 }
 
@@ -42,7 +43,7 @@ export class IndustryWorkerPool {
         }
     }
 
-    tick(industries: IndustryTickInput[]) {
+    tick(industries: IndustryTickInput[], tick: number) {
         if (!this.started) this.start();
         
         this.batches = Array.from({ length: this.workerCount }, () => []);
@@ -56,7 +57,7 @@ export class IndustryWorkerPool {
         }
 
         for (let i = 0; i < this.workerCount; i++) {
-            this.workers[i].postMessage({ type: "tick", industries: this.batches[i] });
+            this.workers[i].postMessage({ type: "tick", industries: this.batches[i], tick });
         }
     }
 
@@ -67,7 +68,7 @@ export class IndustryWorkerPool {
         this.pendingCount--;
 
         if (this.pendingCount === 0) {
-            this.onMessage({ type: "result", patches: this.allPatches });
+            this.onMessage({ type: "result", tick: event.data.tick, patches: this.allPatches });
         }
     }
 

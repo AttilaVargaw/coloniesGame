@@ -5,6 +5,7 @@ import { ButtonPressSystem } from "@engine/systems/buttonPressSystem"
 import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
+import { EconomicMetricsSystem } from "@game/systems/EconomicMetricsSystem"
 import { TradeSystem } from "@game/systems/tradeSystem"
 import { AutoTradeSystem } from "@game/systems/autoTradeSystem"
 import { MigrationSystem } from "@game/systems/migrationSystem"
@@ -41,6 +42,7 @@ export class Game {
             .addSystem(LawSystem)
             .addSystem(IndustryPolicySystem)
             .addSystem(IndustrySystem)
+            .addSystem(EconomicMetricsSystem)
             .addSystem(TradeSystem)
             .addSystem(AutoTradeSystem)
             .addSystem(MigrationSystem)
