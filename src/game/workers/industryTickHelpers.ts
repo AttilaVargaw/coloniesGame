@@ -1120,6 +1120,28 @@ export function allocateLaborTwoStage(
 		}
 	}
 
+	// Validate essential minimums against sector requests
+	const requestsBySector = new Map(
+		sectorRequests.map(req => [req.sectorId, req])
+	);
+	for (const [sectorId, minimum] of Object.entries(minimumEssentialLabor)) {
+		const request = requestsBySector.get(sectorId);
+		if (!request) {
+			throw new Error(
+				`Essential labor configured for sector without a request: ${sectorId}`
+			);
+		}
+		for (const [popType, minWorkers] of Object.entries(minimum)) {
+			const ideal = request.idealDemand[popType as keyof Population] ?? 0;
+			if (minWorkers > ideal + EPSILON) {
+				throw new Error(
+					`Essential labor exceeds ideal demand for ${sectorId}/${popType}: ` +
+					`${minWorkers} > ${ideal}`
+				);
+			}
+		}
+	}
+
 	// Stage 1: Reserve minimum labor for essential sectors
 	// Sort by explicit priority desc, then sector name asc for stability
 	const essentialEntries = Object.entries(minimumEssentialLabor).sort((a, b) => {
@@ -1183,8 +1205,12 @@ export function allocateLaborTwoStage(
 				0,
 			);
 
-			if (totalWeight <= 0 || !Number.isFinite(totalWeight)) {
+			if (!Number.isFinite(totalWeight)) {
 				throw new Error(`Invalid labor allocation weights for ${String(popType)}`);
+			}
+
+			if (totalWeight <= 0) {
+				break;
 			}
 
 			// Check which sectors would saturate (hit their demand cap)

@@ -167,9 +167,11 @@ function kahnTopologicalSort(
 			for (const dep of node.dependsOn) {
 				const depSccId = sccId.get(dep);
 				if (depSccId !== undefined && depSccId !== i) {
-					if (!sccGraph.get(i)!.has(depSccId)) {
-						sccGraph.get(i)!.add(depSccId);
-						inDegree.set(depSccId, inDegree.get(depSccId)! + 1);
+					// Consumer (i) depends on producer (depSccId).
+					// Producer must execute before consumer.
+					if (!sccGraph.get(depSccId)!.has(i)) {
+						sccGraph.get(depSccId)!.add(i);
+						inDegree.set(i, inDegree.get(i)! + 1);
 					}
 				}
 			}
@@ -221,17 +223,42 @@ function findBlockedSCCs(
 ): Set<number> {
 	const blocked = new Set<number>();
 
+	// Map original SCC ID to sorted position
+	const sortedPositionBySccId = new Map<number, number>();
+	for (let position = 0; position < sortedSCCs.length; position++) {
+		for (const node of sortedSCCs[position]) {
+			const originalId = sccId.get(node.sectorName);
+			if (originalId !== undefined) {
+				sortedPositionBySccId.set(originalId, position);
+			}
+		}
+	}
+
+	// First pass: mark cyclic SCCs
 	for (let i = 0; i < sortedSCCs.length; i++) {
 		const scc = sortedSCCs[i];
 		const isCyclic = isCyclicSCC(scc);
 
 		if (isCyclic) {
 			blocked.add(i);
-			for (const node of scc) {
-				for (const required of node.requiredBy) {
-					const reqSccId = sccId.get(required);
-					if (reqSccId !== undefined) {
-						blocked.add(reqSccId);
+		}
+	}
+
+	// Second pass: propagate blocked status transitively through requiredBy edges
+	// Use a worklist algorithm
+	const worklist: number[] = [...blocked];
+	while (worklist.length > 0) {
+		const currentIdx = worklist.pop()!;
+		const currentSCC = sortedSCCs[currentIdx];
+
+		for (const node of currentSCC) {
+			for (const required of node.requiredBy) {
+				const originalReqSccId = sccId.get(required);
+				if (originalReqSccId !== undefined) {
+					const reqPosition = sortedPositionBySccId.get(originalReqSccId);
+					if (reqPosition !== undefined && !blocked.has(reqPosition)) {
+						blocked.add(reqPosition);
+						worklist.push(reqPosition);
 					}
 				}
 			}
@@ -248,8 +275,12 @@ export function executeNonCumulativeFlow(
 	salaries: Record<keyof Population, number>,
 	laborAllocations: Record<string, Partial<Record<keyof Population, number>>> | undefined,
 	purchasedBySector: Record<string, Partial<Record<keyof Goods, number>>> | undefined,
-	population: Population
+	population: Population,
+	availableWorkers: Record<keyof Population, number>
 ): NonCumulativeFlowResult {
+	// laborAllocations is required for execution; provide empty object if undefined
+	const finalLaborAllocations = laborAllocations ?? {};
+
 	const nodes = buildDependencyGraph(sectorBids);
 
 	const { sccId, sccs } = tarjanSCC(nodes);
@@ -278,9 +309,10 @@ export function executeNonCumulativeFlow(
 	for (const key of Object.keys(workingWorkers) as (keyof Population)[]) {
 		workingWorkers[key] = { ...workingWorkers[key], number: 0 };
 	}
+	// Initialize remainingWorkers from availableWorkers (eligible labor only)
 	const remainingWorkers: Record<keyof Population, PopulationBreakdown> = { ...population };
 	for (const key of Object.keys(remainingWorkers) as (keyof Population)[]) {
-		remainingWorkers[key] = { ...remainingWorkers[key] };
+		remainingWorkers[key] = { ...remainingWorkers[key], number: availableWorkers[key] ?? 0 };
 	}
 
 	const executedInSCC = new Set<string>();
@@ -357,14 +389,6 @@ export function executeNonCumulativeFlow(
 					continue;
 				}
 
-				const allocatedNonCumulative: Partial<Record<keyof Goods, number>> = {};
-				for (const [good, required] of Object.entries(demand)) {
-					const allocated = required * flowScale;
-					allocatedNonCumulative[good as keyof Goods] = allocated;
-					flowPool[good as keyof Goods] = (flowPool[good as keyof Goods] ?? 0) - allocated;
-				}
-
-				// Check cumulative goods constraint
 				let cumulativeRatio = 1;
 				for (const [good, cumulativeDemand] of Object.entries(node.cumulativeDemand)) {
 					const key = good as keyof Goods;
@@ -398,11 +422,20 @@ export function executeNonCumulativeFlow(
 					continue;
 				}
 
+				// Deduct non-cumulative goods from flow pool using finalScale
+				for (const [good, required] of Object.entries(demand)) {
+					const key = good as keyof Goods;
+					const consumed = required * finalScale;
+					flowPool[key] = (flowPool[key] ?? 0) - consumed;
+				}
+
+				const effectiveScale = node.bid.actualScale * finalScale;
+
 				const result = executeSingleSector(
 					node.bid,
-					finalScale,
+					effectiveScale,
 					salaries,
-					laborAllocations,
+					finalLaborAllocations,
 					remainingWorkers,
 					workingWorkers,
 					prices
@@ -413,7 +446,7 @@ export function executeNonCumulativeFlow(
 				sectorRevenue[node.sectorName] = 0; // Revenue from population sales added later
 				sectorLaborCosts[node.sectorName] = result.laborCosts;
 				sectorInputCosts[node.sectorName] = result.inputCosts;
-				sectorUtilization[node.sectorName] = finalScale;
+				sectorUtilization[node.sectorName] = effectiveScale;
 				sectorStopReason[node.sectorName] = result.stopReason;
 				executedInSCC.add(node.sectorName);
 				executedSectors.add(node.sectorName);
@@ -448,7 +481,7 @@ export function executeNonCumulativeFlow(
 					node.bid,
 					0,
 					salaries,
-					laborAllocations,
+					finalLaborAllocations,
 					remainingWorkers,
 					workingWorkers,
 					prices
@@ -473,7 +506,7 @@ export function executeNonCumulativeFlow(
 				bid,
 				0,
 				salaries,
-				laborAllocations,
+				finalLaborAllocations,
 				remainingWorkers,
 				workingWorkers,
 				prices
@@ -516,7 +549,7 @@ function executeSingleSector(
 	bid: SectorBid,
 	finalScale: number,
 	salaries: Record<keyof Population, number>,
-	laborAllocations: Record<string, Partial<Record<keyof Population, number>>> | undefined,
+	laborAllocations: Record<string, Partial<Record<keyof Population, number>>>,
 	remainingWorkers: Record<keyof Population, PopulationBreakdown>,
 	workingWorkers: Record<keyof Population, PopulationBreakdown>,
 	prices: Record<keyof Goods, number>
@@ -540,7 +573,11 @@ function executeSingleSector(
 	}
 
 	const workersEmployed: Partial<Record<keyof Population, number>> = {};
-	const sectorLaborAllocation = laborAllocations?.[bid.name];
+	const sectorLaborAllocation = laborAllocations[bid.name];
+
+	if (!sectorLaborAllocation) {
+		throw new Error(`Missing labor allocation for sector ${bid.name}`);
+	}
 
 	for (const [key, demandPerTick] of Object.entries(bid.idealWorkerDemand)) {
 		if (!Number.isFinite(demandPerTick) || demandPerTick < 0) {
@@ -551,23 +588,17 @@ function executeSingleSector(
 		const popType = key as keyof Population;
 		const demanded = demandPerTick * finalScale;
 
-		let employed: number;
-		if (sectorLaborAllocation) {
-			const alloc = sectorLaborAllocation[popType] ?? 0;
-			if (!Number.isFinite(alloc) || alloc < 0) {
-				throw new Error(`Invalid labor allocation for ${bid.name}, ${key}: ${alloc}`);
-			}
-			if (alloc + 1e-9 < demanded) {
-				throw new Error(
-					`Labor allocation insufficient for ${bid.name}, ${key}: ` +
-					`allocated ${alloc}, required ${demanded}`
-				);
-			}
-			employed = demanded;
-		} else {
-			const available = remainingWorkers[popType].number;
-			employed = Math.min(demanded, Math.max(0, available));
+		const alloc = sectorLaborAllocation[popType] ?? 0;
+		if (!Number.isFinite(alloc) || alloc < 0) {
+			throw new Error(`Invalid labor allocation for ${bid.name}, ${key}: ${alloc}`);
 		}
+		if (alloc + 1e-9 < demanded) {
+			throw new Error(
+				`Labor allocation insufficient for ${bid.name}, ${key}: ` +
+				`allocated ${alloc}, required ${demanded}`
+			);
+		}
+		const employed = demanded;
 
 		const available = remainingWorkers[popType].number;
 		if (employed > available + 1e-9) {
