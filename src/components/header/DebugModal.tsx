@@ -60,7 +60,7 @@ export function DebugModal() {
 
     return (
         <Dialog modal={false} open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+<DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs">
                     <BugOff />
                     Debug

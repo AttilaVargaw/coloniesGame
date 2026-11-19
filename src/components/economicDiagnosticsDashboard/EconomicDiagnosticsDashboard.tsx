@@ -54,14 +54,14 @@ const HOUSEHOLD_STATUS_COLORS = {
 };
 
 function formatNumber(n: number): string {
-    if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + "B";
-    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + "M";
-    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + "K";
+    if(Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + "B";
+    if(Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + "M";
+    if(Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + "K";
     return n.toFixed(2);
 }
 
 function formatPct(n: number | null): string {
-    if (n === null) return "N/A";
+    if(n === null) return "N/A";
     return (n * 100).toFixed(1) + "%";
 }
 
@@ -72,7 +72,7 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     const engine = useGameEngine();
 
     const diagnostics = useMemo(() => {
-        if (!engine) return null;
+        if(!engine) return null;
         return engine.getEconomicDiagnostics();
     }, [engine]);
 
@@ -97,34 +97,34 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     });
 
     const updateReports = useCallback(() => {
-        if (!engine) return;
+        if(!engine) return;
         const tick = (engine as any).currentTick ?? 0;
-        
-        if (healthMetrics) {
+
+        if(healthMetrics) {
             setLatestReports(prev => ({
                 ...prev,
                 health: healthMetrics.getLatestSnapshot(entityId),
             }));
         }
-        if (marketAnalyzer) {
+        if(marketAnalyzer) {
             setLatestReports(prev => ({
                 ...prev,
                 market: marketAnalyzer.analyze(tick, entityId),
             }));
         }
-        if (industryAnalyzer) {
+        if(industryAnalyzer) {
             setLatestReports(prev => ({
                 ...prev,
                 industry: industryAnalyzer.analyze(tick, entityId),
             }));
         }
-        if (householdAnalyzer) {
+        if(householdAnalyzer) {
             setLatestReports(prev => ({
                 ...prev,
                 household: householdAnalyzer.analyze(tick, entityId),
             }));
         }
-        if (cascadeAnalyzer) {
+        if(cascadeAnalyzer) {
             setLatestReports(prev => ({
                 ...prev,
                 cascade: cascadeAnalyzer.analyze(tick, entityId),
@@ -138,7 +138,7 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
 
     const overviewCards = useMemo(() => {
         const { health, market, industry, household, cascade } = latestReports;
-        if (!health || !market || !industry || !household || !cascade) return [];
+        if(!health || !market || !industry || !household || !cascade) return [];
 
         return [
             {
@@ -192,8 +192,8 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
 
     const cascadeLinks = useMemo(() => {
         const links: (CascadeLink & { fromCascadeId: string })[] = [];
-        for (const cascade of latestReports.cascade?.cascades ?? []) {
-            for (const link of cascade.links) {
+        for(const cascade of latestReports.cascade?.cascades ?? []) {
+            for(const link of cascade.links) {
                 links.push({ ...link, fromCascadeId: cascade.id });
             }
         }
@@ -203,7 +203,10 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     return (
         <Dialog modal={false} open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button
+                    variant="ghost"
+                    className="px-2 py-1 rounded-sm text-[10px] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                >
                     <span className="flex items-center gap-1">
                         <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -212,15 +215,15 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                     </span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1c1c1c] text-white max-w-5xl max-h-[90vh]" style={{ width: "95vw" }}>
+            <DialogContent className="bg-[#1c1c1c] text-white max-w-5xl min-w-7xl">
                 <DialogHeader>
                     <DialogTitle>Economic Diagnostics Dashboard</DialogTitle>
                 </DialogHeader>
-                
-                <div className="flex flex-col h-full">
+
+                <div className="flex flex-col h-full" style={{ height: "80vh" }}>
                     <div className="flex items-center justify-between mb-4">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-                            <TabsList className="grid w-full grid-cols-7">
+                            <TabsList style={{ height: "2em", width: "100%" }}>
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
                                 <TabsTrigger value="markets">Markets</TabsTrigger>
                                 <TabsTrigger value="industries">Industries</TabsTrigger>
@@ -232,8 +235,8 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                         </Tabs>
                         <div className="flex items-center gap-2 ml-4">
                             <label className="text-xs text-muted-foreground">History:</label>
-                            <select 
-                                value={historyLength} 
+                            <select
+                                value={historyLength}
                                 onChange={(e) => setHistoryLength(Number(e.target.value))}
                                 className="bg-[#2a2a2a] border border-[#3a3a3a] text-xs px-2 py-1 rounded"
                             >
@@ -257,8 +260,8 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                             <CardContent>
                                                 <div className="text-2xl font-bold">{card.value}</div>
                                                 <div className="text-xs text-muted-foreground">{card.details}</div>
-                                                <Badge 
-                                                    variant="outline" 
+                                                <Badge
+                                                    variant="outline"
                                                     className={SEVERITY_COLORS[card.severity as keyof typeof SEVERITY_COLORS]}
                                                 >
                                                     {card.severity}
@@ -319,9 +322,9 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                     <h3 className="font-medium">Industry Health Assessments</h3>
                                     <div className="flex gap-2">
                                         {["healthy", "under_pressure", "unprofitable", "resource_constrained", "inactive"].map(status => (
-                                            <Badge 
-                                                key={status} 
-                                                variant="outline" 
+                                            <Badge
+                                                key={status}
+                                                variant="outline"
                                                 className={STATUS_COLORS[status as keyof typeof STATUS_COLORS]}
                                             >
                                                 {status}: {industryAssessments.filter(a => a.status === status).length}
@@ -384,9 +387,9 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                     <h3 className="font-medium">Household Health Assessments</h3>
                                     <div className="flex gap-2">
                                         {["prosperous", "stable", "stressed", "destitute"].map(status => (
-                                            <Badge 
-                                                key={status} 
-                                                variant="outline" 
+                                            <Badge
+                                                key={status}
+                                                variant="outline"
                                                 className={HOUSEHOLD_STATUS_COLORS[status as keyof typeof HOUSEHOLD_STATUS_COLORS]}
                                             >
                                                 {status}: {householdAssessments.filter(a => a.status === status).length}
@@ -545,11 +548,11 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                                                 <TableRow key={i}>
                                                                     <TableCell className="font-mono">{link.fromProblem}</TableCell>
                                                                     <TableCell className="font-mono">{link.toProblem}</TableCell>
-<TableCell>
-                                                                            <Badge variant="outline" className={EVIDENCE_COLORS[link.evidenceLevel as keyof typeof EVIDENCE_COLORS]}>
-                                                                                {link.evidenceLevel.replace(/_/g, " ")}
-                                                                            </Badge>
-                                                                        </TableCell>
+                                                                    <TableCell>
+                                                                        <Badge variant="outline" className={EVIDENCE_COLORS[link.evidenceLevel as keyof typeof EVIDENCE_COLORS]}>
+                                                                            {link.evidenceLevel.replace(/_/g, " ")}
+                                                                        </Badge>
+                                                                    </TableCell>
                                                                     <TableCell>{(link.confidence * 100).toFixed(0)}%</TableCell>
                                                                     <TableCell className="max-w-[300px] truncate">{link.description}</TableCell>
                                                                 </TableRow>
@@ -574,7 +577,7 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                 </div>
                                 <Alert className="bg-blue-500/10 border-blue-500/20">
                                     <AlertDescription>
-                                        Historical time-series charts for market prices, industry health, household metrics, and cascade progression 
+                                        Historical time-series charts for market prices, industry health, household metrics, and cascade progression
                                         will be rendered here using the history buffers from each diagnostic analyzer.
                                     </AlertDescription>
                                 </Alert>
@@ -584,15 +587,15 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                             <CardHeader><CardTitle>Price Volatility (Last {historyLength} Ticks)</CardTitle></CardHeader>
                                             <CardContent>
                                                 <pre className="text-xs bg-[#0a0a0a] p-3 rounded overflow-auto max-h-[300px]">
-{JSON.stringify(
-    Object.fromEntries(
-        Object.entries(latestReports.health.prices.byGood)
-            .filter(([, v]) => v.volatility !== null)
-            .map(([k, v]) => [k, { volatility: v.volatility?.toFixed(4), current: v.currentPrice, change: v.priceChangePct.toFixed(4) }])
-    ),
-    null,
-    2
-)}
+                                                    {JSON.stringify(
+                                                        Object.fromEntries(
+                                                            Object.entries(latestReports.health.prices.byGood)
+                                                                .filter(([, v]) => v.volatility !== null)
+                                                                .map(([k, v]) => [k, { volatility: v.volatility?.toFixed(4), current: v.currentPrice, change: v.priceChangePct.toFixed(4) }])
+                                                        ),
+                                                        null,
+                                                        2
+                                                    )}
                                                 </pre>
                                             </CardContent>
                                         </Card>
@@ -600,11 +603,11 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                             <CardHeader><CardTitle>Treasury History (Last {historyLength} Ticks)</CardTitle></CardHeader>
                                             <CardContent>
                                                 <pre className="text-xs bg-[#0a0a0a] p-3 rounded overflow-auto max-h-[300px]">
-{JSON.stringify(
-    latestReports.health.treasury,
-    null,
-    2
-)}
+                                                    {JSON.stringify(
+                                                        latestReports.health.treasury,
+                                                        null,
+                                                        2
+                                                    )}
                                                 </pre>
                                             </CardContent>
                                         </Card>

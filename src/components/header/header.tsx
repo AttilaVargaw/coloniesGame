@@ -44,22 +44,22 @@ export function Header() {
     return (
         <div className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-4 text-white/80 backdrop-blur-xs border-b border-white/10">
             <nav>
-<ul className="flex space-x-4 text-xs text-white/50 uppercase tracking-widest">
-                        <li>
-                            <Button className="text-xs">
-                                1000 <GiTaurus />
-                            </Button>
-                        </li>
-                        <li>
-                            <DebugModal />
-                        </li>
-                        {colony && <li>
-                            <EconomicDiagnosticsDashboard entityId={colony.id} />
-                        </li>}
-                        {colony && <li>
-                            <GovernmentModal colony={colony!} />
-                        </li>}
-                    </ul>
+                <ul className="flex space-x-4 text-xs text-white/50 uppercase tracking-widest">
+                    <li>
+                        <Button className="text-xs">
+                            1000 <GiTaurus />
+                        </Button>
+                    </li>
+                    <li>
+                        <DebugModal />
+                    </li>
+                    {colony && <li>
+                        <EconomicDiagnosticsDashboard entityId={colony.id} />
+                    </li>}
+                    {colony && <li>
+                        <GovernmentModal colony={colony!} />
+                    </li>}
+                </ul>
             </nav>
             <h1 className="text-xs font-bold tracking-widest text-white uppercase letter-spacing-widest opacity-70"></h1>
             <nav>
