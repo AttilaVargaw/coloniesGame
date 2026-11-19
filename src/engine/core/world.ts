@@ -7,13 +7,18 @@ import { NodeManager } from "../lib/nodeManager"
 import { EventBus } from "../lib/eventBus"
 import { CommandBus } from "../lib/commandBus"
 import { SystemRegistry } from "../lib/systemRegistry"
-import type { Engine } from "./engine"
+import type { Engine, EconomicDiagnostics } from "./engine"
 import type { CommandBase } from "../lib/CommandBase"
 import type { EventBase } from "../lib/events"
 import type { Queue } from "../lib/commandQueue"
 import { DebugManager } from "../lib/debugManager"
 import { CanvasManager } from "../systems/canvasManager"
 import { EntityComponent } from "../entities/entityComponent"
+import { EconomicHealthMetrics } from "@game/economics/diagnostics/economicHealthMetrics"
+import { MarketStabilityAnalyzer } from "@game/economics/diagnostics/marketStabilityAnalyzer"
+import { IndustryHealthAnalyzer } from "@game/economics/diagnostics/industryHealthAnalyzer"
+import { HouseholdHealthAnalyzer } from "@game/economics/diagnostics/householdHealthAnalyzer"
+import { EconomicCascadeAnalyzer } from "@game/economics/diagnostics/economicCascadeAnalyzer"
 
 export class World implements Engine {
     private readonly entityRegistry: EntityRegistry
@@ -23,6 +28,7 @@ export class World implements Engine {
     private readonly systemRegistry: SystemRegistry
     private readonly debugManager: DebugManager
     private readonly canvasManager: CanvasManager = new CanvasManager()
+    private readonly diagnostics: EconomicDiagnostics
 
     constructor() {
         this.nodeManager = new NodeManager()
@@ -31,6 +37,15 @@ export class World implements Engine {
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus)
         this.systemRegistry = new SystemRegistry()
         this.debugManager = new DebugManager()
+        
+        const health = new EconomicHealthMetrics({ rollingWindowTicks: 200, priceVolatilityWindow: 50 })
+        this.diagnostics = {
+            health,
+            market: new MarketStabilityAnalyzer(health),
+            industry: new IndustryHealthAnalyzer(health),
+            household: new HouseholdHealthAnalyzer(health),
+            cascade: new EconomicCascadeAnalyzer(health),
+        }
     }
 
     getCanvas(canvas: "webgl2" | "2d"): HTMLCanvasElement {
@@ -171,5 +186,9 @@ export class World implements Engine {
 
     getDebugManager() {
         return this.debugManager
+    }
+
+    getEconomicDiagnostics(): EconomicDiagnostics {
+        return this.diagnostics
     }
 }

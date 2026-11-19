@@ -7,6 +7,19 @@ import type { CommandBase } from "../lib/CommandBase";
 import { DebugManager } from "../lib/debugManager";
 import { EntityComponent } from "../entities/entityComponent";
 import { Queue } from "../lib/commandQueue";
+import { EconomicHealthMetrics } from "@game/economics/diagnostics/economicHealthMetrics";
+import { MarketStabilityAnalyzer } from "@game/economics/diagnostics/marketStabilityAnalyzer";
+import { IndustryHealthAnalyzer } from "@game/economics/diagnostics/industryHealthAnalyzer";
+import { HouseholdHealthAnalyzer } from "@game/economics/diagnostics/householdHealthAnalyzer";
+import { EconomicCascadeAnalyzer } from "@game/economics/diagnostics/economicCascadeAnalyzer";
+
+export interface EconomicDiagnostics {
+    health: EconomicHealthMetrics;
+    market: MarketStabilityAnalyzer;
+    industry: IndustryHealthAnalyzer;
+    household: HouseholdHealthAnalyzer;
+    cascade: EconomicCascadeAnalyzer;
+}
 
 export interface Engine {
     getSystem<T extends System>(system: new (...args: any[]) => T): T;
@@ -35,4 +48,5 @@ export interface Engine {
     registerEventQueue<T extends EventBase>(event: new (...args: any[]) => T): this;
     removeEventQueue<T extends EventBase>(event: new (...args: any[]) => T): this;
     getCanvas(canvas: "webgl2" | "2d"): HTMLCanvasElement;
+    getEconomicDiagnostics(): EconomicDiagnostics;
 }
