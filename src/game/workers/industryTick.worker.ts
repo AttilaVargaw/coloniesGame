@@ -11,18 +11,18 @@ import { shallowDiff } from "./shallowDiff";
 import { populationDiff } from "./populationDiff";
 import { populationUpdateDiff } from "./populationUpdateDiff";
 import { buildSectorBid } from "./buildSectorBid";
-import { executeSectors } from "./sectorExecution";
+import { executeNonCumulativeFlow } from "./nonCumulativeFlow";
 import { buildSectorResultsPatch } from "./sectorResultsPatch";
 import { buildAdjustedSalaries, updateWageMemory } from "./wageSystem";
 import { processCapital } from "./capitalSystem";
 import { createSectorTree, buildBlackboard } from "../systems/sectorBehaviorTree/sectorTree";
 import { createIndustryTree } from "./industryBehaviorTree/industryTree";
 import { defaultIndustryBlackboard } from "./industryBehaviorTree/industryBT";
-import { computePopulationConsumption, buySectorInputs, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS } from "./industryTickHelpers";
+import { computePopulationConsumption, buySectorInputs, pruneMemory, trySetPatchField, computeMarketRatios, distributeSectorInputRevenue, computeMinimumEssentialLabor, allocateLaborTwoStage, ESSENTIAL_SERVICE_SECTORS, nearlyEqual } from "./industryTickHelpers";
 import { allocateGoods } from "./goodsAllocation";
 import { allocateBudget } from "./budgetAllocation";
 import { allocatePopulationSales, TransactionLedger } from "./transactionLedger";
-import type { PurchaseProvenance } from "./industryTickHelpers";
+import { settleProvenance } from "./provenanceSettlement";
 import { computeDeprivation, computeMortalityRates, applyMortality } from "./demographics";
 import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 
@@ -54,6 +54,7 @@ function processIndustry(
         capitalMultipliers,
         selectedMethod,
         tick,
+        producerInventories = {},
     }: IndustryTickInput,
     priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
@@ -390,29 +391,31 @@ function processIndustry(
     finalGoodsAllocations = goodsAllocations;
     finalSalaries = adjustedSalaries;
 
-    // === COMMIT FINAL CANDIDATE (MILESTONE 1: commit once) ===
+// === COMMIT FINAL CANDIDATE (MILESTONE 1: commit once) ===
 
     // One real purchase with final converged state
     // Use the exact prices and salaries from the selected candidate
-    const { colonyGoodsAfterPurchase, newMoney: roundNewMoney, purchasedBySector, purchaseProvenance } = buySectorInputs(
+    const { colonyGoodsAfterPurchase, newMoney: roundNewMoney, purchasedBySector, purchaseProvenance, updatedProducerInventories } = buySectorInputs(
         finalSectorBids,
         tickStartGoods,
         tickStartMoney,
         prices,
         finalGoodsAllocations,
+        undefined, // warehouseComposition - not used anymore
+        producerInventories,
     );
     newMoney = roundNewMoney;
     currentGoods = colonyGoodsAfterPurchase;
 
-    // Execute sectors once with final allocations
-    const execResult = executeSectors(
+    // Execute sectors once with final allocations using non-cumulative flow
+    const execResult = executeNonCumulativeFlow(
         finalSectorBids,
-        population,
         colonyGoodsAfterPurchase,
         prices,
         finalSalaries,
         finalLaborAllocations,
         purchasedBySector,
+        population,
     );
 
     const {
@@ -451,59 +454,72 @@ function processIndustry(
         }
     }
 
-// Reconcile purchases vs actual consumption at finalScale.
-	// Any input purchased but not consumed is returned to the colony and
-	// its cost is refunded to the sector.
-	// Track refunds and returned goods for accounting.
-	const refundBySector: Record<string, number> = {};
-	const returnedGoods: Partial<Goods> = {};
-	for(const bid of finalSectorBids) {
+    // Calculate settlement ONCE using shared provenance settlement
+    const { refunded } = settleProvenance(purchaseProvenance, sectorResults);
+
+    // Aggregate per-source totals from settlement
+    // Warehouse: W_closing = W_opening - W_grossPurchased + W_refunded
+    // Producer: P_closing = P_opening - P_consumed + P_refunded
+    // HouseholdSalesStock = physicalWarehouseStock (reservation already subtracted from sector pool)
+    
+    // Apply refunds to warehouse (currentGoods) - refunded goods go back to warehouse
+    for(const [, goodMap] of Object.entries(refunded)) {
+        for(const [goodKey, sourceAllocation] of Object.entries(goodMap)) {
+            const gKey = goodKey as keyof Goods;
+            const warehouseRefund = sourceAllocation.warehouse ?? 0;
+            if (warehouseRefund > 0) {
+                currentGoods[gKey] = (currentGoods[gKey] ?? 0) + warehouseRefund;
+            }
+        }
+    }
+    
+    // Apply producer refunds to producer inventories
+    for(const [, goodMap] of Object.entries(refunded)) {
+        for(const [goodKey, sourceAllocation] of Object.entries(goodMap)) {
+            const gKey = goodKey as keyof Goods;
+            for(const [producer, qty] of Object.entries(sourceAllocation.producers ?? {})) {
+                if (qty > 0) {
+                    updatedProducerInventories[producer] = updatedProducerInventories[producer] ?? {};
+                    updatedProducerInventories[producer][gKey] = (updatedProducerInventories[producer][gKey] ?? 0) + qty;
+                }
+            }
+        }
+    }
+    
+    // Refund money to sectors based on consumed vs purchased
+    const refundBySector: Record<string, number> = {};
+    for(const bid of finalSectorBids) {
         const sectorName = bid.name as keyof IndustrialSectors;
         const purchases = purchasedBySector?.[sectorName] ?? {};
-        const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
-
+        const consumedGoods = sectorResults[sectorName]?.consumedGoods ?? {};
+        
+        let sectorRefund = 0;
         for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
             const gKey = goodKey as keyof Goods;
             const purchased = Number(purchasedQty);
-            const consumedQty = Number(consumed[gKey] ?? 0);
-
-            // Invariant: consumption cannot exceed purchase
-            const epsilon = 1e-8;
-            if(!Number.isFinite(purchased) || !Number.isFinite(consumedQty) || purchased < 0 || consumedQty < 0) {
-                throw new Error(
-                    `Invalid purchase/consumption for ${sectorName}/${gKey}: ` +
-                    `purchased=${purchased}, consumed=${consumedQty}`
-                );
-            }
-            if(consumedQty > purchased + epsilon) {
-                throw new Error(
-                    `${sectorName} consumed more ${gKey} than it purchased: ` +
-                    `${consumedQty} > ${purchased}`
-                );
-            }
-
+            const consumedQty = Number(consumedGoods[gKey] ?? 0);
             const unused = purchased - consumedQty;
-            if(unused > epsilon) {
-                // Return unused goods to colony warehouse
-                currentGoods[gKey] = (currentGoods[gKey] ?? 0) + unused;
-                returnedGoods[gKey] = (returnedGoods[gKey] ?? 0) + unused;
-                // Refund unused purchase cost to sector
+            
+            if(unused > 1e-8) {
                 const price = prices[gKey];
                 if(price === undefined || !Number.isFinite(price) || price < 0) {
                     throw new Error(`Invalid or missing price for ${gKey}: ${price}`);
                 }
-                const refund = unused * price;
-                newMoney[sectorName] = (newMoney[sectorName] ?? 0) + refund;
-                refundBySector[sectorName] = (refundBySector[sectorName] ?? 0) + refund;
-                if(!Number.isFinite(newMoney[sectorName])) {
-                    throw new Error(`Sector money overflow for ${sectorName}`);
-                }
+                sectorRefund += unused * price;
+            }
+        }
+        
+        if (sectorRefund > 0) {
+            newMoney[sectorName] = (newMoney[sectorName] ?? 0) + sectorRefund;
+            refundBySector[sectorName] = sectorRefund;
+            if(!Number.isFinite(newMoney[sectorName])) {
+                throw new Error(`Sector money overflow for ${sectorName}`);
             }
         }
 
         // Recompute input costs based on actual consumption (not purchase)
         let actualInputCost = 0;
-        for(const [goodKey, consumedQty] of Object.entries(consumed)) {
+        for(const [goodKey, consumedQty] of Object.entries(consumedGoods)) {
             const qty = Number(consumedQty);
             const price = prices[goodKey as keyof Goods] ?? 0;
             if(!Number.isFinite(qty) || qty < 0 || !Number.isFinite(price) || price < 0) {
@@ -519,6 +535,23 @@ function processIndustry(
         // Profit will be computed once at the end after all revenue and subsidies.
         // Initialize to 0 for now.
         sectorProfits[sectorName] = 0;
+    }
+
+    // Compute returned goods from refunded provenance (for accounting)
+    const returnedGoods: Partial<Goods> = {};
+    for(const [, goodMap] of Object.entries(refunded)) {
+        for(const [goodKey, sourceAllocation] of Object.entries(goodMap)) {
+            const gKey = goodKey as keyof Goods;
+            const warehouseRefund = sourceAllocation.warehouse ?? 0;
+            if (warehouseRefund > 0) {
+                returnedGoods[gKey] = (returnedGoods[gKey] ?? 0) + warehouseRefund;
+            }
+            for(const [, qty] of Object.entries(sourceAllocation.producers ?? {})) {
+                if (qty > 0) {
+                    returnedGoods[gKey] = (returnedGoods[gKey] ?? 0) + qty;
+                }
+            }
+        }
     }
 
 // Distribute sector-to-sector input purchase revenue to producing sectors
@@ -850,7 +883,7 @@ function processIndustry(
     }
 
     // Capital wear, decay, replenishment, investment
-    const { newCapitalStock, moneySpent, remainingGoods } = processCapital(
+    const { newCapitalStock, moneySpent, purchasesBySector: capitalPurchasesBySector } = processCapital(
         activeSectors,
         capitalStock,
         sectorResults,
@@ -858,22 +891,6 @@ function processIndustry(
         newMoney,
         goodsForCapital
     );
-
-    // Compute capital purchases as actual goods removed from warehouse stock.
-    const capitalPurchasesByGood: Partial<Goods> = {};
-    for(const key of Object.keys(goodsForCapital) as (keyof Goods)[]) {
-        const purchased =
-            (goodsForCapital[key] ?? 0) - (remainingGoods[key] ?? 0);
-        if(!Number.isFinite(purchased) || purchased < -1e-9) {
-            throw new Error(
-                `Invalid capital goods consumption for ${key}: ${purchased}`,
-            );
-        }
-        const qty = Math.max(0, purchased);
-        if(qty > 0) {
-            capitalPurchasesByGood[key] = qty;
-        }
-    }
 
     // Deduct capital costs from sector money
     for(const name of activeSectors) {
@@ -894,9 +911,6 @@ function processIndustry(
         throw new Error(`Treasury overflow after capital purchases`);
     }
 
-    // remainingGoods is the authoritative inventory after capital purchases
-    const postCapitalGoods: Goods = { ...createEmptyWarehouse(), ...remainingGoods };
-
     // Reject negative closing sector balances — only floating-point noise tolerated
     for(const [name, balance] of Object.entries(newMoney)) {
         if(!Number.isFinite(balance) || balance < -1e-6) {
@@ -910,6 +924,15 @@ function processIndustry(
     }
 
     // Build total requirements = sector consumption + capital purchases
+    // Aggregate capital purchases by good from per-sector physical audit
+    const capitalPurchasesByGood: Partial<Goods> = {};
+    for(const [, goodPurchases] of Object.entries(capitalPurchasesBySector)) {
+        for(const [goodKey, qty] of Object.entries(goodPurchases)) {
+            const key = goodKey as keyof Goods;
+            capitalPurchasesByGood[key] = (capitalPurchasesByGood[key] ?? 0) + qty;
+        }
+    }
+
     const totalGoodsRequirements: Goods = createEmptyWarehouse();
     for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
         totalGoodsRequirements[key] =
@@ -927,24 +950,6 @@ function processIndustry(
         fulfilledDemandQty,
         mortalityAdjustedPopulation
     );
-
-    // Scale-aware comparison for inventory validation.
-    // Uses both absolute and relative tolerance to handle values at different scales.
-    function nearlyEqual(
-        actual: number,
-        expected: number,
-        absoluteTolerance: number = 1e-6,
-        relativeTolerance: number = 1e-9,
-    ): boolean {
-        if(!Number.isFinite(actual) || !Number.isFinite(expected)) {
-            return false;
-        }
-        const tolerance = Math.max(
-            absoluteTolerance,
-            relativeTolerance * Math.max(1, Math.abs(actual), Math.abs(expected)),
-        );
-        return Math.abs(actual - expected) <= tolerance;
-    }
 
     // Direct inventory conservation invariant.
     // Closing inventory must equal opening + production - consumption - sales - capital purchases,
@@ -1007,7 +1012,58 @@ function processIndustry(
     }
 
     // PHASE 7: Transaction ledger — record all economic transfers for audit
+    // Compute sector accounts for ledger initialization
+    const sectorAccounts = new Set<string>([
+        ...Object.keys(tickStartMoney),
+        ...Object.keys(newMoney),
+        ...activeSectors,
+    ]);
+
     const ledger = new TransactionLedger();
+
+    // Initialize ledger with opening balances for per-transaction non-negative validation
+    const openingBalancesForLedger: Record<string, number> = {};
+    for(const name of sectorAccounts) {
+        openingBalancesForLedger[name] = (tickStartMoney as Record<string, number>)[name] ?? 0;
+    }
+    openingBalancesForLedger["colony_treasury"] = openingTreasury;
+    openingBalancesForLedger["household_sales"] = 0;
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const account = `population:${key}`;
+        openingBalancesForLedger[account] = population[key].wealth ?? 0;
+    }
+    // Add producer accounts from purchaseProvenance
+    for(const [, goodProvenance] of Object.entries(purchaseProvenance)) {
+        for(const [, sourceAllocation] of Object.entries(goodProvenance)) {
+            if(sourceAllocation.warehouse > 0) {
+                openingBalancesForLedger["colony_treasury"] = openingBalancesForLedger["colony_treasury"] ?? 0;
+            }
+            for(const [producer] of Object.entries(sourceAllocation.producers)) {
+                openingBalancesForLedger[producer] = openingBalancesForLedger[producer] ?? 0;
+            }
+        }
+    }
+    // Add producer accounts from refunded
+    for(const [, goodRefunded] of Object.entries(refunded)) {
+        for(const [, sourceAllocation] of Object.entries(goodRefunded)) {
+            if(sourceAllocation.warehouse > 0) {
+                openingBalancesForLedger["colony_treasury"] = openingBalancesForLedger["colony_treasury"] ?? 0;
+            }
+            for(const [producer] of Object.entries(sourceAllocation.producers)) {
+                openingBalancesForLedger[producer] = openingBalancesForLedger[producer] ?? 0;
+            }
+        }
+    }
+    // Add subsidy recipients
+    for(const { sectorName } of subsidies) {
+        openingBalancesForLedger[sectorName] = openingBalancesForLedger[sectorName] ?? 0;
+    }
+    // Add capital_investment if used
+    for(const [sectorName] of Object.entries(capitalPurchasesBySector)) {
+        openingBalancesForLedger[sectorName] = openingBalancesForLedger[sectorName] ?? 0;
+    }
+    
+    ledger.initializeWithOpeningBalances(openingBalancesForLedger);
 
     // Sector input purchases: record from purchaseProvenance (per-good, per-producer)
     // This provides full audit trail with goodId, quantity, unitPrice
@@ -1042,6 +1098,47 @@ function processIndustry(
                         quantity,
                         unitPrice: price,
                         amount: quantity * price,
+                    });
+                }
+            }
+        }
+    }
+
+    // Refunds: record from refunded provenance with REVERSED semantics
+    // buyer = originalSource (credits), seller = consumingSector (debits)
+    for(const [consumingSector, goodRefunded] of Object.entries(refunded)) {
+        for(const [goodKey, sourceAllocation] of Object.entries(goodRefunded)) {
+            const good = goodKey as keyof Goods;
+            const price = currentPrices[good] ?? 0;
+            
+            // Record refunds to warehouse (colony_treasury)
+            if(sourceAllocation.warehouse > 0) {
+                const amount = sourceAllocation.warehouse * price;
+                ledger.record({
+                    tick,
+                    type: "input_refund",
+                    buyerId: "colony_treasury",  // originalSource = treasury
+                    sellerId: consumingSector,     // consumingSector = debited
+                    goodId: good,
+                    quantity: sourceAllocation.warehouse,
+                    unitPrice: price,
+                    amount,
+                });
+            }
+            
+            // Record refunds to producing sectors
+            for(const [producingSector, quantity] of Object.entries(sourceAllocation.producers)) {
+                if(quantity > 0) {
+                    const amount = quantity * price;
+                    ledger.record({
+                        tick,
+                        type: "input_refund",
+                        buyerId: producingSector,    // originalSource = producingSector
+                        sellerId: consumingSector,    // consumingSector = debited
+                        goodId: good,
+                        quantity,
+                        unitPrice: price,
+                        amount,
                     });
                 }
             }
@@ -1124,29 +1221,27 @@ function processIndustry(
         });
     }
 
-    // Capital purchases: record per-good purchases from colony treasury
-    // Use the capitalPurchasesByGood computed earlier (line 863)
-    // Note: We don't know which sector bought which capital good from the aggregate.
-    // For now, record as aggregate from colony_treasury with total amount.
-    // TODO: Track per-sector capital goods purchases for full audit trail.
-    for(const [goodKey, qtyVal] of Object.entries(capitalPurchasesByGood)) {
-        const good = goodKey as keyof Goods;
-        const qty = Number(qtyVal);
-        if(!Number.isFinite(qty) || qty <= 0) continue;
-        
-        const price = currentPrices[good] ?? 0;
-        if(!Number.isFinite(price) || price < 0) continue;
-        
-        ledger.record({
-            tick,
-            type: "goods_purchase",
-            buyerId: "capital_investment", // aggregate buyer
-            sellerId: "colony_treasury",
-            goodId: good,
-            quantity: qty,
-            unitPrice: price,
-            amount: qty * price,
-        });
+    // Capital purchases: record per-sector purchases from colony treasury using physical audit
+    for(const [sectorName, goodPurchases] of Object.entries(capitalPurchasesBySector)) {
+        for(const [goodKey, qtyVal] of Object.entries(goodPurchases)) {
+            const good = goodKey as keyof Goods;
+            const qty = Number(qtyVal);
+            if(!Number.isFinite(qty) || qty <= 0) continue;
+            
+            const price = currentPrices[good] ?? 0;
+            if(!Number.isFinite(price) || price < 0) continue;
+            
+            ledger.record({
+                tick,
+                type: "goods_purchase",
+                buyerId: sectorName,
+                sellerId: "colony_treasury",
+                goodId: good,
+                quantity: qty,
+                unitPrice: price,
+                amount: qty * price,
+            });
+        }
     }
 
     // Verify money conservation: closing balances = opening + deltas
@@ -1155,11 +1250,7 @@ function processIndustry(
 
     // Include all accounts that can receive or pay money — union of
     // tickStartMoney (persisted), newMoney (after tick), and activeSectors.
-    const sectorAccounts = new Set<string>([
-        ...Object.keys(tickStartMoney),
-        ...Object.keys(newMoney),
-        ...activeSectors,
-    ]);
+    // (sectorAccounts already defined earlier for ledger initialization)
 
     for(const name of sectorAccounts) {
         openingBalances[name] = (tickStartMoney as Record<string, number>)[name] ?? 0;
@@ -1193,6 +1284,42 @@ function processIndustry(
         );
 
         return null;
+    }
+
+    // Verify household_sales clearing account: delta must be 0
+    const householdSalesDelta = ledger.getAccountDeltas().get("household_sales") ?? 0;
+    const tolerance = 1e-6;
+    if(Math.abs(householdSalesDelta) > tolerance) {
+        throw new Error(
+            `Household_sales clearing account delta not zero: ${householdSalesDelta}`
+        );
+    }
+
+    // Verify recorded spending/revenue match independent totals
+    const verifiedTotalPopulationSpending = Object.values(spendingByPop).reduce((sum, v) => sum + v, 0);
+    const verifiedTotalSalesRevenue = Object.values(popSalesRevenue).reduce((sum, v) => sum + v, 0) + warehouseRevenue;
+    if(Math.abs(verifiedTotalPopulationSpending - verifiedTotalSalesRevenue) > tolerance) {
+        throw new Error(
+            `Household spending/revenue mismatch: spending=${verifiedTotalPopulationSpending}, revenue=${verifiedTotalSalesRevenue}`
+        );
+    }
+
+    // Complete population cash reconciliation: verify each group's closing wealth
+    // = opening wealth + wages + transfers - spending
+    for(const key of Object.keys(population) as (keyof Population)[]) {
+        const openingWealth = population[key].wealth ?? 0;
+        const wages = wagesByPop[key] ?? 0;
+        const spending = spendingByPop[key] ?? 0;
+        const expectedClosingWealth = openingWealth + wages - spending;
+        const actualClosingWealth = mortalityAdjustedPopulation[key].wealth ?? 0;
+
+        if(Math.abs(expectedClosingWealth - actualClosingWealth) > tolerance) {
+            throw new Error(
+                `Population cash reconciliation failed for ${key}: ` +
+                `expected=${expectedClosingWealth}, actual=${actualClosingWealth}, ` +
+                `opening=${openingWealth}, wages=${wages}, spending=${spending}`
+            );
+        }
     }
 
     // Compute sector profits once after all revenue sources and subsidies are settled.
@@ -1265,27 +1392,9 @@ function processIndustry(
             sectorInputsConsumedByGood: sumGoodsRequirements,
             // Total goods produced by sectors (committed production).
             sectorProductionByGood: sumGoodsProduction,
-            // Actual capital goods removed from warehouse stock by processCapital,
-            // measured directly as before/after inventory (not derived from
-            // replenishmentDelta, which is an accounting delta not a quantity).
-            capitalPurchasesByGood: (() => {
-                const byGood: Partial<Goods> = {};
-                for(const key of Object.keys(goodsForCapital) as (keyof Goods)[]) {
-                    const purchased =
-                        (goodsForCapital[key] ?? 0) -
-                        (remainingGoods[key] ?? 0);
-                    if(!Number.isFinite(purchased) || purchased < -1e-9) {
-                        throw new Error(
-                            `Invalid capital goods consumption for ${key}: ${purchased}`,
-                        );
-                    }
-                    const qty = Math.max(0, purchased);
-                    if(qty > 0) {
-                        byGood[key] = qty;
-                    }
-                }
-return byGood;
-            })(),
+// Actual capital goods removed from warehouse stock by processCapital,
+            // measured from per-sector physical audit (purchasesBySector).
+            capitalPurchasesByGood: capitalPurchasesByGood,
             wagesByPop,
             spendingByPop,
             // Per-sector input reconciliation data
@@ -1298,6 +1407,49 @@ return byGood;
                 return bySector;
             })(),
             sectorInputRefundsBySector: refundBySector,
+            // Explicit refund tracking for validation
+            sectorInputRefundQuantitiesBySector: (() => {
+                const bySector: Record<string, Partial<Goods>> = {};
+                for(const bid of finalSectorBids) {
+                    const sectorName = bid.name;
+                    const purchases = purchasedBySector?.[sectorName] ?? {};
+                    const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
+                    bySector[sectorName] = {};
+                    for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
+                        const gKey = goodKey as keyof Goods;
+                        const purchased = Number(purchasedQty);
+                        const consumedQty = Number(consumed[gKey] ?? 0);
+                        const refundedQty = purchased - consumedQty;
+                        if (refundedQty > 1e-9) {
+                            bySector[sectorName][gKey] = refundedQty;
+                        }
+                    }
+                }
+                return bySector;
+            })(),
+            sectorInputRefundAmountsBySector: (() => {
+                const bySector: Record<string, number> = {};
+                for(const bid of finalSectorBids) {
+                    const sectorName = bid.name;
+                    const purchases = purchasedBySector?.[sectorName] ?? {};
+                    const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
+                    let sectorRefundAmount = 0;
+                    for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
+                        const gKey = goodKey as keyof Goods;
+                        const purchased = Number(purchasedQty);
+                        const consumedQty = Number(consumed[gKey] ?? 0);
+                        const refundedQty = purchased - consumedQty;
+                        if (refundedQty > 1e-9) {
+                            const price = prices[gKey] ?? 0;
+                            sectorRefundAmount += refunded * price;
+                        }
+                    }
+                    if (sectorRefundAmount > 0) {
+                        bySector[sectorName] = sectorRefundAmount;
+                    }
+                }
+                return bySector;
+            })(),
             returnedInputsByGood: returnedGoods,
             sectorInputPaymentBreakdown,
             purchaseProvenance,
@@ -1594,6 +1746,88 @@ function validateTickResult(result: IndustryTickResult): boolean {
         }
     }
 
+    // Validate explicit refund fields
+    // sectorInputRefundQuantitiesBySector: Record<string, Partial<Goods>>
+    const refundQuantitiesField = result.accounting.sectorInputRefundQuantitiesBySector;
+    if(refundQuantitiesField) {
+        for(const [sectorName, goodMap] of Object.entries(refundQuantitiesField)) {
+            if(!goodMap || typeof goodMap !== "object") {
+                console.error(`[IndustryTick] Malformed sectorInputRefundQuantitiesBySector for ${result.entityId}.${sectorName}`);
+                return false;
+            }
+            for(const [goodKey, value] of Object.entries(goodMap)) {
+                if(!Number.isFinite(value) || value < 0) {
+                    console.error(
+                        `[IndustryTick] Invalid sectorInputRefundQuantitiesBySector value for ${result.entityId}.${sectorName}.${goodKey}: ${value}`,
+                    );
+                    return false;
+                }
+            }
+        }
+    }
+    
+    // sectorInputRefundAmountsBySector: Record<string, number>
+    const refundAmountsField = result.accounting.sectorInputRefundAmountsBySector;
+    if(refundAmountsField) {
+        for(const [sectorName, value] of Object.entries(refundAmountsField)) {
+            if(!Number.isFinite(value) || value < 0) {
+                console.error(
+                    `[IndustryTick] Invalid sectorInputRefundAmountsBySector value for ${result.entityId}.${sectorName}: ${value}`,
+                );
+                return false;
+            }
+        }
+    }
+
+    // Bidirectional cross-field reconciliation: validate purchased = consumed + refunded per sector/good
+    const purchasedBySector = result.accounting.sectorInputsPurchasedBySector;
+    const consumedBySector = result.accounting.sectorInputsConsumedBySector;
+    const refundQuantitiesBySector = result.accounting.sectorInputRefundQuantitiesBySector;
+    
+    if(purchasedBySector && consumedBySector && refundQuantitiesBySector) {
+        for(const [sectorName, purchases] of Object.entries(purchasedBySector)) {
+            const consumedByGood = consumedBySector[sectorName] ?? {};
+            const refundedByGood = refundQuantitiesBySector[sectorName] ?? {};
+            
+            // Validate structure
+            if(!purchases || typeof purchases !== "object" ||
+               !consumedByGood || typeof consumedByGood !== "object" ||
+               !refundedByGood || typeof refundedByGood !== "object") {
+                console.error(`[IndustryTick] Malformed reconciliation data for ${result.entityId}.${sectorName}`);
+                return false;
+            }
+            
+            const allGoods = new Set<keyof Goods>([
+                ...Object.keys(purchases) as (keyof Goods)[],
+                ...Object.keys(consumedByGood) as (keyof Goods)[],
+                ...Object.keys(refundedByGood) as (keyof Goods)[],
+            ]);
+            
+            for(const goodKey of allGoods) {
+                const purchased = purchases[goodKey] ?? 0;
+                const consumedQty = consumedByGood[goodKey] ?? 0;
+                const refundedQty = refundedByGood[goodKey] ?? 0;
+                
+                if(!Number.isFinite(purchased) || purchased < 0 ||
+                   !Number.isFinite(consumedQty) || consumedQty < 0 ||
+                   !Number.isFinite(refundedQty) || refundedQty < 0) {
+                    console.error(`[IndustryTick] Invalid reconciliation values for ${result.entityId}.${sectorName}.${goodKey}`);
+                    return false;
+                }
+                
+                // Validate purchased = consumed + refunded (with scale-aware tolerance)
+                const expected = consumedQty + refundedQty;
+                if(!nearlyEqual(purchased, expected)) {
+                    console.error(
+                        `[IndustryTick] Reconciliation failed for ${result.entityId}.${sectorName}.${goodKey}: ` +
+                        `purchased=${purchased}, consumed=${consumedQty}, refunded=${refundedQty}, expected=${expected}`
+                    );
+                    return false;
+                }
+            }
+        }
+    }
+
     return true;
 }
 
@@ -1601,11 +1835,11 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
     const patch: IndustryTickPatch = { entityId: result.entityId };
     let hasChanged = false;
 
-    hasChanged = trySetPatchField(patch, "goods", last?.goods, result.goods, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "goodsRequirements", last?.goodsRequirements, result.goodsRequirements, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "goodsProduction", last?.goodsProduction, result.goodsProduction, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "workingWorkers", last?.workingWorkers, result.workingWorkers, populationDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "freeWorkers", last?.freeWorkers, result.freeWorkers, populationDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "goods", last?.goods, result.goods, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "goodsRequirements", last?.goodsRequirements, result.goodsRequirements, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "goodsProduction", last?.goodsProduction, result.goodsProduction, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "workingWorkers", last?.workingWorkers, result.workingWorkers, populationDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "freeWorkers", last?.freeWorkers, result.freeWorkers, populationDiff) || hasChanged;
 
     if(last?.populationUpdates !== result.populationUpdates) {
         const updatedPop: IndustryTickPatch["populationUpdates"] = {};
@@ -1624,19 +1858,26 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
         }
     }
 
-    hasChanged = trySetPatchField(patch, "sectorProfits", last?.sectorProfits, result.sectorProfits, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorRevenue", last?.sectorRevenue, result.sectorRevenue, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "wages", last?.wages, result.wages, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorLaborCosts", last?.sectorLaborCosts, result.sectorLaborCosts, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorInputCosts", last?.sectorInputCosts, result.sectorInputCosts, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "populationProfits", last?.populationProfits, result.populationProfits, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorUtilization", last?.sectorUtilization, result.sectorUtilization, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "sectorStopReason", last?.sectorStopReason, result.sectorStopReason, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorProfits", last?.sectorProfits, result.sectorProfits, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorRevenue", last?.sectorRevenue, result.sectorRevenue, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "wages", last?.wages, result.wages, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorLaborCosts", last?.sectorLaborCosts, result.sectorLaborCosts, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorInputCosts", last?.sectorInputCosts, result.sectorInputCosts, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "populationProfits", last?.populationProfits, result.populationProfits, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorUtilization", last?.sectorUtilization, result.sectorUtilization, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "sectorStopReason", last?.sectorStopReason, result.sectorStopReason, shallowDiff) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "capitalStock", last?.capitalStock, result.capitalStock, shallowDiff) || hasChanged;
     // hasChanged = trySetPatchField(patch, "sectorGoods", last?.sectorGoods, result.sectorGoods, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "money", last?.money, result.money, shallowDiff) || hasChanged;
-    hasChanged = trySetPatchField(patch, "colonyTreasury", last?.colonyTreasury, result.colonyTreasury, Object.is) || hasChanged;
-    hasChanged = trySetPatchField(patch, "householdMoney", last?.householdMoney, result.householdMoney, Object.is) || hasChanged;
+    hasChanged = trySetPatchField(patch as any, "money", last?.money, result.money, shallowDiff) || hasChanged;
+    // Primitive fields handled inline
+    if (last?.colonyTreasury !== result.colonyTreasury) {
+        patch.colonyTreasury = result.colonyTreasury;
+        hasChanged = true;
+    }
+    if (last?.householdMoney !== result.householdMoney) {
+        patch.householdMoney = result.householdMoney;
+        hasChanged = true;
+    }
 
     const sectorResultsPatch = buildSectorResultsPatch(last?.sectorResults, result.sectorResults);
     if(sectorResultsPatch) { patch.sectorResults = sectorResultsPatch; hasChanged = true; }

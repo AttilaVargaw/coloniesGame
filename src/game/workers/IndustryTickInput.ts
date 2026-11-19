@@ -4,6 +4,8 @@ import { Goods } from "../data/Goods";
 import { Population } from "../data/Population";
 
 
+export type ProducerInventories = Record<string, Partial<Record<keyof Goods, number>>>;
+
 export interface IndustryTickInput {
     entityId: string;
     activeSectors: Set<keyof IndustrialSectors>;
@@ -24,6 +26,9 @@ export interface IndustryTickInput {
     colonyTreasury: number;
     sectorInvestment: Record<keyof IndustrialSectors, number>;
     activeLaws: Set<string>;
+
+    // Producer inventories for source-aware procurement (optional, defaults to empty)
+    producerInventories?: ProducerInventories;
 
     // Current tick number for ledger transactions
     tick: number;

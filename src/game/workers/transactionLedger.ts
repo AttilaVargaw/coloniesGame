@@ -9,7 +9,8 @@ export type TransactionType =
 	| "population_spending"
 	| "external_injection"
 	| "external_destruction"
-	| "treasury_subsidy";
+	| "treasury_subsidy"
+	| "input_refund";
 
 export interface EconomicTransaction {
 	tick: number;
@@ -30,12 +31,17 @@ export interface EconomicTransaction {
  * TransactionLedger records all economic transactions for a colony.
  * Each record represents a single transfer: buyer loses amount, seller gains amount.
  * Provides money conservation verification against opening/closing balances.
+ * Supports per-transaction non-negative balance validation when initialized with opening balances.
  */
 export class TransactionLedger {
-	private transactions: EconomicTransaction[] = [];
+    private transactions: EconomicTransaction[] = [];
 
-	// Per-account balance deltas computed from recorded transfers
-	private accountDeltas: Map<string, number> = new Map();
+    // Per-account balance deltas computed from recorded transfers
+    private accountDeltas: Map<string, number> = new Map();
+
+    // Running balances for per-transaction validation (when initialized with opening balances)
+    private runningBalances: Map<string, number> | null = null;
+    private initialized = false;
 
 	record(tx: EconomicTransaction): void {
 		// All validation happens before any ledger mutation.
@@ -137,9 +143,22 @@ export class TransactionLedger {
 				}
 			}
 
+			// Standard transfer: buyer pays, seller receives
 			changes.push(
 				[tx.buyerId!, -tx.amount],
 				[tx.sellerId!, tx.amount],
+			);
+		} else if (tx.type === "input_refund") {
+			// REVERSED delta semantics for input refunds:
+			// buyer = originalSource (credits), seller = consumingSector (debits)
+			// buyerWealthBefore/After follows REVERSED semantics (buyer wealth increases)
+			this.validateAccountId(tx.buyerId, "buyerId");
+			this.validateAccountId(tx.sellerId, "sellerId");
+
+			// REVERSED: buyer (originalSource) gets CREDITED (+amount), seller (consumingSector) gets DEBITED (-amount)
+			changes.push(
+				[tx.buyerId!, tx.amount],   // buyer = originalSource → CREDITED
+				[tx.sellerId!, -tx.amount], // seller = consumingSector → DEBITED
 			);
 		} else {
 			throw new Error(`Unknown transaction type: ${tx.type}`);
@@ -147,11 +166,18 @@ export class TransactionLedger {
 
 		// Validate balance metadata if provided — before any ledger mutation
 		if(tx.buyerWealthBefore !== undefined && tx.buyerWealthAfter !== undefined) {
-			const expectedAfter = tx.buyerWealthBefore - tx.amount;
+			let expectedAfter: number;
+			if (tx.type === "input_refund") {
+				// REVERSED: buyer (originalSource) gets CREDITED (+amount)
+				expectedAfter = tx.buyerWealthBefore + tx.amount;
+			} else {
+				// Standard: buyer pays (-amount)
+				expectedAfter = tx.buyerWealthBefore - tx.amount;
+			}
 
 			if(!Number.isFinite(expectedAfter)) {
 				throw new Error(
-					`Buyer balance metadata overflow: before=${tx.buyerWealthBefore}, amount=${tx.amount}`
+					`Buyer balance metadata overflow: before=${tx.buyerWealthBefore}, amount=${tx.amount}, type=${tx.type}`
 				);
 			}
 
@@ -159,17 +185,24 @@ export class TransactionLedger {
 			if(Math.abs(tx.buyerWealthAfter - expectedAfter) > tolerance) {
 				throw new Error(
 					`Buyer balance metadata mismatch for ${tx.buyerId}: ` +
-					`before=${tx.buyerWealthBefore}, amount=${tx.amount}, ` +
+					`before=${tx.buyerWealthBefore}, amount=${tx.amount}, type=${tx.type}, ` +
 					`expectedAfter=${expectedAfter}, actualAfter=${tx.buyerWealthAfter}`
 				);
 			}
 		}
 		if(tx.sellerMoneyBefore !== undefined && tx.sellerMoneyAfter !== undefined) {
-			const expectedAfter = tx.sellerMoneyBefore + tx.amount;
+			let expectedAfter: number;
+			if (tx.type === "input_refund") {
+				// REVERSED: seller (consumingSector) gets DEBITED (-amount)
+				expectedAfter = tx.sellerMoneyBefore - tx.amount;
+			} else {
+				// Standard: seller receives (+amount)
+				expectedAfter = tx.sellerMoneyBefore + tx.amount;
+			}
 
 			if(!Number.isFinite(expectedAfter)) {
 				throw new Error(
-					`Seller balance metadata overflow: before=${tx.sellerMoneyBefore}, amount=${tx.amount}`
+					`Seller balance metadata overflow: before=${tx.sellerMoneyBefore}, amount=${tx.amount}, type=${tx.type}`
 				);
 			}
 
@@ -177,7 +210,7 @@ export class TransactionLedger {
 			if(Math.abs(tx.sellerMoneyAfter - expectedAfter) > tolerance) {
 				throw new Error(
 					`Seller balance metadata mismatch for ${tx.sellerId}: ` +
-					`before=${tx.sellerMoneyBefore}, amount=${tx.amount}, ` +
+					`before=${tx.sellerMoneyBefore}, amount=${tx.amount}, type=${tx.type}, ` +
 					`expectedAfter=${expectedAfter}, actualAfter=${tx.sellerMoneyAfter}`
 				);
 			}
@@ -209,37 +242,80 @@ export class TransactionLedger {
 	}
 
 	/**
-	 * Accumulate account deltas atomically: compute every affected balance,
-	 * validate all of them, then commit. Handles buyer==seller correctly by
-	 * combining their changes before applying.
-	 */
-	private applyDeltas(changes: [string, number][]): void {
-		const combined = new Map<string, number>();
+     * Initialize the ledger with opening balances for per-transaction validation.
+     * When initialized, each transaction will be validated to ensure no account goes negative.
+     * Must be called before recording any transactions.
+     */
+    initializeWithOpeningBalances(openingBalances: Record<string, number>): void {
+        if (this.initialized) {
+            throw new Error("Ledger already initialized");
+        }
+        if (this.transactions.length > 0) {
+            throw new Error("Cannot initialize ledger after transactions recorded");
+        }
 
-		for(const [account, amount] of changes) {
-			combined.set(
-				account,
-				(combined.get(account) ?? 0) + amount,
-			);
-		}
+        this.runningBalances = new Map<string, number>();
+        for (const [account, balance] of Object.entries(openingBalances)) {
+            if (!Number.isFinite(balance) || balance < 0) {
+                throw new Error(`Invalid opening balance for ${account}: ${balance}`);
+            }
+            this.runningBalances.set(account, balance);
+        }
+        this.initialized = true;
+    }
 
-		const nextDeltas = new Map<string, number>();
+    /**
+     * Accumulate account deltas atomically: compute every affected balance,
+     * validate all of them, then commit. Handles buyer==seller correctly by
+     * combining their changes before applying.
+     * If initialized with opening balances, also validates running balances never go negative.
+     */
+    private applyDeltas(changes: [string, number][]): void {
+        const combined = new Map<string, number>();
 
-		for(const [account, change] of combined) {
-			const next = (this.accountDeltas.get(account) ?? 0) + change;
+        for(const [account, amount] of changes) {
+            combined.set(
+                account,
+                (combined.get(account) ?? 0) + amount,
+            );
+        }
 
-			if(!Number.isFinite(next)) {
-				throw new Error(`Account delta overflow for ${account}`);
-			}
+        const nextDeltas = new Map<string, number>();
 
-			nextDeltas.set(account, next);
-		}
+        for(const [account, change] of combined) {
+            const next = (this.accountDeltas.get(account) ?? 0) + change;
 
-		// Commit only after every account has passed validation.
-		for(const [account, next] of nextDeltas) {
-			this.accountDeltas.set(account, next);
-		}
-	}
+            if(!Number.isFinite(next)) {
+                throw new Error(`Account delta overflow for ${account}`);
+            }
+
+            nextDeltas.set(account, next);
+
+            // If initialized with opening balances, validate running balance
+            if (this.runningBalances !== null) {
+                const currentBalance = this.runningBalances.get(account) ?? 0;
+                const newBalance = currentBalance + change;
+                
+                if (!Number.isFinite(newBalance)) {
+                    throw new Error(`Running balance overflow for ${account}`);
+                }
+                
+                if (newBalance < -1e-9) {
+                    throw new Error(
+                        `Transaction would make account ${account} negative: ` +
+                        `current=${currentBalance}, change=${change}, new=${newBalance}`
+                    );
+                }
+                
+                this.runningBalances.set(account, newBalance);
+            }
+        }
+
+        // Commit only after every account has passed validation.
+        for(const [account, next] of nextDeltas) {
+            this.accountDeltas.set(account, next);
+        }
+    }
 
 	getTransactions(tick?: number): EconomicTransaction[] {
 		const selected = tick === undefined

@@ -60,5 +60,6 @@ export function generateColonyConfig(
 		sectorInvestment,
 		activeLaws: new Set(),
 		tick: 0,
+		producerInventories: {},
 	};
 }

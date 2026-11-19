@@ -58,6 +58,11 @@ export interface IndustryTickResult {
         sectorInputsPurchasedBySector: Record<string, Partial<Goods>>;
         sectorInputsConsumedBySector: Record<string, Partial<Goods>>;
         sectorInputRefundsBySector: Record<string, number>;
+        
+        // Explicit refund tracking for validation
+        sectorInputRefundQuantitiesBySector: Record<string, Partial<Goods>>;
+        sectorInputRefundAmountsBySector: Record<string, number>;
+        
         returnedInputsByGood: Partial<Goods>;
         sectorInputPaymentBreakdown: InputPaymentBreakdown;
         purchaseProvenance: PurchaseProvenance;

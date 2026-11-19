@@ -36,6 +36,7 @@ function cloneInput(input: IndustryTickInput): IndustryTickInput {
 		allowedSectors: input.allowedSectors ? [...input.allowedSectors] : undefined,
 		sectorInvestment: { ...input.sectorInvestment },
 		activeLaws: new Set(input.activeLaws),
+		producerInventories: input.producerInventories ?? {},
 	};
 }
 
@@ -135,6 +136,7 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					sectorInvestment: baseInput.sectorInvestment,
 					activeLaws: baseInput.activeLaws,
 					tick: (input.tick ?? 0) + 1,
+					producerInventories: input.producerInventories ?? {},
 				};
 			}
 
@@ -326,6 +328,7 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 				sectorInvestment: baseInput.sectorInvestment,
 				activeLaws: baseInput.activeLaws,
 				tick: (input.tick ?? 0) + 1,
+				producerInventories: input.producerInventories ?? {},
 			};
 
 			if ((t + 1) % 10 === 0) {

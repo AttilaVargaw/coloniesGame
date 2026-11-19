@@ -109,6 +109,7 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 sectorInvestment: industry.sectorInvestment,
                 activeLaws: industry.activeLaws,
                 tick: this.tickCounter,
+                producerInventories: {},
             };
         });
 

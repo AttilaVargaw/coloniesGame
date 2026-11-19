@@ -36,6 +36,7 @@ function advanceTick(input: IndustryTickInput, result: IndustryTickResult): Indu
 		sectorInvestment: input.sectorInvestment,
 		activeLaws: input.activeLaws,
 		tick: (input.tick ?? 0) + 1,
+		producerInventories: input.producerInventories ?? {},
 	} as IndustryTickInput;
 }
 

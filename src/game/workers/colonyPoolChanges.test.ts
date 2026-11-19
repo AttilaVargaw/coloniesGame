@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { computeColonyGoodsDelta, applyGoodsModifier, buySectorInputs } from "./industryTickHelpers"
+import { computeColonyGoodsDelta, applyGoodsModifier, buySectorInputs, reconcileSectorInputs } from "./industryTickHelpers"
 import { createEmptyWarehouse, createStarterWarehouse } from "../factories/createStarterWarehouse"
 import { basePrices } from "../data/Goods"
 import type { Goods } from "../data/Goods"
@@ -102,6 +102,165 @@ describe("colony goods pool changes", () => {
             )
             expect(result.purchasedBySector.powerPlant?.oil).toBe(50)
             expect(result.colonyGoodsAfterPurchase.oil).toBe(50)
+        })
+
+        it("generates detailed purchase lines per source", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 200
+            // 100 from producerA, 100 from treasury
+            const warehouseComposition = { oil: { producerA: 100, colony_treasury: 100 } }
+            const result = buySectorInputs(
+                [makeBid("powerPlant", { oil: 150 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                { powerPlant: { oil: 150 } },
+                warehouseComposition
+            )
+            expect(result.purchaseLines).toBeDefined()
+            expect(result.purchaseLines.length).toBe(2) // one per source
+            const producerLine = result.purchaseLines.find(l => l.sellerId === "producerA")
+            const treasuryLine = result.purchaseLines.find(l => l.sellerId === "colony_treasury")
+            expect(producerLine?.quantity).toBeCloseTo(75, 6) // 150 * 100/200
+            expect(treasuryLine?.quantity).toBeCloseTo(75, 6)
+            expect(producerLine?.amount).toBeCloseTo(producerLine!.quantity * 100, 6)
+            expect(treasuryLine?.amount).toBeCloseTo(treasuryLine!.quantity * 100, 6)
+        })
+
+        it("consumes warehouse provenance per purchase - no double attribution", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 200
+            // 100 from producerA, 100 from producerB
+            const warehouseComposition = { oil: { producerA: 100, producerB: 100 } }
+            
+            // Both sectors buy in a SINGLE call (real usage pattern)
+            const result = buySectorInputs(
+                [
+                    makeBid("sector1", { oil: 150 }),
+                    makeBid("sector2", { oil: 100 }),
+                ],
+                goods,
+                { sector1: 1_000_000, sector2: 1_000_000 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                { sector1: { oil: 150 }, sector2: { oil: 100 } },
+                warehouseComposition
+            )
+            
+            // Total attributed to each producer should not exceed 100
+            const allLines = result.purchaseLines
+            const producerATotal = allLines.filter(l => l.sellerId === "producerA").reduce((sum, l) => sum + l.quantity, 0)
+            const producerBTotal = allLines.filter(l => l.sellerId === "producerB").reduce((sum, l) => sum + l.quantity, 0)
+            
+            expect(producerATotal).toBeLessThanOrEqual(100 + 1e-9)
+            expect(producerBTotal).toBeLessThanOrEqual(100 + 1e-9)
+            // Exactly 150 + 50 = 200 total purchased (sector2 can only buy 50 since only 50 left after sector1)
+            expect(producerATotal + producerBTotal).toBeCloseTo(200, 6)
+        })
+
+        it("reconciles with scale-aware tolerance and rejects over-consumption", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            
+            const purchasedBySector = {
+                powerPlant: { oil: 100 },
+            }
+            const consumedBySector = {
+                powerPlant: { oil: 100.000000001 }, // Tiny overshoot within scale-aware tolerance (1e-9)
+            }
+            const prices = { oil: 100 } as Record<keyof Goods, number>
+            const colonyGoods = { ...goods }
+            colonyGoods.oil = 900 // After purchase
+            const sectorMoney = { powerPlant: 90_000 }
+            
+            // Should succeed with scale-aware tolerance
+            const result = reconcileSectorInputs(purchasedBySector, consumedBySector, prices, colonyGoods, sectorMoney)
+            expect(result.returnedBySector.powerPlant.oil).toBeCloseTo(0, 6)
+        })
+
+        it("throws on material over-consumption", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            
+            const purchasedBySector = { powerPlant: { oil: 100 } }
+            const consumedBySector = { powerPlant: { oil: 101 } } // 1 unit over - material
+            const prices = { oil: 100 } as Record<keyof Goods, number>
+            const colonyGoods = { ...goods }
+            colonyGoods.oil = 900
+            const sectorMoney = { powerPlant: 90_000 }
+            
+            expect(() => reconcileSectorInputs(purchasedBySector, consumedBySector, prices, colonyGoods, sectorMoney))
+                .toThrow("consumed more than purchased")
+        })
+
+        it("throws when consumption recorded without purchases", () => {
+            const purchasedBySector = { powerPlant: { oil: 100 } }
+            const consumedBySector = { 
+                powerPlant: { oil: 50 },
+                missingSector: { oil: 10 } // No purchase entry!
+            }
+            const prices = { oil: 100 } as Record<keyof Goods, number>
+            const colonyGoods = createEmptyWarehouse()
+            const sectorMoney = { powerPlant: 90_000 }
+            
+            expect(() => reconcileSectorInputs(purchasedBySector, consumedBySector, prices, colonyGoods, sectorMoney))
+                .toThrow("Consumption recorded without purchases")
+        })
+
+        it("throws on malformed allocation object (undefined value)", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            const allocation = { powerPlant: undefined as any } // malformed
+            
+            expect(() => buySectorInputs(
+                [makeBid("powerPlant", { oil: 100 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                allocation
+            )).toThrow("Invalid goods allocation for powerPlant")
+        })
+
+        it("throws on malformed allocation object (array instead of object)", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            const allocation = { powerPlant: [] as any }
+            
+            expect(() => buySectorInputs(
+                [makeBid("powerPlant", { oil: 100 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                allocation
+            )).toThrow("Invalid goods allocation for powerPlant")
+        })
+
+        it("throws when price missing for demanded good", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            const prices = { energy: 50 } as Record<keyof Goods, number> // missing oil
+            
+            expect(() => buySectorInputs(
+                [makeBid("powerPlant", { oil: 100 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                prices,
+                { powerPlant: { oil: 100 } }
+            )).toThrow("Missing price for demanded good: oil")
+        })
+
+        it("warns when allocation materially exceeds demand", () => {
+            const goods = createEmptyWarehouse()
+            goods.oil = 1000
+            // Allocation 10000 vs demand 100 - 100x
+            const result = buySectorInputs(
+                [makeBid("powerPlant", { oil: 100 })],
+                goods,
+                { powerPlant: 1_000_000 },
+                { oil: 100 } as Record<keyof Goods, number>,
+                { powerPlant: { oil: 10000 } }
+            )
+            // Should still work but log warning (or we could throw)
+            expect(result.purchasedBySector.powerPlant?.oil).toBeCloseTo(100, 6)
         })
     })
 

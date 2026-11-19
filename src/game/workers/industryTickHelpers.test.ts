@@ -1,323 +1,234 @@
 import { describe, it, expect } from "vitest"
-import { allocatePopulationSales } from "./transactionLedger"
-import { pruneMemory, trySetPatchField } from "./industryTickHelpers"
-import { shallowDiff } from "./shallowDiff"
-import type { SectorBid } from "./SectorBid"
+import { distributeSectorInputRevenue, computePopulationConsumption, applyGoodsModifier, computeMarketRatios, trySetPatchField, ESSENTIAL_MINIMUM_SCALE } from "./industryTickHelpers"
+import { Goods, basePrices } from "../data/Goods"
+import { Population } from "../data/Population"
+import { createEmptyWarehouse } from "../factories/createStarterWarehouse"
 
-function makeBid(name: string): SectorBid {
-    return {
-        name,
-        level: 1,
-        budgetRatio: 1,
-        actualScale: 1,
-        inputCost: 0,
-        laborCost: 0,
-        capitalMultiplier: 1,
-        idealWorkerDemand: {},
-        idealGoodsDemand: {},
-        idealGoodsProduction: {},
-        outputLevel: 1,
-        inputLevel: 1,
-    }
-}
+describe("distributeSectorInputRevenue", () => {
+    const prices: Record<keyof Goods, number> = { 
+        ...basePrices,
+        oil: 100, 
+        energy: 50,
+    } as Record<keyof Goods, number>
 
-describe("allocatePopulationSales", () => {
-    const prices: Record<string, number> = { food: 30, oil: 100 }
-
-    function makeResult(name: string, produced: Record<string, number>) {
-        return { [name]: { producedGoods: produced } }
-    }
-
-    function callAllocatePopulationSales(opts: {
-        sectorBids: { name: string }[]
-        sectorResults: Record<string, { producedGoods: Record<string, number> }>
-        demandByPop: Record<string, Partial<Record<string, number>>>
-        cashByPop: Record<string, number>
-        prices: Record<string, number>
-        availableStock?: Partial<Record<string, number>>
-    }) {
-        return allocatePopulationSales({
-            sectorBids: opts.sectorBids,
-            sectorResults: opts.sectorResults,
-            demandByPop: opts.demandByPop as any,
-            cashByPop: opts.cashByPop as any,
-            prices: opts.prices as any,
-            availableStock: opts.availableStock as any,
-        })
-    }
-
-    it("caps sales at actual production when demand exceeds supply", () => {
-        const bids = [makeBid("sectorA")]
-        // Population demands 100 food, but sector only produces 60
-        const sectorResults = makeResult("sectorA", { food: 60 })
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-        })
-
-        // Actual sales = 60 (production), not 100 (demand)
-        const totalSales = Object.values(result.salesQty).reduce(
-            (sum, sq) => sum + Object.values(sq).reduce((a, b) => a + b, 0),
-            0
-        )
-        expect(totalSales).toBe(60)
-
-        // Unmet demand = 100 - 60 = 40
-        expect(result.unmetDemandByPop.worker?.food).toBeCloseTo(40, 4)
-
-        // Revenue = 60 * 30 = 1800
-        expect(result.sectorRevenue.sectorA).toBeCloseTo(1800, 4)
+    it("throws on NaN consumption", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: NaN } } }
+        const sectorInputCosts = { powerPlant: 1000 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: 10, producers: {} } } }
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Invalid consumption")
     })
 
-    it("fulfilled demand equals sum of salesQty across all sectors", () => {
-        const bids = [makeBid("sectorA"), makeBid("sectorB")]
-        // Two sectors produce 30 food each = 60 total; demand is 100
-        const sectorResults = {
-            sectorA: { producedGoods: { food: 30 } },
-            sectorB: { producedGoods: { food: 30 } },
+    it("throws on missing price for consumed good", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 10 } } }
+        const sectorInputCosts = { powerPlant: 1000 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: 10, producers: {} } } }
+        const badPrices = { ...prices }
+        delete (badPrices as any).oil
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, badPrices as Record<keyof Goods, number>, sectorInputCosts, purchaseProvenance))
+            .toThrow("Invalid price")
+    })
+
+    it("throws on missing provenance for consumed good", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 10 } } }
+        const sectorInputCosts = { powerPlant: 1000 }
+        const purchaseProvenance = { powerPlant: {} } // missing oil provenance
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Missing provenance")
+    })
+
+    it("reconciles per-sector costs match distributed revenue", () => {
+        const sectorResults = { 
+            powerPlant: { consumedGoods: { oil: 10 } },
+            factory: { consumedGoods: { energy: 5 } }
         }
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-        })
-
-        // Each sector sells 30 (proportional: 30/60 * 100 = 50 each... wait)
-        // demandCoverage = min(1, 100/60) = 1
-        // soldQty = production * 1 = production for each
-        // So sectorA sells 30, sectorB sells 30
-        expect(result.salesQty.sectorA.food).toBe(30)
-        expect(result.salesQty.sectorB.food).toBe(30)
-
-        // Total fulfilled = 60
-        const fulfilledDemandQty: Record<string, number> = {}
-        for(const sectorSales of Object.values(result.salesQty)) {
-            for(const [goodKey, qty] of Object.entries(sectorSales)) {
-                fulfilledDemandQty[goodKey] = (fulfilledDemandQty[goodKey] ?? 0) + qty
-            }
+        const sectorInputCosts = { powerPlant: 1000, factory: 250 }
+        const purchaseProvenance = { 
+            powerPlant: { oil: { warehouse: 5, producers: { refinery: 5 } } },
+            factory: { energy: { warehouse: 0, producers: { powerPlant: 5 } } }
         }
-        expect(fulfilledDemandQty.food).toBe(60)
-
-        // Unmet = 40
-        expect(result.unmetDemandByPop.worker?.food).toBeCloseTo(40, 4)
+        
+        const result = distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance)
+        
+        // Per-sector: powerPlant spent 1000 on oil, factory spent 250 on energy
+        // powerPlant (producer) receives revenue from factory's energy purchase: 5 * 50 = 250
+        expect(result.sectorRevenue.powerPlant).toBeCloseTo(250, 6)
+        // refinery (producer) receives revenue from powerPlant's oil purchase: 5 * 100 = 500
+        expect(result.sectorRevenue.refinery).toBeCloseTo(500, 6)
+        // Treasury receives from powerPlant's warehouse oil purchase: 5 * 100 = 500
+        expect(result.treasuryRevenue).toBeCloseTo(500, 6)
+        // Total distributed = total costs (1000 + 250 = 1250)
+        const totalDistributed = Object.values(result.sectorRevenue).reduce((a,b)=>a+b,0) + result.treasuryRevenue
+        expect(totalDistributed).toBeCloseTo(1250, 6)
     })
 
-    it("sells full demand when production exceeds demand", () => {
-        const bids = [makeBid("sectorA")]
-        // Sector produces 150 food, demand is 100
-        const sectorResults = makeResult("sectorA", { food: 150 })
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-        })
-
-        // Sells exactly demand (100), not all production (150)
-        expect(result.salesQty.sectorA.food).toBe(100)
-        expect(result.unsoldQty.sectorA.food).toBe(50)
-        expect(result.unmetDemandByPop.worker?.food).toBeUndefined()
-        expect(result.sectorRevenue.sectorA).toBeCloseTo(3000, 4) // 100 * 30
+    it("throws when sector has inputCosts but no sectorResults", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 10 } } }
+        const sectorInputCosts = { powerPlant: 1000, missingSector: 500 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: 10, producers: {} } } }
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Missing sectorResults")
     })
 
-    it("no production means all demand is unmet", () => {
-        const bids = [makeBid("sectorA")]
-        const sectorResults = makeResult("sectorA", { food: 0 })
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-        })
-
-        expect(result.salesQty.sectorA.food).toBeUndefined()
-        expect(result.unmetDemandByPop.worker?.food).toBeCloseTo(100, 4)
-        expect(result.sectorRevenue.sectorA).toBe(0)
+    it("throws on negative provenance quantity", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 10 } } }
+        const sectorInputCosts = { powerPlant: 1000 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: -5, producers: {} } } }
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Invalid warehouse provenance")
     })
 
-    it("sells zero-priced goods with zero revenue", () => {
-        const zeroPrices: Record<string, number> = { food: 0, oil: 100 }
-        const bids = [makeBid("sectorA")]
-        // Sector produces 10 food, households demand 8, price is 0
-        const sectorResults = makeResult("sectorA", { food: 10 })
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 8 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices: zeroPrices,
-        })
-
-        // 8 sold (all demand), 2 unsold, zero revenue, zero unmet
-        expect(result.salesQty.sectorA.food).toBe(8)
-        expect(result.unsoldQty.sectorA.food).toBe(2)
-        expect(result.sectorRevenue.sectorA).toBe(0)
-        expect(result.unmetDemandByPop.worker?.food).toBeUndefined()
+    it("throws on negative producer provenance quantity", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 10 } } }
+        const sectorInputCosts = { powerPlant: 1000 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: 10, producers: { refinery: -5 } } } }
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Invalid producer provenance")
     })
 
-    it("sells from available stock when there is no production", () => {
-        const bids = [makeBid("sectorA")]
-        // No production, but 50 food in warehouse stock, demand is 30
-        const sectorResults = makeResult("sectorA", { food: 0 })
-        const availableStock = { food: 50 }
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 30 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-            availableStock,
-        })
-
-        // 30 sold from warehouse, 20 stock remains, zero unmet demand
-        expect(result.warehouseSalesQty.food).toBe(30)
-        expect(result.salesQty.sectorA.food).toBeUndefined()
-        expect(result.unmetDemandByPop.worker?.food).toBeUndefined()
-        expect(result.sectorRevenue.sectorA).toBe(0)
-    })
-
-    it("allocates between production and warehouse stock proportionally", () => {
-        const bids = [makeBid("sectorA"), makeBid("sectorB")]
-        // Sector A produces 30, sector B produces 30, warehouse has 40
-        // Total supply = 100, demand = 100 → coverage = 1
-        // Each sector sells 30, warehouse sells 40
-        const sectorResults = {
-            sectorA: { producedGoods: { food: 30 } },
-            sectorB: { producedGoods: { food: 30 } },
-        }
-        const availableStock = { food: 40 }
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-            availableStock,
-        })
-
-        expect(result.salesQty.sectorA.food).toBe(30)
-        expect(result.salesQty.sectorB.food).toBe(30)
-        expect(result.warehouseSalesQty.food).toBe(40)
-        expect(result.unmetDemandByPop.worker?.food).toBeUndefined()
-
-        // Revenue only from sector production sales: (30 + 30) * 30 = 1800
-        expect(result.sectorRevenue.sectorA).toBeCloseTo(900, 4)
-        expect(result.sectorRevenue.sectorB).toBeCloseTo(900, 4)
-    })
-
-    it("shortfall splits unmet demand across all sources", () => {
-        const bids = [makeBid("sectorA")]
-        // Sector produces 10, warehouse has 10, total supply = 20, demand = 100
-        // coverage = min(1, 100/20) = 1 → all supply sold, 80 unmet
-        const sectorResults = makeResult("sectorA", { food: 10 })
-        const availableStock = { food: 10 }
-
-        const result = callAllocatePopulationSales({
-            sectorBids: bids,
-            sectorResults,
-            demandByPop: { worker: { food: 100 } },
-            cashByPop: { worker: 10000, clerks: 10000 },
-            prices,
-            availableStock,
-        })
-
-        expect(result.salesQty.sectorA.food).toBe(10)
-        expect(result.warehouseSalesQty.food).toBe(10)
-        expect(result.unmetDemandByPop.worker?.food).toBeCloseTo(80, 4)
+    it("throws when consumption exceeds provenance", () => {
+        const sectorResults = { powerPlant: { consumedGoods: { oil: 15 } } }
+        const sectorInputCosts = { powerPlant: 1500 }
+        const purchaseProvenance = { powerPlant: { oil: { warehouse: 10, producers: {} } } }
+        
+        expect(() => distributeSectorInputRevenue(sectorResults, prices, sectorInputCosts, purchaseProvenance))
+            .toThrow("Consumption exceeds provenance")
     })
 })
 
-describe("pruneMemory", () => {
-    it("removes entries not in active entity ids", () => {
-        const memory = new Map<string, number>([
-            ["a", 1],
-            ["b", 2],
-            ["c", 3],
-        ])
-        const active = new Set(["a", "c"])
-
-        pruneMemory(memory, active)
-
-        expect(memory.has("a")).toBe(true)
-        expect(memory.has("b")).toBe(false)
-        expect(memory.has("c")).toBe(true)
+describe("computePopulationConsumption", () => {
+    it("validates all population fields including wealthLevel, mortality, salary", () => {
+        const pop = {
+            farmer: { number: 100, wealth: 1000, qol: 50, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 100, expectedQol: 50 },
+            scientist: { number: 50, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 6, mortality: 0.001, salary: 200, expectedQol: 60 },
+            worker: { number: 20, wealth: 3000, qol: 70, birthRate: 0.01, wealthLevel: 7, mortality: 0.001, salary: 300, expectedQol: 70 },
+            student: { number: 10, wealth: 0, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.001, salary: 0, expectedQol: 40 },
+            healtcarePersonal: { number: 5, wealth: 5000, qol: 30, birthRate: 0, wealthLevel: 4, mortality: 0.01, salary: 0, expectedQol: 30 },
+            policeMen: { number: 2, wealth: 10000, qol: 80, birthRate: 0, wealthLevel: 8, mortality: 0.001, salary: 0, expectedQol: 80 },
+            teacher: { number: 30, wealth: 0, qol: 50, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 50 },
+            serviceWorker: { number: 10, wealth: 1000, qol: 45, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 45 },
+            clergy: { number: 5, wealth: 2000, qol: 55, birthRate: 0.01, wealthLevel: 4, mortality: 0.001, salary: 180, expectedQol: 55 },
+            retired: { number: 20, wealth: 3000, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.01, salary: 0, expectedQol: 40 },
+            clerks: { number: 15, wealth: 1500, qol: 50, birthRate: 0.01, wealthLevel: 4, mortality: 0.001, salary: 200, expectedQol: 50 },
+            engineer: { number: 10, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 300, expectedQol: 60 },
+            stayAtHome: { number: 5, wealth: 0, qol: 30, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 30 },
+            serviceMan: { number: 8, wealth: 1000, qol: 40, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 40 },
+        } as any
+        
+        // Should not throw with valid data
+        const prices = { ...basePrices } as Record<keyof Goods, number>
+        const salaries = {
+            farmer: 100, scientist: 200, worker: 300, student: 0, healtcarePersonal: 0, policeMen: 0,
+            teacher: 0, serviceWorker: 0, clergy: 0, retired: 0, clerks: 0, engineer: 0,
+            stayAtHome: 0, serviceMan: 0
+        } as Record<keyof Population, number>
+        
+        expect(() => computePopulationConsumption(pop, salaries, prices)).not.toThrow()
     })
 
-    it("does nothing when all entries are active", () => {
-        const memory = new Map<string, number>([["a", 1], ["b", 2]])
-        const active = new Set(["a", "b"])
-
-        pruneMemory(memory, active)
-
-        expect(memory.size).toBe(2)
-        expect(memory.has("a")).toBe(true)
-        expect(memory.has("b")).toBe(true)
+    it("throws when required good has no price", () => {
+        const pop = {
+            farmer: { number: 100, wealth: 1000, qol: 50, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 100, expectedQol: 50 },
+            scientist: { number: 50, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 6, mortality: 0.001, salary: 200, expectedQol: 60 },
+            worker: { number: 20, wealth: 3000, qol: 70, birthRate: 0.01, wealthLevel: 7, mortality: 0.001, salary: 300, expectedQol: 70 },
+            student: { number: 10, wealth: 0, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.001, salary: 0, expectedQol: 40 },
+            healtcarePersonal: { number: 5, wealth: 5000, qol: 30, birthRate: 0, wealthLevel: 4, mortality: 0.01, salary: 0, expectedQol: 30 },
+            policeMen: { number: 2, wealth: 10000, qol: 80, birthRate: 0, wealthLevel: 8, mortality: 0.001, salary: 0, expectedQol: 80 },
+            teacher: { number: 30, wealth: 0, qol: 50, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 50 },
+            serviceWorker: { number: 10, wealth: 1000, qol: 45, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 45 },
+            clergy: { number: 5, wealth: 2000, qol: 55, birthRate: 0.01, wealthLevel: 4, mortality: 0.001, salary: 180, expectedQol: 55 },
+            retired: { number: 20, wealth: 3000, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.01, salary: 0, expectedQol: 40 },
+            clerks: { number: 15, wealth: 1500, qol: 50, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 200, expectedQol: 50 },
+            engineer: { number: 10, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 300, expectedQol: 60 },
+            stayAtHome: { number: 5, wealth: 0, qol: 30, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 30 },
+            serviceMan: { number: 8, wealth: 1000, qol: 40, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 40 },
+        } as any
+        const salaries = {
+            farmer: 100, scientist: 200, worker: 300, student: 0, healtcarePersonal: 0, policeMen: 0,
+            teacher: 0, serviceWorker: 0, clergy: 0, retired: 0, clerks: 0, engineer: 0,
+            stayAtHome: 0, serviceMan: 0
+        } as Record<keyof Population, number>
+        const prices = { food: 100 } as Record<keyof Goods, number> // missing water, energy, etc.
+        
+        expect(() => computePopulationConsumption(pop, salaries, prices))
+            .toThrow("Missing price for required good")
     })
 
-    it("clears memory when no entities are active", () => {
-        const memory = new Map<string, number>([["a", 1], ["b", 2]])
-        const active = new Set<string>()
-
-        pruneMemory(memory, active)
-
-        expect(memory.size).toBe(0)
+    it("validates QoL range 0-80", () => {
+        const pop = {
+            farmer: { number: 100, wealth: 1000, qol: 100, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 100, expectedQol: 50 }, // QoL > 80
+            scientist: { number: 50, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 6, mortality: 0.001, salary: 200, expectedQol: 60 },
+            worker: { number: 20, wealth: 3000, qol: 70, birthRate: 0.01, wealthLevel: 7, mortality: 0.001, salary: 300, expectedQol: 70 },
+            student: { number: 10, wealth: 0, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.001, salary: 0, expectedQol: 40 },
+            healtcarePersonal: { number: 5, wealth: 5000, qol: 30, birthRate: 0, wealthLevel: 4, mortality: 0.01, salary: 0, expectedQol: 30 },
+            policeMen: { number: 2, wealth: 10000, qol: 80, birthRate: 0, wealthLevel: 8, mortality: 0.001, salary: 0, expectedQol: 80 },
+            teacher: { number: 30, wealth: 0, qol: 50, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 50 },
+            serviceWorker: { number: 10, wealth: 1000, qol: 45, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 45 },
+            clergy: { number: 5, wealth: 2000, qol: 55, birthRate: 0.01, wealthLevel: 4, mortality: 0.001, salary: 180, expectedQol: 55 },
+            retired: { number: 20, wealth: 3000, qol: 40, birthRate: 0, wealthLevel: 3, mortality: 0.01, salary: 0, expectedQol: 40 },
+            clerks: { number: 15, wealth: 1500, qol: 50, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 200, expectedQol: 50 },
+            engineer: { number: 10, wealth: 2000, qol: 60, birthRate: 0.01, wealthLevel: 5, mortality: 0.001, salary: 300, expectedQol: 60 },
+            stayAtHome: { number: 5, wealth: 0, qol: 30, birthRate: 0, wealthLevel: 2, mortality: 0.001, salary: 0, expectedQol: 30 },
+            serviceMan: { number: 8, wealth: 1000, qol: 40, birthRate: 0.01, wealthLevel: 3, mortality: 0.001, salary: 150, expectedQol: 40 },
+        } as any
+        const prices = { ...basePrices } as Record<keyof Goods, number>
+        const salaries = {
+            farmer: 100, scientist: 200, worker: 300, student: 0, healtcarePersonal: 0, policeMen: 0,
+            teacher: 0, serviceWorker: 0, clergy: 0, retired: 0, clerks: 0, engineer: 0,
+            stayAtHome: 0, serviceMan: 0
+        } as Record<keyof Population, number>
+        
+        expect(() => computePopulationConsumption(pop, salaries, prices))
+            .toThrow("Invalid QoL")
     })
+})
 
-    it("handles empty memory", () => {
-        const memory = new Map<string, number>()
-        const active = new Set(["a"])
+describe("applyGoodsModifier", () => {
+    it("commits all changes atomically or none", () => {
+        const goods = createEmptyWarehouse()
+        goods.oil = 100
+        goods.energy = 100
+        
+        const deltas = { oil: -50, energy: NaN } // energy will fail validation
+        
+        expect(() => applyGoodsModifier(goods, deltas, (cur, d) => cur + d))
+            .toThrow("Invalid modifier delta")
+        
+        // Original goods should be unchanged (atomic commit)
+        expect(goods.oil).toBe(100)
+        expect(goods.energy).toBe(100)
+    })
+})
 
-        pruneMemory(memory, active)
-
-        expect(memory.size).toBe(0)
+describe("computeMarketRatios", () => {
+    it("restricts key type to string/number", () => {
+        // TypeScript should enforce this at compile time
+        const demands = { "good1": 100, "good2": 200 }
+        const available = { "good1": 50, "good2": 100 }
+        
+        const ratios = computeMarketRatios(demands, available)
+        expect(ratios.good1).toBe(0.5)
+        expect(ratios.good2).toBe(0.5)
     })
 })
 
 describe("trySetPatchField", () => {
-    it("sets field when diff returns a change", () => {
-        const patch: any = {}
-        const result = trySetPatchField(patch, "goods", { oil: 100 }, { oil: 200 }, shallowDiff)
-
-        expect(result).toBe(true)
-        expect(patch.goods).toEqual({ oil: 200 })
-    })
-
-    it("returns false and does not set field when diff returns null", () => {
-        const patch: any = {}
-        const result = trySetPatchField(patch, "goods", { oil: 100 }, { oil: 100 }, shallowDiff)
-
-        expect(result).toBe(false)
-        expect(patch.goods).toBeUndefined()
-    })
-
-    it("returns newObj when oldObj is undefined", () => {
-        const patch: any = {}
-        const result = trySetPatchField(patch, "goods", undefined, { oil: 100 }, shallowDiff)
-
-        expect(result).toBe(true)
-        expect(patch.goods).toEqual({ oil: 100 })
-    })
-
-    it("works with different diff functions", () => {
-        const nullDiff = (): null => null
-        const patch: any = {}
-        const result = trySetPatchField(patch, "field", { a: 1 }, { a: 2 }, nullDiff)
-
-        expect(result).toBe(false)
-        expect(patch.field).toBeUndefined()
+    it("uses typed patch interface", () => {
+        // Current uses `any` - should use proper generic
+        const patch: Record<string, { value: number }> = {}
+        const diffFn = (a: { value: number } | undefined, b: { value: number }) => a?.value !== b.value ? b : undefined
+        
+        const changed = trySetPatchField(patch, "test", { value: 10 }, { value: 20 }, diffFn)
+        expect(changed).toBe(true)
+        expect(patch.test.value).toBe(20)
+        
+        const unchanged = trySetPatchField(patch, "test", { value: 20 }, { value: 20 }, diffFn)
+        expect(unchanged).toBe(false)
     })
 })

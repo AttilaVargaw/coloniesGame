@@ -20,6 +20,8 @@ interface CapitalSystemResult {
     replenishmentDelta: Partial<Goods>;
     moneySpent: Record<string, number>;
     remainingGoods: Partial<Record<keyof Goods, number>>;
+    // Physical audit: per-sector capital goods purchases (good -> quantity)
+    purchasesBySector: Record<string, Partial<Record<keyof Goods, number>>>;
 }
 
 function requireActionSuccess(
@@ -72,6 +74,7 @@ export function processCapital(
     const replenishmentDelta: Partial<Goods> = {};
     const moneySpent: Record<string, number> = {};
     const remainingGoods: Partial<Record<keyof Goods, number>> = { ...availableGoods };
+    const purchasesBySector: Record<string, Partial<Record<keyof Goods, number>>> = {};
 
     // Validate all availableGoods entries once, normalizing tiny negatives.
     for(const [goodKey, qty] of Object.entries(remainingGoods)) {
@@ -93,6 +96,7 @@ export function processCapital(
 
     for(const name of sectorNames) {
         moneySpent[name] = 0;
+        purchasesBySector[name] = {};
 
         const config = industrySectorBlueprints.get(name);
         const currentStock = { ...(capitalStock[name] ?? {}) } as Partial<Goods>;
@@ -209,6 +213,22 @@ export function processCapital(
 
         newCapitalStock[name] = bb.currentStock;
 
+        // Track physical capital purchases by sector
+        for(const [goodKey, amount] of Object.entries(bb.replenishAmounts)) {
+            const key = goodKey as keyof Goods;
+            const qty = -(amount ?? 0);
+            if (qty > 0) {
+                purchasesBySector[name][key] = (purchasesBySector[name][key] ?? 0) + qty;
+            }
+        }
+        for(const [goodKey, amount] of Object.entries(bb.investAmounts)) {
+            const key = goodKey as keyof Goods;
+            const qty = -(amount ?? 0);
+            if (qty > 0) {
+                purchasesBySector[name][key] = (purchasesBySector[name][key] ?? 0) + qty;
+            }
+        }
+
         // Reconcile cash: opening - spent must equal closing
         const closingMoney = requireNonNegativeFinite(
             bb.money,
@@ -314,5 +334,5 @@ export function processCapital(
         }
     }
 
-    return { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods };
+    return { newCapitalStock, replenishmentDelta, moneySpent, remainingGoods, purchasesBySector };
 }
