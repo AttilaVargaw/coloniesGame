@@ -25,26 +25,26 @@ export function MarketPanel({ market }: MarketPanelProps) {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Good</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Description</TableHead>
+            <TableRow className="border-b border-muted">
+              <TableHead className="text-left p-2 font-medium">Good</TableHead>
+              <TableHead className="text-left p-2 font-medium">Type</TableHead>
+              <TableHead className="text-center p-2 font-medium">Severity</TableHead>
+              <TableHead className="text-center p-2 font-medium">Duration</TableHead>
+              <TableHead className="text-left p-2 font-medium">Description</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {alerts.map((alert, i) => (
-              <TableRow key={i}>
-                <TableCell className="font-mono">{alert.good}</TableCell>
-                <TableCell>{alert.type.replace(/_/g, " ")}</TableCell>
-                <TableCell>
+              <TableRow key={i} className="border-b border-muted/50 last:border-0">
+                <TableCell className="font-mono p-2 text-left">{alert.good}</TableCell>
+                <TableCell className="p-2 text-left">{alert.type.replace(/_/g, " ")}</TableCell>
+                <TableCell className="p-2 text-center">
                   <Badge variant="outline" className={SEVERITY_COLORS[alert.severity]}>
                     {alert.severity}
                   </Badge>
                 </TableCell>
-                <TableCell>{alert.consecutiveTicks} ticks</TableCell>
-                <TableCell className="max-w-[300px] truncate">{alert.description}</TableCell>
+                <TableCell className="p-2 text-center">{alert.consecutiveTicks} ticks</TableCell>
+                <TableCell className="p-2 text-left max-w-[300px] truncate">{alert.description}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -68,4 +68,8 @@ export interface IndustryTickResult {
         purchaseProvenance: PurchaseProvenance;
         treasurySubsidiesPaid: Record<string, number>;
     };
+
+    // Treasury financial data
+    treasuryRevenue: number;
+    treasuryExpenditure: number;
 }

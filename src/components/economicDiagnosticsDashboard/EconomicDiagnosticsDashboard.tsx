@@ -9,7 +9,6 @@ import { EconomicHealthMetrics } from "@/game/economics/diagnostics/economicHeal
 import { MarketStabilityAnalyzer } from "@/game/economics/diagnostics/marketStabilityAnalyzer";
 import { IndustryHealthReport } from "@/game/economics/diagnostics/industryHealthAnalyzer";
 import { HouseholdHealthReport } from "@/game/economics/diagnostics/householdHealthAnalyzer";
-import { EconomicCascadeAnalyzer } from "@/game/economics/diagnostics/economicCascadeAnalyzer";
 
 import { GameDialogTabs, TabPanel } from "./DialogTabs";
 import { OverviewPanel } from "./OverviewPanel";
@@ -17,8 +16,6 @@ import { MarketPanel } from "./MarketPanel";
 import { IndustryPanel } from "./IndustryPanel";
 import { HouseholdPanel } from "./HouseholdPanel";
 import { TreasuryPanel } from "./TreasuryPanel";
-import { CascadePanel } from "./CascadePanel";
-import { HistoryPanel } from "./HistoryPanel";
 
 interface EconomicDiagnosticsDashboardProps {
     entityId: string;
@@ -38,20 +35,17 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     const marketAnalyzer = diagnostics?.market ?? null;
     const industryAnalyzer = diagnostics?.industry ?? null;
     const householdAnalyzer = diagnostics?.household ?? null;
-    const cascadeAnalyzer = diagnostics?.cascade ?? null;
 
     const [latestReports, setLatestReports] = useState<{
         health: ReturnType<EconomicHealthMetrics["getLatestSnapshot"]> | null;
         market: ReturnType<MarketStabilityAnalyzer["analyze"]> | null;
         industry: IndustryHealthReport | null;
         household: HouseholdHealthReport | null;
-        cascade: ReturnType<EconomicCascadeAnalyzer["analyze"]> | null;
     }>({
         health: null,
         market: null,
         industry: null,
         household: null,
-        cascade: null,
     });
 
     const updateReports = useCallback((tick: number) => {
@@ -85,21 +79,16 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                 household: analysis,
             }));
         }
-        if(cascadeAnalyzer) {
-            const analysis = cascadeAnalyzer.analyze(tick, entityId);
-            setLatestReports(prev => ({
-                ...prev,
-                cascade: analysis,
-            }));
-        }
-    }, [engine, entityId, healthMetrics, marketAnalyzer, industryAnalyzer, householdAnalyzer, cascadeAnalyzer]);
+    }, [engine, entityId, healthMetrics, marketAnalyzer, industryAnalyzer, householdAnalyzer]);
 
     const updateReportsRef = useRef(updateReports);
     updateReportsRef.current = updateReports;
 
-    useGameEvent(IndustryTickCompletedEvent, useCallback((data) => {
-        updateReportsRef.current(data.tick);
-    }, []));
+useGameEvent(IndustryTickCompletedEvent, useCallback((data) => {
+        // Only update for our entity
+        if (data.entity.id !== entityId) return;
+        updateReports(data.tick);
+    }, [entityId]));
 
     return (
         <Dialog modal={false} open={open}>
@@ -130,8 +119,6 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                             <TabsTrigger key="industries" value="industries">Industries</TabsTrigger>,
                             <TabsTrigger key="households" value="households">Households</TabsTrigger>,
                             <TabsTrigger key="treasury" value="treasury">Treasury</TabsTrigger>,
-                            <TabsTrigger key="cascades" value="cascades">Cascades</TabsTrigger>,
-                            <TabsTrigger key="history" value="history">History</TabsTrigger>,
                         ]}
                     >
                         <TabPanel value="overview">
@@ -140,7 +127,6 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                                 market={latestReports.market}
                                 industry={latestReports.industry}
                                 household={latestReports.household}
-                                cascade={latestReports.cascade}
                             />
                         </TabPanel>
 
@@ -158,14 +144,6 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
 
                         <TabPanel value="treasury">
                             <TreasuryPanel health={latestReports.health} />
-                        </TabPanel>
-
-                        <TabPanel value="cascades">
-                            <CascadePanel cascade={latestReports.cascade} />
-                        </TabPanel>
-
-                        <TabPanel value="history">
-                            <HistoryPanel health={latestReports.health} historyLength={historyLength} />
                         </TabPanel>
                     </GameDialogTabs>
                 </div>

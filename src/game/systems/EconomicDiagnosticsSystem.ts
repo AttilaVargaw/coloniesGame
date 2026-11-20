@@ -279,11 +279,9 @@ export class EconomicDiagnosticsSystem extends System {
     private createTreasuryMetrics(tick: number, entityId: string, metrics: IndustryTickCompletedData["metrics"]): TreasuryMetrics {
         const subsidyOutflowRate = Object.values(metrics.accounting.treasurySubsidiesPaid ?? {}).reduce((sum, v) => sum + v, 0);
         
-        // Other outflows - could include infrastructure maintenance, etc.
-        const otherOutflowRate = 0;
-        
-        // Inflows - taxes, trade revenue, etc.
-        const inflowRate = 0;
+        // Use actual computed treasury data from worker
+        const inflowRate = metrics.treasuryRevenue ?? 0;
+        const otherOutflowRate = (metrics.treasuryExpenditure ?? 0) - (metrics.accounting.treasurySubsidiesPaid ? Object.values(metrics.accounting.treasurySubsidiesPaid).reduce((sum, v) => sum + v, 0) : 0);
         
         const balance = metrics.colonyTreasury ?? 0;
 
@@ -292,7 +290,7 @@ export class EconomicDiagnosticsSystem extends System {
             entityId,
             balance,
             subsidyOutflowRate,
-            otherOutflowRate,
+            otherOutflowRate: Math.max(0, otherOutflowRate),
             inflowRate,
             runway: (subsidyOutflowRate + otherOutflowRate) > 0 && balance > 0 
                 ? balance / (subsidyOutflowRate + otherOutflowRate) 

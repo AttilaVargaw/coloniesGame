@@ -248,7 +248,10 @@ function mergeRecord<T extends Record<string, any>>(
 ) {
     if(!patch) return
     for(const key in patch) {
-        target[key as keyof T] = patch[key as keyof T]!
+        const value = patch[key as keyof T]
+        if(value !== undefined) {
+            target[key as keyof T] = value
+        }
     }
 }
 

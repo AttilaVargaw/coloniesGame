@@ -140,9 +140,23 @@ export class IndustryHealthAnalyzer {
         } else if (inputAvailabilityScore < this.config.lowInputAvailabilityThreshold) {
             status = "resource_constrained";
             details.push(`Low input availability: ${(inputAvailabilityScore * 100).toFixed(1)}%`);
+            // List specific unavailable inputs
+            const lowInputs = Object.entries(metrics.inputAvailability)
+                .filter(([, avail]) => avail < this.config.lowInputAvailabilityThreshold)
+                .map(([good, avail]) => `${good}: ${(avail * 100).toFixed(0)}%`);
+            if (lowInputs.length > 0) {
+                details.push(`Unavailable: ${lowInputs.join(", ")}`);
+            }
         } else if (laborAvailabilityScore < this.config.lowLaborAvailabilityThreshold) {
             status = "resource_constrained";
             details.push(`Low labor availability: ${(laborAvailabilityScore * 100).toFixed(1)}%`);
+            // List specific unavailable labor categories
+            const lowLabor = Object.entries(metrics.laborAvailability)
+                .filter(([, avail]) => avail < this.config.lowLaborAvailabilityThreshold)
+                .map(([cat, avail]) => `${cat}: ${(avail * 100).toFixed(0)}%`);
+            if (lowLabor.length > 0) {
+                details.push(`Short labor: ${lowLabor.join(", ")}`);
+            }
         } else if (metrics.operatingResultPreSubsidy < 0) {
             status = "under_pressure";
             details.push(`Operating at a loss: ${metrics.operatingResultPreSubsidy.toFixed(1)}`);

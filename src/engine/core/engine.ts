@@ -18,7 +18,7 @@ export interface EconomicDiagnostics {
     market: MarketStabilityAnalyzer;
     industry: IndustryHealthAnalyzer;
     household: HouseholdHealthAnalyzer;
-    cascade: EconomicCascadeAnalyzer;
+    cascade?: EconomicCascadeAnalyzer; // Optional - disabled
 }
 
 export interface Engine {

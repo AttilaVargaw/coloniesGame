@@ -44,7 +44,7 @@ export class World implements Engine {
             market: new MarketStabilityAnalyzer(health),
             industry: new IndustryHealthAnalyzer(health),
             household: new HouseholdHealthAnalyzer(health),
-            cascade: new EconomicCascadeAnalyzer(health),
+            // cascade: new EconomicCascadeAnalyzer(health), // Disabled
         }
     }
 

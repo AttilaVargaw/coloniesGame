@@ -1061,6 +1061,8 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 		capitalStock: newCapitalStock,
 		money: newMoney,
 		colonyTreasury: newTreasury,
+		treasuryRevenue: 0,
+		treasuryExpenditure: 0,
 		householdMoney: newHouseholdMoney,
 		settlementType,
 		allowedSectors,

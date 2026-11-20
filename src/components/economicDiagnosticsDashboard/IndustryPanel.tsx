@@ -33,38 +33,38 @@ export function IndustryPanel({ industry }: IndustryPanelProps) {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Sector</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Pre-Subsidy Result</TableHead>
-              <TableHead>Post-Subsidy Result</TableHead>
-              <TableHead>Utilization</TableHead>
-              <TableHead>Input Avail.</TableHead>
-              <TableHead>Labor Avail.</TableHead>
-              <TableHead>Stopped</TableHead>
-              <TableHead>Details</TableHead>
+            <TableRow className="border-b border-muted">
+              <TableHead className="text-left p-2 font-medium">Sector</TableHead>
+              <TableHead className="text-center p-2 font-medium">Status</TableHead>
+              <TableHead className="text-right p-2 font-medium">Pre-Subsidy Result</TableHead>
+              <TableHead className="text-right p-2 font-medium">Post-Subsidy Result</TableHead>
+              <TableHead className="text-right p-2 font-medium">Utilization</TableHead>
+              <TableHead className="text-right p-2 font-medium">Input Avail.</TableHead>
+              <TableHead className="text-right p-2 font-medium">Labor Avail.</TableHead>
+              <TableHead className="text-center p-2 font-medium">Stopped</TableHead>
+              <TableHead className="text-left p-2 font-medium">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {assessments.map((assessment, i) => (
-              <TableRow key={i}>
-                <TableCell className="font-mono">{assessment.sectorId}</TableCell>
-                <TableCell>
+              <TableRow key={i} className="border-b border-muted/50 last:border-0">
+                <TableCell className="font-mono p-2 text-left">{assessment.sectorId}</TableCell>
+                <TableCell className="p-2 text-center">
                   <Badge variant="outline" className={STATUS_COLORS[assessment.status]}>
                     {assessment.status.replace(/_/g, " ")}
                   </Badge>
                 </TableCell>
-                <TableCell className={assessment.operatingResultPreSubsidy < 0 ? "text-red-400" : "text-green-400"}>
+                <TableCell className={`p-2 text-right ${assessment.operatingResultPreSubsidy < 0 ? "text-red-400" : "text-green-400"}`}>
                   {formatNumber(assessment.operatingResultPreSubsidy)}
                 </TableCell>
-                <TableCell className={assessment.operatingResultPostSubsidy < 0 ? "text-red-400" : "text-green-400"}>
+                <TableCell className={`p-2 text-right ${assessment.operatingResultPostSubsidy < 0 ? "text-red-400" : "text-green-400"}`}>
                   {formatNumber(assessment.operatingResultPostSubsidy)}
                 </TableCell>
-                <TableCell>{formatPct(assessment.utilization)}</TableCell>
-                <TableCell>{formatPct(assessment.inputAvailabilityScore)}</TableCell>
-                <TableCell>{formatPct(assessment.laborAvailabilityScore)}</TableCell>
-                <TableCell>{assessment.consecutiveStoppedTicks > 0 ? assessment.consecutiveStoppedTicks : "-"}</TableCell>
-                <TableCell className="max-w-[300px] truncate">
+                <TableCell className="p-2 text-right">{formatPct(assessment.utilization)}</TableCell>
+                <TableCell className="p-2 text-right">{formatPct(assessment.inputAvailabilityScore)}</TableCell>
+                <TableCell className="p-2 text-right">{formatPct(assessment.laborAvailabilityScore)}</TableCell>
+                <TableCell className="p-2 text-center">{assessment.consecutiveStoppedTicks > 0 ? assessment.consecutiveStoppedTicks : "-"}</TableCell>
+                <TableCell className="p-2 text-left max-w-[300px] truncate">
                   {assessment.assessmentDetails.join("; ")}
                 </TableCell>
               </TableRow>

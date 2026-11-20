@@ -353,7 +353,8 @@ export function buySectorInputs(
             const allocated = allocation[key] ?? 0;
             const idealDemand = demandPerTick * bid.actualScale;
             if (allocated > idealDemand * 10) {
-                console.warn(`Allocation for ${sectorName}/${goodName} (${allocated}) significantly exceeds demand (${idealDemand})`);
+				// comented, so the program runs without lag
+                // console.warn(`Allocation for ${sectorName}/${goodName} (${allocated}) significantly exceeds demand (${idealDemand})`);
             }
         }
 

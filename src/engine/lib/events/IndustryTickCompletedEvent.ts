@@ -51,6 +51,8 @@ export interface IndustryTickMetricsData {
 
     money: Record<string, number>;
     colonyTreasury: number;
+    treasuryRevenue: number;
+    treasuryExpenditure: number;
 }
 
 export interface IndustryTickCompletedData {

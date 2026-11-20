@@ -73,6 +73,9 @@ export class EconomicCascadeAnalyzer {
     private activeCascades: Map<string, EconomicCascade> = new Map();
     private resolvedCascades: EconomicCascade[] = [];
     private problemTracking: Map<string, { firstTick: number; lastTick: number; severity: "info" | "warning" | "critical" }> = new Map();
+    private sectorInputRequirements: Map<string, Set<keyof Goods>> = new Map();
+    private cycleCheckCache: Map<string, boolean> = new Map();
+    private adjacencyCache: Map<string, Map<string, Set<string>>> = new Map();
     private cascadeIdCounter = 0;
 
     constructor(healthMetrics: EconomicHealthMetrics, config: Partial<EconomicCascadeAnalyzerConfig> = {}) {
@@ -81,6 +84,17 @@ export class EconomicCascadeAnalyzer {
     }
 
     analyze(tick: number, entityId: string): EconomicCascadeReport {
+        // Clear cycle check cache periodically (every 20 ticks)
+        if (tick % 20 === 0) {
+            this.cycleCheckCache.clear();
+            this.adjacencyCache.clear();
+            // Clear sector input requirements - they'll be rebuilt from current industry data
+            this.sectorInputRequirements.clear();
+        }
+        
+        // Build adjacency cache for this entity once per analyze call
+        this.buildAdjacencyCache(entityId);
+        
         // Detect current problems
         const currentProblems = this.detectProblems(tick, entityId);
         
@@ -112,6 +126,16 @@ export class EconomicCascadeAnalyzer {
         const priceData = priceSnapshot?.prices?.byGood ?? {};
 
         if (!latestMarket) return problems;
+
+        // Build sector input requirements from ALL sectors (not just stopped ones)
+        for (const sectorMetrics of latestIndustry) {
+            const requiredInputs = Object.entries(sectorMetrics.inputAvailability)
+                .filter(([, avail]) => avail !== undefined)
+                .map(([good]) => good as keyof Goods);
+            if (requiredInputs.length > 0) {
+                this.sectorInputRequirements.set(sectorMetrics.sectorId, new Set(requiredInputs));
+            }
+        }
 
         // Market shortages
         for (const [good, metrics] of Object.entries(latestMarket.goods)) {
@@ -178,6 +202,28 @@ export class EconomicCascadeAnalyzer {
                     description: `${sectorMetrics.sectorId} stopped: ${sectorMetrics.stopReason}`,
                     relatedLinks: [],
                 });
+
+                // Create sector-specific shortage problems with sector in ID to avoid conflicts
+                const requiredInputs = Object.entries(sectorMetrics.inputAvailability)
+                    .filter(([, avail]) => avail !== undefined)
+                    .map(([good]) => good as keyof Goods);
+                for (const goodKey of requiredInputs) {
+                    const avail = sectorMetrics.inputAvailability[goodKey];
+                    if (avail !== undefined && avail < 0.3) { // threshold for "unavailable"
+                        problems.push({
+                            id: `shortage_${goodKey}_for_${sectorMetrics.sectorId}`,
+                            type: "shortage",
+                            entityId,
+                            good: goodKey,
+                            sector: sectorMetrics.sectorId,
+                            firstDetectedTick: tick,
+                            lastObservedTick: tick,
+                            severity: avail === 0 ? "critical" : "warning",
+                            description: `${goodKey} unavailable for ${sectorMetrics.sectorId}: ${(avail * 100).toFixed(0)}% available`,
+                            relatedLinks: [],
+                        });
+                    }
+                }
             }
         }
 
@@ -268,13 +314,19 @@ export class EconomicCascadeAnalyzer {
         for (const [id, tracking] of this.problemTracking) {
             if (id === problem.id) continue;
             if (tracking.lastTick < tick - this.config.linkDetectionWindow) continue;
-            if (tracking.lastTick >= tick) continue; // Same tick or future
+            // Allow same-tick for cause→effect pairs that logically happen in sequence within a tick
+            const sameTickAllowed = this.canLinkSameTick(problem, id);
+            if (!sameTickAllowed && tracking.lastTick >= tick) continue; // Same tick or future
             
             // Find the actual problem node
             const causeProblem = this.findProblemNode(id, tracking, tick);
             if (causeProblem) {
                 const evidence = this.assessEvidence(causeProblem, problem, entityId);
                 if (evidence.confidence >= this.config.minConfidenceForLink) {
+                    // Check if this link would create a cycle
+                    if (this.wouldCreateCycle(causeProblem.id, problem.id, entityId)) {
+                        continue; // Skip this cause to avoid cycles
+                    }
                     potentialCauses.push(causeProblem);
                     // Add link to problem
                     problem.relatedLinks.push({
@@ -295,9 +347,81 @@ export class EconomicCascadeAnalyzer {
         if (potentialCauses.length > 0) {
             this.addToCascade(problem, potentialCauses, tick);
         } else if (problem.severity !== "info") {
-            // Root cause - start new cascade
-            this.startNewCascade(problem, tick);
+            // Root cause - try to group with similar root causes
+            this.startOrMergeCascade(problem, tick);
         }
+    }
+
+    private canLinkSameTick(effect: CascadeNode, causeId: string): boolean {
+        // Allow same-tick linking for specific cause→effect pairs where cause logically precedes effect
+        const causeType = causeId.split("_")[0];
+        const effectType = effect.type;
+        
+        // Shortage → Sector stop (input shortage causes sector to stop)
+        if (causeType === "shortage" && effectType === "sector_stop") return true;
+        // Price spike → Sector stop (high input prices make production unviable)
+        if (causeType === "price_spike" && effectType === "sector_stop") return true;
+        // Sector stop → Shortage (stopped sector stops producing its outputs)
+        if (causeType === "sector_stop" && effectType === "shortage") return true;
+        
+        return false;
+    }
+
+    private wouldCreateCycle(causeId: string, effectId: string, entityId: string): boolean {
+        const cacheKey = `${causeId}->${effectId}:${entityId}`;
+        const cached = this.cycleCheckCache.get(cacheKey);
+        if (cached !== undefined) return cached;
+        
+        // Get cached adjacency for this entity
+        const adjacency = this.adjacencyCache.get(entityId);
+        if (!adjacency) {
+            this.cycleCheckCache.set(cacheKey, false);
+            return false;
+        }
+        
+        // DFS from effect to see if we can reach cause (with depth limit)
+        const visited = new Set<string>();
+        const stack: Array<{ node: string; depth: number }> = [{ node: effectId, depth: 0 }];
+        const MAX_DEPTH = 10; // Prevent runaway searches
+        
+        while (stack.length > 0) {
+            const { node: current, depth } = stack.pop()!;
+            if (current === causeId) {
+                this.cycleCheckCache.set(cacheKey, true);
+                return true;
+            }
+            if (visited.has(current)) continue;
+            if (depth >= MAX_DEPTH) continue;
+            visited.add(current);
+            
+            const neighbors = adjacency.get(current);
+            if (neighbors) {
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        stack.push({ node: neighbor, depth: depth + 1 });
+                    }
+                }
+            }
+        }
+        
+        this.cycleCheckCache.set(cacheKey, false);
+        return false;
+    }
+
+    private buildAdjacencyCache(entityId: string): void {
+        const adjacency = new Map<string, Set<string>>();
+        
+        for (const cascade of this.activeCascades.values()) {
+            if (cascade.rootCause.entityId !== entityId) continue;
+            for (const link of cascade.links) {
+                if (!adjacency.has(link.fromProblem)) {
+                    adjacency.set(link.fromProblem, new Set());
+                }
+                adjacency.get(link.fromProblem)!.add(link.toProblem);
+            }
+        }
+        
+        this.adjacencyCache.set(entityId, adjacency);
     }
 
     private findProblemNode(id: string, tracking: { firstTick: number; lastTick: number; severity: "info" | "warning" | "critical" }, _currentTick: number): CascadeNode | null {
@@ -335,11 +459,20 @@ export class EconomicCascadeAnalyzer {
     private assessEvidence(cause: CascadeNode, effect: CascadeNode, _entityId: string): { level: EvidenceLevel; confidence: number; description: string } {
         // Confirmed dependency: known production chain
         if (cause.type === "shortage" && cause.good && effect.type === "sector_stop" && effect.sector) {
-            // Check if sector requires this good
+            // Check if sector actually requires this good as input
+            const requiredInputs = this.sectorInputRequirements.get(effect.sector);
+            if (requiredInputs && requiredInputs.has(cause.good)) {
+                return {
+                    level: "confirmed_dependency",
+                    confidence: 0.9,
+                    description: `${cause.good} shortage likely caused ${effect.sector} stop`,
+                };
+            }
+            // Sector doesn't require this good - observed association only
             return {
-                level: "confirmed_dependency",
-                confidence: 0.9,
-                description: `${cause.good} shortage likely caused ${effect.sector} stop`,
+                level: "observed_association",
+                confidence: 0.4,
+                description: `${cause.good} shortage coincident with ${effect.sector} stop (not a direct input)`,
             };
         }
         
@@ -404,8 +537,16 @@ export class EconomicCascadeAnalyzer {
         }
 
         if (targetCascade) {
-            targetCascade.nodes.push(problem);
-            targetCascade.links.push(...problem.relatedLinks);
+            // Add problem if not already present
+            if (!targetCascade.nodes.some(n => n.id === problem.id)) {
+                targetCascade.nodes.push(problem);
+            }
+            // Add links avoiding duplicates
+            for (const link of problem.relatedLinks) {
+                if (!targetCascade.links.some(l => l.fromProblem === link.fromProblem && l.toProblem === link.toProblem)) {
+                    targetCascade.links.push(link);
+                }
+            }
             targetCascade.endTick = tick;
             targetCascade.narrative = this.generateNarrative(targetCascade);
         } else {
@@ -416,10 +557,14 @@ export class EconomicCascadeAnalyzer {
 
     private startNewCascade(rootCause: CascadeNode, tick: number, causes: CascadeNode[] = []): void {
         this.cascadeIdCounter++;
+        // Deduplicate causes
+        const uniqueCauses = causes.filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
+        const uniqueNodes = [rootCause, ...uniqueCauses].filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i);
+        
         const cascade: EconomicCascade = {
             id: `cascade_${this.cascadeIdCounter}`,
             rootCause,
-            nodes: [rootCause, ...causes],
+            nodes: uniqueNodes,
             links: rootCause.relatedLinks,
             startTick: rootCause.firstDetectedTick,
             endTick: tick,
@@ -430,29 +575,91 @@ export class EconomicCascadeAnalyzer {
         this.activeCascades.set(cascade.id, cascade);
     }
 
+    private startOrMergeCascade(rootCause: CascadeNode, tick: number): void {
+        // Try to find an existing cascade with a related root cause
+        const relatedKey = this.getCascadeGroupKey(rootCause);
+        
+        for (const cascade of this.activeCascades.values()) {
+            if (cascade.status !== "active") continue;
+            const existingKey = this.getCascadeGroupKey(cascade.rootCause);
+            
+            // Same group key = merge into existing cascade
+            if (existingKey === relatedKey) {
+                // Check if this exact problem is already in the cascade
+                if (!cascade.nodes.some(n => n.id === rootCause.id)) {
+                    cascade.nodes.push(rootCause);
+                    cascade.endTick = tick;
+                    cascade.narrative = this.generateNarrative(cascade);
+                }
+                return;
+            }
+        }
+        
+        // No existing cascade for this group - create new
+        this.startNewCascade(rootCause, tick);
+    }
+
+    private getCascadeGroupKey(problem: CascadeNode): string {
+        // Group by sector or by good category
+        if (problem.sector) return `sector_${problem.sector}`;
+        if (problem.good) {
+            // Group goods by category (raw, manufactured, food, etc.)
+            const goodCategories: Record<string, string> = {
+                food: "food",
+                water: "food",
+                energy: "energy",
+                fuel: "energy",
+                ore: "raw",
+                metal: "manufactured",
+                electronics: "manufactured",
+                chemicals: "manufactured",
+                machinery: "manufactured",
+                textiles: "manufactured",
+                medicine: "services",
+                luxury: "luxury",
+            };
+            const category = goodCategories[problem.good] || "other";
+            return `good_${category}_${problem.type}`;
+        }
+        return `unknown_${problem.type}`;
+    }
+
     private updateCascadeWithNewProblems(cascade: EconomicCascade, problems: CascadeNode[], tick: number): void {
         // Check if any new problems link to cascade nodes
         for (const problem of problems) {
+            let addedToCascade = false;
+            const newLinks: typeof cascade.links = [];
+            
             for (const node of cascade.nodes) {
                 const evidence = this.assessEvidence(node, problem, cascade.rootCause.entityId);
                 if (evidence.confidence >= this.config.minConfidenceForLink) {
-                    // Add to cascade if not already present
-                    if (!cascade.nodes.some(n => n.id === problem.id)) {
-                        cascade.nodes.push(problem);
-                        cascade.links.push({
-                            fromProblem: node.id,
-                            toProblem: problem.id,
-                            fromGood: node.good,
-                            toSector: problem.sector,
-                            evidenceLevel: evidence.level,
-                            firstObservedTick: tick,
-                            description: evidence.description,
-                            confidence: evidence.confidence,
-                        });
-                        cascade.endTick = tick;
-                        cascade.narrative = this.generateNarrative(cascade);
+                    // Add link
+                    newLinks.push({
+                        fromProblem: node.id,
+                        toProblem: problem.id,
+                        fromGood: node.good,
+                        toSector: problem.sector,
+                        evidenceLevel: evidence.level,
+                        firstObservedTick: tick,
+                        description: evidence.description,
+                        confidence: evidence.confidence,
+                    });
+                }
+            }
+            
+            if (newLinks.length > 0) {
+                // Add to cascade if not already present
+                if (!cascade.nodes.some(n => n.id === problem.id)) {
+                    cascade.nodes.push(problem);
+                }
+                // Add new links (avoiding duplicates)
+                for (const newLink of newLinks) {
+                    if (!cascade.links.some(l => l.fromProblem === newLink.fromProblem && l.toProblem === newLink.toProblem)) {
+                        cascade.links.push(newLink);
                     }
                 }
+                cascade.endTick = tick;
+                cascade.narrative = this.generateNarrative(cascade);
             }
         }
     }

@@ -1273,16 +1273,17 @@ function processIndustry(
             .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
             .slice(0, 10);
 
-        console.warn(
-            `[IndustryTick] Money conservation violated for ${entityId}, continuing anyway`,
-            {
-                totalError: conservation.error,
-                largestAccountErrors: largestErrors,
-                openingBalances,
-                closingBalances,
-                transactionDeltas: Object.fromEntries(ledger.getAccountDeltas()),
-            }
-        );
+        // comented, so the program runs without lag
+        // console.warn(
+        //     `[IndustryTick] Money conservation violated for ${entityId}, continuing anyway`,
+        //     {
+        //         totalError: conservation.error,
+        //         largestAccountErrors: largestErrors,
+        //         openingBalances,
+        //         closingBalances,
+        //         transactionDeltas: Object.fromEntries(ledger.getAccountDeltas()),
+        //     }
+        // );
 
         // Continue anyway for initial ticks - don't return null
     }
@@ -1332,6 +1333,32 @@ function processIndustry(
         sectorProfits[name] = totalRevenue - inputCosts - laborCosts;
     }
 
+    // Build accounting object first to compute treasury financials
+    const householdSalesByGood = (() => {
+        const byGood: Partial<Goods> = {};
+        for(const sectorSales of Object.values(salesQty)) {
+            for(const [goodKey, qty] of Object.entries(sectorSales)) {
+                byGood[goodKey as keyof Goods] =
+                    (byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+            }
+        }
+        for(const [goodKey, qty] of Object.entries(warehouseSalesQty)) {
+            byGood[goodKey as keyof Goods] =
+                (byGood[goodKey as keyof Goods] ?? 0) + (qty ?? 0);
+        }
+        return byGood;
+    })();
+
+    const treasurySubsidies = Object.fromEntries(subsidies.map(s => [s.sectorName, s.amount]));
+    const treasurySubsidiesTotal = Object.values(treasurySubsidies).reduce((sum, v) => sum + v, 0);
+
+    // Treasury revenue: from household sales + capital purchases
+    const householdSalesRevenue = Object.values(householdSalesByGood).reduce((sum, v) => sum + v, 0);
+    const capitalPurchasesRevenue = Object.values(capitalPurchasesByGood).reduce((sum, v) => sum + v, 0);
+
+    const treasuryRevenue = householdSalesRevenue + capitalPurchasesRevenue;
+    const treasuryExpenditure = Object.values(treasurySubsidies).reduce((sum, v) => sum + v, 0);
+
     const result: IndustryTickResult = {
         entityId,
         goodsRequirements: aggregateGoodsRequirements(sumGoodsRequirements, populationConsumption),
@@ -1353,6 +1380,8 @@ function processIndustry(
         capitalStock: newCapitalStock,
         money: newMoney,
         colonyTreasury: newTreasury,
+        treasuryRevenue,
+        treasuryExpenditure,
         householdMoney: newHouseholdMoney,
         // sectorGoods: updatedSectorGoods,
         settlementType,
@@ -1899,6 +1928,8 @@ function buildPatch(last: IndustryTickResult | undefined, result: IndustryTickRe
         accounting: result.accounting,
         money: result.money,
         colonyTreasury: result.colonyTreasury,
+        treasuryRevenue: result.treasuryRevenue,
+        treasuryExpenditure: result.treasuryExpenditure,
     };
     hasChanged = true;
 
