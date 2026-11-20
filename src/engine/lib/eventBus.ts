@@ -18,6 +18,7 @@ import {
     MousemoveEvent,
     ContextMenuEvent,
     ContextMenuOpenEvent,
+    IndustryTickCompletedEvent,
 } from "./events"
 
 export class EventBus {
@@ -39,6 +40,7 @@ export class EventBus {
         [MousemoveEvent, new Queue()],
         [ContextMenuEvent, new Queue()],
         [ContextMenuOpenEvent, new Queue()],
+        [IndustryTickCompletedEvent, new Queue()],
     ])
 
     private readonly eventHandlers = new Map<new (...args: any[]) => EventBase, Set<(data: unknown) => void>>()

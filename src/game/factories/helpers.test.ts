@@ -46,7 +46,9 @@ describe("createEntityClickHandler", () => {
         handler({ event: { shiftKey: false }, worldX: 0, worldY: 0 })
 
         expect(engine.dispatchEvent).toHaveBeenCalledWith(
-            new SelectionChangedEvent({ data: body, type: "colony" })
+            expect.objectContaining({
+                data: { data: body, type: "colony" },
+            })
         )
     })
 
@@ -62,7 +64,9 @@ describe("createEntityClickHandler", () => {
         handler({ event: { shiftKey: false }, worldX: 0, worldY: 0 })
 
         expect(engine.dispatchEvent).toHaveBeenCalledWith(
-            new SelectionChangedEvent({ data: body, type: "attractor" })
+            expect.objectContaining({
+                data: { data: body, type: "attractor" },
+            })
         )
     })
 

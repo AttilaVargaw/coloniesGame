@@ -183,6 +183,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             new Set([IndustryComponent]),
             (entity) => new IndustryNode(entity.getComponent(IndustryComponent)!, entity)
         ).subscribe(DayPassedEvent, this.onDayPassed);
+        
+        // Reindex existing entities that have IndustryComponent
+        for (const entity of engine.getAllEntities()) {
+            if (entity.getComponent(IndustryComponent)) {
+                engine.reindexEntity(entity);
+            }
+        }
+        
         this.nodes = engine.getNodeList(IndustryNode);
         return this;
     }

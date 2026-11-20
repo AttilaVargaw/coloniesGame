@@ -59,16 +59,18 @@ export async function createBarycentre(
 
     for(let i = 0; i < bodies.length; i += 1) {
         const bodyAngle = dAngle + (TWO_PI / bodies.length) * i
-        await createBody(
+        const body = await createBody(
             { ...bodies[i], orbit: makeMoonOrbit(bodies[i], bodyAngle, commonAngularSpeed) },
             barycentre,
             engine,
             totalMass,
         )
+        engine.addEntity(body, barycentre)
     }
 
     for(const satellite of satellites ?? []) {
-        await createBody(satellite, barycentre, engine, totalMass)
+        const body = await createBody(satellite, barycentre, engine, totalMass)
+        engine.addEntity(body, barycentre)
     }
 
     return barycentre

@@ -1,4 +1,7 @@
 import { Entity } from "../entities/entity"
+import { EventBase } from "./events/EventBase"
+
+export { EventBase }
 
 export interface PointerEventData {
     x: number
@@ -13,10 +16,6 @@ export interface PointerEventData {
     type: string
     timeStamp: number
     isTrusted: boolean
-}
-
-export abstract class EventBase<T = any> {
-    constructor(public data: T) { }
 }
 
 export class EntityAddedEvent extends EventBase<Entity> { }
@@ -40,3 +39,4 @@ export class MouseupEvent extends EventBase<PointerEventData> { }
 export class ContextMenuEvent extends EventBase<{ x: number, y: number }> { }
 
 export class ContextMenuOpenEvent extends EventBase<{ entity: Entity, screenX: number, screenY: number }> { }
+export { IndustryTickCompletedEvent } from "./events/IndustryTickCompletedEvent"

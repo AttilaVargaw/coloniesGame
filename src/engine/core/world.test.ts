@@ -155,7 +155,9 @@ describe("World", () => {
         world.removeEntity(entity)
 
         expect(world.getEvents(EntityRemovedEvent)!.length).toBe(1)
-        expect(world.getEvents(EntityRemovedEvent)!.peek()).toEqual({ data: entity })
+        const event = world.getEvents(EntityRemovedEvent)!.peek()!
+        expect(event).toEqual(expect.objectContaining({ data: entity }))
+        expect(event.timestamp).toBeDefined()
     })
 
     it("clears command queues on destruct", () => {

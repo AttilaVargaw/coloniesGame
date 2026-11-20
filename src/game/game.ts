@@ -6,6 +6,7 @@ import { DateSystem } from "@engine/systems/dateSystem"
 import { TimeScaleSystem } from "@engine/systems/timeScaleSystem"
 import { IndustrySystem } from "@game/systems/industrySystem"
 import { EconomicMetricsSystem } from "@game/systems/EconomicMetricsSystem"
+import { EconomicDiagnosticsSystem } from "@game/systems/EconomicDiagnosticsSystem"
 import { TradeSystem } from "@game/systems/tradeSystem"
 import { AutoTradeSystem } from "@game/systems/autoTradeSystem"
 import { MigrationSystem } from "@game/systems/migrationSystem"
@@ -45,6 +46,7 @@ export class Game {
             .addSystem(MarketPriceSystem)
             .addSystem(IndustrySystem)
             .addSystem(EconomicMetricsSystem)
+            .addSystem(EconomicDiagnosticsSystem)
             .addSystem(TradeSystem)
             .addSystem(AutoTradeSystem)
             .addSystem(MigrationSystem)

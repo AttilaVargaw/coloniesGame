@@ -320,42 +320,6 @@ export async function createBody({
         body.addComponent(new TextureComponent({ src: markerInput.texture, id: name }))
     }
 
-    if(!buildable && typeof document !== "undefined" && !isRoot) {
-        const pool = getTextureWorkerPool()
-
-        if(archetype === "sol") {
-            const dayBitmap = await pool.generate("star", marker.color, undefined, name)
-            body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
-        } else if(archetype !== "baricenter") {
-            const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
-                pool.generate("planet", marker.color, archetype, name),
-                pool.generate("roughness", marker.color, archetype, name),
-                pool.generate("normal", marker.color, archetype, name, hasAtmosphere.has(archetype)),
-            ])
-
-            const [nightBitmap, cloudBitmap] = await Promise.all([
-                population !== undefined ? await pool.generate("night", marker.color, archetype, name) : createBlackNightCanvas(),
-                hasClouds.has(archetype) ? await pool.generate("cloud", marker.color, archetype, name) : undefined
-            ])
-
-            let meshIndex = 0
-            if(archetype === "asteroid") {
-                let h = 0
-                for(let i = 0; i < name.length; i++) {
-                    h = ((h << 5) - h + name.charCodeAt(i)) | 0
-                }
-                meshIndex = (Math.abs(h) % 8) + 1
-            }
-
-            body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name, meshIndex, tilt: axialTilt, tiltAxis: axialTiltAxis }))
-            body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
-
-            if(hasAtmosphere.has(archetype)) {
-                body.addComponent(new AtmosphereComponent(atmosphereForArchetype(archetype, marker.color, marker.radius)))
-            }
-        }
-    }
-
     let components: EntityComponent[]
 
     if(isRoot) {
@@ -379,6 +343,51 @@ export async function createBody({
 
     engine.addEntity(body, parent)
 
+    const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
+    !isRoot && applyComponents(
+        body,
+        ...createInteractionComponents(population, clickSize, clickSquare, engine, body, effectivePopulationRatio, blueprintOccupationStarterRatio))
+
+    if(!buildable && typeof document !== "undefined" && !isRoot) {
+        const pool = getTextureWorkerPool()
+
+        try {
+            if(archetype === "sol") {
+                const dayBitmap = await pool.generate("star", marker.color, undefined, name)
+                body.addComponent(new TextureComponent({ day: dayBitmap, animationSpeed: 0.5, id: name }))
+            } else if(archetype !== "baricenter") {
+                const [dayBitmap, roughnessBitmap, normalBitmap] = await Promise.all([
+                    pool.generate("planet", marker.color, archetype, name),
+                    pool.generate("roughness", marker.color, archetype, name),
+                    pool.generate("normal", marker.color, archetype, name, hasAtmosphere.has(archetype)),
+                ])
+
+                const [nightBitmap, cloudBitmap] = await Promise.all([
+                    population !== undefined ? await pool.generate("night", marker.color, archetype, name) : createBlackNightCanvas(),
+                    hasClouds.has(archetype) ? await pool.generate("cloud", marker.color, archetype, name) : undefined
+                ])
+
+                let meshIndex = 0
+                if(archetype === "asteroid") {
+                    let h = 0
+                    for(let i = 0; i < name.length; i++) {
+                        h = ((h << 5) - h + name.charCodeAt(i)) | 0
+                    }
+                    meshIndex = (Math.abs(h) % 8) + 1
+                }
+
+                body.addComponent(new TextureComponent({ day: dayBitmap, night: nightBitmap, roughness: roughnessBitmap, cloud: cloudBitmap, normal: normalBitmap, animationSpeed: 0.2, id: name, meshIndex, tilt: axialTilt, tiltAxis: axialTiltAxis }))
+                body.addComponent(new RotationComponent(0, generateRandomNumber(0.05, 0.2)))
+
+                if(hasAtmosphere.has(archetype)) {
+                    body.addComponent(new AtmosphereComponent(atmosphereForArchetype(archetype, marker.color, marker.radius)))
+                }
+            }
+        } catch (error) {
+            console.warn(`Texture generation failed for ${name}:`, error)
+        }
+    }
+
     const tasks: Promise<void>[] = []
 
     if(systems) {
@@ -388,11 +397,6 @@ export async function createBody({
     if(vessels) {
         createVessels(vessels, body, engine, mass)
     }
-
-    const effectivePopulationRatio = blueprintPopulationRatio ?? populationRatio
-    !isRoot && applyComponents(
-        body,
-        ...createInteractionComponents(population, clickSize, clickSquare, engine, body, effectivePopulationRatio, blueprintOccupationStarterRatio))
 
     if(rings?.length) {
         await createRings(rings, body, engine)

@@ -18,6 +18,7 @@ import {
     MousemoveEvent,
     ContextMenuEvent,
     ContextMenuOpenEvent,
+    IndustryTickCompletedEvent,
     EventBase,
 } from "./events"
 import { Entity } from "../entities/entity"
@@ -42,7 +43,7 @@ describe("EventBus", () => {
 
     describe("initialization", () => {
         it("pre-populates the expected default event queues", () => {
-            expect(bus.events.size).toBe(17)
+            expect(bus.events.size).toBe(18)
             expect(bus.events.has(EntityAddedEvent)).toBe(true)
             expect(bus.events.has(EntityRemovedEvent)).toBe(true)
             expect(bus.events.has(DayPassedEvent)).toBe(true)
@@ -60,6 +61,7 @@ describe("EventBus", () => {
             expect(bus.events.has(MousemoveEvent)).toBe(true)
             expect(bus.events.has(ContextMenuEvent)).toBe(true)
             expect(bus.events.has(ContextMenuOpenEvent)).toBe(true)
+            expect(bus.events.has(IndustryTickCompletedEvent)).toBe(true)
         })
 
         it("starts with no registered handlers", () => {

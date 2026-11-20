@@ -1,5 +1,5 @@
 import { Entity } from "@engine/entities/entity";
-import { EventBase } from "../events";
+import { EventBase } from "./EventBase";
 import { Goods } from "@game/data/Goods";
 import { Population } from "@game/data/Population";
 import type { SectorResult } from "@game/systems/generateIndustrialSector";

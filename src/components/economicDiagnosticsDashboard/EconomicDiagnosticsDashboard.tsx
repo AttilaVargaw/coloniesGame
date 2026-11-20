@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -20,7 +20,7 @@ import { HouseholdHealthReport } from "@/game/economics/diagnostics/householdHea
 import { EconomicCascadeAnalyzer, CascadeLink } from "@/game/economics/diagnostics/economicCascadeAnalyzer";
 import { useGameEngine } from "@/hooks/useGameContext";
 import { IndustryTickCompletedEvent } from "@engine/lib/events/IndustryTickCompletedEvent";
-import { useGameEvent } from "@/hooks/useGameEvent";
+import { Entity } from "@engine/entities/entity";
 
 interface EconomicDiagnosticsDashboardProps {
     entityId: string;
@@ -70,6 +70,7 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     const [activeTab, setActiveTab] = useState("overview");
     const [historyLength, setHistoryLength] = useState(50);
     const engine = useGameEngine();
+    console.log("[Dashboard] Component mounted", { entityId });
 
     const diagnostics = useMemo(() => {
         if(!engine) return null;
@@ -96,82 +97,112 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
         cascade: null,
     });
 
-    const updateReports = useCallback(() => {
+    const updateReports = useCallback((tick: number) => {
         if(!engine) return;
-        const tick = (engine as any).currentTick ?? 0;
+        console.log("[Dashboard] updateReports called", { entityId, tick, hasHealthMetrics: !!healthMetrics, hasMarketAnalyzer: !!marketAnalyzer });
 
         if(healthMetrics) {
+            const snapshot = healthMetrics.getLatestSnapshot(entityId);
+            console.log("[Dashboard] health snapshot:", snapshot ? "exists" : "null");
             setLatestReports(prev => ({
                 ...prev,
-                health: healthMetrics.getLatestSnapshot(entityId),
+                health: snapshot,
             }));
         }
         if(marketAnalyzer) {
+            const analysis = marketAnalyzer.analyze(tick, entityId);
+            console.log("[Dashboard] market analysis:", analysis);
             setLatestReports(prev => ({
                 ...prev,
-                market: marketAnalyzer.analyze(tick, entityId),
+                market: analysis,
             }));
         }
         if(industryAnalyzer) {
+            const analysis = industryAnalyzer.analyze(tick, entityId);
+            console.log("[Dashboard] industry analysis:", analysis);
             setLatestReports(prev => ({
                 ...prev,
-                industry: industryAnalyzer.analyze(tick, entityId),
+                industry: analysis,
             }));
         }
         if(householdAnalyzer) {
+            const analysis = householdAnalyzer.analyze(tick, entityId);
+            console.log("[Dashboard] household analysis:", analysis);
             setLatestReports(prev => ({
                 ...prev,
-                household: householdAnalyzer.analyze(tick, entityId),
+                household: analysis,
             }));
         }
         if(cascadeAnalyzer) {
+            const analysis = cascadeAnalyzer.analyze(tick, entityId);
+            console.log("[Dashboard] cascade analysis:", analysis);
             setLatestReports(prev => ({
                 ...prev,
-                cascade: cascadeAnalyzer.analyze(tick, entityId),
+                cascade: analysis,
             }));
         }
     }, [engine, entityId, healthMetrics, marketAnalyzer, industryAnalyzer, householdAnalyzer, cascadeAnalyzer]);
 
-    useGameEvent(IndustryTickCompletedEvent, useCallback(() => {
-        updateReports();
-    }, [updateReports]));
+    const updateReportsRef = useRef(updateReports);
+    updateReportsRef.current = updateReports;
+
+    useEffect(() => {
+        if (!engine) return;
+        const handleEvent = (data: { entity: Entity; tick: number; metrics: any }) => {
+            updateReportsRef.current(data.tick);
+        };
+        engine.subscribe(IndustryTickCompletedEvent, handleEvent);
+        return () => {
+            engine.unsubscribe(IndustryTickCompletedEvent, handleEvent);
+        };
+    }, [engine, entityId]);
 
     const overviewCards = useMemo(() => {
         const { health, market, industry, household, cascade } = latestReports;
-        if(!health || !market || !industry || !household || !cascade) return [];
+        const cards = [];
 
-        return [
-            {
+        if (health && market) {
+            cards.push({
                 title: "Economic Health",
                 value: market.summary.goodsWithShortage > 0 ? "Stressed" : "Stable",
                 details: `${market.summary.goodsWithShortage} shortages, ${market.summary.goodsWithSurplus} surpluses`,
                 severity: market.summary.goodsWithShortage > 5 ? "critical" : market.summary.goodsWithShortage > 0 ? "warning" : "info",
-            },
-            {
+            });
+        }
+        if (industry) {
+            cards.push({
                 title: "Industry Status",
                 value: industry.summary.inactive > 0 ? `${industry.summary.inactive} Stopped` : "Operational",
                 details: `${industry.summary.healthy} healthy, ${industry.summary.unprofitable} unprofitable, ${industry.summary.resourceConstrained} constrained`,
                 severity: industry.summary.inactive > 3 ? "critical" : industry.summary.unprofitable > 3 ? "warning" : "info",
-            },
-            {
+            });
+        }
+        if (household) {
+            cards.push({
                 title: "Households",
                 value: household.summary.destitute > 0 ? "Critical" : household.summary.stressed > 0 ? "Stressed" : "Stable",
                 details: `${household.summary.prosperous} prosperous, ${household.summary.stable} stable, ${household.summary.stressed} stressed, ${household.summary.destitute} destitute`,
                 severity: household.summary.destitute > 0 ? "critical" : household.summary.stressed > 2 ? "warning" : "info",
-            },
-            {
+            });
+        }
+        if (health) {
+            cards.push({
                 title: "Treasury",
                 value: health.treasury.runway ? `${health.treasury.runway.toFixed(0)} ticks` : "Infinite",
                 details: `Balance: ${formatNumber(health.treasury.balance)}, Outflow: ${formatNumber(health.treasury.subsidyOutflowRate + health.treasury.otherOutflowRate)}/tick`,
                 severity: health.treasury.runway && health.treasury.runway < 20 ? "critical" : health.treasury.runway && health.treasury.runway < 50 ? "warning" : "info",
-            },
-            {
+            });
+        }
+        if (cascade) {
+            cards.push({
                 title: "Active Cascades",
                 value: cascade.summary.activeCascades.toString(),
                 details: `${cascade.summary.resolvedCascades} resolved, ${cascade.summary.escalatingCascades} escalating`,
                 severity: cascade.summary.escalatingCascades > 0 ? "critical" : cascade.summary.activeCascades > 2 ? "warning" : "info",
-            },
-        ];
+            });
+        }
+
+        return cards;
     }, [latestReports]);
 
     const marketAlerts = useMemo(() => {
@@ -201,11 +232,12 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
     }, [latestReports.cascade]);
 
     return (
-        <Dialog modal={false} open={open} onOpenChange={setOpen}>
+        <Dialog modal={false} open={open}>
             <DialogTrigger asChild>
                 <Button
                     variant="ghost"
                     className="px-2 py-1 rounded-sm text-[10px] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                    onClick={() => setOpen(true)}
                 >
                     <span className="flex items-center gap-1">
                         <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -215,7 +247,7 @@ export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDa
                     </span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1c1c1c] text-white max-w-5xl min-w-7xl">
+            <DialogContent onCloseButtonClick={() => setOpen(false)} className="bg-[#1c1c1c] text-white max-w-5xl min-w-7xl">
                 <DialogHeader>
                     <DialogTitle>Economic Diagnostics Dashboard</DialogTitle>
                 </DialogHeader>
