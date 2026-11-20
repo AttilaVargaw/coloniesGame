@@ -10,6 +10,13 @@ interface OverviewCardsProps {
   cascade: ReturnType<typeof import("@/game/economics/diagnostics/economicCascadeAnalyzer").EconomicCascadeAnalyzer.prototype.analyze> | null
 }
 
+function getBorderClass(severity: string): string {
+  const colorString = SEVERITY_COLORS[severity as keyof typeof SEVERITY_COLORS]
+  // Extract border color (e.g., "border-blue-500/30" -> "blue-500/30")
+  const borderMatch = colorString?.match(/border-([^\s]+)/)
+  return borderMatch ? `border-${borderMatch[1]}` : "border-neutral-800"
+}
+
 export function OverviewPanel({ health, market, industry, household, cascade }: OverviewCardsProps) {
   const cards = []
 
@@ -62,7 +69,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {cards.map((card, i) => (
-          <Card key={i} className={`border-${SEVERITY_COLORS[card.severity as keyof typeof SEVERITY_COLORS].split(" ")[2]}`}>
+          <Card key={i} className={getBorderClass(card.severity)}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
             </CardHeader>

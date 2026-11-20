@@ -26,9 +26,7 @@ export function GameDialogTabs({
   )
 }
 
-type TabValue = "overview" | "markets" | "industries" | "households" | "treasury" | "cascades" | "history"
-
-function TabPanel({ value, children }: { value: TabValue; children: ReactNode }) {
+function TabPanel({ value, children }: { value: string; children: ReactNode }) {
   return (
     <TabsContent style={{ overflowY: "auto" }} value={value}>
       {children}
@@ -37,4 +35,3 @@ function TabPanel({ value, children }: { value: TabValue; children: ReactNode })
 }
 
 export { TabPanel }
-export type { TabValue }
