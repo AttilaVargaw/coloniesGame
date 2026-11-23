@@ -39,7 +39,9 @@
     "noUnusedLocals": false,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["./src/index.d.ts"]
+    "types": [
+      "./src/index.d.ts"
+    ]
   },
   "include": [
     "src",
@@ -53,11 +55,7 @@
     "**/dist",
     "**/e2e",
     "**/.kilo",
-    "**/src-tauri",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/src-tauri"
   ],
   "references": [
     {

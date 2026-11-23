@@ -23,7 +23,6 @@ interface EconomicDiagnosticsDashboardProps {
 
 export function EconomicDiagnosticsDashboard({ entityId }: EconomicDiagnosticsDashboardProps) {
     const [open, setOpen] = useState(false);
-    const [historyLength, setHistoryLength] = useState(50);
     const engine = useGameEngine();
 
     const diagnostics = useMemo(() => {

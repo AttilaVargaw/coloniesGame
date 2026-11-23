@@ -550,7 +550,7 @@ function runSimulation(
 
 describe("Long-run simulation validation — 1,500-tick scenarios", () => {
 	describe("Scenario: Normal economy", () => {
-		it("runs 1,500 ticks with standard starting conditions", { timeout: 60000 }, () => {
+		it("runs 1,500 ticks with standard starting conditions", () => {
 			const run = runSimulation("normal", 1500, {
 				populationSize: 100_000,
 				activeSectors: COMPLETE_SECTORS,

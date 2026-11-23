@@ -27,15 +27,42 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock Worker for Vite's ?worker imports in tests
-class MockWorker {
-  onmessage: ((event: MessageEvent) => void) | null = null
-  onerror: ((event: ErrorEvent) => void) | null = null
-  
-  postMessage = vi.fn()
-  terminate = vi.fn()
-  addEventListener = vi.fn()
-  removeEventListener = vi.fn()
-  dispatchEvent = vi.fn()
+function MockWorker(this: any) {
+  this.onmessage = null
+  this.onerror = null
+  this.postMessage = vi.fn((message) => {
+    // Simulate async worker response for texture worker
+    if (message?.type === "texture") {
+      queueMicrotask(() => {
+        if (this.onmessage) {
+          this.onmessage({
+            data: {
+              type: "result",
+              id: message.id,
+              bitmap: { width: 128, height: 128 } as ImageBitmap,
+            },
+          } as MessageEvent)
+        }
+      })
+    }
+    // Handle industry tick worker messages
+    if (message?.type === "tick") {
+      queueMicrotask(() => {
+        if (this.onmessage) {
+          this.onmessage({
+            data: {
+              type: "result",
+              patches: [],
+            },
+          } as MessageEvent)
+        }
+      })
+    }
+  })
+  this.terminate = vi.fn()
+  this.addEventListener = vi.fn()
+  this.removeEventListener = vi.fn()
+  this.dispatchEvent = vi.fn()
 }
 
-global.Worker = vi.fn(() => new MockWorker()) as any
+global.Worker = MockWorker as any

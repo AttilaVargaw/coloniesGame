@@ -12,10 +12,10 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			//reporter: ['text', 'text-summary'],
-
 		},
 		include: ["src/**/*.{test,spec}.{ts,tsx}"],
-		exclude: ["e2e/**/*.spec.ts"]
+		exclude: ["e2e/**/*.spec.ts"],
+		testTimeout: 30000,
 	},
     resolve: {
         alias: {
