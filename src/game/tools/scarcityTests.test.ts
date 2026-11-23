@@ -324,7 +324,7 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 	});
 
 	describe("Integration — sector execution under scarcity", () => {
-		it("insufficient operating cash: sector scales down proportionally", () => {
+		it("insufficient operating cash: sector scales proportionally to available money", () => {
 			const state = createSimState();
 			const input = generateColonyConfig(
 				{
@@ -343,8 +343,9 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 
 			const sectorResult = result.sectorResults["powerPlant"];
 			expect(sectorResult).toBeDefined();
-			// With only 20_000 money and total operating cost ~248_800,
-			// budgetRatio should be ~0.0804 and production should scale down.
+			// With only 20,000 money and total operating cost ~248,800,
+			// budgetRatio should be ~0.08 and production scales proportionally.
+			// minBudgetRatio of 0.5 only applies if sector has >= 50% of operating costs.
 			const expectedBudgetRatio = 20_000 / 248_800;
 			expect(sectorResult!.productionRatio).toBeCloseTo(expectedBudgetRatio, 2);
 			expect(result.sectorStopReason["powerPlant"]).toBe("Low budget");

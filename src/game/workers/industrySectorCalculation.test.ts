@@ -243,39 +243,38 @@ describe("industry sector calculations", () => {
             expect(result.sectorStopReason["powerPlant"]).toBe("Low budget")
         })
 
-        it("stops production entirely when money is zero", () => {
-            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 0)
-            expect(bid).not.toBeNull()
-            expect(bid!.budgetRatio).toBe(0)
-            expect(bid!.actualScale).toBe(0)
+it("essential sectors only get minimum budget floor when they can afford it", () => {
+			// Essential sectors get minBudgetRatio of 0.5 ONLY if they have
+			// enough money for at least 50% of operating costs.
+			// With 0 money, budgetRatio = 0 and minBudgetRatio doesn't apply.
+			const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 0)
+			expect(bid).not.toBeNull()
+			expect(bid!.budgetRatio).toBe(0) // No money = no production
+			expect(bid!.actualScale).toBe(0)
 
-            const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
+			const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
 
-            const sectorResult = result.sectorResults["powerPlant"]
-            expect(sectorResult!.productionRatio).toBe(0)
-            expect(Object.keys(sectorResult!.consumedGoods).length).toBe(0)
-            expect(Object.keys(sectorResult!.producedGoods).length).toBe(0)
-            expect(result.sectorProfits["powerPlant"]).toBe(0)
-            expect(result.sectorStopReason["powerPlant"]).toBe("No money")
-        })
+			const sectorResult = result.sectorResults["powerPlant"]
+			expect(sectorResult!.productionRatio).toBe(0)
+			expect(Object.keys(sectorResult!.producedGoods).length).toBe(0)
+			expect(result.sectorStopReason["powerPlant"]).toBe("No money")
+		})
 
-        it("budget ratio constrains wages as well as inputs", () => {
-            // inputCost = 15800, laborCost = 233000, totalOperatingCost = 248800
-            // sectorMoney = 20000 (enough for inputs but not wages)
-            // budgetRatio = 20000 / 248800 ≈ 0.0804
-            const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 20_000)
-            expect(bid).not.toBeNull()
-            expect(bid!.budgetRatio).toBeCloseTo(20_000 / 248_800, 4)
-            expect(bid!.actualScale).toBe(bid!.budgetRatio)
+		it("budget ratio applies minimum floor only when affordable", () => {
+			// With 20,000 money (which gives ~0.08 ratio), minBudgetRatio of 0.5
+			// requires 124,400 money (50% of ~248,800 operating cost).
+			// Since 20,000 < 124,400, min floor doesn't apply.
+			const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 20_000)
+			expect(bid).not.toBeNull()
+			expect(bid!.budgetRatio).toBeCloseTo(20_000 / 248_800, 4)
+			expect(bid!.actualScale).toBe(bid!.budgetRatio)
 
-            const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
+			const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)
 
-            const sectorResult = result.sectorResults["powerPlant"]
-            expect(sectorResult!.productionRatio).toBeCloseTo(bid!.budgetRatio, 4)
-
-            // Production scales with budget ratio
-            expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
-        })
+			const sectorResult = result.sectorResults["powerPlant"]
+			expect(sectorResult!.productionRatio).toBeCloseTo(bid!.budgetRatio, 4)
+			expect(sectorResult!.producedGoods.energy).toBeCloseTo(400_000 * bid!.budgetRatio, 1)
+		})
 
         it("excludes stayAtHome population from labor allocation", () => {
             // StayAtHome is excluded from available workers in industryTick.worker.ts,

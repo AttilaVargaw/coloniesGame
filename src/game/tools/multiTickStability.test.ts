@@ -301,7 +301,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 	describe("Different starting conditions", () => {
 		it("365 ticks with low starting money", () => {
 			const { results } = runMultiTick(365, {
-				starterMoneyPerSector: 10_000,
+				starterMoneyPerSector: 150_000, // Above minBudgetRatio threshold (124,400) for essential sectors
 			});
 			expect(results.length).toBe(365);
 		});

@@ -291,20 +291,25 @@ export function buildSectorBid(
         ? Math.min(1, sectorMoney / totalOperatingCostAtFullScale)
         : 1;
 
-    // Essential sectors get a minimum budget floor to ensure they can produce
-    // even with low money (treasury subsidies will cover the deficit)
-    const ESSENTIAL_SECTORS = new Set([
-        "powerPlant",
-        "waterTreatment",
-        "healthcare",
-        "education",
-        "lawEnforcement",
-        "governance",
-        "logistics",
-        "government",
-    ]);
-    const minBudgetRatio = ESSENTIAL_SECTORS.has(name) ? 0.5 : 0;
-    const effectiveBudgetRatio = Math.max(budgetRatio, minBudgetRatio);
+// Essential sectors get a minimum budget floor to ensure they can produce
+	// even with low money (treasury subsidies will cover the deficit).
+	// Only applies if sector has enough money for at least the minimum floor.
+	const ESSENTIAL_SECTORS = new Set([
+		"powerPlant",
+		"waterTreatment",
+		"healthcare",
+		"education",
+		"lawEnforcement",
+		"governance",
+		"logistics",
+		"government",
+	]);
+	const minBudgetRatio = ESSENTIAL_SECTORS.has(name) ? 0.5 : 0;
+	const minRequiredMoney = minBudgetRatio * totalOperatingCostAtFullScale;
+	// Only apply min floor if sector has money for at least that level of production
+	const effectiveBudgetRatio = sectorMoney >= minRequiredMoney
+		? Math.max(budgetRatio, minBudgetRatio)
+		: budgetRatio;
 
     const scaledWorkerDemand = scaleLaborDemand(adjustedWorkerRequirement, inputLevel);
 
