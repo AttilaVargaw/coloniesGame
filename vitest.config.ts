@@ -5,7 +5,10 @@ const dirname = import.meta.dirname
 
 export default defineConfig({
 	test: {
+		environment: 'jsdom',
+		globals: true,
 		maxForks: 8,
+		setupFiles: ['./vitest.setup.ts'],
 		coverage: {
 			provider: 'v8',
 			//reporter: ['text', 'text-summary'],

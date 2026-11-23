@@ -9,7 +9,7 @@ import { TbHexagonNumber4 } from "react-icons/tb";
 import { useMemo } from "react";
 import { cn } from "cn";
 
-export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, satisfied }: { name: keyof Population | keyof Goods | "money"; fullCapacityReq?: number; currentCapacityReq: number; satisfied?: number; }) {
+export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, satisfied, isStopped }: { name: keyof Population | keyof Goods | "money"; fullCapacityReq?: number; currentCapacityReq: number; satisfied?: number; isStopped?: boolean; }) {
     const icon = useMemo(() => {
         if(name === "money") {
             return <TbHexagonNumber4 className="w-4 h-4 text-yellow-400" strokeWidth={1.5} />
@@ -20,12 +20,17 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
 
     let color = "text-green-400"
 
-    if(satisfied && satisfied <= currentCapacityReq * 0.99) {
+    if(satisfied !== undefined && currentCapacityReq > 0 && satisfied <= currentCapacityReq * 0.99) {
         color = "text-red-400"
     }
 
     const inside = useMemo(() => {
         const ret = []
+
+        if(isStopped) {
+            ret.push(<span key="stopped" className="text-muted-foreground">Stopped</span>)
+            return ret
+        }
 
         if(fullCapacityReq !== undefined) {
             ret.push(<span key="full">{convertToReadable(Math.round(fullCapacityReq))}</span>)
@@ -38,7 +43,7 @@ export function RequirementItem({ name, fullCapacityReq, currentCapacityReq, sat
         }
 
         return ret
-    }, [name, icon, fullCapacityReq, currentCapacityReq, satisfied])
+    }, [name, icon, fullCapacityReq, currentCapacityReq, satisfied, isStopped])
 
     return (
         <span style={{ flex: 1 }} className={cn('inline-flex', 'items-center', 'gap-1', color)}>

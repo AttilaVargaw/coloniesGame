@@ -427,30 +427,136 @@ describe("executeNonCumulativeFlow", () => {
 	});
 
 	describe("executedSectors consistency", () => {
-		it("includes all processed sectors regardless of production", () => {
-			const bids = [
-				createMockBid("FactoryA", {
-					idealGoodsDemand: { [ENERGY]: 10 },
-					idealGoodsProduction: { [SERVICES]: 5 },
-					idealWorkerDemand: { worker: 10 },
-				}),
-				createMockBid("FactoryB", {
-					idealGoodsDemand: { [ENERGY]: 10 },
-					idealGoodsProduction: { [SERVICES]: 5 },
-					idealWorkerDemand: { worker: 10 },
-				}),
-			];
+it("includes all processed sectors regardless of production", () => {
+      const bids = [
+        createMockBid("FactoryA", {
+          idealGoodsDemand: { [ENERGY]: 10 },
+          idealGoodsProduction: { [SERVICES]: 5 },
+          idealWorkerDemand: { worker: 10 },
+        }),
+        createMockBid("FactoryB", {
+          idealGoodsDemand: { [ENERGY]: 10 },
+          idealGoodsProduction: { [SERVICES]: 5 },
+          idealWorkerDemand: { worker: 10 },
+        }),
+      ];
 
-			// Only enough energy for one factory
-			const colonyGoods = createMockGoods({ [ENERGY]: 10, [SERVICES]: 0 });
-			const laborAllocations = { FactoryA: { worker: 10 }, FactoryB: { worker: 10 } };
+      // Only enough energy for one factory
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, [SERVICES]: 0 });
+      const laborAllocations = { FactoryA: { worker: 10 }, FactoryB: { worker: 10 } };
 
-			const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
 
-			// Both should be in executedSectors even though one produces nothing
-			expect(result.executedSectors.has("FactoryA")).toBe(true);
-			expect(result.executedSectors.has("FactoryB")).toBe(true);
-			expect(result.executedSectors.size).toBe(2);
-		});
-	});
+      // Both should be in executedSectors even though one produces nothing
+      expect(result.executedSectors.has("FactoryA")).toBe(true);
+      expect(result.executedSectors.has("FactoryB")).toBe(true);
+      expect(result.executedSectors.size).toBe(2);
+    });
+  });
+
+  describe("non-essential goods penalty", () => {
+    it("skips non-essential goods from flowScale and applies penalty instead", () => {
+      // Sector needs ENERGY (non-cumulative) and GOVERNANCE (non-essential)
+      const bids = [
+        createMockBid("OilRig", {
+          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any, environmentFactor: 20 as any },
+          idealGoodsProduction: { oil: 5000 },
+          idealWorkerDemand: { worker: 10 },
+          nonEssentialGoods: new Set(["governance", "environmentFactor"] as any),
+        }),
+      ];
+
+      // All non-essential goods missing (governance, environmentFactor), but ENERGY available
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 0, environmentFactor: 0 });
+      const laborAllocations = { OilRig: { worker: 10 } };
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+
+      // Should NOT be blocked by missing non-essential goods (flowScale skips them)
+      // flowScale = 1 (ENERGY available), cumulativeRatio = 1 (no cumulative inputs)
+      // Then penalty applies: 2 missing non-essential = 20% penalty
+      // finalScale = 1.0 * 0.8 = 0.8
+      expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(0.8, 1);
+      expect(result.sectorStopReason.OilRig).toContain("Missing non-essential");
+      expect(result.sectorStopReason.OilRig).toContain("-20%");
+    });
+
+    it("produces at 50% minimum when all non-essential goods missing (50% cap)", () => {
+      const bids = [
+        createMockBid("OilRig", {
+          idealGoodsDemand: { 
+            [ENERGY]: 10, 
+            governance: 20 as any, 
+            environmentFactor: 20 as any,
+            energy: 10 as any,
+            services: 5 as any,
+            vehicles: 5 as any,
+            water: 10 as any,
+          },
+          idealGoodsProduction: { oil: 5000 },
+          idealWorkerDemand: { worker: 10 },
+          nonEssentialGoods: new Set(["governance", "environmentFactor", "energy", "services", "vehicles", "water"] as any),
+        }),
+      ];
+
+      // ENERGY available, but all 6 non-essential goods missing
+      const colonyGoods = createMockGoods({ [ENERGY]: 10 });
+      const laborAllocations = { OilRig: { worker: 10 } };
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+
+      // 6 missing non-essential = 60% penalty, capped at 50%
+      // finalScale = 1.0 * 0.5 = 0.5
+      expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(0.5, 1);
+      expect(result.sectorStopReason.OilRig).toContain("-50%");
+    });
+
+    it("produces at 100% when all non-essential goods available", () => {
+      const bids = [
+        createMockBid("OilRig", {
+          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any },
+          idealGoodsProduction: { oil: 5000 },
+          idealWorkerDemand: { worker: 10 },
+          nonEssentialGoods: new Set(["governance"] as any),
+        }),
+      ];
+
+      // Both ENERGY and governance available
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 20 });
+      const laborAllocations = { OilRig: { worker: 10 } };
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+
+      // No penalty - all non-essential goods available
+      expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(1.0, 1);
+      expect(result.sectorStopReason.OilRig).toBe("Producing");
+    });
+
+    it("does not add non-essential goods to cumulative demand", () => {
+      // Sector with both non-cumulative and non-essential goods
+      const bids = [
+        createMockBid("Factory", {
+          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any, logistics: 5 as any },
+          idealGoodsProduction: { [SERVICES]: 8 },
+          idealWorkerDemand: { worker: 10 },
+          nonEssentialGoods: new Set(["governance"] as any),
+        }),
+      ];
+
+      // ENERGY available, governance (non-essential) missing, LOGISTICS (cumulative) missing
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 0, logistics: 0 });
+      const purchasedBySector = { Factory: { logistics: 0 } };
+      const laborAllocations = { Factory: { worker: 10 } };
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, purchasedBySector, population, availableWorkers);
+
+      // flowScale = 1 (ENERGY available, governance skipped)
+      // cumulativeRatio = 0 (LOGISTICS missing)
+      // finalScale = 0 (capped by cumulative), but sector should still execute (not blocked by non-essential)
+      expect(result.executedSectors.has("Factory")).toBe(true);
+      expect(result.sectorResults.Factory.productionRatio).toBe(0);
+      // stopReason should be about cumulative shortage, not non-essential
+      expect(result.sectorStopReason.Factory).toContain("No materials");
+    });
+  });
 });

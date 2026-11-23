@@ -1,5 +1,6 @@
 import type { IndustryTickPatch } from "../workers/IndustryTickPatch";
 import type { IndustryTickInput } from "../workers/IndustryTickInput";
+import Worker from "../workers/industryTick.worker.ts?worker";
 
 export interface WorkerPoolMessage {
     type: string;
@@ -38,9 +39,8 @@ export class IndustryWorkerPool {
         if (this.started) return;
         this.started = true;
         
-        const workerUrl = new URL("../workers/industryTick.worker.ts", import.meta.url);
         for (let i = 0; i < this.workerCount; i++) {
-            const worker = new Worker(workerUrl, { type: "module" });
+            const worker = new Worker();
             worker.onmessage = (event) => this.handleMessage(i, event);
             worker.onerror = (event) => {
                 console.error(`Industry worker ${i} error:`, event.message);
