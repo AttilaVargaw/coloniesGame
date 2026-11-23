@@ -29,6 +29,14 @@ const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"recycling",
 	"consumerFactory",
 	"paperFactory",
+	"metalFactory",
+	"machineryFactory",
+	"fishery",
+	"mine",
+	"environmentControl",
+	"medicineFactory",
+	"construction",
+	"automotive",
 ];
 
 const NO_OIL_SECTORS: (keyof IndustrialSectors)[] = [

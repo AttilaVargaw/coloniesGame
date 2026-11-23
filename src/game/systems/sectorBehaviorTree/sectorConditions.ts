@@ -66,6 +66,12 @@ export class HasLaborShortage extends Condition {
     }
 }
 
+export class HasNoWorkers extends Condition {
+    check(blackboard: SectorBlackboard): boolean {
+        return blackboard.laborAssigned <= 0;
+    }
+}
+
 export class HasEnoughWorkers extends Condition {
     check(blackboard: SectorBlackboard): boolean {
         if (!blackboard.workerRequirement) return true;

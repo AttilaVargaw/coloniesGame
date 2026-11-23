@@ -559,4 +559,226 @@ it("includes all processed sectors regardless of production", () => {
       expect(result.sectorStopReason.Factory).toContain("No materials");
     });
   });
+
+  describe("realistic sector blueprints", () => {
+    it("shows blocked SCCs for powerPlant + services scenario", async () => {
+      // Import using dynamic import for ES modules
+      const { industrySectorBlueprints } = await import("../systems/sectorBlueprints");
+      const { basePrices } = await import("../data/Goods");
+      const { Population } = await import("../data/Population");
+      const { createEmptyWarehouse } = await import("../factories/createStarterWarehouse");
+
+      const population: Population = {
+        farmer: { number: 10000, wealth: 1000, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        scientist: { number: 5000, wealth: 2000, wealthLevel: 2, qol: 60, expectedQol: 60, populationChange: 0, mortality: 0, salary: 1000, birthRate: 0 },
+        worker: { number: 20000, wealth: 500, wealthLevel: 1, qol: 40, expectedQol: 40, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        student: { number: 8000, wealth: 0, wealthLevel: 0, qol: 30, expectedQol: 30, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        healtcarePersonal: { number: 2000, wealth: 1500, wealthLevel: 2, qol: 55, expectedQol: 55, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        policeMen: { number: 1500, wealth: 800, wealthLevel: 1, qol: 45, expectedQol: 45, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        teacher: { number: 1000, wealth: 600, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        serviceWorker: { number: 3000, wealth: 400, wealthLevel: 1, qol: 35, expectedQol: 35, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        clergy: { number: 500, wealth: 300, wealthLevel: 1, qol: 40, expectedQol: 40, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        retired: { number: 4000, wealth: 5000, wealthLevel: 3, qol: 60, expectedQol: 60, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        clerks: { number: 2500, wealth: 800, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        engineer: { number: 2000, wealth: 2000, wealthLevel: 2, qol: 55, expectedQol: 55, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        stayAtHome: { number: 3000, wealth: 200, wealthLevel: 1, qol: 30, expectedQol: 30, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        serviceMan: { number: 1000, wealth: 1000, wealthLevel: 1, qol: 45, expectedQol: 45, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+      };
+
+      const availableWorkers: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+      for (const key of Object.keys(population) as (keyof Population)[]) {
+        availableWorkers[key] = key === "stayAtHome" ? 0 : population[key].number;
+      }
+
+      const salaries = {
+        farmer: 200,
+        scientist: 1000,
+        worker: 200,
+        student: 180,
+        healtcarePersonal: 500,
+        policeMen: 200,
+        teacher: 200,
+        serviceWorker: 200,
+        clergy: 200,
+        retired: 180,
+        clerks: 500,
+        engineer: 500,
+        stayAtHome: 180,
+        serviceMan: 200,
+      };
+
+      const prices = basePrices;
+
+      // Use real sector blueprints for powerPlant and services
+      const powerPlantBlueprint = industrySectorBlueprints.get("powerPlant");
+      const servicesBlueprint = industrySectorBlueprints.get("services");
+
+      if (!powerPlantBlueprint || !servicesBlueprint) {
+        throw new Error("Blueprints not found");
+      }
+
+      // Create bids manually from blueprints (simplified)
+      const bids = [
+        {
+          name: "powerPlant",
+          level: 1,
+          idealGoodsDemand: powerPlantBlueprint.goodsRequirements,
+          idealGoodsProduction: powerPlantBlueprint.goodsProduction,
+          idealWorkerDemand: powerPlantBlueprint.workerRequirement,
+          actualScale: 1,
+          budgetRatio: 1,
+          inputLevel: 1,
+          outputLevel: 1,
+          capitalMultiplier: 1,
+          inputCost: 0,
+          laborCost: 0,
+          nonEssentialGoods: powerPlantBlueprint.nonEssentialGoods ?? new Set(),
+        },
+        {
+          name: "services",
+          level: 1,
+          idealGoodsDemand: servicesBlueprint.goodsRequirements,
+          idealGoodsProduction: servicesBlueprint.goodsProduction,
+          idealWorkerDemand: servicesBlueprint.workerRequirement,
+          actualScale: 1,
+          budgetRatio: 1,
+          inputLevel: 1,
+          outputLevel: 1,
+          capitalMultiplier: 1,
+          inputCost: 0,
+          laborCost: 0,
+          nonEssentialGoods: servicesBlueprint.nonEssentialGoods ?? new Set(),
+        },
+      ];
+
+      // Starting goods - enough oil for powerPlant, no energy initially
+      const colonyGoods = createEmptyWarehouse();
+      colonyGoods.oil = 10000;
+      colonyGoods.environmentFactor = 10000;
+      colonyGoods.governance = 10000;
+      colonyGoods.consumerGoods = 10000;
+
+      const laborAllocations = {
+        powerPlant: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
+        services: { healtcarePersonal: 10, serviceWorker: 940, clergy: 50 },
+      };
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+
+      console.log("=== powerPlant + services result ===");
+      console.log("powerPlant productionRatio:", result.sectorResults.powerPlant?.productionRatio);
+      console.log("services productionRatio:", result.sectorResults.services?.productionRatio);
+      console.log("powerPlant stopReason:", result.sectorStopReason.powerPlant);
+      console.log("services stopReason:", result.sectorStopReason.services);
+      console.log("executedSectors:", [...result.executedSectors]);
+
+      // Just verify it runs without error
+      expect(result.executedSectors.has("powerPlant")).toBe(true);
+      expect(result.executedSectors.has("services")).toBe(true);
+    });
+
+    it("shows blocked SCCs for multiple sectors consuming energy and services", async () => {
+      const { industrySectorBlueprints } = await import("../systems/sectorBlueprints");
+      const { basePrices } = await import("../data/Goods");
+      const { Population } = await import("../data/Population");
+      const { createEmptyWarehouse } = await import("../factories/createStarterWarehouse");
+
+      const population: Population = {
+        farmer: { number: 10000, wealth: 1000, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        scientist: { number: 5000, wealth: 2000, wealthLevel: 2, qol: 60, expectedQol: 60, populationChange: 0, mortality: 0, salary: 1000, birthRate: 0 },
+        worker: { number: 20000, wealth: 500, wealthLevel: 1, qol: 40, expectedQol: 40, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        student: { number: 8000, wealth: 0, wealthLevel: 0, qol: 30, expectedQol: 30, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        healtcarePersonal: { number: 2000, wealth: 1500, wealthLevel: 2, qol: 55, expectedQol: 55, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        policeMen: { number: 1500, wealth: 800, wealthLevel: 1, qol: 45, expectedQol: 45, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        teacher: { number: 1000, wealth: 600, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        serviceWorker: { number: 3000, wealth: 400, wealthLevel: 1, qol: 35, expectedQol: 35, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        clergy: { number: 500, wealth: 300, wealthLevel: 1, qol: 40, expectedQol: 40, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+        retired: { number: 4000, wealth: 5000, wealthLevel: 3, qol: 60, expectedQol: 60, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        clerks: { number: 2500, wealth: 800, wealthLevel: 1, qol: 50, expectedQol: 50, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        engineer: { number: 2000, wealth: 2000, wealthLevel: 2, qol: 55, expectedQol: 55, populationChange: 0, mortality: 0, salary: 500, birthRate: 0 },
+        stayAtHome: { number: 3000, wealth: 200, wealthLevel: 1, qol: 30, expectedQol: 30, populationChange: 0, mortality: 0, salary: 180, birthRate: 0 },
+        serviceMan: { number: 1000, wealth: 1000, wealthLevel: 1, qol: 45, expectedQol: 45, populationChange: 0, mortality: 0, salary: 200, birthRate: 0 },
+      };
+
+      const availableWorkers: Record<keyof Population, number> = {} as Record<keyof Population, number>;
+      for (const key of Object.keys(population) as (keyof Population)[]) {
+        availableWorkers[key] = key === "stayAtHome" ? 0 : population[key].number;
+      }
+
+      const salaries = {
+        farmer: 200,
+        scientist: 1000,
+        worker: 200,
+        student: 180,
+        healtcarePersonal: 500,
+        policeMen: 200,
+        teacher: 200,
+        serviceWorker: 200,
+        clergy: 200,
+        retired: 180,
+        clerks: 500,
+        engineer: 500,
+        stayAtHome: 180,
+        serviceMan: 200,
+      };
+
+      const prices = basePrices;
+
+      // Add more sectors that consume both energy and services
+      const sectorNames = ["powerPlant", "services", "bank", "education", "logistics", "lawEnforcement", "government"];
+      const bids: any[] = [];
+      const laborAllocations: Record<string, any> = {};
+
+      for (const name of sectorNames) {
+        const blueprint = industrySectorBlueprints.get(name);
+        if (!blueprint) continue;
+        bids.push({
+          name,
+          level: 1,
+          idealGoodsDemand: blueprint.goodsRequirements,
+          idealGoodsProduction: blueprint.goodsProduction,
+          idealWorkerDemand: blueprint.workerRequirement,
+          actualScale: 1,
+          budgetRatio: 1,
+          inputLevel: 1,
+          outputLevel: 1,
+          capitalMultiplier: 1,
+          inputCost: 0,
+          laborCost: 0,
+          nonEssentialGoods: blueprint.nonEssentialGoods ?? new Set(),
+        });
+        laborAllocations[name] = blueprint.workerRequirement;
+      }
+
+      // Starting goods - enough for powerPlant
+      const colonyGoods = createEmptyWarehouse();
+      colonyGoods.oil = 50000;
+      colonyGoods.environmentFactor = 50000;
+      colonyGoods.governance = 50000;
+      colonyGoods.consumerGoods = 50000;
+      colonyGoods.chemicals = 50000;
+      colonyGoods.medicine = 50000;
+      colonyGoods.paper = 50000;
+      colonyGoods.metals = 50000;
+      colonyGoods.machinery = 50000;
+      colonyGoods.buildings = 50000;
+      colonyGoods.water = 50000;
+      colonyGoods.food = 50000;
+      colonyGoods.agriculturalGoods = 50000;
+      colonyGoods.lumber = 50000;
+
+      const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
+
+      console.log("=== Multiple sectors result ===");
+      for (const bid of bids) {
+        const name = bid.name;
+        console.log(`${name} productionRatio:`, result.sectorResults[name]?.productionRatio);
+        console.log(`${name} stopReason:`, result.sectorStopReason[name]);
+      }
+      console.log("executedSectors:", [...result.executedSectors]);
+
+      // Just verify it runs
+      expect(result.executedSectors.size).toBe(bids.length);
+    });
+  });
 });

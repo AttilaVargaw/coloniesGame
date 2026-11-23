@@ -48,6 +48,35 @@ export class PrioritizeFoodSectors extends Action<IndustryBlackboard> {
     }
 }
 
+export class PrioritizeEssentialSectors extends Action<IndustryBlackboard> {
+    execute(bb: IndustryBlackboard): "SUCCESS" | "FAILURE" {
+        const essentialSectors = [
+            "powerPlant",
+            "waterTreatment",
+            "healthcare",
+            "education",
+            "lawEnforcement",
+            "governance",
+            "logistics",
+            "government",
+        ];
+        for(const sectorName of Object.keys(bb.sectorProfits)) {
+            if(essentialSectors.includes(sectorName)) {
+                bb.investmentPriority[sectorName] = Math.max(
+                    bb.investmentPriority[sectorName] ?? 0,
+                    0.9
+                );
+            } else {
+                bb.investmentPriority[sectorName] = Math.min(
+                    bb.investmentPriority[sectorName] ?? 0.5,
+                    0.3
+                );
+            }
+        }
+        return "SUCCESS";
+    }
+}
+
 export class SetInvestmentTotal extends Action<IndustryBlackboard> {
     constructor(public fractionOfMoney: number = 0.1) { super(); }
     execute(bb: IndustryBlackboard): "SUCCESS" | "FAILURE" {

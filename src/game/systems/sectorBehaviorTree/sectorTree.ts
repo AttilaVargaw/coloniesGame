@@ -9,6 +9,7 @@ import {
     HasCapitalDeficit,
     CanAffordCapital,
     HasLaborShortage,
+    HasNoWorkers,
 } from "./sectorConditions";
 import {
     NormalOperations,
@@ -30,10 +31,17 @@ export function createSectorTree(_blackboard: SectorBlackboard): BTNode {
         // 2. Profitability branch
         // Generic conditions: GreaterThan/LessThan on "sectorProfits"
         new Selector([
+            // Profitable: normal operations
             new Sequence([
                 new GreaterThan("sectorProfits", 0),
                 new NormalOperations(),
             ]),
+            // No workers: hire them (handles both zero and negative profits)
+            new Sequence([
+                new HasNoWorkers(),
+                new HireWorkers(),
+            ]),
+            // Unprofitable with workers: reduce production
             new Sequence([
                 new LessThan("sectorProfits", 0),
                 new ReduceProduction(),
@@ -50,8 +58,13 @@ export function createSectorTree(_blackboard: SectorBlackboard): BTNode {
             new Idle(),
         ]),
 
-        // 4. Labor hiring branch
+        // 4. Labor hiring branch - hire if no workers but sector needs them
         new Selector([
+            new Sequence([
+                new HasNoWorkers(),
+                new GreaterThan("freeWorkers", 0),
+                new HireWorkers(),
+            ]),
             new Sequence([
                 new HasLaborShortage(),
                 new GreaterThan("freeWorkers", 0),
