@@ -2,9 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { SEVERITY_COLORS } from "./constants"
+import { MarketStabilityReport } from "@/game/economics/diagnostics/marketStabilityAnalyzer"
 
 interface MarketPanelProps {
-  market: ReturnType<typeof import("@/game/economics/diagnostics/marketStabilityAnalyzer").MarketStabilityAnalyzer.prototype.analyze> | null
+  market: MarketStabilityReport | null
 }
 
 export function MarketPanel({ market }: MarketPanelProps) {

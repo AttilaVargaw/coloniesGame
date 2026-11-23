@@ -4,11 +4,11 @@ import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs"
 import { EVIDENCE_COLORS } from "./constants"
-import type { CascadeLink } from "@/game/economics/diagnostics/economicCascadeAnalyzer"
+import type { CascadeLink, EconomicCascadeReport } from "@/game/economics/diagnostics/economicCascadeAnalyzer"
 import { CascadeGraph } from "./CascadeGraph"
 
 interface CascadePanelProps {
-  cascade: ReturnType<typeof import("@/game/economics/diagnostics/economicCascadeAnalyzer").EconomicCascadeAnalyzer.prototype.analyze> | null
+  cascade: EconomicCascadeReport | null
 }
 
 export function CascadePanel({ cascade }: CascadePanelProps) {
@@ -16,8 +16,8 @@ export function CascadePanel({ cascade }: CascadePanelProps) {
   const allCascades = cascade?.cascades ?? []
 
   const cascadeLinks: (CascadeLink & { fromCascadeId: string })[] = []
-  for (const c of allCascades) {
-    for (const link of c.links) {
+  for(const c of allCascades) {
+    for(const link of c.links) {
       cascadeLinks.push({ ...link, fromCascadeId: c.id })
     }
   }

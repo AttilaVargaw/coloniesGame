@@ -2,9 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { formatNumber, formatPct, STATUS_COLORS } from "./constants"
+import { IndustryHealthReport } from "@/game/economics/diagnostics/industryHealthAnalyzer"
 
 interface IndustryPanelProps {
-  industry: ReturnType<typeof import("@/game/economics/diagnostics/industryHealthAnalyzer").IndustryHealthAnalyzer.prototype.analyze> | null
+  industry: IndustryHealthReport | null
 }
 
 export function IndustryPanel({ industry }: IndustryPanelProps) {

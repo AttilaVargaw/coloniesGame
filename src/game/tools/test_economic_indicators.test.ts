@@ -5,6 +5,7 @@ import { EconomicDashboard } from "../workers/economicIndicators.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import type { Population } from "../data/Population.ts";
 import type { IndustrialSectors } from "../components/Factories.ts";
+import { Goods } from "../data/Goods.ts";
 
 const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"powerPlant",
@@ -62,7 +63,7 @@ describe("Phase 3: Economic Indicators", () => {
 		const state = createSimState();
 		const dashboard = new EconomicDashboard();
 		const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
-		
+
 		let input = generateColonyConfig(
 			{
 				populationSize: 100_000,
@@ -79,7 +80,7 @@ describe("Phase 3: Economic Indicators", () => {
 			if(!result) break;
 
 			const indicators = dashboard.recordTick(result, state.priceMemory);
-			
+
 			// Basic sanity checks
 			expect(indicators.tick).toBe(tick);
 			expect(indicators.nominalGDP).toBeGreaterThanOrEqual(0);
@@ -90,13 +91,13 @@ describe("Phase 3: Economic Indicators", () => {
 			expect(indicators.employmentRate).toBeLessThanOrEqual(1);
 			expect(indicators.treasuryBalance).toBeDefined();
 			expect(indicators.outputPerWorker).toBeGreaterThanOrEqual(0);
-			
+
 			// Verify sector output tracking
 			for(const sector of Object.keys(indicators.sectorOutput) as (keyof IndustrialSectors)[]) {
 				expect(indicators.sectorOutput[sector]).toBeGreaterThanOrEqual(0);
 			}
 
-input = {
+			input = {
 				...input,
 				goods: result.goods,
 				money: result.money,
@@ -105,18 +106,18 @@ input = {
 				colonyTreasury: result.colonyTreasury,
 			};
 		}
-	
+
 		// Verify history
 		const history = dashboard.getHistory();
 		expect(history.length).toBe(100);
-		
+
 		// Verify series
 		const series = dashboard.getSeries();
 		expect(series.nominalGDP.length).toBe(100);
 		expect(series.realGDP.length).toBe(100);
 		expect(series.inflationRate.length).toBe(100);
 		expect(series.unemploymentRate.length).toBe(100);
-		
+
 		// GDP should be positive and stabilize (not grow indefinitely)
 		expect(series.nominalGDP[99]).toBeGreaterThan(0);
 		expect(series.nominalGDP[99]).toBeLessThan(series.nominalGDP[0] * 2); // Within 2x of initial
@@ -130,7 +131,7 @@ input = {
 		const state = createSimState();
 		const dashboard = new EconomicDashboard();
 		const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
-		
+
 		let input = generateColonyConfig(
 			{
 				populationSize: 200_000,
@@ -141,18 +142,18 @@ input = {
 			capitalMultipliers,
 		);
 		// Constrain initial goods
-		for(const key of Object.keys(input.goods) as (keyof import("../data/Goods.ts").Goods)[]) {
+		for(const key of Object.keys(input.goods) as (keyof Goods)[]) {
 			input.goods[key] = Math.min(input.goods[key], 1000);
 		}
 
-for(let tick = 0; tick < 50; tick++) {
+		for(let tick = 0; tick < 50; tick++) {
 			const result = simulateTick(input, state);
 			expect(result).not.toBeNull();
 			if(!result) break;
 
 			dashboard.recordTick(result, state.priceMemory);
 
-input = {
+			input = {
 				...input,
 				goods: result.goods,
 				money: result.money,
@@ -161,7 +162,7 @@ input = {
 				colonyTreasury: result.colonyTreasury,
 			};
 		}
-	
+
 		const series = dashboard.getSeries();
 		// Inflation should be positive with constrained supply
 		const avgInflation = series.inflationRate.reduce((s, v) => s + v, 0) / series.inflationRate.length;
@@ -172,7 +173,7 @@ input = {
 		const state = createSimState();
 		const dashboard = new EconomicDashboard();
 		const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
-		
+
 		let input = generateColonyConfig(
 			{
 				populationSize: 100_000,
@@ -186,7 +187,7 @@ input = {
 
 		let maxUnemployment = 0;
 
-for(let tick = 0; tick < 50; tick++) {
+		for(let tick = 0; tick < 50; tick++) {
 			const result = simulateTick(input, state);
 			expect(result).not.toBeNull();
 			if(!result) break;
@@ -212,7 +213,7 @@ for(let tick = 0; tick < 50; tick++) {
 		const state = createSimState();
 		const dashboard = new EconomicDashboard();
 		const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
-		
+
 		let input = generateColonyConfig(
 			{
 				populationSize: 100_000,

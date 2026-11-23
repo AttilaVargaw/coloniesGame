@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Alert, AlertDescription } from "../ui/alert"
+import { EconomicHealthSnapshot } from "@/game/economics/diagnostics/economicHealthMetrics"
 
 interface HistoryPanelProps {
-  health: ReturnType<typeof import("@/game/economics/diagnostics/economicHealthMetrics").EconomicHealthMetrics.prototype.getLatestSnapshot> | null
+  health: EconomicHealthSnapshot | null
   historyLength: number
 }
 

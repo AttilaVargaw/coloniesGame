@@ -2,9 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { formatNumber, formatPct, HOUSEHOLD_STATUS_COLORS } from "./constants"
+import { HouseholdHealthReport } from "@/game/economics/diagnostics/householdHealthAnalyzer"
 
 interface HouseholdPanelProps {
-  household: ReturnType<typeof import("@/game/economics/diagnostics/householdHealthAnalyzer").HouseholdHealthAnalyzer.prototype.analyze> | null
+  household: HouseholdHealthReport | null
 }
 
 export function HouseholdPanel({ household }: HouseholdPanelProps) {

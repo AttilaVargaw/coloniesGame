@@ -87,13 +87,13 @@ function closeTickForNext(
 
 function assertNoNaNOrNegative(result: IndustryTickResult): void {
 	// Goods
-	for (const [, qty] of Object.entries(result.goods)) {
+	for(const [, qty] of Object.entries(result.goods)) {
 		expect(Number.isFinite(qty)).toBe(true);
 		expect(qty).toBeGreaterThanOrEqual(-1e-9);
 	}
 
 	// Sector money
-	for (const [, balance] of Object.entries(result.money)) {
+	for(const [, balance] of Object.entries(result.money)) {
 		expect(Number.isFinite(balance)).toBe(true);
 		expect(balance).toBeGreaterThanOrEqual(-1e-6);
 	}
@@ -107,7 +107,7 @@ function assertNoNaNOrNegative(result: IndustryTickResult): void {
 	expect(result.householdMoney).toBeGreaterThanOrEqual(-1e-6);
 
 	// Population
-	for (const [, pop] of Object.entries(result.population)) {
+	for(const [, pop] of Object.entries(result.population)) {
 		expect(Number.isFinite(pop.wealth)).toBe(true);
 		expect(pop.wealth).toBeGreaterThanOrEqual(-1e-6);
 		expect(Number.isFinite(pop.number)).toBe(true);
@@ -115,8 +115,8 @@ function assertNoNaNOrNegative(result: IndustryTickResult): void {
 	}
 
 	// Capital stock
-	for (const [, stock] of Object.entries(result.capitalStock)) {
-		for (const [, value] of Object.entries(stock)) {
+	for(const [, stock] of Object.entries(result.capitalStock)) {
+		for(const [, value] of Object.entries(stock)) {
 			expect(Number.isFinite(value)).toBe(true);
 			expect(value).toBeGreaterThanOrEqual(-1e-6);
 		}
@@ -126,8 +126,8 @@ function assertNoNaNOrNegative(result: IndustryTickResult): void {
 function assertInventoryStable(
 	closingGoods: Goods,
 ): void {
-	for (const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
-		if (NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
+	for(const goodKey of Object.keys(basePrices) as (keyof Goods)[]) {
+		if(NON_CUMULATING_GOODS.has(goodKey) || goodKey === "waste") {
 			continue;
 		}
 		const closing = closingGoods[goodKey] ?? 0;
@@ -140,7 +140,7 @@ function runMultiTick(
 	tickCount: number,
 	overrides: Partial<{
 		populationSize: number;
-		activeSectors: (keyof import("../components/Factories").IndustrialSectors)[];
+		activeSectors: (keyof IndustrialSectors)[];
 		starterMoneyPerSector: number;
 		capitalStockMultiplier: number;
 		goods: Partial<Goods>;
@@ -156,8 +156,8 @@ function runMultiTick(
 		},
 		{},
 	);
-	if (overrides.goods) {
-		for (const [key, value] of Object.entries(overrides.goods)) {
+	if(overrides.goods) {
+		for(const [key, value] of Object.entries(overrides.goods)) {
 			input.goods[key as keyof Goods] = value;
 		}
 	}
@@ -173,13 +173,13 @@ function runMultiTick(
 	// Track per-good max/min for drift detection
 	const goodMin: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
 	const goodMax: Record<keyof Goods, number> = {} as Record<keyof Goods, number>;
-	for (const gk of Object.keys(basePrices) as (keyof Goods)[]) {
+	for(const gk of Object.keys(basePrices) as (keyof Goods)[]) {
 		goodMin[gk] = openingGoods[gk] ?? 0;
 		goodMax[gk] = openingGoods[gk] ?? 0;
 	}
-	for (const [key] of Object.entries(openingGoods)) {
+	for(const [key] of Object.entries(openingGoods)) {
 		const gk = key as keyof Goods;
-		if (gk in goodMin) {
+		if(gk in goodMin) {
 			goodMin[gk] = openingGoods[gk] ?? 0;
 			goodMax[gk] = openingGoods[gk] ?? 0;
 		}
@@ -190,25 +190,25 @@ function runMultiTick(
 	let minMoney = openingMoney;
 	let maxMoney = openingMoney;
 
-	for (let tick = 0; tick < tickCount; tick++) {
+	for(let tick = 0; tick < tickCount; tick++) {
 		const tickOpeningMoney = openingTotalMoney(input);
 
 		const result = simulateTick(input, state);
-		if (!result) break;
+		if(!result) break;
 
 		results.push(result);
 
 		// Per-tick money conservation (within tolerance;
-		 // simulateTick in the test harness doesn't refund unused purchases,
-		 // so small money destruction occurs per tick — scales with sector count)
+		// simulateTick in the test harness doesn't refund unused purchases,
+		// so small money destruction occurs per tick — scales with sector count)
 		const tickClosingMoney = closingTotalMoney(result);
 		expect(
 			Math.abs(tickClosingMoney - tickOpeningMoney),
 		).toBeLessThan(100000);
 
 		// Per-tick inventory stability (exact equation verified in single-tick
-		 // integrated accounting tests; simulateTick tracking gaps prevent exact
-		 // per-tick verification here)
+		// integrated accounting tests; simulateTick tracking gaps prevent exact
+		// per-tick verification here)
 		assertInventoryStable(result.goods);
 
 		// No NaN or negative values
@@ -225,9 +225,9 @@ function runMultiTick(
 		minPopulation = Math.min(minPopulation, currentPop);
 		maxPopulation = Math.max(maxPopulation, currentPop);
 
-		for (const [key, qty] of Object.entries(result.goods)) {
+		for(const [key, qty] of Object.entries(result.goods)) {
 			const gk = key as keyof Goods;
-			if (gk in goodMin) {
+			if(gk in goodMin) {
 				goodMin[gk] = Math.min(goodMin[gk], qty);
 				goodMax[gk] = Math.max(goodMax[gk], qty);
 			}
@@ -243,11 +243,11 @@ function runMultiTick(
 	// Population should not collapse unexpectedly (allow natural fluctuation)
 	expect(finalPopulation).toBeGreaterThan(initialPopulation * 0.05);
 
-		// Overall money conserved across all ticks (per-tick destruction accumulates)
-		const finalClosingMoney = closingTotalMoney(lastResult);
-		// Allow up to 50% of opening money drift over the simulation (subsidy system causes transfers)
-		const maxDrift = Math.max(150000 * tickCount, openingMoney * 0.50);
-		expect(Math.abs(finalClosingMoney - openingMoney)).toBeLessThan(maxDrift);
+	// Overall money conserved across all ticks (per-tick destruction accumulates)
+	const finalClosingMoney = closingTotalMoney(lastResult);
+	// Allow up to 50% of opening money drift over the simulation (subsidy system causes transfers)
+	const maxDrift = Math.max(150000 * tickCount, openingMoney * 0.50);
+	expect(Math.abs(finalClosingMoney - openingMoney)).toBeLessThan(maxDrift);
 
 	return { results, openingMoney, openingGoods };
 }
@@ -378,7 +378,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			expect(results.length).toBe(100);
 
 			const lastResult = results[results.length - 1];
-			for (const [, qty] of Object.entries(lastResult.goods)) {
+			for(const [, qty] of Object.entries(lastResult.goods)) {
 				expect(Number.isFinite(qty)).toBe(true);
 				expect(qty).toBeGreaterThanOrEqual(0);
 			}
@@ -392,7 +392,7 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			expect(results.length).toBe(100);
 
 			const lastResult = results[results.length - 1];
-			for (const [, balance] of Object.entries(lastResult.money)) {
+			for(const [, balance] of Object.entries(lastResult.money)) {
 				expect(Number.isFinite(balance)).toBe(true);
 				expect(balance).toBeGreaterThanOrEqual(0);
 			}

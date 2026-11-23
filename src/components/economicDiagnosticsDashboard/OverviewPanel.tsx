@@ -1,13 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Badge } from "../ui/badge"
 import { formatNumber, SEVERITY_COLORS } from "./constants"
+import { EconomicHealthSnapshot } from "@/game/economics/diagnostics/economicHealthMetrics"
+import { EconomicCascadeReport } from "@/game/economics/diagnostics/economicCascadeAnalyzer"
+import { HouseholdHealthReport } from "@/game/economics/diagnostics/householdHealthAnalyzer"
+import { IndustryHealthReport } from "@/game/economics/diagnostics/industryHealthAnalyzer"
+import { MarketStabilityReport } from "@/game/economics/diagnostics/marketStabilityAnalyzer"
 
 interface OverviewCardsProps {
-  health: ReturnType<typeof import("@/game/economics/diagnostics/economicHealthMetrics").EconomicHealthMetrics.prototype.getLatestSnapshot> | null
-  market: ReturnType<typeof import("@/game/economics/diagnostics/marketStabilityAnalyzer").MarketStabilityAnalyzer.prototype.analyze> | null
-  industry: ReturnType<typeof import("@/game/economics/diagnostics/industryHealthAnalyzer").IndustryHealthAnalyzer.prototype.analyze> | null
-  household: ReturnType<typeof import("@/game/economics/diagnostics/householdHealthAnalyzer").HouseholdHealthAnalyzer.prototype.analyze> | null
-  cascade?: ReturnType<typeof import("@/game/economics/diagnostics/economicCascadeAnalyzer").EconomicCascadeAnalyzer.prototype.analyze> | null
+  health: EconomicHealthSnapshot | null
+  market: MarketStabilityReport | null
+  industry: IndustryHealthReport | null
+  household: HouseholdHealthReport | null
+  cascade?: EconomicCascadeReport | null
 }
 
 function getBorderClass(severity: string): string {
@@ -20,7 +25,7 @@ function getBorderClass(severity: string): string {
 export function OverviewPanel({ health, market, industry, household, cascade }: OverviewCardsProps) {
   const cards = []
 
-  if (health && market) {
+  if(health && market) {
     cards.push({
       title: "Economic Health",
       value: market.summary.goodsWithShortage > 0 ? "Stressed" : "Stable",
@@ -28,7 +33,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
       severity: market.summary.goodsWithShortage > 5 ? "critical" : market.summary.goodsWithShortage > 0 ? "warning" : "info",
     })
   }
-  if (industry) {
+  if(industry) {
     cards.push({
       title: "Industry Status",
       value: industry.summary.inactive > 0 ? `${industry.summary.inactive} Stopped` : "Operational",
@@ -36,7 +41,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
       severity: industry.summary.inactive > 3 ? "critical" : industry.summary.unprofitable > 3 ? "warning" : "info",
     })
   }
-  if (household) {
+  if(household) {
     cards.push({
       title: "Households",
       value: household.summary.destitute > 0 ? "Critical" : household.summary.stressed > 0 ? "Stressed" : "Stable",
@@ -44,7 +49,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
       severity: household.summary.destitute > 0 ? "critical" : household.summary.stressed > 2 ? "warning" : "info",
     })
   }
-  if (health) {
+  if(health) {
     cards.push({
       title: "Treasury",
       value: health.treasury.runway ? `${health.treasury.runway.toFixed(0)} ticks` : "Infinite",
@@ -52,7 +57,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
       severity: health.treasury.runway && health.treasury.runway < 20 ? "critical" : health.treasury.runway && health.treasury.runway < 50 ? "warning" : "info",
     })
   }
-  if (cascade) {
+  if(cascade) {
     cards.push({
       title: "Active Cascades",
       value: cascade.summary.activeCascades.toString(),
@@ -61,7 +66,7 @@ export function OverviewPanel({ health, market, industry, household, cascade }: 
     })
   }
 
-  if (cards.length === 0) {
+  if(cards.length === 0) {
     return <div className="text-center text-muted-foreground py-8">No data available yet</div>
   }
 

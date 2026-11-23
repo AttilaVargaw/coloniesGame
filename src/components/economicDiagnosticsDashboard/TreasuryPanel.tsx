@@ -1,12 +1,13 @@
+import { EconomicHealthSnapshot } from "@/game/economics/diagnostics/economicHealthMetrics"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { formatNumber } from "./constants"
 
 interface TreasuryPanelProps {
-  health: ReturnType<typeof import("@/game/economics/diagnostics/economicHealthMetrics").EconomicHealthMetrics.prototype.getLatestSnapshot> | null
+  health: EconomicHealthSnapshot | null
 }
 
 export function TreasuryPanel({ health }: TreasuryPanelProps) {
-  if (!health) return <div className="text-center text-muted-foreground py-8">No treasury data available</div>
+  if(!health) return <div className="text-center text-muted-foreground py-8">No treasury data available</div>
 
   return (
     <div className="space-y-4">
