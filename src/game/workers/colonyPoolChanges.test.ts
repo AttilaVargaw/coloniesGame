@@ -27,6 +27,7 @@ function makeBid(
         idealWorkerDemand: {},
         idealGoodsDemand: idealGoodsDemand as Partial<Record<string, number>>,
         idealGoodsProduction: {},
+        nonEssentialGoods: new Set<keyof Goods>(),
         outputLevel: 1,
         inputLevel: 1,
     }

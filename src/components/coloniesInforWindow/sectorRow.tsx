@@ -110,15 +110,15 @@ export function SectorRow({
         <tr className="border-b border-muted/50 last:border-0">
             <td className="p-2 capitalize">
                 <span style={{ display: "flex", gap: "1em" }}>
-                    <SectorIcon name={sectorKey} /> {sectorKey} {isStopped && stopReason && (
+                    <SectorIcon name={sectorKey} /> {sectorKey} {stopReason && stopReason !== "Producing" && (
                         <Tooltip>
                             <TooltipTrigger asChild >
                                 <span className="inline-flex items-center">
-                                    <FaCircleExclamation className="text-red-400" />
+                                    <FaCircleExclamation className={isStopped ? "text-red-400" : "text-orange-400"} />
                                 </span>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <div className="pt-2 text-center text-xs text-red-400" title={stopReason}>
+                                <div className="pt-2 text-center text-xs" title={stopReason}>
                                     {stopReason}
                                 </div>
                             </TooltipContent>

@@ -105,6 +105,7 @@ function makeSectorBid(overrides: Partial<SectorBid> = {}): SectorBid {
         idealWorkerDemand: {},
         idealGoodsDemand: {},
         idealGoodsProduction: {},
+        nonEssentialGoods: new Set<keyof Goods>(),
         outputLevel: 1,
         inputLevel: 1,
         ...overrides,

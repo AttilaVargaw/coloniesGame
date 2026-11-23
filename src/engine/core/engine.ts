@@ -34,7 +34,7 @@ export interface Engine {
     unregisterNodeType<T extends EntityNode>(nodeName: EntityNodeConstructor<T>): void;
     getNodeList<T extends EntityNode>(node: EntityNodeConstructor<T>): T[];
     getAllEntities(): Entity[];
-    getEntityById(id: string): Entity | void;
+    getEntityById(id: string): Entity | undefined;
     addCommand(command: CommandBase): void;
     getCommands<T extends CommandBase>(command: new (...args: any[]) => T): Queue<T>;
     registerCommandQueue(command: new (...args: any[]) => CommandBase): this;

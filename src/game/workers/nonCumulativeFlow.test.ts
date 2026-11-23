@@ -39,6 +39,7 @@ function createMockBid(name: string, overrides: Partial<SectorBid> = {}): Sector
 		capitalMultiplier: 1,
 		inputCost: 0,
 		laborCost: 0,
+		nonEssentialGoods: new Set<keyof Goods>(),
 	};
 	return { ...base, ...overrides };
 }

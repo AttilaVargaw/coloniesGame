@@ -37,7 +37,7 @@ export class World implements Engine {
         this.entityRegistry = new EntityRegistry(this.nodeManager, this.eventBus)
         this.systemRegistry = new SystemRegistry()
         this.debugManager = new DebugManager()
-        
+
         const health = new EconomicHealthMetrics({ rollingWindowTicks: 200, priceVolatilityWindow: 50 })
         this.diagnostics = {
             health,
@@ -59,7 +59,7 @@ export class World implements Engine {
         }
     }
 
-    getEntityById(id: string): Entity | void {
+    getEntityById(id: string): Entity | undefined {
         return this.entityRegistry.getEntityById(id)
     }
 

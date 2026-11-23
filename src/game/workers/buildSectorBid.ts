@@ -180,6 +180,9 @@ export function buildSectorBid(
 
     const effective = mergeMethodOverrides(config, method);
 
+    // Non-essential goods from blueprint (not overridden by methods)
+    const nonEssentialGoods = config.nonEssentialGoods ?? new Set<keyof Goods>();
+
     const workerRequirement = effective.workerRequirement || {};
     const goodsRequirements = effective.goodsRequirements || {};
     const goodsProduction = effective.goodsProduction || {};
@@ -306,6 +309,7 @@ export function buildSectorBid(
         idealWorkerDemand: capitalAdjustedWorkerDemand,
         idealGoodsDemand: scaleMap(adjustedGoodsRequirements, inputLevel * capitalMult),
         idealGoodsProduction: scaleMap(goodsProduction as Record<string, number>, outputLevel * capitalMult),
+        nonEssentialGoods,
         outputLevel,
         inputLevel,
     };

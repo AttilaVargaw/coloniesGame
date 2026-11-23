@@ -96,14 +96,19 @@ function buildDependencyGraph(
 		const idealNonCumulativeDemand: Partial<Record<keyof Goods, number>> = {};
 		const cumulativeDemand: Partial<Record<keyof Goods, number>> = {};
 
+		const nonEssentialGoods = bid.nonEssentialGoods ?? new Set<keyof Goods>();
+
 		for (const [goodKey, demandPerTick] of Object.entries(bid.idealGoodsDemand)) {
 			const key = goodKey as keyof Goods;
 			const scaledDemand = demandPerTick * bid.actualScale;
 			if (NON_CUMULATING_GOODS.has(key)) {
 				idealNonCumulativeDemand[key] = scaledDemand;
-			} else {
+			} else if (!nonEssentialGoods.has(key)) {
+				// Only add to cumulative demand if it's not a non-essential good
+				// Non-essential goods are optional and don't block production
 				cumulativeDemand[key] = scaledDemand;
 			}
+			// Non-essential goods are tracked but don't constrain production scale
 		}
 
 		const idealProduction: Partial<Record<keyof Goods, number>> = {};
@@ -357,8 +362,12 @@ export function executeNonCumulativeFlow(
 				const demand = nonCumulativeDemands.get(node.sectorName)!;
 				let flowScale = 1;
 
+				const nonEssentialGoods = node.bid.nonEssentialGoods ?? new Set<keyof Goods>();
+
 				for (const [good, required] of Object.entries(demand)) {
 					const key = good as keyof Goods;
+					// Skip non-essential goods from flowScale - they apply penalty later instead of stopping production
+					if (nonEssentialGoods.has(key)) continue;
 					if (required > 0) {
 						const available = poolSnapshot[key] ?? 0;
 						const ratio = available / required;
@@ -400,7 +409,25 @@ export function executeNonCumulativeFlow(
 					}
 				}
 
-				const finalScale = Math.min(flowScale, cumulativeRatio);
+				let finalScale = Math.min(flowScale, cumulativeRatio);
+
+				// Apply non-essential goods penalty: 10% per missing non-essential good, capped at 50%
+				let missingNonEssentialNames: string[] = [];
+				if (nonEssentialGoods.size > 0) {
+					let missingNonEssential = 0;
+					for (const [goodKey, demandPerTick] of Object.entries(node.bid.idealGoodsDemand)) {
+						const key = goodKey as keyof Goods;
+						if (nonEssentialGoods.has(key)) {
+							const available = purchasedBySector?.[node.sectorName]?.[key] ?? colonyGoods[key] ?? 0;
+							if (available <= 0) {
+								missingNonEssential++;
+								missingNonEssentialNames.push(String(key));
+							}
+						}
+					}
+					const penalty = Math.min(0.5, missingNonEssential * 0.1);
+					finalScale *= (1 - penalty);
+				}
 
 				if (finalScale <= 1e-9) {
 					sectorResults[node.sectorName] = {
@@ -433,6 +460,12 @@ export function executeNonCumulativeFlow(
 
 				const effectiveScale = node.bid.actualScale * finalScale;
 
+				// Build stop reason including non-essential goods missing
+				let stopReason = "Producing";
+				if (missingNonEssentialNames.length > 0) {
+					stopReason = `Missing non-essential: ${missingNonEssentialNames.join(", ")} (-${Math.round(Math.min(0.5, missingNonEssentialNames.length * 0.1) * 100)}%)`;
+				}
+
 				const result = executeSingleSector(
 					node.bid,
 					effectiveScale,
@@ -449,7 +482,7 @@ export function executeNonCumulativeFlow(
 				sectorLaborCosts[node.sectorName] = result.laborCosts;
 				sectorInputCosts[node.sectorName] = result.inputCosts;
 				sectorUtilization[node.sectorName] = effectiveScale;
-				sectorStopReason[node.sectorName] = result.stopReason;
+				sectorStopReason[node.sectorName] = stopReason;
 				executedInSCC.add(node.sectorName);
 				executedSectors.add(node.sectorName);
 				hasProgress = true;

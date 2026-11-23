@@ -24,6 +24,9 @@ export type SectorBid = {
     idealGoodsDemand: Partial<Record<keyof Goods, number>>;
     idealGoodsProduction: Partial<Record<keyof Goods, number>>;
 
+    /** Goods that are optional (non-essential) — sector can produce without them at reduced efficiency. */
+    nonEssentialGoods: Set<keyof Goods>;
+
     outputLevel: number;
     inputLevel: number;
 };
