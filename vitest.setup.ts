@@ -5,11 +5,13 @@ import { afterEach, vi } from 'vitest'
 afterEach(() => cleanup())
 
 // Mock ResizeObserver (used by some UI libraries)
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+function MockResizeObserver(this: any) {
+  this.observe = vi.fn()
+  this.unobserve = vi.fn()
+  this.disconnect = vi.fn()
+}
+
+global.ResizeObserver = MockResizeObserver as any
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
