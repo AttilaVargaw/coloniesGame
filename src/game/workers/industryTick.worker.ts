@@ -78,12 +78,6 @@ function processIndustry(
         prices,
     );
 
-    // Add household demand to total lawEnforcement and defense demand
-    const householdLawEnforcementDemand = populationConsumption.lawEnforcement ?? 0;
-    const householdDefenseDemand = populationConsumption.defense ?? 0;
-    const effectiveTotalLawEnforcementDemand = totalLawEnforcementDemand + householdLawEnforcementDemand;
-    const effectiveTotalDefenseDemand = totalDefenseDemand + householdDefenseDemand;
-
     const last = results.get(entityId);
     const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
     const previousSectorRevenue: Record<string, number> = last?.sectorRevenue ?? {};
@@ -465,8 +459,8 @@ function processIndustry(
     }
 
     // Apply lawEnforcement penalty
-    const lawEnforcementRatio = effectiveTotalLawEnforcementDemand > 0
-        ? Math.min(1, lawEnforcementCapacity / effectiveTotalLawEnforcementDemand)
+    const lawEnforcementRatio = totalLawEnforcementDemand > 0
+        ? Math.min(1, lawEnforcementCapacity / totalLawEnforcementDemand)
         : 1;
 
     if (lawEnforcementRatio < 1) {
@@ -485,8 +479,8 @@ function processIndustry(
     }
 
     // Apply defense penalty
-    const defenseRatio = effectiveTotalDefenseDemand > 0
-        ? Math.min(1, defenseCapacity / effectiveTotalDefenseDemand)
+    const defenseRatio = totalDefenseDemand > 0
+        ? Math.min(1, defenseCapacity / totalDefenseDemand)
         : 1;
 
     if (defenseRatio < 1) {

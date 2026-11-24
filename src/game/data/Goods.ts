@@ -20,7 +20,6 @@ export type Goods = {
     vehicles: number;
     environmentFactor: number
     faith: number,
-    lawEnforcement: number,
     healthcare: number,
     chemicals: number;
     buildings: number;
@@ -29,7 +28,6 @@ export type Goods = {
     paper: number;
     entertainment: number;
     education: number;
-    defense: number
     monetaryServices: number
     mobility: number
     militaryEquipment: number
@@ -60,11 +58,9 @@ export const physicalGoods = new Set<keyof Goods>([
 export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
     "services",
     "faith",
-    "lawEnforcement",
     "healthcare",
     "education",
     "environmentFactor",
-    "defense",
     "entertainment",
     "logistics",
     "monetaryServices",
@@ -99,7 +95,6 @@ export const basePrices = {
 
     environmentFactor: 50,
     faith: 40,
-    lawEnforcement: 40,
     healthcare: 70,
     chemicals: 40,
     buildings: 20,
@@ -111,18 +106,17 @@ export const basePrices = {
     education: 80,
 
     mobility: 200,
-    defense: 100,
     monetaryServices: 200,
     militaryEquipment: 800,
 } satisfies Record<keyof Goods, number>
 
 export const godsCategories = new Map<string, Set<keyof Goods>>([
-    ["publicServices", new Set(["healthcare", "lawEnforcement", "education", "logistics"])],
+    ["publicServices", new Set(["healthcare", "education", "logistics"])],
     ["rawMaterials", new Set(["agriculturalGoods", "oil", "tylium", "water", "energy", "fissionMaterial", "environmentFactor"])],
     ["industrialMaterials", new Set(["buildings", "chemicals", "lumber", "metals", "medicine", "paper", "waste", "machinery"])],
     ["consumerGoods", new Set(["consumerGoods", "food"])],
     ["services", new Set(["services", "tourism", "faith", "monetaryServices", "entertainment"])],
-    ["military", new Set(["nuclearWeapons", "militaryEquipment", "defense"])],
+    ["military", new Set(["nuclearWeapons", "militaryEquipment"])],
     ["mobility", new Set(["vehicles", "spaceShips", "mobility"])]
 ]) as ReadonlyMap<string, Set<keyof Goods>>;
 

@@ -240,10 +240,10 @@ describe("EconomicHealthMetrics", () => {
                 tourism: 300, services: 15, agriculturalGoods: 20, tylium: 150,
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
-                vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
+                vehicles: 80, environmentFactor: 50, faith: 40,
                 healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
-                mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
+                mobility: 200, monetaryServices: 200, militaryEquipment: 800,
             };
 
             const householdMetrics = createHouseholdCategoryMetrics(
@@ -395,10 +395,10 @@ describe("EconomicHealthMetrics", () => {
                 tourism: 300, services: 15, agriculturalGoods: 20, tylium: 150,
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
-                vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
+                vehicles: 80, environmentFactor: 50, faith: 40,
                 healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
-                mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
+                mobility: 200, monetaryServices: 200, militaryEquipment: 800,
             };
 
             // Simulate price history: 30 -> 32 -> 31 -> 33 -> 32
@@ -427,10 +427,10 @@ describe("EconomicHealthMetrics", () => {
                 tourism: 300, services: 15, agriculturalGoods: 20, tylium: 150,
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
-                vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
+                vehicles: 80, environmentFactor: 50, faith: 40,
                 healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
-                mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
+                mobility: 200, monetaryServices: 200, militaryEquipment: 800,
             };
 
             // Need all histories for getLatestSnapshot
@@ -510,10 +510,10 @@ describe("EconomicHealthMetrics", () => {
                 tourism: 300, services: 15, agriculturalGoods: 20, tylium: 150,
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
-                vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
+                vehicles: 80, environmentFactor: 50, faith: 40,
                 healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
-                mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
+                mobility: 200, monetaryServices: 200, militaryEquipment: 800,
             };
 
             metrics.recordMarketMetrics({ tick: 1, entityId: "colony1", goods: {} });

@@ -460,7 +460,7 @@ describe("executeNonCumulativeFlow", () => {
       // Sector needs ENERGY (non-cumulative) and WATER (non-essential)
       const bids = [
         createMockBid("OilRig", {
-          idealGoodsDemand: { [ENERGY]: 10, environmentFactor: 20 },
+          idealGoodsDemand: { [ENERGY]: 10, environmentFactor: 20, water: 5 },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
           nonEssentialGoods: new Set(["water", "environmentFactor"]),
@@ -475,14 +475,15 @@ describe("executeNonCumulativeFlow", () => {
 
       // Should NOT be blocked by missing non-essential goods (flowScale skips them)
       // flowScale = 1 (ENERGY available), cumulativeRatio = 1 (no cumulative inputs)
-      // Then penalty applies: 2 missing non-essential = 20% penalty
+      // Then penalty applies: 2 missing non-essential (water, environmentFactor) = 20% penalty
+      // lawEnforcement and defense are not demanded, so not penalized
       // finalScale = 1.0 * 0.8 = 0.8
       expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(0.8, 1);
       expect(result.sectorStopReason.OilRig).toContain("Missing non-essential");
       expect(result.sectorStopReason.OilRig).toContain("-20%");
     });
 
-    it("produces at 50% minimum when all non-essential goods missing (50% cap)", () => {
+it("produces at 50% minimum when all non-essential goods missing (50% cap)", () => {
       const bids = [
         createMockBid("OilRig", {
           idealGoodsDemand: {
@@ -499,16 +500,20 @@ describe("executeNonCumulativeFlow", () => {
         }),
       ];
 
-      // ENERGY available, but all 6 non-essential goods missing
+      // ENERGY available, but all 5 demanded non-essential goods missing
+      // energy is available in colonyGoods, so 4 missing non-essential (environmentFactor, services, vehicles, water)
+      // = 40% penalty (not capped)
+      // finalScale = 1.0 * 0.6 = 0.6
       const colonyGoods = createMockGoods({ [ENERGY]: 10 });
       const laborAllocations = { OilRig: { worker: 10 } };
 
       const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
 
-      // 6 missing non-essential = 60% penalty, capped at 50%
-      // finalScale = 1.0 * 0.5 = 0.5
-      expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(0.5, 1);
-      expect(result.sectorStopReason.OilRig).toContain("-50%");
+      // 4 missing demanded non-essential = 40% penalty
+      // logistics not demanded, so not penalized
+      // energy is available in colonyGoods
+      expect(result.sectorResults.OilRig.productionRatio).toBeCloseTo(0.6, 1);
+      expect(result.sectorStopReason.OilRig).toContain("-40%");
     });
 
     it("produces at 100% when all non-essential goods available", () => {

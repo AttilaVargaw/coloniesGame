@@ -163,12 +163,12 @@ describe("industry sector calculations", () => {
 
             // Revenue = 0 (comes from allocatePopulationSales later)
             expect(result.sectorRevenue["powerPlant"]).toBe(0)
-            // inputCosts = oil(140*100) + envFactor(20*50) + governance(20*40) = 15800
-            expect(result.sectorInputCosts["powerPlant"]).toBe(15_800)
+            // inputCosts = oil(140*100) + envFactor(20*50) = 15000
+            expect(result.sectorInputCosts["powerPlant"]).toBe(15_000)
             // laborCosts = worker(890*200) + clerks(50*500) + engineer(50*500) + health(10*500) = 233000
             expect(result.sectorLaborCosts["powerPlant"]).toBe(233_000)
-            // profit = -(inputCosts + laborCosts) = -(15_800 + 233_000) = -248800
-            expect(result.sectorProfits["powerPlant"]).toBe(-248_800)
+            // profit = -(inputCosts + laborCosts) = -(15_000 + 233_000) = -248000
+            expect(result.sectorProfits["powerPlant"]).toBe(-248_000)
         })
 
         it("limits workers employed when workers are insufficient", () => {
@@ -230,10 +230,10 @@ describe("industry sector calculations", () => {
             // Revenue = 0 (comes from allocatePopulationSales later)
             expect(result.sectorRevenue["powerPlant"]).toBe(0)
             // Costs scale proportionally
-            expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(15_800 * bid!.budgetRatio, 1)
+            expect(result.sectorInputCosts["powerPlant"]).toBeCloseTo(15_000 * bid!.budgetRatio, 1)
             expect(result.sectorLaborCosts["powerPlant"]).toBeCloseTo(233_000 * bid!.budgetRatio, 1)
             // Profit = -(costs) scales proportionally
-            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(-248_800 * bid!.budgetRatio, 0)
+            expect(result.sectorProfits["powerPlant"]).toBeCloseTo(-248_000 * bid!.budgetRatio, 0)
 
             // Stop reason reflects low budget (budgetRatio was binding constraint)
             expect(result.sectorStopReason["powerPlant"]).toBe("Low budget")
@@ -258,11 +258,11 @@ it("essential sectors only get minimum budget floor when they can afford it", ()
 
 		it("budget ratio applies minimum floor only when affordable", () => {
 			// With 20,000 money (which gives ~0.08 ratio), minBudgetRatio of 0.5
-			// requires 124,400 money (50% of ~248,800 operating cost).
-			// Since 20,000 < 124,400, min floor doesn't apply.
+			// requires 124,000 money (50% of ~248,000 operating cost).
+			// Since 20,000 < 124,000, min floor doesn't apply.
 			const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 }, 20_000)
 			expect(bid).not.toBeNull()
-			expect(bid!.budgetRatio).toBeCloseTo(20_000 / 248_800, 4)
+			expect(bid!.budgetRatio).toBeCloseTo(20_000 / 248_000, 4)
 			expect(bid!.actualScale).toBe(bid!.budgetRatio)
 
 			const result = executeSectors([bid!], population, colonyGoods, basePrices as any, baseSalaries as any)

@@ -21,7 +21,6 @@ export function createEmptyWarehouse() {
         food: 0,
         healthcare: 0,
         faith: 0,
-        lawEnforcement: 0,
         chemicals: 0,
         buildings: 0,
         waste: 0,
@@ -30,7 +29,6 @@ export function createEmptyWarehouse() {
         paper: 0,
         entertainment: 0,
         education: 0,
-        defense: 0,
         monetaryServices: 0,
         mobility: 0,
         militaryEquipment: 0
@@ -58,7 +56,6 @@ export function createStarterWarehouse(population: number) {
         food: population / 10_000,
         healthcare: population / 10,
         faith: population / 10,
-        lawEnforcement: population / 10,
         chemicals: population / 10_00,
         buildings: population / 20,
         waste: population / 1_000_000_000,
@@ -67,7 +64,6 @@ export function createStarterWarehouse(population: number) {
         paper: population / 1000,
         entertainment: population / 10,
         education: population / 10,
-        defense: population / 10,
         monetaryServices: population / 10,
         mobility: population / 1_000,
         militaryEquipment: population / 1_000

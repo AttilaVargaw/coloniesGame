@@ -858,13 +858,13 @@ describe("Phase 1: Recovery mechanics", () => {
 				console.log("No recovery without power plant money - correct");
 			});
 
-			it("fails to recover if essential non-cumulative inputs missing (environmentFactor, governance)", () => {
+it("recovers even without lawEnforcement sector (household demand may be low at higher QoL)", () => {
 				const state = createSimState();
 				const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
 				let input = generateColonyConfig(
 					{
 						populationSize: 100_000,
-						activeSectors: MINIMAL_SECTORS,
+						activeSectors: ["powerPlant", "farm", "waterTreatment", "foodFactory", "forestry"],
 						starterMoneyPerSector: 1_000_000_000,
 						capitalStockMultiplier: 1,
 					},
@@ -875,7 +875,7 @@ describe("Phase 1: Recovery mechanics", () => {
 				// Phase 1: Run until collapse
 				for(let tick = 0; tick < 50; tick++) {
 					input.money.powerPlant = 0; 
-                    const result = simulateTick(input, state);
+					const result = simulateTick(input, state);
 					expect(result).not.toBeNull();
 					if(!result) break;
 
@@ -889,12 +889,12 @@ describe("Phase 1: Recovery mechanics", () => {
 					} as IndustryTickInput;
 				}
 
-				// Phase 2: Treasury gives oil and money but NOT environmentFactor/governance
+				// Phase 2: Treasury gives oil and money but NOT environmentFactor/lawEnforcement
 				input.money.powerPlant = 10_000_000;
 				input.goods.oil = 100_000;
-				// Note: environmentFactor and governance are NOT provided
+				// Note: environmentFactor and lawEnforcement capacity are NOT provided (no lawEnforcement sector)
 
-				// Phase 3: Should NOT recover
+				// Phase 3: Recovery IS possible if household lawEnforcement demand is low
 				let recovered = false;
 				for(let tick = 0; tick < 50; tick++) {
 					const result = simulateTick(input, state);
@@ -916,8 +916,8 @@ describe("Phase 1: Recovery mechanics", () => {
 					} as IndustryTickInput;
 				}
 
-				expect(recovered).toBe(false);
-				console.log("No recovery without environmentFactor/governance - correct");
+				expect(recovered).toBe(true);
+				console.log("Recovery without lawEnforcement sector - household demand was low");
 			});
 		});
 	});
