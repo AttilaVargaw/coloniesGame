@@ -145,36 +145,3 @@ export function getLowestGoodsRatio(
     )
 }
 
-const priceDamping = 0.3;
-const priceMinMultiplier = 0.1;
-const priceMaxMultiplier = 10;
-
-/**
- * @deprecated Use MarketPriceSystem for authoritative prices. This function is kept for backward compatibility only.
- */
-export function getPrices(goods: Goods, memory: Partial<Record<keyof Goods, number>>): Record<keyof Goods, number> {
-    const prices = {} as Record<keyof Goods, number>;
-
-    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
-        const stock = goods[key] || 0;
-        const base = basePrices[key];
-        const baseline = Math.max(base * 10, 1);
-
-        // Continuous supply/demand curve: scarcity raises price, surplus lowers it
-        let adjustment = 1.0;
-        if(stock > 0) {
-            adjustment = baseline / stock;
-        } else {
-            adjustment = priceMaxMultiplier;
-        }
-        adjustment = Math.max(priceMinMultiplier, Math.min(priceMaxMultiplier, adjustment));
-
-        const currentPrice = memory[key] ?? base;
-        const targetPrice = base * adjustment;
-        const dampedPrice = currentPrice + (targetPrice - currentPrice) * priceDamping;
-        const clampedPrice = Math.max(base * priceMinMultiplier, Math.min(base * priceMaxMultiplier, dampedPrice));
-        memory[key] = clampedPrice;
-        prices[key] = clampedPrice;
-    }
-    return prices;
-}
