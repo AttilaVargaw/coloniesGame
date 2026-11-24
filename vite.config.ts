@@ -12,6 +12,7 @@ export default defineConfig(async () => ({
   plugins: [react(), tailwindcss(), babel({
     presets: [reactCompilerPreset()]
   })],
+  base: process.env.GITHUB_PAGES ? '/coloniesGame/' : '/',
   resolve: {
     alias: {
       "@": path.resolve(dirname, "./src"),
