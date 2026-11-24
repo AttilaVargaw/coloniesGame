@@ -42,10 +42,10 @@ export function createStarterWarehouse(population: number) {
     return {
         water: population / 10,
         agriculturalGoods: population / 10_000,
-        consumerGoods: population * 5,
+        consumerGoods: population / 5,
         energy: population / 10,
         machinery: population / 10_000,
-        medicine: population / 100,
+        medicine: population / 1000,
         oil: population / 3000,
         tylium: population / 10,
         fissionMaterial: population / 10_000,
