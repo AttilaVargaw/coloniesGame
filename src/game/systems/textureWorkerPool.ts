@@ -1,3 +1,4 @@
+import Worker from "../workers/textureWorker.ts?worker";
 import { getCachedTexture, setCachedTexture } from "../factories/textureCache";
 
 export interface TextureWorkerMessage {
@@ -41,9 +42,8 @@ export class TextureWorkerPool {
     start() {
         if(this.workers.length > 0) return
 
-        const workerUrl = new URL("../workers/textureWorker.ts", import.meta.url)
         for(let i = 0; i < this.workerCount; i++) {
-            const worker = new Worker(workerUrl, { type: "module" })
+            const worker = new Worker()
             worker.onmessage = (event) => this.handleMessage(event)
             worker.onerror = (event) => {
                 console.error("Texture worker error:", event.message)
