@@ -453,7 +453,6 @@ describe("Multi-tick stability — long-run economic simulation", () => {
 			// Zero out all key inputs for power plant
 			input.goods.oil = 0;
 			input.goods.environmentFactor = 0;
-			input.goods.governance = 0;
 
 			const result = simulateTick(input, state);
 			expect(result).toBeDefined();

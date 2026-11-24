@@ -6,6 +6,7 @@ import { Population } from "../data/Population";
 import { createStarterWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustryTickInput, PriceSnapshot } from "../workers/IndustryTickInput";
 import { ColonyConfig, DEFAULT_CONFIG, seedCapitalStock } from "./economyConfigGenerator";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints";
 
 export function generateColonyConfig(
 	config: Partial<ColonyConfig> = {},
@@ -43,6 +44,19 @@ export function generateColonyConfig(
 		prices: { ...basePrices },
 	};
 
+	// Calculate governance capacity and demand
+	let governanceCapacity = 0;
+	let totalGovernanceDemand = 0;
+	for (const sector of activeSectors) {
+		const blueprint = industrySectorBlueprints.get(sector);
+		if (blueprint) {
+			if (blueprint.governanceCapacity) {
+				governanceCapacity += blueprint.governanceCapacity;
+			}
+			totalGovernanceDemand += blueprint.governanceDemand ?? 0;
+		}
+	}
+
 	return {
 		entityId: "test-colony",
 		activeSectors: new Set(activeSectors),
@@ -69,5 +83,7 @@ export function generateColonyConfig(
 		tick: 0,
 		producerInventories: {},
 		prices,
+		governanceCapacity,
+		totalGovernanceDemand,
 	};
 }

@@ -143,7 +143,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.agriculturalGoods = 5000;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingGoods = { ...input.goods };
             const result = simulateTick(input, createSimState());
@@ -161,7 +160,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
             input.goods.energy = 1000;
 
             const openingGoods = { ...input.goods };
@@ -185,7 +183,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingGoods = { ...input.goods };
             const result = simulateTick(input, createSimState());
@@ -195,28 +192,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
 
             expect(envProduction).toBeGreaterThan(0);
             expect(result.goods.environmentFactor).toBeGreaterThanOrEqual(0);
-        });
-
-        it("governance production from government matches sector requirements", () => {
-            const state = createSimState();
-            const input = createCompleteEconomyConfig({
-                populationSize: 100_000,
-                starterMoneyPerSector: 1_000_000_000,
-                capitalStockMultiplier: 1,
-            });
-            // Bootstrap for defense chain
-            input.goods.environmentFactor = 5000;
-            input.goods.energy = 1000;
-            input.goods.governance = 10000;
-
-            const openingGoods = { ...input.goods };
-            const result = simulateTick(input, createSimState());
-
-            const govProduction = result.accounting.sectorProductionByGood?.governance ?? 0;
-            const govConsumed = result.accounting.sectorInputsConsumedByGood?.governance ?? 0;
-
-            expect(govProduction).toBeGreaterThan(0);
-            expect(result.goods.governance).toBeGreaterThanOrEqual(0);
         });
     });
 
@@ -233,7 +208,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 500;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingMoney = sumValues(Object.values(input.money)) + input.colonyTreasury;
             const result = simulateTick(input, createSimState());
@@ -255,19 +229,9 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 500;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingSectorMoney = sumValues(Object.values(input.money));
             const result = simulateTick(input, createSimState());
-            const closingSectorMoney = sumValues(Object.values(result.money));
-
-            const totalInputCosts = sumValues(Object.values(result.accounting.sectorInputsConsumedByGood ?? {}));
-            const totalLaborCosts = sumValues(Object.values(result.sectorLaborCosts ?? {}));
-            const totalCapitalCosts = sumValues(Object.values(result.accounting.capitalPurchasesByGood ?? {}));
-            const totalRevenue = sumValues(Object.values(result.accounting.sectorProductionSalesByGood ?? {}));
-            const totalRefunds = sumValues(Object.values(result.accounting.sectorInputRefundsBySector ?? {}));
-
-            const expectedClosing = openingSectorMoney - totalInputCosts - totalLaborCosts - totalCapitalCosts + sumValues(Object.values(result.accounting.sectorProductionSalesByGood ?? {})) + sumValues(Object.values(result.accounting.sectorInputRefundsBySector ?? {}));
 
             // Use relative tolerance for large values
             const tolerance = Math.max(1000, Math.abs(openingSectorMoney) * 1e-9);
@@ -275,7 +239,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
         });
 
         it("household wealth reconciles: opening + wages - spending = closing", () => {
-            const state = createSimState();
             const input = createCompleteEconomyConfig({
                 populationSize: 100_000,
                 starterMoneyPerSector: 1_000_000_000,
@@ -285,7 +248,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.food = 1000;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingWealthByPop: Record<string, number> = Object.fromEntries(
                 Object.entries(input.population).map(
@@ -318,7 +280,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 500;
             input.goods.energy = 1000;
             input.goods.environmentFactor = 5000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -351,7 +312,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 5000;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -382,7 +342,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 1000; // abundant water
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -417,7 +376,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.agriculturalGoods = 10000;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingMoney = openingTotalMoney(input);
             let prevMoney = openingMoney;
@@ -469,7 +427,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.agriculturalGoods = 5000;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const openingMoney = openingTotalMoney(input);
             let prevMoney = openingMoney;
@@ -534,7 +491,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.activeSectors = new Set(["farm", "foodFactory", "waterTreatment", "forestry", "oilRig", "chemical", "recycling", "healthcare", "education", "lawEnforcement", "entertainmentIndustry", "logistics"]);
             // Provide energy in opening goods so sectors can consume it, but have NO energy-producing sectors
             input.goods.energy = 10000;
-            input.goods.governance = 10000;
 
             const state2 = createSimState();
             // With the fix matching worker pipeline, non-cumulative goods with
@@ -545,7 +501,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             
             // Non-cumulative goods with no production should be 0 after consumption
             expect(result.goods.energy).toBe(0);
-            expect(result.goods.governance).toBe(0);
             
             // In the FIRST tick, sectors can buy from opening stock so they run.
             // They only stop with "No materials" in subsequent ticks when stock is depleted.
@@ -568,7 +523,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -591,7 +545,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
 // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
             input.goods.militaryEquipment = 100; // bootstrap for defense sector
 
             const result = simulateTick(input, createSimState());
@@ -616,7 +569,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
             // Use goods that are NOT in active sectors' requirements/production
             input.goods.tylium = 10000;
             input.goods.fissionMaterial = 5000;
@@ -640,7 +592,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             // Bootstrap for defense chain
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -666,7 +617,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 500;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 
@@ -690,7 +640,6 @@ describe("Focused Accounting Test Suite — Valid Production Fixtures", () => {
             input.goods.water = 500;
             input.goods.environmentFactor = 5000;
             input.goods.energy = 1000;
-            input.goods.governance = 1000;
 
             const result = simulateTick(input, createSimState());
 

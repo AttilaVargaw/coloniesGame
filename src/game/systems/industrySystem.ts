@@ -13,6 +13,7 @@ import { MarketPriceSystem } from "./MarketPriceSystem";
 import type { IndustrialSectors } from "../components/Factories";
 import { laws } from "./laws";
 import { PriceSnapshot } from "../workers/IndustryTickInput";
+import { industrySectorBlueprints } from "./sectorBlueprints";
 
 export class IndustrySystem extends SystemWithNodes<IndustryNode> {
     // eslint-disable-next-line class-methods-use-this,no-empty-function
@@ -131,6 +132,19 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             }
             const effectiveActiveSectors = new Set([...industry.activeSectors].filter(s => !bannedSectors.has(s)));
 
+            // Calculate governance capacity and demand
+            let governanceCapacity = 0;
+            let totalGovernanceDemand = 0;
+            for (const sectorKey of effectiveActiveSectors) {
+                const blueprint = industrySectorBlueprints.get(sectorKey);
+                if (blueprint) {
+                    if (blueprint.governanceCapacity) {
+                        governanceCapacity += blueprint.governanceCapacity;
+                    }
+                    totalGovernanceDemand += blueprint.governanceDemand ?? 0;
+                }
+            }
+
             for(const sectorKey of effectiveActiveSectors) {
                 techMultipliers[sectorKey] = (industry.techMultipliers[sectorKey] ?? 1) * (lawMultiplier[sectorKey] ?? 1);
                 capitalStock[sectorKey] = industry.capitalStock[sectorKey] ?? {};
@@ -159,6 +173,8 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 tick: this.tickCounter,
                 producerInventories: industry.producerInventories ?? {},
                 prices: this.getPriceSnapshot(entity.id),
+                governanceCapacity,
+                totalGovernanceDemand,
             };
         });
 

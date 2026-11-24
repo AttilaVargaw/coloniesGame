@@ -42,6 +42,10 @@ export interface IndustryTickInput {
 
     // Price snapshot with entity/tick identity
     prices: PriceSnapshot;
+
+    // Governance: national capacity and demand
+    governanceCapacity: number;
+    totalGovernanceDemand: number;
 }
 
 export function validatePriceSnapshot(

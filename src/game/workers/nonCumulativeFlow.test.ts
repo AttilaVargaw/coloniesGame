@@ -460,7 +460,7 @@ describe("executeNonCumulativeFlow", () => {
       // Sector needs ENERGY (non-cumulative) and GOVERNANCE (non-essential)
       const bids = [
         createMockBid("OilRig", {
-          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any, environmentFactor: 20 as any },
+          idealGoodsDemand: { [ENERGY]: 10, environmentFactor: 20 as any },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
           nonEssentialGoods: new Set(["governance", "environmentFactor"] as any),
@@ -468,7 +468,7 @@ describe("executeNonCumulativeFlow", () => {
       ];
 
       // All non-essential goods missing (governance, environmentFactor), but ENERGY available
-      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 0, environmentFactor: 0 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, environmentFactor: 0 });
       const laborAllocations = { OilRig: { worker: 10 } };
 
       const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
@@ -487,7 +487,6 @@ describe("executeNonCumulativeFlow", () => {
         createMockBid("OilRig", {
           idealGoodsDemand: {
             [ENERGY]: 10,
-            governance: 20 as any,
             environmentFactor: 20 as any,
             energy: 10 as any,
             services: 5 as any,
@@ -515,7 +514,7 @@ describe("executeNonCumulativeFlow", () => {
     it("produces at 100% when all non-essential goods available", () => {
       const bids = [
         createMockBid("OilRig", {
-          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any },
+          idealGoodsDemand: { [ENERGY]: 10, },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
           nonEssentialGoods: new Set(["governance"] as any),
@@ -523,7 +522,7 @@ describe("executeNonCumulativeFlow", () => {
       ];
 
       // Both ENERGY and governance available
-      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 20 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, });
       const laborAllocations = { OilRig: { worker: 10 } };
 
       const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
@@ -537,7 +536,7 @@ describe("executeNonCumulativeFlow", () => {
       // Sector with both non-cumulative and non-essential goods
       const bids = [
         createMockBid("Factory", {
-          idealGoodsDemand: { [ENERGY]: 10, governance: 20 as any, logistics: 5 as any },
+          idealGoodsDemand: { [ENERGY]: 10, logistics: 5 as any },
           idealGoodsProduction: { [SERVICES]: 8 },
           idealWorkerDemand: { worker: 10 },
           nonEssentialGoods: new Set(["governance"] as any),
@@ -545,7 +544,7 @@ describe("executeNonCumulativeFlow", () => {
       ];
 
       // ENERGY available, governance (non-essential) missing, LOGISTICS (cumulative) missing
-      const colonyGoods = createMockGoods({ [ENERGY]: 10, governance: 0, logistics: 0 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, logistics: 0 });
       const purchasedBySector = { Factory: { logistics: 0 } };
       const laborAllocations = { Factory: { worker: 10 } };
 
@@ -931,7 +930,6 @@ describe("executeNonCumulativeFlow", () => {
       const colonyGoods = createEmptyWarehouse();
       colonyGoods.oil = 10000;
       colonyGoods.environmentFactor = 10000;
-      colonyGoods.governance = 10000;
       colonyGoods.consumerGoods = 10000;
 
       const laborAllocations = {
@@ -1025,7 +1023,6 @@ describe("executeNonCumulativeFlow", () => {
       const colonyGoods = createEmptyWarehouse();
       colonyGoods.oil = 50000;
       colonyGoods.environmentFactor = 50000;
-      colonyGoods.governance = 50000;
       colonyGoods.consumerGoods = 50000;
       colonyGoods.chemicals = 50000;
       colonyGoods.medicine = 50000;

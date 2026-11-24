@@ -50,7 +50,6 @@ const availableGoods: Record<keyof Goods, number> = {
     healthcare: 0,
     chemicals: 40,
     waste: 0,
-    governance: 0,
     logistics: 0,
     paper: 70,
     entertainment: 0,

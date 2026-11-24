@@ -43,7 +43,6 @@ const population = createStarterPopulation(10000, {
 const colonyGoods = createEmptyWarehouse()
 colonyGoods.oil = 10_000
 colonyGoods.environmentFactor = 10_000
-colonyGoods.governance = 10_000
 
 describe("industry sector calculations", () => {
     describe("buildSectorBid", () => {
@@ -69,7 +68,6 @@ describe("industry sector calculations", () => {
             expect(bid).not.toBeNull()
             expect(bid!.idealGoodsDemand.oil).toBe(140)
             expect(bid!.idealGoodsDemand.environmentFactor).toBe(20)
-            expect(bid!.idealGoodsDemand.governance).toBe(20)
         })
 
         it("calculates goods production with outputLevel = 1", () => {
@@ -142,7 +140,6 @@ describe("industry sector calculations", () => {
             // Goods consumed
             expect(sectorResult!.consumedGoods.oil).toBe(140)
             expect(sectorResult!.consumedGoods.environmentFactor).toBe(20)
-            expect(sectorResult!.consumedGoods.governance).toBe(20)
 
             // Goods produced
             expect(sectorResult!.producedGoods.energy).toBe(400_000)
@@ -194,7 +191,6 @@ describe("industry sector calculations", () => {
             const lowGoods = createEmptyWarehouse()
             lowGoods.oil = 70
             lowGoods.environmentFactor = 10
-            lowGoods.governance = 10
 
             const bid = makePowerPlantBid({ machinery: 0.5, buildings: 0.1 })
             expect(bid).not.toBeNull()

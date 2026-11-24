@@ -45,6 +45,8 @@ function cloneInput(input: IndustryTickInput): IndustryTickInput {
 		activeLaws: new Set(input.activeLaws),
 		producerInventories: input.producerInventories ?? {},
 		prices,
+		governanceCapacity: input.governanceCapacity,
+		totalGovernanceDemand: input.totalGovernanceDemand,
 	};
 }
 
@@ -152,6 +154,8 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					tick: (input.tick ?? 0) + 1,
 					producerInventories: input.producerInventories ?? {},
 					prices,
+					governanceCapacity: baseInput.governanceCapacity,
+					totalGovernanceDemand: baseInput.totalGovernanceDemand,
 				};
 			}
 
@@ -350,6 +354,8 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					effectiveTick: (input.tick ?? 0) + 1,
 					prices: input.prices?.prices ?? { ...basePrices },
 				},
+				governanceCapacity: baseInput.governanceCapacity,
+				totalGovernanceDemand: baseInput.totalGovernanceDemand,
 			};
 
 			if ((t + 1) % 10 === 0) {

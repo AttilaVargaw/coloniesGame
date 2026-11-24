@@ -76,7 +76,6 @@ describe("buildSectorBid capital adequacy scaling", () => {
         // oil=140*3.1623≈442.72, governance=20*3.1623≈63.25, environmentFactor=20*3.1623≈63.25
         const bid = makeBid("powerPlant", { machinery: 5, buildings: 1 }, 1_000_000)
         expect(bid).not.toBeNull()
-        expect(bid!.idealGoodsDemand.governance).toBeCloseTo(63.25, 2)
         expect(bid!.idealGoodsDemand.environmentFactor).toBeCloseTo(63.25, 2)
         expect(bid!.idealGoodsDemand.oil).toBeCloseTo(442.72, 2)
     })

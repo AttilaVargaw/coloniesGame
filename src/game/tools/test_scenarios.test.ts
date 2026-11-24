@@ -470,7 +470,6 @@ describe("Scenario: Healthcare collapse", () => {
 			input.money.powerPlant = 10_000_000;
 			input.goods.oil = 100_000;
 			input.goods.environmentFactor = 10_000;
-			input.goods.governance = 10_000;
 
 			// Verify recovery
 			let recovered = false;
@@ -660,7 +659,6 @@ describe("Phase 1: Recovery mechanics", () => {
 			inputB.money.powerPlant = 10_000_000;
 			inputB.goods.oil = 1_000_000;
 			inputB.goods.environmentFactor = 10_000;
-			inputB.goods.governance = 10_000;
 			inputB.activeSectors.add("oilRig");
 			inputB.money.oilRig = 1_000_000_000;
 			inputB.capitalStock.oilRig = { machinery: 0.5, buildings: 0.1 };

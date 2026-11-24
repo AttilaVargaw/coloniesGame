@@ -56,7 +56,6 @@ const availableGoods: Record<keyof GoodsType, number> = {
 	healthcare: 0,
 	chemicals: 40,
 	waste: 0,
-	governance: 0,
 	logistics: 0,
 	paper: 70,
 	entertainment: 0,
@@ -337,7 +336,6 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			);
 			input.goods.oil = 10_000;
 			input.goods.environmentFactor = 10_000;
-			input.goods.governance = 10_000;
 
 			const result = simulateTick(input, state);
 
@@ -367,7 +365,6 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 			// Zero out water — farm and waterTreatment need it
 			input.goods.water = 0;
 			input.goods.environmentFactor = 10_000;
-			input.goods.governance = 10_000;
 			input.goods.energy = 10_000;
 
 			const result = simulateTick(input, state);

@@ -45,6 +45,8 @@ function advanceTick(input: IndustryTickInput, result: IndustryTickResult): Indu
 		tick: (input.tick ?? 0) + 1,
 		producerInventories: input.producerInventories ?? {},
 		prices,
+		governanceCapacity: input.governanceCapacity,
+		totalGovernanceDemand: input.totalGovernanceDemand,
 	} as IndustryTickInput;
 }
 

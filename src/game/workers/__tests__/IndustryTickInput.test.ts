@@ -31,6 +31,8 @@ describe("IndustryTickInput", () => {
             tick: 1,
             prices,
             producerInventories: undefined,
+            governanceCapacity: 0,
+            totalGovernanceDemand: 0,
         };
         
         expect(input.prices.entityId).toBe("test-colony");

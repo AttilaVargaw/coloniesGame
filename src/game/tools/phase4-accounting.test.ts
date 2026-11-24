@@ -95,7 +95,6 @@ describe("allocatePopulationSales", () => {
         chemicals: 40,
         buildings: 20,
         waste: 2,
-        governance: 40,
         paper: 30,
         logistics: 60,
         entertainment: 30,

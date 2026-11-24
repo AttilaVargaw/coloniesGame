@@ -32,7 +32,7 @@ function createTestInput(
 	const input = generateColonyConfig(config, {});
 
 	// Apply initial goods overrides
-	for (const [key, value] of Object.entries(initialGoodsOverrides)) {
+	for(const [key, value] of Object.entries(initialGoodsOverrides)) {
 		input.goods[key as keyof Goods] = value;
 	}
 
@@ -44,10 +44,10 @@ function validateFlowReconciliation(
 	result: any
 ): void {
 	// Basic sanity checks: no NaN, no negative values for cumulative goods
-	for (const good of Object.keys(basePrices) as (keyof Goods)[]) {
+	for(const good of Object.keys(basePrices) as (keyof Goods)[]) {
 		const closing = result.goods[good] ?? 0;
 		expect(Number.isFinite(closing)).toBe(true);
-		if (!NON_CUMULATING_GOODS.has(good) && good !== "waste") {
+		if(!NON_CUMULATING_GOODS.has(good) && good !== "waste") {
 			expect(closing).toBeGreaterThanOrEqual(0);
 		}
 	}
@@ -70,7 +70,6 @@ describe("Multi-tick flow validation", () => {
 	const initialGoods: Partial<Goods> = {
 		oil: 50000,
 		environmentFactor: 500000,
-		governance: 50000,
 		consumerGoods: 5000000,
 		chemicals: 50000,
 		medicine: 50000,
@@ -90,37 +89,37 @@ describe("Multi-tick flow validation", () => {
 			const state = createSimState();
 
 			let productionHistory: Record<string, number[]> = {};
-			for (const sector of SEVEN_SECTORS_PLUS_OIL) {
+			for(const sector of SEVEN_SECTORS_PLUS_OIL) {
 				productionHistory[sector] = [];
 			}
 
-			for (let tick = 1; tick <= 30; tick++) {
+			for(let tick = 1; tick <= 30; tick++) {
 				input.tick = tick;
 				const result = simulateTick(input, state);
 				expect(result).not.toBeNull();
 
 				// Debug: log power plant stop reason
-				if (tick <= 5) {
+				if(tick <= 5) {
 					console.log(`Tick ${tick}: powerPlant ratio=${result.sectorUtilization.powerPlant}, stopReason=${result.sectorStopReason.powerPlant}, goods.energy=${result.goods.energy}, goods.oil=${result.goods.oil}`);
 					console.log(`Tick ${tick}: oilRig ratio=${result.sectorUtilization.oilRig}, stopReason=${result.sectorStopReason.oilRig}, produced.oil=${result.goodsProduction.oil}`);
 				}
 
 				// Track production ratios
-				for (const sector of SEVEN_SECTORS_PLUS_OIL) {
+				for(const sector of SEVEN_SECTORS_PLUS_OIL) {
 					const ratio = result.sectorUtilization[sector] ?? 0;
 					productionHistory[sector].push(ratio);
 				}
 
 				// Debug: log all sector ratios
-				if (tick <= 5) {
-					for (const sector of SEVEN_SECTORS_PLUS_OIL) {
+				if(tick <= 5) {
+					for(const sector of SEVEN_SECTORS_PLUS_OIL) {
 						console.log(`Tick ${tick}: ${sector} ratio=${result.sectorUtilization[sector]}, stopReason=${result.sectorStopReason[sector]}`);
 					}
 				}
 
 				// Debug: check services inputs on tick 3
-				if (tick === 3 || tick === 4) {
-					console.log(`Tick ${tick} goods: energy=${result.goods.energy}, environmentFactor=${result.goods.environmentFactor}, consumerGoods=${result.goods.consumerGoods}, governance=${result.goods.governance}`);
+				if(tick === 3 || tick === 4) {
+					console.log(`Tick ${tick} goods: energy=${result.goods.energy}, environmentFactor=${result.goods.environmentFactor}, consumerGoods=${result.goods.consumerGoods}`);
 					console.log(`Tick ${tick} services sectorResults:`, result.sectorResults.services);
 					console.log(`Tick ${tick} services stopReason:`, result.sectorStopReason.services);
 				}
@@ -147,8 +146,8 @@ describe("Multi-tick flow validation", () => {
 			expect(oilAvgLast10).toBeGreaterThan(0.3); // Proportional allocation gives ~30-40%
 
 			// Other sectors should maintain some production (not collapse to 0)
-			for (const sector of SEVEN_SECTORS_PLUS_OIL) {
-				if (sector === "powerPlant" || sector === "oilRig") continue;
+			for(const sector of SEVEN_SECTORS_PLUS_OIL) {
+				if(sector === "powerPlant" || sector === "oilRig") continue;
 				const history = productionHistory[sector];
 				const last10 = history.slice(-10);
 				const avgLast10 = last10.reduce((a, b) => a + b, 0) / last10.length;
@@ -164,7 +163,7 @@ describe("Multi-tick flow validation", () => {
 			let input = createTestInput(SEVEN_SECTORS_PLUS_OIL, initialGoods);
 			const state = createSimState();
 
-			for (let tick = 1; tick <= 20; tick++) {
+			for(let tick = 1; tick <= 20; tick++) {
 				input.tick = tick;
 				const previousGoods = { ...input.goods };
 				const result = simulateTick(input, state);
@@ -181,15 +180,15 @@ describe("Multi-tick flow validation", () => {
 		});
 	});
 
-describe("Order sensitivity", () => {
-	const orders: string[][] = [
-		[...SEVEN_SECTORS_PLUS_OIL],
-		[...SEVEN_SECTORS_PLUS_OIL].reverse(),
-		["services", "powerPlant", "government", "bank", "education", "logistics", "lawEnforcement", "oilRig", "forestry"],
-		["forestry", "oilRig", "lawEnforcement", "logistics", "education", "bank", "government", "services", "powerPlant"],
-	];
+	describe("Order sensitivity", () => {
+		const orders: string[][] = [
+			[...SEVEN_SECTORS_PLUS_OIL],
+			[...SEVEN_SECTORS_PLUS_OIL].reverse(),
+			["services", "powerPlant", "government", "bank", "education", "logistics", "lawEnforcement", "oilRig", "forestry"],
+			["forestry", "oilRig", "lawEnforcement", "logistics", "education", "bank", "government", "services", "powerPlant"],
+		];
 
-		for (const order of orders) {
+		for(const order of orders) {
 			it(`produces consistent results for order: ${order.join(" > ")}`, () => {
 				let input = createTestInput(order, initialGoods);
 				const state = createSimState();
@@ -197,12 +196,12 @@ describe("Order sensitivity", () => {
 				let tick1Result: any = null;
 				let tick10Result: any = null;
 
-				for (let tick = 1; tick <= 10; tick++) {
+				for(let tick = 1; tick <= 10; tick++) {
 					input.tick = tick;
 					const result = simulateTick(input, state);
 
-					if (tick === 1) tick1Result = result;
-					if (tick === 10) tick10Result = result;
+					if(tick === 1) tick1Result = result;
+					if(tick === 10) tick10Result = result;
 
 					input = closeTickForNext(input, result);
 

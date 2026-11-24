@@ -25,7 +25,6 @@ export type Goods = {
     chemicals: number;
     buildings: number;
     waste: number;
-    governance: number;
     logistics: number;
     paper: number;
     entertainment: number;
@@ -64,7 +63,6 @@ export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
     "lawEnforcement",
     "healthcare",
     "education",
-    "governance",
     "environmentFactor",
     "defense",
     "entertainment",
@@ -106,7 +104,6 @@ export const basePrices = {
     chemicals: 40,
     buildings: 20,
     waste: 2,
-    governance: 40,
 
     paper: 30,
     logistics: 60,
@@ -120,7 +117,7 @@ export const basePrices = {
 } satisfies Record<keyof Goods, number>
 
 export const godsCategories = new Map<string, Set<keyof Goods>>([
-    ["publicServices", new Set(["governance", "healthcare", "lawEnforcement", "education", "logistics"])],
+    ["publicServices", new Set(["healthcare", "lawEnforcement", "education", "logistics"])],
     ["rawMaterials", new Set(["agriculturalGoods", "oil", "tylium", "water", "energy", "fissionMaterial", "environmentFactor"])],
     ["industrialMaterials", new Set(["buildings", "chemicals", "lumber", "metals", "medicine", "paper", "waste", "machinery"])],
     ["consumerGoods", new Set(["consumerGoods", "food"])],

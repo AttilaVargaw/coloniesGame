@@ -243,7 +243,7 @@ describe("EconomicHealthMetrics", () => {
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
                 vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
-                healthcare: 70, chemicals: 40, buildings: 20, waste: 2, governance: 40,
+                healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
                 mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
             };
@@ -398,7 +398,7 @@ describe("EconomicHealthMetrics", () => {
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
                 vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
-                healthcare: 70, chemicals: 40, buildings: 20, waste: 2, governance: 40,
+                healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
                 mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
             };
@@ -430,7 +430,7 @@ describe("EconomicHealthMetrics", () => {
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
                 vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
-                healthcare: 70, chemicals: 40, buildings: 20, waste: 2, governance: 40,
+                healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
                 mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
             };
@@ -513,7 +513,7 @@ describe("EconomicHealthMetrics", () => {
                 metals: 150, fissionMaterial: 100, machinery: 50, medicine: 20,
                 lumber: 30, oil: 100, spaceShips: 2000, nuclearWeapons: 300,
                 vehicles: 80, environmentFactor: 50, faith: 40, lawEnforcement: 40,
-                healthcare: 70, chemicals: 40, buildings: 20, waste: 2, governance: 40,
+                healthcare: 70, chemicals: 40, buildings: 20, waste: 2,
                 paper: 30, logistics: 60, entertainment: 30, education: 80,
                 mobility: 200, defense: 100, monetaryServices: 200, militaryEquipment: 800,
             };

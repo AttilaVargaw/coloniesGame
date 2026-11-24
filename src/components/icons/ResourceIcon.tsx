@@ -60,7 +60,6 @@ const ICON_MAP: Record<keyof Goods, ComponentType<LucideProps>> = {
     chemicals: TestTubes,
     buildings: Building2,
     waste: Recycle,
-    governance: Landmark,
     paper: Newspaper,
     logistics: Mail,
     defense: Shield,

@@ -328,7 +328,6 @@ export function runAllScenarios(maxTicks: number = 300): Map<string, SimulationR
 					input.money.powerPlant = 10_000_000;
 					input.goods.oil = 100_000;
 					input.goods.environmentFactor = 10_000;
-					input.goods.governance = 10_000;
 				}
 				return input;
 			});

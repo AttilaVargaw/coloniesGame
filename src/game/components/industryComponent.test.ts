@@ -31,7 +31,6 @@ function makeGoods(overrides: Partial<Goods> = {}): Goods {
         chemicals: 0,
         buildings: 0,
         waste: 0,
-        governance: 0,
         logistics: 0,
         paper: 0,
         entertainment: 0,
@@ -252,9 +251,5 @@ describe("CAN_BE_NEGATIVE set", () => {
 
     it("does not contain paper", () => {
         expect(CAN_BE_NEGATIVE.has("paper")).toBe(false)
-    })
-
-    it("does not contain governance", () => {
-        expect(CAN_BE_NEGATIVE.has("governance")).toBe(false)
     })
 })

@@ -55,6 +55,8 @@ function processIndustry(
         tick,
         producerInventories = {},
         prices: priceSnapshot,
+        governanceCapacity,
+        totalGovernanceDemand,
     }: IndustryTickInput,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
@@ -431,6 +433,26 @@ function processIndustry(
         sumGoodsRequirements,
         sumGoodsProduction,
     } = execResult;
+
+    // Apply governance penalty: if capacity < demand, all sectors produce proportionally less
+    const governanceRatio = totalGovernanceDemand > 0
+        ? Math.min(1, governanceCapacity / totalGovernanceDemand)
+        : 1;
+
+    if (governanceRatio < 1) {
+        // Scale down all production
+        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
+            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * governanceRatio;
+        }
+        // Scale down sector production in results
+        for (const result of Object.values(sectorResults)) {
+            if (result?.producedGoods) {
+                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
+                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * governanceRatio;
+                }
+            }
+        }
+    }
 
     // Reconcile aggregate consumption against individual sector results.
     // sumGoodsRequirements is the aggregate accounting field; each sector's
