@@ -64,8 +64,24 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
 
         const requirements: { name: keyof Population | keyof Goods; fullCapacityReq: number; currentCapacityReq: number; satisfied: number; isNegativeCapable?: boolean }[] = [];
 
+        // Base sector requirements
         if(config?.goodsRequirements) {
             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
+                const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
+                const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * sectorLevel;
+                requirements.push({
+                    name: good,
+                    fullCapacityReq,
+                    currentCapacityReq: fullCapacityReq * productionRatio,
+                    satisfied: isStopped ? 0 : (sectorResult?.consumedGoods?.[good] ?? 0),
+                    isNegativeCapable: CAN_BE_NEGATIVE.has(good),
+                });
+            }
+        }
+
+        // Method-specific requirements
+        if(method?.goodsRequirements) {
+            for(const [good, req] of Object.entries(method.goodsRequirements) as [keyof Goods, number][]) {
                 const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
                 const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * sectorLevel;
                 requirements.push({
