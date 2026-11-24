@@ -130,12 +130,12 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             createMethod("traditional", { desc: "Traditional" }),
             createMethod("hydroponics", { desc: "hydroponics" }),
             createMethod("withWatering", { desc: "With artificial watering", goodsRequirements: { water: 40, environmentFactor: 10 } }),
-            createMethod("withWatering", { desc: "With artificial watering and ", goodsRequirements: { water: 40, chemicals: 80, environmentFactor: 20 } }),
+            createMethod("withWateringFertilizers", { desc: "With artificial watering and fertilizers", goodsRequirements: { water: 40, chemicals: 80, environmentFactor: 20 } }),
         ])
     })],
     ["fishery", {
         name: "fishery", goodsRequirements: {
-            governance: 2,
+            governance: 20,
             environmentFactor: 2,
         },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
@@ -351,6 +351,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalGoods: { machinery: 0.3, buildings: 0.2, },
         capitalEfficiency: 0.0006,
         capitalEfficiencyDecay: 0.08,
+        nonEssentialGoods: usualNonEssentialGoods,
     })],
     ["chemical", ({
         name: "chemical", goodsRequirements: {
@@ -477,7 +478,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["entertainmentIndustry", ({
         name: "entertainmentIndustry",
         goodsRequirements: {
-            environmentFactor: 20, energy: 150, governance: 2, paper: 100
+            environmentFactor: 20, energy: 150, governance: 20, paper: 100
         },
         workerRequirement: { worker: 490, clerks: 50, engineer: 50, serviceWorker: 400, healtcarePersonal: 10 },
         goodsProduction: { entertainment: 1_000_000, waste: 10 },

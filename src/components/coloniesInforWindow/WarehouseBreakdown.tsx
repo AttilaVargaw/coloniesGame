@@ -50,8 +50,19 @@ function getGoodCostPerUnit(
     return 0;
 }
 
+function getPopulationRequirements(
+    goodKey: keyof Goods,
+    populationRequirements: IndustryComponent["populationRequirements"],
+): number {
+    let total = 0;
+    for (const [, requirements] of Object.entries(populationRequirements)) {
+        total += requirements[goodKey] ?? 0;
+    }
+    return total;
+}
+
 export function WarehouseBreakdown({ industry, showPhysical }: { industry: IndustryComponent; showPhysical?: boolean }) {
-    const { goods, goodsProduction, goodsRequirements } = industry;
+    const { goods, goodsProduction, goodsRequirements, populationRequirements } = industry;
     const prices = basePrices;
 
     return (
@@ -73,7 +84,8 @@ export function WarehouseBreakdown({ industry, showPhysical }: { industry: Indus
                                 <th className="text-right p-2 font-medium">Stock</th>
                                 <th className="text-center p-2 font-medium">Net</th>
                                 <th className="text-center p-2 font-medium">Production</th>
-                                <th className="text-center p-2 font-medium">Requirements</th>
+                                <th className="text-center p-2 font-medium">Industry Req</th>
+                                <th className="text-center p-2 font-medium">Pop Req</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -83,6 +95,8 @@ export function WarehouseBreakdown({ industry, showPhysical }: { industry: Indus
                                 .map(([key, value]) => {
                                     const addition = goodsProduction[key] || 0;
                                     const used = goodsRequirements[key] || 0;
+                                    const popReq = getPopulationRequirements(key, populationRequirements);
+                                    const industryReq = used - popReq;
 
                                     return <tr key={key} className="border-b border-muted/50 last:border-0">
                                         <td className="p-2" style={{ display: "flex", gap: "1em" }}>
@@ -94,7 +108,8 @@ export function WarehouseBreakdown({ industry, showPhysical }: { industry: Indus
                                         <td className="p-2 text-right">{convertToReadable(value || 0)}</td>
                                         <td className="p-2 text-center">{colorBySign(addition - used)}</td>
                                         <td className="p-2 text-center">{convertToReadable(addition)}</td>
-                                        <td className="p-2 text-center">{convertToReadable(used)}</td>
+                                        <td className="p-2 text-center">{convertToReadable(industryReq)}</td>
+                                        <td className="p-2 text-center">{convertToReadable(popReq)}</td>
                                     </tr>;
                                 })}
                         </tbody>
