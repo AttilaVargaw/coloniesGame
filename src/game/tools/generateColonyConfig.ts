@@ -15,7 +15,7 @@ export function generateColonyConfig(
 	const cfg = { ...DEFAULT_CONFIG, ...config };
 	const { populationSize, activeSectors, starterMoneyPerSector, capitalStockMultiplier } = cfg;
 
-const goods = createStarterWarehouse(populationSize);
+	const goods = createStarterWarehouse(populationSize);
 	for(const key of Object.keys(goods) as (keyof Goods)[]) {
 		goods[key] *= cfg.initialGoodsMultipliers.get(key) ?? 100;
 	}

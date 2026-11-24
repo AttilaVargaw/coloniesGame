@@ -176,6 +176,10 @@ export function buildSectorBid(
                 `Unknown production method ${options.selectedMethod} for ${name}`,
             );
         }
+    } else if(config.productionMethods && config.productionMethods.size > 0) {
+        // Default to first production method (matches IndustryComponent initialization)
+        const firstMethodKey = config.productionMethods.keys().next().value!;
+        method = config.productionMethods.get(firstMethodKey);
     }
 
     const effective = mergeMethodOverrides(config, method);

@@ -185,14 +185,36 @@ export function runScenario(
 			if (reason) currentStops.add(sector);
 		}
 		
-		for(const sector of currentStops) {
+		// Also track sectors with critically low production scale (< 0.1)
+		const criticalScaleSectors = new Set<string>();
+		for(const [sector, sectorResult] of Object.entries(result.sectorResults)) {
+			if (sectorResult.productionRatio !== undefined && sectorResult.productionRatio < 0.1) {
+				criticalScaleSectors.add(sector);
+			}
+		}
+		
+		// Combine stopped sectors and critically scaled sectors
+		const allCriticalSectors = new Set([...currentStops, ...criticalScaleSectors]);
+		
+		for(const sector of allCriticalSectors) {
 			if (!prevSectorStops.has(sector)) {
-				const severity = result.sectorStopReason[sector] === "No money" || 
-					result.sectorStopReason[sector] === "No materials" ? "critical" : "warning";
+				const stopReason = result.sectorStopReason[sector];
+				const isCriticalStop = stopReason === "No money" || stopReason === "No materials";
+				const isCriticalScale = criticalScaleSectors.has(sector);
+				const severity = (isCriticalStop || isCriticalScale) ? "critical" : "warning";
+				
+				let description: string;
+				if (isCriticalScale && !isCriticalStop) {
+					const scale = result.sectorResults[sector]?.productionRatio ?? 0;
+					description = `${sector} critically scaled down: production ratio = ${scale.toFixed(3)}`;
+				} else {
+					description = `${sector} stopped: ${stopReason}`;
+				}
+				
 				eventLog.push({
 					tick,
 					type: "sector_stop",
-					description: `${sector} stopped: ${result.sectorStopReason[sector]}`,
+					description,
 					sector,
 					severity,
 				});
@@ -201,7 +223,7 @@ export function runScenario(
 		}
 		
 		for(const sector of prevSectorStops) {
-			if (!currentStops.has(sector)) {
+			if (!allCriticalSectors.has(sector)) {
 				eventLog.push({
 					tick,
 					type: "sector_start",
@@ -212,7 +234,7 @@ export function runScenario(
 				totalRecoveryEvents++;
 			}
 		}
-		prevSectorStops = currentStops;
+		prevSectorStops = allCriticalSectors;
 		
 		// Check for shortages/surpluses
 		for(const good of indicators.shortageGoods) {

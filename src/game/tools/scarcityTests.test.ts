@@ -362,6 +362,8 @@ describe("Scarcity — multiple sectors competing for the same input", () => {
 				},
 				{},
 			);
+			// Select farm method that requires water
+			input.selectedMethod.farm = "withWatering";
 			// Zero out water — farm and waterTreatment need it
 			input.goods.water = 0;
 			input.goods.environmentFactor = 10_000;

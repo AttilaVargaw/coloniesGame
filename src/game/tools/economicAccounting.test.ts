@@ -939,6 +939,9 @@ it("two sectors purchase and consume the same good — each reconciles independe
 
 it("sector with insufficient inputs stops production — no over-consumption", () => {
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 10 } });
+		// Select farm method that requires water
+		input.selectedMethod.farm = "withWatering";
+		input.goods.water = 0; // No water available
 		const state = createSimState();
 		const result = simulateTick(input, state);
 
@@ -953,6 +956,8 @@ it("sector with insufficient inputs stops production — no over-consumption", (
 
 it("sector purchases more than it consumes — unused stock and cash are returned", () => {
 		const input = createCompleteEconomyInput({ goods: { agriculturalGoods: 0, water: 1000 } });
+		// Select farm method that requires water
+		input.selectedMethod.farm = "withWatering";
 		const state = createSimState();
 		const result = simulateTick(input, state);
 
