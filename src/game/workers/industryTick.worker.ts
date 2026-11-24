@@ -1,5 +1,5 @@
 import { industrySectorBlueprints } from "../systems/sectorBlueprints";
-import { getPrices, Goods, NON_CUMULATING_GOODS, basePrices } from "../data/Goods";
+import { Goods, NON_CUMULATING_GOODS, basePrices } from "../data/Goods";
 import { Population, PopulationBreakdown } from "../data/Population";
 import { createEmptyWarehouse } from "../factories/createStarterWarehouse";
 import type { IndustrialSectors } from "../components/Factories";
@@ -29,7 +29,6 @@ import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "healthcare", "agriculturalGoods"];
 
 const lastResults = new Map<string, IndustryTickResult>();
-const colonyPriceMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 const colonyWageMemory = new Map<string, Partial<Record<keyof Population, number>>>();
 const colonyDeprivationMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
 
@@ -55,12 +54,12 @@ function processIndustry(
         selectedMethod,
         tick,
         producerInventories = {},
+        prices: priceSnapshot,
     }: IndustryTickInput,
-    priceMemory: Map<string, Partial<Record<keyof Goods, number>>>,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
-    const memory = { ...(priceMemory.get(entityId) ?? {}) };
-    const prices = validatePrices(getPrices(goods, memory));
+    // Use prices from input snapshot (committed by MarketPriceSystem)
+    const prices = validatePrices(priceSnapshot.prices);
 
     const wageMemory = { ...(colonyWageMemory.get(entityId) ?? {}) };
     const adjustedSalaries = buildAdjustedSalaries(wageMemory);
@@ -1498,7 +1497,6 @@ function processIndustry(
     // Commit persistent memory only after successful processing
     // Update wage memory once with final market ratios (wages frozen per tick)
     updateWageMemory(wageMemory, finalWorkerMarketRatios);
-    priceMemory.set(entityId, prices);
     colonyWageMemory.set(entityId, wageMemory);
     colonyDeprivationMemory.set(entityId, deprivation);
     results.set(entityId, result);
@@ -1947,7 +1945,6 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
         activeEntityIds.add(industry.entityId);
     }
 
-    pruneMemory(colonyPriceMemory, activeEntityIds);
     pruneMemory(colonyWageMemory, activeEntityIds);
     pruneMemory(colonyDeprivationMemory, activeEntityIds);
     pruneMemory(lastResults, activeEntityIds);
@@ -1967,7 +1964,7 @@ self.onmessage = (event: MessageEvent<{ type: string; industries: IndustryTickIn
                     industry.goods[key as keyof Goods] = 0;
                 }
             }
-            const patch = processIndustry(industry, colonyPriceMemory, lastResults);
+            const patch = processIndustry(industry, lastResults);
             if(patch) {
                 patches.push(patch);
             }

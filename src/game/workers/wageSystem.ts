@@ -1,8 +1,8 @@
 import { baseSalaries, Population } from "../data/Population";
 
-export const wageDamping = 0.3;
-export const wageMinMultiplier = 0.5;
-export const wageMaxMultiplier = 2.0;
+const wageDamping = 0.3;
+const wageMinMultiplier = 0.5;
+const wageMaxMultiplier = 2.0;
 
 export function buildAdjustedSalaries(
     wageMemory: Partial<Record<keyof Population, number>>

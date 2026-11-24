@@ -58,22 +58,6 @@ export const physicalGoods = new Set<keyof Goods>([
     "paper",
 ])
 
-export const services = new Set<keyof Goods>([
-    "services",
-    "faith",
-    "lawEnforcement",
-    "healthcare",
-    "education",
-    "governance",
-    "environmentFactor",
-    "defense",
-    "entertainment",
-    "logistics",
-    "monetaryServices",
-    "tourism",
-    "energy",
-])
-
 export const NON_CUMULATING_GOODS: ReadonlySet<keyof Goods> = new Set([
     "services",
     "faith",

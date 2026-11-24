@@ -1,6 +1,6 @@
 import { IndustryComponent } from "@/game/components/industryComponent";
 import type { IndustrialSectors } from "@/game/components/Factories";
-import { Goods, getPrices, godsCategories, basePrices } from "@/game/data/Goods";
+import { Goods, godsCategories, basePrices } from "@/game/data/Goods";
 import { Population, baseSalaries } from "@/game/data/Population";
 import { industrySectorBlueprints } from "@/game/systems/sectorBlueprints";
 import { convertToReadable } from "@/lib/utils";
@@ -52,7 +52,7 @@ function getGoodCostPerUnit(
 
 export function WarehouseBreakdown({ industry, showPhysical }: { industry: IndustryComponent; showPhysical?: boolean }) {
     const { goods, goodsProduction, goodsRequirements } = industry;
-    const prices = getPrices(goods, warehousePriceMemory);
+    const prices = basePrices;
 
     return (
         <Tabs defaultValue="rawMaterials">

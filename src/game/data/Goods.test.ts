@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest"
 import {
     basePrices,
     physicalGoods,
-    services,
-    NON_CUMULATING_GOODS,
     CAN_BE_NEGATIVE,
     godsCategories,
     getPrices,
@@ -27,26 +25,6 @@ describe("Goods data", () => {
         expect(physicalGoods.has("services")).toBe(false)
         expect(physicalGoods.has("faith")).toBe(false)
         expect(physicalGoods.has("healthcare")).toBe(false)
-    })
-
-    it("services contains only service goods", () => {
-        expect(services.has("services")).toBe(true)
-        expect(services.has("faith")).toBe(true)
-        expect(services.has("healthcare")).toBe(true)
-        expect(services.has("education")).toBe(true)
-        expect(services.has("governance")).toBe(true)
-        expect(services.has("environmentFactor")).toBe(true)
-        // Physical goods should not be in services
-        expect(services.has("oil")).toBe(false)
-        expect(services.has("food")).toBe(false)
-    })
-
-    it("NON_CUMULATING_GOODS is a superset of services plus environmentFactor", () => {
-        for(const key of services) {
-            expect(NON_CUMULATING_GOODS.has(key)).toBe(true)
-        }
-        expect(NON_CUMULATING_GOODS.has("environmentFactor")).toBe(true)
-        expect(NON_CUMULATING_GOODS.has("oil")).toBe(false)
     })
 
     it("CAN_BE_NEGATIVE only contains environmentFactor", () => {
