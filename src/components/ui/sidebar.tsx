@@ -4,7 +4,6 @@ import { cn } from "cn"
 import { Slot } from "radix-ui"
 import { generateRandomNumber } from "@/lib/generateRandomNumber"
 
-import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -45,7 +44,7 @@ const SidebarContext = createContext<SidebarContextProps | null>(null)
 
 function useSidebar() {
   const context = useContext(SidebarContext)
-  if (!context) {
+  if(!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.")
   }
 
@@ -65,7 +64,7 @@ function SidebarProvider({
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
-  const isMobile = useIsMobile()
+  const isMobile = false
   const [openMobile, setOpenMobile] = useState(false)
 
   // This is the internal state of the sidebar.
@@ -75,7 +74,7 @@ function SidebarProvider({
   const setOpen = useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value
-      if (setOpenProp) {
+      if(setOpenProp) {
         setOpenProp(openState)
       } else {
         _setOpen(openState)
@@ -95,7 +94,7 @@ function SidebarProvider({
   // Adds a keyboard shortcut to toggle the sidebar.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
+      if(
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
       ) {
@@ -163,7 +162,7 @@ function Sidebar({
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-  if (collapsible === "none") {
+  if(collapsible === "none") {
     return (
       <div
         data-slot="sidebar"
@@ -178,7 +177,7 @@ function Sidebar({
     )
   }
 
-  if (isMobile) {
+  if(isMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
@@ -514,11 +513,11 @@ function SidebarMenuButton({
     />
   )
 
-  if (!tooltip) {
+  if(!tooltip) {
     return button
   }
 
-  if (typeof tooltip === "string") {
+  if(typeof tooltip === "string") {
     tooltip = {
       children: tooltip,
     }
@@ -555,7 +554,7 @@ function SidebarMenuAction({
       className={cn(
         "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground ring-sidebar-ring outline-hidden transition-transform group-data-[collapsible=icon]:hidden peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[size=default]/menu-button:top-1.5 peer-data-[size=lg]/menu-button:top-2.5 peer-data-[size=sm]/menu-button:top-1 after:absolute after:-inset-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 md:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
         showOnHover &&
-          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 peer-data-active/menu-button:text-sidebar-accent-foreground aria-expanded:opacity-100 md:opacity-0",
+        "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 peer-data-active/menu-button:text-sidebar-accent-foreground aria-expanded:opacity-100 md:opacity-0",
         className
       )}
       {...props}
