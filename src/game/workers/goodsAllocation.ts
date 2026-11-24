@@ -77,7 +77,10 @@ export function allocateGoods({
         }
     }
 
-    for (const goodKey of Object.keys(availableGoods) as (keyof Goods)[]) {
+    // Pre-compute available goods keys to avoid repeated Object.keys()
+    const availableGoodsKeys = Object.keys(availableGoods) as (keyof Goods)[];
+
+    for (const goodKey of availableGoodsKeys) {
         const available = availableGoods[goodKey];
 
         if (!Number.isFinite(available) || available < 0) {
@@ -86,104 +89,117 @@ export function allocateGoods({
             );
         }
 
-        const demands = sectorRequests
-            .map(req => ({
-                sectorId: req.sectorId,
-                originalDemand: req.idealDemand[goodKey] ?? 0,
-                remaining: req.idealDemand[goodKey] ?? 0,
-                priority: req.priority,
-            }))
-            .filter(item => item.remaining > 0)
-            .sort((a, b) =>
-                String(a.sectorId).localeCompare(String(b.sectorId))
-            );
+        // Build demands array once - avoid repeated map/filter/sort
+        const demands: Array<{ sectorId: keyof IndustrialSectors; originalDemand: number; remaining: number; priority: number }> = [];
+        for (let i = 0; i < sectorRequests.length; i++) {
+            const req = sectorRequests[i];
+            const demand = req.idealDemand[goodKey] ?? 0;
+            if (demand > 0) {
+                demands.push({
+                    sectorId: req.sectorId,
+                    originalDemand: demand,
+                    remaining: demand,
+                    priority: req.priority,
+                });
+            }
+        }
 
-        const totalDemand = demands.reduce(
-            (sum, item) => sum + item.remaining,
-            0,
-        );
+        if (demands.length === 0) continue;
+
+        // Sort once for stable ordering
+        demands.sort((a, b) => String(a.sectorId).localeCompare(String(b.sectorId)));
+
+        const totalDemand = demands.reduce((sum, item) => sum + item.remaining, 0);
 
         if (!Number.isFinite(totalDemand)) {
             throw new Error(`Total demand overflow for ${String(goodKey)}`);
         }
 
-        if (totalDemand === 0) continue;
-
         let remainingStock = Math.min(available, totalDemand);
 
-        // Weighted allocation with demand caps and redistribution.
+        // Vectorized water-filling: single pass with pre-computed weights
         let active = demands;
 
         while (active.length > 0 && remainingStock > EPSILON) {
-            const totalWeight = active.reduce(
-                (sum, item) => sum + item.remaining * item.priority,
-                0,
-            );
-
-            if (totalWeight <= 0 || !Number.isFinite(totalWeight)) {
-                throw new Error(
-                    `Invalid allocation weights for ${String(goodKey)}`,
-                );
+            // Compute total weight
+            let totalWeight = 0;
+            for (let i = 0; i < active.length; i++) {
+                totalWeight += active[i].remaining * active[i].priority;
             }
 
-            const saturated = active.filter(item => {
-                const proposed =
-                    remainingStock *
-                    (item.remaining * item.priority) /
-                    totalWeight;
+            if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
+                throw new Error(`Invalid allocation weights for ${String(goodKey)}`);
+            }
 
-                return proposed >= item.remaining - EPSILON;
-            });
+            // Find saturated items in single pass
+            const saturatedIndices: number[] = [];
+            for (let i = 0; i < active.length; i++) {
+                const item = active[i];
+                const proposed = remainingStock * (item.remaining * item.priority) / totalWeight;
+                if (proposed >= item.remaining - EPSILON) {
+                    saturatedIndices.push(i);
+                }
+            }
 
-            if (saturated.length > 0) {
-                const saturatedIds = new Set(
-                    saturated.map(item => item.sectorId),
-                );
-
-                for (const item of saturated) {
+            if (saturatedIndices.length > 0) {
+                // Allocate saturated sectors
+                const saturatedSet = new Set(saturatedIndices);
+                
+                for (const idx of saturatedIndices) {
+                    const item = active[idx];
                     const amount = Math.min(item.remaining, remainingStock);
-
                     allocation[item.sectorId]![goodKey] = amount;
                     remainingStock -= amount;
-                    item.remaining -= amount;
+                    item.remaining = 0;
                 }
 
-                active = active.filter(
-                    item => !saturatedIds.has(item.sectorId),
-                );
-
+                // Compact active array (remove saturated)
+                const newActive: typeof active = [];
+                for (let i = 0; i < active.length; i++) {
+                    if (!saturatedSet.has(i)) {
+                        newActive.push(active[i]);
+                    }
+                }
+                active = newActive;
                 continue;
             }
 
-            // No demand caps are reached: distribute the remaining stock.
-            // Sorting ensures floating-point remainder handling is stable.
+            // No caps reached: distribute proportionally
+            // Pre-compute all proposed amounts
+            const proposedAmounts = new Array(active.length);
             for (let i = 0; i < active.length; i++) {
                 const item = active[i];
-
-                const amount = i === active.length - 1
-                    ? remainingStock
-                    : remainingStock *
-                      (item.remaining * item.priority) /
-                      totalWeight;
-
-                const allocated = Math.min(amount, item.remaining);
-
-                allocation[item.sectorId]![goodKey] = allocated;
-                remainingStock -= allocated;
+                const proposed = remainingStock * (item.remaining * item.priority) / totalWeight;
+                proposedAmounts[i] = Math.min(proposed, item.remaining);
             }
 
-            break;
+            for (let i = 0; i < active.length; i++) {
+                const item = active[i];
+                const amount = proposedAmounts[i];
+                allocation[item.sectorId]![goodKey] = (allocation[item.sectorId]![goodKey] ?? 0) + amount;
+                remainingStock -= amount;
+                item.remaining -= amount;
+            }
+
+            // Filter still-active items
+            const stillActive: typeof active = [];
+            for (let i = 0; i < active.length; i++) {
+                if (active[i].remaining > EPSILON) {
+                    stillActive.push(active[i]);
+                }
+            }
+            
+            if (stillActive.length === 0 || remainingStock <= EPSILON) {
+                break;
+            }
+            active = stillActive;
         }
 
-        // Record unmet demand.
-        for (const item of demands) {
-            const allocated =
-                allocation[item.sectorId]?.[goodKey] ?? 0;
-
-            const unmet = Math.max(0, item.originalDemand - allocated);
-
-            if (unmet > EPSILON) {
-                unmetDemand[item.sectorId]![goodKey] = unmet;
+        // Record unmet demand
+        for (let i = 0; i < demands.length; i++) {
+            const item = demands[i];
+            if (item.remaining > EPSILON) {
+                unmetDemand[item.sectorId]![goodKey] = (unmetDemand[item.sectorId]![goodKey] ?? 0) + item.remaining;
             }
         }
     }

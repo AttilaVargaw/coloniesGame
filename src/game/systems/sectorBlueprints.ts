@@ -24,7 +24,6 @@ export type ProductionMethod = {
     capitalGoods?: Partial<Record<keyof Goods, number>>
     capitalEfficiency?: number
     capitalEfficiencyDecay?: number
-    nonEssentialGoods?: Set<keyof Goods>
     desc?: string
     prerequisites?: Set<string>
     // Gamification modifiers applied when this method is selected
@@ -44,12 +43,11 @@ function createMethod<K extends string>(key: K, overrides?: Partial<ProductionMe
         capitalGoods: {},
         capitalEfficiency: 0,
         capitalEfficiencyDecay: 0,
-        nonEssentialGoods: new Set<keyof Goods>(),
         ...overrides,
     }]
 }
 
-const robotizedDefaults = { prerequisites: new Set(["synteticLifeformUnit"]), nonEssentialGoods: new Set<keyof Goods>() }
+const robotizedDefaults = { prerequisites: new Set(["synteticLifeformUnit"]) }
 
 function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
     return createMethod("robotized", {

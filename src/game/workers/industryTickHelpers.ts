@@ -1179,32 +1179,35 @@ export function allocateLaborTwoStage(
 		if (available <= EPSILON) continue;
 
 		// Build demands for this population type (full demand minus already allocated)
-		const demands = sectorRequests
-			.map(req => {
-				const idealDemand = req.idealDemand[popType] ?? 0;
-				const alreadyAllocated = allocation[req.sectorId]?.[popType] ?? 0;
-				const remainingDemand = Math.max(0, idealDemand - alreadyAllocated);
-				return {
+		// Use array instead of map/filter for performance
+		const demands: Array<{ sectorId: string; remaining: number; priority: number }> = [];
+		for (let i = 0; i < sectorRequests.length; i++) {
+			const req = sectorRequests[i];
+			const idealDemand = req.idealDemand[popType] ?? 0;
+			const alreadyAllocated = allocation[req.sectorId]?.[popType] ?? 0;
+			const remainingDemand = Math.max(0, idealDemand - alreadyAllocated);
+			if (remainingDemand > EPSILON) {
+				demands.push({
 					sectorId: req.sectorId,
 					remaining: remainingDemand,
 					priority: req.priority,
-				};
-			})
-			.filter(item => item.remaining > EPSILON);
+				});
+			}
+		}
 
 		if (demands.length === 0) continue;
 
 		let remainingWorkersForPop = available;
 
-		// Water-filling algorithm: repeated proportional allocation with caps
+		// Vectorized water-filling algorithm: single pass with pre-computed weights
 		let active = demands;
 
 		while (active.length > 0 && remainingWorkersForPop > EPSILON) {
 			// Snapshot total weight at start of iteration
-			const totalWeight = active.reduce(
-				(sum, item) => sum + item.remaining * item.priority,
-				0,
-			);
+			let totalWeight = 0;
+			for (let i = 0; i < active.length; i++) {
+				totalWeight += active[i].remaining * active[i].priority;
+			}
 
 			if (!Number.isFinite(totalWeight)) {
 				throw new Error(`Invalid labor allocation weights for ${String(popType)}`);
@@ -1214,35 +1217,47 @@ export function allocateLaborTwoStage(
 				break;
 			}
 
-			// Check which sectors would saturate (hit their demand cap)
-			const saturated = active.filter(item => {
+			// Check which sectors would saturate (hit their demand cap) - single pass
+			const saturatedIndices: number[] = [];
+			for (let i = 0; i < active.length; i++) {
+				const item = active[i];
 				const proposed = remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
-				return proposed >= item.remaining - EPSILON;
-			});
+				if (proposed >= item.remaining - EPSILON) {
+					saturatedIndices.push(i);
+				}
+			}
 
-			if (saturated.length > 0) {
-				const saturatedIds = new Set(saturated.map(item => item.sectorId));
+			if (saturatedIndices.length > 0) {
+				const saturatedSet = new Set(saturatedIndices);
 
 				// Allocate saturated sectors their full remaining demand
-				for (const item of saturated) {
+				for (const idx of saturatedIndices) {
+					const item = active[idx];
 					const amount = Math.min(item.remaining, remainingWorkersForPop);
 					allocation[item.sectorId]![popType] = (allocation[item.sectorId]![popType] ?? 0) + amount;
 					remainingWorkersForPop -= amount;
-					item.remaining -= amount;
+					item.remaining = 0;
 				}
 
-				// Remove saturated sectors and continue
-				active = active.filter(item => !saturatedIds.has(item.sectorId));
+				// Compact active array (remove saturated)
+				const newActive: typeof active = [];
+				for (let i = 0; i < active.length; i++) {
+					if (!saturatedSet.has(i)) {
+						newActive.push(active[i]);
+					}
+				}
+				active = newActive;
 				continue;
 			}
 
 			// No caps reached: distribute proportionally to ALL active sectors
-			// using the same snapshot of remainingWorkersForPop and totalWeight
-			// Calculate all proposed amounts first (from snapshot) then apply
-			const proposedAmounts = active.map(item => {
+			// Pre-compute all proposed amounts first (from snapshot) then apply
+			const proposedAmounts = new Array(active.length);
+			for (let i = 0; i < active.length; i++) {
+				const item = active[i];
 				const proposed = remainingWorkersForPop * (item.remaining * item.priority) / totalWeight;
-				return Math.min(proposed, item.remaining);
-			});
+				proposedAmounts[i] = Math.min(proposed, item.remaining);
+			}
 			
 			for (let i = 0; i < active.length; i++) {
 				const item = active[i];
@@ -1252,8 +1267,14 @@ export function allocateLaborTwoStage(
 				item.remaining -= amount;
 			}
 
-			// If we still have workers but no one can take more, we're done
-			const stillActive = active.filter(item => item.remaining > EPSILON);
+			// Filter still-active items
+			const stillActive: typeof active = [];
+			for (let i = 0; i < active.length; i++) {
+				if (active[i].remaining > EPSILON) {
+					stillActive.push(active[i]);
+				}
+			}
+			
 			if (stillActive.length === 0 || remainingWorkersForPop <= EPSILON) {
 				break;
 			}
@@ -1263,7 +1284,8 @@ export function allocateLaborTwoStage(
 		}
 
 		// Track unmet demand
-		for (const item of demands) {
+		for (let i = 0; i < demands.length; i++) {
+			const item = demands[i];
 			if (item.remaining > EPSILON) {
 				unmetDemand[item.sectorId]![popType] = (unmetDemand[item.sectorId]![popType] ?? 0) + item.remaining;
 			}
