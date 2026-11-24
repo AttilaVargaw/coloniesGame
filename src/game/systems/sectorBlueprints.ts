@@ -403,7 +403,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         name: "nuclearSector", goodsRequirements:
             { governance: 20, environmentFactor: 10 },
         workerRequirement: { scientist: 50, worker: 690, clerks: 50, engineer: 200, healtcarePersonal: 10 },
-        goodsProduction: { fissionMaterial: 500, waste: 30, energy: 10_000_000 },
+        goodsProduction: { fissionMaterial: 500, waste: 30, },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 1, buildings: 0.1, },
         capitalEfficiency: 0.001,
@@ -411,7 +411,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         nonEssentialGoods: usualNonEssentialGoods,
         productionMethods: new Map([
             createMethod("Weapon grade only", { desc: "Creating only weapon grade fission material" }),
-            createMethod("Energy production")
+            createMethod("Energy production", { goodsProduction: { energy: 10_000_000 } })
         ])
     })],
     ["recycling", ({

@@ -161,10 +161,10 @@ function combineExecResults(results: ReturnType<typeof executeSectors>[]): Retur
 			populationProfits: {},
 			sectorUtilization: {},
 			sectorStopReason: {},
-workingWorkers: createStarterPopulation(0),
-		remainingWorkers: createStarterPopulation(0),
-		sumGoodsRequirements: createEmptyWarehouse(),
-		sumGoodsProduction: createEmptyWarehouse(),
+			workingWorkers: createStarterPopulation(0),
+			remainingWorkers: createStarterPopulation(0),
+			sumGoodsRequirements: createEmptyWarehouse(),
+			sumGoodsProduction: createEmptyWarehouse(),
 		};
 	}
 	if(results.length === 1) return results[0];
@@ -1107,51 +1107,51 @@ export function simulateTick(input: IndustryTickInput, state: SimState): Industr
 				}
 				return bySector;
 			})(),
-sectorInputRefundsBySector: refundBySector,
-            // Explicit refund tracking for validation
-            sectorInputRefundQuantitiesBySector: (() => {
-                const bySector: Record<string, Partial<Goods>> = {};
-                for(const bid of finalSectorBids) {
-                    const sectorName = bid.name;
-                    const purchases = finalPurchasedBySector?.[sectorName] ?? {};
-                    const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
-                    bySector[sectorName] = {};
-                    for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
-                        const gKey = goodKey as keyof Goods;
-                        const purchased = Number(purchasedQty);
-                        const consumedQty = Number(consumed[gKey] ?? 0);
-                        const refunded = purchased - consumedQty;
-                        if (refunded > 1e-9) {
-                            bySector[sectorName][gKey] = refunded;
-                        }
-                    }
-                }
-                return bySector;
-            })(),
-            sectorInputRefundAmountsBySector: (() => {
-                const bySector: Record<string, number> = {};
-                for(const bid of finalSectorBids) {
-                    const sectorName = bid.name;
-                    const purchases = finalPurchasedBySector?.[sectorName] ?? {};
-                    const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
-                    let sectorRefundAmount = 0;
-                    for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
-                        const gKey = goodKey as keyof Goods;
-                        const purchased = Number(purchasedQty);
-                        const consumedQty = Number(consumed[gKey] ?? 0);
-                        const refunded = purchased - consumedQty;
-                        if (refunded > 1e-9) {
-                            const price = prices[gKey] ?? 0;
-                            sectorRefundAmount += refunded * price;
-                        }
-                    }
-                    if (sectorRefundAmount > 0) {
-                        bySector[sectorName] = sectorRefundAmount;
-                    }
-                }
-                return bySector;
-            })(),
-            returnedInputsByGood: returnedGoods,
+			sectorInputRefundsBySector: refundBySector,
+			// Explicit refund tracking for validation
+			sectorInputRefundQuantitiesBySector: (() => {
+				const bySector: Record<string, Partial<Goods>> = {};
+				for(const bid of finalSectorBids) {
+					const sectorName = bid.name;
+					const purchases = finalPurchasedBySector?.[sectorName] ?? {};
+					const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
+					bySector[sectorName] = {};
+					for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
+						const gKey = goodKey as keyof Goods;
+						const purchased = Number(purchasedQty);
+						const consumedQty = Number(consumed[gKey] ?? 0);
+						const refunded = purchased - consumedQty;
+						if(refunded > 1e-9) {
+							bySector[sectorName][gKey] = refunded;
+						}
+					}
+				}
+				return bySector;
+			})(),
+			sectorInputRefundAmountsBySector: (() => {
+				const bySector: Record<string, number> = {};
+				for(const bid of finalSectorBids) {
+					const sectorName = bid.name;
+					const purchases = finalPurchasedBySector?.[sectorName] ?? {};
+					const consumed = sectorResults[sectorName]?.consumedGoods ?? {};
+					let sectorRefundAmount = 0;
+					for(const [goodKey, purchasedQty] of Object.entries(purchases)) {
+						const gKey = goodKey as keyof Goods;
+						const purchased = Number(purchasedQty);
+						const consumedQty = Number(consumed[gKey] ?? 0);
+						const refunded = purchased - consumedQty;
+						if(refunded > 1e-9) {
+							const price = prices[gKey] ?? 0;
+							sectorRefundAmount += refunded * price;
+						}
+					}
+					if(sectorRefundAmount > 0) {
+						bySector[sectorName] = sectorRefundAmount;
+					}
+				}
+				return bySector;
+			})(),
+			returnedInputsByGood: returnedGoods,
 			sectorInputPaymentBreakdown,
 			purchaseProvenance: finalPurchaseProvenance,
 			treasurySubsidiesPaid: subsidiesPaid,
@@ -1379,7 +1379,7 @@ export function generateValidatedColonyConfig(
 			const good = validation.failedGood.good;
 			const sectors = getSectorsMakingThisGood(good);
 			for(const sector of sectors) {
-				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 2;
+				capitalStockMultipliers[sector] = (capitalStockMultipliers[sector] ?? 1) * 3;
 				initialGoodsMultipliers.set(good, (initialGoodsMultipliers.get(good) ?? 1) * 2);
 			}
 		}
