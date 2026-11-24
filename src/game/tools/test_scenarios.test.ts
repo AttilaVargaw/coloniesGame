@@ -32,7 +32,6 @@ const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"metalFactory",
 	"machineryFactory",
 	"fishery",
-	"mine",
 	"environmentControl",
 	"medicineFactory",
 	"construction",

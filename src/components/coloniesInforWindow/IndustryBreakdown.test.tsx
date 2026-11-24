@@ -5,25 +5,26 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { IndustryComponent } from '@/game/components/industryComponent'
 import { Goods } from '@/game/data/Goods'
 import { Population } from '@/game/data/Population'
+import type { IndustrialSectors } from '@/game/components/Factories'
 
 const renderWithTooltip = (ui: React.ReactElement) => {
     return render(<TooltipProvider>{ui}</TooltipProvider>)
 }
 
 const createMockIndustry = (overrides: Partial<IndustryComponent> = {}): IndustryComponent => {
-    const base: IndustryComponent = {
-        sectorProfits: { oilRig: 1000, farm: 5000, powerPlant: 0 },
-        sectorRevenue: { oilRig: 5000, farm: 20000, powerPlant: 0 },
-        sectorLaborCosts: { oilRig: 2000, farm: 8000, powerPlant: 0 },
-        sectorInputCosts: { oilRig: 2000, farm: 7000, powerPlant: 0 },
-        sectorUtilization: { oilRig: 1, farm: 0.9, powerPlant: 0 },
-        sectorStopReason: { powerPlant: 'No oil' },
-        techMultipliers: { oilRig: 1.0, farm: 1.2, powerPlant: 1.0 },
-        selectedMethod: { oilRig: 'dieselEngines', farm: 'traditional' },
-        materialRequirementMultipliers: { energy: 1, governance: 1, environmentFactor: 1, water: 1, chemicals: 1 },
-        workerEfficiencyMultipliers: { worker: 1, clerks: 1, engineer: 1, healtcarePersonal: 1, farmer: 1 },
-        capitalStock: { oilRig: { machinery: 0.5, buildings: 0.1 }, farm: { machinery: 0.5, buildings: 0.1, vehicles: 1 } },
-        money: { oilRig: 10000, farm: 20000, powerPlant: 0 },
+    const base = {
+        sectorProfits: { oilRig: 1000, farm: 5000, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
+        sectorRevenue: { oilRig: 5000, farm: 20000, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
+        sectorLaborCosts: { oilRig: 2000, farm: 8000, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
+        sectorInputCosts: { oilRig: 2000, farm: 7000, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
+        sectorUtilization: { oilRig: 1, farm: 0.9, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
+        sectorStopReason: { powerPlant: 'No oil' } as unknown as Record<keyof IndustrialSectors, string>,
+        techMultipliers: { oilRig: 1.0, farm: 1.2, powerPlant: 1.0 } as unknown as Record<keyof IndustrialSectors, number>,
+        selectedMethod: { oilRig: 'dieselEngines', farm: 'traditional' } as unknown as Record<keyof IndustrialSectors, string | null>,
+        materialRequirementMultipliers: { energy: 1, governance: 1, environmentFactor: 1, water: 1, chemicals: 1 } as unknown as Record<keyof Goods, number>,
+        workerEfficiencyMultipliers: { worker: 1, clerks: 1, engineer: 1, healtcarePersonal: 1, farmer: 1 } as unknown as Record<keyof Population, number>,
+        capitalStock: { oilRig: { machinery: 0.5, buildings: 0.1 }, farm: { machinery: 0.5, buildings: 0.1, vehicles: 1 } } as unknown as Record<keyof IndustrialSectors, Partial<Goods>>,
+        money: { oilRig: 10000, farm: 20000, powerPlant: 0 } as unknown as Record<keyof IndustrialSectors, number>,
         goods: {} as Goods,
         goodsRequirements: {} as Goods,
         goodsProduction: {} as Goods,
@@ -63,8 +64,17 @@ const createMockIndustry = (overrides: Partial<IndustryComponent> = {}): Industr
         ]),
         colonyTreasury: 0,
         householdMoney: 0,
+        goodsChange: {} as Goods,
+        populationChange: {} as Population,
+        laborAssigned: {} as Record<keyof IndustrialSectors, number>,
+        activeSectorKeys: new Set(['oilRig', 'farm', 'powerPlant']),
+        colonyType: 'colony' as const,
+        settlementType: 'colony' as const,
+        starterMoney: {} as Record<keyof IndustrialSectors, number>,
+        starterCapitalStock: {} as Partial<Record<keyof IndustrialSectors, Partial<Goods>>>,
+        starterSectorGoods: {} as Record<keyof IndustrialSectors, Partial<Goods>>,
         ...overrides,
-    }
+    } as unknown as IndustryComponent
     return base
 }
 

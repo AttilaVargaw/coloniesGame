@@ -40,7 +40,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "types": [
-      "./src/index.d.ts"
+      "./src/index.d.ts",
+      "@testing-library/jest-dom",
+      "./src/test-types.d.ts"
     ]
   },
   "include": [
