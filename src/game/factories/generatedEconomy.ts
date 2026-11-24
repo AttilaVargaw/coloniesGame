@@ -138,9 +138,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 12740000000,
+        "water": 127400000,
         "agriculturalGoods": 12740000,
-        "consumerGoods": 11581818182,
+        "consumerGoods": 10616666667,
         "energy": 12740000000,
         "machinery": 12740000,
         "medicine": 127400000,
@@ -314,9 +314,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 10920000000,
+        "water": 109200000,
         "agriculturalGoods": 10920000,
-        "consumerGoods": 9927272728,
+        "consumerGoods": 9100000000,
         "energy": 10920000000,
         "machinery": 10920000,
         "medicine": 109200000,
@@ -490,9 +490,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 44590000000,
+        "water": 445900000,
         "agriculturalGoods": 44590000,
-        "consumerGoods": 40536363637,
+        "consumerGoods": 37158333334,
         "energy": 44590000000,
         "machinery": 44590000,
         "medicine": 445900000,
@@ -666,9 +666,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 25480000000,
+        "water": 254800000,
         "agriculturalGoods": 25480000,
-        "consumerGoods": 23163636364,
+        "consumerGoods": 21233333334,
         "energy": 25480000000,
         "machinery": 25480000,
         "medicine": 254800000,
@@ -842,9 +842,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 39130000000,
+        "water": 391300000,
         "agriculturalGoods": 39130000,
-        "consumerGoods": 35572727273,
+        "consumerGoods": 32608333334,
         "energy": 39130000000,
         "machinery": 39130000,
         "medicine": 391300000,
@@ -1018,9 +1018,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 910000,
+        "water": 9100,
         "agriculturalGoods": 910,
-        "consumerGoods": 827273,
+        "consumerGoods": 758334,
         "energy": 910000,
         "machinery": 910,
         "medicine": 9100,
@@ -1194,9 +1194,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 2366000000,
+        "water": 23660000,
         "agriculturalGoods": 2366000,
-        "consumerGoods": 2150909091,
+        "consumerGoods": 1971666667,
         "energy": 2366000000,
         "machinery": 2366000,
         "medicine": 23660000,
@@ -1370,9 +1370,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 4095000000,
+        "water": 40950000,
         "agriculturalGoods": 4095000,
-        "consumerGoods": 3722727273,
+        "consumerGoods": 3412500000,
         "energy": 4095000000,
         "machinery": 4095000,
         "medicine": 40950000,
@@ -1546,9 +1546,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 15470000000,
+        "water": 154700000,
         "agriculturalGoods": 15470000,
-        "consumerGoods": 14063636364,
+        "consumerGoods": 12891666667,
         "energy": 15470000000,
         "machinery": 15470000,
         "medicine": 154700000,
@@ -1722,9 +1722,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 19110000,
+        "water": 191100,
         "agriculturalGoods": 19110,
-        "consumerGoods": 17372728,
+        "consumerGoods": 15925000,
         "energy": 19110000,
         "machinery": 19110,
         "medicine": 191100,
@@ -1898,9 +1898,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 60970000000,
+        "water": 609700000,
         "agriculturalGoods": 60970000,
-        "consumerGoods": 55427272728,
+        "consumerGoods": 50808333334,
         "energy": 60970000000,
         "machinery": 60970000,
         "medicine": 609700000,
@@ -2074,9 +2074,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 227500,
+        "water": 2275,
         "agriculturalGoods": 228,
-        "consumerGoods": 206819,
+        "consumerGoods": 189584,
         "energy": 227500,
         "machinery": 228,
         "medicine": 2275,
@@ -2250,9 +2250,9 @@ export const economies = new Map([
         }
       },
       "goods": {
-        "water": 10920000000,
+        "water": 109200000,
         "agriculturalGoods": 10920000,
-        "consumerGoods": 9927272728,
+        "consumerGoods": 9100000000,
         "energy": 10920000000,
         "machinery": 10920000,
         "medicine": 109200000,

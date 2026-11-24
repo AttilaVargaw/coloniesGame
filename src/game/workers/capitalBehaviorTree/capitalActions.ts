@@ -28,7 +28,7 @@ function debitCapitalMoney(
     requireNonNegativeFinite(bb.money, `${label} remaining balance`);
     requireNonNegativeFinite(bb.moneySpent, `${label} previous spending`);
 
-    if(cost > bb.money) {
+    if(cost > bb.money + 1e-10) {
         throw new Error(
             `${label} exceeds available cash: cost=${cost}, cash=${bb.money}`,
         );

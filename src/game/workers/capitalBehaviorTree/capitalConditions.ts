@@ -57,7 +57,7 @@ function getPurchaseCapacity(
         throw new Error(`Invalid available stock: ${key}`);
     }
 
-    if(!Number.isFinite(money) || money < 0) {
+    if(!Number.isFinite(money) || money < -1e-10) {
         throw new Error(`Invalid capital cash balance: ${money}`);
     }
 
@@ -173,7 +173,7 @@ export class CanAffordInvestment extends Condition<CapitalBlackboard> {
         const toBuy = Math.min(needed, this.rate);
 
         // Check if *any* amount can be purchased (aligned with InvestCapital action)
-        return getPurchaseCapacity(bb, key, toBuy) > 0;
+        return getPurchaseCapacity(bb, key, toBuy) > 1e-10;
     }
 }
 
