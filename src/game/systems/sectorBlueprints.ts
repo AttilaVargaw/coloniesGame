@@ -12,7 +12,6 @@ export type SectorBlueprint = {
     capitalEfficiency?: number
     capitalEfficiencyDecay?: number
     nonEssentialGoods?: Set<keyof Goods>
-    optionalGoods?: (keyof Goods)[]
     productionMethods?: Map<string, ProductionMethod>
     secondaryProductionMethod?: Map<string, ProductionMethod>
 }
@@ -26,7 +25,6 @@ export type ProductionMethod = {
     capitalEfficiency?: number
     capitalEfficiencyDecay?: number
     nonEssentialGoods?: Set<keyof Goods>
-    optionalGoods?: (keyof Goods)[]
     desc?: string
     prerequisites?: Set<string>
     // Gamification modifiers applied when this method is selected
@@ -47,12 +45,11 @@ function createMethod<K extends string>(key: K, overrides?: Partial<ProductionMe
         capitalEfficiency: 0,
         capitalEfficiencyDecay: 0,
         nonEssentialGoods: new Set<keyof Goods>(),
-        optionalGoods: [],
         ...overrides,
     }]
 }
 
-const robotizedDefaults = { prerequisites: new Set(["synteticLifeformUnit"]), nonEssentialGoods: new Set<keyof Goods>(), optionalGoods: [] }
+const robotizedDefaults = { prerequisites: new Set(["synteticLifeformUnit"]), nonEssentialGoods: new Set<keyof Goods>() }
 
 function createRobotized(descOverride?: string): ["robotized", ProductionMethod] {
     return createMethod("robotized", {
@@ -134,8 +131,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         productionMethods: new Map([
             createMethod("traditional", { desc: "Traditional" }),
             createMethod("hydroponics", { desc: "hydroponics" }),
-            createMethod("withWatering", { desc: "With artificial watering", optionalGoods: ["water"], goodsRequirements: { water: 40, environmentFactor: 10 } }),
-            createMethod("withWatering", { desc: "With artificial watering and ", optionalGoods: ["water"], goodsRequirements: { water: 40, chemicals: 80, environmentFactor: 20 } }),
+            createMethod("withWatering", { desc: "With artificial watering", goodsRequirements: { water: 40, environmentFactor: 10 } }),
+            createMethod("withWatering", { desc: "With artificial watering and ", goodsRequirements: { water: 40, chemicals: 80, environmentFactor: 20 } }),
         ])
     })],
     ["fishery", {
@@ -173,7 +170,6 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
             createMethod("traditional", { desc: "Traditional" }),
             createMethod("With advanced chemical processes", {
                 desc: "It can create more drinking water even from bad quality water",
-                optionalGoods: ["chemicals"],
                 goodsRequirements: { chemicals: 80, environmentFactor: 20 },
                 goodsProduction: { water: 1_500_000 }
             })
