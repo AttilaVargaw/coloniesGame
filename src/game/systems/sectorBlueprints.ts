@@ -106,24 +106,36 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["forestry", ({
         name: "forestry", goodsRequirements: {
             chemicals: 30, governance: 20
-        }, workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-        goodsProduction: { lumber: 500_000, agriculturalGoods: 2_000, environmentFactor: 1_000_00 },
+        },
+        workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
+        goodsProduction: { lumber: 500_000, environmentFactor: 1_000_00 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.1, vehicles: 0.1 },
         nonEssentialGoods: usualNonEssentialGoods,
+        productionMethods: new Map([
+            createTraditional("Traditional forestry, "),
+            createMethod("Forestry with hunting", {
+                goodsProduction: {
+                    agriculturalGoods: 2_000,
+                    environmentFactor: 1_100_00
+                }
+            }),
+        ])
     })],
     ["farm", ({
         name: "farm", goodsRequirements: {
-            environmentFactor: 20, water: 40, chemicals: 80, governance: 20,
+            governance: 20,
         }, workerRequirement: {
             farmer: 900, clerks: 50, engineer: 50, healtcarePersonal: 10
         }, goodsProduction: { agriculturalGoods: 100_000, },
         efficiencyBonus: 0.01,
-        nonEssentialGoods: new Set(["chemicals", "paper", "environmentFactor"]),
+        nonEssentialGoods: usualNonEssentialGoods,
         capitalGoods: { machinery: 0.5, buildings: 0.1, vehicles: 1 },
         productionMethods: new Map([
             createMethod("traditional", { desc: "Traditional" }),
             createMethod("hydroponics", { desc: "hydroponics" }),
+            createMethod("withWatering", { desc: "With artificial watering", optionalGoods: ["water"], goodsRequirements: { water: 40, environmentFactor: 10 } }),
+            createMethod("withWatering", { desc: "With artificial watering and ", optionalGoods: ["water"], goodsRequirements: { water: 40, chemicals: 80, environmentFactor: 20 } }),
         ])
     })],
     ["fishery", {
@@ -151,7 +163,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["waterTreatment", ({
         name: "waterTreatment", goodsRequirements: {
-            environmentFactor: 20, energy: 200, chemicals: 80, governance: 20
+            environmentFactor: 20, energy: 200, governance: 20
         },
         workerRequirement: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 }, goodsProduction: { water: 1_000_000 },
         efficiencyBonus: 0.01,
@@ -159,12 +171,17 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalGoods: { machinery: 0.5, buildings: 0.1 },
         productionMethods: new Map([
             createMethod("traditional", { desc: "Traditional" }),
+            createMethod("With advanced chemical processes", {
+                desc: "It can create more drinking water even from bad quality water",
+                optionalGoods: ["chemicals"],
+                goodsRequirements: { chemicals: 80, environmentFactor: 20 },
+                goodsProduction: { water: 1_500_000 }
+            })
         ])
     })],
     ["powerPlant", ({
         name: "powerPlant", goodsRequirements: {
             environmentFactor: 20,
-            oil: 140,
             governance: 20,
         },
         workerRequirement: {
@@ -174,8 +191,8 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         nonEssentialGoods: usualNonEssentialGoods,
         capitalGoods: { machinery: 0.5, buildings: 0.1 },
         productionMethods: new Map([
-            createMethod("Fossil", { desc: "Fossil" }),
-            createMethod("Nuclear", { desc: "Nuclear energy generation" }),
+            createMethod("Fossil", { desc: "Fossil", goodsRequirements: { oil: 140 } }),
+            createMethod("Nuclear", { desc: "Nuclear energy generation", goodsRequirements: { fissionMaterial: 5 } }),
         ])
     })],
     ["metalFactory", ({
@@ -226,8 +243,11 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["consumerFactory", ({
         name: "consumerFactory", goodsRequirements: {
             environmentFactor: 20,
-            chemicals: 60, energy: 220, governance: 20,
-        }, workerRequirement: { worker: 890 * 4, clerks: 50 * 4, engineer: 50 * 4, healtcarePersonal: 10 * 4 }, goodsProduction: { consumerGoods: 500_000 * 4 },
+            chemicals: 60,
+            energy: 220,
+            governance: 20,
+        }, workerRequirement: { worker: 890 * 4, clerks: 50 * 4, engineer: 50 * 4, healtcarePersonal: 10 * 4 },
+        goodsProduction: { consumerGoods: 500_000 * 4 },
         efficiencyBonus: 0.01,
         capitalGoods: { machinery: 2, buildings: 0.1 },
         capitalEfficiency: 0.0008,
@@ -275,7 +295,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["services", ({
         name: "services", goodsRequirements: {
-            environmentFactor: 10, energy: 220, consumerGoods: 80, governance: 20
+            environmentFactor: 10,
+            energy: 220,
+            consumerGoods: 80,
+            governance: 20
         },
         workerRequirement: { healtcarePersonal: 10, serviceWorker: 940, clergy: 50 },
         goodsProduction: { services: 500_000 },
@@ -288,7 +311,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["tourism", ({
         name: "tourism",
         goodsRequirements: {
-            environmentFactor: 30, services: 120, food: 60, governance: 20
+            environmentFactor: 30, food: 60, governance: 20
         }, workerRequirement: { worker: 200, clerks: 50, serviceWorker: 700, healtcarePersonal: 50 }, goodsProduction: { tourism: 1_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2, },
@@ -298,7 +321,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["education", ({
         name: "education", goodsRequirements: {
-            energy: 100, services: 60, governance: 20,
+            energy: 100, governance: 20,
         }, workerRequirement: { teacher: 890, clerks: 100, worker: 50, healtcarePersonal: 10 },
         goodsProduction: { education: 300_000 },
         efficiencyBonus: 0.01,
@@ -308,7 +331,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         nonEssentialGoods: usualNonEssentialGoods,
         productionMethods: new Map([
             createMethod("traditional", { desc: "Traditional" }),
-            createFullyRobotized("All of the non teaching staff is replaced by robots, because teacher are still cheaper")
+            createFullyRobotized("All of the non teaching staff is replaced by robots, because teachers are still cheaper")
         ])
     })],
     ["healthcare", ({
@@ -348,7 +371,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     })],
     ["bank", ({
         name: "bank", goodsRequirements: {
-            energy: 140, services: 80, governance: 20
+            energy: 140, governance: 20
         }, workerRequirement: { worker: 190, clerks: 800, healtcarePersonal: 10 }, goodsProduction: { monetaryServices: 800_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2, vehicles: 0.01 },
@@ -359,7 +382,7 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
     ["religion", ({
         name: "religion",
         goodsRequirements: {
-            services: 120, governance: 20
+            governance: 20
         }, workerRequirement: { clergy: 890, clerks: 50, worker: 50, healtcarePersonal: 10 }, goodsProduction: { faith: 2_000_000 },
         efficiencyBonus: 0.01,
         capitalGoods: { buildings: 0.2 },
@@ -392,6 +415,10 @@ export const industrySectorBlueprints = new Map<keyof IndustrialSectors, SectorB
         capitalEfficiency: 0.001,
         capitalEfficiencyDecay: 0.1,
         nonEssentialGoods: usualNonEssentialGoods,
+        productionMethods: new Map([
+            createMethod("Weapon grade only", { desc: "Creating only weapon grade fission material" }),
+            createMethod("Energy production")
+        ])
     })],
     ["recycling", ({
         name: "recycling",
