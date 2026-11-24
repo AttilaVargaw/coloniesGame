@@ -47,6 +47,10 @@ function advanceTick(input: IndustryTickInput, result: IndustryTickResult): Indu
 		prices,
 		governanceCapacity: input.governanceCapacity,
 		totalGovernanceDemand: input.totalGovernanceDemand,
+		lawEnforcementCapacity: input.lawEnforcementCapacity,
+		totalLawEnforcementDemand: input.totalLawEnforcementDemand,
+		defenseCapacity: input.defenseCapacity,
+		totalDefenseDemand: input.totalDefenseDemand,
 	} as IndustryTickInput;
 }
 

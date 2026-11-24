@@ -13,7 +13,6 @@ export const QOL_LEVELS: readonly QolLevel[] = (() => {
             faith: 4,
             lawEnforcement: 1,
             healthcare: 4,
-            governance: 0.5,
             defense: 1,
             consumerGoods: 1
         }],

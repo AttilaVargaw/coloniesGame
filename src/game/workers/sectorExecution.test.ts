@@ -205,7 +205,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -243,7 +243,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -271,7 +271,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -304,7 +304,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -335,7 +335,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -359,7 +359,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -384,7 +384,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -407,7 +407,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -432,7 +432,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -457,7 +457,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -488,7 +488,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -522,7 +522,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -554,7 +554,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -578,7 +578,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -606,7 +606,7 @@ describe("executeSectors", () => {
             population,
             colonyGoods,
             // inputSectorGoods,
-                        basePrices as any,
+            basePrices as any,
             baseSalaries as any,
         )
 
@@ -634,8 +634,8 @@ describe("executeSectors", () => {
             [bid],
             population,
             colonyGoods,
-            basePrices as any,
-            baseSalaries as any,
+            basePrices,
+            baseSalaries,
         )
 
         // With zero inventory, the sector cannot execute at all
@@ -678,14 +678,14 @@ describe("executeSectors", () => {
         const consumed: Partial<Goods> = {}
         const produced: Partial<Goods> = {}
 
-        for (const sector of Object.values(result.sectorResults)) {
-            for (const [key, amount] of Object.entries(
+        for(const sector of Object.values(result.sectorResults)) {
+            for(const [key, amount] of Object.entries(
                 sector.consumedGoods ?? {},
             )) {
                 const good = key as keyof Goods
                 consumed[good] = (consumed[good] ?? 0) + (amount ?? 0)
             }
-            for (const [key, amount] of Object.entries(
+            for(const [key, amount] of Object.entries(
                 sector.producedGoods ?? {},
             )) {
                 const good = key as keyof Goods
@@ -694,7 +694,7 @@ describe("executeSectors", () => {
         }
 
         const requirementKeys = Object.keys(result.sumGoodsRequirements) as (keyof Goods)[]
-        for (const key of requirementKeys) {
+        for(const key of requirementKeys) {
             expect(result.sumGoodsRequirements[key] ?? 0).toBeCloseTo(
                 consumed[key] ?? 0,
                 8,
@@ -702,7 +702,7 @@ describe("executeSectors", () => {
         }
 
         const productionKeys = Object.keys(result.sumGoodsProduction) as (keyof Goods)[]
-        for (const key of productionKeys) {
+        for(const key of productionKeys) {
             expect(result.sumGoodsProduction[key] ?? 0).toBeCloseTo(
                 produced[key] ?? 0,
                 8,
@@ -759,12 +759,12 @@ describe("executeSectors", () => {
         expect(result.sumGoodsProduction.paper).toBeCloseTo(250, 8)
 
         // No unaccounted goods in aggregates
-        for (const key of Object.keys(result.sumGoodsRequirements) as (keyof Goods)[]) {
-            if (key === "oil" || key === "machinery") continue
+        for(const key of Object.keys(result.sumGoodsRequirements) as (keyof Goods)[]) {
+            if(key === "oil" || key === "machinery") continue
             expect(result.sumGoodsRequirements[key]).toBeCloseTo(0, 8)
         }
-        for (const key of Object.keys(result.sumGoodsProduction) as (keyof Goods)[]) {
-            if (key === "paper") continue
+        for(const key of Object.keys(result.sumGoodsProduction) as (keyof Goods)[]) {
+            if(key === "paper") continue
             expect(result.sumGoodsProduction[key]).toBeCloseTo(0, 8)
         }
     })

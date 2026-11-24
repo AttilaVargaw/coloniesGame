@@ -457,17 +457,17 @@ describe("executeNonCumulativeFlow", () => {
 
   describe("non-essential goods penalty", () => {
     it("skips non-essential goods from flowScale and applies penalty instead", () => {
-      // Sector needs ENERGY (non-cumulative) and GOVERNANCE (non-essential)
+      // Sector needs ENERGY (non-cumulative) and WATER (non-essential)
       const bids = [
         createMockBid("OilRig", {
-          idealGoodsDemand: { [ENERGY]: 10, environmentFactor: 20 as any },
+          idealGoodsDemand: { [ENERGY]: 10, environmentFactor: 20 },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
-          nonEssentialGoods: new Set(["governance", "environmentFactor"] as any),
+          nonEssentialGoods: new Set(["water", "environmentFactor"]),
         }),
       ];
 
-      // All non-essential goods missing (governance, environmentFactor), but ENERGY available
+      // All non-essential goods missing (water, environmentFactor), but ENERGY available
       const colonyGoods = createMockGoods({ [ENERGY]: 10, environmentFactor: 0 });
       const laborAllocations = { OilRig: { worker: 10 } };
 
@@ -487,15 +487,15 @@ describe("executeNonCumulativeFlow", () => {
         createMockBid("OilRig", {
           idealGoodsDemand: {
             [ENERGY]: 10,
-            environmentFactor: 20 as any,
-            energy: 10 as any,
-            services: 5 as any,
-            vehicles: 5 as any,
-            water: 10 as any,
+            environmentFactor: 20,
+            energy: 10,
+            services: 5,
+            vehicles: 5,
+            water: 10,
           },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
-          nonEssentialGoods: new Set(["governance", "environmentFactor", "energy", "services", "vehicles", "water"] as any),
+          nonEssentialGoods: new Set(["water", "environmentFactor", "energy", "services", "vehicles", "logistics"]),
         }),
       ];
 
@@ -517,11 +517,11 @@ describe("executeNonCumulativeFlow", () => {
           idealGoodsDemand: { [ENERGY]: 10, },
           idealGoodsProduction: { oil: 5000 },
           idealWorkerDemand: { worker: 10 },
-          nonEssentialGoods: new Set(["governance"] as any),
+          nonEssentialGoods: new Set(["water"]),
         }),
       ];
 
-      // Both ENERGY and governance available
+      // Both ENERGY and water available
       const colonyGoods = createMockGoods({ [ENERGY]: 10, });
       const laborAllocations = { OilRig: { worker: 10 } };
 
@@ -536,21 +536,21 @@ describe("executeNonCumulativeFlow", () => {
       // Sector with both non-cumulative and non-essential goods
       const bids = [
         createMockBid("Factory", {
-          idealGoodsDemand: { [ENERGY]: 10, logistics: 5 as any },
+          idealGoodsDemand: { [ENERGY]: 10, logistics: 5 },
           idealGoodsProduction: { [SERVICES]: 8 },
           idealWorkerDemand: { worker: 10 },
-          nonEssentialGoods: new Set(["governance"] as any),
+          nonEssentialGoods: new Set(["water"]),
         }),
       ];
 
-      // ENERGY available, governance (non-essential) missing, LOGISTICS (cumulative) missing
+      // ENERGY available, water (non-essential) missing, LOGISTICS (cumulative) missing
       const colonyGoods = createMockGoods({ [ENERGY]: 10, logistics: 0 });
       const purchasedBySector = { Factory: { logistics: 0 } };
       const laborAllocations = { Factory: { worker: 10 } };
 
       const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, purchasedBySector, population, availableWorkers);
 
-      // flowScale = 1 (ENERGY available, governance skipped)
+      // flowScale = 1 (ENERGY available, water skipped)
       // cumulativeRatio = 0 (LOGISTICS missing)
       // finalScale = 0 (capped by cumulative), but sector should still execute (not blocked by non-essential)
       expect(result.executedSectors.has("Factory")).toBe(true);
@@ -563,7 +563,7 @@ describe("executeNonCumulativeFlow", () => {
   describe("dependency graph construction (fixed behavior)", () => {
     const ENERGY = "energy" as keyof Goods;
     const SERVICES = "services" as keyof Goods;
-    const GOVERNANCE = "governance" as keyof Goods;
+    const WATER = "water" as keyof Goods;
 
     it("A produces energy; B consumes energy → B can execute in same tick", () => {
       // Producer has energy stock, Consumer needs energy
@@ -600,24 +600,24 @@ describe("executeNonCumulativeFlow", () => {
     });
 
     it("A and B depend on each other's outputs, with initial stocks → Both can execute", () => {
-      // A produces energy, needs governance
-      // B produces governance, needs energy
+      // A produces energy, needs water
+      // B produces water, needs energy
       // Both have starting stock of the other's output
       const bids = [
         createMockBid("SectorA", {
-          idealGoodsDemand: { [GOVERNANCE]: 10 },
+          idealGoodsDemand: { [WATER]: 10 },
           idealGoodsProduction: { [ENERGY]: 20 },
           idealWorkerDemand: { worker: 10 },
         }),
         createMockBid("SectorB", {
           idealGoodsDemand: { [ENERGY]: 15 },
-          idealGoodsProduction: { [GOVERNANCE]: 15 },
+          idealGoodsProduction: { [WATER]: 15 },
           idealWorkerDemand: { worker: 10 },
         }),
       ];
 
       // Starting with both goods in stock
-      const colonyGoods = createMockGoods({ [ENERGY]: 50, [GOVERNANCE]: 50 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 50, [WATER]: 50 });
       const laborAllocations = {
         SectorA: { worker: 10 },
         SectorB: { worker: 10 },
@@ -629,34 +629,34 @@ describe("executeNonCumulativeFlow", () => {
       expect(result.sectorResults.SectorA.productionRatio).toBe(1);
       expect(result.sectorResults.SectorB.productionRatio).toBe(1);
 
-      // A produces 20 energy, consumes 10 governance
+      // A produces 20 energy, consumes 10 water
       expect(result.sectorResults.SectorA.producedGoods[ENERGY]).toBe(20);
-      expect(result.sectorResults.SectorA.consumedGoods[GOVERNANCE]).toBe(10);
+      expect(result.sectorResults.SectorA.consumedGoods[WATER]).toBe(10);
 
-      // B produces 15 governance, consumes 15 energy
-      expect(result.sectorResults.SectorB.producedGoods[GOVERNANCE]).toBe(15);
+      // B produces 15 water, consumes 15 energy
+      expect(result.sectorResults.SectorB.producedGoods[WATER]).toBe(15);
       expect(result.sectorResults.SectorB.consumedGoods[ENERGY]).toBe(15);
     });
 
     it("A and B depend on each other's outputs, with no initial stocks → Both remain input-constrained", () => {
-      // A produces energy, needs governance
-      // B produces governance, needs energy
+      // A produces energy, needs water
+      // B produces water, needs energy
       // No starting stock of either
       const bids = [
         createMockBid("SectorA", {
-          idealGoodsDemand: { [GOVERNANCE]: 10 },
+          idealGoodsDemand: { [WATER]: 10 },
           idealGoodsProduction: { [ENERGY]: 20 },
           idealWorkerDemand: { worker: 10 },
         }),
         createMockBid("SectorB", {
           idealGoodsDemand: { [ENERGY]: 15 },
-          idealGoodsProduction: { [GOVERNANCE]: 15 },
+          idealGoodsProduction: { [WATER]: 15 },
           idealWorkerDemand: { worker: 10 },
         }),
       ];
 
       // No starting stock
-      const colonyGoods = createMockGoods({ [ENERGY]: 0, [GOVERNANCE]: 0 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 0, [WATER]: 0 });
       const laborAllocations = {
         SectorA: { worker: 10 },
         SectorB: { worker: 10 },
@@ -719,7 +719,7 @@ describe("executeNonCumulativeFlow", () => {
 
     it("Two independent sectors → Both execute", () => {
       // SectorA uses energy, produces services
-      // SectorB uses governance, produces healthcare
+      // SectorB uses water, produces healthcare
       // No shared dependencies
       const bids = [
         createMockBid("SectorA", {
@@ -728,13 +728,13 @@ describe("executeNonCumulativeFlow", () => {
           idealWorkerDemand: { worker: 10 },
         }),
         createMockBid("SectorB", {
-          idealGoodsDemand: { [GOVERNANCE]: 5 },
+          idealGoodsDemand: { [WATER]: 5 },
           idealGoodsProduction: { [HEALTHCARE]: 10 },
           idealWorkerDemand: { worker: 10 },
         }),
       ];
 
-      const colonyGoods = createMockGoods({ [ENERGY]: 10, [GOVERNANCE]: 5, [SERVICES]: 0, [HEALTHCARE]: 0 });
+      const colonyGoods = createMockGoods({ [ENERGY]: 10, [WATER]: 5, [SERVICES]: 0, [HEALTHCARE]: 0 });
       const laborAllocations = {
         SectorA: { worker: 10 },
         SectorB: { worker: 10 },
@@ -783,6 +783,7 @@ describe("executeNonCumulativeFlow", () => {
 
     it("A blocked sector has downstream consumers → Only sectors actually lacking inputs remain blocked", () => {
       // Producer makes energy
+      // Water sector needs energy, makes water
       // Middle needs energy, makes services
       // Consumer needs services
       // But Producer has NO starting stock and is blocked (cycle)
@@ -790,13 +791,13 @@ describe("executeNonCumulativeFlow", () => {
 
       const bids = [
         createMockBid("Producer", {
-          idealGoodsDemand: { [GOVERNANCE]: 10 },
+          idealGoodsDemand: { [WATER]: 10 },
           idealGoodsProduction: { [ENERGY]: 20 },
           idealWorkerDemand: { worker: 10 },
         }),
-        createMockBid("Government", {
+        createMockBid("WaterSector", {
           idealGoodsDemand: { [ENERGY]: 15 },
-          idealGoodsProduction: { [GOVERNANCE]: 15 },
+          idealGoodsProduction: { [WATER]: 15 },
           idealWorkerDemand: { worker: 10 },
         }),
         createMockBid("Middle", {
@@ -811,20 +812,20 @@ describe("executeNonCumulativeFlow", () => {
         }),
       ];
 
-      // No starting stock - Producer and Government form a cycle with no initial goods
-      const colonyGoods = createMockGoods({ [ENERGY]: 0, [GOVERNANCE]: 0, [SERVICES]: 0, [HEALTHCARE]: 0 });
+      // No starting stock - Producer and WaterSector form a cycle with no initial goods
+      const colonyGoods = createMockGoods({ [ENERGY]: 0, [WATER]: 0, [SERVICES]: 0, [HEALTHCARE]: 0 });
       const laborAllocations = {
         Producer: { worker: 10 },
-        Government: { worker: 10 },
+        WaterSector: { worker: 10 },
         Middle: { worker: 10 },
         Consumer: { worker: 10 },
       };
 
       const result = executeNonCumulativeFlow(bids, colonyGoods, prices, salaries, laborAllocations, undefined, population, availableWorkers);
 
-      // Producer and Government are in a cycle with no stock → both blocked
+      // Producer and WaterSector are in a cycle with no stock → both blocked
       expect(result.sectorResults.Producer.productionRatio).toBe(0);
-      expect(result.sectorResults.Government.productionRatio).toBe(0);
+      expect(result.sectorResults.WaterSector.productionRatio).toBe(0);
 
       // Middle and Consumer depend on blocked sectors → also blocked
       expect(result.sectorResults.Middle.productionRatio).toBe(0);
@@ -832,7 +833,7 @@ describe("executeNonCumulativeFlow", () => {
 
       // All have "No materials" stop reason
       expect(result.sectorStopReason.Producer).toBe("No materials");
-      expect(result.sectorStopReason.Government).toBe("No materials");
+      expect(result.sectorStopReason.WaterSector).toBe("No materials");
       expect(result.sectorStopReason.Middle).toBe("No materials");
       expect(result.sectorStopReason.Consumer).toBe("No materials");
     });
@@ -999,7 +1000,7 @@ describe("executeNonCumulativeFlow", () => {
       const laborAllocations: Record<string, any> = {};
 
       for(const name of sectorNames) {
-        const blueprint = industrySectorBlueprints.get(name as any);
+        const blueprint = industrySectorBlueprints.get(name);
         if(!blueprint) continue;
         bids.push({
           name,

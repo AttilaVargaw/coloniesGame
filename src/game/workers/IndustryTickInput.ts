@@ -46,6 +46,10 @@ export interface IndustryTickInput {
     // Governance: national capacity and demand
     governanceCapacity: number;
     totalGovernanceDemand: number;
+    lawEnforcementCapacity: number;
+    totalLawEnforcementDemand: number;
+    defenseCapacity: number;
+    totalDefenseDemand: number;
 }
 
 export function validatePriceSnapshot(

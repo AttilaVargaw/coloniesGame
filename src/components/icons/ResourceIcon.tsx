@@ -1,5 +1,5 @@
 import { Goods } from "@/game/data/Goods";
-import { Atom, Clapperboard, Cuboid, Mail, Newspaper, School, Shirt, ShoppingCart, type LucideProps } from "lucide-react"
+import { Atom, Clapperboard, Cuboid, Mail, Newspaper, School, type LucideProps } from "lucide-react"
 import {
     Wheat,
     Cookie,
@@ -8,7 +8,6 @@ import {
     Droplets,
     Zap,
     Stethoscope,
-    Stone,
     Diamond,
     Cog,
     Pill,

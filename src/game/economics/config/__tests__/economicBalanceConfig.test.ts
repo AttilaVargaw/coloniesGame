@@ -35,7 +35,6 @@ describe("EconomicBalanceConfig", () => {
             expect(essential).toContain("healthcare");
             expect(essential).toContain("education");
             expect(essential).toContain("lawEnforcement");
-            expect(essential).toContain("governance");
             expect(essential).toContain("logistics");
             expect(essential).toContain("government");
         });

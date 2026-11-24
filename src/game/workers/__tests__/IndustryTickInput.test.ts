@@ -33,6 +33,10 @@ describe("IndustryTickInput", () => {
             producerInventories: undefined,
             governanceCapacity: 0,
             totalGovernanceDemand: 0,
+            lawEnforcementCapacity: 0,
+            totalLawEnforcementDemand: 0,
+            defenseCapacity: 0,
+            totalDefenseDemand: 0,
         };
         
         expect(input.prices.entityId).toBe("test-colony");

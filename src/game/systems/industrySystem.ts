@@ -135,6 +135,10 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
             // Calculate governance capacity and demand
             let governanceCapacity = 0;
             let totalGovernanceDemand = 0;
+            let lawEnforcementCapacity = 0;
+            let totalLawEnforcementDemand = 0;
+            let defenseCapacity = 0;
+            let totalDefenseDemand = 0;
             for (const sectorKey of effectiveActiveSectors) {
                 const blueprint = industrySectorBlueprints.get(sectorKey);
                 if (blueprint) {
@@ -142,6 +146,14 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                         governanceCapacity += blueprint.governanceCapacity;
                     }
                     totalGovernanceDemand += blueprint.governanceDemand ?? 0;
+                    if (blueprint.lawEnforcementCapacity) {
+                        lawEnforcementCapacity += blueprint.lawEnforcementCapacity;
+                    }
+                    totalLawEnforcementDemand += blueprint.lawEnforcementDemand ?? 0;
+                    if (blueprint.defenseCapacity) {
+                        defenseCapacity += blueprint.defenseCapacity;
+                    }
+                    totalDefenseDemand += blueprint.defenseDemand ?? 0;
                 }
             }
 
@@ -175,6 +187,10 @@ export class IndustrySystem extends SystemWithNodes<IndustryNode> {
                 prices: this.getPriceSnapshot(entity.id),
                 governanceCapacity,
                 totalGovernanceDemand,
+                lawEnforcementCapacity,
+                totalLawEnforcementDemand,
+                defenseCapacity,
+                totalDefenseDemand,
             };
         });
 

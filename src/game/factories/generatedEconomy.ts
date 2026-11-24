@@ -33,10 +33,6 @@ export const economies = new Map([
           "machinery": 4,
           "buildings": 1
         },
-        "nuclearSector": {
-          "machinery": 7,
-          "buildings": 1
-        },
         "metalFactory": {
           "machinery": 1,
           "buildings": 1
@@ -133,14 +129,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 658,
-          "governance": 132,
           "vehicles": 658
         }
       },
       "goods": {
         "water": 127400000,
         "agriculturalGoods": 12740000,
-        "consumerGoods": 509600000,
+        "consumerGoods": 637000000,
         "energy": 12740000000,
         "machinery": 12740000,
         "medicine": 127400000,
@@ -161,7 +156,6 @@ export const economies = new Map([
         "chemicals": 127400000,
         "buildings": 6370000000,
         "waste": 128,
-        "governance": 12740000000,
         "vehicles": 12740000000,
         "logistics": 12740000000,
         "paper": 127400000,
@@ -207,10 +201,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 5,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 9,
           "buildings": 1
         },
         "metalFactory": {
@@ -309,14 +299,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 839,
-          "governance": 168,
           "vehicles": 839
         }
       },
       "goods": {
         "water": 109200000,
         "agriculturalGoods": 10920000,
-        "consumerGoods": 436800000,
+        "consumerGoods": 546000000,
         "energy": 10920000000,
         "machinery": 10920000,
         "medicine": 109200000,
@@ -337,7 +326,6 @@ export const economies = new Map([
         "chemicals": 109200000,
         "buildings": 5460000000,
         "waste": 110,
-        "governance": 10920000000,
         "vehicles": 10920000000,
         "logistics": 10920000000,
         "paper": 109200000,
@@ -383,10 +371,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 6,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 11,
           "buildings": 2
         },
         "metalFactory": {
@@ -485,14 +469,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1020,
-          "governance": 204,
           "vehicles": 1020
         }
       },
       "goods": {
         "water": 445900000,
         "agriculturalGoods": 44590000,
-        "consumerGoods": 1783600000,
+        "consumerGoods": 2229500000,
         "energy": 44590000000,
         "machinery": 44590000,
         "medicine": 445900000,
@@ -513,7 +496,6 @@ export const economies = new Map([
         "chemicals": 445900000,
         "buildings": 22295000000,
         "waste": 446,
-        "governance": 44590000000,
         "vehicles": 44590000000,
         "logistics": 44590000000,
         "paper": 445900000,
@@ -559,10 +541,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 7,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 13,
           "buildings": 2
         },
         "metalFactory": {
@@ -661,14 +639,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1202,
-          "governance": 241,
           "vehicles": 1202
         }
       },
       "goods": {
         "water": 254800000,
         "agriculturalGoods": 25480000,
-        "consumerGoods": 1019200000,
+        "consumerGoods": 1274000000,
         "energy": 25480000000,
         "machinery": 25480000,
         "medicine": 254800000,
@@ -689,7 +666,6 @@ export const economies = new Map([
         "chemicals": 254800000,
         "buildings": 12740000000,
         "waste": 255,
-        "governance": 25480000000,
         "vehicles": 25480000000,
         "logistics": 25480000000,
         "paper": 254800000,
@@ -735,10 +711,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 7,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 14,
           "buildings": 2
         },
         "metalFactory": {
@@ -837,14 +809,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1383,
-          "governance": 277,
           "vehicles": 1383
         }
       },
       "goods": {
         "water": 391300000,
         "agriculturalGoods": 39130000,
-        "consumerGoods": 1565200000,
+        "consumerGoods": 1956500000,
         "energy": 39130000000,
         "machinery": 39130000,
         "medicine": 391300000,
@@ -865,7 +836,6 @@ export const economies = new Map([
         "chemicals": 391300000,
         "buildings": 19565000000,
         "waste": 392,
-        "governance": 39130000000,
         "vehicles": 39130000000,
         "logistics": 39130000000,
         "paper": 391300000,
@@ -911,10 +881,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 8,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 16,
           "buildings": 2
         },
         "metalFactory": {
@@ -1013,14 +979,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1565,
-          "governance": 313,
           "vehicles": 1565
         }
       },
       "goods": {
         "water": 9100,
         "agriculturalGoods": 910,
-        "consumerGoods": 36400,
+        "consumerGoods": 45500,
         "energy": 910000,
         "machinery": 910,
         "medicine": 9100,
@@ -1041,7 +1006,6 @@ export const economies = new Map([
         "chemicals": 9100,
         "buildings": 455000,
         "waste": 1,
-        "governance": 910000,
         "vehicles": 910000,
         "logistics": 910000,
         "paper": 9100,
@@ -1087,10 +1051,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 9,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 18,
           "buildings": 2
         },
         "metalFactory": {
@@ -1189,14 +1149,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1746,
-          "governance": 350,
           "vehicles": 1746
         }
       },
       "goods": {
         "water": 23660000,
         "agriculturalGoods": 2366000,
-        "consumerGoods": 94640000,
+        "consumerGoods": 118300000,
         "energy": 2366000000,
         "machinery": 2366000,
         "medicine": 23660000,
@@ -1217,7 +1176,6 @@ export const economies = new Map([
         "chemicals": 23660000,
         "buildings": 1183000000,
         "waste": 24,
-        "governance": 2366000000,
         "vehicles": 2366000000,
         "logistics": 2366000000,
         "paper": 23660000,
@@ -1263,10 +1221,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 10,
-          "buildings": 2
-        },
-        "nuclearSector": {
-          "machinery": 20,
           "buildings": 2
         },
         "metalFactory": {
@@ -1365,14 +1319,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 1927,
-          "governance": 386,
           "vehicles": 1927
         }
       },
       "goods": {
         "water": 40950000,
         "agriculturalGoods": 4095000,
-        "consumerGoods": 163800000,
+        "consumerGoods": 204750000,
         "energy": 4095000000,
         "machinery": 4095000,
         "medicine": 40950000,
@@ -1393,7 +1346,6 @@ export const economies = new Map([
         "chemicals": 40950000,
         "buildings": 2047500000,
         "waste": 41,
-        "governance": 4095000000,
         "vehicles": 4095000000,
         "logistics": 4095000000,
         "paper": 40950000,
@@ -1439,10 +1391,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 1,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 2,
           "buildings": 1
         },
         "metalFactory": {
@@ -1541,14 +1489,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 109,
-          "governance": 22,
           "vehicles": 109
         }
       },
       "goods": {
         "water": 154700000,
         "agriculturalGoods": 15470000,
-        "consumerGoods": 618800000,
+        "consumerGoods": 773500000,
         "energy": 15470000000,
         "machinery": 15470000,
         "medicine": 154700000,
@@ -1569,7 +1516,6 @@ export const economies = new Map([
         "chemicals": 154700000,
         "buildings": 7735000000,
         "waste": 155,
-        "governance": 15470000000,
         "vehicles": 15470000000,
         "logistics": 15470000000,
         "paper": 154700000,
@@ -1615,10 +1561,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 2,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 3,
           "buildings": 1
         },
         "metalFactory": {
@@ -1717,14 +1659,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 290,
-          "governance": 58,
           "vehicles": 290
         }
       },
       "goods": {
         "water": 191100,
         "agriculturalGoods": 19110,
-        "consumerGoods": 764400,
+        "consumerGoods": 955500,
         "energy": 19110000,
         "machinery": 19110,
         "medicine": 191100,
@@ -1745,7 +1686,6 @@ export const economies = new Map([
         "chemicals": 191100,
         "buildings": 9555000,
         "waste": 1,
-        "governance": 19110000,
         "vehicles": 19110000,
         "logistics": 19110000,
         "paper": 191100,
@@ -1791,10 +1731,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 3,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 5,
           "buildings": 1
         },
         "metalFactory": {
@@ -1893,14 +1829,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 472,
-          "governance": 95,
           "vehicles": 472
         }
       },
       "goods": {
         "water": 609700000,
         "agriculturalGoods": 60970000,
-        "consumerGoods": 2438800000,
+        "consumerGoods": 3048500000,
         "energy": 60970000000,
         "machinery": 60970000,
         "medicine": 609700000,
@@ -1921,7 +1856,6 @@ export const economies = new Map([
         "chemicals": 609700000,
         "buildings": 30485000000,
         "waste": 610,
-        "governance": 60970000000,
         "vehicles": 60970000000,
         "logistics": 60970000000,
         "paper": 609700000,
@@ -1967,10 +1901,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 4,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 7,
           "buildings": 1
         },
         "metalFactory": {
@@ -2069,14 +1999,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 653,
-          "governance": 131,
           "vehicles": 653
         }
       },
       "goods": {
         "water": 2275,
         "agriculturalGoods": 228,
-        "consumerGoods": 9100,
+        "consumerGoods": 11375,
         "energy": 227500,
         "machinery": 228,
         "medicine": 2275,
@@ -2097,7 +2026,6 @@ export const economies = new Map([
         "chemicals": 2275,
         "buildings": 113750,
         "waste": 1,
-        "governance": 227500,
         "vehicles": 227500,
         "logistics": 227500,
         "paper": 2275,
@@ -2143,10 +2071,6 @@ export const economies = new Map([
         },
         "powerPlant": {
           "machinery": 5,
-          "buildings": 1
-        },
-        "nuclearSector": {
-          "machinery": 9,
           "buildings": 1
         },
         "metalFactory": {
@@ -2245,14 +2169,13 @@ export const economies = new Map([
         },
         "mobility": {
           "buildings": 835,
-          "governance": 167,
           "vehicles": 835
         }
       },
       "goods": {
         "water": 109200000,
         "agriculturalGoods": 10920000,
-        "consumerGoods": 436800000,
+        "consumerGoods": 546000000,
         "energy": 10920000000,
         "machinery": 10920000,
         "medicine": 109200000,
@@ -2273,7 +2196,6 @@ export const economies = new Map([
         "chemicals": 109200000,
         "buildings": 5460000000,
         "waste": 110,
-        "governance": 10920000000,
         "vehicles": 10920000000,
         "logistics": 10920000000,
         "paper": 109200000,

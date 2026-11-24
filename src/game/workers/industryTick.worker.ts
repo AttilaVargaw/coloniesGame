@@ -57,6 +57,10 @@ function processIndustry(
         prices: priceSnapshot,
         governanceCapacity,
         totalGovernanceDemand,
+        lawEnforcementCapacity,
+        totalLawEnforcementDemand,
+        defenseCapacity,
+        totalDefenseDemand,
     }: IndustryTickInput,
     results: Map<string, IndustryTickResult>
 ): IndustryTickPatch | null {
@@ -73,6 +77,12 @@ function processIndustry(
         adjustedSalaries,
         prices,
     );
+
+    // Add household demand to total lawEnforcement and defense demand
+    const householdLawEnforcementDemand = populationConsumption.lawEnforcement ?? 0;
+    const householdDefenseDemand = populationConsumption.defense ?? 0;
+    const effectiveTotalLawEnforcementDemand = totalLawEnforcementDemand + householdLawEnforcementDemand;
+    const effectiveTotalDefenseDemand = totalDefenseDemand + householdDefenseDemand;
 
     const last = results.get(entityId);
     const previousSectorProfits: Record<string, number> = last?.sectorProfits ?? {};
@@ -449,6 +459,46 @@ function processIndustry(
             if (result?.producedGoods) {
                 for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
                     result.producedGoods[key] = (result.producedGoods[key] ?? 0) * governanceRatio;
+                }
+            }
+        }
+    }
+
+    // Apply lawEnforcement penalty
+    const lawEnforcementRatio = effectiveTotalLawEnforcementDemand > 0
+        ? Math.min(1, lawEnforcementCapacity / effectiveTotalLawEnforcementDemand)
+        : 1;
+
+    if (lawEnforcementRatio < 1) {
+        // Scale down all production
+        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
+            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * lawEnforcementRatio;
+        }
+        // Scale down sector production in results
+        for (const result of Object.values(sectorResults)) {
+            if (result?.producedGoods) {
+                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
+                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * lawEnforcementRatio;
+                }
+            }
+        }
+    }
+
+    // Apply defense penalty
+    const defenseRatio = effectiveTotalDefenseDemand > 0
+        ? Math.min(1, defenseCapacity / effectiveTotalDefenseDemand)
+        : 1;
+
+    if (defenseRatio < 1) {
+        // Scale down all production
+        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
+            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * defenseRatio;
+        }
+        // Scale down sector production in results
+        for (const result of Object.values(sectorResults)) {
+            if (result?.producedGoods) {
+                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
+                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * defenseRatio;
                 }
             }
         }

@@ -8,7 +8,6 @@ export const PER_CAPITA_SECTOR_RATIOS = {
     foodFactory: 0.00006,
     waterTreatment: 0.00005,
     powerPlant: 0.000000004,
-    nuclearSector: 0.000001,
     metalFactory: 0.00000526,
     machineryFactory: 0.000004,
     medicineFactory: 0.000008,

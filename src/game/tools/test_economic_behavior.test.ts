@@ -29,7 +29,6 @@ const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"recycling",
 	"consumerFactory",
 	"paperFactory",
-	"nuclearSector",
 ];
 
 const MINIMAL_SECTORS: (keyof IndustrialSectors)[] = [

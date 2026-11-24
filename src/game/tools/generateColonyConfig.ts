@@ -47,6 +47,10 @@ export function generateColonyConfig(
 	// Calculate governance capacity and demand
 	let governanceCapacity = 0;
 	let totalGovernanceDemand = 0;
+	let lawEnforcementCapacity = 0;
+	let totalLawEnforcementDemand = 0;
+	let defenseCapacity = 0;
+	let totalDefenseDemand = 0;
 	for (const sector of activeSectors) {
 		const blueprint = industrySectorBlueprints.get(sector);
 		if (blueprint) {
@@ -54,6 +58,14 @@ export function generateColonyConfig(
 				governanceCapacity += blueprint.governanceCapacity;
 			}
 			totalGovernanceDemand += blueprint.governanceDemand ?? 0;
+			if (blueprint.lawEnforcementCapacity) {
+				lawEnforcementCapacity += blueprint.lawEnforcementCapacity;
+			}
+			totalLawEnforcementDemand += blueprint.lawEnforcementDemand ?? 0;
+			if (blueprint.defenseCapacity) {
+				defenseCapacity += blueprint.defenseCapacity;
+			}
+			totalDefenseDemand += blueprint.defenseDemand ?? 0;
 		}
 	}
 
@@ -85,5 +97,9 @@ export function generateColonyConfig(
 		prices,
 		governanceCapacity,
 		totalGovernanceDemand,
+		lawEnforcementCapacity,
+		totalLawEnforcementDemand,
+		defenseCapacity,
+		totalDefenseDemand,
 	};
 }

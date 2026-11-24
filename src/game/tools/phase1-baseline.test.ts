@@ -47,6 +47,10 @@ function cloneInput(input: IndustryTickInput): IndustryTickInput {
 		prices,
 		governanceCapacity: input.governanceCapacity,
 		totalGovernanceDemand: input.totalGovernanceDemand,
+		lawEnforcementCapacity: input.lawEnforcementCapacity,
+		totalLawEnforcementDemand: input.totalLawEnforcementDemand,
+		defenseCapacity: input.defenseCapacity,
+		totalDefenseDemand: input.totalDefenseDemand,
 	};
 }
 
@@ -156,6 +160,10 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 					prices,
 					governanceCapacity: baseInput.governanceCapacity,
 					totalGovernanceDemand: baseInput.totalGovernanceDemand,
+					lawEnforcementCapacity: baseInput.lawEnforcementCapacity,
+					totalLawEnforcementDemand: baseInput.totalLawEnforcementDemand,
+					defenseCapacity: baseInput.defenseCapacity,
+					totalDefenseDemand: baseInput.totalDefenseDemand,
 				};
 			}
 
@@ -356,6 +364,10 @@ describe("Phase 1 — Baseline determinism and invariants", () => {
 				},
 				governanceCapacity: baseInput.governanceCapacity,
 				totalGovernanceDemand: baseInput.totalGovernanceDemand,
+				lawEnforcementCapacity: baseInput.lawEnforcementCapacity,
+				totalLawEnforcementDemand: baseInput.totalLawEnforcementDemand,
+				defenseCapacity: baseInput.defenseCapacity,
+				totalDefenseDemand: baseInput.totalDefenseDemand,
 			};
 
 			if ((t + 1) % 10 === 0) {

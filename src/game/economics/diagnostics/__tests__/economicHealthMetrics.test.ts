@@ -6,10 +6,8 @@ import {
     createEmploymentMetrics,
     createTreasuryMetrics,
     createProductionDependencyExposure,
-    DEFAULT_ECONOMIC_HEALTH_CONFIG,
 } from "../economicHealthMetrics";
 import { Goods } from "@game/data/Goods";
-import { Population } from "@game/data/Population";
 
 describe("EconomicHealthMetrics", () => {
     let metrics: EconomicHealthMetrics;
