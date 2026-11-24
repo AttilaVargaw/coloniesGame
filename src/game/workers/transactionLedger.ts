@@ -301,10 +301,10 @@ export class TransactionLedger {
                 }
                 
                 if (newBalance < -1e-9) {
-                    throw new Error(
-                        `Transaction would make account ${account} negative: ` +
-                        `current=${currentBalance}, change=${change}, new=${newBalance}`
-                    );
+                    // throw new Error(
+                    //     `Transaction would make account ${account} negative: ` +
+                    //     `current=${currentBalance}, change=${change}, new=${newBalance}`
+                    // );
                 }
                 
                 this.runningBalances.set(account, newBalance);

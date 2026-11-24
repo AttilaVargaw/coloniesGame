@@ -203,35 +203,35 @@ export function executeNonCumulativeFlow(
 
 		if (readySectors.length === 0) break;
 
-		// Execute all ready sectors in this pass
-		// Use deterministic order (by sector name) for consistency
-		readySectors.sort((a, b) => a.sectorName.localeCompare(b.sectorName));
+// Execute all ready sectors in this pass
+        // Use deterministic order (by sector name) for consistency
+        readySectors.sort((a, b) => a.sectorName.localeCompare(b.sectorName));
 
-		for (const node of readySectors) {
-			// Remove from pending
-			pendingSectors.delete(node.sectorName);
-			executedSectorNames.add(node.sectorName);
+        for (const node of readySectors) {
+            // Remove from pending
+            pendingSectors.delete(node.sectorName);
+            executedSectorNames.add(node.sectorName);
 
-			const nonEssentialGoods = node.bid.nonEssentialGoods ?? new Set<keyof Goods>();
+            const nonEssentialGoods = node.bid.nonEssentialGoods ?? new Set<keyof Goods>();
 
-			// Check mandatory non-cumulative inputs against LIVE flow pool
-			let flowScale = 1;
-			const mandatoryDemand: Partial<Record<keyof Goods, number>> = {};
-			const optionalDemand: Partial<Record<keyof Goods, number>> = {};
+            // Check mandatory non-cumulative inputs against LIVE flow pool
+            let flowScale = 1;
+            const mandatoryDemand: Partial<Record<keyof Goods, number>> = {};
+            const optionalDemand: Partial<Record<keyof Goods, number>> = {};
 
-			for (const [good, required] of Object.entries(node.idealNonCumulativeDemand)) {
-				const key = good as keyof Goods;
-				if (required > 0) {
-					if (nonEssentialGoods.has(key)) {
-						optionalDemand[key] = required;
-					} else {
-						mandatoryDemand[key] = required;
-						const available = flowPool[key] ?? 0;
-						const ratio = available / required;
-						flowScale = Math.min(flowScale, ratio);
-					}
-				}
-			}
+            for (const [good, required] of Object.entries(node.idealNonCumulativeDemand)) {
+                const key = good as keyof Goods;
+                if (required > 0) {
+                    if (nonEssentialGoods.has(key)) {
+                        optionalDemand[key] = required;
+                    } else {
+                        mandatoryDemand[key] = required;
+                        const available = flowPool[key] ?? 0;
+                        const ratio = available / required;
+                        flowScale = Math.min(flowScale, ratio);
+                    }
+                }
+            }
 
 			flowScale = Math.min(1, Math.max(0, flowScale));
 
@@ -376,13 +376,13 @@ export function executeNonCumulativeFlow(
 				sumGoodsProduction[key] = nextProd;
 			}
 
-			// Track actual consumption
-			for (const [good, consumed] of Object.entries(actualConsumedGoods)) {
-				const key = good as keyof Goods;
-				const nextReq = (sumGoodsRequirements[key] ?? 0) + consumed;
-				sumGoodsRequirements[key] = nextReq;
-			}
-		}
+// Track actual consumption
+            for (const [good, consumed] of Object.entries(actualConsumedGoods)) {
+                const key = good as keyof Goods;
+                const nextReq = (sumGoodsRequirements[key] ?? 0) + consumed;
+                sumGoodsRequirements[key] = nextReq;
+            }
+}
 	}
 
 	// Phase 2: Remaining pending sectors cannot execute (input-constrained)

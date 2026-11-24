@@ -29,6 +29,7 @@ const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"recycling",
 	"consumerFactory",
 	"paperFactory",
+	"nuclearSector",
 ];
 
 const MINIMAL_SECTORS: (keyof IndustrialSectors)[] = [
@@ -481,6 +482,90 @@ describe("Input costs → Sector profitability", () => {
 			}
 
 			expect(cascadeDetected).toBe(true);
+		});
+	});
+
+	describe("Production persistence across ticks", () => {
+		it("powerPlant and nuclearSector produce consistently over two consecutive ticks", () => {
+			const state = createSimState();
+			const capitalMultipliers: Partial<Record<keyof IndustrialSectors, number>> = {};
+
+			let input = generateColonyConfig(
+				{
+					populationSize: 200_000,
+					activeSectors: COMPLETE_SECTORS,
+					starterMoneyPerSector: 1_000_000_000,
+					capitalStockMultiplier: 1,
+				},
+				capitalMultipliers,
+			);
+
+			// Ensure oil is available for powerPlant
+			input.goods.oil = 100_000;
+
+			let tick1EnergyProduction = 0;
+			let tick1FissionProduction = 0;
+			let tick2EnergyProduction = 0;
+			let tick2FissionProduction = 0;
+			let tick1PowerPlantScale = 0;
+			let tick1NuclearScale = 0;
+			let tick2PowerPlantScale = 0;
+			let tick2NuclearScale = 0;
+
+			for (let tick = 0; tick < 2; tick++) {
+				const result = simulateTick(input, state);
+				expect(result).not.toBeNull();
+				if (!result) break;
+
+				const powerPlantResult = result.sectorResults?.powerPlant;
+				const nuclearResult = result.sectorResults?.nuclearSector;
+
+				expect(powerPlantResult).toBeDefined();
+				expect(nuclearResult).toBeDefined();
+
+				if (tick === 0) {
+					tick1EnergyProduction = powerPlantResult?.producedGoods?.energy ?? 0;
+					tick1FissionProduction = nuclearResult?.producedGoods?.fissionMaterial ?? 0;
+					tick1PowerPlantScale = powerPlantResult?.productionRatio ?? 0;
+					tick1NuclearScale = nuclearResult?.productionRatio ?? 0;
+				} else {
+					tick2EnergyProduction = powerPlantResult?.producedGoods?.energy ?? 0;
+					tick2FissionProduction = nuclearResult?.producedGoods?.fissionMaterial ?? 0;
+					tick2PowerPlantScale = powerPlantResult?.productionRatio ?? 0;
+					tick2NuclearScale = nuclearResult?.productionRatio ?? 0;
+				}
+
+				// Verify sectors execute (have production results)
+				expect(powerPlantResult?.producedGoods).toBeDefined();
+				expect(nuclearResult?.producedGoods).toBeDefined();
+
+				// Verify no negative goods pools
+				for (const [key, value] of Object.entries(result.goods)) {
+					expect(value).toBeGreaterThanOrEqual(0);
+				}
+
+				// Advance to next tick
+				input = {
+					...input,
+					goods: result.goods,
+					money: result.money,
+					capitalStock: result.capitalStock,
+					population: result.population ?? input.population,
+					colonyTreasury: result.colonyTreasury,
+				} as IndustryTickInput;
+			}
+
+			// Verify both ticks had positive production
+			expect(tick1EnergyProduction).toBeGreaterThan(0);
+			expect(tick1FissionProduction).toBeGreaterThan(0);
+			expect(tick2EnergyProduction).toBeGreaterThan(0);
+			expect(tick2FissionProduction).toBeGreaterThan(0);
+
+			// Verify both sectors ran at full scale (productionRatio = 1)
+			expect(tick1PowerPlantScale).toBeCloseTo(1, 6);
+			expect(tick1NuclearScale).toBeCloseTo(1, 6);
+			expect(tick2PowerPlantScale).toBeCloseTo(1, 6);
+			expect(tick2NuclearScale).toBeCloseTo(1, 6);
 		});
 	});
 });
