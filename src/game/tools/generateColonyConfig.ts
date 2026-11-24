@@ -17,7 +17,7 @@ export function generateColonyConfig(
 
 	const goods = createStarterWarehouse(populationSize);
 	for(const key of Object.keys(goods) as (keyof Goods)[]) {
-		goods[key] *= cfg.initialGoodsMultipliers.get(key) ?? 100;
+		goods[key] *= cfg.initialGoodsMultipliers.get(key) ?? 91;
 	}
 	const population = createStarterPopulation(populationSize, occupationStarterRatioOverride);
 

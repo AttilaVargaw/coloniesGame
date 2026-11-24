@@ -19,7 +19,7 @@ export function SectorRow({
     sectorKey: keyof IndustrialSectors;
     industry: IndustryComponent;
 }) {
-    const profit = industry.sectorProfits[sectorKey] ?? 0
+const profit = industry.sectorProfits[sectorKey] ?? 0
     const revenue = industry.sectorRevenue[sectorKey] ?? 0
     const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0
     const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0
@@ -29,9 +29,10 @@ export function SectorRow({
 
     const config = industrySectorBlueprints.get(sectorKey);
     const sectorResult = industry.sectorResults?.get(sectorKey);
+    const productionRatio = sectorResult?.productionRatio ?? 0;
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     const hasData = !!sectorResult;
-    const isStopped = sectorResult?.productionRatio === 0;
+    const isStopped = productionRatio === 0;
 
     const methodName = industry.selectedMethod[sectorKey] ?? null;
     const method = methodName ? config?.productionMethods?.get(methodName) : undefined;
@@ -139,7 +140,7 @@ export function SectorRow({
             <td className="pt-2 text-center">{techMultiplier.toFixed(2)}</td>
             <td className="pt-2 text-center">
                 <div className="text-xs">
-                    {(utilization * 100).toFixed(0)}%
+                    {(productionRatio * 100).toFixed(0)}%
                     {sectorLevel < 0.99 && (
                         <div className="text-orange-400">{Math.round(sectorLevel * 100)}% capital</div>
                     )}

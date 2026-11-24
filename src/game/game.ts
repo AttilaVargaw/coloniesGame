@@ -35,7 +35,6 @@ import { MarketPriceSystem } from "./systems/MarketPriceSystem"
 export class Game {
     readonly engine: World
     private gameLoopId?: number
-    private dayPassedTimeout?: number
 
     private constructor(public map: BodyBlueprint) {
         this.engine = new World()
@@ -84,10 +83,6 @@ export class Game {
         const cameraFollowSystem = this.engine.getSystem(CameraFollowSystem)
         this.engine.getSystem(ViewportSystem).init(cameraFollowSystem)
 
-        this.dayPassedTimeout = setTimeout(() => {
-            this.engine.dispatchEvent(new DayPassedEvent())
-        }, 2_500);
-
         let previousTime = 0.0
         let firstUpdate = true
         let lastRenderTime = 0
@@ -126,10 +121,11 @@ export class Game {
         const game = new Game(map)
         const mapSystem = game.engine.getSystem(MapSystem)
 
-        mapSystem
-            .init()
-            .catch(console.error)
-            .then(mapSystem.rebuildGraph)
+        await mapSystem.init()
+        mapSystem.rebuildGraph()
+
+        // Dispatch initial DayPassedEvent after map is initialized so industries exist
+        game.engine.dispatchEvent(new DayPassedEvent())
 
         return game
     }
@@ -141,9 +137,6 @@ export class Game {
 
         if(this.gameLoopId !== undefined) {
             cancelAnimationFrame(this.gameLoopId)
-        }
-        if(this.dayPassedTimeout !== undefined) {
-            clearTimeout(this.dayPassedTimeout)
         }
     }
 

@@ -52,7 +52,7 @@ describe('SectorRow', () => {
                 consumedGoods: { energy: 100, governance: 20, environmentFactor: 20 },
                 producedGoods: { oil: 5000, waste: 20 },
                 workersEmployed: { worker: 890, clerks: 50, engineer: 50, healtcarePersonal: 10 },
-                productionRatio: 1,
+                productionRatio: 0.8,
                 inputLevel: 1,
                 outputLevel: 1,
             }]]),
