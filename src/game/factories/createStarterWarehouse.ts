@@ -38,11 +38,11 @@ export function createEmptyWarehouse() {
 export function createStarterWarehouse(population: number) {
     return {
         water: population / 1_000,
-        agriculturalGoods: population / 40_000,
-        consumerGoods: population / 300,
+        agriculturalGoods: population / 50_000,
+        consumerGoods: population / 350,
         machinery: population / 10_000,
         medicine: population / 1000,
-        oil: population / 3_000,
+        oil: population / 50_000,
         tylium: population * 0,
         fissionMaterial: population * 0,
         environmentFactor: population / 2_000,
@@ -52,7 +52,7 @@ export function createStarterWarehouse(population: number) {
         lumber: population / 10_000,
         chemicals: population / 10_00,
         buildings: population / 1_000,
-        waste: population / 1_000_000_000,
+        waste: population / 10_000_000_000,
         vehicles: population / 10000,
         paper: population / 1_000,
         entertainment: population / 10,
