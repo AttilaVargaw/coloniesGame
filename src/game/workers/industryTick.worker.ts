@@ -1382,7 +1382,7 @@ function processIndustry(
     })();
 
     const treasurySubsidies = Object.fromEntries(subsidies.map(s => [s.sectorName, s.amount]));
-    const treasurySubsidiesTotal = Object.values(treasurySubsidies).reduce((sum, v) => sum + v, 0);
+    // const treasurySubsidiesTotal = Object.values(treasurySubsidies).reduce((sum, v) => sum + v, 0);
 
     // Treasury revenue: from household sales + capital purchases
     const householdSalesRevenue = Object.values(householdSalesByGood).reduce((sum, v) => sum + v, 0);
