@@ -1622,17 +1622,10 @@ function finalizeGoods(
         // Waste is handled separately below — exclude from main goods loop
         if(goodKey === "waste") continue;
 
-        let closing: number;
-
-        if(NON_CUMULATING_GOODS.has(goodKey)) {
-            // Non-cumulative goods (services): opening inventory does not carry over.
-            // These are non-storable flows; closing = production - requirements - household consumption.
-            // Household consumption represents services consumed by population during the tick.
-            closing = production - requirements - consumption;
-        } else {
-            // Cumulative goods (physical inventory): opening + production - requirements - consumption.
-            closing = opening + production - requirements - consumption;
-        }
+        const isNonCumulative = NON_CUMULATING_GOODS.has(goodKey);
+        let closing = isNonCumulative
+            ? production - requirements - consumption
+            : opening + production - requirements - consumption;
 
         if(!Number.isFinite(closing)) {
             throw new Error(`Inventory overflow for ${goodKey}`);
