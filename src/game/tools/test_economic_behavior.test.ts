@@ -1,12 +1,47 @@
 import { describe, it, expect } from "vitest";
 import { createSimState, simulateTick } from "./economyConfigGenerator.ts";
 import { generateColonyConfig } from "./generateColonyConfig.ts";
+import { industrySectorBlueprints } from "../systems/sectorBlueprints.ts";
 import type { IndustryTickInput } from "../workers/IndustryTickInput.ts";
 import type { IndustryTickResult } from "../workers/IndustryTickResult.ts";
 import type { Population } from "../data/Population.ts";
 import type { IndustrialSectors } from "../components/Factories.ts";
 import type { Goods } from "../data/Goods.ts";
 import { basePrices } from "../data/Goods.ts";
+
+function computeCapacityDemand(activeSectors: Set<keyof IndustrialSectors>) {
+	let governanceCapacity = 0;
+	let totalGovernanceDemand = 0;
+	let lawEnforcementCapacity = 0;
+	let totalLawEnforcementDemand = 0;
+	let defenseCapacity = 0;
+	let totalDefenseDemand = 0;
+	for (const sector of activeSectors) {
+		const blueprint = industrySectorBlueprints.get(sector);
+		if (blueprint) {
+			if (blueprint.governanceCapacity) {
+				governanceCapacity += blueprint.governanceCapacity;
+			}
+			totalGovernanceDemand += blueprint.governanceDemand ?? 0;
+			if (blueprint.lawEnforcementCapacity) {
+				lawEnforcementCapacity += blueprint.lawEnforcementCapacity;
+			}
+			totalLawEnforcementDemand += blueprint.lawEnforcementDemand ?? 0;
+			if (blueprint.defenseCapacity) {
+				defenseCapacity += blueprint.defenseCapacity;
+			}
+			totalDefenseDemand += blueprint.defenseDemand ?? 0;
+		}
+	}
+	return {
+		governanceCapacity,
+		totalGovernanceDemand,
+		lawEnforcementCapacity,
+		totalLawEnforcementDemand,
+		defenseCapacity,
+		totalDefenseDemand,
+	};
+}
 
 const COMPLETE_SECTORS: (keyof IndustrialSectors)[] = [
 	"powerPlant",
@@ -346,14 +381,14 @@ describe("Input costs → Sector profitability", () => {
 			expect(initialCapital).toBeGreaterThan(0);
 
 			for(let tick = 0; tick < 100; tick++) {
+				// Zero out sector money BEFORE the tick to prevent any investment
+				for(const sector of Object.keys(input.money) as (keyof IndustrialSectors)[]) {
+					input.money[sector] = 0;
+				}
+
 				const result = simulateTick(input, state);
 				expect(result).not.toBeNull();
 				if(!result) break;
-
-				// Keep money low
-				for(const sector of Object.keys(result.money) as (keyof IndustrialSectors)[]) {
-					result.money[sector] = 1000;
-				}
 
 				input = {
 					...input,
@@ -363,6 +398,15 @@ describe("Input costs → Sector profitability", () => {
 					population: result.population ?? input.population,
 					colonyTreasury: result.colonyTreasury,
 				} as IndustryTickInput;
+
+				// Update capacity/demand from active sectors
+				const capDemand = computeCapacityDemand(input.activeSectors);
+				input.governanceCapacity = capDemand.governanceCapacity;
+				input.totalGovernanceDemand = capDemand.totalGovernanceDemand;
+				input.lawEnforcementCapacity = capDemand.lawEnforcementCapacity;
+				input.totalLawEnforcementDemand = capDemand.totalLawEnforcementDemand;
+				input.defenseCapacity = capDemand.defenseCapacity;
+				input.totalDefenseDemand = capDemand.totalDefenseDemand;
 			}
 
 			let finalCapital = 0;
