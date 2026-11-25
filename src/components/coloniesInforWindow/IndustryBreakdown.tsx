@@ -15,7 +15,7 @@ export function IndustryBreakdown({ industry }: { industry: IndustryComponent; }
 
     return (
         <Tabs className="overflow-x-auto" defaultValue="energy">
-            <TabsList>
+            <TabsList defaultValue="rawMaterials" style={{ height: "2em", width: "100%" }}>
                 {subsectors.map(([key]) => (
                     <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
                 ))}

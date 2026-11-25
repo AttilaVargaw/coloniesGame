@@ -67,7 +67,7 @@ export function WarehouseBreakdown({ industry, showPhysical }: { industry: Indus
 
     return (
         <Tabs defaultValue="rawMaterials">
-            <TabsList className="f-width">
+            <TabsList defaultValue="rawMaterials" style={{ height: "2em", width: "100%" }}>
                 {[...godsCategories.keys()].map((key) => {
                     return <TabsTrigger key={key} value={key}>{key}</TabsTrigger>
                 })}
