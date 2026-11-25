@@ -19,7 +19,7 @@ export function SectorRow({
     sectorKey: keyof IndustrialSectors;
     industry: IndustryComponent;
 }) {
-const profit = industry.sectorProfits[sectorKey] ?? 0
+    const profit = industry.sectorProfits[sectorKey] ?? 0
     const revenue = industry.sectorRevenue[sectorKey] ?? 0
     const laborCosts = industry.sectorLaborCosts?.[sectorKey] ?? 0
     const inputCosts = industry.sectorInputCosts?.[sectorKey] ?? 0
@@ -56,20 +56,20 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
     }
 
     const reqs = useMemo(() => {
-        const items: ReactNode[] = [];
+        const items: ReactNode[][] = [[], []];
         let bottleneck: keyof Population | keyof Goods | null = null;
         let bottleneckRatio = Infinity;
 
         const productionRatio = sectorResult?.productionRatio ?? 1;
 
-        const requirements: { name: keyof Population | keyof Goods; fullCapacityReq: number; currentCapacityReq: number; satisfied: number; isNegativeCapable?: boolean }[] = [];
+        const requirements: { name: keyof Population | keyof Goods; fullCapacityReq: number; currentCapacityReq: number; satisfied: number; isNegativeCapable?: boolean }[][] = [[], []];
 
         // Base sector requirements
         if(config?.goodsRequirements) {
             for(const [good, req] of Object.entries(config.goodsRequirements) as [keyof Goods, number][]) {
                 const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
                 const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * sectorLevel;
-                requirements.push({
+                requirements[0].push({
                     name: good,
                     fullCapacityReq,
                     currentCapacityReq: fullCapacityReq * productionRatio,
@@ -84,7 +84,7 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
             for(const [good, req] of Object.entries(method.goodsRequirements) as [keyof Goods, number][]) {
                 const materialMult = industry.materialRequirementMultipliers[good] ?? 1;
                 const fullCapacityReq = req * materialMult * materialMethodMult * inputLevel * sectorLevel;
-                requirements.push({
+                requirements[0].push({
                     name: good,
                     fullCapacityReq,
                     currentCapacityReq: fullCapacityReq * productionRatio,
@@ -98,7 +98,7 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
             for(const [worker, req] of Object.entries(config.workerRequirement) as [keyof Population, number][]) {
                 const workerEffMult = industry.workerEfficiencyMultipliers[worker] ?? 1;
                 const fullCapacityReq = (req / Math.max(workerEffMult, 0.01) / Math.max(workerMethodMult, 0.01)) * inputLevel * sectorLevel;
-                requirements.push({
+                requirements[1].push({
                     name: worker,
                     fullCapacityReq,
                     currentCapacityReq: fullCapacityReq * productionRatio,
@@ -107,18 +107,20 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
             }
         }
 
-        for(const { name, fullCapacityReq, currentCapacityReq, satisfied, isNegativeCapable } of requirements) {
-            if(hasData && currentCapacityReq > 0 && !isNegativeCapable) {
-                const reqRatio = satisfied / currentCapacityReq;
-                if(reqRatio < 0.99 && reqRatio < bottleneckRatio) {
-                    bottleneckRatio = reqRatio;
-                    bottleneck = name;
+        for(let i = 0; i < 2; ++i) {
+            for(const { name, fullCapacityReq, currentCapacityReq, satisfied, isNegativeCapable } of requirements[i]) {
+                if(hasData && currentCapacityReq > 0 && !isNegativeCapable) {
+                    const reqRatio = satisfied / currentCapacityReq;
+                    if(reqRatio < 0.99 && reqRatio < bottleneckRatio) {
+                        bottleneckRatio = reqRatio;
+                        bottleneck = name;
+                    }
                 }
+                items[i].push(<RequirementItem key={name} name={name} fullCapacityReq={fullCapacityReq} currentCapacityReq={currentCapacityReq} satisfied={satisfied} />);
             }
-            items.push(<RequirementItem key={name} name={name} fullCapacityReq={fullCapacityReq} currentCapacityReq={currentCapacityReq} satisfied={satisfied} />);
         }
 
-        items.push(<RequirementItem currentCapacityReq={industry.sectorLaborCosts[sectorKey] + industry.sectorInputCosts[sectorKey]} name="money" />);
+        items[0].push(<RequirementItem currentCapacityReq={industry.sectorLaborCosts[sectorKey] + industry.sectorInputCosts[sectorKey]} name="money" />);
 
         return { items, bottleneck, bottleneckRatio }
     }, [config, materialMethodMult, inputLevel, workerMethodMult, sectorLevel, industry.materialRequirementMultipliers, industry.workerEfficiencyMultipliers, sectorResult, hasData, isStopped]);
@@ -190,7 +192,12 @@ const profit = industry.sectorProfits[sectorKey] ?? 0
                 </div>
             </td>
             <td className="pt-2 text-center">
-                {reqs.items.map((req, i) => (
+                {reqs.items[0].map((req, i) => (
+                    <div className="text-xs space-y-0.5" key={i}>{req}</div>
+                ))}
+            </td>
+            <td className="pt-2 text-center">
+                {reqs.items[1].map((req, i) => (
                     <div className="text-xs space-y-0.5" key={i}>{req}</div>
                 ))}
             </td>
