@@ -28,6 +28,9 @@ import { SectorDecisions } from "../systems/sectorBehaviorTree/bt";
 
 const ESSENTIAL_GOODS: (keyof Goods)[] = ["food", "water", "energy", "healthcare", "agriculturalGoods"];
 
+// Pre-computed keys for hot path optimization
+const GOODS_KEYS = Object.keys(basePrices) as (keyof Goods)[];
+
 const lastResults = new Map<string, IndustryTickResult>();
 const colonyWageMemory = new Map<string, Partial<Record<keyof Population, number>>>();
 const colonyDeprivationMemory = new Map<string, Partial<Record<keyof Goods, number>>>();
@@ -105,7 +108,9 @@ function processIndustry(
     }
 
     // Aggregate population
-    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+    const populationEntries = Object.entries(population) as [keyof Population, PopulationBreakdown][];
+    const populationKeys = Object.keys(population) as (keyof Population)[];
+    for(const [key, pop] of populationEntries) {
         industryBlackboard.totalPopulation += pop.number;
         if(key === "worker") {
             industryBlackboard.totalFreeWorkers = pop.number; // will be refined below
@@ -155,7 +160,7 @@ function processIndustry(
     }
 
     // Validate population counts and wealth values before constructing cashByPop
-    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+    for(const [key, pop] of populationEntries) {
         if(!Number.isFinite(pop.number) || pop.number < 0) {
             throw new Error(`Invalid population count for ${entityId}.${key}: ${pop.number}`);
         }
@@ -273,7 +278,7 @@ function processIndustry(
 
     // === PHASE 2: CENTRALIZED RESOURCE ALLOCATION ===
     const availableWorkers: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         availableWorkers[key] = key === "stayAtHome" ? 0 : population[key].number;
     }
 
@@ -438,61 +443,29 @@ function processIndustry(
         sumGoodsProduction,
     } = execResult;
 
-    // Apply governance penalty: if capacity < demand, all sectors produce proportionally less
+    // Apply governance, lawEnforcement, defense penalties - combined into single pass
     const governanceRatio = totalGovernanceDemand > 0
         ? Math.min(1, governanceCapacity / totalGovernanceDemand)
         : 1;
-
-    if (governanceRatio < 1) {
-        // Scale down all production
-        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
-            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * governanceRatio;
-        }
-        // Scale down sector production in results
-        for (const result of Object.values(sectorResults)) {
-            if (result?.producedGoods) {
-                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
-                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * governanceRatio;
-                }
-            }
-        }
-    }
-
-    // Apply lawEnforcement penalty
     const lawEnforcementRatio = totalLawEnforcementDemand > 0
         ? Math.min(1, lawEnforcementCapacity / totalLawEnforcementDemand)
         : 1;
-
-    if (lawEnforcementRatio < 1) {
-        // Scale down all production
-        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
-            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * lawEnforcementRatio;
-        }
-        // Scale down sector production in results
-        for (const result of Object.values(sectorResults)) {
-            if (result?.producedGoods) {
-                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
-                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * lawEnforcementRatio;
-                }
-            }
-        }
-    }
-
-    // Apply defense penalty
     const defenseRatio = totalDefenseDemand > 0
         ? Math.min(1, defenseCapacity / totalDefenseDemand)
         : 1;
+    const combinedRatio = governanceRatio * lawEnforcementRatio * defenseRatio;
 
-    if (defenseRatio < 1) {
+    if (combinedRatio < 1) {
         // Scale down all production
-        for (const key of Object.keys(sumGoodsProduction) as (keyof Goods)[]) {
-            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * defenseRatio;
+        for (const key of GOODS_KEYS) {
+            sumGoodsProduction[key] = (sumGoodsProduction[key] ?? 0) * combinedRatio;
         }
         // Scale down sector production in results
-        for (const result of Object.values(sectorResults)) {
+        const sectorResultsArray = Object.values(sectorResults);
+        for (const result of sectorResultsArray) {
             if (result?.producedGoods) {
-                for (const key of Object.keys(result.producedGoods) as (keyof Goods)[]) {
-                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * defenseRatio;
+                for (const key of GOODS_KEYS) {
+                    result.producedGoods[key] = (result.producedGoods[key] ?? 0) * combinedRatio;
                 }
             }
         }
@@ -502,14 +475,15 @@ function processIndustry(
     // sumGoodsRequirements is the aggregate accounting field; each sector's
     // consumedGoods is the source of truth. They must match exactly.
     const reconstructedConsumption: Partial<Goods> = {};
-    for(const result of Object.values(sectorResults)) {
+    const sectorResultsArray = Object.values(sectorResults);
+    for(const result of sectorResultsArray) {
         for(const [key, amount] of Object.entries(result?.consumedGoods ?? {})) {
             const good = key as keyof Goods;
             reconstructedConsumption[good] =
                 (reconstructedConsumption[good] ?? 0) + (amount ?? 0);
         }
     }
-    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+    for(const key of GOODS_KEYS) {
         const reported = sumGoodsRequirements[key] ?? 0;
         const reconstructed = reconstructedConsumption[key] ?? 0;
         if(Math.abs(reported - reconstructed) > 1e-6) {
@@ -529,6 +503,7 @@ function processIndustry(
     // HouseholdSalesStock = physicalWarehouseStock (reservation already subtracted from sector pool)
 
     // Apply refunds to warehouse (currentGoods) - refunded goods go back to warehouse
+    // Apply producer refunds to producer inventories
     for(const [, goodMap] of Object.entries(refunded)) {
         for(const [goodKey, sourceAllocation] of Object.entries(goodMap)) {
             const gKey = goodKey as keyof Goods;
@@ -536,13 +511,6 @@ function processIndustry(
             if(warehouseRefund > 0) {
                 currentGoods[gKey] = (currentGoods[gKey] ?? 0) + warehouseRefund;
             }
-        }
-    }
-
-    // Apply producer refunds to producer inventories
-    for(const [, goodMap] of Object.entries(refunded)) {
-        for(const [goodKey, sourceAllocation] of Object.entries(goodMap)) {
-            const gKey = goodKey as keyof Goods;
             for(const [producer, qty] of Object.entries(sourceAllocation.producers ?? {})) {
                 if(qty > 0) {
                     updatedProducerInventories[producer] = updatedProducerInventories[producer] ?? {};
@@ -661,7 +629,7 @@ function processIndustry(
 
     // Each group's available cash = starting wealth + wages earned this tick
     const cashByPop: Record<keyof Population, number> = {} as Record<keyof Population, number>;
-    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+    for(const [key, pop] of populationEntries) {
         cashByPop[key] = (pop.wealth ?? 0) + (wagesByPop[key] ?? 0);
     }
 
@@ -705,7 +673,7 @@ function processIndustry(
     }
 
     // Validate each group's spending is within its cash budget
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const spending = spendingByPop[key] ?? 0;
         const available = cashByPop[key] ?? 0;
 
@@ -792,7 +760,7 @@ function processIndustry(
 
     // Every population group gets a wealth update, even groups without a consumption update,
     // so no wage credit is lost.
-    for(const [key, pop] of Object.entries(population) as [keyof Population, PopulationBreakdown][]) {
+    for(const [key, pop] of populationEntries) {
         const k = key as keyof Population;
         const actualIncome = wagesByPop[k] ?? 0;
         const actualSpending = spendingByPop[k] ?? 0;
@@ -815,8 +783,7 @@ function processIndustry(
 
     // Derive aggregate household money from all population wealth (authoritative source).
     // Use the final population state rather than relying on partial-update semantics.
-    newHouseholdMoney = Object.keys(population).reduce((sum, key) => {
-        const popKey = key as keyof Population;
+    newHouseholdMoney = populationKeys.reduce((sum, popKey) => {
         const update = populationUpdates[popKey];
         const wealth = update?.wealth ?? population[popKey].wealth ?? 0;
         return sum + wealth;
@@ -936,7 +903,7 @@ function processIndustry(
 
     // Per-category wealth must match the update entry — mortality changes
     // population count, not cash held by a category.
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const actualWealth = mortalityAdjustedPopulation[key].wealth ?? 0;
         const expectedWealth = populationUpdates[key]?.wealth ?? 0;
 
@@ -1000,7 +967,7 @@ function processIndustry(
     }
 
     const totalGoodsRequirements: Goods = createEmptyWarehouse();
-    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+    for(const key of GOODS_KEYS) {
         totalGoodsRequirements[key] =
             (sumGoodsRequirements[key] ?? 0) +
             (capitalPurchasesByGood[key] ?? 0);
@@ -1094,7 +1061,7 @@ function processIndustry(
     }
     openingBalancesForLedger["colony_treasury"] = openingTreasury;
     openingBalancesForLedger["household_sales"] = 0;
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const account = `population:${key}`;
         openingBalancesForLedger[account] = population[key].wealth ?? 0;
     }
@@ -1228,7 +1195,7 @@ function processIndustry(
     for(const name of activeSectors) {
         const result = sectorResults[name];
         const workersEmployed = result?.workersEmployed ?? {};
-        for(const key of Object.keys(population) as (keyof Population)[]) {
+        for(const key of populationKeys) {
             const employed = workersEmployed[key] ?? 0;
             const salary = finalSalaries[key] ?? 0;
             const wage = employed * salary;
@@ -1250,7 +1217,7 @@ function processIndustry(
     }
 
     // Household sales: each population category pays, sector receives
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const spending = spendingByPop[key] ?? 0;
         if(spending > 0) {
             ledger.record({
@@ -1326,7 +1293,7 @@ function processIndustry(
     closingBalances["colony_treasury"] = newTreasury;
     openingBalances["household_sales"] = 0;
     closingBalances["household_sales"] = 0;
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const account = `population:${key}`;
         openingBalances[account] = population[key].wealth ?? 0;
         closingBalances[account] = mortalityAdjustedPopulation[key].wealth ?? 0;
@@ -1373,7 +1340,7 @@ function processIndustry(
 
     // Complete population cash reconciliation: verify each group's closing wealth
     // = opening wealth + wages + transfers - spending
-    for(const key of Object.keys(population) as (keyof Population)[]) {
+    for(const key of populationKeys) {
         const openingWealth = population[key].wealth ?? 0;
         const wages = wagesByPop[key] ?? 0;
         const spending = spendingByPop[key] ?? 0;
@@ -1577,7 +1544,7 @@ function validatePrices(
 
     // Validate every good in the authoritative schema has a finite, nonnegative price.
     // A missing price must be an error, not silently treated as a free good.
-    for(const key of Object.keys(basePrices) as (keyof Goods)[]) {
+    for(const key of GOODS_KEYS) {
         const value = validated[key];
 
         if(!Number.isFinite(value) || value < 0) {
